@@ -3,6 +3,7 @@
 import time
 
 from apps.adcs.sun import SUN_VECTOR_STATUS, compute_body_sun_vector_from_lux, in_eclipse, read_light_sensors
+from apps.telemetry.constants import SUN_IDX
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
@@ -21,6 +22,15 @@ class Task(TemplateTask):
     status = SUN_VECTOR_STATUS.NO_READINGS
     sun_vector = np.zeros(3)
     eclipse_state = False
+
+    _log_data = {
+        SUN_IDX.TIME: time.time(),
+        SUN_IDX.STATUS: status,
+        SUN_IDX.X: 0.0,
+        SUN_IDX.Y: 0.0,
+        SUN_IDX.Z: 0.0,
+        SUN_IDX.ECLIPSE: eclipse_state,
+    }
 
     async def main_task(self):
 
