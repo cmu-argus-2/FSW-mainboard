@@ -1,8 +1,5 @@
 # Electrical Power Subsystem Task
 
-import time
-
-import microcontroller
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
