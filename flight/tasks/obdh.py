@@ -31,4 +31,5 @@ class Task(TemplateTask):
         elif SM.current_state == "NOMINAL":
             self.SD_stored_volume = DH.compute_total_size_files()
 
+        print(f"[{self.ID}][{self.name}] Data processes: {DH.get_all_data_processes_name()}")
         print(f"[{self.ID}][{self.name}] Stored files: {self.SD_stored_volume} bytes.")
