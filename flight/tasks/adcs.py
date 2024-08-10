@@ -50,9 +50,15 @@ class Task(TemplateTask):
         "YM_COIL_STATUS",
         "ZP_COIL_STATUS",
         "ZM_COIL_STATUS",
-        "COARSE_ATTITUDE",
+        "COARSE_ATTITUDE_QW",
+        "COARSE_ATTITUDE_QX",
+        "COARSE_ATTITUDE_QY",
+        "COARSE_ATTITUDE_QZ",
         "STAR_TRACKER_STATUS",
-        "STAR_TRACKER_ATTITUDE",
+        "STAR_TRACKER_ATTITUDE_QW",
+        "STAR_TRACKER_ATTITUDE_QX",
+        "STAR_TRACKER_ATTITUDE_QY",
+        "STAR_TRACKER_ATTITUDE_QZ",
     ]
 
     # Sun Acquisition

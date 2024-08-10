@@ -1,5 +1,7 @@
 # GPS Task
 
+import time
+
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
@@ -11,6 +13,7 @@ class Task(TemplateTask):
     ID = 0x0B
 
     data_keys = [
+        "TIME",
         "GPS_MESSAGE_ID",
         "GPS_FIX_MODE",
         "GPS_NUMBER_OF_SV",
@@ -39,12 +42,13 @@ class Task(TemplateTask):
             pass
         elif SM.current_state == "NOMINAL":
             if not DH.data_process_exists("gps"):
-                DH.register_data_process("gps", self.data_keys, "BBBHIiiiiHHHHHiiiiii", True, line_limit=200)
+                DH.register_data_process("gps", self.data_keys, "fBBBHIiiiiHHHHHiiiiii", True, line_limit=200)
             pass
 
         # TODO GPS readings
 
         readings = {
+            "TIME": time.time(),
             "GPS_MESSAGE_ID": 0,
             "GPS_FIX_MODE": 0,
             "GPS_NUMBER_OF_SV": 0,
