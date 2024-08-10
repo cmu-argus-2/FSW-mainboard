@@ -15,6 +15,7 @@ class Task(TemplateTask):
     name = "SUN"
     ID = 0x11
 
+    # To be removed - kept until proper logging is implemented
     data_keys = ["time", "status", "x", "y", "z", "eclipse"]
 
     THRESHOLD_ILLUMINATION_LUX = 3000
@@ -23,14 +24,8 @@ class Task(TemplateTask):
     sun_vector = np.zeros(3)
     eclipse_state = False
 
-    _log_data = {
-        SUN_IDX.TIME: time.time(),
-        SUN_IDX.STATUS: status,
-        SUN_IDX.X: 0.0,
-        SUN_IDX.Y: 0.0,
-        SUN_IDX.Z: 0.0,
-        SUN_IDX.ECLIPSE: eclipse_state,
-    }
+    # pre-allocation
+    log_data = [0] * 6
 
     async def main_task(self):
 
@@ -48,14 +43,12 @@ class Task(TemplateTask):
                 threshold_lux_illumination=self.THRESHOLD_ILLUMINATION_LUX,
             )
 
-            readings = {
-                "time": time.time(),
-                "status": self.status,
-                "x": self.sun_vector[0],
-                "y": self.sun_vector[1],
-                "z": self.sun_vector[2],
-                "eclipse": self.eclipse_state,
-            }
+            self.log_data[SUN_IDX.TIME] = time.time()
+            self.log_data[SUN_IDX.STATUS] = self.status
+            self.log_data[SUN_IDX.X] = self.sun_vector[0]
+            self.log_data[SUN_IDX.Y] = self.sun_vector[1]
+            self.log_data[SUN_IDX.Z] = self.sun_vector[2]
+            self.log_data[SUN_IDX.ECLIPSE] = self.eclipse_state
 
-            DH.log_data("sun", readings)
-            print(f"[{self.ID}][{self.name}] Data: {readings}")
+            DH.log_data("sun", self.log_data)
+            print(f"[{self.ID}][{self.name}] Data: {dict(zip(self.data_keys, self.log_data))}")
