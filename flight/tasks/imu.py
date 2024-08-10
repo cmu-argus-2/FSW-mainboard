@@ -12,6 +12,7 @@ class Task(TemplateTask):
     name = "IMU"
     ID = 0x03
 
+    # To be removed - kept until proper logging is implemented
     data_keys = [
         "time",
         "accel_x",
@@ -25,18 +26,8 @@ class Task(TemplateTask):
         "gyro_z",
     ]
 
-    _log_data = {
-        IMU_IDX.TIME: time.time(),
-        IMU_IDX.ACCEL_X: 0.0,
-        IMU_IDX.ACCEL_Y: 0.0,
-        IMU_IDX.ACCEL_Z: 0.0,
-        IMU_IDX.MAG_X: 0.0,
-        IMU_IDX.MAG_Y: 0.0,
-        IMU_IDX.MAG_Z: 0.0,
-        IMU_IDX.GYRO_X: 0.0,
-        IMU_IDX.GYRO_Y: 0.0,
-        IMU_IDX.GYRO_Z: 0.0,
-    }
+    # pre-allocation
+    log_data = [0.0] * 10
 
     async def main_task(self):
 
@@ -49,19 +40,18 @@ class Task(TemplateTask):
             mag = SATELLITE.IMU.mag()
             gyro = SATELLITE.IMU.gyro()
 
-            log_data = {
-                "time": time.time(),
-                "accel_x": accel[0],
-                "accel_y": accel[1],
-                "accel_z": accel[2],
-                "mag_x": mag[0],
-                "mag_y": mag[1],
-                "mag_z": mag[2],
-                "gyro_x": gyro[0],
-                "gyro_y": gyro[1],
-                "gyro_z": gyro[2],
-            }
+            # Replace data in the pre-allocated list
+            self.log_data[IMU_IDX.TIME] = time.time()
+            self.log_data[IMU_IDX.ACCEL_X] = accel[0]
+            self.log_data[IMU_IDX.ACCEL_Y] = accel[1]
+            self.log_data[IMU_IDX.ACCEL_Z] = accel[2]
+            self.log_data[IMU_IDX.MAG_X] = mag[0]
+            self.log_data[IMU_IDX.MAG_Y] = mag[1]
+            self.log_data[IMU_IDX.MAG_Z] = mag[2]
+            self.log_data[IMU_IDX.GYRO_X] = gyro[0]
+            self.log_data[IMU_IDX.GYRO_Y] = gyro[1]
+            self.log_data[IMU_IDX.GYRO_Z] = gyro[2]
 
-            DH.log_data("imu", log_data)
+            DH.log_data("imu", self.log_data)
 
-            print(f"[{self.ID}][{self.name}] Data: {log_data}")
+            print(f"[{self.ID}][{self.name}] Data: {dict(zip(self.data_keys, self.log_data))}")
