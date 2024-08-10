@@ -48,6 +48,19 @@ class EPS_CONST:
     ZM_SOLAR_CHARGE_CURRENT = const(41)
 
 
+class CDH_CONST:
+    TIME = const(0)
+    SC_STATE = const(1)
+    SD_AVAILABLE_STORAGE = const(2)
+    CURRENT_RAM_USAGE = const(3)
+    REBOOT_COUNT = const(4)
+    WATCHDOG_TIMER = const(5)
+    HAL_BITFLAGS = const(6)
+    COMMUNICATION_STATUS = const(7)
+    ADCS_STATUS = const(8)
+    EPS_STATUS = const(9)
+
+
 class ADCS_IDX:
     TIME = const(0)
     ADCS_STATUS = const(1)
@@ -131,3 +144,10 @@ class GPS_IDX:
     GPS_ECEF_VX = const(18)
     GPS_ECEF_VY = const(19)
     GPS_ECEF_VZ = const(20)
+
+
+class THERMAL_IDX:
+    TIME = const(0)
+    IMU_TEMPERATURE = const(1)
+    CPU_TEMPERATURE = const(2)
+    BATTERY_PACK_TEMPERATURE = const(3)
