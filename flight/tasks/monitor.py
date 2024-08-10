@@ -8,8 +8,6 @@ Satellite monitoring task
 import gc
 import time
 
-# Template task from taskio
-# State manager and OBDH
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH

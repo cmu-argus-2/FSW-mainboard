@@ -1,15 +1,18 @@
 # Electrical Power Subsystem Task
 
+from apps.telemetry.constants import EPS_IDX
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
+from hal.configuration import SATELLITE
 
 
 class Task(TemplateTask):
 
     name = "EPS"
-    ID = 0x12
+    ID = 0x00
 
+    # To be removed - kept until proper logging is implemented
     data_keys = [
         "MAINBOARD_VOLTAGE",
         "MAINBOARD_CURRENT",
@@ -55,19 +58,28 @@ class Task(TemplateTask):
         "ZM_SOLAR_CHARGE_CURRENT",
     ]
 
+    log_data = [0.0] * 42
+    batt_soc = 0
+    current = 0
+
     async def main_task(self):
 
         if SM.current_state == "STARTUP":
-            if not DH.data_process_exists("eps"):
-                pass
+            pass
 
         elif SM.current_state == "NOMINAL":
 
             if not DH.data_process_exists("eps"):
-                pass
+                DH.register_data_process("eps", self.data_keys, "ffffb", True, line_limit=50)
 
             # Get power system readings
 
+            (self.batt_soc, self.current) = SATELLITE.BATTERY_POWER_MONITOR.read_voltage_current()
+
+            self.log_data[EPS_IDX.MAINBOARD_VOLTAGE] = int(self.batt_soc * 100 / 8.4)
+            self.log_data[EPS_IDX.MAINBOARD_CURRENT] = int(self.current * 10000)
+            ## ADDITIONAL EPS DATA HERE ##
+
             ##
 
-            print(f"[{self.ID}][{self.name}] ...")
+            print(f"[{self.ID}][{self.name}] Battery SOC: {self.batt_soc}%, Current: {self.current} mA")
