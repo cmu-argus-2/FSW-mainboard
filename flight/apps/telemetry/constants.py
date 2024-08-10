@@ -3,7 +3,7 @@
 from micropython import const
 
 
-class EPS_CONST:
+class EPS_IDX:
     MAINBOARD_VOLTAGE = const(0)
     MAINBOARD_CURRENT = const(1)
     BATTERY_PACK_SOC = const(2)
@@ -48,7 +48,7 @@ class EPS_CONST:
     ZM_SOLAR_CHARGE_CURRENT = const(41)
 
 
-class CDH_CONST:
+class CDH_IDX:
     TIME = const(0)
     SC_STATE = const(1)
     SD_AVAILABLE_STORAGE = const(2)
