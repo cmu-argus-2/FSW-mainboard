@@ -10,7 +10,7 @@ from hal.configuration import SATELLITE
 class Task(TemplateTask):
 
     name = "EPS"
-    ID = 0x00
+    ID = 0x01
 
     # To be removed - kept until proper logging is implemented
     data_keys = [
@@ -19,7 +19,6 @@ class Task(TemplateTask):
         "BATTERY_PACK_SOC",
         "BATTERY_PACK_REMAINING_CAPACITY_PERC",
         "BATTERY_PACK_CURRENT",
-        "BATTERY_PACK_TEMPERATURE",
         "BATTERY_PACK_VOLTAGE",
         "BATTERY_PACK_MIDPOINT_VOLTAGE",
         "BATTERY_CYCLES",
@@ -58,7 +57,8 @@ class Task(TemplateTask):
         "ZM_SOLAR_CHARGE_CURRENT",
     ]
 
-    log_data = [0.0] * 42
+    log_data = [0] * 41
+    data_format = "h" * 41  # 41 signed short integers (2 bytes each) - use mV for voltage and mA for current
     batt_soc = 0
     current = 0
 
@@ -70,16 +70,20 @@ class Task(TemplateTask):
         elif SM.current_state == "NOMINAL":
 
             if not DH.data_process_exists("eps"):
-                DH.register_data_process("eps", self.data_keys, "ffffb", True, line_limit=50)
+                DH.register_data_process("eps", self.data_keys, self.data_format, True, line_limit=100)
 
             # Get power system readings
 
             (self.batt_soc, self.current) = SATELLITE.BATTERY_POWER_MONITOR.read_voltage_current()
 
-            self.log_data[EPS_IDX.MAINBOARD_VOLTAGE] = int(self.batt_soc * 100 / 8.4)
-            self.log_data[EPS_IDX.MAINBOARD_CURRENT] = int(self.current * 10000)
+            self.log_data[EPS_IDX.MAINBOARD_VOLTAGE] = int(self.batt_soc * 1000)  # mV - max 8.4V
+            self.log_data[EPS_IDX.MAINBOARD_CURRENT] = int(self.current * 1000)  # mA
             ## ADDITIONAL EPS DATA HERE ##
 
             ##
 
-            print(f"[{self.ID}][{self.name}] Battery SOC: {self.batt_soc}%, Current: {self.current} mA")
+            DH.log_data("eps", self.log_data)
+            print(
+                f"[{self.ID}][{self.name}] Battery SOC: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, \
+                                            Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA"
+            )

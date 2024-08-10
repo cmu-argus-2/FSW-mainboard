@@ -74,7 +74,7 @@ class satellite(CubeSat):
         self._imu.enable()
 
         self._jetson_monitor = self.init_device(PowerMonitor(4, 0.05))
-        self._battery_monitor = self.init_device(PowerMonitor(4.2, 0.04))
+        self._battery_monitor = self.init_device(PowerMonitor(7.6, 0.1))
 
         self._rtc = self.init_device(RTC(time.gmtime()))
 

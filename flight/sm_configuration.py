@@ -1,3 +1,4 @@
+from tasks.eps import Task as eps
 from tasks.imu import Task as imu
 from tasks.obdh import Task as obdh
 from tasks.radio_comms import Task as comms
@@ -10,9 +11,9 @@ TODO Copy the state descriptions here
 
 """
 
-TASK_REGISTRY = {"TIMING": timing, "OBDH": obdh, "IMU": imu, "SUN": sun, "COMMS": comms}
+TASK_REGISTRY = {"TIMING": timing, "EPS": eps, "OBDH": obdh, "IMU": imu, "SUN": sun, "COMMS": comms}
 
-TASK_MAPPING_ID = {"TIMING": 0x01, "OBDH": 0x02, "IMU": 0x03, "SUN": 0x11, "COMMS": 0x12}
+TASK_MAPPING_ID = {"TIMING": 0x00, "EPS": 0x01, "OBDH": 0x02, "IMU": 0x03, "SUN": 0x11, "COMMS": 0x12}
 
 
 SM_CONFIGURATION = {
@@ -20,12 +21,14 @@ SM_CONFIGURATION = {
         "Tasks": {
             "TIMING": {"Frequency": 1, "Priority": 2},
             "OBDH": {"Frequency": 1, "Priority": 3},
+            "EPS": {"Frequency": 1, "Priority": 1},
         },
         "MovesTo": ["NOMINAL"],
     },
     "NOMINAL": {
         "Tasks": {
             "TIMING": {"Frequency": 1, "Priority": 2},
+            "EPS": {"Frequency": 1, "Priority": 1},
             "OBDH": {"Frequency": 1, "Priority": 2},
             "IMU": {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
             "SUN": {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
@@ -35,6 +38,7 @@ SM_CONFIGURATION = {
     },
     "DOWNLINK": {
         "Tasks": {
+            "EPS": {"Frequency": 1, "Priority": 1},
             "OBDH": {"Frequency": 1, "Priority": 2},
             "IMU": {"Frequency": 1, "Priority": 3},
             "COMMS": {"Frequency": 0.1, "Priority": 5},
@@ -43,6 +47,7 @@ SM_CONFIGURATION = {
     },
     "LOW_POWER": {
         "Tasks": {
+            "EPS": {"Frequency": 1, "Priority": 1},
             "OBDH": {"Frequency": 1, "Priority": 2},
             "IMU": {"Frequency": 2, "Priority": 3},
         },
@@ -50,6 +55,7 @@ SM_CONFIGURATION = {
     },
     "SAFE": {
         "Tasks": {
+            "EPS": {"Frequency": 1, "Priority": 1},
             "OBDH": {"Frequency": 1, "Priority": 2},
             "IMU": {"Frequency": 2, "Priority": 3},
         },
