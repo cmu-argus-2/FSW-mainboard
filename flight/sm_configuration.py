@@ -1,5 +1,4 @@
 from tasks.imu import Task as imu
-from tasks.jetson_comms import Task as jetson
 from tasks.monitor import Task as monitor
 from tasks.obdh import Task as obdh
 from tasks.radio_comms import Task as comms
@@ -12,25 +11,9 @@ TODO Copy the state descriptions here
 
 """
 
-TASK_REGISTRY = {
-    "MONITOR": monitor,
-    "TIMING": timing,
-    "OBDH": obdh,
-    "IMU": imu,
-    "SUN": sun,
-    "COMMS": comms,
-    "JETSON": jetson,
-}
+TASK_REGISTRY = {"MONITOR": monitor, "TIMING": timing, "OBDH": obdh, "IMU": imu, "SUN": sun, "COMMS": comms}
 
-TASK_MAPPING_ID = {
-    "MONITOR": 0x05,
-    "TIMING": 0x01,
-    "OBDH": 0x02,
-    "IMU": 0x03,
-    "SUN": 0x11,
-    "COMMS": 0x12,
-    "JETSON": 0x13,
-}
+TASK_MAPPING_ID = {"MONITOR": 0x05, "TIMING": 0x01, "OBDH": 0x02, "IMU": 0x03, "SUN": 0x11, "COMMS": 0x12}
 
 
 SM_CONFIGURATION = {
