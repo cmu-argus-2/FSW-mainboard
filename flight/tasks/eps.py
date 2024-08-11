@@ -1,5 +1,7 @@
 # Electrical Power Subsystem Task
 
+import time
+
 from apps.telemetry.constants import EPS_IDX
 from core import TemplateTask
 from core import state_manager as SM
@@ -14,6 +16,7 @@ class Task(TemplateTask):
 
     # To be removed - kept until proper logging is implemented
     data_keys = [
+        "TIME",
         "MAINBOARD_VOLTAGE",
         "MAINBOARD_CURRENT",
         "BATTERY_PACK_SOC",
@@ -57,10 +60,10 @@ class Task(TemplateTask):
         "ZM_SOLAR_CHARGE_CURRENT",
     ]
 
-    log_data = [0] * 41
-    data_format = "h" * 41  # 41 signed short integers (2 bytes each) - use mV for voltage and mA for current
-    batt_soc = 0
-    current = 0
+    log_data = [0] * 42
+    data_format = "f" + "h" * 41  # 41 signed short integers (2 bytes each) - use mV for voltage and mA for current
+    batt_voltage = 0
+    batt_current = 0
 
     async def main_task(self):
 
@@ -74,16 +77,17 @@ class Task(TemplateTask):
 
             # Get power system readings
 
-            (self.batt_soc, self.current) = SATELLITE.BATTERY_POWER_MONITOR.read_voltage_current()
+            (self.batt_voltage, self.batt_current) = SATELLITE.BATTERY_POWER_MONITOR.read_voltage_current()
 
-            self.log_data[EPS_IDX.MAINBOARD_VOLTAGE] = int(self.batt_soc * 1000)  # mV - max 8.4V
-            self.log_data[EPS_IDX.MAINBOARD_CURRENT] = int(self.current * 1000)  # mA
+            self.log_data[EPS_IDX.TIME] = time.time()
+            self.log_data[EPS_IDX.MAINBOARD_VOLTAGE] = int(self.batt_voltage * 1000)  # mV - max 8.4V
+            self.log_data[EPS_IDX.MAINBOARD_CURRENT] = int(self.batt_current * 1000)  # mA
             ## ADDITIONAL EPS DATA HERE ##
 
             ##
 
             DH.log_data("eps", self.log_data)
             print(
-                f"[{self.ID}][{self.name}] Battery SOC: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, \
+                f"[{self.ID}][{self.name}] Battery Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, \
                                             Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA"
             )
