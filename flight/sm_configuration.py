@@ -1,3 +1,5 @@
+from core.states import STATES
+from tasks.command import Task as command
 from tasks.comms import Task as comms
 from tasks.eps import Task as eps
 from tasks.imu import Task as imu
@@ -6,62 +8,78 @@ from tasks.sun import Task as sun
 from tasks.thermal import Task as thermal
 from tasks.timing import Task as timing
 
-"""
-TODO Copy the state descriptions here
-
-
-"""
-
-TASK_REGISTRY = {"TIMING": timing, "EPS": eps, "OBDH": obdh, "IMU": imu, "SUN": sun, "COMMS": comms, "THERMAL": thermal}
-
-TASK_MAPPING_ID = {"TIMING": 0x00, "EPS": 0x01, "OBDH": 0x02, "IMU": 0x03, "SUN": 0x11, "COMMS": 0x12, "THERMAL": 0x0A}
+TASK_REGISTRY = {
+    "COMMAND": command,
+    "TIMING": timing,
+    "EPS": eps,
+    "OBDH": obdh,
+    "IMU": imu,
+    "SUN": sun,
+    "COMMS": comms,
+    "THERMAL": thermal,
+}
+TASK_MAPPING_ID = {
+    "COMMAND": 0x00,
+    "TIMING": 0x00,
+    "EPS": 0x01,
+    "OBDH": 0x02,
+    "IMU": 0x03,
+    "SUN": 0x11,
+    "COMMS": 0x12,
+    "THERMAL": 0x0A,
+}
 
 
 SM_CONFIGURATION = {
-    "STARTUP": {
+    STATES.STARTUP: {
         "Tasks": {
+            "COMMAND": {"Frequency": 1, "Priority": 1},
             "TIMING": {"Frequency": 1, "Priority": 2},
             "OBDH": {"Frequency": 1, "Priority": 3},
             "EPS": {"Frequency": 1, "Priority": 1},
         },
-        "MovesTo": ["NOMINAL"],
+        "MovesTo": [STATES.NOMINAL],
     },
-    "NOMINAL": {
+    STATES.NOMINAL: {
         "Tasks": {
+            "COMMAND": {"Frequency": 1, "Priority": 1},
             "TIMING": {"Frequency": 1, "Priority": 2},
             "EPS": {"Frequency": 1, "Priority": 1},
-            "OBDH": {"Frequency": 1, "Priority": 2},
+            "OBDH": {"Frequency": 0.2, "Priority": 2},
             "IMU": {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
             "SUN": {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
             "COMMS": {"Frequency": 0.1, "Priority": 5, "ScheduleLater": True},
             "THERMAL": {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
         },
-        "MovesTo": ["DOWNLINK", "LOW_POWER", "SAFE"],
+        "MovesTo": [STATES.DOWNLINK, STATES.LOW_POWER, STATES.SAFE],
     },
-    "DOWNLINK": {
+    STATES.DOWNLINK: {
         "Tasks": {
+            "COMMAND": {"Frequency": 1, "Priority": 1},
             "EPS": {"Frequency": 1, "Priority": 1},
-            "OBDH": {"Frequency": 1, "Priority": 2},
+            "OBDH": {"Frequency": 0.2, "Priority": 2},
             "IMU": {"Frequency": 1, "Priority": 3},
             "COMMS": {"Frequency": 0.1, "Priority": 5},
             "THERMAL": {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
         },
-        "MovesTo": ["NOMINAL"],
+        "MovesTo": [STATES.NOMINAL],
     },
-    "LOW_POWER": {
+    STATES.LOW_POWER: {
         "Tasks": {
+            "COMMAND": {"Frequency": 1, "Priority": 1},
             "EPS": {"Frequency": 1, "Priority": 1},
-            "OBDH": {"Frequency": 1, "Priority": 2},
+            "OBDH": {"Frequency": 0.2, "Priority": 2},
             "IMU": {"Frequency": 2, "Priority": 3},
         },
-        "MovesTo": ["NOMINAL"],
+        "MovesTo": [STATES.NOMINAL, STATES.SAFE],
     },
-    "SAFE": {
+    STATES.SAFE: {
         "Tasks": {
+            "COMMAND": {"Frequency": 1, "Priority": 1},
             "EPS": {"Frequency": 1, "Priority": 1},
-            "OBDH": {"Frequency": 1, "Priority": 2},
+            "OBDH": {"Frequency": 0.2, "Priority": 2},
             "IMU": {"Frequency": 2, "Priority": 3},
         },
-        "MovesTo": ["NOMINAL"],
+        "MovesTo": [STATES.NOMINAL],
     },
 }

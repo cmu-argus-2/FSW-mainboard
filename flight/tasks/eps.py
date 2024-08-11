@@ -6,6 +6,7 @@ from apps.telemetry.constants import EPS_IDX
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
+from core.states import STATES
 from hal.configuration import SATELLITE
 
 
@@ -67,10 +68,10 @@ class Task(TemplateTask):
 
     async def main_task(self):
 
-        if SM.current_state == "STARTUP":
+        if SM.current_state == STATES.STARTUP:
             pass
 
-        elif SM.current_state == "NOMINAL":
+        elif SM.current_state == STATES.NOMINAL:
 
             if not DH.data_process_exists("eps"):
                 DH.register_data_process("eps", self.data_keys, self.data_format, True, line_limit=100)

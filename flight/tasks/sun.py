@@ -7,6 +7,7 @@ from apps.telemetry.constants import SUN_IDX
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
+from core.states import STATES
 from ulab import numpy as np
 
 
@@ -29,7 +30,7 @@ class Task(TemplateTask):
 
     async def main_task(self):
 
-        if SM.current_state == "NOMINAL":
+        if SM.current_state == STATES.NOMINAL:
 
             if not DH.data_process_exists("sun"):
                 DH.register_data_process("sun", self.data_keys, "fbfffb", True, line_limit=100)

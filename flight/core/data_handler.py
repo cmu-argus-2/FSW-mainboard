@@ -478,6 +478,13 @@ class DataHandler:
     # Keep track of all file processes
     data_process_registry = dict()
 
+    _SD_SCANNED = False
+    _SD_USAGE = 0
+
+    @property
+    def SD_scanned(self):
+        return self._SD_SCANNED
+
     @classmethod
     def scan_SD_card(cls) -> None:
         """
@@ -517,8 +524,8 @@ class DataHandler:
                             persistent=True,
                             line_limit=line_limit,
                         )
-                    print("HERE6")
 
+        cls._SD_SCANNED = True
         # print("SD Card Scanning complete - found ", cls.data_process_registry.keys())
 
     @classmethod
@@ -848,7 +855,15 @@ class DataHandler:
             else:
                 total_size += os.stat(file_path)[6]
             pass
-        return total_size
+        return int(total_size)
+
+    @classmethod
+    def update_SD_usage(cls) -> None:
+        cls._SD_USAGE = cls.compute_total_size_files()
+
+    @classmethod
+    def SD_usage(cls) -> int:
+        return cls._SD_USAGE
 
     # DEBUG ONLY
     @classmethod

@@ -109,6 +109,5 @@ class StateManager:
 
     def print_current_tasks(self):
         """Prints all current tasks being executed"""
-        print("Current tasks:")
         for task_name in self.__scheduled_tasks:
             print(task_name)

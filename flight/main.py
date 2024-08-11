@@ -2,6 +2,7 @@ import gc
 import sys
 
 from core import state_manager
+from core.states import STATES
 from hal.configuration import SATELLITE
 from sm_configuration import SM_CONFIGURATION, TASK_REGISTRY
 
@@ -37,7 +38,7 @@ print(str(gc.mem_free()) + " bytes free")
 
 try:
     # Run forever
-    state_manager.start("STARTUP", SM_CONFIGURATION, TASK_REGISTRY)
+    state_manager.start(STATES.STARTUP, SM_CONFIGURATION, TASK_REGISTRY)
 
 except Exception as e:
     print("ERROR:", e)

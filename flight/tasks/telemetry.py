@@ -2,6 +2,7 @@
 
 from core import TemplateTask
 from core import state_manager as SM
+from core.states import STATES
 
 
 class Task(TemplateTask):
@@ -11,10 +12,10 @@ class Task(TemplateTask):
 
     async def main_task(self):
 
-        if SM.current_state == "STARTUP":
+        if SM.current_state == STATES.STARTUP:
             pass
 
-        elif SM.current_state == "NOMINAL":
+        elif SM.current_state == STATES.NOMINAL:
             pass
 
         print(f"[{self.ID}][{self.name}] ...")

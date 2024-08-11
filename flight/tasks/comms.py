@@ -4,6 +4,7 @@ from apps.comms.radio_helpers import SATELLITE_RADIO
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
+from core.states import STATES
 from hal.configuration import SATELLITE
 
 
@@ -18,7 +19,7 @@ class Task(TemplateTask):
 
     async def main_task(self):
         # Only transmit if SAT in NOMINAL state
-        if SM.current_state == "NOMINAL":
+        if SM.current_state == STATES.NOMINAL:
             # In NOMINAL state, can transmit
             self.flag_ground_station_pass = True
 

@@ -6,7 +6,7 @@ from micropython import const
 class CDH_IDX:
     TIME = const(0)
     SC_STATE = const(1)
-    SD_AVAILABLE_STORAGE = const(2)
+    SD_USAGE = const(2)
     CURRENT_RAM_USAGE = const(3)
     REBOOT_COUNT = const(4)
     WATCHDOG_TIMER = const(5)
