@@ -19,6 +19,9 @@ class IMU(Driver):
     def gyro(self):
         return self.__gyro if self.__enable else None
 
+    def temperature(self):
+        return self.__temp if self.__enable else None
+
     def temp(self):
         return self.__temp if self.__enable else None
 

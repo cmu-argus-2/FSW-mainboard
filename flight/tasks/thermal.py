@@ -6,6 +6,8 @@ import microcontroller
 from apps.telemetry.constants import THERMAL_IDX
 from core import TemplateTask
 from core import state_manager as SM
+from core.data_handler import DataHandler as DH
+from hal.configuration import SATELLITE
 
 
 class Task(TemplateTask):
@@ -22,17 +24,17 @@ class Task(TemplateTask):
 
         if SM.current_state == "NOMINAL":
 
-            if not self.DH.data_process_exists("THERMAL"):
-                self.DH.register_data_process("THERMAL", self.data_keys, self.data_format, True, line_limit=100)
+            if not DH.data_process_exists("thermal"):
+                DH.register_data_process("thermal", self.data_keys, self.data_format, True, line_limit=100)
 
             self.log_data[THERMAL_IDX.TIME] = time.time()
-            self.log_data[THERMAL_IDX.IMU_TEMPERATURE] = int(self.IMU.temperature() * 100)
+            self.log_data[THERMAL_IDX.IMU_TEMPERATURE] = int(SATELLITE.IMU.temperature() * 100)
             self.log_data[THERMAL_IDX.CPU_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
             self.log_data[THERMAL_IDX.BATTERY_PACK_TEMPERATURE] = 0  # Placeholder
 
-            self.log_data("THERMAL", self.log_data)
+            DH.log_data("thermal", self.log_data)
 
         print(
-            f"[{self.ID}][{self.name}] CPU Temp: {self.log_data[THERMAL_IDX.CPU_TEMPERATURE]/100}° \
-                                        IMU Temp: {self.log_data[THERMAL_IDX.IMU_TEMPERATURE]/100}°"
+            f"[{self.ID}][{self.name}] CPU: {self.log_data[THERMAL_IDX.CPU_TEMPERATURE]/100}°, \
+            IMU: {self.log_data[THERMAL_IDX.IMU_TEMPERATURE]/100}°"
         )
