@@ -62,7 +62,7 @@ class Task(TemplateTask):
     ]
 
     log_data = [0] * 42
-    data_format = "f" + "h" * 41  # 41 signed short integers (2 bytes each) - use mV for voltage and mA for current
+    data_format = "L" + "h" * 41  # 41 signed short integers (2 bytes each) - use mV for voltage and mA for current
     batt_voltage = 0
     batt_current = 0
 
@@ -80,7 +80,7 @@ class Task(TemplateTask):
 
             (self.batt_voltage, self.batt_current) = SATELLITE.BATTERY_POWER_MONITOR.read_voltage_current()
 
-            self.log_data[EPS_IDX.TIME] = time.time()
+            self.log_data[EPS_IDX.TIME] = int(time.time())
             self.log_data[EPS_IDX.MAINBOARD_VOLTAGE] = int(self.batt_voltage * 1000)  # mV - max 8.4V
             self.log_data[EPS_IDX.MAINBOARD_CURRENT] = int(self.batt_current * 1000)  # mA
             ## ADDITIONAL EPS DATA HERE ##

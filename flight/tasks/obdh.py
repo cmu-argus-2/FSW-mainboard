@@ -1,5 +1,7 @@
 # Onboard Data Handling (OBDH) Task
 
+import gc
+
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
@@ -21,5 +23,6 @@ class Task(TemplateTask):
         elif SM.current_state == STATES.NOMINAL:
             DH.update_SD_usage()
 
+        gc.collect()
         print(f"[{self.ID}][{self.name}] Data processes: {DH.get_all_data_processes_name()}")
         print(f"[{self.ID}][{self.name}] Stored files: {DH.SD_usage()} bytes.")

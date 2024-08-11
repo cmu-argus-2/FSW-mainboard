@@ -33,7 +33,7 @@ class Task(TemplateTask):
         if SM.current_state == STATES.NOMINAL:
 
             if not DH.data_process_exists("sun"):
-                DH.register_data_process("sun", self.data_keys, "fbfffb", True, line_limit=100)
+                DH.register_data_process("sun", self.data_keys, "Lbfffb", True, line_limit=100)
 
             # Access Sun Sensor Readings - Satellite must return the array directly
             lux_readings = read_light_sensors()
@@ -44,7 +44,7 @@ class Task(TemplateTask):
                 threshold_lux_illumination=self.THRESHOLD_ILLUMINATION_LUX,
             )
 
-            self.log_data[SUN_IDX.TIME] = time.time()
+            self.log_data[SUN_IDX.TIME] = int(time.time())
             self.log_data[SUN_IDX.STATUS] = self.status
             self.log_data[SUN_IDX.X] = self.sun_vector[0]
             self.log_data[SUN_IDX.Y] = self.sun_vector[1]

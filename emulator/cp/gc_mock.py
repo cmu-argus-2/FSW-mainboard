@@ -12,4 +12,11 @@ def mem_free():
     """
     just returns a constant value for now
     """
-    return 1024 * 30
+    return 136000
+
+
+def mem_alloc():
+    """
+    just returns a constant value for now
+    """
+    return 20000

@@ -11,9 +11,6 @@ class CDH_IDX:
     REBOOT_COUNT = const(4)
     WATCHDOG_TIMER = const(5)
     HAL_BITFLAGS = const(6)
-    COMMUNICATION_STATUS = const(7)
-    ADCS_STATUS = const(8)
-    EPS_STATUS = const(9)
 
 
 class EPS_IDX:
@@ -151,3 +148,7 @@ class THERMAL_IDX:
     IMU_TEMPERATURE = const(1)
     CPU_TEMPERATURE = const(2)
     BATTERY_PACK_TEMPERATURE = const(3)
+
+
+class PAYLOAD_IDX:
+    pass

@@ -2,6 +2,7 @@
 # This task handles spacecraft state, board status, and state transitions.
 # It also executes commands received from the ground station (TBD)
 
+import gc
 import time
 
 from apps.telemetry.constants import CDH_IDX
@@ -18,21 +19,13 @@ class Task(TemplateTask):
     ID = 0x01
 
     # To be removed - kept until proper logging is implemented
-    data_keys = [
-        "TIME",
-        "SC_STATE",
-        "SD_USAGE",
-        "CURRENT_RAM_USAGE",
-        "REBOOT_COUNT",
-        "WATCHDOG_TIMER",
-        "HAL_BITFLAGS",
-        "COMMUNICATION_STATUS",
-        "ADCS_STATUS",
-        "EPS_STATUS",
-    ]
+    data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "REBOOT_COUNT", "WATCHDOG_TIMER", "HAL_BITFLAGS"]
 
     log_data = [0] * len(data_keys)
-    data_format = "fbQIHHbbbb"
+    data_format = "LbLbbbb"
+
+    gc.collect()
+    total_memory = gc.mem_alloc() + gc.mem_free()
 
     async def main_task(self):
 
@@ -60,16 +53,13 @@ class Task(TemplateTask):
             if not DH.data_process_exists("cdh"):
                 DH.register_data_process("cdh", self.data_keys, self.data_format, True, line_limit=100)
 
-            self.log_data[CDH_IDX.TIME] = time.time()
+            self.log_data[CDH_IDX.TIME] = int(time.time())
             self.log_data[CDH_IDX.SC_STATE] = SM.current_state
-            self.log_data[CDH_IDX.SD_USAGE] = DH.SD_usage()  # gets updated in the OBDH task
-            self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = 0
+            self.log_data[CDH_IDX.SD_USAGE] = int(DH.SD_usage() / 1000)  # kb - gets updated in the OBDH task
+            self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = int(gc.mem_alloc() / self.total_memory * 100)
             self.log_data[CDH_IDX.REBOOT_COUNT] = 0
             self.log_data[CDH_IDX.WATCHDOG_TIMER] = 0
             self.log_data[CDH_IDX.HAL_BITFLAGS] = 0
-            self.log_data[CDH_IDX.COMMUNICATION_STATUS] = 0
-            self.log_data[CDH_IDX.ADCS_STATUS] = 0
-            self.log_data[CDH_IDX.EPS_STATUS] = 0
 
             DH.log_data("cdh", self.log_data)
 
@@ -83,3 +73,4 @@ class Task(TemplateTask):
             # periodic system checks (HW) - better another task for this
 
         print(f"[{self.ID}][{self.name}] GLOBAL STATE: {STR_STATES[SM.current_state]}.")
+        print(f"[{self.ID}][{self.name}] RAM USAGE: {self.log_data[CDH_IDX.CURRENT_RAM_USAGE]}%")

@@ -35,14 +35,14 @@ class Task(TemplateTask):
         if SM.current_state == STATES.NOMINAL:
 
             if not DH.data_process_exists("imu"):
-                DH.register_data_process("imu", self.data_keys, "ffffffffff", True, line_limit=40)
+                DH.register_data_process("imu", self.data_keys, "Lfffffffff", True, line_limit=40)
 
             accel = SATELLITE.IMU.accel()
             mag = SATELLITE.IMU.mag()
             gyro = SATELLITE.IMU.gyro()
 
             # Replace data in the pre-allocated list
-            self.log_data[IMU_IDX.TIME] = time.time()
+            self.log_data[IMU_IDX.TIME] = int(time.time())
             self.log_data[IMU_IDX.ACCEL_X] = accel[0]
             self.log_data[IMU_IDX.ACCEL_Y] = accel[1]
             self.log_data[IMU_IDX.ACCEL_Z] = accel[2]

@@ -47,7 +47,7 @@ class CubeSat:
 
         # Debugging
         self._neopixel = None
-        self._time_ref_boot = time.time()
+        self._time_ref_boot = int(time.time())
 
     # ABSTRACT METHOD #
     def boot_sequence(self) -> List[int]:

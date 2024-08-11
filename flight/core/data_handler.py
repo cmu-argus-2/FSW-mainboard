@@ -235,7 +235,7 @@ class DataProcess:
             str: The new filename.
         """
         # TODO timestamp must be obtained through the REFERENCE TIME until the time module is done
-        return self.dir_path + self.tag_name + "_" + str(time.time()) + ".bin"
+        return self.dir_path + self.tag_name + "_" + str(int(time.time())) + ".bin"
 
     def open(self) -> None:
         """
