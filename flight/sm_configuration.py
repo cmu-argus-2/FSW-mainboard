@@ -1,10 +1,11 @@
 from tasks.eps import Task as eps
 from tasks.imu import Task as imu
 from tasks.obdh import Task as obdh
-from tasks.radio_comms import Task as comms
 from tasks.sun import Task as sun
 from tasks.thermal import Task as thermal
 from tasks.timing import Task as timing
+
+from flight.tasks.comms import Task as comms
 
 """
 TODO Copy the state descriptions here

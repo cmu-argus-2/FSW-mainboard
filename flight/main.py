@@ -9,7 +9,6 @@ for path in ["/hal", "/apps", "/core"]:
     if path not in sys.path:
         sys.path.append(path)
 
-
 gc.collect()
 print(str(gc.mem_free()) + " bytes free")
 
@@ -38,12 +37,7 @@ print(str(gc.mem_free()) + " bytes free")
 
 try:
     # Run forever
-    # print(os.listdir())
-    # print(sys.path)
-
     state_manager.start("STARTUP", SM_CONFIGURATION, TASK_REGISTRY)
-
-    pass
 
 except Exception as e:
     print("ERROR:", e)
