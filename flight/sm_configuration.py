@@ -3,6 +3,7 @@ from tasks.imu import Task as imu
 from tasks.obdh import Task as obdh
 from tasks.radio_comms import Task as comms
 from tasks.sun import Task as sun
+from tasks.thermal import Task as thermal
 from tasks.timing import Task as timing
 
 """
@@ -11,9 +12,9 @@ TODO Copy the state descriptions here
 
 """
 
-TASK_REGISTRY = {"TIMING": timing, "EPS": eps, "OBDH": obdh, "IMU": imu, "SUN": sun, "COMMS": comms}
+TASK_REGISTRY = {"TIMING": timing, "EPS": eps, "OBDH": obdh, "IMU": imu, "SUN": sun, "COMMS": comms, "THERMAL": thermal}
 
-TASK_MAPPING_ID = {"TIMING": 0x00, "EPS": 0x01, "OBDH": 0x02, "IMU": 0x03, "SUN": 0x11, "COMMS": 0x12}
+TASK_MAPPING_ID = {"TIMING": 0x00, "EPS": 0x01, "OBDH": 0x02, "IMU": 0x03, "SUN": 0x11, "COMMS": 0x12, "THERMAL": 0x0A}
 
 
 SM_CONFIGURATION = {
@@ -33,6 +34,7 @@ SM_CONFIGURATION = {
             "IMU": {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
             "SUN": {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
             "COMMS": {"Frequency": 0.1, "Priority": 5, "ScheduleLater": True},
+            "THERMAL": {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
         },
         "MovesTo": ["DOWNLINK", "LOW_POWER", "SAFE"],
     },
@@ -42,6 +44,7 @@ SM_CONFIGURATION = {
             "OBDH": {"Frequency": 1, "Priority": 2},
             "IMU": {"Frequency": 1, "Priority": 3},
             "COMMS": {"Frequency": 0.1, "Priority": 5},
+            "THERMAL": {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
         },
         "MovesTo": ["NOMINAL"],
     },
