@@ -1,3 +1,5 @@
+import time
+
 from hal.drivers.middleware.errors import Errors
 from hal.drivers.middleware.generic_driver import Driver
 
@@ -45,6 +47,7 @@ class CubeSat:
 
         # Debugging
         self.__neopixel = None
+        self._time_ref_boot = time.time()
 
     ## ABSTRACT METHOD ##
     def boot_sequence(self) -> list[int]:
@@ -245,3 +248,10 @@ class CubeSat:
         :return: object or None
         """
         return self.__payload_uart
+
+    @property
+    def BOOTTIME(self):
+        """BOOTTIME: Returns the reference count since the board booted
+        :return: object or None
+        """
+        return self._time_ref_boot

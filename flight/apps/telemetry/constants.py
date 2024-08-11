@@ -3,6 +3,19 @@
 from micropython import const
 
 
+class CDH_IDX:
+    TIME = const(0)
+    SC_STATE = const(1)
+    SD_AVAILABLE_STORAGE = const(2)
+    CURRENT_RAM_USAGE = const(3)
+    REBOOT_COUNT = const(4)
+    WATCHDOG_TIMER = const(5)
+    HAL_BITFLAGS = const(6)
+    COMMUNICATION_STATUS = const(7)
+    ADCS_STATUS = const(8)
+    EPS_STATUS = const(9)
+
+
 class EPS_IDX:
     TIME = const(0)
     MAINBOARD_VOLTAGE = const(1)
@@ -48,22 +61,9 @@ class EPS_IDX:
     ZM_SOLAR_CHARGE_CURRENT = const(41)
 
 
-class CDH_IDX:
-    TIME = const(0)
-    SC_STATE = const(1)
-    SD_AVAILABLE_STORAGE = const(2)
-    CURRENT_RAM_USAGE = const(3)
-    REBOOT_COUNT = const(4)
-    WATCHDOG_TIMER = const(5)
-    HAL_BITFLAGS = const(6)
-    COMMUNICATION_STATUS = const(7)
-    ADCS_STATUS = const(8)
-    EPS_STATUS = const(9)
-
-
 class ADCS_IDX:
     TIME = const(0)
-    ADCS_STATUS = const(1)
+    ADCS_STATE = const(1)
     GYRO_X = const(2)
     GYRO_Y = const(3)
     GYRO_Z = const(4)

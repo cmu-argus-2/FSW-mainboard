@@ -1,3 +1,4 @@
+import time
 from typing import List, Optional
 
 from hal.drivers.diagnostics.diagnostics import Diagnostics
@@ -46,6 +47,7 @@ class CubeSat:
 
         # Debugging
         self._neopixel = None
+        self._time_ref_boot = time.time()
 
     # ABSTRACT METHOD #
     def boot_sequence(self) -> List[int]:
@@ -219,3 +221,10 @@ class CubeSat:
         :return: object or None
         """
         return self._payload_uart
+
+    @property
+    def BOOTTIME(self):
+        """BOOTTIME: Returns the reference count since the board booted
+        :return: object or None
+        """
+        return self._time_ref_boot

@@ -24,7 +24,7 @@ class Task(TemplateTask):
 
     data_keys = [
         "time",
-        "ADCS_STATUS",
+        "ADCS_STATE",
         "GYRO_X",
         "GYRO_Y",
         "GYRO_Z",

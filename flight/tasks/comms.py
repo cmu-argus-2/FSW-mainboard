@@ -1,19 +1,9 @@
-"""
-radio_comms.py
-================
-Comms FSW Task
-"""
+# Communication task which uses the radio to transmit and receive messages.
 
-# Argus-1 Radio Libs
 from apps.comms.radio_helpers import SATELLITE_RADIO
-
-# Template task from taskio
-# State manager and OBDH
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
-
-# PyCubed Board Lib
 from hal.configuration import SATELLITE
 
 
