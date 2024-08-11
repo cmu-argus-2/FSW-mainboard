@@ -76,5 +76,10 @@ class Task(TemplateTask):
             # Command processing
             # TODO
 
+            # Burn wires
+
+            # Handle middleware flags / HW states
+
+            # periodic system checks (HW) - better another task for this
+
         print(f"[{self.ID}][{self.name}] GLOBAL STATE: {STR_STATES[SM.current_state]}.")
-        print(f"[{self.ID}][{self.name}] Stored files: {self.log_data[CDH_IDX.SD_USAGE]} bytes.")

@@ -13,8 +13,8 @@ class TemplateTask:
     ID = 0xFF
     name = "TEMPLATE TASK"
 
-    def __init__(self):
-        pass
+    def __init__(self, id):
+        self.ID = id
 
     def debug(self, msg):
         """

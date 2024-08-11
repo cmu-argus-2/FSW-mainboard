@@ -16,16 +16,13 @@ print(str(gc.mem_free()) + " bytes free")
 print("Booting ARGUS-1...")
 boot_errors = SATELLITE.boot_sequence()
 print("ARGUS-1 booted.")
-print()
-
 print("Boot Errors: ", boot_errors)
-print()
 
 """print("Running system diagnostics...")
 errors = SATELLITE.run_system_diagnostics()
 print("System diagnostics complete")
 print("Errors:", errors)
-print()"""
+"""
 
 """
 from apps.data_handler import DataHandler as DH
