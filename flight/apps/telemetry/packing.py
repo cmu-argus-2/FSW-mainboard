@@ -34,8 +34,9 @@ class TelemetryPacker:
 
     PACKET = bytearray(256)  # pre-allocated buffer for packing
     PACKET[0] = 0x01  # message ID
-    PACKET[1] = 0x01  # sequence count
-    PACKET[2] = 252  # packet length
+    PACKET[1] = 0x00  # sequence count
+    PACKET[2] = 0x01  # sequence count
+    PACKET[3] = 252  # packet length
 
     @classmethod
     def pack_telemetry(cls):
@@ -64,12 +65,37 @@ class TelemetryPacker:
         cls.PACKET[13] = cdh_data[CDH_IDX.CURRENT_RAM_USAGE] & 0xFF
 
         # Reboot count
-        cls.PACKET[8] = cdh_data[CDH_IDX.REBOOT_COUNT] & 0xFF
+        cls.PACKET[14] = cdh_data[CDH_IDX.REBOOT_COUNT] & 0xFF
 
         # Watchdog Timer
-        cls.PACKET[9] = cdh_data[CDH_IDX.WATCHDOG_TIMER] & 0xFF
+        cls.PACKET[15] = cdh_data[CDH_IDX.WATCHDOG_TIMER] & 0xFF
 
         # HAL Bitflags
-        cls.PACKET[10] = cdh_data[CDH_IDX.HAL_BITFLAGS] & 0xFF
+        cls.PACKET[16] = cdh_data[CDH_IDX.HAL_BITFLAGS] & 0xFF
+
+        #### EPS fields
+        eps_data = DH.get_latest_data("eps")
+
+        # Mainboard voltage
+        cls.PACKET[17] = (eps_data[EPS_IDX.MAINBOARD_VOLTAGE] >> 8) & 0xFF
+        cls.PACKET[18] = eps_data[EPS_IDX.MAINBOARD_VOLTAGE] & 0xFF
+
+        # Mainboard current
+        cls.PACKET[19] = (eps_data[EPS_IDX.MAINBOARD_CURRENT] >> 8) & 0xFF
+        cls.PACKET[20] = eps_data[EPS_IDX.MAINBOARD_CURRENT] & 0xFF
+
+        # Battery pack SOC
+
+        ## ADCS fields
+        # TODO
+
+        ## GPS fields
+        # TODO
+
+        ## Thermal fields
+        # TODO
+
+        ## Payload fields
+        # TODO
 
         cls.PACKET = bytes(cls.PACKET)
