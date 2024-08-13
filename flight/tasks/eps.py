@@ -62,7 +62,7 @@ class Task(TemplateTask):
     ]
 
     log_data = [0] * 42
-    data_format = "Lhhb" + "h" * 36  # - use mV for voltage and mA for current  (h = short integer 2 bytes)
+    data_format = "Lhhb" + "h" * 38  # - use mV for voltage and mA for current  (h = short integer 2 bytes)
     batt_voltage = 0
     batt_current = 0
 

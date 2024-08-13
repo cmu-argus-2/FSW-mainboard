@@ -1,5 +1,6 @@
 from core.states import STATES
 from micropython import const
+from tasks.adcs import Task as adcs
 from tasks.command import Task as command
 from tasks.comms import Task as comms
 from tasks.eps import Task as eps
@@ -15,19 +16,21 @@ class TASK:
     TIMING = const(0x01)
     EPS = const(0x02)
     OBDH = const(0x03)
-    IMU = const(0x04)
-    SUN = const(0x05)
-    COMMS = const(0x06)
-    THERMAL = const(0x07)
+    ADCS = const(0x04)
+    IMU = const(0x05)
+    SUN = const(0x06)
+    COMMS = const(0x07)
+    THERMAL = const(0x08)
 
 
-STR_TASKS = ["COMMAND", "TIMING", "EPS", "OBDH", "IMU", "SUN", "COMMS", "THERMAL"]
+STR_TASKS = ["COMMAND", "TIMING", "EPS", "OBDH", "ADCS", "IMU", "SUN", "COMMS", "THERMAL"]
 
 TASK_REGISTRY = {
     TASK.COMMAND: command,
     TASK.TIMING: timing,
     TASK.EPS: eps,
     TASK.OBDH: obdh,
+    TASK.ADCS: adcs,
     TASK.IMU: imu,
     TASK.SUN: sun,
     TASK.COMMS: comms,
@@ -51,7 +54,8 @@ SM_CONFIGURATION = {
             TASK.TIMING: {"Frequency": 1, "Priority": 2},
             TASK.EPS: {"Frequency": 1, "Priority": 1},
             TASK.OBDH: {"Frequency": 0.2, "Priority": 2},
-            TASK.IMU: {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
+            TASK.IMU: {"Frequency": 2, "Priority": 5},
+            TASK.ADCS: {"Frequency": 1, "Priority": 2, "ScheduleLater": True},
             TASK.SUN: {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
             TASK.COMMS: {"Frequency": 0.1, "Priority": 5, "ScheduleLater": True},
             TASK.THERMAL: {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
@@ -62,10 +66,11 @@ SM_CONFIGURATION = {
         "Tasks": {
             TASK.COMMAND: {"Frequency": 1, "Priority": 1},
             TASK.TIMING: {"Frequency": 1, "Priority": 2},
+            TASK.COMMS: {"Frequency": 0.1, "Priority": 1},
             TASK.EPS: {"Frequency": 1, "Priority": 1},
             TASK.OBDH: {"Frequency": 0.2, "Priority": 2},
             TASK.IMU: {"Frequency": 1, "Priority": 3},
-            TASK.COMMS: {"Frequency": 0.1, "Priority": 5},
+            TASK.ADCS: {"Frequency": 1, "Priority": 2, "ScheduleLater": True},
             TASK.THERMAL: {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
         },
         "MovesTo": [STATES.NOMINAL],
@@ -77,6 +82,7 @@ SM_CONFIGURATION = {
             TASK.EPS: {"Frequency": 1, "Priority": 1},
             TASK.OBDH: {"Frequency": 0.2, "Priority": 2},
             TASK.IMU: {"Frequency": 2, "Priority": 3},
+            TASK.ADCS: {"Frequency": 1, "Priority": 2, "ScheduleLater": True},
         },
         "MovesTo": [STATES.NOMINAL, STATES.SAFE],
     },
@@ -87,6 +93,7 @@ SM_CONFIGURATION = {
             TASK.EPS: {"Frequency": 1, "Priority": 1},
             TASK.OBDH: {"Frequency": 0.2, "Priority": 2},
             TASK.IMU: {"Frequency": 2, "Priority": 3},
+            TASK.ADCS: {"Frequency": 1, "Priority": 2, "ScheduleLater": True},
         },
         "MovesTo": [STATES.NOMINAL],
     },
