@@ -20,8 +20,8 @@ class Task(TemplateTask):
         "TIME",
         "MAINBOARD_VOLTAGE",
         "MAINBOARD_CURRENT",
-        "BATTERY_PACK_SOC",
-        "BATTERY_PACK_REMAINING_CAPACITY_PERC",
+        "BATTERY_PACK_REPORTED_SOC",
+        "BATTERY_PACK_REPORTED_CAPACITY",
         "BATTERY_PACK_CURRENT",
         "BATTERY_PACK_VOLTAGE",
         "BATTERY_PACK_MIDPOINT_VOLTAGE",
@@ -62,7 +62,7 @@ class Task(TemplateTask):
     ]
 
     log_data = [0] * 42
-    data_format = "L" + "h" * 41  # 41 signed short integers (2 bytes each) - use mV for voltage and mA for current
+    data_format = "Lhhb" + "h" * 36  # - use mV for voltage and mA for current  (h = short integer 2 bytes)
     batt_voltage = 0
     batt_current = 0
 
