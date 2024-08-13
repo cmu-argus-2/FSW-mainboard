@@ -62,6 +62,9 @@ class Task(TemplateTask):
         "STAR_TRACKER_ATTITUDE_QZ",
     ]
 
+    log_data = [0] * 36
+    data_format = "LB" + 9 * "f" + "b" + 9 * "H" + 6 * "b" + 4 * "f" + "b" + 4 * "f"
+
     # Sun Acquisition
     THRESHOLD_ILLUMINATION_LUX = 3000
     sun_status = SUN_VECTOR_STATUS.NO_READINGS
