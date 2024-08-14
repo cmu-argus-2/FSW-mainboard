@@ -3,6 +3,7 @@
 import time
 
 from apps.adcs.ad import TRIAD
+from apps.adcs.frames import ecef_to_eci
 from apps.adcs.igrf import igrf_eci
 from apps.adcs.sun import (
     SUN_VECTOR_STATUS,
@@ -11,7 +12,7 @@ from apps.adcs.sun import (
     in_eclipse,
     read_light_sensors,
 )
-from apps.telemetry.constants import ADCS_IDX
+from apps.telemetry.constants import ADCS_IDX, GPS_IDX
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
@@ -60,6 +61,7 @@ class Task(TemplateTask):
         "STAR_TRACKER_ATTITUDE_QY",
         "STAR_TRACKER_ATTITUDE_QZ",
     ]
+    time = int(time.time())
 
     log_data = [0] * 37
     data_format = "LB" + 6 * "f" + "B" + 3 * "f" + "B" + 9 * "H" + 6 * "B" + 4 * "f" + "B" + 4 * "f"
@@ -74,6 +76,7 @@ class Task(TemplateTask):
     # Magnetic Control
 
     # Attitude Determination
+    coarse_attitude = np.zeros(4)
 
     async def main_task(self):
 
@@ -82,14 +85,15 @@ class Task(TemplateTask):
             if not DH.data_process_exists("adcs"):
                 DH.register_data_process("adcs", self.data_keys, self.data_format, True, line_limit=100)
 
+            self.time = int(time.time())
+
             # Log IMU data
-            self.log_data[ADCS_IDX.TIME] = int(time.time())
-            self.log_data[ADCS_IDX.MAG_X] = DH.get_latest_data("imu")[ADCS_IDX.MAG_X]
-            self.log_data[ADCS_IDX.MAG_Y] = DH.get_latest_data("imu")[ADCS_IDX.MAG_Y]
-            self.log_data[ADCS_IDX.MAG_Z] = DH.get_latest_data("imu")[ADCS_IDX.MAG_Z]
-            self.log_data[ADCS_IDX.GYRO_X] = DH.get_latest_data("imu")[ADCS_IDX.GYRO_X]
-            self.log_data[ADCS_IDX.GYRO_Y] = DH.get_latest_data("imu")[ADCS_IDX.GYRO_Y]
-            self.log_data[ADCS_IDX.GYRO_Z] = DH.get_latest_data("imu")[ADCS_IDX.GYRO_Z]
+            self.log_data[ADCS_IDX.TIME] = self.time
+            imu_mag_data = DH.get_latest_data("imu")[ADCS_IDX.MAG_X : ADCS_IDX.MAG_Z + 1]
+            self.log_data[ADCS_IDX.MAG_X : ADCS_IDX.MAG_Z + 1] = imu_mag_data
+            self.log_data[ADCS_IDX.GYRO_X : ADCS_IDX.GYRO_Z + 1] = DH.get_latest_data("imu")[
+                ADCS_IDX.GYRO_X : ADCS_IDX.GYRO_Z + 1
+            ]
 
             ## Sun Acquisition
 
@@ -102,9 +106,7 @@ class Task(TemplateTask):
             )
 
             self.log_data[ADCS_IDX.SUN_STATUS] = self.sun_status
-            self.log_data[ADCS_IDX.SUN_VEC_X] = self.sun_vector[0]
-            self.log_data[ADCS_IDX.SUN_VEC_Y] = self.sun_vector[1]
-            self.log_data[ADCS_IDX.SUN_VEC_Z] = self.sun_vector[2]
+            self.log_data[ADCS_IDX.SUN_VEC_X : ADCS_IDX.SUN_VEC_Z + 1] = self.sun_vector
             self.log_data[ADCS_IDX.ECLIPSE] = self.eclipse_state
             # Log dlux (decilux) instead of lux for TM space efficiency
             self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = int(lux_readings[0] / 10)
@@ -120,8 +122,20 @@ class Task(TemplateTask):
 
             ## Attitude Determination
 
-            # TODO
+            # TODO GPS flag for valid position
+            # Might need an attitude status flag
+            R_ecef_to_eci = ecef_to_eci(self.time)
+            gps_pos_eci = R_ecef_to_eci @ (
+                np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]) / 100
+            )
+            mag_eci = igrf_eci(self.time, gps_pos_eci)
+            sun_eci = approx_sun_position_ECI(self.time)
+
+            # TRIAD
+            self.coarse_attitude = TRIAD(sun_eci, mag_eci, self.sun_vector, imu_mag_data)
+            self.log_data[ADCS_IDX.COARSE_ATTITUDE_QW : ADCS_IDX.COARSE_ATTITUDE_QZ + 1] = self.coarse_attitude
 
             # Data logging
             DH.log_data("adcs", self.log_data)
             self.log_info(f"{dict(zip(self.data_keys[8:11], self.log_data[8:11]))}")
+            self.log_info(f"{dict(zip(self.data_keys[28:32], self.coarse_attitude))}")
