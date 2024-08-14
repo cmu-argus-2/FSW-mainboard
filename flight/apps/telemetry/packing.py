@@ -27,6 +27,13 @@ from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, PAYLOA
 from core.data_handler import DataHandler as DH
 
 
+def pack_4_bytes(data, idx):
+    """
+    Packs 4-byte into a bytearray
+    """
+    return [(data[idx] >> 24) & 0xFF, (data[idx] >> 16) & 0xFF, (data[idx] >> 8) & 0xFF, data[idx] & 0xFF]
+
+
 class TelemetryPacker:
     """
     Packs telemetry data for transmission
