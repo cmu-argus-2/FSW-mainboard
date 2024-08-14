@@ -52,4 +52,4 @@ class Task(TemplateTask):
             self.log_data[SUN_IDX.ECLIPSE] = self.eclipse_state
 
             DH.log_data("sun", self.log_data)
-            print(f"[{self.ID}][{self.name}] Data: {dict(zip(self.data_keys, self.log_data))}")
+            self.log_info(f" Data: {dict(zip(self.data_keys, self.log_data))}")

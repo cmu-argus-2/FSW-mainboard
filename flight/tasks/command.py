@@ -40,13 +40,13 @@ class Task(TemplateTask):
 
             # TODO: remove for flight
             DH.delete_all_files()
-            print(f"[{self.ID}][{self.name}] SD card cleaned up.")
+            self.log_info("SD card cleaned up.")
 
             HAL_DIAGNOSTICS = True
             # For now
             if DH.SD_scanned and HAL_DIAGNOSTICS:
                 SM.switch_to(STATES.NOMINAL)
-                print(f"[{self.ID}][{self.name}] Switching to NOMINAL state.")
+                self.log_info("Switching to NOMINAL state.")
 
         else:  # Run for all states
 
@@ -72,5 +72,5 @@ class Task(TemplateTask):
 
             # periodic system checks (HW) - better another task for this
 
-        print(f"[{self.ID}][{self.name}] GLOBAL STATE: {STR_STATES[SM.current_state]}.")
-        print(f"[{self.ID}][{self.name}] RAM USAGE: {self.log_data[CDH_IDX.CURRENT_RAM_USAGE]}%")
+        self.log_info(f"GLOBAL STATE: {STR_STATES[SM.current_state]}.")
+        self.log_info(f"RAM USAGE: {self.log_data[CDH_IDX.CURRENT_RAM_USAGE]}%")

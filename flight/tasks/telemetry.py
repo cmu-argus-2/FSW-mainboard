@@ -18,4 +18,4 @@ class Task(TemplateTask):
         elif SM.current_state == STATES.NOMINAL:
             pass
 
-        print(f"[{self.ID}][{self.name}] ...")
+        self.log_info("...")

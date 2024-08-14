@@ -35,7 +35,7 @@ class Task(TemplateTask):
 
             DH.log_data("thermal", self.log_data)
 
-        print(
-            f"[{self.ID}][{self.name}] CPU: {self.log_data[THERMAL_IDX.CPU_TEMPERATURE]/100}°, \
+        self.log_info(
+            f" CPU: {self.log_data[THERMAL_IDX.CPU_TEMPERATURE]/100}°, \
             IMU: {self.log_data[THERMAL_IDX.IMU_TEMPERATURE]/100}°"
         )

@@ -34,20 +34,17 @@ class Task(TemplateTask):
                     tm_path = DH.request_TM_path_image()
                     if tm_path is not None:
                         # Image available, change filepath
-                        print(
-                            f"[{self.ID}][{self.name}] Onboard image at:",
-                            tm_path,
-                        )
+                        self.log_info(f"Onboard image at: {tm_path}")
                         self.SAT_RADIO.image_strs = [tm_path]
                         self.SAT_RADIO.image_get_info()
                     else:
                         # No image available, use empty filepath
-                        print(f"[{self.ID}][{self.name}] No image onboard")
+                        self.log_info("No image onboard")
                         self.SAT_RADIO.image_strs = []
                         self.SAT_RADIO.image_get_info()
                 else:
                     # No image available, use empty filepath
-                    print(f"[{self.ID}][{self.name}] No image process")
+                    self.log_info("No image process")
                     self.SAT_RADIO.image_strs = []
                     self.SAT_RADIO.image_get_info()
 
@@ -55,15 +52,12 @@ class Task(TemplateTask):
                 self.tx_header = self.SAT_RADIO.transmit_message()
 
                 # Debug message
-                print(
-                    f"[{self.ID}][{self.name}] Sent message with ID:",
-                    self.tx_header,
-                )
+                self.log_info(f"Sent message with ID: {self.tx_header}")
 
                 # Receive message, blocking for 1s
                 self.flag_ground_station_pass = self.SAT_RADIO.receive_message()
 
                 if self.SAT_RADIO.image_done_transmitting():
-                    print(f"[{self.ID}][{self.name}] Image downlinked, deleting with OBDH")
+                    self.log_info("Image downlinked, deleting with OBDH")
                     DH.notify_TM_path("img", tm_path)
                     DH.clean_up()
