@@ -244,7 +244,7 @@ class StreamHandler(Handler):
 
     terminator = "\n"
 
-    def __init__(self, stream: Optional[WriteableStream] = None) -> None:
+    def __init__(self, stream=None) -> None:
         super().__init__()
         if stream is None:
             stream = sys.stderr
@@ -599,3 +599,24 @@ class Logger:
             # so we can't add the indent in the above line - needs to be done separately
             lines = lines.replace("\n", "\n  ")
             self._log(ERROR, lines)
+
+
+logger = getLogger("core_logger")
+
+
+def setup_logger(level="NOTSET", handler=None):
+    """
+    Setup the logger with the specified level and handler.
+
+    :param level: The logging level (NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL).
+    :param handler: A logging handler, e.g., StreamHandler or FileHandler.
+    """
+    set_level = 0
+    for i, _level in enumerate(LEVELS):
+        if _level[1] == level:
+            set_level = LEVELS[i][0]
+
+    logger.setLevel(set_level)
+
+    if handler is None:
+        handler = StreamHandler()

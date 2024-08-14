@@ -1,6 +1,7 @@
 import gc
 import sys
 
+import core.logging as logging
 from core import state_manager
 from core.states import STATES
 from hal.configuration import SATELLITE
@@ -35,6 +36,9 @@ print(str(gc.mem_free()) + " bytes free")
 
 try:
     # Run forever
+
+    logging.setup_logger(level=logging.DEBUG)
+
     state_manager.start(STATES.STARTUP, SM_CONFIGURATION, TASK_REGISTRY)
 
 except Exception as e:
