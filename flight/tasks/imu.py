@@ -43,12 +43,12 @@ class Task(TemplateTask):
             self.log_data[IMU_IDX.ACCEL_X] = accel[0]
             self.log_data[IMU_IDX.ACCEL_Y] = accel[1]
             self.log_data[IMU_IDX.ACCEL_Z] = accel[2]
-            self.log_data[IMU_IDX.MAG_X] = mag[0]
-            self.log_data[IMU_IDX.MAG_Y] = mag[1]
-            self.log_data[IMU_IDX.MAG_Z] = mag[2]
-            self.log_data[IMU_IDX.GYRO_X] = gyro[0]
-            self.log_data[IMU_IDX.GYRO_Y] = gyro[1]
-            self.log_data[IMU_IDX.GYRO_Z] = gyro[2]
+            self.log_data[IMU_IDX.MAGNETOMETER_X] = mag[0]
+            self.log_data[IMU_IDX.MAGNETOMETER_Y] = mag[1]
+            self.log_data[IMU_IDX.MAGNETOMETER_Z] = mag[2]
+            self.log_data[IMU_IDX.GYROSCOPE_X] = gyro[0]
+            self.log_data[IMU_IDX.GYROSCOPE_Y] = gyro[1]
+            self.log_data[IMU_IDX.GYROSCOPE_Z] = gyro[2]
 
             DH.log_data("imu", self.log_data)
 

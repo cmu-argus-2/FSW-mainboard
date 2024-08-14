@@ -103,12 +103,12 @@ class IMU_IDX:
     ACCEL_X = const(1)
     ACCEL_Y = const(2)
     ACCEL_Z = const(3)
-    MAG_X = const(4)
-    MAG_Y = const(5)
-    MAG_Z = const(6)
-    GYRO_X = const(7)
-    GYRO_Y = const(8)
-    GYRO_Z = const(9)
+    MAGNETOMETER_X = const(4)
+    MAGNETOMETER_Y = const(5)
+    MAGNETOMETER_Z = const(6)
+    GYROSCOPE_X = const(7)
+    GYROSCOPE_Y = const(8)
+    GYROSCOPE_Z = const(9)
 
 
 class GPS_IDX:

@@ -89,10 +89,10 @@ class Task(TemplateTask):
 
             # Log IMU data
             self.log_data[ADCS_IDX.TIME_ADCS] = self.time
-            imu_mag_data = DH.get_latest_data("imu")[ADCS_IDX.MAG_X : ADCS_IDX.MAG_Z + 1]
+            imu_mag_data = DH.get_latest_data("imu")[ADCS_IDX.MAGNETOMETER_X : ADCS_IDX.MAGNETOMETER_Z + 1]
             self.log_data[ADCS_IDX.MAG_X : ADCS_IDX.MAG_Z + 1] = imu_mag_data
             self.log_data[ADCS_IDX.GYRO_X : ADCS_IDX.GYRO_Z + 1] = DH.get_latest_data("imu")[
-                ADCS_IDX.GYRO_X : ADCS_IDX.GYRO_Z + 1
+                ADCS_IDX.GYROSCOPE_X : ADCS_IDX.GYROSCOPE_Z + 1
             ]
 
             ## Sun Acquisition
