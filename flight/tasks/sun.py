@@ -13,9 +13,6 @@ from ulab import numpy as np
 
 class Task(TemplateTask):
 
-    name = "SUN"
-    ID = 0x11
-
     # To be removed - kept until proper logging is implemented
     data_keys = ["time", "status", "x", "y", "z", "eclipse"]
 

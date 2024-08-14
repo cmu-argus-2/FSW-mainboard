@@ -10,9 +10,6 @@ from hal.configuration import SATELLITE
 
 class Task(TemplateTask):
 
-    name = "IMU"
-    ID = 0x03
-
     # To be removed - kept until proper logging is implemented
     data_keys = [
         "time",

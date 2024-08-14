@@ -13,9 +13,6 @@ from hal.configuration import SATELLITE
 
 class Task(TemplateTask):
 
-    name = "THERMAL"
-    ID = 0x0A
-
     data_keys = ["TIME", "IMU_TEMPERATURE", "CPU_TEMPERATURE", "BATTERY_PACK_TEMPERATURE"]
 
     log_data = [0] * 4  # pre-allocation

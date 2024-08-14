@@ -10,10 +10,6 @@ from hal.configuration import SATELLITE
 
 
 class Task(TemplateTask):
-
-    name = "TIMING"
-    ID = 0x00
-
     async def main_task(self):
 
         if SM.current_state == STATES.STARTUP:

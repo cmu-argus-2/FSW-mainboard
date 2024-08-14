@@ -11,9 +11,6 @@ from core.states import STATES
 
 class Task(TemplateTask):
 
-    name = "GPS"
-    ID = 0x0B
-
     data_keys = [
         "TIME",
         "GPS_MESSAGE_ID",

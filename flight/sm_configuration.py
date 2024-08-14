@@ -8,6 +8,7 @@ from tasks.gps import Task as gps
 from tasks.imu import Task as imu
 from tasks.obdh import Task as obdh
 from tasks.sun import Task as sun
+from tasks.telemetry import Task as telemetry
 from tasks.thermal import Task as thermal
 from tasks.timing import Task as timing
 
@@ -23,21 +24,21 @@ class TASK:
     COMMS = const(0x07)
     THERMAL = const(0x08)
     GPS = const(0x09)
+    TM = const(0x0A)
 
-
-STR_TASKS = ["COMMAND", "TIMING", "EPS", "OBDH", "ADCS", "IMU", "SUN", "COMMS", "THERMAL", "GPS"]
 
 TASK_REGISTRY = {
-    TASK.COMMAND: command,
-    TASK.TIMING: timing,
-    TASK.EPS: eps,
-    TASK.OBDH: obdh,
-    TASK.ADCS: adcs,
-    TASK.IMU: imu,
-    TASK.SUN: sun,
-    TASK.COMMS: comms,
-    TASK.THERMAL: thermal,
-    TASK.GPS: gps,
+    TASK.COMMAND: (command, "COMMAND"),
+    TASK.TIMING: (timing, "TIMING"),
+    TASK.EPS: (eps, "EPS"),
+    TASK.OBDH: (obdh, "OBDH"),
+    TASK.ADCS: (adcs, "ADCS"),
+    TASK.IMU: (imu, "IMU"),
+    TASK.SUN: (sun, "SUN"),
+    TASK.COMMS: (comms, "COMMS"),
+    TASK.THERMAL: (thermal, "THERMAL"),
+    TASK.GPS: (gps, "GPS"),
+    TASK.TM: (telemetry, "TM"),
 }
 
 

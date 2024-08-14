@@ -32,7 +32,9 @@ from apps.telemetry.helpers import (
     pack_unsigned_long_int,
     pack_unsigned_short_int,
 )
+from core import logger
 from core.data_handler import DataHandler as DH
+from micropython import const
 
 
 class TelemetryPacker:
@@ -40,14 +42,16 @@ class TelemetryPacker:
     Packs telemetry data for transmission
     """
 
-    PACKET = bytearray(256)  # pre-allocated buffer for packing
-    PACKET[0] = 0x01  # message ID
-    PACKET[1] = 0x00  # sequence count
-    PACKET[2] = 0x01  # sequence count
-    PACKET[3] = 250  # packet length
+    TM_FRAME_SIZE = const(254)  # size of the telemetry frame
+
+    PACKET = bytearray(TM_FRAME_SIZE)  # pre-allocated buffer for packing
+    PACKET[0] = const(0x01)  # message ID
+    PACKET[1] = const(0x00)  # sequence count
+    PACKET[2] = const(0x01)  # sequence count
+    PACKET[3] = const(250)  # packet length
 
     @classmethod
-    def pack_telemetry(cls):
+    def pack_tm_frame(cls):
 
         ############ CDH fields ############
         cdh_data = DH.get_latest_data("cdh")
@@ -73,7 +77,6 @@ class TelemetryPacker:
 
         # Mainboard voltage
         cls.PACKET[17:19] = pack_signed_short_int(eps_data, EPS_IDX.MAINBOARD_VOLTAGE)
-
         # Mainboard current
         cls.PACKET[19:21] = pack_signed_short_int(eps_data, EPS_IDX.MAINBOARD_CURRENT)
         # Battery pack SOC
@@ -290,3 +293,6 @@ class TelemetryPacker:
 
         ############ Payload fields ############
         # TODO
+
+        logger.info("Telemetry frame packed")
+        return True

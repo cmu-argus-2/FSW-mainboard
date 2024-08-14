@@ -21,9 +21,6 @@ from ulab import numpy as np
 
 class Task(TemplateTask):
 
-    name = "ADCS"
-    ID = 0x11
-
     data_keys = [
         "time",
         "ADCS_STATE",
@@ -109,13 +106,12 @@ class Task(TemplateTask):
             self.log_data[ADCS_IDX.SUN_VEC_Y] = self.sun_vector[1]
             self.log_data[ADCS_IDX.SUN_VEC_Z] = self.sun_vector[2]
             self.log_data[ADCS_IDX.ECLIPSE] = self.eclipse_state
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = (
-                lux_readings[0] / 10
-            )  # Log dlux (decilux) instead of lux for TM space efficiency
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = lux_readings[1] / 10
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = lux_readings[2] / 10
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = lux_readings[3] / 10
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = lux_readings[4] / 10
+            # Log dlux (decilux) instead of lux for TM space efficiency
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = int(lux_readings[0] / 10)
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = int(lux_readings[1] / 10)
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = int(lux_readings[2] / 10)
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = int(lux_readings[3] / 10)
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(lux_readings[4] / 10)
             # Pyramid TBD
 
             ## Magnetic Control

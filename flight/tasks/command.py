@@ -15,9 +15,6 @@ from hal.configuration import SATELLITE
 
 class Task(TemplateTask):
 
-    name = "COMMAND"
-    ID = 0x01
-
     # To be removed - kept until proper logging is implemented
     data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "REBOOT_COUNT", "WATCHDOG_TIMER", "HAL_BITFLAGS"]
 

@@ -10,11 +10,9 @@ class TemplateTask:
         name:        Name of the task object.
     """
 
-    ID = 0xFF
-    name = "TEMPLATE TASK"
-
-    def __init__(self, id):
+    def __init__(self, id, name="TASK"):
         self.ID = id
+        self.name = name
 
     def debug(self, msg, exc=None):
         """

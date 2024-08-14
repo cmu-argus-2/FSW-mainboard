@@ -10,9 +10,6 @@ from hal.configuration import SATELLITE
 
 class Task(TemplateTask):
 
-    name = "COMMS"
-    ID = 0x12
-
     SAT_RADIO = SATELLITE_RADIO(SATELLITE)
     tx_header = 0
     flag_ground_station_pass = True
