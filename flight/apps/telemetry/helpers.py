@@ -59,7 +59,7 @@ def convert_float_to_fixed_point_hp(val):
     :param val: Value to convert to fixed point
     :return: value in FP as byte list
     Convert float value to fixed point with 1 integer bytes, 3 decimal bytes (high-precision).
-    Range: [-128.9999999, 128.9999999]
+    Range: [-127.9999999, 127.9999999]
     """
     # Handle negative flag and convert to positive if necessary
     neg_bit_flag = 1 if val < 0 else 0
