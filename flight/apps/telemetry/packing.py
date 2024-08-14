@@ -228,7 +228,176 @@ class TelemetryPacker:
         cls.PACKET[97] = eps_data[EPS_IDX.ZM_SOLAR_CHARGE_CURRENT] & 0xFF
 
         ############ ADCS fields ############
-        # TODO
+        adcs_data = DH.get_latest_data("adcs")
+
+        # ADCS state
+        cls.PACKET[98] = adcs_data[ADCS_IDX.ADCS_STATE] & 0xFF
+
+        # Gyro X
+        cls.PACKET[99] = (adcs_data[ADCS_IDX.GYRO_X] >> 24) & 0xFF
+        cls.PACKET[100] = (adcs_data[ADCS_IDX.GYRO_X] >> 16) & 0xFF
+        cls.PACKET[101] = (adcs_data[ADCS_IDX.GYRO_X] >> 8) & 0xFF
+        cls.PACKET[102] = adcs_data[ADCS_IDX.GYRO_X] & 0xFF
+        # Gyro Y
+        cls.PACKET[103] = (adcs_data[ADCS_IDX.GYRO_Y] >> 24) & 0xFF
+        cls.PACKET[104] = (adcs_data[ADCS_IDX.GYRO_Y] >> 16) & 0xFF
+        cls.PACKET[105] = (adcs_data[ADCS_IDX.GYRO_Y] >> 8) & 0xFF
+        cls.PACKET[106] = adcs_data[ADCS_IDX.GYRO_Y] & 0xFF
+        # Gyro Z
+        cls.PACKET[107] = (adcs_data[ADCS_IDX.GYRO_Z] >> 24) & 0xFF
+        cls.PACKET[108] = (adcs_data[ADCS_IDX.GYRO_Z] >> 16) & 0xFF
+        cls.PACKET[109] = (adcs_data[ADCS_IDX.GYRO_Z] >> 8) & 0xFF
+        cls.PACKET[110] = adcs_data[ADCS_IDX.GYRO_Z] & 0xFF
+
+        # Magnetometer X
+        cls.PACKET[111] = (adcs_data[ADCS_IDX.MAGNETOMETER_X] >> 24) & 0xFF
+        cls.PACKET[112] = (adcs_data[ADCS_IDX.MAGNETOMETER_X] >> 16) & 0xFF
+        cls.PACKET[113] = (adcs_data[ADCS_IDX.MAGNETOMETER_X] >> 8) & 0xFF
+        cls.PACKET[114] = adcs_data[ADCS_IDX.MAGNETOMETER_X] & 0xFF
+        # Magnetometer Y
+        cls.PACKET[115] = (adcs_data[ADCS_IDX.MAGNETOMETER_Y] >> 24) & 0xFF
+        cls.PACKET[116] = (adcs_data[ADCS_IDX.MAGNETOMETER_Y] >> 16) & 0xFF
+        cls.PACKET[117] = (adcs_data[ADCS_IDX.MAGNETOMETER_Y] >> 8) & 0xFF
+        cls.PACKET[118] = adcs_data[ADCS_IDX.MAGNETOMETER_Y] & 0xFF
+        # Magnetometer Z
+        cls.PACKET[119] = (adcs_data[ADCS_IDX.MAGNETOMETER_Z] >> 24) & 0xFF
+        cls.PACKET[120] = (adcs_data[ADCS_IDX.MAGNETOMETER_Z] >> 16) & 0xFF
+        cls.PACKET[121] = (adcs_data[ADCS_IDX.MAGNETOMETER_Z] >> 8) & 0xFF
+        cls.PACKET[122] = adcs_data[ADCS_IDX.MAGNETOMETER_Z] & 0xFF
+
+        # Sun status
+        cls.PACKET[123] = adcs_data[ADCS_IDX.SUN_STATUS] & 0xFF
+
+        # Sun vector X
+        cls.PACKET[124] = (adcs_data[ADCS_IDX.SUN_VEC_X] >> 24) & 0xFF
+        cls.PACKET[125] = (adcs_data[ADCS_IDX.SUN_VEC_X] >> 16) & 0xFF
+        cls.PACKET[126] = (adcs_data[ADCS_IDX.SUN_VEC_X] >> 8) & 0xFF
+        cls.PACKET[127] = adcs_data[ADCS_IDX.SUN_VEC_X] & 0xFF
+        # Sun vector Y
+        cls.PACKET[125] = (adcs_data[ADCS_IDX.SUN_VEC_Y] >> 24) & 0xFF
+        cls.PACKET[126] = (adcs_data[ADCS_IDX.SUN_VEC_Y] >> 16) & 0xFF
+        cls.PACKET[127] = (adcs_data[ADCS_IDX.SUN_VEC_Y] >> 8) & 0xFF
+        cls.PACKET[128] = adcs_data[ADCS_IDX.SUN_VEC_Y] & 0xFF
+        # Sun vector Z
+        cls.PACKET[129] = (adcs_data[ADCS_IDX.SUN_VEC_Z] >> 24) & 0xFF
+        cls.PACKET[130] = (adcs_data[ADCS_IDX.SUN_VEC_Z] >> 16) & 0xFF
+        cls.PACKET[131] = (adcs_data[ADCS_IDX.SUN_VEC_Z] >> 8) & 0xFF
+        cls.PACKET[132] = adcs_data[ADCS_IDX.SUN_VEC_Z] & 0xFF
+        # Eclipse bool
+        cls.PACKET[133] = adcs_data[ADCS_IDX.ECLIPSE] & 0xFF
+        # Light sensor X+
+        cls.PACKET[134] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_XP] >> 24) & 0xFF
+        cls.PACKET[135] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_XP] >> 16) & 0xFF
+        cls.PACKET[136] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_XP] >> 8) & 0xFF
+        cls.PACKET[137] = adcs_data[ADCS_IDX.LIGHT_SENSOR_XP] & 0xFF
+        # Light sensor X-
+        cls.PACKET[138] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_XM] >> 24) & 0xFF
+        cls.PACKET[139] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_XM] >> 16) & 0xFF
+        cls.PACKET[140] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_XM] >> 8) & 0xFF
+        cls.PACKET[141] = adcs_data[ADCS_IDX.LIGHT_SENSOR_XM] & 0xFF
+        # Light sensor Y+
+        cls.PACKET[142] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_YP] >> 24) & 0xFF
+        cls.PACKET[143] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_YP] >> 16) & 0xFF
+        cls.PACKET[144] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_YP] >> 8) & 0xFF
+        cls.PACKET[145] = adcs_data[ADCS_IDX.LIGHT_SENSOR_YP] & 0xFF
+        # Light sensor Y-
+        cls.PACKET[146] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_YM] >> 24) & 0xFF
+        cls.PACKET[147] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_YM] >> 16) & 0xFF
+        cls.PACKET[148] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_YM] >> 8) & 0xFF
+        cls.PACKET[149] = adcs_data[ADCS_IDX.LIGHT_SENSOR_YM] & 0xFF
+        # Light sensor Z+ 1
+        cls.PACKET[150] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_ZP1] >> 24) & 0xFF
+        cls.PACKET[151] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_ZP1] >> 16) & 0xFF
+        cls.PACKET[152] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_ZP1] >> 8) & 0xFF
+        cls.PACKET[153] = adcs_data[ADCS_IDX.LIGHT_SENSOR_ZP1] & 0xFF
+
+        # Light sensor Z+ 2
+        cls.PACKET[154] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_ZP2] >> 24) & 0xFF
+        cls.PACKET[155] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_ZP2] >> 16) & 0xFF
+        cls.PACKET[156] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_ZP2] >> 8) & 0xFF
+        cls.PACKET[157] = adcs_data[ADCS_IDX.LIGHT_SENSOR_ZP2] & 0xFF
+
+        # Light sensor Z+ 3
+        cls.PACKET[158] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_ZP3] >> 24) & 0xFF
+        cls.PACKET[159] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_ZP3] >> 16) & 0xFF
+        cls.PACKET[160] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_ZP3] >> 8) & 0xFF
+        cls.PACKET[161] = adcs_data[ADCS_IDX.LIGHT_SENSOR_ZP3] & 0xFF
+
+        # Light sensor Z+ 4
+        cls.PACKET[162] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_ZP4] >> 24) & 0xFF
+        cls.PACKET[163] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_ZP4] >> 16) & 0xFF
+        cls.PACKET[164] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_ZP4] >> 8) & 0xFF
+        cls.PACKET[165] = adcs_data[ADCS_IDX.LIGHT_SENSOR_ZP4] & 0xFF
+
+        # Light sensor Z-
+        cls.PACKET[166] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_ZM] >> 24) & 0xFF
+        cls.PACKET[167] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_ZM] >> 16) & 0xFF
+        cls.PACKET[168] = (adcs_data[ADCS_IDX.LIGHT_SENSOR_ZM] >> 8) & 0xFF
+        cls.PACKET[169] = adcs_data[ADCS_IDX.LIGHT_SENSOR_ZM] & 0xFF
+
+        # XP coil status
+        cls.PACKET[170] = adcs_data[ADCS_IDX.XP_COIL_STATUS] & 0xFF
+        # XM coil status
+        cls.PACKET[171] = adcs_data[ADCS_IDX.XM_COIL_STATUS] & 0xFF
+        # YP coil status
+        cls.PACKET[172] = adcs_data[ADCS_IDX.YP_COIL_STATUS] & 0xFF
+        # YM coil status
+        cls.PACKET[173] = adcs_data[ADCS_IDX.YM_COIL_STATUS] & 0xFF
+        # ZP coil status
+        cls.PACKET[174] = adcs_data[ADCS_IDX.ZP_COIL_STATUS] & 0xFF
+        # ZM coil status
+        cls.PACKET[175] = adcs_data[ADCS_IDX.ZM_COIL_STATUS] & 0xFF
+
+        # Coarse attitude QW
+        cls.PACKET[176] = (adcs_data[ADCS_IDX.COARSE_ATTITUDE_QW] >> 24) & 0xFF
+        cls.PACKET[177] = (adcs_data[ADCS_IDX.COARSE_ATTITUDE_QW] >> 16) & 0xFF
+        cls.PACKET[178] = (adcs_data[ADCS_IDX.COARSE_ATTITUDE_QW] >> 8) & 0xFF
+        cls.PACKET[179] = adcs_data[ADCS_IDX.COARSE_ATTITUDE_QW] & 0xFF
+
+        # Coarse attitude QX
+        cls.PACKET[180] = (adcs_data[ADCS_IDX.COARSE_ATTITUDE_QX] >> 24) & 0xFF
+        cls.PACKET[181] = (adcs_data[ADCS_IDX.COARSE_ATTITUDE_QX] >> 16) & 0xFF
+        cls.PACKET[182] = (adcs_data[ADCS_IDX.COARSE_ATTITUDE_QX] >> 8) & 0xFF
+        cls.PACKET[183] = adcs_data[ADCS_IDX.COARSE_ATTITUDE_QX] & 0xFF
+
+        # Coarse attitude QY
+        cls.PACKET[184] = (adcs_data[ADCS_IDX.COARSE_ATTITUDE_QY] >> 24) & 0xFF
+        cls.PACKET[185] = (adcs_data[ADCS_IDX.COARSE_ATTITUDE_QY] >> 16) & 0xFF
+        cls.PACKET[186] = (adcs_data[ADCS_IDX.COARSE_ATTITUDE_QY] >> 8) & 0xFF
+        cls.PACKET[187] = adcs_data[ADCS_IDX.COARSE_ATTITUDE_QY] & 0xFF
+
+        # Coarse attitude QZ
+        cls.PACKET[188] = (adcs_data[ADCS_IDX.COARSE_ATTITUDE_QZ] >> 24) & 0xFF
+        cls.PACKET[189] = (adcs_data[ADCS_IDX.COARSE_ATTITUDE_QZ] >> 16) & 0xFF
+        cls.PACKET[190] = (adcs_data[ADCS_IDX.COARSE_ATTITUDE_QZ] >> 8) & 0xFF
+        cls.PACKET[191] = adcs_data[ADCS_IDX.COARSE_ATTITUDE_QZ] & 0xFF
+
+        # Star tracker status
+        cls.PACKET[192] = adcs_data[ADCS_IDX.STAR_TRACKER_STATUS] & 0xFF
+
+        # Star tracker attitude QW
+        cls.PACKET[193] = (adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QW] >> 24) & 0xFF
+        cls.PACKET[194] = (adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QW] >> 16) & 0xFF
+        cls.PACKET[195] = (adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QW] >> 8) & 0xFF
+        cls.PACKET[196] = adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QW] & 0xFF
+
+        # Star tracker attitude QX
+        cls.PACKET[197] = (adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QX] >> 24) & 0xFF
+        cls.PACKET[198] = (adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QX] >> 16) & 0xFF
+        cls.PACKET[199] = (adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QX] >> 8) & 0xFF
+        cls.PACKET[200] = adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QX] & 0xFF
+
+        # Star tracker attitude QY
+        cls.PACKET[201] = (adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QY] >> 24) & 0xFF
+        cls.PACKET[202] = (adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QY] >> 16) & 0xFF
+        cls.PACKET[203] = (adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QY] >> 8) & 0xFF
+        cls.PACKET[204] = adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QY] & 0xFF
+
+        # Star tracker attitude QZ
+        cls.PACKET[205] = (adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QZ] >> 24) & 0xFF
+        cls.PACKET[206] = (adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QZ] >> 16) & 0xFF
+        cls.PACKET[207] = (adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QZ] >> 8) & 0xFF
+        cls.PACKET[208] = adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QZ] & 0xFF
 
         ############ GPS fields ############
         # TODO

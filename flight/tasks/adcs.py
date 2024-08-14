@@ -66,6 +66,7 @@ class Task(TemplateTask):
 
     log_data = [0] * 37
     data_format = "LB" + 6 * "f" + "B" + 3 * "f" + "B" + 9 * "l" + 6 * "B" + 4 * "f" + "B" + 4 * "f"
+    # For now - keep the floats, will optimize the telemetry packet afterwards
 
     # Sun Acquisition
     THRESHOLD_ILLUMINATION_LUX = 3000
