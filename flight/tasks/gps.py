@@ -48,7 +48,7 @@ class Task(TemplateTask):
 
             # TODO GPS frame parsing - get ECEF in (cm) and ECEF velocity in cm/s
 
-            self.log_data[GPS_IDX.TIME] = int(time.time())
+            self.log_data[GPS_IDX.TIME_GPS] = int(time.time())
             self.log_data[GPS_IDX.GPS_MESSAGE_ID] = 0
             self.log_data[GPS_IDX.GPS_FIX_MODE] = 0
             self.log_data[GPS_IDX.GPS_NUMBER_OF_SV] = 0

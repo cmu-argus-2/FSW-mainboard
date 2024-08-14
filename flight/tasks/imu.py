@@ -39,7 +39,7 @@ class Task(TemplateTask):
             gyro = SATELLITE.IMU.gyro()
 
             # Replace data in the pre-allocated list
-            self.log_data[IMU_IDX.TIME] = int(time.time())
+            self.log_data[IMU_IDX.TIME_IMU] = int(time.time())
             self.log_data[IMU_IDX.ACCEL_X] = accel[0]
             self.log_data[IMU_IDX.ACCEL_Y] = accel[1]
             self.log_data[IMU_IDX.ACCEL_Z] = accel[2]

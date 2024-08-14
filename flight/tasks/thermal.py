@@ -25,7 +25,7 @@ class Task(TemplateTask):
             if not DH.data_process_exists("thermal"):
                 DH.register_data_process("thermal", self.data_keys, self.data_format, True, line_limit=100)
 
-            self.log_data[THERMAL_IDX.TIME] = int(time.time())
+            self.log_data[THERMAL_IDX.TIME_THERMAL] = int(time.time())
             self.log_data[THERMAL_IDX.IMU_TEMPERATURE] = int(SATELLITE.IMU.temperature() * 100)
             self.log_data[THERMAL_IDX.CPU_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
             self.log_data[THERMAL_IDX.BATTERY_PACK_TEMPERATURE] = 0  # Placeholder

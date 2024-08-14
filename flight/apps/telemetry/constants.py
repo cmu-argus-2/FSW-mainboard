@@ -14,7 +14,7 @@ class CDH_IDX:
 
 
 class EPS_IDX:
-    TIME = const(0)
+    TIME_EPS = const(0)
     MAINBOARD_VOLTAGE = const(1)
     MAINBOARD_CURRENT = const(2)
     BATTERY_PACK_REPORTED_SOC = const(3)
@@ -59,7 +59,7 @@ class EPS_IDX:
 
 
 class ADCS_IDX:
-    TIME = const(0)
+    TIME_ADCS = const(0)
     ADCS_STATE = const(1)
     GYRO_X = const(2)
     GYRO_Y = const(3)
@@ -98,17 +98,8 @@ class ADCS_IDX:
     STAR_TRACKER_ATTITUDE_QZ = const(36)
 
 
-class SUN_IDX:
-    TIME = const(0)
-    STATUS = const(1)
-    X = const(2)
-    Y = const(3)
-    Z = const(4)
-    ECLIPSE = const(5)
-
-
 class IMU_IDX:
-    TIME = const(0)
+    TIME_IMU = const(0)
     ACCEL_X = const(1)
     ACCEL_Y = const(2)
     ACCEL_Z = const(3)
@@ -121,7 +112,7 @@ class IMU_IDX:
 
 
 class GPS_IDX:
-    TIME = const(0)
+    TIME_GPS = const(0)
     GPS_MESSAGE_ID = const(1)
     GPS_FIX_MODE = const(2)
     GPS_NUMBER_OF_SV = const(3)
@@ -145,7 +136,7 @@ class GPS_IDX:
 
 
 class THERMAL_IDX:
-    TIME = const(0)
+    TIME_THERMAL = const(0)
     IMU_TEMPERATURE = const(1)
     CPU_TEMPERATURE = const(2)
     BATTERY_PACK_TEMPERATURE = const(3)

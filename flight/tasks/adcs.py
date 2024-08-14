@@ -23,7 +23,7 @@ from ulab import numpy as np
 class Task(TemplateTask):
 
     data_keys = [
-        "time",
+        "TIME_ADCS",
         "ADCS_STATE",
         "GYRO_X",
         "GYRO_Y",
@@ -88,7 +88,7 @@ class Task(TemplateTask):
             self.time = int(time.time())
 
             # Log IMU data
-            self.log_data[ADCS_IDX.TIME] = self.time
+            self.log_data[ADCS_IDX.TIME_ADCS] = self.time
             imu_mag_data = DH.get_latest_data("imu")[ADCS_IDX.MAG_X : ADCS_IDX.MAG_Z + 1]
             self.log_data[ADCS_IDX.MAG_X : ADCS_IDX.MAG_Z + 1] = imu_mag_data
             self.log_data[ADCS_IDX.GYRO_X : ADCS_IDX.GYRO_Z + 1] = DH.get_latest_data("imu")[
@@ -126,9 +126,8 @@ class Task(TemplateTask):
                 # TODO GPS flag for valid position
                 # Might need an attitude status flag
                 R_ecef_to_eci = ecef_to_eci(self.time)
-                gps_pos_eci = R_ecef_to_eci @ (
-                    np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]) / 100
-                )
+                gps_pos_ecef = np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]) * 0.01
+                gps_pos_eci = R_ecef_to_eci @ gps_pos_ecef
                 mag_eci = igrf_eci(self.time, gps_pos_eci)
                 sun_eci = approx_sun_position_ECI(self.time)
 
@@ -138,5 +137,6 @@ class Task(TemplateTask):
 
             # Data logging
             DH.log_data("adcs", self.log_data)
-            self.log_info(f"{dict(zip(self.data_keys[8:11], self.log_data[8:11]))}")
+
+            self.log_info(f"{dict(zip(self.data_keys[8:13], self.log_data[8:13]))}")  # Sun
             self.log_info(f"{dict(zip(self.data_keys[28:32], self.coarse_attitude))}")

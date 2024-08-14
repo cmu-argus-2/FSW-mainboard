@@ -31,6 +31,7 @@ print("Errors:", errors)
 gc.collect()
 logger.info("Memory free: " + str(gc.mem_free()) + " bytes")
 
+
 try:
     # Run forever
 

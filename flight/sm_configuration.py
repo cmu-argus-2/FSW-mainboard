@@ -7,7 +7,6 @@ from tasks.eps import Task as eps
 from tasks.gps import Task as gps
 from tasks.imu import Task as imu
 from tasks.obdh import Task as obdh
-from tasks.sun import Task as sun
 from tasks.telemetry import Task as telemetry
 from tasks.thermal import Task as thermal
 from tasks.timing import Task as timing
@@ -20,7 +19,6 @@ class TASK:
     OBDH = const(0x03)
     ADCS = const(0x04)
     IMU = const(0x05)
-    SUN = const(0x06)
     COMMS = const(0x07)
     THERMAL = const(0x08)
     GPS = const(0x09)
@@ -34,7 +32,6 @@ TASK_REGISTRY = {
     TASK.OBDH: (obdh, "OBDH"),
     TASK.ADCS: (adcs, "ADCS"),
     TASK.IMU: (imu, "IMU"),
-    TASK.SUN: (sun, "SUN"),
     TASK.COMMS: (comms, "COMMS"),
     TASK.THERMAL: (thermal, "THERMAL"),
     TASK.GPS: (gps, "GPS"),
@@ -60,7 +57,6 @@ SM_CONFIGURATION = {
             TASK.OBDH: {"Frequency": 0.2, "Priority": 2},
             TASK.IMU: {"Frequency": 2, "Priority": 5},
             TASK.ADCS: {"Frequency": 1, "Priority": 2, "ScheduleLater": True},
-            TASK.SUN: {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
             TASK.COMMS: {"Frequency": 0.2, "Priority": 5, "ScheduleLater": True},
             TASK.THERMAL: {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
             TASK.GPS: {"Frequency": 0.5, "Priority": 5, "ScheduleLater": True},
