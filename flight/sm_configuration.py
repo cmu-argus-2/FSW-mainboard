@@ -4,6 +4,7 @@ from tasks.adcs import Task as adcs
 from tasks.command import Task as command
 from tasks.comms import Task as comms
 from tasks.eps import Task as eps
+from tasks.gps import Task as gps
 from tasks.imu import Task as imu
 from tasks.obdh import Task as obdh
 from tasks.sun import Task as sun
@@ -21,9 +22,10 @@ class TASK:
     SUN = const(0x06)
     COMMS = const(0x07)
     THERMAL = const(0x08)
+    GPS = const(0x09)
 
 
-STR_TASKS = ["COMMAND", "TIMING", "EPS", "OBDH", "ADCS", "IMU", "SUN", "COMMS", "THERMAL"]
+STR_TASKS = ["COMMAND", "TIMING", "EPS", "OBDH", "ADCS", "IMU", "SUN", "COMMS", "THERMAL", "GPS"]
 
 TASK_REGISTRY = {
     TASK.COMMAND: command,
@@ -35,6 +37,7 @@ TASK_REGISTRY = {
     TASK.SUN: sun,
     TASK.COMMS: comms,
     TASK.THERMAL: thermal,
+    TASK.GPS: gps,
 }
 
 
@@ -59,6 +62,7 @@ SM_CONFIGURATION = {
             TASK.SUN: {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
             TASK.COMMS: {"Frequency": 0.1, "Priority": 5, "ScheduleLater": True},
             TASK.THERMAL: {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
+            TASK.GPS: {"Frequency": 0.5, "Priority": 5, "ScheduleLater": True},
         },
         "MovesTo": [STATES.DOWNLINK, STATES.LOW_POWER, STATES.SAFE],
     },
@@ -72,6 +76,7 @@ SM_CONFIGURATION = {
             TASK.IMU: {"Frequency": 1, "Priority": 3},
             TASK.ADCS: {"Frequency": 1, "Priority": 2, "ScheduleLater": True},
             TASK.THERMAL: {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
+            TASK.GPS: {"Frequency": 0.2, "Priority": 5, "ScheduleLater": True},
         },
         "MovesTo": [STATES.NOMINAL],
     },

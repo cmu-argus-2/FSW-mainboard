@@ -101,7 +101,7 @@ def convert_fixed_point_to_float_hp(message_list):
     return val
 
 
-def pack_long_int(data, idx):
+def pack_unsigned_long_int(data, idx):
     """
     Packs a 4-byte integer from the specified index in the data list into a list of 4 bytes.
 
@@ -112,12 +112,83 @@ def pack_long_int(data, idx):
     return [(data[idx] >> 24) & 0xFF, (data[idx] >> 16) & 0xFF, (data[idx] >> 8) & 0xFF, data[idx] & 0xFF]
 
 
-def pack_short_int(data, idx):
+def pack_signed_long_int(data, idx):
     """
-    Packs a 2-byte integer from the specified index in the data list into a list of 2 bytes.
+    Packs a signed 4-byte integer from the specified index in the data list into a list of 4 bytes.
 
-    :param data: List of 2-byte integers.
+    :param data: List of signed 4-byte integers.
     :param idx: Index of the integer in the data list to pack.
-    :return: List of 2 bytes representing the packed 2-byte integer.
+    :return: List of 4 bytes representing the packed 4-byte signed integer.
+    """
+    # Handle signed integers by converting to unsigned before packing
+    val = data[idx] & 0xFFFFFFFF
+    return [(val >> 24) & 0xFF, (val >> 16) & 0xFF, (val >> 8) & 0xFF, val & 0xFF]
+
+
+def unpack_signed_long_int(byte_list):
+    """
+    Unpacks a signed 4-byte integer from a list of 4 bytes.
+
+    :param byte_list: List of 4 bytes representing the packed 4-byte signed integer.
+    :return: Unpacked signed 4-byte integer.
+    """
+    # Combine the bytes into a 32-bit signed integer
+    val = (byte_list[0] << 24) | (byte_list[1] << 16) | (byte_list[2] << 8) | byte_list[3]
+
+    # Convert to signed integer if the sign bit (MSB) is set
+    return val if val < 0x80000000 else val - 0x100000000
+
+
+def unpack_unsigned_long_int(byte_list):
+    """
+    Unpacks an unsigned 4-byte integer from a list of 4 bytes.
+
+    :param byte_list: List of 4 bytes representing the packed 4-byte unsigned integer.
+    :return: Unpacked unsigned 4-byte integer.
+    """
+    # Combine the bytes into a 32-bit unsigned integer
+    return (byte_list[0] << 24) | (byte_list[1] << 16) | (byte_list[2] << 8) | byte_list[3]
+
+
+def pack_unsigned_short_int(data, idx):
+    """
+    Packs a 2-byte unsigned integer from the specified index in the data list into a list of 2 bytes.
+
+    :param data: List of 2-byte unsigned integers.
+    :param idx: Index of the integer in the data list to pack.
+    :return: List of 2 bytes representing the packed 2-byte unsigned integer.
     """
     return [(data[idx] >> 8) & 0xFF, data[idx] & 0xFF]
+
+
+def unpack_unsigned_short_int(byte_list):
+    """
+    Unpacks a 2-byte unsigned integer from a list of 2 bytes.
+
+    :param byte_list: List of 2 bytes representing the packed 2-byte unsigned integer.
+    :return: Unpacked unsigned 2-byte integer.
+    """
+    return (byte_list[0] << 8) | byte_list[1]
+
+
+def pack_signed_short_int(data, idx):
+    """
+    Packs a signed 2-byte integer from the specified index in the data list into a list of 2 bytes.
+
+    :param data: List of signed 2-byte integers.
+    :param idx: Index of the integer in the data list to pack.
+    :return: List of 2 bytes representing the packed 2-byte signed integer.
+    """
+    val = data[idx] & 0xFFFF
+    return [(val >> 8) & 0xFF, val & 0xFF]
+
+
+def unpack_signed_short_int(byte_list):
+    """
+    Unpacks a signed 2-byte integer from a list of 2 bytes.
+
+    :param byte_list: List of 2 bytes representing the packed 2-byte signed integer.
+    :return: Unpacked signed 2-byte integer.
+    """
+    val = (byte_list[0] << 8) | byte_list[1]
+    return val if val < 0x8000 else val - 0x10000
