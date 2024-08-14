@@ -65,7 +65,7 @@ class Task(TemplateTask):
     ]
 
     log_data = [0] * 37
-    data_format = "LB" + 6 * "f" + "B" + 3 * "f" + "B" + 9 * "l" + 6 * "B" + 4 * "f" + "B" + 4 * "f"
+    data_format = "LB" + 6 * "f" + "B" + 3 * "f" + "B" + 9 * "H" + 6 * "B" + 4 * "f" + "B" + 4 * "f"
     # For now - keep the floats, will optimize the telemetry packet afterwards
 
     # Sun Acquisition
@@ -97,8 +97,8 @@ class Task(TemplateTask):
             ## Sun Acquisition
 
             #  Must return the array directly
-            lux_readings = read_light_sensors()
-            self.sun_status, self.sun_vector = compute_body_sun_vector_from_lux(lux_readings)
+            lux_readings = read_light_sensors()  # lux
+            self.sun_status, self.sun_vector = compute_body_sun_vector_from_lux(lux_readings)  # use full lux for sun vector
             self.eclipse_state = in_eclipse(
                 lux_readings,
                 threshold_lux_illumination=self.THRESHOLD_ILLUMINATION_LUX,
@@ -109,11 +109,13 @@ class Task(TemplateTask):
             self.log_data[ADCS_IDX.SUN_VEC_Y] = self.sun_vector[1]
             self.log_data[ADCS_IDX.SUN_VEC_Z] = self.sun_vector[2]
             self.log_data[ADCS_IDX.ECLIPSE] = self.eclipse_state
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = lux_readings[0]
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = lux_readings[1]
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = lux_readings[2]
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = lux_readings[3]
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = lux_readings[4]
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = (
+                lux_readings[0] / 10
+            )  # Log dlux (decilux) instead of lux for TM space efficiency
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = lux_readings[1] / 10
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = lux_readings[2] / 10
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = lux_readings[3] / 10
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = lux_readings[4] / 10
             # Pyramid TBD
 
             ## Magnetic Control
