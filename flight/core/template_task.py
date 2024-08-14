@@ -16,14 +16,28 @@ class TemplateTask:
     def __init__(self, id):
         self.ID = id
 
-    def debug(self, msg):
+    def debug(self, msg, exc=None):
         """
-        Print a debug message formatted with the task name
+        Print a debug message formatted with the task name, filename, and line number
 
         :param msg: Debug message to print
         :param level: > 1 will print as a sub-level
         """
-        print(f"[{self.ID}][{self.name}] Error: {msg}")
+        if exc is not None:
+            tb = exc.__traceback__
+            while tb.tb_next:  # Iterate to the last traceback
+                tb = tb.tb_next
+            lineno = tb.tb_lineno
+            filename = tb.tb_frame.f_code.co_filename
+
+            # Extract just the filename without the full path
+            filename = filename.split("/")[-1]
+
+            # Print the message in the desired format
+            print(f"[{self.ID}][{self.name}][{filename}:{lineno}] {msg}")
+        else:
+            # If no exception is provided, just print the message
+            print(f"[{self.ID}][{self.name}] {msg}")
 
     async def main_task(self, *args, **kwargs):
         """
@@ -41,5 +55,4 @@ class TemplateTask:
         try:
             await self.main_task()
         except Exception as e:
-            # TODO change this to comply with the logging system of the framework
-            self.debug(f"{e}")
+            self.debug(f"{e}", exc=e)
