@@ -8,9 +8,6 @@ from core.states import STATES
 
 class Task(TemplateTask):
 
-    name = "TM"
-    ID = 0x12
-
     packed = False
 
     async def main_task(self):
@@ -20,7 +17,8 @@ class Task(TemplateTask):
 
         elif SM.current_state == STATES.NOMINAL:
 
+            # Pack telemetry at the task rate
             self.packed = TelemetryPacker.pack_tm_frame()
             if self.packed:
                 self.log_info("Telemetry packed")
-                self.log_info(TelemetryPacker.PACKET)
+                self.log_info(TelemetryPacker.FRAME())
