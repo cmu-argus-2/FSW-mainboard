@@ -1,4 +1,4 @@
-# TODO Logging
+from core import logger
 
 
 class TemplateTask:
@@ -56,3 +56,43 @@ class TemplateTask:
             await self.main_task()
         except Exception as e:
             self.debug(f"{e}", exc=e)
+
+    def log_debug(self, msg):
+        """
+        Log a debug message with the task name
+
+        :param msg: Message to log
+        """
+        logger.debug(f"[{self.ID}][{self.name}] {msg}")
+
+    def log_info(self, msg):
+        """
+        Log a message with the task name
+
+        :param msg: Message to log
+        """
+        logger.info(f"[{self.ID}][{self.name}] {msg}")
+
+    def log_warning(self, msg):
+        """
+        Log a warning message with the task name
+
+        :param msg: Message to log
+        """
+        logger.warning(f"[{self.ID}][{self.name}] {msg}")
+
+    def log_error(self, msg):
+        """
+        Log an error message with the task name
+
+        :param msg: Message to log
+        """
+        logger.error(f"[{self.ID}][{self.name}] {msg}")
+
+    def log_critical(self, msg):
+        """
+        Log a critical message with the task name
+
+        :param msg: Message to log
+        """
+        logger.critical(f"[{self.ID}][{self.name}] {msg}")

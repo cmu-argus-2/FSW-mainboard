@@ -55,4 +55,4 @@ class Task(TemplateTask):
 
             DH.log_data("imu", self.log_data)
 
-            print(f"[{self.ID}][{self.name}] {dict(zip(self.data_keys, self.log_data))}")
+            self.log_info(f"{dict(zip(self.data_keys, self.log_data))}")
