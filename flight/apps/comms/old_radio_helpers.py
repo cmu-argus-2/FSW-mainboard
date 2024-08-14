@@ -13,9 +13,10 @@ import os
 import time
 from binascii import hexlify
 
-from apps.comms.radio_protocol import IMAGES, Definitions, construct_message
 from core import logger
 from hal.cubesat import CubeSat
+
+from flight.apps.comms.old_radio_protocol import IMAGES, Definitions, construct_message
 
 
 class SATELLITE_RADIO:
