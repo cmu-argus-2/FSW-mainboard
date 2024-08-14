@@ -21,5 +21,5 @@ class Task(TemplateTask):
             SATELLITE.RTC.set_datetime(time.struct_time((2024, 4, 24, 9, 30, 0, 3, 115, -1)))
             # rtc.set_time_source(r)
         elif SM.current_state == STATES.NOMINAL:
-            print(f"[{self.ID}][{self.name}] Time: {int(time.time())}")
-            print(f"[{self.ID}][{self.name}] Time since boot: {int(time.time()) - SATELLITE.BOOTTIME}")
+            self.log_info(f"Time: {int(time.time())}")
+            self.log_info(f"Time since boot: {int(time.time()) - SATELLITE.BOOTTIME}")

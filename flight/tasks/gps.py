@@ -73,4 +73,4 @@ class Task(TemplateTask):
         }
 
         DH.log_data("gps", readings)
-        print(f"[{self.ID}][{self.name}] ...")
+        self.log_info("...")

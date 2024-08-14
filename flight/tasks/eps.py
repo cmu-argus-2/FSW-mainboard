@@ -88,7 +88,7 @@ class Task(TemplateTask):
             ##
 
             DH.log_data("eps", self.log_data)
-            print(
-                f"[{self.ID}][{self.name}] Battery Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, \
+            self.log_info(
+                f"Battery Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, \
                                             Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA"
             )

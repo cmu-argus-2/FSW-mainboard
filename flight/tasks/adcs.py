@@ -125,4 +125,4 @@ class Task(TemplateTask):
 
             # Data logging
             DH.log_data("adcs", self.log_data)
-            print(f"[{self.ID}][{self.name}] {dict(zip(self.data_keys[8:11], self.log_data[8:11]))}")
+            self.log_info(f"{dict(zip(self.data_keys[8:11], self.log_data[8:11]))}")

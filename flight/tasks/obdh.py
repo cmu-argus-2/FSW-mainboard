@@ -24,5 +24,5 @@ class Task(TemplateTask):
             DH.update_SD_usage()
 
         gc.collect()
-        print(f"[{self.ID}][{self.name}] Data processes: {DH.get_all_data_processes_name()}")
-        print(f"[{self.ID}][{self.name}] Stored files: {DH.SD_usage()} bytes.")
+        self.log_info(f"Data processes: {DH.get_all_data_processes_name()}")
+        self.log_info(f"Stored files: {DH.SD_usage()} bytes.")
