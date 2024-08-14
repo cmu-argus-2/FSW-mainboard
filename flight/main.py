@@ -10,13 +10,17 @@ for path in ["/hal", "/apps", "/core"]:
     if path not in sys.path:
         sys.path.append(path)
 
-gc.collect()
-print(str(gc.mem_free()) + " bytes free")
+setup_logger(level="INFO")
 
-print("Booting ARGUS-1...")
+
+gc.collect()
+logger.info("Memory free: " + str(gc.mem_free()) + " bytes")
+
+
+logger.info("Booting ARGUS-1...")
 boot_errors = SATELLITE.boot_sequence()
-print("ARGUS-1 booted.")
-print("Boot Errors: ", boot_errors)
+logger.info("ARGUS-1 booted.")
+logger.warning(f"Boot Errors: {boot_errors}")
 
 """print("Running system diagnostics...")
 errors = SATELLITE.run_system_diagnostics()
@@ -24,24 +28,15 @@ print("System diagnostics complete")
 print("Errors:", errors)
 """
 
-"""
-from apps.data_handler import DataHandler as DH
-DH.delete_all_files()
-"""
-
 gc.collect()
-print(str(gc.mem_free()) + " bytes free")
-
+logger.info("Memory free: " + str(gc.mem_free()) + " bytes")
 
 try:
     # Run forever
 
-    setup_logger(level="INFO")
-
     logger.info("Starting state manager")
-
     state_manager.start(STATES.STARTUP, SM_CONFIGURATION, TASK_REGISTRY)
 
 except Exception as e:
-    print("ERROR:", e)
+    logger.critical("ERROR:", e)
     # TODO Log the error

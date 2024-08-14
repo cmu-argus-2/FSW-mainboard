@@ -35,6 +35,7 @@ import re
 import struct
 import time
 
+from core import logger
 from micropython import const
 
 try:
@@ -153,12 +154,11 @@ class DataProcess:
         if not path_exist(self.dir_path):
             try:
                 os.mkdir(self.dir_path)
-                print(f"Folder {self.dir_path} created successfully.")
+                logger.info(f"Folder {self.dir_path} created successfully.")
             except OSError as e:
-                print(f"Error creating folder: {e}")
+                logger.critical(f"Error creating folder: {e}")
         else:
-            # TODO log
-            print("Folder already exists.")
+            logger.info("Folder already exists.")
 
     @classmethod
     def compute_bytesize(cls, data_format: str) -> int:
@@ -245,7 +245,7 @@ class DataProcess:
             self.file = open(self.current_path, "ab+")
             self.status = _OPEN
         else:
-            print("File is already open.")
+            logger.info("File is already open.")
 
     def close(self) -> None:
         """
@@ -255,7 +255,7 @@ class DataProcess:
             self.file.close()
             self.status = _CLOSED
         else:
-            print("File is already closed.")
+            logger.info("File is already closed.")
 
     def request_TM_path(self, latest: bool = False) -> Optional[str]:
         """
@@ -300,8 +300,7 @@ class DataProcess:
             self.delete_paths.append(path)
             # TODO handle case where comms transmitted a file it wasn't suposed to
         else:
-            # TODO log
-            print("No file to acknowledge.")
+            logger.info("No file to acknowledge.")
 
     def clean_up(self) -> None:
         """
@@ -312,7 +311,7 @@ class DataProcess:
                 os.remove(d_path)
             else:
                 # TODO - log error, use exception handling instead
-                print(f"File {d_path} does not exist.")
+                logger.critical(f"File {d_path} does not exist.")
 
             self.delete_paths.remove(d_path)
 
@@ -344,12 +343,11 @@ class DataProcess:
                 filesize = file_stats[6]  # size of the file in bytes
                 return filesize
             except OSError as e:
-                # TODO log
-                print(f"Error getting file size: {e}")
+                logger.error(f"Error getting file size: {e}")
                 return None
         else:
             # TODO handle case where file does not exist
-            print("File does not exist.")
+            logger.warning(f"File {self.current_path} does not exist.")
             return None
 
     # DEBUG ONLY
@@ -377,7 +375,7 @@ class DataProcess:
                     content.append(struct.unpack(self.data_format, cr))
                 return content
         else:
-            print("File is not closed!")
+            logger.warning(f"Can't read {self.current_path}: File is not closed!")
 
 
 class ImageProcess(DataProcess):
@@ -526,7 +524,6 @@ class DataHandler:
                         )
 
         cls._SD_SCANNED = True
-        # print("SD Card Scanning complete - found ", cls.data_process_registry.keys())
 
     @classmethod
     def register_data_process(
@@ -596,7 +593,7 @@ class DataHandler:
             else:
                 raise KeyError("Data process not registered!")
         except KeyError as e:
-            print(f"Error: {e}")
+            logger.critical(f"Error: {e}")
 
     @classmethod
     def log_image(cls, data: List[bytes]) -> None:
@@ -615,7 +612,7 @@ class DataHandler:
             else:
                 raise KeyError("Data process not registered!")
         except KeyError as e:
-            print(f"Error: {e}")
+            logger.critical(f"Error: {e}")
 
     @classmethod
     def image_completed(cls) -> bool:
@@ -631,7 +628,7 @@ class DataHandler:
             else:
                 raise KeyError("Image data process not registered!")
         except KeyError as e:
-            print(f"Error: {e}")
+            logger.critical(f"Error: {e}")
 
     @classmethod
     def get_latest_data(cls, tag_name: str):
@@ -653,7 +650,7 @@ class DataHandler:
             else:
                 raise KeyError("Data process not registered!")
         except KeyError as e:
-            print(f"Error: {e}")
+            logger.critical(f"Error: {e}")
 
     @classmethod
     def list_directories(cls) -> List[str]:
@@ -738,7 +735,7 @@ class DataHandler:
             else:
                 raise KeyError("File process not registered.")
         except KeyError as e:
-            print(f"Error: {e}")
+            logger.warning(f"Error: {e}")
 
     @classmethod
     def data_process_exists(cls, tag_name: str) -> bool:
@@ -768,7 +765,7 @@ class DataHandler:
             else:
                 raise KeyError("Data  process not registered!")
         except KeyError as e:
-            print(f"Error: {e}")
+            logger.critical(f"Error: {e}")
 
     @classmethod
     def request_TM_path_image(cls, latest=False):
@@ -785,7 +782,7 @@ class DataHandler:
             else:
                 raise KeyError("Image process not registered!")
         except KeyError as e:
-            print(f"Error: {e}")
+            logger.critical(f"Error: {e}")
 
     @classmethod
     def notify_TM_path(cls, tag_name, path):
@@ -799,7 +796,7 @@ class DataHandler:
             else:
                 raise KeyError("Data process not registered!")
         except KeyError as e:
-            print(f"Error: {e}")
+            logger.critical(f"Error: {e}")
 
     @classmethod
     def clean_up(cls):
@@ -821,9 +818,9 @@ class DataHandler:
                 elif os.stat(file_path)[0] & 0x4000:  # Check if file is a directory
                     cls.delete_all_files(file_path)  # Recursively delete files in subdirectories
                     os.rmdir(file_path)  # Delete the empty directory
-            print("All files and directories deleted successfully!")
+            logger.info("All files and directories deleted successfully!")
         except Exception as e:
-            print(f"Error deleting files and directories: {e}")
+            logger.warning(f"Error deleting files and directories: {e}")
 
     @classmethod
     def get_current_file_size(cls, tag_name):
@@ -833,7 +830,7 @@ class DataHandler:
             else:
                 raise KeyError("File process not registered!")
         except KeyError as e:
-            print(f"Error: {e}")
+            logger.warning(f"Error: {e}")
 
     @classmethod
     def compute_total_size_files(cls, root_path: str = None) -> int:
@@ -916,7 +913,7 @@ def path_exist(path: str) -> bool:
         os.stat(try_path)
         return True
     except OSError as e:
-        print(f"{e} - {try_path} doesn't exist")
+        logger.info(f"{e} - {try_path} doesn't exist")
         return False
 
 

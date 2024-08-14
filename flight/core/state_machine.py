@@ -1,4 +1,5 @@
 import core.scheduler as scheduler
+from core import logger
 
 
 class StateManager:
@@ -60,11 +61,13 @@ class StateManager:
         """
 
         if new_state not in self.states:
+            logger.critical(f"State {new_state} is not in the list of states")
             raise ValueError(f"State {new_state} is not in the list of states")
 
         if self.__initialized:
             # prevent illegal transitions
             if not (new_state in self.config[self.__current_state]["MovesTo"]):
+                logger.critical(f"No transition from {self.__current_state} to {new_state}")
                 raise ValueError(f"No transition from {self.__current_state} to {new_state}")
         else:
             self.__initialized = True
@@ -76,7 +79,7 @@ class StateManager:
         self.stop_all_tasks()
         self.schedule_new_state_tasks(new_state)
 
-        print(f"Switched to state {new_state}")
+        logger.info(f"Switched to state {new_state}")
 
     def schedule_new_state_tasks(self, new_state):
 
