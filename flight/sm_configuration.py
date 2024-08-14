@@ -64,6 +64,7 @@ SM_CONFIGURATION = {
             TASK.COMMS: {"Frequency": 0.1, "Priority": 5, "ScheduleLater": True},
             TASK.THERMAL: {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
             TASK.GPS: {"Frequency": 0.5, "Priority": 5, "ScheduleLater": True},
+            TASK.TM: {"Frequency": 0.5, "Priority": 5, "ScheduleLater": True},
         },
         "MovesTo": [STATES.DOWNLINK, STATES.LOW_POWER, STATES.SAFE],
     },

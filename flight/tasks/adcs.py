@@ -122,18 +122,19 @@ class Task(TemplateTask):
 
             ## Attitude Determination
 
-            # TODO GPS flag for valid position
-            # Might need an attitude status flag
-            R_ecef_to_eci = ecef_to_eci(self.time)
-            gps_pos_eci = R_ecef_to_eci @ (
-                np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]) / 100
-            )
-            mag_eci = igrf_eci(self.time, gps_pos_eci)
-            sun_eci = approx_sun_position_ECI(self.time)
+            if DH.data_process_exists("gps"):
+                # TODO GPS flag for valid position
+                # Might need an attitude status flag
+                R_ecef_to_eci = ecef_to_eci(self.time)
+                gps_pos_eci = R_ecef_to_eci @ (
+                    np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]) / 100
+                )
+                mag_eci = igrf_eci(self.time, gps_pos_eci)
+                sun_eci = approx_sun_position_ECI(self.time)
 
-            # TRIAD
-            self.coarse_attitude = TRIAD(sun_eci, mag_eci, self.sun_vector, imu_mag_data)
-            self.log_data[ADCS_IDX.COARSE_ATTITUDE_QW : ADCS_IDX.COARSE_ATTITUDE_QZ + 1] = self.coarse_attitude
+                # TRIAD
+                self.coarse_attitude = TRIAD(sun_eci, mag_eci, self.sun_vector, imu_mag_data)
+                self.log_data[ADCS_IDX.COARSE_ATTITUDE_QW : ADCS_IDX.COARSE_ATTITUDE_QZ + 1] = self.coarse_attitude
 
             # Data logging
             DH.log_data("adcs", self.log_data)

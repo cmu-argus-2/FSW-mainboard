@@ -177,20 +177,20 @@ class TelemetryPacker:
         cls.PACKET[107:111] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.GYRO_Z])
 
         # Magnetometer X
-        cls.PACKET[111:115] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.MAGNETOMETER_X])
+        cls.PACKET[111:115] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.MAG_X])
         # Magnetometer Y
-        cls.PACKET[115:119] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.MAGNETOMETER_Y])
+        cls.PACKET[115:119] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.MAG_Y])
         # Magnetometer Z
-        cls.PACKET[119:123] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.MAGNETOMETER_Z])
+        cls.PACKET[119:123] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.MAG_Z])
 
         # Sun status
         cls.PACKET[123] = adcs_data[ADCS_IDX.SUN_STATUS] & 0xFF
         # Sun vector X
-        cls.PACKET[124:128] = pack_signed_long_int(adcs_data, ADCS_IDX.SUN_VEC_X)
+        cls.PACKET[124:128] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.SUN_VEC_X])
         # Sun vector Y
-        cls.PACKET[128:132] = pack_signed_long_int(adcs_data, ADCS_IDX.SUN_VEC_Y)
+        cls.PACKET[128:132] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.SUN_VEC_Y])
         # Sun vector Z
-        cls.PACKET[132:136] = pack_signed_long_int(adcs_data, ADCS_IDX.SUN_VEC_Z)
+        cls.PACKET[132:136] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.SUN_VEC_Z])
         # Eclipse bool
         cls.PACKET[136] = adcs_data[ADCS_IDX.ECLIPSE] & 0xFF
         # Light sensor X+
