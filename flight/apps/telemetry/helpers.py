@@ -99,3 +99,25 @@ def convert_fixed_point_to_float_hp(message_list):
         val = -val
 
     return val
+
+
+def pack_long_int(data, idx):
+    """
+    Packs a 4-byte integer from the specified index in the data list into a list of 4 bytes.
+
+    :param data: List of 4-byte integers.
+    :param idx: Index of the integer in the data list to pack.
+    :return: List of 4 bytes representing the packed 4-byte integer.
+    """
+    return [(data[idx] >> 24) & 0xFF, (data[idx] >> 16) & 0xFF, (data[idx] >> 8) & 0xFF, data[idx] & 0xFF]
+
+
+def pack_short_int(data, idx):
+    """
+    Packs a 2-byte integer from the specified index in the data list into a list of 2 bytes.
+
+    :param data: List of 2-byte integers.
+    :param idx: Index of the integer in the data list to pack.
+    :return: List of 2 bytes representing the packed 2-byte integer.
+    """
+    return [(data[idx] >> 8) & 0xFF, data[idx] & 0xFF]
