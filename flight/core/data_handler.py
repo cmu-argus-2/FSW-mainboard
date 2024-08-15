@@ -840,6 +840,7 @@ class DataHandler:
         Returns:
         - The total size in bytes.
         """
+        # TODO Remove recursion, really bad
         if root_path is None:
             root_path = cls.sd_path
         total_size: int = 0

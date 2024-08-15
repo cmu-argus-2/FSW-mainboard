@@ -12,14 +12,15 @@ class Task(TemplateTask):
     async def main_task(self):
 
         if SM.current_state == STATES.STARTUP:
-            DH.delete_all_files()
             if not DH.SD_scanned:
                 DH.scan_SD_card()
-                DH.update_SD_usage()
+                # DH.update_SD_usage()
+                gc.collect()
 
         elif SM.current_state == STATES.NOMINAL:
-            DH.update_SD_usage()
+            # DH.update_SD_usage()
+            pass
 
         gc.collect()
         self.log_info(f"Data processes: {DH.get_all_data_processes_name()}")
-        self.log_info(f"Stored files: {DH.SD_usage()} bytes.")
+        # self.log_info(f"Stored files: {DH.SD_usage()} bytes.")

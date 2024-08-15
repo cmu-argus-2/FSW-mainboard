@@ -11,6 +11,7 @@ satellite, and a pyramid of 4 light sensors angled at 45 degrees on the z+ face.
 
 """
 
+from core import logger
 from hal.configuration import SATELLITE
 from ulab import numpy as np
 
@@ -58,13 +59,11 @@ def read_light_sensors():
             lux_readings.append(s)
         except AttributeError as e:
             # logging.error(f"AttributeError for {face}: {e}")
-            err_msg = f"AttributeError for {face}: {e}"
-            print(err_msg)
+            logger.warning(f"AttributeError for {face}: {e}")
             lux_readings.append(ERROR_LUX)
         except Exception as e:
             # logging.error(f"Error reading {face}: {e}")
-            err_msg = f"Error reading {face}: {e}"
-            print(err_msg)
+            logger.warning(f"Error reading {face}: {e}")
             lux_readings.append(ERROR_LUX)
 
     # Read the pyramid on z+ face - not implemented in the HAL yet

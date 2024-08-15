@@ -19,3 +19,6 @@ class Task(TemplateTask):
         elif SM.current_state == STATES.NOMINAL:
             self.log_info(f"Time: {int(time.time())}")
             self.log_info(f"Time since boot: {int(time.time()) - SATELLITE.BOOTTIME}")
+
+            if int(time.time()) - SATELLITE.BOOTTIME > 10:
+                time.sleep(10000000)

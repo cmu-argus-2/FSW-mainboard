@@ -12,7 +12,7 @@ from apps.adcs.sun import (
     in_eclipse,
     read_light_sensors,
 )
-from apps.telemetry.constants import ADCS_IDX, GPS_IDX
+from apps.telemetry.constants import ADCS_IDX, GPS_IDX, IMU_IDX
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
@@ -89,10 +89,10 @@ class Task(TemplateTask):
 
             # Log IMU data
             self.log_data[ADCS_IDX.TIME_ADCS] = self.time
-            imu_mag_data = DH.get_latest_data("imu")[ADCS_IDX.MAGNETOMETER_X : ADCS_IDX.MAGNETOMETER_Z + 1]
+            imu_mag_data = DH.get_latest_data("imu")[IMU_IDX.MAGNETOMETER_X : IMU_IDX.MAGNETOMETER_Z + 1]
             self.log_data[ADCS_IDX.MAG_X : ADCS_IDX.MAG_Z + 1] = imu_mag_data
             self.log_data[ADCS_IDX.GYRO_X : ADCS_IDX.GYRO_Z + 1] = DH.get_latest_data("imu")[
-                ADCS_IDX.GYROSCOPE_X : ADCS_IDX.GYROSCOPE_Z + 1
+                IMU_IDX.GYROSCOPE_X : IMU_IDX.GYROSCOPE_Z + 1
             ]
 
             ## Sun Acquisition
@@ -106,7 +106,9 @@ class Task(TemplateTask):
             )
 
             self.log_data[ADCS_IDX.SUN_STATUS] = self.sun_status
-            self.log_data[ADCS_IDX.SUN_VEC_X : ADCS_IDX.SUN_VEC_Z + 1] = self.sun_vector
+            self.log_data[ADCS_IDX.SUN_VEC_X] = self.sun_vector[0]
+            self.log_data[ADCS_IDX.SUN_VEC_Y] = self.sun_vector[1]
+            self.log_data[ADCS_IDX.SUN_VEC_Z] = self.sun_vector[2]
             self.log_data[ADCS_IDX.ECLIPSE] = self.eclipse_state
             # Log dlux (decilux) instead of lux for TM space efficiency
             self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = int(lux_readings[0] / 10)
@@ -126,17 +128,34 @@ class Task(TemplateTask):
                 # TODO GPS flag for valid position
                 # Might need an attitude status flag
                 R_ecef_to_eci = ecef_to_eci(self.time)
-                gps_pos_ecef = np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]) * 0.01
-                gps_pos_eci = R_ecef_to_eci @ gps_pos_ecef
-                mag_eci = igrf_eci(self.time, gps_pos_eci)
+                gps_pos_ecef_meters = (
+                    np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,)) * 0.01
+                )
+                gps_pos_eci_meters = np.dot(R_ecef_to_eci, gps_pos_ecef_meters)
+                mag_eci = igrf_eci(self.time, gps_pos_eci_meters / 1000)
                 sun_eci = approx_sun_position_ECI(self.time)
 
                 # TRIAD
                 self.coarse_attitude = TRIAD(sun_eci, mag_eci, self.sun_vector, imu_mag_data)
-                self.log_data[ADCS_IDX.COARSE_ATTITUDE_QW : ADCS_IDX.COARSE_ATTITUDE_QZ + 1] = self.coarse_attitude
+                self.log_data[ADCS_IDX.COARSE_ATTITUDE_QW] = (
+                    self.coarse_attitude[0] if not is_nan(self.coarse_attitude[0]) else 0
+                )
+                self.log_data[ADCS_IDX.COARSE_ATTITUDE_QX] = (
+                    self.coarse_attitude[1] if not is_nan(self.coarse_attitude[1]) else 0
+                )
+                self.log_data[ADCS_IDX.COARSE_ATTITUDE_QY] = (
+                    self.coarse_attitude[2] if not is_nan(self.coarse_attitude[2]) else 0
+                )
+                self.log_data[ADCS_IDX.COARSE_ATTITUDE_QZ] = (
+                    self.coarse_attitude[3] if not is_nan(self.coarse_attitude[3]) else 0
+                )
 
             # Data logging
             DH.log_data("adcs", self.log_data)
-
             self.log_info(f"{dict(zip(self.data_keys[8:13], self.log_data[8:13]))}")  # Sun
-            self.log_info(f"{dict(zip(self.data_keys[28:32], self.coarse_attitude))}")
+            self.log_info(f"{dict(zip(self.data_keys[28:32], self.log_data[28:32]))}")  # Coarse attitude
+
+
+def is_nan(x):
+    # np.nan is not equal to itself
+    return x != x

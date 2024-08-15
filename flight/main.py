@@ -2,6 +2,7 @@ import gc
 import sys
 
 from core import logger, setup_logger, state_manager
+from core.data_handler import DataHandler as DH
 from core.states import STATES
 from hal.configuration import SATELLITE
 from sm_configuration import SM_CONFIGURATION, TASK_REGISTRY
@@ -31,6 +32,7 @@ print("Errors:", errors)
 gc.collect()
 logger.info("Memory free: " + str(gc.mem_free()) + " bytes")
 
+DH.delete_all_files()
 
 try:
     # Run forever

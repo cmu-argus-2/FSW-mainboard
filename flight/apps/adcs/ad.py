@@ -33,6 +33,11 @@ def rotm2quat(r):
 
 def TRIAD(n1, n2, b1, b2):
 
+    n1 = np.array(n1)
+    n2 = np.array(n2)
+    b1 = np.array(b1)
+    b2 = np.array(b2)
+
     # Normalize the input vectors
     n1 /= np.linalg.norm(n1)
     n2 /= np.linalg.norm(n2)
@@ -43,15 +48,15 @@ def TRIAD(n1, n2, b1, b2):
     t1 = n1
     t2 = np.cross(n1, n2) / np.linalg.norm(np.cross(n1, n2))  # Third linearly independant vector
     t3 = np.cross(t1, t2) / np.linalg.norm(np.cross(t1, t2))
-    T = np.array([t1, t2, t3]).T
+    T = np.array([t1, t2, t3]).transpose()
 
     # Body triad
     w1 = b1
     w2 = np.cross(b1, b2) / np.linalg.norm(np.cross(b1, b2))
     w3 = np.cross(w1, w2) / np.linalg.norm(np.cross(w1, w2))
-    W = np.array([w1, w2, w3]).T
+    W = np.array([w1, w2, w3]).transpose()
 
     # Determine attitude
-    Q = np.dot(T, np.transpose(W))
+    Q = np.dot(T, W.transpose())
 
     return rotm2quat(Q)

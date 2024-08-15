@@ -1,7 +1,7 @@
 """
+
 Helper functions for converting to fixed point format and back.
 
-Authors: Akshat Sahay, Ibrahima Sory Sow, DJ Morvay
 """
 
 
@@ -109,7 +109,7 @@ def pack_unsigned_long_int(data, idx):
     :param idx: Index of the integer in the data list to pack.
     :return: List of 4 bytes representing the packed 4-byte integer.
     """
-    return [(data[idx] >> 24) & 0xFF, (data[idx] >> 16) & 0xFF, (data[idx] >> 8) & 0xFF, data[idx] & 0xFF]
+    return bytearray([(data[idx] >> 24) & 0xFF, (data[idx] >> 16) & 0xFF, (data[idx] >> 8) & 0xFF, data[idx] & 0xFF])
 
 
 def pack_signed_long_int(data, idx):
@@ -122,7 +122,7 @@ def pack_signed_long_int(data, idx):
     """
     # Handle signed integers by converting to unsigned before packing
     val = data[idx] & 0xFFFFFFFF
-    return [(val >> 24) & 0xFF, (val >> 16) & 0xFF, (val >> 8) & 0xFF, val & 0xFF]
+    return bytearray([(val >> 24) & 0xFF, (val >> 16) & 0xFF, (val >> 8) & 0xFF, val & 0xFF])
 
 
 def unpack_signed_long_int(byte_list):
@@ -158,7 +158,7 @@ def pack_unsigned_short_int(data, idx):
     :param idx: Index of the integer in the data list to pack.
     :return: List of 2 bytes representing the packed 2-byte unsigned integer.
     """
-    return [(data[idx] >> 8) & 0xFF, data[idx] & 0xFF]
+    return bytearray([(data[idx] >> 8) & 0xFF, data[idx] & 0xFF])
 
 
 def unpack_unsigned_short_int(byte_list):
@@ -180,7 +180,7 @@ def pack_signed_short_int(data, idx):
     :return: List of 2 bytes representing the packed 2-byte signed integer.
     """
     val = data[idx] & 0xFFFF
-    return [(val >> 8) & 0xFF, val & 0xFF]
+    return bytearray([(val >> 8) & 0xFF, val & 0xFF])
 
 
 def unpack_signed_short_int(byte_list):
