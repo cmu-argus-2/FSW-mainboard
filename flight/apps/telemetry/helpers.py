@@ -30,7 +30,7 @@ def convert_float_to_fixed_point_lp(val):
     val_dec_LSB = val_dec & 0xFF
 
     # Combine into a single list
-    return [val_int_MSB, val_int_LSB, val_dec_MSB, val_dec_LSB]
+    return bytearray([val_int_MSB, val_int_LSB, val_dec_MSB, val_dec_LSB])
 
 
 def convert_fixed_point_to_float_lp(message_list):
@@ -73,7 +73,7 @@ def convert_float_to_fixed_point_hp(val):
     val_int_byte = (val_int & 0x7F) | (neg_bit_flag << 7)
 
     # Pack into message list
-    message_list = [val_int_byte, (val_dec >> 16) & 0xFF, (val_dec >> 8) & 0xFF, val_dec & 0xFF]
+    message_list = bytearray([val_int_byte, (val_dec >> 16) & 0xFF, (val_dec >> 8) & 0xFF, val_dec & 0xFF])
 
     return message_list
 

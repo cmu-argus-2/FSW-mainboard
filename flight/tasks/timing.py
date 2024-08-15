@@ -20,5 +20,5 @@ class Task(TemplateTask):
             self.log_info(f"Time: {int(time.time())}")
             self.log_info(f"Time since boot: {int(time.time()) - SATELLITE.BOOTTIME}")
 
-            if int(time.time()) - SATELLITE.BOOTTIME > 10:
-                time.sleep(10000000)
+            """if int(time.time()) - SATELLITE.BOOTTIME > 20:
+                time.sleep(10000000)"""
