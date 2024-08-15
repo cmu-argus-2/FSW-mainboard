@@ -23,10 +23,9 @@ For struct module format strings:
     "d": 8,  # double
 
 """
-from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, PAYLOAD_IDX, THERMAL_IDX
+from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, THERMAL_IDX
 from apps.telemetry.helpers import (
     convert_float_to_fixed_point_hp,
-    convert_float_to_fixed_point_lp,
     pack_signed_long_int,
     pack_signed_short_int,
     pack_unsigned_long_int,
