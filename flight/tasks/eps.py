@@ -74,7 +74,7 @@ class Task(TemplateTask):
         elif SM.current_state == STATES.NOMINAL:
 
             if not DH.data_process_exists("eps"):
-                DH.register_data_process("eps", self.data_keys, self.data_format, True, line_limit=100)
+                DH.register_data_process("eps", self.data_keys, self.data_format, True, line_limit=500)
 
             # Get power system readings
 

@@ -32,7 +32,7 @@ class Task(TemplateTask):
         if SM.current_state == STATES.NOMINAL:
 
             if not DH.data_process_exists("imu"):
-                DH.register_data_process("imu", self.data_keys, "Lfffffffff", True, line_limit=40)
+                DH.register_data_process("imu", self.data_keys, "Lfffffffff", True, line_limit=2000)
 
             accel = SATELLITE.IMU.accel()
             mag = SATELLITE.IMU.mag()

@@ -47,7 +47,7 @@ class Task(TemplateTask):
         else:  # Run for all states
 
             if not DH.data_process_exists("cdh"):
-                DH.register_data_process("cdh", self.data_keys, self.data_format, True, line_limit=100)
+                DH.register_data_process("cdh", self.data_keys, self.data_format, True, line_limit=500)
 
             self.log_data[CDH_IDX.TIME] = int(time.time())
             self.log_data[CDH_IDX.SC_STATE] = SM.current_state

@@ -83,7 +83,7 @@ class Task(TemplateTask):
         if SM.current_state == STATES.NOMINAL:
 
             if not DH.data_process_exists("adcs"):
-                DH.register_data_process("adcs", self.data_keys, self.data_format, True, line_limit=100)
+                DH.register_data_process("adcs", self.data_keys, self.data_format, True, line_limit=1000)
 
             self.time = int(time.time())
 
