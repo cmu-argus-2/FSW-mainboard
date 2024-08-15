@@ -1,8 +1,10 @@
-import pytest
-import tests.cp_mock  # noqa: F401
+from datetime import datetime as dt
+from datetime import timezone
 
 import numpy as np
-from datetime import datetime as dt, timezone
+import pytest
+
+import tests.cp_mock  # noqa: F401
 from flight.apps.adcs.igrf import igrf, igrf_eci
 
 EARTH_RADIUS = 6.378136300e3  # km

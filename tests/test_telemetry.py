@@ -1,9 +1,10 @@
 import pytest
+
 from flight.apps.telemetry.helpers import (
-    convert_float_to_fixed_point_lp,
+    convert_fixed_point_to_float_hp,
     convert_fixed_point_to_float_lp,
     convert_float_to_fixed_point_hp,
-    convert_fixed_point_to_float_hp,
+    convert_float_to_fixed_point_lp,
 )
 
 
