@@ -6,7 +6,7 @@ It defines the SPI communication protocol between the 2 MCU's.
 TODO: Until porting to new board configuration is complete, this will send directly to the radio module.
 
 """
-from core import logger
+
 from hal.configuration import SATELLITE
 
 

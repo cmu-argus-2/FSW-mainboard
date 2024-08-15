@@ -4,7 +4,6 @@ from apps.comms.rf_mcu import RF_MCU
 from apps.telemetry import TelemetryPacker
 from core import TemplateTask
 from core import state_manager as SM
-from core.data_handler import DataHandler as DH
 from core.states import STATES
 
 
