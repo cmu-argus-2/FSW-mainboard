@@ -107,7 +107,7 @@ class ArgusV1Components:
     LIGHT_SENSOR_XM_I2C_ADDRESS = const(0x45)
     LIGHT_SENSOR_YP_I2C_ADDRESS = const(0x46)
     LIGHT_SENSOR_YM_I2C_ADDRESS = const(0x47)
-    LIGHT_SENSOR_ZP_I2C_ADDRESS = const(0x48)
+    LIGHT_SENSOR_ZM_I2C_ADDRESS = const(0x48)
     LIGHT_SENSOR_CONVERSION_TIME = 0b0000
 
     # RADIO
@@ -189,7 +189,7 @@ class ArgusV1(CubeSat):
         error_list += self.__light_sensor_xm_boot()
         error_list += self.__light_sensor_yp_boot()
         error_list += self.__light_sensor_ym_boot()
-        error_list += self.__light_sensor_zp_boot()
+        error_list += self.__light_sensor_zm_boot()
         error_list += self.__radio_boot()
         error_list += self.__neopixel_boot()
         error_list += self.__burn_wire_boot()
@@ -589,23 +589,23 @@ class ArgusV1(CubeSat):
 
         return [Errors.NOERROR]
 
-    def __light_sensor_zp_boot(self) -> list[int]:
-        """light_sensor_zp_boot: Boot sequence for the light sensor in the z+ direction
+    def __light_sensor_zm_boot(self) -> list[int]:
+        """light_sensor_zm_boot: Boot sequence for the light sensor in the z+ direction
 
         :return: Error code if the light sensor failed to initialize
         """
         try:
-            light_sensor_zp = OPT4001(
+            light_sensor_zm = OPT4001(
                 ArgusV1Components.LIGHT_SENSORS_I2C,
-                ArgusV1Components.LIGHT_SENSOR_ZP_I2C_ADDRESS,
+                ArgusV1Components.LIGHT_SENSOR_ZM_I2C_ADDRESS,
                 conversion_time=ArgusV1Components.LIGHT_SENSOR_CONVERSION_TIME,
             )
 
             if self.__middleware_enabled:
-                light_sensor_zp = Middleware(light_sensor_zp)
+                light_sensor_zm = Middleware(light_sensor_zm)
 
-            self.__light_sensor_zp = light_sensor_zp
-            self.__device_list.append(light_sensor_zp)
+            self.__light_sensor_zm = light_sensor_zm
+            self.__device_list.append(light_sensor_zm)
         except Exception as e:
             if self.__debug:
                 raise e
@@ -804,8 +804,8 @@ class ArgusV1(CubeSat):
             return Errors.DIAGNOSTICS_ERROR_LIGHT_SENSOR_YP
         elif device is self.LIGHT_SENSOR_YM:
             return Errors.DIAGNOSTICS_ERROR_LIGHT_SENSOR_YM
-        elif device is self.LIGHT_SENSOR_ZP:
-            return Errors.DIAGNOSTICS_ERROR_LIGHT_SENSOR_ZP
+        elif device is self.LIGHT_SENSOR_ZM:
+            return Errors.DIAGNOSTICS_ERROR_LIGHT_SENSOR_ZM
         elif device is self.RADIO:
             return Errors.DIAGNOSTICS_ERROR_RADIO
         elif device is self.NEOPIXEL:

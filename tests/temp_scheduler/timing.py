@@ -14,7 +14,7 @@ class Task(TemplateTask):
     async def main_task(self):
 
         print(f"[{self.ID}][{self.name}] GLOBAL STATE: {SM.current_state}.")
-        print(f"[{self.ID}][{self.name}] Time: {time.time()}")
+        print(f"[{self.ID}][{self.name}] Time: {int(time.time())}")
 
         if SM.current_state == "STARTUP":
             SM.switch_to("NOMINAL")

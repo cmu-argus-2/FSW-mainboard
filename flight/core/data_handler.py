@@ -6,7 +6,8 @@ Onboard Data Handling (OBDH) Module
 This module provides the main interface for the onboard data handling system consisting of:
 - Persistent storage management and single point of access for the onboard mass storage system (SD Card)
 - Logging interface for flight software tasks
-- Automated file services for the flight software, including telemetry (TM) and telecommand (TC) file generation for transmission
+- Automated file services for the flight software, including telemetry (TM) and telecommand (TC)
+file generation for transmission
 - Data processing and formatting for the flight software
 
 Author: Ibrahima Sory Sow
@@ -34,6 +35,7 @@ import re
 import struct
 import time
 
+from core import logger
 from micropython import const
 
 try:
@@ -115,7 +117,8 @@ class DataProcess:
 
         # TODO Check formating e.g. 'iff', 'iif', 'fff', 'iii', etc. ~ done within compute_bytesize()
         self.data_format = "<" + data_format
-        # Need to specify endianness to disable padding (https://stackoverflow.com/questions/47750056/python-struct-unpack-length-error/47750278#47750278)
+        # Need to specify endianness to disable padding
+        # (https://stackoverflow.com/questions/47750056/python-struct-unpack-length-error/47750278#47750278)
         self.bytesize = self.compute_bytesize(self.data_format)
 
         self.last_data = {}
@@ -151,12 +154,11 @@ class DataProcess:
         if not path_exist(self.dir_path):
             try:
                 os.mkdir(self.dir_path)
-                print(f"Folder {self.dir_path} created successfully.")
+                logger.info(f"Folder {self.dir_path} created successfully.")
             except OSError as e:
-                print(f"Error creating folder: {e}")
+                logger.critical(f"Error creating folder: {e}")
         else:
-            # TODO log
-            print("Folder already exists.")
+            logger.info("Folder already exists.")
 
     @classmethod
     def compute_bytesize(cls, data_format: str) -> int:
@@ -176,7 +178,7 @@ class DataProcess:
             b_size += cls._FORMAT[c]
         return b_size
 
-    def log(self, data: dict) -> None:
+    def log(self, data: List) -> None:
         """
         Logs the given data (eventually to a file if persistent = True).
 
@@ -190,12 +192,11 @@ class DataProcess:
         self.last_data = data
 
         if self.persistent:
-            values = [data[key] for key in self.data_keys]
-            bin_data = struct.pack(self.data_format, *values)
+            bin_data = struct.pack(self.data_format, *data)
             self.file.write(bin_data)
             self.file.flush()  # Flush immediately
 
-    def get_latest_data(self) -> dict:
+    def get_latest_data(self) -> List:
         """
         Returns the latest data point.
 
@@ -234,7 +235,7 @@ class DataProcess:
             str: The new filename.
         """
         # TODO timestamp must be obtained through the REFERENCE TIME until the time module is done
-        return self.dir_path + self.tag_name + "_" + str(time.time()) + ".bin"
+        return self.dir_path + self.tag_name + "_" + str(int(time.time())) + ".bin"
 
     def open(self) -> None:
         """
@@ -244,7 +245,7 @@ class DataProcess:
             self.file = open(self.current_path, "ab+")
             self.status = _OPEN
         else:
-            print("File is already open.")
+            logger.info("File is already open.")
 
     def close(self) -> None:
         """
@@ -254,7 +255,7 @@ class DataProcess:
             self.file.close()
             self.status = _CLOSED
         else:
-            print("File is already closed.")
+            logger.info("File is already closed.")
 
     def request_TM_path(self, latest: bool = False) -> Optional[str]:
         """
@@ -299,8 +300,7 @@ class DataProcess:
             self.delete_paths.append(path)
             # TODO handle case where comms transmitted a file it wasn't suposed to
         else:
-            # TODO log
-            print("No file to acknowledge.")
+            logger.info("No file to acknowledge.")
 
     def clean_up(self) -> None:
         """
@@ -311,7 +311,7 @@ class DataProcess:
                 os.remove(d_path)
             else:
                 # TODO - log error, use exception handling instead
-                print(f"File {d_path} does not exist.")
+                logger.critical(f"File {d_path} does not exist.")
 
             self.delete_paths.remove(d_path)
 
@@ -343,12 +343,11 @@ class DataProcess:
                 filesize = file_stats[6]  # size of the file in bytes
                 return filesize
             except OSError as e:
-                # TODO log
-                print(f"Error getting file size: {e}")
+                logger.error(f"Error getting file size: {e}")
                 return None
         else:
             # TODO handle case where file does not exist
-            print("File does not exist.")
+            logger.warning(f"File {self.current_path} does not exist.")
             return None
 
     # DEBUG ONLY
@@ -357,7 +356,8 @@ class DataProcess:
         Reads the content of the current file.
 
         Returns:
-            A list of tuples representing the content of the file. Each tuple contains the unpacked data from a line in the file.
+            A list of tuples representing the content of the file.
+            Each tuple contains the unpacked data from a line in the file.
 
         Raises:
             FileNotFoundError: If the file does not exist.
@@ -375,7 +375,7 @@ class DataProcess:
                     content.append(struct.unpack(self.data_format, cr))
                 return content
         else:
-            print("File is not closed!")
+            logger.warning(f"Can't read {self.current_path}: File is not closed!")
 
 
 class ImageProcess(DataProcess):
@@ -467,13 +467,21 @@ class DataHandler:
     Managing class for all data processes and the SD card.
 
 
-    Note: If the same SPI bus is shared with other peripherals, the SD card must be initialized before accessing any other peripheral on the bus.
+    Note: If the same SPI bus is shared with other peripherals, the SD card must be initialized
+    before accessing any other peripheral on the bus.
     Failure to do so can prevent the SD card from being recognized until it is powered off or re-inserted.
     """
 
     sd_path = "/sd"
     # Keep track of all file processes
     data_process_registry = dict()
+
+    _SD_SCANNED = False
+    _SD_USAGE = 0
+
+    @property
+    def SD_scanned(self):
+        return self._SD_SCANNED
 
     @classmethod
     def scan_SD_card(cls) -> None:
@@ -514,9 +522,8 @@ class DataHandler:
                             persistent=True,
                             line_limit=line_limit,
                         )
-                    print("HERE6")
 
-        # print("SD Card Scanning complete - found ", cls.data_process_registry.keys())
+        cls._SD_SCANNED = True
 
     @classmethod
     def register_data_process(
@@ -566,13 +573,13 @@ class DataHandler:
         cls.data_process_registry[_IMG_TAG_NAME] = ImageProcess(_IMG_TAG_NAME)
 
     @classmethod
-    def log_data(cls, tag_name: str, data: dict) -> None:
+    def log_data(cls, tag_name: str, data: List) -> None:
         """
         Logs the provided data using the specified tag name.
 
         Parameters:
         - tag_name (str): The name of data process to associate with the logged data.
-        - data (dict): The data to be logged.
+        - data (List): The data to be logged.
 
         Raises:
         - KeyError: If the provided tag name is not registered in the data process registry.
@@ -586,7 +593,7 @@ class DataHandler:
             else:
                 raise KeyError("Data process not registered!")
         except KeyError as e:
-            print(f"Error: {e}")
+            logger.critical(f"Error: {e}")
 
     @classmethod
     def log_image(cls, data: List[bytes]) -> None:
@@ -605,7 +612,7 @@ class DataHandler:
             else:
                 raise KeyError("Data process not registered!")
         except KeyError as e:
-            print(f"Error: {e}")
+            logger.critical(f"Error: {e}")
 
     @classmethod
     def image_completed(cls) -> bool:
@@ -621,7 +628,7 @@ class DataHandler:
             else:
                 raise KeyError("Image data process not registered!")
         except KeyError as e:
-            print(f"Error: {e}")
+            logger.critical(f"Error: {e}")
 
     @classmethod
     def get_latest_data(cls, tag_name: str):
@@ -643,7 +650,7 @@ class DataHandler:
             else:
                 raise KeyError("Data process not registered!")
         except KeyError as e:
-            print(f"Error: {e}")
+            logger.critical(f"Error: {e}")
 
     @classmethod
     def list_directories(cls) -> List[str]:
@@ -728,7 +735,7 @@ class DataHandler:
             else:
                 raise KeyError("File process not registered.")
         except KeyError as e:
-            print(f"Error: {e}")
+            logger.warning(f"Error: {e}")
 
     @classmethod
     def data_process_exists(cls, tag_name: str) -> bool:
@@ -758,7 +765,7 @@ class DataHandler:
             else:
                 raise KeyError("Data  process not registered!")
         except KeyError as e:
-            print(f"Error: {e}")
+            logger.critical(f"Error: {e}")
 
     @classmethod
     def request_TM_path_image(cls, latest=False):
@@ -775,7 +782,7 @@ class DataHandler:
             else:
                 raise KeyError("Image process not registered!")
         except KeyError as e:
-            print(f"Error: {e}")
+            logger.critical(f"Error: {e}")
 
     @classmethod
     def notify_TM_path(cls, tag_name, path):
@@ -789,7 +796,7 @@ class DataHandler:
             else:
                 raise KeyError("Data process not registered!")
         except KeyError as e:
-            print(f"Error: {e}")
+            logger.critical(f"Error: {e}")
 
     @classmethod
     def clean_up(cls):
@@ -811,9 +818,9 @@ class DataHandler:
                 elif os.stat(file_path)[0] & 0x4000:  # Check if file is a directory
                     cls.delete_all_files(file_path)  # Recursively delete files in subdirectories
                     os.rmdir(file_path)  # Delete the empty directory
-            print("All files and directories deleted successfully!")
+            logger.info("All files and directories deleted successfully!")
         except Exception as e:
-            print(f"Error deleting files and directories: {e}")
+            logger.warning(f"Error deleting files and directories: {e}")
 
     @classmethod
     def get_current_file_size(cls, tag_name):
@@ -823,7 +830,7 @@ class DataHandler:
             else:
                 raise KeyError("File process not registered!")
         except KeyError as e:
-            print(f"Error: {e}")
+            logger.warning(f"Error: {e}")
 
     @classmethod
     def compute_total_size_files(cls, root_path: str = None) -> int:
@@ -833,6 +840,7 @@ class DataHandler:
         Returns:
         - The total size in bytes.
         """
+        # TODO Remove recursion, really bad
         if root_path is None:
             root_path = cls.sd_path
         total_size: int = 0
@@ -845,7 +853,15 @@ class DataHandler:
             else:
                 total_size += os.stat(file_path)[6]
             pass
-        return total_size
+        return int(total_size)
+
+    @classmethod
+    def update_SD_usage(cls) -> None:
+        cls._SD_USAGE = cls.compute_total_size_files()
+
+    @classmethod
+    def SD_usage(cls) -> int:
+        return cls._SD_USAGE
 
     # DEBUG ONLY
     @classmethod
@@ -886,7 +902,9 @@ class DataHandler:
 
 def path_exist(path: str) -> bool:
     """
-    Replacement for os.path.exists() function, which is not implemented in micropython. If the request for a directory, the function will return True if the directory exists, even if it is empty.
+    Replacement for os.path.exists() function, which is not implemented in micropython.
+    If the request for a directory, the function will return True if the directory exists,
+    even if it is empty.
     """
     try_path = path
     if path[-1] == "/":
@@ -896,7 +914,7 @@ def path_exist(path: str) -> bool:
         os.stat(try_path)
         return True
     except OSError as e:
-        print(f"{e} - {try_path} doesn't exist")
+        logger.info(f"{e} - {try_path} doesn't exist")
         return False
 
 

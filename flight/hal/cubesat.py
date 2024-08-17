@@ -1,3 +1,5 @@
+import time
+
 from hal.drivers.middleware.errors import Errors
 from hal.drivers.middleware.generic_driver import Driver
 
@@ -35,7 +37,7 @@ class CubeSat:
         self.__light_sensor_xm = None
         self.__light_sensor_yp = None
         self.__light_sensor_ym = None
-        self.__light_sensor_zp = None
+        self.__light_sensor_zm = None
         self.__rtc = None
         self.__radio = None
         self.__sd_card = None
@@ -45,6 +47,7 @@ class CubeSat:
 
         # Debugging
         self.__neopixel = None
+        self._time_ref_boot = int(time.time())
 
     ## ABSTRACT METHOD ##
     def boot_sequence(self) -> list[int]:
@@ -191,11 +194,11 @@ class CubeSat:
         return self.__light_sensor_ym
 
     @property
-    def LIGHT_SENSOR_ZP(self):
-        """LIGHT_SENSOR_ZP: Returns the light sensor in the z+ direction
+    def LIGHT_SENSOR_ZM(self):
+        """LIGHT_SENSOR_ZM: Returns the light sensor in the z+ direction
         :return: object or None
         """
-        return self.__light_sensor_zp
+        return self.__light_sensor_zm
 
     @property
     def RTC(self):
@@ -245,3 +248,10 @@ class CubeSat:
         :return: object or None
         """
         return self.__payload_uart
+
+    @property
+    def BOOTTIME(self):
+        """BOOTTIME: Returns the reference count since the board booted
+        :return: object or None
+        """
+        return self._time_ref_boot

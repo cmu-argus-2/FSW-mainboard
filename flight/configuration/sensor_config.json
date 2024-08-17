@@ -19,12 +19,12 @@
         "normal": [0, -1, 0]
     },
 
-    "light_sensor_zp": 
+    "light_sensor_zm": 
     {
         "normal": [0, 0, 1]
     },
 
-    "sun_sensor_zm": 
+    "sun_sensor_zp": 
     {
         "normal": [0, 0, -1]
     }

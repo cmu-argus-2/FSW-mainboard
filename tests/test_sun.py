@@ -1,7 +1,7 @@
 import pytest
 
 import tests.cp_mock  # noqa: F401
-from flight.apps.sun import ERROR_LUX, SUN_VECTOR_STATUS, compute_body_sun_vector_from_lux, in_eclipse
+from flight.apps.adcs.sun import ERROR_LUX, SUN_VECTOR_STATUS, compute_body_sun_vector_from_lux, in_eclipse
 
 
 @pytest.mark.parametrize(

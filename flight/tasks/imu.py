@@ -1,17 +1,16 @@
-# from hal.pycubed import hardware
 import time
 
+from apps.telemetry.constants import IMU_IDX
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
+from core.states import STATES
 from hal.configuration import SATELLITE
 
 
 class Task(TemplateTask):
 
-    name = "IMU"
-    ID = 0x03
-
+    # To be removed - kept until proper logging is implemented
     data_keys = [
         "time",
         "accel_x",
@@ -25,41 +24,32 @@ class Task(TemplateTask):
         "gyro_z",
     ]
 
-    # Temporary fake time
-    curr_time = time.monotonic_ns()
+    # pre-allocation
+    log_data = [0.0] * 10
 
     async def main_task(self):
 
-        if SM.current_state == "NOMINAL":
+        if SM.current_state == STATES.NOMINAL:
 
             if not DH.data_process_exists("imu"):
-                DH.register_data_process("imu", self.data_keys, "ffffffffff", True, line_limit=40)
+                DH.register_data_process("imu", self.data_keys, "Lfffffffff", True, line_limit=2000)
 
-            # print(f"[{self.ID}][{self.name}] Reading BMX160.")
+            accel = SATELLITE.IMU.accel()
+            mag = SATELLITE.IMU.mag()
+            gyro = SATELLITE.IMU.gyro()
 
-            # SATELLITE.IMU.enable()
+            # Replace data in the pre-allocated list
+            self.log_data[IMU_IDX.TIME_IMU] = int(time.time())
+            self.log_data[IMU_IDX.ACCEL_X] = accel[0]
+            self.log_data[IMU_IDX.ACCEL_Y] = accel[1]
+            self.log_data[IMU_IDX.ACCEL_Z] = accel[2]
+            self.log_data[IMU_IDX.MAGNETOMETER_X] = mag[0]
+            self.log_data[IMU_IDX.MAGNETOMETER_Y] = mag[1]
+            self.log_data[IMU_IDX.MAGNETOMETER_Z] = mag[2]
+            self.log_data[IMU_IDX.GYROSCOPE_X] = gyro[0]
+            self.log_data[IMU_IDX.GYROSCOPE_Y] = gyro[1]
+            self.log_data[IMU_IDX.GYROSCOPE_Z] = gyro[2]
 
-            readings = {
-                "accel": SATELLITE.IMU.accel(),
-                "mag": SATELLITE.IMU.mag(),
-                "gyro": SATELLITE.IMU.gyro(),
-            }
+            DH.log_data("imu", self.log_data)
 
-            # SATELLITE.IMU.disable()
-
-            log_data = {
-                "time": time.time(),
-                "accel_x": readings["accel"][0],
-                "accel_y": readings["accel"][1],
-                "accel_z": readings["accel"][2],
-                "mag_x": readings["mag"][0],
-                "mag_y": readings["mag"][1],
-                "mag_z": readings["mag"][2],
-                "gyro_x": readings["gyro"][0],
-                "gyro_y": readings["gyro"][1],
-                "gyro_z": readings["gyro"][2],
-            }
-
-            DH.log_data("imu", log_data)
-
-            print(f"[{self.ID}][{self.name}] Data: {readings}")
+            self.log_info(f"{dict(zip(self.data_keys, self.log_data))}")

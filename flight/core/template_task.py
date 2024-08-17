@@ -1,4 +1,4 @@
-# TODO Logging
+from core import logger
 
 
 class TemplateTask:
@@ -10,20 +10,18 @@ class TemplateTask:
         name:        Name of the task object.
     """
 
-    ID = 0xFF
-    name = "TEMPLATE TASK"
-
-    def __init__(self):
-        pass
+    def __init__(self, id, name="TASK"):
+        self.ID = id
+        self.name = name
 
     def debug(self, msg):
         """
-        Print a debug message formatted with the task name
+        Print a debug message formatted with the task name, filename, and line number
 
         :param msg: Debug message to print
         :param level: > 1 will print as a sub-level
         """
-        print(f"[{self.ID}][{self.name}] Error: {msg}")
+        logger.info(f"[{self.ID}][{self.name}] {msg}")
 
     async def main_task(self, *args, **kwargs):
         """
@@ -41,5 +39,44 @@ class TemplateTask:
         try:
             await self.main_task()
         except Exception as e:
-            # TODO change this to comply with the logging system of the framework
             self.debug(f"{e}")
+
+    def log_debug(self, msg):
+        """
+        Log a debug message with the task name
+
+        :param msg: Message to log
+        """
+        logger.debug(f"[{self.ID}][{self.name}] {msg}")
+
+    def log_info(self, msg):
+        """
+        Log a message with the task name
+
+        :param msg: Message to log
+        """
+        logger.info(f"[{self.ID}][{self.name}] {msg}")
+
+    def log_warning(self, msg):
+        """
+        Log a warning message with the task name
+
+        :param msg: Message to log
+        """
+        logger.warning(f"[{self.ID}][{self.name}] {msg}")
+
+    def log_error(self, msg):
+        """
+        Log an error message with the task name
+
+        :param msg: Message to log
+        """
+        logger.error(f"[{self.ID}][{self.name}] {msg}")
+
+    def log_critical(self, msg):
+        """
+        Log a critical message with the task name
+
+        :param msg: Message to log
+        """
+        logger.critical(f"[{self.ID}][{self.name}] {msg}")

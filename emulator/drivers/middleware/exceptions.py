@@ -160,7 +160,7 @@ class light_sensor_ym_fatal_exception(Exception):
         return f"{type(self.exception).__name__}: {self.exception}"
 
 
-class light_sensor_zp_fatal_exception(Exception):
+class light_sensor_zm_fatal_exception(Exception):
     """light_sensor_z_fatal_exception: Exception for fatal light sensor in the z direction errors"""
 
     def __init__(self, exception: Exception):

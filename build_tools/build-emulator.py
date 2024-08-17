@@ -52,15 +52,14 @@ def create_build(source_folder, emulator_folder):
     print(hal_folder)
     for root, dirs, files in os.walk(emulator_folder):
         for file in files:
-            if os.path.relpath(root, emulator_folder).startswith("fake_core"):
-                continue
             source_path = os.path.join(root, file)
             build_path = os.path.join(hal_folder, os.path.relpath(source_path, emulator_folder))
             os.makedirs(os.path.dirname(build_path), exist_ok=True)
             shutil.copy2(source_path, build_path)
             print(f"Copied {source_path} to {build_path}")
 
-    shutil.copy2("emulator/fake_core/data_handler.py", "build/lib/core/data_handler.py")
+    # Adding data_handler.py to the build folder
+    shutil.copy2("flight/core/data_handler.py", "build/lib/core/data_handler.py")
 
     # Create main.py file with single import statement "import main_module"
     build_folder = os.path.join(build_folder, "..")

@@ -1,34 +1,26 @@
 # Onboard Data Handling (OBDH) Task
 
+import gc
+
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
+from core.states import STATES
 
 
 class Task(TemplateTask):
-
-    name = "OBDH"
-    ID = 0x02
-
-    # Class variables
-    SD_cleaned = False  # TODO DEBUG
-    SD_scanned = False
-    SD_stored_volume = 0
-
     async def main_task(self):
 
-        if SM.current_state == "STARTUP":
-            if not self.SD_cleaned:
-                DH.delete_all_files()
-                self.SD_cleaned = True
-            if not self.SD_scanned:
+        if SM.current_state == STATES.STARTUP:
+            if not DH.SD_scanned:
                 DH.scan_SD_card()
-                self.SD_scanned = True
+                # DH.update_SD_usage()
+                gc.collect()
 
-            # TODO Temporarily start global state switch here
-            # TODO should have a verification checklist in monitor and switch from there
-            SM.switch_to("NOMINAL")
-        elif SM.current_state == "NOMINAL":
-            self.SD_stored_volume = DH.compute_total_size_files()
+        elif SM.current_state == STATES.NOMINAL:
+            # DH.update_SD_usage()
+            pass
 
-        print(f"[{self.ID}][{self.name}] Stored files: {self.SD_stored_volume} bytes.")
+        gc.collect()
+        self.log_info(f"Data processes: {DH.get_all_data_processes_name()}")
+        # self.log_info(f"Stored files: {DH.SD_usage()} bytes.")

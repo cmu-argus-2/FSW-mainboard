@@ -1,8 +1,9 @@
-from apps.comms.radio_helpers import SATELLITE_RADIO
+from hal.configuration import SATELLITE
+
+from flight.apps.comms.old_radio_helpers import SATELLITE_RADIO
 
 # Argus-1 Radio Libs
-from apps.comms.radio_protocol import Definitions
-from hal.configuration import SATELLITE
+from flight.apps.comms.old_radio_protocol import Definitions
 
 SAT_RADIO = SATELLITE_RADIO(SATELLITE)
 SAT_RADIO.heartbeat_seq = [Definitions.SAT_HEARTBEAT_BATT]

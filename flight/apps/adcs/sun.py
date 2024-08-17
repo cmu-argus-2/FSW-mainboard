@@ -1,3 +1,17 @@
+"""
+
+Sun Acquisition Module for the Attitude Determination and Control Subsystem (ADCS).
+
+This module is responsible for acquiring and processing light sensor data to determine the
+sun vector relative to the satellite's body frame. It also determines whether the satellite
+is in an eclipse based on the sensor readings.
+
+Argus posseses 5 light sensors, 1 on each of the x+, x-, y+, y-, and z- faces of the
+satellite, and a pyramid of 4 light sensors angled at 45 degrees on the z+ face.
+
+"""
+
+from core import logger
 from hal.configuration import SATELLITE
 from ulab import numpy as np
 
@@ -15,7 +29,7 @@ class SUN_VECTOR_STATUS:
     MISSING_XM_READING = 0x5
     MISSING_YP_READING = 0x6
     MISSING_YM_READING = 0x7
-    MISSING_ZP_READING = 0x8
+    MISSING_ZM_READING = 0x8
     MISSING_FULL_X_AXIS_READING = 0x9
     MISSING_FULL_Y_AXIS_READING = 0xA
     MISSING_FULL_Z_AXIS_READING = 0xB
@@ -23,7 +37,7 @@ class SUN_VECTOR_STATUS:
 
 def read_light_sensors():
     """
-    Read the light sensors on the x+,x-,y+,y-, and z+ faces of the satellite
+    Read the light sensors on the x+,x-,y+,y-, and z- faces of the satellite
 
     Returns:
         lux_readings: list of lux readings on each face. A "ERROR_LUX" reading comes from a dysfunctional sensor
@@ -34,7 +48,7 @@ def read_light_sensors():
         "LIGHT_SENSOR_XM",
         "LIGHT_SENSOR_YP",
         "LIGHT_SENSOR_YM",
-        "LIGHT_SENSOR_ZP",
+        "LIGHT_SENSOR_ZM",
     ]
 
     lux_readings = []
@@ -45,16 +59,14 @@ def read_light_sensors():
             lux_readings.append(s)
         except AttributeError as e:
             # logging.error(f"AttributeError for {face}: {e}")
-            err_msg = f"AttributeError for {face}: {e}"
-            print(err_msg)
+            logger.warning(f"AttributeError for {face}: {e}")
             lux_readings.append(ERROR_LUX)
         except Exception as e:
             # logging.error(f"Error reading {face}: {e}")
-            err_msg = f"Error reading {face}: {e}"
-            print(err_msg)
+            logger.warning(f"Error reading {face}: {e}")
             lux_readings.append(ERROR_LUX)
 
-    # Read the z- face - not implemented in the HAL yet
+    # Read the pyramid on z+ face - not implemented in the HAL yet
 
     return lux_readings
 
@@ -65,7 +77,7 @@ def compute_body_sun_vector_from_lux(I_vec):
 
     Args:
         I_vec: flux values on each face in the following order
-        - X+ face, X- face, Y+ face, Y- face, Z+ face
+        - X+ face, X- face, Y+ face, Y- face, Z- face
 
     Returns:
         sun_body: unit vector from spacecraft to sun expressed in body frame
@@ -82,7 +94,7 @@ def compute_body_sun_vector_from_lux(I_vec):
     elif num_valid_readings < 3:
         status = SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS
     elif I_vec[4] == ERROR_LUX:
-        status = SUN_VECTOR_STATUS.MISSING_ZP_READING
+        status = SUN_VECTOR_STATUS.MISSING_ZM_READING
     elif I_vec[0] == ERROR_LUX and I_vec[1] == ERROR_LUX:
         status = SUN_VECTOR_STATUS.MISSING_FULL_X_AXIS_READING
     elif I_vec[2] == ERROR_LUX and I_vec[3] == ERROR_LUX:
@@ -125,7 +137,7 @@ def in_eclipse(raw_readings, threshold_lux_illumination=1000):
     Check the eclipse conditions based on the lux readings
 
     Parameters:
-        raw_readings (list): list of lux readings on each face (X+ face, X- face, Y+ face, Y- face, Z+ face)
+        raw_readings (list): list of lux readings on each face (X+ face, X- face, Y+ face, Y- face, Z- face)
 
     Returns:
         eclipse (bool): True if the satellite is in eclipse, False if no eclipse or no correct readings.
@@ -146,5 +158,36 @@ def in_eclipse(raw_readings, threshold_lux_illumination=1000):
     return eclipse
 
 
-def read_sun_sensor_zm():
+def read_pyramid_sun_sensor_zm():
+    # TODO
     pass
+
+
+def unix_time_to_julian_day(unix_time):
+    """Takes in a unix timestamp and returns the julian day"""
+    return unix_time / 86400 + 2440587.5
+
+
+def approx_sun_position_ECI(utime):
+    """
+    Formula taken from "Satellite Orbits: Models, Methods and Applications", Section 3.3.2, page 70, by Motenbruck and Gill
+
+    Args:
+        - utime: Unix timestamp
+
+    Returns:
+        - Sun pointing in Earth Centered Intertial (ECI) frame (km)
+    """
+    JD = unix_time_to_julian_day(utime)
+    OplusW = 282.94  # Ω + ω
+    T = (JD - 2451545.0) / 36525
+
+    M = np.radians(357.5256 + 35999.049 * T)
+
+    long = np.radians(OplusW + np.degrees(M) + (6892 / 3600) * np.sin(M) + (72 / 3600) * np.sin(2 * M))
+    r_mag = (149.619 - 2.499 * np.cos(M) - 0.021 * np.cos(2 * M)) * 10**6
+
+    epsilon = np.radians(23.43929111)
+    r_vec = np.array([r_mag * np.cos(long), r_mag * np.sin(long) * np.cos(epsilon), r_mag * np.sin(long) * np.sin(epsilon)])
+
+    return r_vec

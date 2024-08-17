@@ -448,7 +448,7 @@ def convert_floating_point_hp(message_list):
     :return: value as floating point
 
     Convert HP FP value back to floating point
-    Range: [-128.9999999, 128.9999999]
+    Range: [-127.9999999, 127.9999999]
     """
     val = 0
     neg_bit_flag = 0

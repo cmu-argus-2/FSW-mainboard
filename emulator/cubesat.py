@@ -1,3 +1,4 @@
+import time
 from typing import List, Optional
 
 from hal.drivers.diagnostics.diagnostics import Diagnostics
@@ -36,7 +37,7 @@ class CubeSat:
         self._light_sensor_xm = None
         self._light_sensor_yp = None
         self._light_sensor_ym = None
-        self._light_sensor_zp = None
+        self._light_sensor_zm = None
         self._rtc = None
         self._radio = None
         self._sd_card = None
@@ -46,6 +47,7 @@ class CubeSat:
 
         # Debugging
         self._neopixel = None
+        self._time_ref_boot = int(time.time())
 
     # ABSTRACT METHOD #
     def boot_sequence(self) -> List[int]:
@@ -165,11 +167,11 @@ class CubeSat:
         return self._light_sensor_ym
 
     @property
-    def LIGHT_SENSOR_ZP(self):
-        """LIGHT_SENSOR_ZP: Returns the light sensor in the z+ direction
+    def LIGHT_SENSOR_ZM(self):
+        """LIGHT_SENSOR_ZM: Returns the light sensor in the z- direction
         :return: object or None
         """
-        return self._light_sensor_zp
+        return self._light_sensor_zm
 
     @property
     def RTC(self):
@@ -219,3 +221,10 @@ class CubeSat:
         :return: object or None
         """
         return self._payload_uart
+
+    @property
+    def BOOTTIME(self):
+        """BOOTTIME: Returns the reference count since the board booted
+        :return: object or None
+        """
+        return self._time_ref_boot

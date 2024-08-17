@@ -13,11 +13,10 @@ import os
 import time
 from binascii import hexlify
 
-# Argus-1 Lib
-from apps.comms.radio_protocol import IMAGES, Definitions, construct_message
-
-# PyCubed Board Lib
+from core import logger
 from hal.cubesat import CubeSat
+
+from flight.apps.comms.old_radio_protocol import IMAGES, Definitions, construct_message
 
 
 class SATELLITE_RADIO:
@@ -69,7 +68,6 @@ class SATELLITE_RADIO:
         ## ---------- Image Sizes and Message Counts ---------- ##
         if not self.image_strs:
             # No image in buffer
-            # print("No image stored on satellite")
 
             # Set all image attributes to 0 for SAT_IMAGES message
             self.sat_images.image_UID = 0x00
@@ -165,7 +163,6 @@ class SATELLITE_RADIO:
 
             if self.gs_req_message_ID == Definitions.GS_STOP:
                 # Kill comms with GS
-                # print("GS stopped comms with SAT!")
                 self.heartbeat_sent = False
 
                 self.gs_req_ack = 0x0
@@ -211,7 +208,6 @@ class SATELLITE_RADIO:
 
                 rec_bytes.close()
 
-                # print(f"OTA file successfully uplinked!")
                 self.ota_array.clear()
                 self.ota_sequence_count = 0
 
@@ -228,9 +224,8 @@ class SATELLITE_RADIO:
                 self.gs_req_message_ID = 0x00
                 self.gs_req_ack = 1
             else:
-                # print(f"Received (raw bytes): {my_packet}")
+
                 crc_check = self.sat.RADIO.crc_error()
-                # print(f"CRC Status: {crc_check}")
 
                 if crc_check > 0:
                     self.crc_count += 1
@@ -343,7 +338,7 @@ class SATELLITE_RADIO:
 
             # TODO: remove
             msg = hexlify(bytes([0xFF, 0xFF, 0x00, 0x00]) + tx_message)
-            print(f"[100][SERIAL OUTPUT]:{msg}")
+            logger.info(f"[100][SERIAL OUTPUT]:{msg}")
             # Send a message to GS
             self.sat.RADIO.send(tx_message)
             self.crc_count = 0
