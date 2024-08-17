@@ -4,7 +4,7 @@ Telemetry packing for transmission
 
 Each fixed-length LoRa Payload is structured as follows
 MESSAGE_ID : 1 byte
-SEQ_COUNT  : 2 bytes
+SEQ_COUNT  : 1 byte
 PACKET_LENGTH: 1 byte
 PACKET_DATA  : 252 bytes (for now)
 
@@ -37,6 +37,8 @@ from core.data_handler import DataHandler as DH
 from micropython import const
 
 
+# No instantiation, the class acts as a namespace for the shared state
+# Avoid global scope pollution and maintain consistency with the rest of the codebase
 class TelemetryPacker:
     """
     Packs telemetry data for transmission

@@ -52,8 +52,6 @@ def create_build(source_folder, emulator_folder):
     print(hal_folder)
     for root, dirs, files in os.walk(emulator_folder):
         for file in files:
-            """if os.path.relpath(root, emulator_folder).startswith("fake_core"):
-            continue"""
             source_path = os.path.join(root, file)
             build_path = os.path.join(hal_folder, os.path.relpath(source_path, emulator_folder))
             os.makedirs(os.path.dirname(build_path), exist_ok=True)

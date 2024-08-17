@@ -15,8 +15,6 @@ class RF_MCU:
     High-level interface to communicate with the RF MCU managing the SEMTECH SX1262 RF LoRa module (E22-900M30S).
     """
 
-    SPI = None
-
     @classmethod
     def transmit(self, msg_bytes: bytearray):
         """
