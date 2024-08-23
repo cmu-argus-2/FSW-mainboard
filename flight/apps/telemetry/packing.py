@@ -51,7 +51,7 @@ class TelemetryPacker:
     _FRAME = bytearray(_TM_FRAME_SIZE)  # pre-allocated buffer for packing
     _FRAME[0] = const(0x01) & 0xFF  # message ID
     _FRAME[1:3] = pack_unsigned_short_int([const(0x01)], 0)  # sequence count
-    _FRAME[3] = const(246) & 0xFF  # packet length
+    _FRAME[3] = const(245) & 0xFF  # packet length
 
     @classmethod
     def FRAME(cls):
@@ -330,11 +330,11 @@ class TelemetryPacker:
             thermal_data = DH.get_latest_data("thermal")
 
             # IMU temperature
-            cls._FRAME[244:246] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.IMU_TEMPERATURE)
+            cls._FRAME[243:245] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.IMU_TEMPERATURE)
             # CPU temperature
-            cls._FRAME[246:248] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.CPU_TEMPERATURE)
+            cls._FRAME[245:247] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.CPU_TEMPERATURE)
             # Battery temperature
-            cls._FRAME[248:250] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.BATTERY_PACK_TEMPERATURE)
+            cls._FRAME[247:249] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.BATTERY_PACK_TEMPERATURE)
 
         else:
             logger.error("No Thermal data available")
