@@ -7,7 +7,6 @@ and acknowledgement RX.
 import os
 import time
 
-from apps.telemetry import TelemetryPacker
 from hal.configuration import SATELLITE
 
 
@@ -35,40 +34,37 @@ class MSG_ID:
 
 
 class SATELLITE_RADIO:
-    """
-    Name: __init__
-    Description: Initialization of radio class
-    """
+    sat = SATELLITE
+    state = COMMS_STATE.TX_HEARTBEAT
 
-    def __init__(self, sat: SATELLITE):
-        self.sat = sat
-        self.state = COMMS_STATE.TX_HEARTBEAT
+    tm_frame = bytearray(256)
 
-        self.filepath = ""
-        self.file_ID = 0x00
-        self.file_size = 0
-        self.file_message_count = 0 
+    filepath = ""
+    file_ID = 0x00
+    file_size = 0
+    file_message_count = 0 
 
-        self.file_array = []
+    file_array = []
 
-        self.tx_message = []
+    tx_message = []
 
-        self.rx_message_ID = 0x00
-        self.rx_message_sequence_count = 0
-        self.rx_message_size = 0
-        self.rx_message_rssi = 0
+    rx_message_ID = 0x00
+    rx_message_sequence_count = 0
+    rx_message_size = 0
+    rx_message_rssi = 0
 
-        self.gs_rx_message_ID = 0x0
-        self.gs_req_message_ID = 0x0
-        self.gs_req_seq_count = 0
+    gs_rx_message_ID = 0x0
+    gs_req_message_ID = 0x0
+    gs_req_seq_count = 0
 
-        self.crc_count = 0
+    crc_count = 0
 
     """
         Name: file_get_metadata
         Description: Get TX file metadata from flash 
     """
 
+    @classmethod
     def file_get_metadata(self):
         if not(self.filepath):
             # No file at filepath
@@ -92,6 +88,7 @@ class SATELLITE_RADIO:
         Description: Packetize TX file and store in file array for TX
     """
 
+    @classmethod
     def file_packetize(self):
         # Initialize / empty file array
         self.file_array = []
@@ -117,6 +114,7 @@ class SATELLITE_RADIO:
         Description: Return file metadata for transmission
     """
 
+    @classmethod
     def file_pack_metadata(self):
         return (
             self.file_ID.to_bytes(1, "big")
@@ -131,6 +129,7 @@ class SATELLITE_RADIO:
         Timeout for RX is set to 1s (change for increasing / decreasing blocking time)
     """
 
+    @classmethod
     def receive_message(self):
         # Get packet from radio over SPI
         packet = self.sat.RADIO.receive(timeout = 1)
@@ -189,6 +188,7 @@ class SATELLITE_RADIO:
         Description: Generate TX message for file metadata
     """
 
+    @classmethod
     def transmit_file_metadata(self):
         # Transmit stored image info
         tx_header = bytes(
@@ -207,6 +207,7 @@ class SATELLITE_RADIO:
         Description: Generate TX message for file packet
     """
 
+    @classmethod
     def transmit_file_pkt(self):
         tx_header = (
             (MSG_ID.SAT_FILE_PKT).to_bytes(1, "big")
@@ -224,11 +225,12 @@ class SATELLITE_RADIO:
         Description: Transmit message via the LoRa module
     """
 
+    @classmethod
     def transmit_message(self):
         # Check comms state and TX message accordingly 
         if (self.state == COMMS_STATE.TX_HEARTBEAT):
             # Transmit SAT heartbeat
-            self.tx_message = TelemetryPacker.FRAME()
+            self.tx_message = self.tm_frame
 
         elif (self.state == COMMS_STATE.TX_METADATA):
             # Transmit file metatdata
@@ -241,7 +243,7 @@ class SATELLITE_RADIO:
         else:
             # Transmit SAT heartbeat
             self.state = COMMS_STATE.TX_HEARTBEAT
-            self.tx_message = TelemetryPacker.FRAME()
+            self.tx_message = self.tm_frame
 
         # Send a message to GS
         self.sat.RADIO.send(self.tx_message)
