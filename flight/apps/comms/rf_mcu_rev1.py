@@ -10,7 +10,7 @@ import time
 from hal.configuration import SATELLITE
 
 
-FILE_PKTSIZE = 252
+FILE_PKTSIZE = 250
 
 
 class COMMS_STATE:
@@ -37,7 +37,7 @@ class SATELLITE_RADIO:
     sat = SATELLITE
     state = COMMS_STATE.TX_HEARTBEAT
 
-    tm_frame = bytearray(256)
+    tm_frame = bytearray(250)
 
     filepath = ""
     file_ID = 0x00
