@@ -205,7 +205,7 @@ class SATELLITE_RADIO:
             # Unknown message ID, return to default state
             self.state = COMMS_STATE.TX_HEARTBEAT
 
-        return self.state
+        return self.gs_req_message_ID
 
     """
         Name: transmit_file_metadata
