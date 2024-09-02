@@ -1,6 +1,6 @@
 # Communication task which uses the radio to transmit and receive messages.
 
-from apps.comms.rf_mcu_rev1 import SATELLITE_RADIO
+from apps.comms.rf_mcu import SATELLITE_RADIO
 from apps.telemetry import TelemetryPacker
 from core import TemplateTask
 from core import state_manager as SM
@@ -23,7 +23,7 @@ class Task(TemplateTask):
                 # Transmit telemetry
                 self.tx_msg_id = SATELLITE_RADIO.transmit_message()
                 self.log_info(
-                    f"Sent message with ID: {self.tx_msg_id}, State: {SATELLITE_RADIO.state}"
+                    f"Sent message with ID: {self.tx_msg_id}"
                 )
 
                 self.rq_msg_id = SATELLITE_RADIO.receive_message()

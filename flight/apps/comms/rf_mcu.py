@@ -189,8 +189,12 @@ class SATELLITE_RADIO:
 
                 return self.gs_req_message_ID
 
-            if self.gs_req_message_ID == MSG_ID.SAT_FILE_METADATA:
-                # Start new file TX sequence, get new filepath
+            if self.gs_req_message_ID == MSG_ID.SAT_HEARTBEAT:
+                # Send latest TM frame
+                self.state = COMMS_STATE.TX_HEARTBEAT
+
+            elif self.gs_req_message_ID == MSG_ID.SAT_FILE_METADATA:
+                # Send file metadata
                 self.state = COMMS_STATE.TX_METADATA
 
             elif self.gs_req_message_ID == MSG_ID.SAT_FILE_PKT:
@@ -219,7 +223,7 @@ class SATELLITE_RADIO:
             [
                 (MSG_ID.SAT_FILE_METADATA),
                 0x0,
-                0x1,
+                0x0,
                 0x7,
             ]
         )
@@ -260,7 +264,7 @@ class SATELLITE_RADIO:
             # Transmit file metatdata
             self.transmit_file_metadata()
 
-        elif (self.state == COMMS_STATE.TX_METADATA):
+        elif (self.state == COMMS_STATE.TX_FILEPKT):
             # Transmit file packets with requested sequence count 
             self.transmit_file_pkt()
 

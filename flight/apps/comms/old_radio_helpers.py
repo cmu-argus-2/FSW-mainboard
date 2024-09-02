@@ -1,5 +1,7 @@
 """
-'radio_helpers.py'
+OLD APPLICATION FILE FOR COMMS
+
+rf_mcu.py is the new comms application file
 ======================
 Satellite radio class for Argus-1 CubeSat.
 Message packing/unpacking for telemetry/image TX

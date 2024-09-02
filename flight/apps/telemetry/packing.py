@@ -50,7 +50,7 @@ class TelemetryPacker:
 
     _FRAME = bytearray(_TM_FRAME_SIZE)  # pre-allocated buffer for packing
     _FRAME[0] = const(0x01) & 0xFF  # message ID
-    _FRAME[1:3] = pack_unsigned_short_int([const(0x01)], 0)  # sequence count
+    _FRAME[1:3] = pack_unsigned_short_int([const(0x00)], 0)  # sequence count
     _FRAME[3] = const(245) & 0xFF  # packet length
 
     @classmethod
