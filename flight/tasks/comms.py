@@ -22,13 +22,11 @@ class Task(TemplateTask):
 
                 # Transmit telemetry
                 self.tx_msg_id = SATELLITE_RADIO.transmit_message()
-                self.log_info(
-                    f"Sent message with ID: {self.tx_msg_id}"
-                )
+                self.log_info(f"Sent message with ID: {self.tx_msg_id}")
 
                 self.rq_msg_id = SATELLITE_RADIO.receive_message()
 
-                if(self.rq_msg_id != 0x00):
+                if self.rq_msg_id != 0x00:
                     self.log_info(f"GS requested message ID: {self.rq_msg_id}")
                 else:
                     self.log_info("No response from GS")
