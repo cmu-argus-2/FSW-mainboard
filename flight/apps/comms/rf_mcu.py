@@ -5,7 +5,6 @@ and acknowledgement RX.
 """
 
 import os
-import time
 
 from core import logger
 from hal.configuration import SATELLITE
