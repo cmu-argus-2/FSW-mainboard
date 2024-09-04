@@ -4,7 +4,7 @@ Telemetry packing for transmission
 
 Each fixed-length LoRa Payload is structured as follows
 MESSAGE_ID : 1 byte
-SEQ_COUNT  : 1 byte
+SEQ_COUNT  : 2 byte
 PACKET_LENGTH: 1 byte
 PACKET_DATA  : 252 bytes (for now)
 
@@ -46,11 +46,11 @@ class TelemetryPacker:
 
     _TM_AVAILABLE = False
 
-    _TM_FRAME_SIZE = const(256)  # size of the telemetry frame
+    _TM_FRAME_SIZE = const(250)  # size of the telemetry frame
 
     _FRAME = bytearray(_TM_FRAME_SIZE)  # pre-allocated buffer for packing
     _FRAME[0] = const(0x01) & 0xFF  # message ID
-    _FRAME[1:3] = pack_unsigned_short_int([const(0x01)], 0)  # sequence count
+    _FRAME[1:3] = pack_unsigned_short_int([const(0x00)], 0)  # sequence count
     _FRAME[3] = const(245) & 0xFF  # packet length
 
     @classmethod

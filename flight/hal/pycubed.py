@@ -148,7 +148,8 @@ class PyCubed:
         _rf_rst1.switch_to_output(value=True)
         self.RADIO_DIO0.switch_to_input()
 
-        # If the same SPI bus is shared with other peripherals, the SD card must be initialized before accessing any other peripheral on the bus.
+        # If the same SPI bus is shared with other peripherals,
+        # the SD card must be initialized before accessing any other peripheral on the bus.
         # Failure to do so can prevent the SD card from being recognized until it is powered off or re-inserted.
         try:
             # Baud rate depends on the card, 4MHz should be safe
