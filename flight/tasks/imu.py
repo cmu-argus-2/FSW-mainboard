@@ -11,7 +11,7 @@ from hal.configuration import SATELLITE
 class Task(TemplateTask):
 
     # To be removed - kept until proper logging is implemented
-    data_keys = [
+    """data_keys = [
         "time",
         "accel_x",
         "accel_y",
@@ -22,7 +22,7 @@ class Task(TemplateTask):
         "gyro_x",
         "gyro_y",
         "gyro_z",
-    ]
+    ]"""
 
     # pre-allocation
     log_data = [0.0] * 10
@@ -33,7 +33,7 @@ class Task(TemplateTask):
         if SM.current_state == STATES.NOMINAL:
 
             if not DH.data_process_exists("imu"):
-                DH.register_data_process("imu", self.data_keys, "Lfffffffff", True, data_limit=100000, write_interval=10)
+                DH.register_data_process("imu", "Lfffffffff", True, data_limit=100000, write_interval=10)
 
             accel = SATELLITE.IMU.accel()
             mag = SATELLITE.IMU.mag()
@@ -55,4 +55,6 @@ class Task(TemplateTask):
 
             self.log_print_counter += 1
             if self.log_print_counter % 10 == 0:
-                self.log_info(f"{dict(zip(self.data_keys, self.log_data))}")
+                # self.log_info(f"{dict(zip(self.data_keys, self.log_data))}")
+                self.log_print_counter = 0
+                self.log_info(f"{self.log_data}")

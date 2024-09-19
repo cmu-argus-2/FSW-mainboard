@@ -15,13 +15,15 @@ from core.states import STATES, STR_STATES
 class Task(TemplateTask):
 
     # To be removed - kept until proper logging is implemented
-    data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "REBOOT_COUNT", "WATCHDOG_TIMER", "HAL_BITFLAGS"]
+    # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "REBOOT_COUNT", "WATCHDOG_TIMER", "HAL_BITFLAGS"]
 
-    log_data = [0] * len(data_keys)
+    log_data = [0] * 7
     data_format = "LbLbbbb"
 
     gc.collect()
     total_memory = gc.mem_alloc() + gc.mem_free()
+
+    log_print_counter = 0
 
     def get_memory_usage(self):
         return int(gc.mem_alloc() / self.total_memory * 100)
@@ -50,7 +52,7 @@ class Task(TemplateTask):
         else:  # Run for all states
 
             if not DH.data_process_exists("cdh"):
-                DH.register_data_process("cdh", self.data_keys, self.data_format, True, data_limit=100000)
+                DH.register_data_process("cdh", self.data_format, True, data_limit=100000)
 
             # gc.collect()
 
@@ -73,5 +75,8 @@ class Task(TemplateTask):
 
             # periodic system checks (HW) - better another task for this
 
-        self.log_info(f"GLOBAL STATE: {STR_STATES[SM.current_state]}.")
-        self.log_info(f"RAM USAGE: {self.log_data[CDH_IDX.CURRENT_RAM_USAGE]}%")
+        self.log_print_counter += 1
+        if self.log_print_counter % 10 == 0:
+            self.log_print_counter = 0
+            self.log_info(f"GLOBAL STATE: {STR_STATES[SM.current_state]}.")
+            self.log_info(f"RAM USAGE: {self.log_data[CDH_IDX.CURRENT_RAM_USAGE]}%")

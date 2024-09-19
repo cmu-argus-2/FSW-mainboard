@@ -11,7 +11,7 @@ from core.states import STATES
 
 class Task(TemplateTask):
 
-    data_keys = [
+    """data_keys = [
         "TIME",
         "GPS_MESSAGE_ID",
         "GPS_FIX_MODE",
@@ -33,7 +33,7 @@ class Task(TemplateTask):
         "GPS_ECEF_VX",
         "GPS_ECEF_VY",
         "GPS_ECEF_VZ",
-    ]
+    ]"""
 
     data_format = "LBBBHIiiiiHHHHHiiiiii"
     log_data = [0] * 21
@@ -44,7 +44,7 @@ class Task(TemplateTask):
             pass
         elif SM.current_state == STATES.NOMINAL:
             if not DH.data_process_exists("gps"):
-                DH.register_data_process("gps", self.data_keys, self.data_format, True, data_limit=100000, write_interval=10)
+                DH.register_data_process("gps", self.data_format, True, data_limit=100000, write_interval=10)
 
             # TODO GPS frame parsing - get ECEF in (cm) and ECEF velocity in cm/s
 

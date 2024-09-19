@@ -59,7 +59,6 @@ class DataProcess:
 
     Attributes:
         tag_name (str): The tag name for the file.
-        data_keys (List[str]): The list of data keys.
         data_format (str): The format of the data to be written to the file.
         persistent (bool): Whether the data should be logged to a file (default is True).
         data_limit (int): The maximum number of data in bytes allowed in the file (default is 100kb).
@@ -93,7 +92,6 @@ class DataProcess:
     def __init__(
         self,
         tag_name: str,
-        data_keys: List[str],
         data_format: str,
         persistent: bool = True,
         data_limit: int = 100000,
@@ -106,7 +104,6 @@ class DataProcess:
 
         Args:
             tag_name (str): The tag name for the file (with no spaces or special characters).
-            data_keys (List[str]): The list of data keys.
             data_format (str): The format of the data to be written to the file. e.g. 'iff', 'iif', 'fff', 'iii', etc.
             persistent (bool, optional): Whether the file should be persistent or not (default is True).
             data_limit (int, optional): The maximum number of data in bytes allowed in the file (default is 100kb).
@@ -116,7 +113,6 @@ class DataProcess:
         """
 
         self.tag_name = tag_name
-        self.data_keys = data_keys
         self.file = None
         self.persistent = persistent
         self.write_interval = int(write_interval)
@@ -151,7 +147,6 @@ class DataProcess:
                 config_data = {
                     "data_format": self.data_format[1:],  # remove the < character
                     "data_limit": data_limit,
-                    "data_keys": data_keys,
                     "write_interval": write_interval,
                 }
                 with open(config_file_path, "w") as config_file:
@@ -525,12 +520,10 @@ class DataHandler:
                         continue
                     data_format: str = config_data.get("data_format")
                     data_limit: int = config_data.get("data_limit")
-                    data_keys: List[str] = config_data.get("data_keys")
                     write_interval: int = config_data.get("write_interval")
                     if data_format and data_limit:
                         cls.register_data_process(
                             tag_name=dir_name,
-                            data_keys=data_keys,
                             data_format=data_format,
                             persistent=True,
                             data_limit=data_limit,
@@ -543,7 +536,6 @@ class DataHandler:
     def register_data_process(
         cls,
         tag_name: str,
-        data_keys: List[str],
         data_format: str,
         persistent: bool,
         data_limit: int = 100000,
@@ -554,7 +546,6 @@ class DataHandler:
 
         Parameters:
         - tag_name (str): The name of the data process.
-        - data_keys (List[str]): The keys of the data.
         - data_format (str): The format of the data.
         - persistent (bool): Whether the data should be logged to a file.
         - data_limit (int, optional): The maximum number of data lines to store. Defaults to 100000 bytes.
@@ -569,7 +560,6 @@ class DataHandler:
         if isinstance(data_limit, int) and data_limit > 0:
             cls.data_process_registry[tag_name] = DataProcess(
                 tag_name,
-                data_keys,
                 data_format,
                 persistent=persistent,
                 data_limit=data_limit,
