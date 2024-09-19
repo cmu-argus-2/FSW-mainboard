@@ -22,7 +22,7 @@ from ulab import numpy as np
 
 class Task(TemplateTask):
 
-    data_keys = [
+    """data_keys = [
         "TIME_ADCS",
         "ADCS_STATE",
         "GYRO_X",
@@ -60,7 +60,8 @@ class Task(TemplateTask):
         "STAR_TRACKER_ATTITUDE_QX",
         "STAR_TRACKER_ATTITUDE_QY",
         "STAR_TRACKER_ATTITUDE_QZ",
-    ]
+    ]"""
+
     time = int(time.time())
 
     log_data = [0] * 37
@@ -152,8 +153,10 @@ class Task(TemplateTask):
 
             # Data logging
             DH.log_data("adcs", self.log_data)
-            self.log_info(f"{dict(zip(self.data_keys[8:13], self.log_data[8:13]))}")  # Sun
-            self.log_info(f"{dict(zip(self.data_keys[28:32], self.log_data[28:32]))}")  # Coarse attitude
+            # self.log_info(f"{dict(zip(self.data_keys[8:13], self.log_data[8:13]))}")  # Sun
+            # self.log_info(f"{dict(zip(self.data_keys[28:32], self.log_data[28:32]))}")  # Coarse attitude
+            self.log_info(f"Sun: {self.log_data[8:13]}")
+            self.log_info(f"Coarse attitude: {self.log_data[28:32]}")
 
 
 def is_nan(x):

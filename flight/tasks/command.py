@@ -23,6 +23,9 @@ class Task(TemplateTask):
     gc.collect()
     total_memory = gc.mem_alloc() + gc.mem_free()
 
+    def get_memory_usage(self):
+        return int(gc.mem_alloc() / self.total_memory * 100)
+
     async def main_task(self):
 
         if SM.current_state == STATES.STARTUP:
@@ -49,12 +52,12 @@ class Task(TemplateTask):
             if not DH.data_process_exists("cdh"):
                 DH.register_data_process("cdh", self.data_keys, self.data_format, True, data_limit=100000)
 
-            gc.collect()
+            # gc.collect()
 
             self.log_data[CDH_IDX.TIME] = int(time.time())
             self.log_data[CDH_IDX.SC_STATE] = SM.current_state
             self.log_data[CDH_IDX.SD_USAGE] = int(DH.SD_usage() / 1000)  # kb - gets updated in the OBDH task
-            self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = int(gc.mem_alloc() / self.total_memory * 100)
+            self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = self.get_memory_usage()
             self.log_data[CDH_IDX.REBOOT_COUNT] = 0
             self.log_data[CDH_IDX.WATCHDOG_TIMER] = 0
             self.log_data[CDH_IDX.HAL_BITFLAGS] = 0

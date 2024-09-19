@@ -51,7 +51,7 @@ SM_CONFIGURATION = {
     },
     STATES.NOMINAL: {
         "Tasks": {
-            TASK.COMMAND: {"Frequency": 1, "Priority": 1},
+            TASK.COMMAND: {"Frequency": 10, "Priority": 1},
             TASK.TIMING: {"Frequency": 1, "Priority": 2},
             TASK.EPS: {"Frequency": 1, "Priority": 1},
             TASK.OBDH: {"Frequency": 1, "Priority": 2},

@@ -71,4 +71,8 @@ class Task(TemplateTask):
             self.log_data[GPS_IDX.GPS_ECEF_VZ] = -73684928
 
         DH.log_data("gps", self.log_data)
-        self.log_info(f"{dict(zip(self.data_keys[-6:], self.log_data[-6:]))}")
+        # self.log_info(f"{dict(zip(self.data_keys[-6:], self.log_data[-6:]))}")
+        self.log_info(
+            f"GPS ECEF: {self.log_data[GPS_IDX.GPS_ECEF_X]}, \
+                {self.log_data[GPS_IDX.GPS_ECEF_Y]}, {self.log_data[GPS_IDX.GPS_ECEF_Z]}"
+        )
