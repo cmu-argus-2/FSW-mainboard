@@ -1,3 +1,5 @@
+import gc
+
 from core import logger
 
 
@@ -37,6 +39,7 @@ class TemplateTask:
         Try to run the main task, then call handle_error if an error is raised.
         """
         try:
+            # gc.collect()
             await self.main_task()
         except Exception as e:
             self.debug(f"{e}")

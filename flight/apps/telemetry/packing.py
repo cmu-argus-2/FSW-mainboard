@@ -23,6 +23,8 @@ For struct module format strings:
     "d": 8,  # double
 
 """
+import gc
+
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, THERMAL_IDX
 from apps.telemetry.helpers import (
     convert_float_to_fixed_point_hp,
@@ -340,6 +342,8 @@ class TelemetryPacker:
             logger.error("No Thermal data available")
 
         cls._FRAME[:] = bytearray(cls._FRAME[:])
+        gc.collect()
+
         ############ Payload fields ############
         # TODO
 

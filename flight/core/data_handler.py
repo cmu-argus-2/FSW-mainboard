@@ -29,6 +29,7 @@ Data format (character: byte size):
 
 """
 
+import gc
 import json
 import os
 import re
@@ -46,7 +47,7 @@ except ImportError:
 
 _CLOSED = const(20)
 _OPEN = const(21)
-_IMG_SIZE_LIMIT = const(1000000)  # 1MB
+_IMG_SIZE_LIMIT = const(100000)
 
 
 _PROCESS_CONFIG_FILENAME = ".process_configuration.json"
@@ -202,6 +203,8 @@ class DataProcess:
             self.file.write(bin_data)
             self.file.flush()  # Flush immediately
             self.write_interval_counter = 0
+
+        gc.collect()
 
     def get_latest_data(self) -> List:
         """
