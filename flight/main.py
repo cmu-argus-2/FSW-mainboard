@@ -1,5 +1,6 @@
 import gc
 import sys
+import time
 
 from core import logger, setup_logger, state_manager
 from core.data_handler import DataHandler as DH
@@ -22,6 +23,9 @@ logger.info("Booting ARGUS-1...")
 boot_errors = SATELLITE.boot_sequence()
 logger.info("ARGUS-1 booted.")
 logger.warning(f"Boot Errors: {boot_errors}")
+
+logger.info("Waiting 5sec...")
+time.sleep(5)
 
 """print("Running system diagnostics...")
 errors = SATELLITE.run_system_diagnostics()

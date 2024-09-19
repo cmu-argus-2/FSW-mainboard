@@ -62,8 +62,11 @@ class DataProcess:
         data_keys (List[str]): The list of data keys.
         data_format (str): The format of the data to be written to the file.
         persistent (bool): Whether the data should be logged to a file (default is True).
-        line_limit (int): The maximum number of data lines allowed in the file (default is 1000).
+        data_limit (int): The maximum number of data in bytes allowed in the file (default is 100kb).
+                        This attribute will automatically get updated based on the line bytesize.
         new_config_file (bool): Whether to create a new configuration file (default is False).
+        write_interval (int): The interval of logs at which the data should be written to the file (default is 1).
+        write_interval_counter (int): The counter for the write interval.
         home_path (str): The home path for the file (default is "/sd/").
         status (str): The status of the file ("CLOSED" or "OPEN").
         file (file): The file object.
@@ -93,7 +96,8 @@ class DataProcess:
         data_keys: List[str],
         data_format: str,
         persistent: bool = True,
-        line_limit: int = 1000,
+        data_limit: int = 100000,
+        write_interval: int = 1,
         new_config_file: bool = False,
         home_path: str = "/sd",
     ) -> None:
@@ -105,7 +109,8 @@ class DataProcess:
             data_keys (List[str]): The list of data keys.
             data_format (str): The format of the data to be written to the file. e.g. 'iff', 'iif', 'fff', 'iii', etc.
             persistent (bool, optional): Whether the file should be persistent or not (default is True).
-            line_limit (int, optional): The maximum number of data lines allowed in the file (default is 1000).
+            data_limit (int, optional): The maximum number of data in bytes allowed in the file (default is 100kb).
+                                        This attribute will automatically get updated based on the line bytesize.
             new_config_file (bool, optional): Whether to create a new configuration file (default is False).
             home_path (str, optional): The home path for the file (default is "/sd/").
         """
@@ -114,6 +119,8 @@ class DataProcess:
         self.data_keys = data_keys
         self.file = None
         self.persistent = persistent
+        self.write_interval = int(write_interval)
+        self.write_interval_counter = self.write_interval - 1  # To write the first data point
 
         # TODO Check formating e.g. 'iff', 'iif', 'fff', 'iii', etc. ~ done within compute_bytesize()
         self.data_format = "<" + data_format
@@ -131,7 +138,9 @@ class DataProcess:
             self.create_folder()
 
             # To Be Resolved for each file process, TODO check if int, positive, etc
-            self.size_limit = line_limit * self.bytesize  # Default size limit is 1000 data lines
+            self.size_limit = (
+                data_limit // self.bytesize
+            )  # + (data_limit % self.bytesize)   # Default size limit is 1000 data lines
 
             self.current_path = self.create_new_path()
             self.delete_paths = []  # Paths that are flagged for deletion
@@ -141,8 +150,9 @@ class DataProcess:
             if not path_exist(config_file_path) or new_config_file:
                 config_data = {
                     "data_format": self.data_format[1:],  # remove the < character
-                    "line_limit": line_limit,
+                    "data_limit": data_limit,
                     "data_keys": data_keys,
+                    "write_interval": write_interval,
                 }
                 with open(config_file_path, "w") as config_file:
                     json.dump(config_data, config_file)
@@ -190,11 +200,13 @@ class DataProcess:
         """
         self.resolve_current_file()
         self.last_data = data
+        self.write_interval_counter += 1
 
-        if self.persistent:
+        if self.persistent and self.write_interval_counter >= self.write_interval:
             bin_data = struct.pack(self.data_format, *data)
             self.file.write(bin_data)
             self.file.flush()  # Flush immediately
+            self.write_interval_counter = 0
 
     def get_latest_data(self) -> List:
         """
@@ -512,15 +524,17 @@ class DataHandler:
                         cls.register_image_process()
                         continue
                     data_format: str = config_data.get("data_format")
-                    line_limit: int = config_data.get("line_limit")
+                    data_limit: int = config_data.get("data_limit")
                     data_keys: List[str] = config_data.get("data_keys")
-                    if data_format and line_limit:
+                    write_interval: int = config_data.get("write_interval")
+                    if data_format and data_limit:
                         cls.register_data_process(
                             tag_name=dir_name,
                             data_keys=data_keys,
                             data_format=data_format,
                             persistent=True,
-                            line_limit=line_limit,
+                            data_limit=data_limit,
+                            write_interval=write_interval,
                         )
 
         cls._SD_SCANNED = True
@@ -532,7 +546,8 @@ class DataHandler:
         data_keys: List[str],
         data_format: str,
         persistent: bool,
-        line_limit: int = 1000,
+        data_limit: int = 100000,
+        write_interval: int = 1,
     ) -> None:
         """
         Register a data process with the given parameters.
@@ -542,25 +557,27 @@ class DataHandler:
         - data_keys (List[str]): The keys of the data.
         - data_format (str): The format of the data.
         - persistent (bool): Whether the data should be logged to a file.
-        - line_limit (int, optional): The maximum number of data lines to store. Defaults to 1000.
+        - data_limit (int, optional): The maximum number of data lines to store. Defaults to 100000 bytes.
+        - write_interval (int, optional): The interval of logs at which the data should be written to the file. Defaults to 1.
 
         Raises:
-        - ValueError: If line_limit is not a positive integer.
+        - ValueError: If data_limit is not a positive integer.
 
         Returns:
         - None
         """
-        if isinstance(line_limit, int) and line_limit > 0:
+        if isinstance(data_limit, int) and data_limit > 0:
             cls.data_process_registry[tag_name] = DataProcess(
                 tag_name,
                 data_keys,
                 data_format,
                 persistent=persistent,
-                line_limit=line_limit,
+                data_limit=data_limit,
+                write_interval=write_interval,
                 home_path=cls.sd_path,
             )
         else:
-            raise ValueError("Line limit must be a positive integer.")
+            raise ValueError("Data limit must be a positive integer.")
 
     @classmethod
     def register_image_process(cls) -> None:

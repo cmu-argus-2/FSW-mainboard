@@ -44,7 +44,7 @@ class Task(TemplateTask):
             pass
         elif SM.current_state == STATES.NOMINAL:
             if not DH.data_process_exists("gps"):
-                DH.register_data_process("gps", self.data_keys, self.data_format, True, line_limit=500)
+                DH.register_data_process("gps", self.data_keys, self.data_format, True, data_limit=100000, write_interval=10)
 
             # TODO GPS frame parsing - get ECEF in (cm) and ECEF velocity in cm/s
 

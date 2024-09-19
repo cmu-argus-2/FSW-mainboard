@@ -23,7 +23,9 @@ class Task(TemplateTask):
         if SM.current_state == STATES.NOMINAL:
 
             if not DH.data_process_exists("thermal"):
-                DH.register_data_process("thermal", self.data_keys, self.data_format, True, line_limit=2000)
+                DH.register_data_process(
+                    "thermal", self.data_keys, self.data_format, True, data_limit=100000, write_interval=10
+                )
 
             self.log_data[THERMAL_IDX.TIME_THERMAL] = int(time.time())
             self.log_data[THERMAL_IDX.IMU_TEMPERATURE] = int(SATELLITE.IMU.temperature() * 100)
