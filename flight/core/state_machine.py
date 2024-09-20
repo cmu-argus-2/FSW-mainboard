@@ -97,6 +97,7 @@ class StateManager:
             frequency = props["Frequency"]
             priority = props["Priority"]
             task_fn = self.tasks[task_name]._run
+            self.tasks[task_name].set_frequency(frequency)
 
             self.__scheduled_tasks[task_name] = schedule(frequency, task_fn, priority)
 

@@ -14,10 +14,8 @@ for path in ["/hal", "/apps", "/core"]:
 
 setup_logger(level="INFO")
 
-
 gc.collect()
 logger.info("Memory free: " + str(gc.mem_free()) + " bytes")
-
 
 logger.info("Booting ARGUS-1...")
 boot_errors = SATELLITE.boot_sequence()
@@ -35,7 +33,7 @@ print("Errors:", errors)
 
 gc.collect()
 logger.info("Memory free: " + str(gc.mem_free()) + " bytes")
-
+gc.collect()
 DH.delete_all_files()
 
 try:
