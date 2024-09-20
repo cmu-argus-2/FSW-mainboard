@@ -15,7 +15,6 @@ class StateManager:
     def __init__(self):
 
         self.__current_state = None
-        self.__previous_state = None
         self.__scheduled_tasks = {}
         self.__initialized = False
         self.config = None
