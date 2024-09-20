@@ -66,6 +66,10 @@ class Task(TemplateTask):
     batt_voltage = 0
     batt_current = 0
 
+    def __init__(self, id):
+        super().__init__(id)
+        self.name = "EPS"
+
     async def main_task(self):
 
         if SM.current_state == STATES.STARTUP:

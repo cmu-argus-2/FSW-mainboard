@@ -79,6 +79,10 @@ class Task(TemplateTask):
     # Attitude Determination
     coarse_attitude = np.zeros(4)
 
+    def __init__(self, id):
+        super().__init__(id)
+        self.name = "ADCS"  # Override the name
+
     async def main_task(self):
 
         if SM.current_state == STATES.NOMINAL:

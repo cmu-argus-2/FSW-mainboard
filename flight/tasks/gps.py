@@ -38,6 +38,10 @@ class Task(TemplateTask):
     data_format = "LBBBHIiiiiHHHHHiiiiii"
     log_data = [0] * 21
 
+    def __init__(self, id):
+        super().__init__(id)
+        self.name = "GPS"
+
     async def main_task(self):
 
         if SM.current_state == STATES.STARTUP:

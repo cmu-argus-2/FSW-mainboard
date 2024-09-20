@@ -18,6 +18,10 @@ class Task(TemplateTask):
     log_data = [0] * 4  # pre-allocation
     data_format = "LHHH"
 
+    def __init__(self, id):
+        super().__init__(id)
+        self.name = "THERMAL"
+
     async def main_task(self):
 
         if SM.current_state == STATES.NOMINAL:

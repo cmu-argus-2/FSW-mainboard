@@ -14,7 +14,7 @@ else
 fi
 
 # Make the correct mpy-cross executable
-chmod +x $MPY_EXEC
+chmod +x build/$MPY_EXEC
 
 echo "$MPY_EXEC is now executable"
 

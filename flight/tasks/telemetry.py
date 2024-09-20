@@ -10,6 +10,10 @@ class Task(TemplateTask):
 
     packed = False
 
+    def __init__(self, id):
+        super().__init__(id)
+        self.name = "TM"
+
     async def main_task(self):
 
         if SM.current_state == STATES.STARTUP:

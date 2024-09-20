@@ -25,6 +25,10 @@ class Task(TemplateTask):
 
     log_print_counter = 0
 
+    def __init__(self, id):
+        super().__init__(id)
+        self.name = "COMMAND"
+
     def get_memory_usage(self):
         return int(gc.mem_alloc() / self.total_memory * 100)
 
@@ -44,7 +48,7 @@ class Task(TemplateTask):
             self.log_info("SD card cleaned up.")
 
             HAL_DIAGNOSTICS = True
-            # For now
+            # TODO For now
             if DH.SD_scanned and HAL_DIAGNOSTICS:
                 SM.switch_to(STATES.NOMINAL)
                 self.log_info("Switching to NOMINAL state.")
@@ -80,3 +84,7 @@ class Task(TemplateTask):
             self.log_print_counter = 0
             self.log_info(f"GLOBAL STATE: {STR_STATES[SM.current_state]}.")
             self.log_info(f"RAM USAGE: {self.log_data[CDH_IDX.CURRENT_RAM_USAGE]}%")
+
+        # gc.collect()
+        # print(int(gc.mem_alloc() / ( gc.mem_alloc() + gc.mem_free()) * 100))
+        # time.sleep(1000000000)

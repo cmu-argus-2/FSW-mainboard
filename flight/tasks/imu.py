@@ -28,6 +28,10 @@ class Task(TemplateTask):
     log_data = [0.0] * 10
     log_print_counter = 0
 
+    def __init__(self, id):
+        super().__init__(id)
+        self.name = "IMU"
+
     async def main_task(self):
 
         if SM.current_state == STATES.NOMINAL:

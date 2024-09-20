@@ -14,26 +14,34 @@ for path in ["/hal", "/apps", "/core"]:
 
 setup_logger(level="INFO")
 
-gc.collect()
-logger.info("Memory free: " + str(gc.mem_free()) + " bytes")
 
-logger.info("Booting ARGUS-1...")
+def print_memory_stats(call_gc=True):
+    if call_gc:
+        gc.collect()
+    print(f"Memory stats after gc: {call_gc}")
+    print(f"Total memory: {str(gc.mem_alloc() + gc.mem_free())} bytes")
+    print(f"Memory free: {str(gc.mem_free())} bytes")
+    print(f"Memory free: {int(gc.mem_alloc() / (gc.mem_alloc() + gc.mem_free()) * 100)}%")
+
+
+print_memory_stats(call_gc=True)
+
+print("Booting ARGUS-1...")
 boot_errors = SATELLITE.boot_sequence()
-logger.info("ARGUS-1 booted.")
-logger.warning(f"Boot Errors: {boot_errors}")
+print("ARGUS-1 booted.")
+print(f"Boot Errors: {boot_errors}")
 
-logger.info("Waiting 5sec...")
-time.sleep(5)
+print("Waiting 2 sec...")
+time.sleep(2)
 
 """print("Running system diagnostics...")
 errors = SATELLITE.run_system_diagnostics()
 print("System diagnostics complete")
 print("Errors:", errors)
 """
-
-gc.collect()
-logger.info("Memory free: " + str(gc.mem_free()) + " bytes")
-gc.collect()
+print_memory_stats(call_gc=False)
+print_memory_stats(call_gc=True)
+# time.sleep(1000000000)
 DH.delete_all_files()
 
 try:

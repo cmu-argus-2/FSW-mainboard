@@ -26,18 +26,17 @@ class TASK:
 
 
 TASK_REGISTRY = {
-    TASK.COMMAND: (command, "COMMAND"),
-    TASK.TIMING: (timing, "TIMING"),
-    TASK.EPS: (eps, "EPS"),
-    TASK.OBDH: (obdh, "OBDH"),
-    TASK.ADCS: (adcs, "ADCS"),
-    TASK.IMU: (imu, "IMU"),
-    TASK.COMMS: (comms, "COMMS"),
-    TASK.THERMAL: (thermal, "THERMAL"),
-    TASK.GPS: (gps, "GPS"),
-    TASK.TM: (telemetry, "TM"),
+    TASK.COMMAND: command,
+    TASK.TIMING: timing,
+    TASK.EPS: eps,
+    TASK.OBDH: obdh,
+    TASK.ADCS: adcs,
+    TASK.IMU: imu,
+    TASK.COMMS: comms,
+    TASK.THERMAL: thermal,
+    TASK.GPS: gps,
+    TASK.TM: telemetry,
 }
-
 
 SM_CONFIGURATION = {
     STATES.STARTUP: {

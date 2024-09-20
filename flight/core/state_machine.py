@@ -44,7 +44,7 @@ class StateManager:
         self.states = list(self.config.keys())
 
         # init task objects
-        self.tasks = {id: task(id, name=name) for id, (task, name) in TASK_REGISTRY.items()}
+        self.tasks = {id: task(id) for id, task in TASK_REGISTRY.items()}
 
         self.__current_state = start_state
 
