@@ -6,7 +6,6 @@ from core import logger, setup_logger, state_manager
 from core.data_handler import DataHandler as DH
 from core.states import STATES
 from hal.configuration import SATELLITE
-from sm_configuration import SM_CONFIGURATION, TASK_REGISTRY
 
 for path in ["/hal", "/apps", "/core"]:
     if path not in sys.path:
@@ -48,7 +47,7 @@ try:
     # Run forever
 
     logger.info("Starting state manager")
-    state_manager.start(STATES.STARTUP, SM_CONFIGURATION, TASK_REGISTRY)
+    state_manager.start(STATES.STARTUP)
 
 except Exception as e:
     logger.critical("ERROR:", e)
