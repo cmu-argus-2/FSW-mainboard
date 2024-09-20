@@ -40,7 +40,7 @@ print("Errors:", errors)
 """
 print_memory_stats(call_gc=False)
 print_memory_stats(call_gc=True)
-# time.sleep(1000000000)
+time.sleep(1000000000)
 DH.delete_all_files()
 
 try:
