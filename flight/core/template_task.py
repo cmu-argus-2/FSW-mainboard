@@ -1,5 +1,3 @@
-import gc
-
 from core import logger
 
 

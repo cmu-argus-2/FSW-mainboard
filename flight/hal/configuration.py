@@ -11,7 +11,7 @@ HARDWARE_VERSION = ARGUS_V1
 DEBUG_MODE = False
 EN_MIDDLEWARE = False
 
-SATELLITE = None
+SATELLITE: CubeSat = None
 
 if HARDWARE_VERSION == PYCUBED_V05:
     from hal.pycubed import PyCubed
