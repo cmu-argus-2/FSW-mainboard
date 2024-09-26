@@ -15,11 +15,9 @@ class StateManager:
     def __init__(self):
 
         self.__current_state = None
-        self.__previous_state = None
         self.__scheduled_tasks = {}
         self.__initialized = False
         self.config = None
-        self.task_registry = None
 
     @property
     def current_state(self):
@@ -29,22 +27,24 @@ class StateManager:
     def scheduled_tasks(self):
         return self.__scheduled_tasks
 
-    def start(self, start_state: str, SM_CONFIGURATION: dict, TASK_REGISTRY: dict):
+    def start(self, start_state: str):
         """Starts the state machine
 
         Args:
         :param start_state: The state to start the state machine in
         :type start_state: str
         """
+        from core.sm_configuration import SM_CONFIGURATION
 
         self.config = SM_CONFIGURATION
-        self.task_registry = TASK_REGISTRY
 
         # TODO Validate the configuration and registry
         self.states = list(self.config.keys())
 
         # init task objects
-        self.tasks = {id: task(id, name=name) for id, (task, name) in TASK_REGISTRY.items()}
+        from core.sm_configuration import TASK_REGISTRY
+
+        self.tasks = {id: task(id) for id, task in TASK_REGISTRY.items()}
 
         self.__current_state = start_state
 
@@ -52,23 +52,23 @@ class StateManager:
         self.switch_to(start_state)
         scheduler.run()
 
-    def switch_to(self, new_state):
+    def switch_to(self, new_state_id: int):
         """Switches to a new state and actiavte all corresponding tasks as defined in the SM_CONFIGURATION
 
         Args:
         :param new_state: The name of the state to switch to
-        :type new_state: str
+        :type new_state_id: id
         """
 
-        if new_state not in self.states:
-            logger.critical(f"State {new_state} is not in the list of states")
-            raise ValueError(f"State {new_state} is not in the list of states")
+        if new_state_id not in self.states:
+            logger.critical(f"State {new_state_id} is not in the list of states")
+            raise ValueError(f"State {new_state_id} is not in the list of states")
 
         if self.__initialized:
             # prevent illegal transitions
-            if not (new_state in self.config[self.__current_state]["MovesTo"]):
-                logger.critical(f"No transition from {self.__current_state} to {new_state}")
-                raise ValueError(f"No transition from {self.__current_state} to {new_state}")
+            if not (new_state_id in self.config[self.__current_state]["MovesTo"]):
+                logger.critical(f"No transition from {self.__current_state} to {new_state_id}")
+                raise ValueError(f"No transition from {self.__current_state} to {new_state_id}")
         else:
             self.__initialized = True
 
@@ -77,9 +77,9 @@ class StateManager:
         # TODO transition functions
 
         self.stop_all_tasks()
-        self.schedule_new_state_tasks(new_state)
+        self.schedule_new_state_tasks(new_state_id)
 
-        logger.info(f"Switched to state {new_state}")
+        logger.info(f"Switched to state {new_state_id}")
 
     def schedule_new_state_tasks(self, new_state):
 
@@ -87,7 +87,7 @@ class StateManager:
         self.__current_state = new_state
         state_config = self.config[new_state]
 
-        for task_name, props in state_config["Tasks"].items():
+        for task_id, props in state_config["Tasks"].items():
 
             if "ScheduleLater" in props:
                 schedule = scheduler.schedule_later
@@ -96,9 +96,10 @@ class StateManager:
 
             frequency = props["Frequency"]
             priority = props["Priority"]
-            task_fn = self.tasks[task_name]._run
+            task_fn = self.tasks[task_id]._run
+            self.tasks[task_id].set_frequency(frequency)
 
-            self.__scheduled_tasks[task_name] = schedule(frequency, task_fn, priority)
+            self.__scheduled_tasks[task_id] = schedule(frequency, task_fn, priority)
 
     def stop_all_tasks(self):
         for name, task in self.__scheduled_tasks.items():

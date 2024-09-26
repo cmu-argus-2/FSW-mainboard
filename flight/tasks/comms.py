@@ -11,6 +11,10 @@ class Task(TemplateTask):
     tx_msg_id = 0x00
     rq_msg_id = 0x00
 
+    def __init__(self, id):
+        super().__init__(id)
+        self.name = "COMMS"
+
     async def main_task(self):
 
         if SM.current_state == STATES.NOMINAL:

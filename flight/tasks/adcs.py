@@ -22,7 +22,7 @@ from ulab import numpy as np
 
 class Task(TemplateTask):
 
-    data_keys = [
+    """data_keys = [
         "TIME_ADCS",
         "ADCS_STATE",
         "GYRO_X",
@@ -60,7 +60,8 @@ class Task(TemplateTask):
         "STAR_TRACKER_ATTITUDE_QX",
         "STAR_TRACKER_ATTITUDE_QY",
         "STAR_TRACKER_ATTITUDE_QZ",
-    ]
+    ]"""
+
     time = int(time.time())
 
     log_data = [0] * 37
@@ -78,12 +79,16 @@ class Task(TemplateTask):
     # Attitude Determination
     coarse_attitude = np.zeros(4)
 
+    def __init__(self, id):
+        super().__init__(id)
+        self.name = "ADCS"  # Override the name
+
     async def main_task(self):
 
         if SM.current_state == STATES.NOMINAL:
 
             if not DH.data_process_exists("adcs"):
-                DH.register_data_process("adcs", self.data_keys, self.data_format, True, line_limit=1000)
+                DH.register_data_process("adcs", self.data_format, True, data_limit=100000, write_interval=5)
 
             self.time = int(time.time())
 
@@ -152,8 +157,10 @@ class Task(TemplateTask):
 
             # Data logging
             DH.log_data("adcs", self.log_data)
-            self.log_info(f"{dict(zip(self.data_keys[8:13], self.log_data[8:13]))}")  # Sun
-            self.log_info(f"{dict(zip(self.data_keys[28:32], self.log_data[28:32]))}")  # Coarse attitude
+            # self.log_info(f"{dict(zip(self.data_keys[8:13], self.log_data[8:13]))}")  # Sun
+            # self.log_info(f"{dict(zip(self.data_keys[28:32], self.log_data[28:32]))}")  # Coarse attitude
+            self.log_info(f"Sun: {self.log_data[8:13]}")
+            self.log_info(f"Coarse attitude: {self.log_data[28:32]}")
 
 
 def is_nan(x):

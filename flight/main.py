@@ -1,11 +1,11 @@
 import gc
 import sys
+import time
 
 from core import logger, setup_logger, state_manager
 from core.data_handler import DataHandler as DH
 from core.states import STATES
 from hal.configuration import SATELLITE
-from sm_configuration import SM_CONFIGURATION, TASK_REGISTRY
 
 for path in ["/hal", "/apps", "/core"]:
     if path not in sys.path:
@@ -14,31 +14,40 @@ for path in ["/hal", "/apps", "/core"]:
 setup_logger(level="INFO")
 
 
-gc.collect()
-logger.info("Memory free: " + str(gc.mem_free()) + " bytes")
+def print_memory_stats(call_gc=True):
+    if call_gc:
+        gc.collect()
+    print(f"Memory stats after gc: {call_gc}")
+    print(f"Total memory: {str(gc.mem_alloc() + gc.mem_free())} bytes")
+    print(f"Memory free: {str(gc.mem_free())} bytes")
+    print(f"Memory free: {int(gc.mem_alloc() / (gc.mem_alloc() + gc.mem_free()) * 100)}%")
 
 
-logger.info("Booting ARGUS-1...")
+print_memory_stats(call_gc=True)
+
+print("Booting ARGUS-1...")
 boot_errors = SATELLITE.boot_sequence()
-logger.info("ARGUS-1 booted.")
-logger.warning(f"Boot Errors: {boot_errors}")
+print("ARGUS-1 booted.")
+print(f"Boot Errors: {boot_errors}")
+
+print("Waiting 2 sec...")
+time.sleep(2)
 
 """print("Running system diagnostics...")
 errors = SATELLITE.run_system_diagnostics()
 print("System diagnostics complete")
 print("Errors:", errors)
 """
-
-gc.collect()
-logger.info("Memory free: " + str(gc.mem_free()) + " bytes")
-
+print_memory_stats(call_gc=False)
+print_memory_stats(call_gc=True)
+# time.sleep(1000000000)
 DH.delete_all_files()
 
 try:
     # Run forever
 
     logger.info("Starting state manager")
-    state_manager.start(STATES.STARTUP, SM_CONFIGURATION, TASK_REGISTRY)
+    state_manager.start(STATES.STARTUP)
 
 except Exception as e:
     logger.critical("ERROR:", e)

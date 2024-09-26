@@ -10,6 +10,10 @@ class Task(TemplateTask):
 
     packed = False
 
+    def __init__(self, id):
+        super().__init__(id)
+        self.name = "TM"
+
     async def main_task(self):
 
         if SM.current_state == STATES.STARTUP:
@@ -21,4 +25,4 @@ class Task(TemplateTask):
             self.packed = TelemetryPacker.pack_tm_frame()
             if self.packed:
                 self.log_info("Telemetry packed")
-                self.log_info(TelemetryPacker.FRAME())
+                # self.log_info(TelemetryPacker.FRAME())

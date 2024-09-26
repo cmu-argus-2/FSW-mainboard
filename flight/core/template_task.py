@@ -10,9 +10,10 @@ class TemplateTask:
         name:        Name of the task object.
     """
 
-    def __init__(self, id, name="TASK"):
+    def __init__(self, id):
         self.ID = id
-        self.name = name
+        self.name = "TASK"
+        self.frequency = None
 
     def debug(self, msg):
         """
@@ -22,6 +23,14 @@ class TemplateTask:
         :param level: > 1 will print as a sub-level
         """
         logger.info(f"[{self.ID}][{self.name}] {msg}")
+
+    def set_frequency(self, frequency):
+        """
+        Set the frequency of the task
+
+        :param frequency: Frequency of the task
+        """
+        self.frequency = frequency
 
     async def main_task(self, *args, **kwargs):
         """
@@ -37,6 +46,7 @@ class TemplateTask:
         Try to run the main task, then call handle_error if an error is raised.
         """
         try:
+            # gc.collect()
             await self.main_task()
         except Exception as e:
             self.debug(f"{e}")

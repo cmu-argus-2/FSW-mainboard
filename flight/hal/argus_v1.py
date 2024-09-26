@@ -1,6 +1,5 @@
 """
-File: argus_v1.py
-Author: Harry
+Author: Harry, Thomas, Ibrahima
 Description: This file contains the definition of the ArgusV1 class and its associated interfaces and components.
 """
 
@@ -10,20 +9,8 @@ import board
 import neopixel
 from busio import I2C, SPI, UART
 from hal.cubesat import CubeSat
-from hal.drivers.adm1176 import ADM1176
-from hal.drivers.bmx160 import BMX160
-from hal.drivers.bq25883 import BQ25883
-from hal.drivers.burnwire import BurnWires
-from hal.drivers.drv8830 import DRV8830
-from hal.drivers.gps import GPS
 from hal.drivers.middleware.errors import Errors
 from hal.drivers.middleware.middleware import Middleware
-from hal.drivers.opt4001 import OPT4001
-from hal.drivers.payload import PayloadUART
-from hal.drivers.pcf8523 import PCF8523
-from hal.drivers.rfm9x import RFM9x
-from hal.drivers.stateflags import StateFlags
-from hal.drivers.torque_coil import TorqueInterface
 from micropython import const
 from sdcardio import SDCard
 from storage import VfsFat, mount
@@ -176,24 +163,24 @@ class ArgusV1(CubeSat):
 
         self.__state_flags_boot()  # Does not require error checking
 
-        error_list += self.__sd_card_boot()
-        error_list += self.__vfs_boot()
-        error_list += self.__imu_boot()
-        error_list += self.__rtc_boot()
-        error_list += self.__gps_boot()
-        error_list += self.__battery_power_monitor_boot()
-        error_list += self.__jetson_power_monitor_boot()
-        error_list += self.__charger_boot()
-        error_list += self.__torque_interface_boot()
-        error_list += self.__light_sensor_xp_boot()
-        error_list += self.__light_sensor_xm_boot()
-        error_list += self.__light_sensor_yp_boot()
-        error_list += self.__light_sensor_ym_boot()
-        error_list += self.__light_sensor_zm_boot()
-        error_list += self.__radio_boot()
-        error_list += self.__neopixel_boot()
-        error_list += self.__burn_wire_boot()
-        error_list += self.__payload_uart_boot()
+        error_list.append(self.__sd_card_boot())
+        error_list.append(self.__vfs_boot())
+        error_list.append(self.__imu_boot())
+        error_list.append(self.__rtc_boot())
+        error_list.append(self.__gps_boot())
+        error_list.append(self.__battery_power_monitor_boot())
+        error_list.append(self.__jetson_power_monitor_boot())
+        error_list.append(self.__charger_boot())
+        error_list.append(self.__torque_interface_boot())
+        error_list.append(self.__light_sensor_xp_boot())
+        error_list.append(self.__light_sensor_xm_boot())
+        error_list.append(self.__light_sensor_yp_boot())
+        error_list.append(self.__light_sensor_ym_boot())
+        error_list.append(self.__light_sensor_zm_boot())
+        error_list.append(self.__radio_boot())
+        error_list.append(self.__neopixel_boot())
+        error_list.append(self.__burn_wire_boot())
+        error_list.append(self.__payload_uart_boot())
 
         error_list = [error for error in error_list if error != Errors.NOERROR]
 
@@ -210,6 +197,8 @@ class ArgusV1(CubeSat):
 
     def __state_flags_boot(self) -> None:
         """state_flags_boot: Boot sequence for the state flags"""
+        from hal.drivers.stateflags import StateFlags
+
         self.__state_flags = StateFlags()
 
     def __gps_boot(self) -> list[int]:
@@ -218,6 +207,8 @@ class ArgusV1(CubeSat):
         :return: Error code if the GPS failed to initialize
         """
         try:
+            from hal.drivers.gps import GPS
+
             gps1 = GPS(ArgusV1Components.GPS_UART, ArgusV1Components.GPS_ENABLE)
 
             if self.__middleware_enabled:
@@ -229,9 +220,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.GPS_NOT_INITIALIZED]
+            return Errors.GPS_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __battery_power_monitor_boot(self) -> list[int]:
         """battery_power_monitor_boot: Boot sequence for the battery power monitor
@@ -239,6 +230,8 @@ class ArgusV1(CubeSat):
         :return: Error code if the battery power monitor failed to initialize
         """
         try:
+            from hal.drivers.adm1176 import ADM1176
+
             battery_monitor = ADM1176(
                 ArgusV1Components.BATTERY_POWER_MONITOR_I2C,
                 ArgusV1Components.BATTERY_POWER_MONITOR_I2C_ADDRESS,
@@ -253,9 +246,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.ADM1176_NOT_INITIALIZED]
+            return Errors.ADM1176_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __jetson_power_monitor_boot(self) -> list[int]:
         """jetson_power_monitor_boot: Boot sequence for the Jetson power monitor
@@ -263,6 +256,8 @@ class ArgusV1(CubeSat):
         :return: Error code if the Jetson power monitor failed to initialize
         """
         try:
+            from hal.drivers.adm1176 import ADM1176
+
             jetson_monitor = ADM1176(
                 ArgusV1Components.JETSON_POWER_MONITOR_I2C,
                 ArgusV1Components.JETSON_POWER_MONITOR_I2C_ADDRESS,
@@ -277,9 +272,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.ADM1176_NOT_INITIALIZED]
+            return Errors.ADM1176_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __imu_boot(self) -> list[int]:
         """imu_boot: Boot sequence for the IMU
@@ -287,6 +282,8 @@ class ArgusV1(CubeSat):
         :return: Error code if the IMU failed to initialize
         """
         try:
+            from hal.drivers.bmx160 import BMX160
+
             imu = BMX160(
                 ArgusV1Components.IMU_I2C,
                 ArgusV1Components.IMU_I2C_ADDRESS,
@@ -302,9 +299,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.BMX160_NOT_INITIALIZED]
+            return Errors.BMX160_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __charger_boot(self) -> list[int]:
         """charger_boot: Boot sequence for the charger
@@ -312,6 +309,8 @@ class ArgusV1(CubeSat):
         :return: Error code if the charger failed to initialize
         """
         try:
+            from hal.drivers.bq25883 import BQ25883
+
             charger = BQ25883(
                 ArgusV1Components.CHARGER_I2C,
                 ArgusV1Components.CHARGER_I2C_ADDRESS,
@@ -326,9 +325,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.BQ25883_NOT_INITIALIZED]
+            return Errors.BQ25883_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __torque_xp_boot(self) -> list[int]:
         """torque_xp_boot: Boot sequence for the torque driver in the x+ direction
@@ -336,6 +335,8 @@ class ArgusV1(CubeSat):
         :return: Error code if the torque driver failed to initialize
         """
         try:
+            from hal.drivers.drv8830 import DRV8830
+
             torque_xp = DRV8830(
                 ArgusV1Components.TORQUE_COILS_I2C,
                 ArgusV1Components.TORQUE_XP_I2C_ADDRESS,
@@ -350,9 +351,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.DRV8830_NOT_INITIALIZED]
+            return Errors.DRV8830_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __torque_xm_boot(self) -> list[int]:
         """torque_xm_boot: Boot sequence for the torque driver in the x- direction
@@ -360,6 +361,8 @@ class ArgusV1(CubeSat):
         :return: Error code if the torque driver failed to initialize
         """
         try:
+            from hal.drivers.drv8830 import DRV8830
+
             torque_xm = DRV8830(
                 ArgusV1Components.TORQUE_COILS_I2C,
                 ArgusV1Components.TORQUE_XM_I2C_ADDRESS,
@@ -374,9 +377,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.DRV8830_NOT_INITIALIZED]
+            return Errors.DRV8830_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __torque_yp_boot(self) -> list[int]:
         """torque_yp_boot: Boot sequence for the torque driver in the y+ direction
@@ -384,6 +387,8 @@ class ArgusV1(CubeSat):
         :return: Error code if the torque driver failed to initialize
         """
         try:
+            from hal.drivers.drv8830 import DRV8830
+
             torque_yp = DRV8830(
                 ArgusV1Components.TORQUE_COILS_I2C,
                 ArgusV1Components.TORQUE_YP_I2C_ADDRESS,
@@ -398,9 +403,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.DRV8830_NOT_INITIALIZED]
+            return Errors.DRV8830_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __torque_ym_boot(self) -> list[int]:
         """torque_ym_boot: Boot sequence for the torque driver in the y- direction
@@ -408,6 +413,8 @@ class ArgusV1(CubeSat):
         :return: Error code if the torque driver failed to initialize
         """
         try:
+            from hal.drivers.drv8830 import DRV8830
+
             torque_ym = DRV8830(
                 ArgusV1Components.TORQUE_COILS_I2C,
                 ArgusV1Components.TORQUE_YM_I2C_ADDRESS,
@@ -422,9 +429,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.DRV8830_NOT_INITIALIZED]
+            return Errors.DRV8830_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __torque_z_boot(self) -> list[int]:
         """torque_z_boot: Boot sequence for the torque driver in the z direction
@@ -432,6 +439,8 @@ class ArgusV1(CubeSat):
         :return: Error code if the torque driver failed to initialize
         """
         try:
+            from hal.drivers.drv8830 import DRV8830
+
             torque_z = DRV8830(
                 ArgusV1Components.TORQUE_COILS_I2C,
                 ArgusV1Components.TORQUE_Z_I2C_ADDRESS,
@@ -446,9 +455,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.DRV8830_NOT_INITIALIZED]
+            return Errors.DRV8830_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __torque_interface_boot(self) -> list[int]:
         """torque_interface_boot: Boot sequence for the torque interface
@@ -457,11 +466,13 @@ class ArgusV1(CubeSat):
         """
         error_list: list[int] = []
 
-        error_list += self.__torque_xp_boot()
-        error_list += self.__torque_xm_boot()
-        error_list += self.__torque_yp_boot()
-        error_list += self.__torque_ym_boot()
-        error_list += self.__torque_z_boot()
+        error_list.append(self.__torque_xp_boot())
+        error_list.append(self.__torque_xm_boot())
+        error_list.append(self.__torque_yp_boot())
+        error_list.append(self.__torque_ym_boot())
+        error_list.append(self.__torque_z_boot())
+
+        from hal.drivers.torque_coil import TorqueInterface
 
         # X direction
         try:
@@ -495,6 +506,8 @@ class ArgusV1(CubeSat):
         :return: Error code if the light sensor failed to initialize
         """
         try:
+            from hal.drivers.opt4001 import OPT4001
+
             light_sensor_xp = OPT4001(
                 ArgusV1Components.LIGHT_SENSORS_I2C,
                 ArgusV1Components.LIGHT_SENSOR_XP_I2C_ADDRESS,
@@ -510,9 +523,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.OPT4001_NOT_INITIALIZED]
+            return Errors.OPT4001_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __light_sensor_xm_boot(self) -> list[int]:
         """light_sensor_xm_boot: Boot sequence for the light sensor in the x- direction
@@ -520,6 +533,8 @@ class ArgusV1(CubeSat):
         :return: Error code if the light sensor failed to initialize
         """
         try:
+            from hal.drivers.opt4001 import OPT4001
+
             light_sensor_xm = OPT4001(
                 ArgusV1Components.LIGHT_SENSORS_I2C,
                 ArgusV1Components.LIGHT_SENSOR_XM_I2C_ADDRESS,
@@ -535,9 +550,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.OPT4001_NOT_INITIALIZED]
+            return Errors.OPT4001_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __light_sensor_yp_boot(self) -> list[int]:
         """light_sensor_yp_boot: Boot sequence for the light sensor in the y+ direction
@@ -545,6 +560,8 @@ class ArgusV1(CubeSat):
         :return: Error code if the light sensor failed to initialize
         """
         try:
+            from hal.drivers.opt4001 import OPT4001
+
             light_sensor_yp = OPT4001(
                 ArgusV1Components.LIGHT_SENSORS_I2C,
                 ArgusV1Components.LIGHT_SENSOR_YP_I2C_ADDRESS,
@@ -560,9 +577,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.OPT4001_NOT_INITIALIZED]
+            return Errors.OPT4001_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __light_sensor_ym_boot(self) -> list[int]:
         """light_sensor_ym_boot: Boot sequence for the light sensor in the y- direction
@@ -570,6 +587,8 @@ class ArgusV1(CubeSat):
         :return: Error code if the light sensor failed to initialize
         """
         try:
+            from hal.drivers.opt4001 import OPT4001
+
             light_sensor_ym = OPT4001(
                 ArgusV1Components.LIGHT_SENSORS_I2C,
                 ArgusV1Components.LIGHT_SENSOR_YM_I2C_ADDRESS,
@@ -585,9 +604,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.OPT4001_NOT_INITIALIZED]
+            return Errors.OPT4001_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __light_sensor_zm_boot(self) -> list[int]:
         """light_sensor_zm_boot: Boot sequence for the light sensor in the z+ direction
@@ -595,6 +614,8 @@ class ArgusV1(CubeSat):
         :return: Error code if the light sensor failed to initialize
         """
         try:
+            from hal.drivers.opt4001 import OPT4001
+
             light_sensor_zm = OPT4001(
                 ArgusV1Components.LIGHT_SENSORS_I2C,
                 ArgusV1Components.LIGHT_SENSOR_ZM_I2C_ADDRESS,
@@ -610,9 +631,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.OPT4001_NOT_INITIALIZED]
+            return Errors.OPT4001_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __radio_boot(self) -> list[int]:
         """radio_boot: Boot sequence for the radio
@@ -620,6 +641,8 @@ class ArgusV1(CubeSat):
         :return: Error code if the radio failed to initialize
         """
         try:
+            from hal.drivers.rfm9x import RFM9x
+
             radio = RFM9x(
                 ArgusV1Components.RADIO_SPI,
                 ArgusV1Components.RADIO_CS,
@@ -638,9 +661,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.RFM9X_NOT_INITIALIZED]
+            return Errors.RFM9X_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __rtc_boot(self) -> list[int]:
         """rtc_boot: Boot sequence for the RTC
@@ -648,6 +671,8 @@ class ArgusV1(CubeSat):
         :return: Error code if the RTC failed to initialize
         """
         try:
+            from hal.drivers.pcf8523 import PCF8523
+
             rtc = PCF8523(ArgusV1Components.RTC_I2C, ArgusV1Components.RTC_I2C_ADDRESS)
 
             if self.__middleware_enabled:
@@ -659,9 +684,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.PCF8523_NOT_INITIALIZED]
+            return Errors.PCF8523_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __neopixel_boot(self) -> list[int]:
         """neopixel_boot: Boot sequence for the neopixel"""
@@ -679,9 +704,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.NEOPIXEL_NOT_INITIALIZED]
+            return Errors.NEOPIXEL_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __sd_card_boot(self) -> list[int]:
         """sd_card_boot: Boot sequence for the SD card"""
@@ -697,14 +722,14 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.SDCARD_NOT_INITIALIZED]
+            return Errors.SDCARD_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __vfs_boot(self) -> list[int]:
         """vfs_boot: Boot sequence for the VFS"""
         if self.__sd_card is None:
-            return [Errors.SDCARD_NOT_INITIALIZED]
+            return Errors.SDCARD_NOT_INITIALIZED
 
         try:
             vfs = VfsFat(self.__sd_card)
@@ -719,13 +744,15 @@ class ArgusV1(CubeSat):
                 raise e
             raise e
 
-            return [Errors.VFS_NOT_INITIALIZED]
+            return Errors.VFS_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __burn_wire_boot(self) -> list[int]:
         """burn_wire_boot: Boot sequence for the burn wires"""
         try:
+            from hal.drivers.burnwire import BurnWires
+
             burn_wires = BurnWires(
                 ArgusV1Components.BURN_WIRE_ENABLE,
                 ArgusV1Components.BURN_WIRE_XP,
@@ -743,13 +770,15 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.BURNWIRES_NOT_INITIALIZED]
+            return Errors.BURNWIRES_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     def __payload_uart_boot(self) -> list[int]:
         """payload_uart_boot: Boot sequence for the Jetson UART"""
         try:
+            from hal.drivers.payload import PayloadUART
+
             payload_uart = PayloadUART(
                 ArgusV1Components.PAYLOAD_UART,
                 ArgusV1Components.PAYLOAD_ENABLE,
@@ -764,9 +793,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return [Errors.PAYLOAD_UART_NOT_INITIALIZED]
+            return Errors.PAYLOAD_UART_NOT_INITIALIZED
 
-        return [Errors.NOERROR]
+        return Errors.NOERROR
 
     ######################## DIAGNOSTICS ########################
     def __get_device_diagnostic_error(self, device) -> list[int]:  # noqa: C901

@@ -15,13 +15,22 @@ from core.states import STATES, STR_STATES
 class Task(TemplateTask):
 
     # To be removed - kept until proper logging is implemented
-    data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "REBOOT_COUNT", "WATCHDOG_TIMER", "HAL_BITFLAGS"]
+    # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "REBOOT_COUNT", "WATCHDOG_TIMER", "HAL_BITFLAGS"]
 
-    log_data = [0] * len(data_keys)
+    log_data = [0] * 7
     data_format = "LbLbbbb"
 
     gc.collect()
     total_memory = gc.mem_alloc() + gc.mem_free()
+
+    log_print_counter = 0
+
+    def __init__(self, id):
+        super().__init__(id)
+        self.name = "COMMAND"
+
+    def get_memory_usage(self):
+        return int(gc.mem_alloc() / self.total_memory * 100)
 
     async def main_task(self):
 
@@ -39,7 +48,7 @@ class Task(TemplateTask):
             self.log_info("SD card cleaned up.")
 
             HAL_DIAGNOSTICS = True
-            # For now
+            # TODO For now
             if DH.SD_scanned and HAL_DIAGNOSTICS:
                 SM.switch_to(STATES.NOMINAL)
                 self.log_info("Switching to NOMINAL state.")
@@ -47,12 +56,14 @@ class Task(TemplateTask):
         else:  # Run for all states
 
             if not DH.data_process_exists("cdh"):
-                DH.register_data_process("cdh", self.data_keys, self.data_format, True, line_limit=500)
+                DH.register_data_process("cdh", self.data_format, True, data_limit=100000)
+
+            # gc.collect()
 
             self.log_data[CDH_IDX.TIME] = int(time.time())
             self.log_data[CDH_IDX.SC_STATE] = SM.current_state
             self.log_data[CDH_IDX.SD_USAGE] = int(DH.SD_usage() / 1000)  # kb - gets updated in the OBDH task
-            self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = int(gc.mem_alloc() / self.total_memory * 100)
+            self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = self.get_memory_usage()
             self.log_data[CDH_IDX.REBOOT_COUNT] = 0
             self.log_data[CDH_IDX.WATCHDOG_TIMER] = 0
             self.log_data[CDH_IDX.HAL_BITFLAGS] = 0
@@ -68,5 +79,12 @@ class Task(TemplateTask):
 
             # periodic system checks (HW) - better another task for this
 
-        self.log_info(f"GLOBAL STATE: {STR_STATES[SM.current_state]}.")
-        self.log_info(f"RAM USAGE: {self.log_data[CDH_IDX.CURRENT_RAM_USAGE]}%")
+        self.log_print_counter += 1
+        if self.log_print_counter % self.frequency == 0:
+            self.log_print_counter = 0
+            self.log_info(f"GLOBAL STATE: {STR_STATES[SM.current_state]}.")
+            self.log_info(f"RAM USAGE: {self.log_data[CDH_IDX.CURRENT_RAM_USAGE]}%")
+
+        # gc.collect()
+        # print(int(gc.mem_alloc() / ( gc.mem_alloc() + gc.mem_free()) * 100))
+        # time.sleep(1000000000)
