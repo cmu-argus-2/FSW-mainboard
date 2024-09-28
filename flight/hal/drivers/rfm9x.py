@@ -1,20 +1,15 @@
-# SPDX-FileCopyrightText: 2017 Tony DiCola for Adafruit Industries
-#
-# SPDX-License-Identifier: MIT
-
 """
-MODIFIED VERSION of adafruit_rfm9x CircuitPython Library for PyCubed Use
-See https://github.com/adafruit/Adafruit_CircuitPython_RFM9x
+MODIFIED VERSION of https://github.com/adafruit/Adafruit_CircuitPython_RFM9x
+and https://github.com/pycubed/library_pycubed.py (Max Holliday)
 
-CircuitPython Version: 7.0.0 alpha
-Library Repo: https://github.com/pycubed/library_pycubed.py
-* Edits by: Max Holliday
+* Edits by: Ibrahima S. Sow for Argus-1
 """
 import math
 from random import random
 from time import monotonic, sleep
 
 import adafruit_bus_device.spi_device as spidev
+import countio
 from digitalio import DigitalInOut, Pull
 from hal.drivers.middleware.errors import Errors
 from hal.drivers.middleware.generic_driver import Driver
@@ -98,15 +93,7 @@ FS_RX_MODE = const(4)  # 0b100
 RX_MODE = const(5)  # 0b101
 # pylint: enable=bad-whitespace
 
-# gap =bytes([0xFF])
-# sgap=bytes([0xFF,0xFF,0xFF])
-# dot =bytes([0])
-# dash=bytes([0,0,0])
-# # ...- .-. ...-- -..-
-# VR3X = (gap+(dot+gap)*3)+dash+sgap+\
-# (dot+gap)+dash+gap+dot+sgap+\
-# ((dot+gap)*3)+dash+gap+dash+sgap+\
-# dash+gap+((dot+gap)*2)+dash+gap
+
 VR3X = (
     b"\xff\x00\xff\x00\xff\x00\xff\x00\x00\x00\xff\xff\xff\x00\xff\x00\x00\x00\xff\x00\xff\xff\xff\x00\xff\x00"
     b"\xff\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\xff\xff\x00\x00\x00\xff\x00\xff\x00\xff\x00\x00\x00\xff"
@@ -257,6 +244,8 @@ class RFM9x(Driver):
         self.dio0 = DigitalInOut(dio0)
         self.dio0.switch_to_input()
         self.dio0 = False
+        # Add counter for interrupt pin
+        self.dio0_counter = countio.Counter(self.dio0)
 
         self.__cs = DigitalInOut(cs)
         self.__cs.switch_to_output(value=True)
@@ -416,7 +405,7 @@ class RFM9x(Driver):
 
         _t = monotonic() + 10
         self.operation_mode = TX_MODE
-        while monotonic() < _t:
+        while monotonic() < _t:  # TODO remove this while loop
             a = self._read_u8(0x3F)
             # print(a,end=' ')
             if (a >> 6) & 1:
@@ -830,7 +819,7 @@ class RFM9x(Driver):
         # best that can be done right now without interrupts).
         start = monotonic()
         timed_out = False
-        while not timed_out and not self.tx_done():
+        while not timed_out and not self.tx_done():  # TODO remove while loop
             if (monotonic() - start) >= self.xmit_timeout:
                 timed_out = True
 
@@ -930,7 +919,7 @@ class RFM9x(Driver):
             self.listen()
             start = monotonic()
             timed_out = False
-            while not timed_out and not self.rx_done():
+            while not timed_out and not self.rx_done():  # TODO remove while loop
                 if (monotonic() - start) >= timeout:
                     timed_out = True
         # Payload ready is set, a packet is in the FIFO.
@@ -985,13 +974,6 @@ class RFM9x(Driver):
                         if debug:
                             print("\t{}".format(packet))
 
-                        # # reject Retries if we have seen this idetifier from this source before
-                        # if (self.seen_ids[packet[1]] == packet[2]) and (
-                        #     packet[3] & _RH_FLAGS_RETRY
-                        # ):
-                        #     print('duplicate identifier from this source. rejecting...')
-                        #     packet = None
-                        # else:  # save the packet identifier for this source
                         self.seen_ids[packet[1]] = packet[2]
                     if not with_header and packet is not None:  # skip the header if not wanted
                         packet = packet[4:]
@@ -1013,6 +995,13 @@ class RFM9x(Driver):
         elif packet is not None:
             return bytes(packet)
         return packet
+
+    def start_listening(self):
+        pass
+
+    def data_available(self):  # check if there is data in the FIFO buffer
+        print("Counter at:", self.dio0_counter)
+        pass
 
     def receive_all(self, only_for_me=True, debug=False):
         # msg=[]
@@ -1039,7 +1028,7 @@ class RFM9x(Driver):
             self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
             packetindex = []
             i = 0
-            while i < 253:  # 256-4 = 252
+            while i < 253:  # 256-4 = 252  # TODO Find a way to remove this while loop
                 # check first
                 if self.buffview[i] in self.valid_ids:
                     # check second
