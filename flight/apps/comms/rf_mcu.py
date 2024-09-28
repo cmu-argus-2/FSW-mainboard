@@ -33,7 +33,7 @@ class MSG_ID:
 
 
 class SATELLITE_RADIO:
-    # Hardware abstraction for satellite
+    # Hardware abstraction for satellite # TODO to remove
     sat = SATELLITE
 
     # Comms state
