@@ -30,9 +30,8 @@ class Task(TemplateTask):
                     self.tx_msg_id = SATELLITE_RADIO.transmit_message()
                     self.log_info(f"Sent message with ID: {self.tx_msg_id}")
 
-                    SATELLITE_RADIO.sat.RADIO.data_available()
-
-                    self.rq_msg_id = SATELLITE_RADIO.receive_message()
+                    if SATELLITE_RADIO.sat.RADIO.data_available():
+                        self.rq_msg_id = SATELLITE_RADIO.receive_message()
 
                     if self.rq_msg_id != 0x00:
                         self.log_info(f"GS requested message ID: {self.rq_msg_id}")

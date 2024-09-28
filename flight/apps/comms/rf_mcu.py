@@ -138,7 +138,8 @@ class SATELLITE_RADIO:
     @classmethod
     def receive_message(self):
         # Get packet from radio over SPI (blocks for 1s)
-        packet = self.sat.RADIO.receive(timeout=1)
+        # packet = self.sat.RADIO.receive(timeout=1)
+        packet = self.sat.RADIO.read_fifo_buffer()
 
         if packet is None:
             # Timeout in receiving packet
