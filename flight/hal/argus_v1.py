@@ -103,7 +103,6 @@ class ArgusV1Components:
     RADIO_RESET = board.RF1_RST
     RADIO_ENABLE = board.EN_RF
     RADIO_DIO0 = board.RF1_IO0
-    # RADIO_FREQ = 433.0
     RADIO_FREQ = 915.6
 
     # SD CARD

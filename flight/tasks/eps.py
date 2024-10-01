@@ -94,5 +94,5 @@ class Task(TemplateTask):
             DH.log_data("eps", self.log_data)
             self.log_info(
                 f"Battery Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, \
-                                            Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA"
+                Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA"
             )
