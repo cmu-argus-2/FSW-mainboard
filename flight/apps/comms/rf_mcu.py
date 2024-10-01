@@ -2,6 +2,10 @@
 Satellite radio class for Argus-1 CubeSat.
 Message packing/unpacking for telemetry/image TX
 and acknowledgement RX.
+
+Authors: Akshat Sahay, Ibrahima S. Sow
+
+By default, the RF module is in RX mode, and returns to it after TX.
 """
 
 import os
@@ -129,20 +133,49 @@ class SATELLITE_RADIO:
         return self.file_ID.to_bytes(1, "big") + self.file_size.to_bytes(4, "big") + self.file_message_count.to_bytes(2, "big")
 
     """
+        Name: listen
+        Description: Switch radio to RX mode
+    """
+
+    @classmethod
+    def listen(self):
+        self.sat.RADIO.listen()
+
+    """
+        Name: idle
+        Description: Switch radio to idle mode
+
+    """
+
+    @classmethod
+    def idle(self):
+        self.sat.RADIO.idle()
+
+    """
+        Name: data_available
+        Description: Check if data is available in FIFO buffer
+
+    """
+
+    @classmethod
+    def data_available(self):
+        return self.sat.RADIO.RX_available()
+
+    """
         Name: receive_message
         Description: Receive and unpack message from GS
 
-        Timeout for RX is set to 1s (change for increasing / decreasing blocking time)
     """
 
     @classmethod
     def receive_message(self):
-        # Get packet from radio over SPI (blocks for 1s)
-        # packet = self.sat.RADIO.receive(timeout=1)
+        # Get packet from radio over SPI
+        # Assumes packet is in FIFO buffer
+
         packet = self.sat.RADIO.read_fifo_buffer()
 
         if packet is None:
-            # Timeout in receiving packet
+            # FIFO buffer does not contain a packet
             self.state = COMMS_STATE.TX_HEARTBEAT
             self.gs_req_message_ID = 0x00
 
@@ -168,8 +201,7 @@ class SATELLITE_RADIO:
             self.gs_rx_message_ID = int.from_bytes(packet[4:5], "big")
             self.gs_req_message_ID = int.from_bytes(packet[5:6], "big")
             self.gs_req_seq_count = int.from_bytes(packet[6:8], "big")
-            # print("tx_message_ID: ", self.tx_message_ID)
-            # print("gs_rx_message_ID: ", self.gs_rx_message_ID)
+
             # Verify GS RX message ID with previously transmitted message ID
             if self.tx_message_ID != self.gs_rx_message_ID:
                 # Logger warning
