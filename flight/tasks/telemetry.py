@@ -24,6 +24,4 @@ class Task(TemplateTask):
             # Pack telemetry at the task rate
             self.packed = TelemetryPacker.pack_tm_frame()
             if self.packed:
-                pass
-                # self.log_info("Telemetry packed")
-                # self.log_info(TelemetryPacker.FRAME())
+                self.log_info("Telemetry packed")
