@@ -201,7 +201,7 @@ class TelemetryPacker:
             logger.error("No EPS data available")
 
         ############ ADCS fields ############
-        if DH.data_process_exists("adcs"):
+        """if DH.data_process_exists("adcs"):
 
             adcs_data = DH.get_latest_data("adcs")
 
@@ -339,7 +339,7 @@ class TelemetryPacker:
             cls._FRAME[247:249] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.BATTERY_PACK_TEMPERATURE)
 
         else:
-            logger.error("No Thermal data available")
+            logger.error("No Thermal data available")"""
 
         cls._FRAME[:] = bytearray(cls._FRAME[:])
         gc.collect()

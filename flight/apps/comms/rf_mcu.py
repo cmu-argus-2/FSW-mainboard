@@ -168,7 +168,8 @@ class SATELLITE_RADIO:
             self.gs_rx_message_ID = int.from_bytes(packet[4:5], "big")
             self.gs_req_message_ID = int.from_bytes(packet[5:6], "big")
             self.gs_req_seq_count = int.from_bytes(packet[6:8], "big")
-
+            # print("tx_message_ID: ", self.tx_message_ID)
+            # print("gs_rx_message_ID: ", self.gs_rx_message_ID)
             # Verify GS RX message ID with previously transmitted message ID
             if self.tx_message_ID != self.gs_rx_message_ID:
                 # Logger warning

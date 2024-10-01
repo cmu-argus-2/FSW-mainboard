@@ -244,6 +244,8 @@ class RFM9x(Driver):
         self.dio0 = DigitalInOut(dio0)
         self.dio0.switch_to_input()
         self.dio0 = False
+
+        self.something_in_rx_buffer = False
         # Add counter for interrupt pin
         # self.dio0_counter = countio.Counter(self.dio0)
 
@@ -718,6 +720,7 @@ class RFM9x(Driver):
             return self.dio0.value
         else:
             return (self._read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x40) >> 6
+        # return self.dio0_counter.value
 
     async def await_rx(self, timeout=60):
         _t = monotonic() + timeout
@@ -922,6 +925,7 @@ class RFM9x(Driver):
             while not timed_out and not self.rx_done():  # TODO remove while loop
                 if (monotonic() - start) >= timeout:
                     timed_out = True
+        print("RX DONE 1?: ", self.rx_done())
         # Payload ready is set, a packet is in the FIFO.
         packet = None
         # save last RSSI reading
@@ -948,7 +952,9 @@ class RFM9x(Driver):
                     # Read the packet.
                     self._read_into(_RH_RF95_REG_00_FIFO, packet)
                 # Clear interrupt.
+                print("RX DONE 2?: ", self.rx_done())
                 self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+                print("RX DONE 3?: ", self.rx_done())
                 if fifo_length < 5:
                     print("missing pckt header")
                     packet = None
@@ -989,7 +995,9 @@ class RFM9x(Driver):
             # Enter idle mode to stop receiving other packets.
             self.idle()
         # Clear interrupt.
+        print("RX DONE 4?: ", self.rx_done())
         self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+        print("RX DONE 5?: ", self.rx_done())
         if view:
             return packet
         elif packet is not None:
@@ -1002,55 +1010,61 @@ class RFM9x(Driver):
     def data_available(self):  # check if there is data in the FIFO buffer
         # print("Counter at:", self.dio0_counter)
         # we should habndle here errors if any. Set the radio to idle here? or wait until we actually read
-        flag = self.rx_done()
-        print("---------------- RX DONE?: ", flag)
-        return flag
+        self.something_in_rx_buffer = bool(self.rx_done())
+        # print("---------------- RX DONE in data available?: ", self.something_in_rx_buffer)
+        return self.something_in_rx_buffer
 
     def read_fifo_buffer(self, keep_listening=True, with_header=False):
-        # Payload ready is set, a packet is in the FIFO.
+        # Assumes a apcket is in the buffer
         packet = None
-        # save last RSSI reading
-        self.last_rssi = self.rssi(raw=True)
-        # Enter idle mode to stop receiving other packets.
-        self.idle()
 
-        if self.enable_crc() and self.crc_error():
-            self.crc_error_count += 1
-            print("crc error")
-            if hasattr(self, "crc_errs"):
-                self.crc_errs += 1
-        else:
-            # Read the data from the FIFO.
-            # Read the length of the FIFO.
-            fifo_length = self._read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
-            # Handle if the received packet is too small to include the 4 byte
-            # RadioHead header and at least one byte of data --reject this packet and ignore it.
-            if fifo_length > 0:  # read and clear the FIFO if anything in it
-                current_addr = self._read_u8(_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
-                self._write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
-                # packet = bytearray(fifo_length)
-                packet = self.buffview[:fifo_length]
-                # Read the packet.
-                self._read_into(_RH_RF95_REG_00_FIFO, packet)
-            # Clear interrupt.
-            self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
-            if fifo_length < 5:
-                print("missing pckt header")
-                packet = None
-            else:
-                if self.node != _RH_BROADCAST_ADDRESS and packet[0] != _RH_BROADCAST_ADDRESS and packet[0] != self.node:
-                    packet = None
-                if not with_header and packet is not None:  # skip the header if not wanted
-                    packet = packet[4:]
+        if self.something_in_rx_buffer:
+            # Payload ready is set, a packet is in the FIFO.
 
-        # Listen again if necessary
-        if keep_listening:
-            self.listen()
-        else:
+            # save last RSSI reading
+            self.last_rssi = self.rssi(raw=True)
             # Enter idle mode to stop receiving other packets.
             self.idle()
-        # Clear interrupt.
-        self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+
+            if self.enable_crc() and self.crc_error():
+                self.crc_error_count += 1
+                print("crc error")
+                if hasattr(self, "crc_errs"):
+                    self.crc_errs += 1
+            else:
+                # Read the data from the FIFO.
+                # Read the length of the FIFO.
+                fifo_length = self._read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
+                # Handle if the received packet is too small to include the 4 byte
+                # RadioHead header and at least one byte of data --reject this packet and ignore it.
+                if fifo_length > 0:  # read and clear the FIFO if anything in it
+                    current_addr = self._read_u8(_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
+                    self._write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
+                    # packet = bytearray(fifo_length)
+                    packet = self.buffview[:fifo_length]
+                    # Read the packet.
+                    self._read_into(_RH_RF95_REG_00_FIFO, packet)
+                # CLEAR THE INTERRUPT
+                self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+                if fifo_length < 5:
+                    print("missing pckt header")
+                    packet = None
+                else:
+                    if self.node != _RH_BROADCAST_ADDRESS and packet[0] != _RH_BROADCAST_ADDRESS and packet[0] != self.node:
+                        packet = None
+                    if not with_header and packet is not None:  # skip the header if not wanted
+                        packet = packet[4:]
+
+                self.something_in_rx_buffer = False
+
+            # Listen again if necessary (RX_MODE)
+            if keep_listening:
+                self.listen()
+            else:
+                # Enter idle mode to stop receiving other packets.
+                self.idle()
+            # CLEAR THE INTERRUPT
+            self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
 
         # return the result packet.
         return packet

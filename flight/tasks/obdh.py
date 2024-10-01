@@ -26,5 +26,5 @@ class Task(TemplateTask):
             pass
 
         gc.collect()
-        self.log_info(f"Data processes: {DH.get_all_data_processes_name()}")
+        # self.log_info(f"Data processes: {DH.get_all_data_processes_name()}")
         # self.log_info(f"Stored files: {DH.SD_usage()} bytes.")

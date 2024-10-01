@@ -82,8 +82,8 @@ class Task(TemplateTask):
         self.log_print_counter += 1
         if self.log_print_counter % self.frequency == 0:
             self.log_print_counter = 0
-            self.log_info(f"GLOBAL STATE: {STR_STATES[SM.current_state]}.")
-            self.log_info(f"RAM USAGE: {self.log_data[CDH_IDX.CURRENT_RAM_USAGE]}%")
+            # self.log_info(f"GLOBAL STATE: {STR_STATES[SM.current_state]}.")
+            # self.log_info(f"RAM USAGE: {self.log_data[CDH_IDX.CURRENT_RAM_USAGE]}%")
 
         # gc.collect()
         # print(int(gc.mem_alloc() / ( gc.mem_alloc() + gc.mem_free()) * 100))
