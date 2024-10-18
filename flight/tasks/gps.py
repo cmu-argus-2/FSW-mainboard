@@ -11,7 +11,7 @@ from core.states import STATES
 
 class Task(TemplateTask):
 
-    data_keys = [
+    """data_keys = [
         "TIME",
         "GPS_MESSAGE_ID",
         "GPS_FIX_MODE",
@@ -33,10 +33,14 @@ class Task(TemplateTask):
         "GPS_ECEF_VX",
         "GPS_ECEF_VY",
         "GPS_ECEF_VZ",
-    ]
+    ]"""
 
     data_format = "LBBBHIiiiiHHHHHiiiiii"
     log_data = [0] * 21
+
+    def __init__(self, id):
+        super().__init__(id)
+        self.name = "GPS"
 
     async def main_task(self):
 
@@ -44,7 +48,7 @@ class Task(TemplateTask):
             pass
         elif SM.current_state == STATES.NOMINAL:
             if not DH.data_process_exists("gps"):
-                DH.register_data_process("gps", self.data_keys, self.data_format, True, line_limit=500)
+                DH.register_data_process("gps", self.data_format, True, data_limit=100000, write_interval=10)
 
             # TODO GPS frame parsing - get ECEF in (cm) and ECEF velocity in cm/s
 
@@ -71,4 +75,8 @@ class Task(TemplateTask):
             self.log_data[GPS_IDX.GPS_ECEF_VZ] = -73684928
 
         DH.log_data("gps", self.log_data)
-        self.log_info(f"{dict(zip(self.data_keys[-6:], self.log_data[-6:]))}")
+        # self.log_info(f"{dict(zip(self.data_keys[-6:], self.log_data[-6:]))}")
+        self.log_info(
+            f"GPS ECEF: {self.log_data[GPS_IDX.GPS_ECEF_X]}, \
+                {self.log_data[GPS_IDX.GPS_ECEF_Y]}, {self.log_data[GPS_IDX.GPS_ECEF_Z]}"
+        )

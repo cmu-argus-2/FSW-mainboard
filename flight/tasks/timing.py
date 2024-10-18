@@ -10,6 +10,10 @@ from hal.configuration import SATELLITE
 
 
 class Task(TemplateTask):
+    def __init__(self, id):
+        super().__init__(id)
+        self.name = "TIMING"
+
     async def main_task(self):
 
         if SM.current_state == STATES.STARTUP:
@@ -19,6 +23,6 @@ class Task(TemplateTask):
         elif SM.current_state == STATES.NOMINAL:
             self.log_info(f"Time: {int(time.time())}")
             self.log_info(f"Time since boot: {int(time.time()) - SATELLITE.BOOTTIME}")
-
+            pass
             """if int(time.time()) - SATELLITE.BOOTTIME > 20:
                 time.sleep(10000000)"""

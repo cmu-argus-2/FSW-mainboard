@@ -26,18 +26,17 @@ class TASK:
 
 
 TASK_REGISTRY = {
-    TASK.COMMAND: (command, "COMMAND"),
-    TASK.TIMING: (timing, "TIMING"),
-    TASK.EPS: (eps, "EPS"),
-    TASK.OBDH: (obdh, "OBDH"),
-    TASK.ADCS: (adcs, "ADCS"),
-    TASK.IMU: (imu, "IMU"),
-    TASK.COMMS: (comms, "COMMS"),
-    TASK.THERMAL: (thermal, "THERMAL"),
-    TASK.GPS: (gps, "GPS"),
-    TASK.TM: (telemetry, "TM"),
+    TASK.COMMAND: command,
+    TASK.TIMING: timing,
+    TASK.EPS: eps,
+    TASK.OBDH: obdh,
+    TASK.ADCS: adcs,
+    TASK.IMU: imu,
+    TASK.COMMS: comms,
+    TASK.THERMAL: thermal,
+    TASK.GPS: gps,
+    TASK.TM: telemetry,
 }
-
 
 SM_CONFIGURATION = {
     STATES.STARTUP: {
@@ -51,16 +50,16 @@ SM_CONFIGURATION = {
     },
     STATES.NOMINAL: {
         "Tasks": {
-            TASK.COMMAND: {"Frequency": 1, "Priority": 1},
+            TASK.COMMAND: {"Frequency": 10, "Priority": 1},
             TASK.TIMING: {"Frequency": 1, "Priority": 2},
             TASK.EPS: {"Frequency": 1, "Priority": 1},
             TASK.OBDH: {"Frequency": 1, "Priority": 2},
-            TASK.IMU: {"Frequency": 2, "Priority": 5},
+            TASK.IMU: {"Frequency": 10, "Priority": 5},
             TASK.ADCS: {"Frequency": 1, "Priority": 2, "ScheduleLater": True},
-            TASK.COMMS: {"Frequency": 0.2, "Priority": 5, "ScheduleLater": True},
+            TASK.COMMS: {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
             TASK.THERMAL: {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
             TASK.GPS: {"Frequency": 0.5, "Priority": 5, "ScheduleLater": True},
-            TASK.TM: {"Frequency": 0.5, "Priority": 4, "ScheduleLater": True},
+            TASK.TM: {"Frequency": 1, "Priority": 4, "ScheduleLater": True},
         },
         "MovesTo": [STATES.DOWNLINK, STATES.LOW_POWER, STATES.SAFE],
     },
@@ -68,7 +67,7 @@ SM_CONFIGURATION = {
         "Tasks": {
             TASK.COMMAND: {"Frequency": 1, "Priority": 1},
             TASK.TIMING: {"Frequency": 1, "Priority": 2},
-            TASK.COMMS: {"Frequency": 1, "Priority": 1},
+            TASK.COMMS: {"Frequency": 0.2, "Priority": 1},
             TASK.TM: {"Frequency": 1, "Priority": 1, "ScheduleLater": True},
             TASK.EPS: {"Frequency": 1, "Priority": 1},
             TASK.OBDH: {"Frequency": 1, "Priority": 2},

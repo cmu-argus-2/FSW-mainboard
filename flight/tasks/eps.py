@@ -16,7 +16,7 @@ class Task(TemplateTask):
     ID = 0x01
 
     # To be removed - kept until proper logging is implemented
-    data_keys = [
+    """data_keys = [
         "TIME",
         "MAINBOARD_VOLTAGE",
         "MAINBOARD_CURRENT",
@@ -59,12 +59,16 @@ class Task(TemplateTask):
         "ZP_SOLAR_CHARGE_CURRENT",
         "ZM_SOLAR_CHARGE_VOLTAGE",
         "ZM_SOLAR_CHARGE_CURRENT",
-    ]
+    ]"""
 
     log_data = [0] * 42
     data_format = "Lhhb" + "h" * 38  # - use mV for voltage and mA for current  (h = short integer 2 bytes)
     batt_voltage = 0
     batt_current = 0
+
+    def __init__(self, id):
+        super().__init__(id)
+        self.name = "EPS"
 
     async def main_task(self):
 
@@ -74,7 +78,7 @@ class Task(TemplateTask):
         elif SM.current_state == STATES.NOMINAL:
 
             if not DH.data_process_exists("eps"):
-                DH.register_data_process("eps", self.data_keys, self.data_format, True, line_limit=500)
+                DH.register_data_process("eps", self.data_format, True, data_limit=100000)
 
             # Get power system readings
 
@@ -90,5 +94,5 @@ class Task(TemplateTask):
             DH.log_data("eps", self.log_data)
             self.log_info(
                 f"Battery Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, \
-                                            Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA"
+                Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA"
             )

@@ -9,6 +9,10 @@ from core.states import STATES
 
 
 class Task(TemplateTask):
+    def __init__(self, id):
+        super().__init__(id)
+        self.name = "OBDH"
+
     async def main_task(self):
 
         if SM.current_state == STATES.STARTUP:
