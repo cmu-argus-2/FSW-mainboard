@@ -8,10 +8,12 @@ import subprocess
 if platform.system() == "Windows":
     BOARD_PATH = "D:\\"
 elif platform.system() == "Linux":
-    username = subprocess.check_output("whoami", shell=True).decode().strip()
+    # username = subprocess.check_output("whoami", shell=True).decode().strip()
+    username = os.getlogin()
     BOARD_PATH = f"/media/{username}/ARGUS"
-    if not os.path.exists(BOARD_PATH):
-        BOARD_PATH = f"/media/{username}/PYCUBED"
+
+    # if not os.path.exists(BOARD_PATH):
+    #     BOARD_PATH = f"/media/{username}/PYCUBED"
 elif platform.system() == "Darwin":
     BOARD_PATH = "/Volumes/ARGUS"
 if platform.node() == "raspberrypi":
@@ -56,10 +58,13 @@ if __name__ == "__main__":
     if platform.system() == "Windows":
         BOARD_PATH = "D:\\"
     elif platform.system() == "Linux":
-        username = subprocess.check_output("whoami", shell=True).decode().strip()
+        # username = subprocess.check_output("whoami", shell=True).decode().strip()
+        username = os.getlogin()
         BOARD_PATH = f"/media/{username}/ARGUS"
-        if not os.path.exists(BOARD_PATH):
-            BOARD_PATH = f"/media/{username}/PYCUBED"
+        print(BOARD_PATH)
+        
+        # if not os.path.exists(BOARD_PATH):
+        #     BOARD_PATH = f"/media/{username}/PYCUBED"
     elif platform.system() == "Darwin":
         BOARD_PATH = "/Volumes/ARGUS"
     if platform.node() == "raspberrypi":
