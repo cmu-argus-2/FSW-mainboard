@@ -74,6 +74,16 @@ class SATELLITE_RADIO:
     crc_count = 0
 
     """
+        Name: set_tm_frame
+        Description: Set internal TM frame for TX
+    """
+
+    @classmethod
+    def set_tm_frame(self, tm_frame):
+        # Set internal TM frame definition
+        self.tm_frame = tm_frame
+
+    """
         Name: file_get_metadata
         Description: Get TX file metadata from flash
     """
@@ -111,7 +121,7 @@ class SATELLITE_RADIO:
         bytes_remaining = self.file_size
         send_bytes = open(self.filepath, "rb")
 
-        # Loop through file and store contents in an array
+        # Loop through file and store contents in file array
         while bytes_remaining > 0:
             if bytes_remaining >= FILE_PKTSIZE:
                 self.file_array.append(send_bytes.read(FILE_PKTSIZE))
@@ -130,6 +140,7 @@ class SATELLITE_RADIO:
 
     @classmethod
     def file_pack_metadata(self):
+        # Return file metadata payload message
         return self.file_ID.to_bytes(1, "big") + self.file_size.to_bytes(4, "big") + self.file_message_count.to_bytes(2, "big")
 
     """
@@ -142,19 +153,8 @@ class SATELLITE_RADIO:
         self.sat.RADIO.listen()
 
     """
-        Name: idle
-        Description: Switch radio to idle mode
-
-    """
-
-    @classmethod
-    def idle(self):
-        self.sat.RADIO.idle()
-
-    """
         Name: data_available
         Description: Check if data is available in FIFO buffer
-
     """
 
     @classmethod
@@ -164,7 +164,6 @@ class SATELLITE_RADIO:
     """
         Name: receive_message
         Description: Receive and unpack message from GS
-
     """
 
     @classmethod

@@ -1,6 +1,6 @@
 # Communication task which uses the radio to transmit and receive messages.
 
-from apps.comms.rf_mcu import SATELLITE_RADIO
+from apps.comms import SATELLITE_RADIO
 from apps.telemetry import TelemetryPacker
 from core import TemplateTask
 from core import state_manager as SM
@@ -30,6 +30,7 @@ class Task(TemplateTask):
         if not self.frequency_set:
             # Reset counter and ensure HB frequency not too high
             self.TX_COUNTER = 0
+
             if self.TX_heartbeat_frequency > self.frequency:
                 self.log_error("TX heartbeat frequency faster than task frequency")
 
@@ -45,7 +46,7 @@ class Task(TemplateTask):
             if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD:
                 # Send out message
                 if TelemetryPacker.TM_AVAILABLE:
-                    SATELLITE_RADIO.tm_frame = TelemetryPacker.FRAME()
+                    SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
 
                 self.tx_msg_id = SATELLITE_RADIO.transmit_message()
                 self.log_info(f"Sent message with ID: {self.tx_msg_id}")
