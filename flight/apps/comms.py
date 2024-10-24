@@ -132,7 +132,7 @@ class SATELLITE_RADIO:
         self.file_obj = open(self.filepath, "rb")
 
         # Seek to the correct sq_cnt
-        if(sq_cnt != self.file_message_count - 1):
+        if sq_cnt != self.file_message_count - 1:
             self.file_obj.seek(sq_cnt * FILE_PKTSIZE)
             self.file_array = self.file_obj.read(FILE_PKTSIZE)
             self.file_obj.close()
@@ -140,7 +140,7 @@ class SATELLITE_RADIO:
             return FILE_PKTSIZE
 
         else:
-            last_pkt_size = self.file_size - (self.file_message_count-1)*FILE_PKTSIZE
+            last_pkt_size = self.file_size - (self.file_message_count - 1) * FILE_PKTSIZE
 
             self.file_obj.seek(sq_cnt * FILE_PKTSIZE)
             self.file_array = self.file_obj.read(last_pkt_size)
