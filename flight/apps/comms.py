@@ -37,7 +37,7 @@ class MSG_ID:
 
 
 class SATELLITE_RADIO:
-    # Hardware abstraction for satellite # TODO to remove
+    # Hardware abstraction for satellite
     sat = SATELLITE
 
     # Comms state
@@ -46,13 +46,14 @@ class SATELLITE_RADIO:
     # Init TM frame for preallocating memory
     tm_frame = bytearray(250)
 
-    # Parameters for file downlinking
+    # Parameters for file downlinking (TEMPORARY HARDCODE)
     filepath = ""
     file_ID = 0x00
     file_size = 0
     file_message_count = 0
 
     # Data for file downlinking
+    file_obj = []
     file_array = []
 
     # Last TX'd message ID
@@ -84,6 +85,16 @@ class SATELLITE_RADIO:
         self.tm_frame = tm_frame
 
     """
+        Name: set_filepath
+        Description: Set filepath for comms TX file
+    """
+
+    @classmethod
+    def set_filepath(self, filepath):
+        # Set internal TM frame definition
+        self.filepath = filepath
+
+    """
         Name: file_get_metadata
         Description: Get TX file metadata from flash
     """
@@ -92,6 +103,8 @@ class SATELLITE_RADIO:
     def file_get_metadata(self):
         if not (self.filepath):
             # No file at filepath
+            logger.warning("[COMMS ERROR] Undefined TX filepath")
+
             self.file_ID = 0x00
             self.file_size = 0
             self.file_message_count = 0
@@ -102,36 +115,22 @@ class SATELLITE_RADIO:
             self.file_size = int(file_stat[6])
             self.file_message_count = int(self.file_size / FILE_PKTSIZE)
 
+            # Increment 1 to message count to account for division floor
             if (self.file_size % FILE_PKTSIZE) > 0:
                 self.file_message_count += 1
 
-            self.file_packetize()
+            self.file_obj = open(self.filepath, "rb")
 
     """
-        Name: file_packetize
+        Name: file_get_packet
         Description: Packetize TX file and store in file array for TX
     """
 
     @classmethod
-    def file_packetize(self):
-        # Initialize / empty file array
-        self.file_array = []
-
-        # Get file data
-        bytes_remaining = self.file_size
-        send_bytes = open(self.filepath, "rb")
-
-        # Loop through file and store contents in file array
-        while bytes_remaining > 0:
-            if bytes_remaining >= FILE_PKTSIZE:
-                self.file_array.append(send_bytes.read(FILE_PKTSIZE))
-            else:
-                self.file_array.append(send_bytes.read(bytes_remaining))
-
-            bytes_remaining -= FILE_PKTSIZE
-
-        # Close file when complete
-        send_bytes.close()
+    def file_get_packet(self, sq_cnt):
+        # Seek to the correct sq_cnt
+        self.file_obj.seek(sq_cnt * FILE_PKTSIZE)
+        self.file_array = self.file_obj.read(FILE_PKTSIZE)
 
     """
         Name: file_pack_metadata
@@ -140,6 +139,9 @@ class SATELLITE_RADIO:
 
     @classmethod
     def file_pack_metadata(self):
+        # Generate file metadata and file array
+        self.file_get_metadata()
+
         # Return file metadata payload message
         return self.file_ID.to_bytes(1, "big") + self.file_size.to_bytes(4, "big") + self.file_message_count.to_bytes(2, "big")
 
@@ -255,26 +257,29 @@ class SATELLITE_RADIO:
                 0x7,
             ]
         )
+
+        # Get file metatdata
         tx_payload = self.file_pack_metadata()
+        # Pack entire message
         self.tx_message = tx_header + tx_payload
 
     """
-        Name: transmit_file_pkt
+        Name: transmit_file_packet
         Description: Generate TX message for file packet
     """
 
     @classmethod
-    def transmit_file_pkt(self):
+    def transmit_file_packet(self):
         tx_header = (
             (MSG_ID.SAT_FILE_PKT).to_bytes(1, "big")
             + (self.gs_req_seq_count).to_bytes(2, "big")
             + len(self.file_array[self.gs_req_seq_count]).to_bytes(1, "big")
         )
 
-        # Payload
-        tx_payload = self.image_array[self.gs_req_seq_count]
+        # Get bytes from file (stored in file_array)
+        self.file_get_packet(self.gs_req_seq_count)
         # Pack entire message
-        self.tx_message = tx_header + tx_payload
+        self.tx_message = tx_header + self.file_array
 
     """
         Name: transmit_message
@@ -294,7 +299,7 @@ class SATELLITE_RADIO:
 
         elif self.state == COMMS_STATE.TX_FILEPKT:
             # Transmit file packets with requested sequence count
-            self.transmit_file_pkt()
+            self.transmit_file_packet()
 
         else:
             # Transmit SAT heartbeat

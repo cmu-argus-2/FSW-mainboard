@@ -5,7 +5,7 @@ from apps.telemetry import TelemetryPacker
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
-
+from core.data_handler import DataHandler as DH
 
 class Task(TemplateTask):
     tx_msg_id = 0x00
@@ -39,6 +39,15 @@ class Task(TemplateTask):
             self.frequency_set = True
 
         if SM.current_state == STATES.NOMINAL:
+            if not DH.data_process_exists("img"):
+                # TODO: Move image process to another task
+                DH.register_data_process("img", "b", True)
+
+                # Set filepath for comms TX file
+                filepath = DH.request_TM_path_image()
+                SATELLITE_RADIO.set_filepath(filepath)
+                self.log_info(f"Initializing TX file filepath: {filepath}")
+
             # Increment counter
             self.TX_COUNTER += 1
 
@@ -60,4 +69,5 @@ class Task(TemplateTask):
                 if self.rq_msg_id != 0x00:
                     self.log_info(f"GS requested message ID: {self.rq_msg_id}")
             else:
-                self.log_info("No response from GS")
+                # No packet received from GS yet
+                self.log_info("Nothing in RX buffer")
