@@ -3,7 +3,6 @@ import sys
 import time
 
 from core import logger, setup_logger, state_manager
-from core.data_handler import DataHandler as DH
 from core.states import STATES
 from hal.configuration import SATELLITE
 
@@ -40,7 +39,6 @@ print("Errors:", errors)
 """
 print_memory_stats(call_gc=False)
 print_memory_stats(call_gc=True)
-# DH.delete_all_files()
 
 try:
     # Run forever
