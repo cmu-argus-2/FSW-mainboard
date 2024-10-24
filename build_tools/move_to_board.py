@@ -62,7 +62,7 @@ if __name__ == "__main__":
         username = os.getlogin()
         BOARD_PATH = f"/media/{username}/ARGUS"
         print(BOARD_PATH)
-        
+
         # if not os.path.exists(BOARD_PATH):
         #     BOARD_PATH = f"/media/{username}/PYCUBED"
     elif platform.system() == "Darwin":

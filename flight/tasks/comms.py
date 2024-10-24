@@ -4,8 +4,9 @@ from apps.comms import SATELLITE_RADIO
 from apps.telemetry import TelemetryPacker
 from core import TemplateTask
 from core import state_manager as SM
-from core.states import STATES
 from core.data_handler import DataHandler as DH
+from core.states import STATES
+
 
 class Task(TemplateTask):
     tx_msg_id = 0x00
