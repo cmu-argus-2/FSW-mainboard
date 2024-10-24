@@ -53,7 +53,7 @@ class Task(TemplateTask):
             self.TX_COUNTER += 1
 
             # TODO: Add check for comms FSW state in this
-            if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD:
+            if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD or SATELLITE_RADIO.state != 0x01:
                 # Send out message
                 if TelemetryPacker.TM_AVAILABLE:
                     SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())

@@ -1,6 +1,6 @@
 """
 Satellite radio class for Argus-1 CubeSat.
-Message packing/unpacking for telemetry/image TX
+Message packing/unpacking for telemetry/file TX
 and acknowledgement RX.
 
 Authors: Akshat Sahay, Ibrahima S. Sow
@@ -112,6 +112,7 @@ class SATELLITE_RADIO:
         else:
             # Valid filepath from DH, set size and message count
             file_stat = os.stat(self.filepath)
+            self.file_ID = 0x01
             self.file_size = int(file_stat[6])
             self.file_message_count = int(self.file_size / FILE_PKTSIZE)
 
@@ -119,7 +120,7 @@ class SATELLITE_RADIO:
             if (self.file_size % FILE_PKTSIZE) > 0:
                 self.file_message_count += 1
 
-            self.file_obj = open(self.filepath, "rb")
+            # self.file_obj = open(self.filepath, "rb")
 
     """
         Name: file_get_packet
@@ -128,9 +129,24 @@ class SATELLITE_RADIO:
 
     @classmethod
     def file_get_packet(self, sq_cnt):
+        self.file_obj = open(self.filepath, "rb")
+
         # Seek to the correct sq_cnt
-        self.file_obj.seek(sq_cnt * FILE_PKTSIZE)
-        self.file_array = self.file_obj.read(FILE_PKTSIZE)
+        if(sq_cnt != self.file_message_count - 1):
+            self.file_obj.seek(sq_cnt * FILE_PKTSIZE)
+            self.file_array = self.file_obj.read(FILE_PKTSIZE)
+            self.file_obj.close()
+
+            return FILE_PKTSIZE
+
+        else:
+            last_pkt_size = self.file_size - (self.file_message_count-1)*FILE_PKTSIZE
+
+            self.file_obj.seek(sq_cnt * FILE_PKTSIZE)
+            self.file_array = self.file_obj.read(last_pkt_size)
+            self.file_obj.close()
+
+            return last_pkt_size
 
     """
         Name: file_pack_metadata
@@ -248,7 +264,7 @@ class SATELLITE_RADIO:
 
     @classmethod
     def transmit_file_metadata(self):
-        # Transmit stored image info
+        # Transmit stored file info
         tx_header = bytes(
             [
                 (MSG_ID.SAT_FILE_METADATA),
@@ -270,14 +286,15 @@ class SATELLITE_RADIO:
 
     @classmethod
     def transmit_file_packet(self):
+        # Get bytes from file (stored in file_array)
+        pkt_size = self.file_get_packet(self.gs_req_seq_count)
+
         tx_header = (
             (MSG_ID.SAT_FILE_PKT).to_bytes(1, "big")
             + (self.gs_req_seq_count).to_bytes(2, "big")
-            + len(self.file_array[self.gs_req_seq_count]).to_bytes(1, "big")
+            + (pkt_size).to_bytes(1, "big")
         )
 
-        # Get bytes from file (stored in file_array)
-        self.file_get_packet(self.gs_req_seq_count)
         # Pack entire message
         self.tx_message = tx_header + self.file_array
 
