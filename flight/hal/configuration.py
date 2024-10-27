@@ -24,7 +24,7 @@ elif HARDWARE_VERSION == ARGUS_V1:
 
     SATELLITE = ArgusV1(enable_middleware=EN_MIDDLEWARE, debug=DEBUG_MODE)
 elif HARDWARE_VERSION == ARGUS_V1_1:
-    from hal.argus_v1_1 import ArgusV1_1
+    from hal.argus_v1_1 import ArgusV1
 
     SATELLITE = ArgusV1(enable_middleware=EN_MIDDLEWARE, debug=DEBUG_MODE)
 else:
