@@ -21,9 +21,9 @@ class ArgusV1Interfaces:
     This class represents the interfaces used in the ArgusV1 module.
     """
 
-    I2C1_SDA = board.SDA1 # PB12
-    I2C1_SCL = board.SCL1 # PB13
-    I2C1 = I2C(I2C1_SCL, I2C1_SDA)
+    # I2C1_SDA = board.SDA1 # PB12
+    # I2C1_SCL = board.SCL1 # PB13
+    I2C1 = I2C(board.SCL1, board.SDA1)
 
     I2C2_SDA = board.SDA2 #PA22
     I2C2_SCL = board.SCL2 #PA23
@@ -221,7 +221,7 @@ class ArgusV1(CubeSat):
         error_list.append(self.__imu_boot())
         error_list.append(self.__rtc_boot())
         error_list.append(self.__gps_boot())
-        error_list.append(self.__battery_power_monitor_boot())
+        error_list.append(self.__board_power_monitor_boot())
         error_list.append(self.__jetson_power_monitor_boot())
         error_list.append(self.__charger_boot())
         error_list.append(self.__torque_interface_boot())
@@ -234,6 +234,12 @@ class ArgusV1(CubeSat):
         error_list.append(self.__neopixel_boot())
         error_list.append(self.__burn_wire_boot())
         error_list.append(self.__payload_uart_boot())
+        error_list.append(self.__torque_xp_power_monitor_boot())
+        error_list.append(self.__torque_xm_power_monitor_boot())
+        error_list.append(self.__torque_yp_power_monitor_boot())
+        error_list.append(self.__torque_ym_power_monitor_boot())
+        error_list.append(self.__torque_zp_power_monitor_boot())
+        error_list.append(self.__torque_zm_power_monitor_boot())
 
         error_list = [error for error in error_list if error != Errors.NOERROR]
 
@@ -277,7 +283,7 @@ class ArgusV1(CubeSat):
 
         return Errors.NOERROR
 
-    def __battery_power_monitor_boot(self) -> list[int]:
+    def __board_power_monitor_boot(self) -> list[int]:
         """battery_power_monitor_boot: Boot sequence for the battery power monitor
 
         :return: Error code if the battery power monitor failed to initialize
@@ -285,16 +291,16 @@ class ArgusV1(CubeSat):
         try:
             from hal.drivers.adm1176 import ADM1176
 
-            battery_monitor = ADM1176(
-                ArgusV1Components.BATTERY_POWER_MONITOR_I2C,
-                ArgusV1Components.BATTERY_POWER_MONITOR_I2C_ADDRESS,
+            board_power_monitor = ADM1176(
+                ArgusV1Components.BOARD_POWER_MONITOR_I2C,
+                ArgusV1Components.BOARD_POWER_MONITOR_I2C_ADDRESS,
             )
 
             if self.__middleware_enabled:
-                battery_monitor = Middleware(battery_monitor)
+                board_power_monitor = Middleware(board_power_monitor)
 
-            self.__battery_monitor = battery_monitor
-            self.__device_list.append(battery_monitor)
+            self.__board_power_monitor = board_power_monitor
+            self.__device_list.append(board_power_monitor)
         except Exception as e:
             if self.__debug:
                 raise e
@@ -407,6 +413,32 @@ class ArgusV1(CubeSat):
             return Errors.DRV8830_NOT_INITIALIZED
 
         return Errors.NOERROR
+    
+    def __torque_xp_power_monitor_boot(self) -> list[int]:
+        """torque_xp_power_monitor_boot: Boot sequence for the torque xp power monitor
+
+        :return: Error code if the torque xp power monitor failed to initialize
+        """
+        try:
+            from hal.drivers.adm1176 import ADM1176
+
+            torque_xp_power_monitor = ADM1176(
+                ArgusV1Components.TORQUE_X_POWER_MONITOR_I2C,
+                ArgusV1Components.TORQUE_XP_POWER_MONITOR_I2C_ADDRESS,
+            )
+
+            if self.__middleware_enabled:
+                torque_xp_power_monitor = Middleware(torque_xp_power_monitor)
+
+            self.__torque_xp_power_monitor = torque_xp_power_monitor
+            self.__device_list.append(torque_xp_power_monitor)
+        except Exception as e:
+            if self.__debug:
+                raise e
+
+            return Errors.ADM1176_NOT_INITIALIZED
+
+        return Errors.NOERROR
 
     def __torque_xm_boot(self) -> list[int]:
         """torque_xm_boot: Boot sequence for the torque driver in the x- direction
@@ -431,6 +463,32 @@ class ArgusV1(CubeSat):
                 raise e
 
             return Errors.DRV8830_NOT_INITIALIZED
+
+        return Errors.NOERROR
+
+    def __torque_xm_power_monitor_boot(self) -> list[int]:
+        """torque_xm_power_monitor_boot: Boot sequence for the torque xm power monitor
+
+        :return: Error code if the torque xm power monitor failed to initialize
+        """
+        try:
+            from hal.drivers.adm1176 import ADM1176
+
+            torque_xm_power_monitor = ADM1176(
+                ArgusV1Components.TORQUE_X_POWER_MONITOR_I2C,
+                ArgusV1Components.TORQUE_XM_POWER_MONITOR_I2C_ADDRESS,
+            )
+
+            if self.__middleware_enabled:
+                torque_xm_power_monitor = Middleware(torque_xm_power_monitor)
+
+            self.__torque_xm_power_monitor = torque_xm_power_monitor
+            self.__device_list.append(torque_xm_power_monitor)
+        except Exception as e:
+            if self.__debug:
+                raise e
+
+            return Errors.ADM1176_NOT_INITIALIZED
 
         return Errors.NOERROR
 
@@ -459,6 +517,32 @@ class ArgusV1(CubeSat):
             return Errors.DRV8830_NOT_INITIALIZED
 
         return Errors.NOERROR
+    
+    def __torque_yp_power_monitor_boot(self) -> list[int]:
+        """torque_yp_power_monitor_boot: Boot sequence for the torque yp power monitor
+
+        :return: Error code if the torque yp power monitor failed to initialize
+        """
+        try:
+            from hal.drivers.adm1176 import ADM1176
+
+            torque_yp_power_monitor = ADM1176(
+                ArgusV1Components.TORQUE_Y_POWER_MONITOR_I2C,
+                ArgusV1Components.TORQUE_YP_POWER_MONITOR_I2C_ADDRESS,
+            )
+
+            if self.__middleware_enabled:
+                torque_yp_power_monitor = Middleware(torque_yp_power_monitor)
+
+            self.__torque_yp_power_monitor = torque_yp_power_monitor
+            self.__device_list.append(torque_yp_power_monitor)
+        except Exception as e:
+            if self.__debug:
+                raise e
+
+            return Errors.ADM1176_NOT_INITIALIZED
+
+        return Errors.NOERROR
 
     def __torque_ym_boot(self) -> list[int]:
         """torque_ym_boot: Boot sequence for the torque driver in the y- direction
@@ -483,6 +567,32 @@ class ArgusV1(CubeSat):
                 raise e
 
             return Errors.DRV8830_NOT_INITIALIZED
+
+        return Errors.NOERROR
+    
+    def __torque_ym_power_monitor_boot(self) -> list[int]:
+        """torque_ym_power_monitor_boot: Boot sequence for the torque ym power monitor
+
+        :return: Error code if the torque ym power monitor failed to initialize
+        """
+        try:
+            from hal.drivers.adm1176 import ADM1176
+
+            torque_ym_power_monitor = ADM1176(
+                ArgusV1Components.TORQUE_Y_POWER_MONITOR_I2C,
+                ArgusV1Components.TORQUE_YM_POWER_MONITOR_I2C_ADDRESS,
+            )
+
+            if self.__middleware_enabled:
+                torque_ym_power_monitor = Middleware(torque_ym_power_monitor)
+
+            self.__torque_ym_power_monitor = torque_ym_power_monitor
+            self.__device_list.append(torque_ym_power_monitor)
+        except Exception as e:
+            if self.__debug:
+                raise e
+
+            return Errors.ADM1176_NOT_INITIALIZED
 
         return Errors.NOERROR
 
@@ -512,6 +622,32 @@ class ArgusV1(CubeSat):
 
         return Errors.NOERROR
     
+    def __torque_zp_power_monitor_boot(self) -> list[int]:
+        """torque_zp_power_monitor_boot: Boot sequence for the torque zp power monitor
+
+        :return: Error code if the torque zp power monitor failed to initialize
+        """
+        try:
+            from hal.drivers.adm1176 import ADM1176
+
+            torque_zp_power_monitor = ADM1176(
+                ArgusV1Components.TORQUE_Z_POWER_MONITOR_I2C,
+                ArgusV1Components.TORQUE_ZP_POWER_MONITOR_I2C_ADDRESS,
+            )
+
+            if self.__middleware_enabled:
+                torque_zp_power_monitor = Middleware(torque_zp_power_monitor)
+
+            self.__torque_zp_power_monitor = torque_zp_power_monitor
+            self.__device_list.append(torque_zp_power_monitor)
+        except Exception as e:
+            if self.__debug:
+                raise e
+
+            return Errors.ADM1176_NOT_INITIALIZED
+
+        return Errors.NOERROR
+    
     def __torque_zm_boot(self) -> list[int]:
         """torque_zm_boot: Boot sequence for the torque driver in the z direction
 
@@ -535,6 +671,32 @@ class ArgusV1(CubeSat):
                 raise e
 
             return Errors.DRV8830_NOT_INITIALIZED
+
+        return Errors.NOERROR
+    
+    def __torque_zm_power_monitor_boot(self) -> list[int]:
+        """torque_zm_power_monitor_boot: Boot sequence for the torque zm power monitor
+
+        :return: Error code if the torque zm power monitor failed to initialize
+        """
+        try:
+            from hal.drivers.adm1176 import ADM1176
+
+            torque_zm_power_monitor = ADM1176(
+                ArgusV1Components.TORQUE_Z_POWER_MONITOR_I2C,
+                ArgusV1Components.TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS,
+            )
+
+            if self.__middleware_enabled:
+                torque_zm_power_monitor = Middleware(torque_zm_power_monitor)
+
+            self.__torque_zm_power_monitor = torque_zm_power_monitor
+            self.__device_list.append(torque_zm_power_monitor)
+        except Exception as e:
+            if self.__debug:
+                raise e
+
+            return Errors.ADM1176_NOT_INITIALIZED
 
         return Errors.NOERROR
 
