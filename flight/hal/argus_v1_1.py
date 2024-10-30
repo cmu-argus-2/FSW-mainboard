@@ -21,17 +21,29 @@ class ArgusV1Interfaces:
     This class represents the interfaces used in the ArgusV1 module.
     """
 
-    # I2C1_SDA = board.SDA1 # PB12
-    # I2C1_SCL = board.SCL1 # PB13
-    I2C1 = board.I2C()
+    I2C1_SDA = board.SDA1 # PB12
+    I2C1_SCL = board.SCL1 # PB13
+    I2C1 = I2C(I2C1_SCL, I2C1_SDA)
 
     I2C2_SDA = board.SDA2 #PA22
     I2C2_SCL = board.SCL2 #PA23
-    I2C2 = board.I2C()
+
+    # Line may not be connected, try except sequence
+    try:
+        I2C2 = I2C(I2C2_SCL, I2C2_SDA)
+    except Exception as e:
+        print(e)
+        I2C2 = None
 
     I2C3_SDA = board.SDA3 #PA16
     I2C3_SCL = board.SCL3 #PA17
-    I2C3 = board.I2C()
+
+    # Line may not be connected, try except sequence
+    try:
+        I2C3 = I2C(I2C3_SCL, I2C3_SDA)
+    except Exception as e:
+        print(e)
+        I2C3 = None
 
     JET_SPI_SCK = board.JETSON_SCK # PA5
     JET_SPI_MOSI = board.JETSON_MOSI # PA4
@@ -340,9 +352,9 @@ class ArgusV1(CubeSat):
         :return: Error code if the IMU failed to initialize
         """
         try:
-            from hal.drivers.bmx160 import BMX160_I2C
+            from hal.drivers.bmx160 import BMX160
 
-            imu = BMX160_I2C(
+            imu = BMX160(
                 ArgusV1Components.IMU_I2C,
                 ArgusV1Components.IMU_I2C_ADDRESS,
             )
