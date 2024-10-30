@@ -1,6 +1,7 @@
 # Communication task which uses the radio to transmit and receive messages.
 
-from apps.comms import SATELLITE_RADIO
+import time
+from apps.comms import SATELLITE_RADIO, COMMS_STATE
 from apps.telemetry import TelemetryPacker
 from core import TemplateTask
 from core import state_manager as SM
@@ -23,6 +24,9 @@ class Task(TemplateTask):
         # Counters for heartbeat frequency
         self.TX_COUNT_THRESHOLD = 0
         self.TX_COUNTER = 0
+
+        # Counter for ground pass timeout
+        self.RX_COUNTER = 0
 
         SATELLITE_RADIO.listen()  # RX mode
 
@@ -52,8 +56,8 @@ class Task(TemplateTask):
             # Increment counter
             self.TX_COUNTER += 1
 
-            # TODO: Add check for comms FSW state in this
-            if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD or SATELLITE_RADIO.state != 0x01:
+            self.log_info(f"SAT currently in state {SATELLITE_RADIO.get_state()}")
+            if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD or SATELLITE_RADIO.get_state() != COMMS_STATE.TX_HEARTBEAT:
                 # Send out message
                 if TelemetryPacker.TM_AVAILABLE:
                     SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
@@ -71,4 +75,4 @@ class Task(TemplateTask):
                     self.log_info(f"GS requested message ID: {self.rq_msg_id}")
             else:
                 # No packet received from GS yet
-                self.log_info("Nothing in RX buffer")
+                self.log_info(f"Nothing in RX buffer at {time.monotonic()}")

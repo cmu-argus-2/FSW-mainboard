@@ -75,6 +75,26 @@ class SATELLITE_RADIO:
     crc_count = 0
 
     """
+        Name: set_state
+        Description: Set internal COMMS_STATE
+    """
+
+    @classmethod
+    def set_state(self, state):
+        # Set state
+        self.state = state
+
+    """
+        Name: get_state
+        Description: Get internal COMMS_STATE
+    """
+
+    @classmethod
+    def get_state(self):
+        # Get state
+        return self.state
+
+    """
         Name: set_tm_frame
         Description: Set internal TM frame for TX
     """
@@ -326,7 +346,8 @@ class SATELLITE_RADIO:
         # Send a message to GS
         self.sat.RADIO.send(self.tx_message)
         self.crc_count = 0
-        self.state = COMMS_STATE.RX
+        # Probably do not need RX state
+        # self.state = COMMS_STATE.RX
 
         # Return TX message header
         self.tx_message_ID = int.from_bytes(self.tx_message[0:1], "big")
