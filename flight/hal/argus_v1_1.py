@@ -23,15 +23,15 @@ class ArgusV1Interfaces:
 
     # I2C1_SDA = board.SDA1 # PB12
     # I2C1_SCL = board.SCL1 # PB13
-    I2C1 = I2C(board.SCL1, board.SDA1)
+    I2C1 = board.I2C()
 
     I2C2_SDA = board.SDA2 #PA22
     I2C2_SCL = board.SCL2 #PA23
-    I2C2 = I2C(I2C2_SCL, I2C2_SDA)
+    I2C2 = board.I2C()
 
     I2C3_SDA = board.SDA3 #PA16
     I2C3_SCL = board.SCL3 #PA17
-    I2C3 = I2C(I2C3_SCL, I2C3_SDA)
+    I2C3 = board.I2C()
 
     JET_SPI_SCK = board.JETSON_SCK # PA5
     JET_SPI_MOSI = board.JETSON_MOSI # PA4
@@ -69,7 +69,7 @@ class ArgusV1Components:
     # IMU
     IMU_I2C = ArgusV1Interfaces.I2C1
     IMU_I2C_ADDRESS = const(0x69)
-    # IMU_ENABLE = board.EN_IMU
+    IMU_ENABLE = board.EN_IMU
 
     # JETSON POWER MONITOR
     JETSON_POWER_MONITOR_I2C = ArgusV1Interfaces.I2C1
@@ -179,7 +179,6 @@ class ArgusV1Components:
     NEOPIXEL_BRIGHTNESS = 0.2
 
     # PAYLOAD
-    # PAYLOAD_UART = ArgusV1Interfaces.UART2
     PAYLOAD_SPI = ArgusV1Interfaces.JET_SPI
     PAYLOAD_CS = board.JETSON_CS
     PAYLOAD_ENABLE = board.JETSON_EN
@@ -230,10 +229,10 @@ class ArgusV1(CubeSat):
         error_list.append(self.__light_sensor_yp_boot())
         error_list.append(self.__light_sensor_ym_boot())
         error_list.append(self.__light_sensor_zm_boot())
-        error_list.append(self.__radio_boot())
+        # error_list.append(self.__radio_boot())
         error_list.append(self.__neopixel_boot())
         error_list.append(self.__burn_wire_boot())
-        error_list.append(self.__payload_uart_boot())
+        # error_list.append(self.__payload_uart_boot())
         error_list.append(self.__torque_xp_power_monitor_boot())
         error_list.append(self.__torque_xm_power_monitor_boot())
         error_list.append(self.__torque_yp_power_monitor_boot())
