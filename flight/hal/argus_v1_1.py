@@ -69,7 +69,7 @@ class ArgusV1Components:
     # IMU
     IMU_I2C = ArgusV1Interfaces.I2C1
     IMU_I2C_ADDRESS = const(0x69)
-    IMU_ENABLE = board.EN_IMU
+    # IMU_ENABLE = board.EN_IMU
 
     # JETSON POWER MONITOR
     JETSON_POWER_MONITOR_I2C = ArgusV1Interfaces.I2C1
@@ -340,12 +340,11 @@ class ArgusV1(CubeSat):
         :return: Error code if the IMU failed to initialize
         """
         try:
-            from hal.drivers.bmx160 import BMX160
+            from hal.drivers.bmx160 import BMX160_I2C
 
-            imu = BMX160(
+            imu = BMX160_I2C(
                 ArgusV1Components.IMU_I2C,
                 ArgusV1Components.IMU_I2C_ADDRESS,
-                ArgusV1Components.IMU_ENABLE,
             )
 
             if self.__middleware_enabled:

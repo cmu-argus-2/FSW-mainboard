@@ -384,6 +384,7 @@ class BMX160(Driver):
     _mag_range = 250  # deg/sec
 
     def __init__(self, i2c, i2c_address, enable_pin=None):
+        self._enable = None
         if enable_pin is not None:
             self._enable = DigitalInOut(enable_pin)
             self._enable.switch_to_output(value=True)
