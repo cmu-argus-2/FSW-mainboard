@@ -1,7 +1,8 @@
 # Communication task which uses the radio to transmit and receive messages.
 
 import time
-from apps.comms.comms import SATELLITE_RADIO, COMMS_STATE
+
+from apps.comms.comms import COMMS_STATE, SATELLITE_RADIO
 from apps.telemetry import TelemetryPacker
 from core import TemplateTask
 from core import state_manager as SM
@@ -26,6 +27,7 @@ class Task(TemplateTask):
         self.TX_COUNTER = 0
 
         # Counter for ground pass timeout
+        self.ground_pass = False
         self.RX_COUNTER = 0
 
         SATELLITE_RADIO.listen()  # RX mode
@@ -73,6 +75,13 @@ class Task(TemplateTask):
                 self.rq_msg_id = SATELLITE_RADIO.receive_message()
                 if self.rq_msg_id != 0x00:
                     self.log_info(f"GS requested message ID: {self.rq_msg_id}")
+                    self.ground_pass = True
+                    self.RX_COUNTER = 0
             else:
                 # No packet received from GS yet
                 self.log_info(f"Nothing in RX buffer at {time.monotonic()}")
+                self.RX_COUNTER += 1
+
+                if self.RX_COUNTER > 8 and self.ground_pass:
+                    self.ground_pass = False
+                    SATELLITE_RADIO.set_state(COMMS_STATE.TX_HEARTBEAT)
