@@ -170,7 +170,11 @@ class ArgusV1(CubeSat):
         error_list.append(self.__battery_power_monitor_boot())
         error_list.append(self.__jetson_power_monitor_boot())
         error_list.append(self.__charger_boot())
-        error_list.append(self.__torque_interface_boot())
+        error_list.append(self.__torque_xp_boot())
+        error_list.append(self.__torque_xm_boot())
+        error_list.append(self.__torque_yp_boot())
+        error_list.append(self.__torque_ym_boot())
+        error_list.append(self.__torque_z_boot())
         error_list.append(self.__light_sensor_xp_boot())
         error_list.append(self.__light_sensor_xm_boot())
         error_list.append(self.__light_sensor_yp_boot())
@@ -457,47 +461,6 @@ class ArgusV1(CubeSat):
             return Errors.DRV8830_NOT_INITIALIZED
 
         return Errors.NOERROR
-
-    def __torque_interface_boot(self) -> list[int]:
-        """torque_interface_boot: Boot sequence for the torque interface
-
-        :return: Error code if the torque interface failed to initialize
-        """
-        error_list: list[int] = []
-
-        error_list.append(self.__torque_xp_boot())
-        error_list.append(self.__torque_xm_boot())
-        error_list.append(self.__torque_yp_boot())
-        error_list.append(self.__torque_ym_boot())
-        error_list.append(self.__torque_z_boot())
-
-        from hal.drivers.torque_coil import TorqueInterface
-
-        # X direction
-        try:
-            torque_interface = TorqueInterface(self.__torque_xp_driver, self.__torque_xm_driver)
-            self.__torque_x = torque_interface
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-        # Y direction
-        try:
-            torque_interface = TorqueInterface(self.__torque_yp_driver, self.__torque_ym_driver)
-            self.__torque_y = torque_interface
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-        # Z direction
-        try:
-            torque_interface = TorqueInterface(self.__torque_z_driver)
-            self.__torque_z = torque_interface
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-        return error_list
 
     def __light_sensor_xp_boot(self) -> list[int]:
         """light_sensor_xp_boot: Boot sequence for the light sensor in the x+ direction

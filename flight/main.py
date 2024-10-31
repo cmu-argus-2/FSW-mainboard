@@ -24,15 +24,14 @@ def print_memory_stats(call_gc=True):
 
 
 print_memory_stats(call_gc=True)
-
+# at 26% of memory usage
 print("Booting ARGUS-1...")
 boot_errors = SATELLITE.boot_sequence()
 print("ARGUS-1 booted.")
 print(f"Boot Errors: {boot_errors}")
-
 print("Waiting 1 sec...")
 time.sleep(1)
-
+# at 54% of memory usage
 """print("Running system diagnostics...")
 errors = SATELLITE.run_system_diagnostics()
 print("System diagnostics complete")
@@ -40,6 +39,7 @@ print("Errors:", errors)
 """
 print_memory_stats(call_gc=False)
 print_memory_stats(call_gc=True)
+time.sleep(5000)
 DH.delete_all_files()
 
 try:
