@@ -53,14 +53,14 @@ class CubeSat:
         # # sun sensor here
         # self.__gps = None
         # self.__radio = None
-        # self.__sd_card = None
+        self.__sd_card = None
         # self.__burn_wires = None
         # self.__payload_spi = None
-        # self.__vfs = None
+        self.__vfs = None
 
         # # Debugging
-        # self.__neopixel = None
-        # self._time_ref_boot = int(time.time())
+        self.__neopixel = None
+        self._time_ref_boot = int(time.time())
 
     # ABSTRACT METHOD #
     def boot_sequence(self) -> list[int]:

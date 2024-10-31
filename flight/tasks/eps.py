@@ -63,8 +63,8 @@ class Task(TemplateTask):
 
     log_data = [0] * 42
     data_format = "Lhhb" + "h" * 38  # - use mV for voltage and mA for current  (h = short integer 2 bytes)
-    batt_voltage = 0
-    batt_current = 0
+    board_voltage = 0
+    board_current = 0
 
     def __init__(self, id):
         super().__init__(id)
@@ -82,17 +82,17 @@ class Task(TemplateTask):
 
             # Get power system readings
 
-            (self.batt_voltage, self.batt_current) = SATELLITE.BATTERY_POWER_MONITOR.read_voltage_current()
+            (self.board_voltage, self.board_current) = SATELLITE.BOARD_POWER_MONITOR.read_voltage_current()
 
             self.log_data[EPS_IDX.TIME_EPS] = int(time.time())
-            self.log_data[EPS_IDX.MAINBOARD_VOLTAGE] = int(self.batt_voltage * 1000)  # mV - max 8.4V
-            self.log_data[EPS_IDX.MAINBOARD_CURRENT] = int(self.batt_current * 1000)  # mA
+            self.log_data[EPS_IDX.MAINBOARD_VOLTAGE] = int(self.board_voltage * 1000)  # mV - max 8.4V
+            self.log_data[EPS_IDX.MAINBOARD_CURRENT] = int(self.board_current * 1000)  # mA
             ## ADDITIONAL EPS DATA HERE ##
 
             ##
 
             DH.log_data("eps", self.log_data)
             self.log_info(
-                f"Battery Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, \
+                f"Board Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, \
                 Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA"
             )
