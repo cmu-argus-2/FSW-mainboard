@@ -1,7 +1,7 @@
 # Communication task which uses the radio to transmit and receive messages.
 
 import time
-from apps.comms import SATELLITE_RADIO, COMMS_STATE
+from apps.comms.comms import SATELLITE_RADIO, COMMS_STATE
 from apps.telemetry import TelemetryPacker
 from core import TemplateTask
 from core import state_manager as SM
@@ -57,7 +57,7 @@ class Task(TemplateTask):
             self.TX_COUNTER += 1
 
             self.log_info(f"SAT currently in state {SATELLITE_RADIO.get_state()}")
-            if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD or SATELLITE_RADIO.get_state() != COMMS_STATE.TX_HEARTBEAT:
+            if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD:
                 # Send out message
                 if TelemetryPacker.TM_AVAILABLE:
                     SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
