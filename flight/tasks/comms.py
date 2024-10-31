@@ -66,7 +66,7 @@ class Task(TemplateTask):
                 self.log_info(f"Sent message with ID: {self.tx_msg_id}")
                 self.TX_COUNTER = 0
 
-                SATELLITE_RADIO.listen()  # RX mode
+                # SATELLITE_RADIO.listen()  # RX mode
 
             if SATELLITE_RADIO.data_available():
                 # Read packet present in the RX buffer
