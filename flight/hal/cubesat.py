@@ -44,7 +44,7 @@ class CubeSat:
         # self.__solar_ym_power_monitor = None
         # self.__light_sensor_yp = None
         # self.__light_sensor_ym = None
-        # self.__rtc = None
+        self.__rtc = None
         # self.__torque_z = None
         # self.__torque_zp_power_monitor = None
         # self.__torque_zm_power_monitor = None
@@ -62,12 +62,12 @@ class CubeSat:
         # self.__neopixel = None
         # self._time_ref_boot = int(time.time())
 
-    ## ABSTRACT METHOD ##
+    # ABSTRACT METHOD #
     def boot_sequence(self) -> list[int]:
         """boot_sequence: Boot sequence for the CubeSat."""
         raise NotImplementedError("CubeSats must implement boot method")
 
-    ## ABSTRACT METHOD ##
+    # ABSTRACT METHOD #
     def run_system_diagnostics(self) -> list[int] | None:
         """run_diagnostic_test: Run all tests for the component"""
         raise NotImplementedError("CubeSats must implement diagnostics method")

@@ -73,6 +73,9 @@ class Errors:
     # Jetson Comm
     JETSON_COMM_NOT_INITIALIZED = const(40)
 
+    # Fuel Gauge errors
+    MAX17205_NOT_INITIALIZED = const(63)
+
     # Diagnostics errors - occur when running diagnostics on the system fails
     DIAGNOSTICS_ERROR_GPS = const(41)
     DIAGNOSTICS_ERROR_BATTERY_POWER_MONITOR = const(42)
