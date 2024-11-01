@@ -36,7 +36,7 @@ import re
 import struct
 import time
 
-from core import logger
+from core.logging import logger
 from micropython import const
 
 try:
@@ -74,6 +74,28 @@ class DataProcess:
         current_path (str): The current filename.
         bytesize (int): The size of each new data line to be written to the file.
     """
+
+    # For optimization purposes  (avoid creating a __dict__ and instantiate static memnory space for attributes)
+
+    __slots__ = (
+        "tag_name",
+        "data_format",
+        "persistent",
+        "data_limit",
+        "new_config_file",
+        "write_interval",
+        "write_interval_counter",
+        "home_path",
+        "status",
+        "file",
+        "dir_path",
+        "current_path",
+        "bytesize",
+        "size_limit",
+        "last_data",
+        "delete_paths",
+        "excluded_paths",
+    )
 
     _FORMAT = {
         "b": 1,  # byte
