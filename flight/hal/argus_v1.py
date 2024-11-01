@@ -129,6 +129,8 @@ class ArgusV1Components:
 class ArgusV1(CubeSat):
     """ArgusV1: Represents the Argus V1 CubeSat."""
 
+    __slots__ = ("__middleware_enabled", "__debug")
+
     def __init__(self, enable_middleware: bool = False, debug: bool = False):
         """__init__: Initializes the Argus V1 CubeSat.
 
@@ -136,7 +138,6 @@ class ArgusV1(CubeSat):
         """
         self.__middleware_enabled = enable_middleware
         self.__debug = debug
-
         super().__init__()
 
     ######################## BOOT SEQUENCE ########################

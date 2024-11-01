@@ -7,6 +7,37 @@ from hal.drivers.middleware.generic_driver import Driver
 class CubeSat:
     """CubeSat: Base class for all CubeSat implementations"""
 
+    __slots__ = (
+        "__device_list",
+        "__recent_errors",
+        "__state_flags",
+        "__uart1",
+        "__uart2",
+        "__spi",
+        "__i2c1",
+        "__i2c2",
+        "__gps",
+        "__battery_monitor",
+        "__jetson_monitor",
+        "__imu",
+        "__charger",
+        "__torque_x",
+        "__torque_y",
+        "__torque_z",
+        "__light_sensor_xp",
+        "__light_sensor_xm",
+        "__light_sensor_yp",
+        "__light_sensor_ym",
+        "__light_sensor_zm",
+        "__rtc",
+        "__radio",
+        "__sd_card",
+        "__burn_wires",
+        "__vfs",
+        "__payload_uart",
+        "_time_ref_boot",
+    )
+
     def __init__(self):
         # List of successfully initialized devices
         self.__device_list: list[Driver] = []

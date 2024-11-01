@@ -8,6 +8,16 @@ class StateManager:
 
     _instance = None
 
+    __slots__ = (
+        "__current_state",
+        "__scheduled_tasks",
+        "__initialized",
+        "config",
+        "states",
+        "tasks",
+        "__previous_state",
+    )
+
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls, *args, **kwargs)
