@@ -34,8 +34,8 @@ from apps.telemetry.helpers import (
     pack_unsigned_short_int,
     unpack_unsigned_short_int,
 )
+from core import DataHandler as DH
 from core import logger
-from core.data_handler import DataHandler as DH
 from micropython import const
 
 

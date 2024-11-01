@@ -72,9 +72,6 @@ class Diagnostics:
     # SD card errors
     SDCARD_NOT_INITIALIZED = 37
 
-    # Neopixel errors
-    NEOPIXEL_NOT_INITIALIZED = 38
-
     # Burn Wire errors
     BURNWIRES_NOT_INITIALIZED = 39
 
@@ -100,7 +97,6 @@ class Diagnostics:
     # DIAGNOSTICS_ERROR_LIGHT_SENSOR_ZM = 56
     DIAGNOSTICS_ERROR_RTC = 57
     DIAGNOSTICS_ERROR_RADIO = 58
-    DIAGNOSTICS_ERROR_NEOPIXEL = 59
     DIAGNOSTICS_ERROR_BURN_WIRES = 60
     DIAGNOSTICS_ERROR_UNKNOWN = 61
 
@@ -255,8 +251,6 @@ class Diagnostics:
     #         return "RFM9X not initialized"
     #     elif error == Diagnostics.SDCARD_NOT_INITIALIZED:
     #         return "SD card not initialized"
-    #     elif error == Diagnostics.NEOPIXEL_NOT_INITIALIZED:
-    #         return "Neopixel not initialized"
     #     elif error == Diagnostics.BURNWIRES_NOT_INITIALIZED:
     #         return "Burn wires not initialized"
     #     elif error == Diagnostics.DIAGNOSTICS_ERROR_GPS:
@@ -295,8 +289,6 @@ class Diagnostics:
     #         return "Diagnostics error: RTC"
     #     elif error == Diagnostics.DIAGNOSTICS_ERROR_RADIO:
     #         return "Diagnostics error: Radio"
-    #     elif error == Diagnostics.DIAGNOSTICS_ERROR_NEOPIXEL:
-    #         return "Diagnostics error: Neopixel"
     #     elif error == Diagnostics.DIAGNOSTICS_ERROR_BURN_WIRES:
     #         return "Diagnostics error: Burn wires"
     #     elif error == Diagnostics.DIAGNOSTICS_ERROR_UNKNOWN:

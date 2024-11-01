@@ -1,5 +1,6 @@
 import core.scheduler as scheduler
 from core import logger
+from core.states import STATES
 
 
 class StateManager:
@@ -27,12 +28,12 @@ class StateManager:
     def scheduled_tasks(self):
         return self.__scheduled_tasks
 
-    def start(self, start_state: str):
+    def start(self, start_state=STATES.STARTUP):
         """Starts the state machine
 
         Args:
         :param start_state: The state to start the state machine in
-        :type start_state: str
+        :type start_state: STATES
         """
         from core.sm_configuration import SM_CONFIGURATION
 

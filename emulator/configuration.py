@@ -1,4 +1,4 @@
-from core.data_handler import DataHandler as DH
+from core import DataHandler as DH
 from hal.cubesat import CubeSat
 from hal.emulator import satellite
 

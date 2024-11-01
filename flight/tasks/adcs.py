@@ -13,9 +13,9 @@ from apps.adcs.sun import (
     read_light_sensors,
 )
 from apps.telemetry.constants import ADCS_IDX, GPS_IDX, IMU_IDX
+from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
-from core.data_handler import DataHandler as DH
 from core.states import STATES
 from ulab import numpy as np
 

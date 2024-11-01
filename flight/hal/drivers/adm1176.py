@@ -30,18 +30,6 @@ _extcmd = bytearray(b"\x00\x04")
 _BUFFER = bytearray(3)
 _STATUS = bytearray(1)
 
-
-# Voltage conversions
-VI_RESOLUTION = const(4096)
-I_FULLSCALE = 0.10584
-V_FULLSCALE = 26.35
-
-V_CONT_BIT = const(0x1 << 0)
-V_ONCE_BIT = const(0x1 << 1)
-I_CONT_BIT = const(0x1 << 2)
-I_ONCE_BIT = const(0x1 << 3)
-V_RANGE_BIT = const(0x1 << 4)
-
 # Status register
 STATUS_READ = const(0x1 << 6)
 STATUS_ADC_OC = const(0x1 << 0)
@@ -53,10 +41,10 @@ STATUS_OFF_ALERT = const(0x1 << 5)
 
 # Extended registers
 ALERT_EN_EXT_REG_ADDR = const(0x81)
-ALERT_EN_EN_ADC_OC1 = const(0x1 << 0)
+# ALERT_EN_EN_ADC_OC1 = const(0x1 << 0)
 ALERT_EN_EN_ADC_OC4 = const(0x1 << 1)
-ALERT_EN_EN_HS_ALERT = const(0x1 << 2)
-ALERT_EN_EN_OFF_ALERT = const(0x1 << 3)
+# ALERT_EN_EN_HS_ALERT = const(0x1 << 2)
+# ALERT_EN_EN_OFF_ALERT = const(0x1 << 3)
 ALERT_EN_CLEAR = const(0x1 << 4)
 
 ALERT_TH_EN_REG_ADDR = const(0x82)
@@ -75,6 +63,14 @@ class ADM1176(Driver):
         self._on = True
         self._overcurrent_level = 0xFF
 
+        # Voltage conversions
+        # VI_RESOLUTION = const(4096)
+        # I_FULLSCALE = 0.10584
+        # V_FULLSCALE = 26.35
+
+        self.v_fs_over_res = 26.35 / 4096
+        self.i_fs_over_res = 0.10584 / 4096
+
         super().__init__()
 
     def config(self, value: str) -> None:
@@ -83,6 +79,12 @@ class ADM1176(Driver):
         :param value: Current and voltage register values
         based on string.
         """
+        V_CONT_BIT = const(0x1 << 0)
+        V_ONCE_BIT = const(0x1 << 1)
+        I_CONT_BIT = const(0x1 << 2)
+        I_ONCE_BIT = const(0x1 << 3)
+        V_RANGE_BIT = const(0x1 << 4)
+
         _cmd[0] = 0x00
         if "V_CONT" in value:
             _cmd[0] |= V_CONT_BIT
@@ -103,12 +105,13 @@ class ADM1176(Driver):
 
         :return: instantaneous (V,I) pair
         """
+
         with self.i2c_device as i2c:
             i2c.readinto(_BUFFER)
         raw_voltage = ((_BUFFER[0] << 8) | (_BUFFER[2] & DATA_V_MASK)) >> 4
         raw_current = (_BUFFER[1] << 4) | (_BUFFER[2] & DATA_I_MASK)
-        _voltage = (V_FULLSCALE / VI_RESOLUTION) * raw_voltage  # volts
-        _current = ((I_FULLSCALE / VI_RESOLUTION) * raw_current) / self.sense_resistor  # amperes
+        _voltage = (self.v_fs_over_res) * raw_voltage  # volts
+        _current = ((self.i_fs_over_res) * raw_current) / self.sense_resistor  # amperes
         return (_voltage, _current)
 
     def __turn_off(self) -> None:
@@ -149,6 +152,7 @@ class ADM1176(Driver):
         return self._overcurrent_level
 
     def set_overcurrent_level(self, value: int = 0xFF) -> None:
+
         # enable over current alert
         _extcmd[0] = ALERT_EN_EXT_REG_ADDR
         _extcmd[1] |= ALERT_EN_EN_ADC_OC4
@@ -163,10 +167,6 @@ class ADM1176(Driver):
             i2c.write(_extcmd)
 
         self._overcurrent_level = value
-
-    # @overcurrent_level.getter
-    # def overcurrent_level(self) -> int:
-    #     return self._overcurrent_level
 
     def clear(self) -> None:
         """clear: Clears the alerts after status register read"""

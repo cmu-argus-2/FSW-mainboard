@@ -2,23 +2,20 @@
 Author: Harry, Thomas, Ibrahima
 Description: This file contains the definition of the ArgusV1 class and its associated interfaces and components.
 """
-
+import gc
 from sys import path
 
 import board
-import neopixel
 from busio import I2C, SPI, UART
 from hal.cubesat import CubeSat
 from hal.drivers.middleware.errors import Errors
 from hal.drivers.middleware.middleware import Middleware
 from micropython import const
-from sdcardio import SDCard
-from storage import VfsFat, mount
 
 
 class ArgusV1Interfaces:
     """
-    This class represents the interfaces used in the ArgusV1 module.
+    This class represents the interfaces used in the Argus V1 board.
     """
 
     I2C1_SDA = board.SDA
@@ -121,11 +118,6 @@ class ArgusV1Components:
     RTC_I2C = ArgusV1Interfaces.I2C1
     RTC_I2C_ADDRESS = const(0x68)
 
-    # NEOPIXEL
-    NEOPIXEL_SDA = board.NEOPIXEL
-    NEOPIXEL_N = const(1)  # Number of neopixels in chain
-    NEOPIXEL_BRIGHTNESS = 0.2
-
     # PAYLOAD
     PAYLOAD_UART = ArgusV1Interfaces.UART2
     PAYLOAD_ENABLE = board.EN_JET
@@ -164,7 +156,7 @@ class ArgusV1(CubeSat):
 
         error_list.append(self.__sd_card_boot())
         error_list.append(self.__vfs_boot())
-        error_list.append(self.__imu_boot())
+        error_list.append(self.__imu_boot())  # 4% of RAM
         error_list.append(self.__rtc_boot())
         error_list.append(self.__gps_boot())
         error_list.append(self.__battery_power_monitor_boot())
@@ -181,9 +173,10 @@ class ArgusV1(CubeSat):
         error_list.append(self.__light_sensor_ym_boot())
         error_list.append(self.__light_sensor_zm_boot())
         error_list.append(self.__radio_boot())
-        error_list.append(self.__neopixel_boot())
         error_list.append(self.__burn_wire_boot())
         error_list.append(self.__payload_uart_boot())
+
+        gc.collect()
 
         error_list = [error for error in error_list if error != Errors.NOERROR]
 
@@ -220,6 +213,7 @@ class ArgusV1(CubeSat):
             self.__gps = gps1
             self.__device_list.append(gps1)
         except Exception as e:
+            self.__gps = None
             if self.__debug:
                 raise e
 
@@ -246,6 +240,8 @@ class ArgusV1(CubeSat):
             self.__battery_monitor = battery_monitor
             self.__device_list.append(battery_monitor)
         except Exception as e:
+            self.__battery_monitor = None
+            print(e)
             if self.__debug:
                 raise e
 
@@ -272,6 +268,7 @@ class ArgusV1(CubeSat):
             self.__jetson_monitor = jetson_monitor
             self.__device_list.append(jetson_monitor)
         except Exception as e:
+            self.__jetson_monitor = None
             if self.__debug:
                 raise e
 
@@ -299,6 +296,7 @@ class ArgusV1(CubeSat):
             self.__imu = imu
             self.__device_list.append(imu)
         except Exception as e:
+            self.__imu = None
             if self.__debug:
                 raise e
 
@@ -325,6 +323,7 @@ class ArgusV1(CubeSat):
             self.__charger = charger
             self.__device_list.append(charger)
         except Exception as e:
+            self.__charger = None
             if self.__debug:
                 raise e
 
@@ -351,6 +350,7 @@ class ArgusV1(CubeSat):
             self.__torque_xp_driver = torque_xp
             self.__device_list.append(torque_xp)
         except Exception as e:
+            self.__torque_xp_driver = None
             if self.__debug:
                 raise e
 
@@ -377,6 +377,7 @@ class ArgusV1(CubeSat):
             self.__torque_xm_driver = torque_xm
             self.__device_list.append(torque_xm)
         except Exception as e:
+            self.__torque_xm_driver = None
             if self.__debug:
                 raise e
 
@@ -403,6 +404,7 @@ class ArgusV1(CubeSat):
             self.__torque_yp_driver = torque_yp
             self.__device_list.append(torque_yp)
         except Exception as e:
+            self.__torque_yp_driver = None
             if self.__debug:
                 raise e
 
@@ -429,6 +431,7 @@ class ArgusV1(CubeSat):
             self.__torque_ym_driver = torque_ym
             self.__device_list.append(torque_ym)
         except Exception as e:
+            self.__torque_ym_driver = None
             if self.__debug:
                 raise e
 
@@ -455,6 +458,7 @@ class ArgusV1(CubeSat):
             self.__torque_z_driver = torque_z
             self.__device_list.append(torque_z)
         except Exception as e:
+            self.__torque_z_driver = None
             if self.__debug:
                 raise e
 
@@ -482,6 +486,7 @@ class ArgusV1(CubeSat):
             self.__light_sensor_xp = light_sensor_xp
             self.__device_list.append(light_sensor_xp)
         except Exception as e:
+            self.__light_sensor_xp = None
             if self.__debug:
                 raise e
 
@@ -509,6 +514,7 @@ class ArgusV1(CubeSat):
             self.__light_sensor_xm = light_sensor_xm
             self.__device_list.append(light_sensor_xm)
         except Exception as e:
+            self.__light_sensor_xm = None
             if self.__debug:
                 raise e
 
@@ -536,6 +542,7 @@ class ArgusV1(CubeSat):
             self.__light_sensor_yp = light_sensor_yp
             self.__device_list.append(light_sensor_yp)
         except Exception as e:
+            self.__light_sensor_yp = None
             if self.__debug:
                 raise e
 
@@ -563,6 +570,7 @@ class ArgusV1(CubeSat):
             self.__light_sensor_ym = light_sensor_ym
             self.__device_list.append(light_sensor_ym)
         except Exception as e:
+            self.__light_sensor_ym = None
             if self.__debug:
                 raise e
 
@@ -590,6 +598,7 @@ class ArgusV1(CubeSat):
             self.__light_sensor_zm = light_sensor_zm
             self.__device_list.append(light_sensor_zm)
         except Exception as e:
+            self.__light_sensor_zm = None
             if self.__debug:
                 raise e
 
@@ -620,6 +629,7 @@ class ArgusV1(CubeSat):
             self.__radio = radio
             self.__device_list.append(radio)
         except Exception as e:
+            self.__radio = None
             if self.__debug:
                 raise e
 
@@ -643,6 +653,7 @@ class ArgusV1(CubeSat):
             self.__rtc = rtc
             self.__device_list.append(rtc)
         except Exception as e:
+            self.__rtc = None
             if self.__debug:
                 raise e
 
@@ -650,29 +661,11 @@ class ArgusV1(CubeSat):
 
         return Errors.NOERROR
 
-    def __neopixel_boot(self) -> list[int]:
-        """neopixel_boot: Boot sequence for the neopixel"""
-        try:
-            np = neopixel.NeoPixel(
-                ArgusV1Components.NEOPIXEL_SDA,
-                ArgusV1Components.NEOPIXEL_N,
-                brightness=ArgusV1Components.NEOPIXEL_BRIGHTNESS,
-                pixel_order=neopixel.GRB,
-            )
-            self.__neopixel = np
-            self.__device_list.append(neopixel)
-            self.append_device(neopixel)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.NEOPIXEL_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
     def __sd_card_boot(self) -> list[int]:
         """sd_card_boot: Boot sequence for the SD card"""
         try:
+            from sdcardio import SDCard
+
             sd_card = SDCard(
                 ArgusV1Components.SD_CARD_SPI,
                 ArgusV1Components.SD_CARD_CS,
@@ -681,6 +674,7 @@ class ArgusV1(CubeSat):
             self.__sd_card = sd_card
             self.append_device(sd_card)
         except Exception as e:
+            self.__sd_card = None
             if self.__debug:
                 raise e
 
@@ -694,6 +688,8 @@ class ArgusV1(CubeSat):
             return Errors.SDCARD_NOT_INITIALIZED
 
         try:
+            from storage import VfsFat, mount
+
             vfs = VfsFat(self.__sd_card)
 
             mount(vfs, ArgusV1Components.VFS_MOUNT_POINT)
@@ -702,6 +698,7 @@ class ArgusV1(CubeSat):
             path.append(ArgusV1Components.VFS_MOUNT_POINT)
             self.__vfs = vfs
         except Exception as e:
+            self.__vfs = None
             if self.__debug:
                 raise e
             raise e
@@ -729,6 +726,7 @@ class ArgusV1(CubeSat):
             self.__burn_wires = burn_wires
             self.append_device(burn_wires)
         except Exception as e:
+            self.__burn_wires = None
             if self.__debug:
                 raise e
 
@@ -752,6 +750,7 @@ class ArgusV1(CubeSat):
             self.__payload_uart = payload_uart
             self.__device_list.append(self.__payload_uart)
         except Exception as e:
+            self.__payload_uart = None
             if self.__debug:
                 raise e
 
@@ -799,8 +798,6 @@ class ArgusV1(CubeSat):
             return Errors.DIAGNOSTICS_ERROR_LIGHT_SENSOR_ZM
         elif device is self.RADIO:
             return Errors.DIAGNOSTICS_ERROR_RADIO
-        elif device is self.NEOPIXEL:
-            return Errors.DIAGNOSTICS_ERROR_NEOPIXEL
         elif device is self.BURN_WIRES:
             return Errors.DIAGNOSTICS_ERROR_BURN_WIRES
         else:
