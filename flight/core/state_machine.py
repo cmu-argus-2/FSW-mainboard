@@ -82,6 +82,10 @@ class StateManager:
 
         logger.info(f"Switched to state {new_state_id}")
 
+    def stop_all_tasks(self):
+        for name, task in self.__scheduled_tasks.items():
+            task.stop()
+
     def schedule_new_state_tasks(self, new_state):
 
         self.__scheduled_tasks = {}  # Reset
@@ -101,10 +105,6 @@ class StateManager:
             self.tasks[task_id].set_frequency(frequency)
 
             self.__scheduled_tasks[task_id] = schedule(frequency, task_fn, priority)
-
-    def stop_all_tasks(self):
-        for name, task in self.__scheduled_tasks.items():
-            task.stop()
 
     def query_task_states(self):
         state = {}
