@@ -180,6 +180,7 @@ def process_command(cmd_id, *args):
 
             # Verify the argument count
             if len(args) != len(arg_list):
+                print(arg_list)
                 logger.error(f"Cmd: Argument count mismatch for command ID {cmd_id}")
                 return CommandProcessingStatus.ARGUMENT_COUNT_MISMATCH
 
