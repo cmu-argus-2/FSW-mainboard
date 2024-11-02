@@ -1,19 +1,19 @@
 """
-
-CommandQueue class provides a Last-In-First-Out (LIFO) queue implementation with a fixed maximum size.
+CommandQueue class provides a First-In-First-Out (FIFO) queue implementation with a fixed maximum size.
 It includes methods to configure the queue size, push commands onto the queue, pop commands from the queue,
 and check the queue's status (empty, full, current size).
 
+There is no priority mechanism in this implementation, so commands are processed in the order they are received.
 """
 
 from micropython import const
 
 
 class CommandQueue:
-    """Last-In-First-Out (LIFO) queue implementation with a fixed maximum size."""
+    """First-In-First-Out (FIFO) queue implementation with a fixed maximum size."""
 
     _queue = []  # The list representing the queue.
-    _max_size = 10  # The maximum size of the queue.
+    _max_size = 20  # The maximum size of the queue.
 
     # Error codes
     OK = const(0)  # Error code indicating successful operation.
@@ -21,26 +21,31 @@ class CommandQueue:
     EMPTY = const(2)  # Error code indicating the queue is empty.
 
     @classmethod
-    def configure(cls, max_size=10):
+    def configure(cls, max_size):
         """Configures the maximum size of the queue."""
         cls._max_size = max_size
 
     @classmethod
-    def push_command(cls, cmd, args):
+    def push_command(cls, cmd_id, args):
         """Pushes a command onto the queue if not full. Returns an error code."""
         if len(cls._queue) < cls._max_size:
-            cls._queue.append((cmd, args))
+            cls._queue.append((cmd_id, args))
             return cls.OK
         else:
             return cls.OVERFLOW
 
     @classmethod
     def pop_command(cls):
-        """Pops the last command from the queue (LIFO). Returns the command or an error code."""
+        """Pops the first command from the queue (FIFO). Returns the command or an error code."""
         if cls._queue:
-            return cls._queue.pop(), cls.OK
+            return cls._queue.pop(0), cls.OK  # Pops the first element (FIFO), returns (cmd_id, args), error code
         else:
             return None, cls.EMPTY
+
+    @classmethod
+    def command_available(cls):
+        """Checks if a command is available in the queue."""
+        return len(cls._queue) > 0
 
     @classmethod
     def is_empty(cls):
