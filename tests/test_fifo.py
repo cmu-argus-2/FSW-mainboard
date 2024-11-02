@@ -1,4 +1,5 @@
 import pytest
+
 from flight.apps.command.fifo import CommandQueue
 
 

@@ -1,5 +1,6 @@
 import pytest
-from flight.apps.command.processor import process_command, CommandProcessingStatus, COMMANDS
+
+from flight.apps.command.processor import COMMANDS, CommandProcessingStatus, process_command
 
 
 def mock_command_success(*args):
