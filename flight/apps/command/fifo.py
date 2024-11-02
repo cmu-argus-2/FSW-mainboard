@@ -1,9 +1,13 @@
 """
+
 CommandQueue class provides a First-In-First-Out (FIFO) queue implementation with a fixed maximum size.
 It includes methods to configure the queue size, push commands onto the queue, pop commands from the queue,
 and check the queue's status (empty, full, current size).
 
-There is no priority mechanism in this implementation, so commands are processed in the order they are received.
+There is no priority mechanism, so commands are processed in the order they are received.
+
+Author: Ibrahima S. Sow
+
 """
 
 from micropython import const

@@ -43,7 +43,13 @@ from core.states import STATES
 from hal.configuration import SATELLITE
 
 # A command is defined as a tuple with the following elements:
-# (ID, precondition, argument list, execute function)
+# - ID: A unique identifier for the command
+# - Precondition: A function that checks if the command can be executed
+# - Arguments: A list of parameters that the command accepts
+# - Execute: The function that executes the command
+
+# See commands.py for function definitions (command functions and eventual preconditions)
+
 COMMANDS = [
     # REQUEST_TELEMETRY (no precondition needed)
     (
