@@ -36,16 +36,6 @@ class STATES:
 STR_STATES = ["STARTUP", "NOMINAL", "DOWNLINK", "LOW_POWER", "SAFE"]
 
 
-# TODO complete
-# TODO deployment state
-
-
-def transition_to_startup():
-    """Transition logic for entering STARTUP state."""
-    # Perform diagnostics and initialize state recovery procedures
-    pass
-
-
 def transition_to_nominal():
     """Transition logic for entering NOMINAL state from various states."""
     # Evaluate conditions to proceed to NOMINAL state
@@ -61,11 +51,13 @@ def transition_to_downlink():
 def transition_to_low_power():
     """Transition logic for entering LOW_POWER state."""
     # Initiate power-saving protocols
-    # Turn off non-essential devices
+    # Turn devices to low-power mode configuration
     pass
 
 
 def transition_to_safe():
     """Transition logic for entering SAFE state."""
     # Handle critical failures and prepare for fault resolution or intervention
+    # Run diagnostics
+    # Attempt to ecover for critical HW failures if possible --> NVM turn-off (done in appropriate task)
     pass
