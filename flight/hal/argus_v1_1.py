@@ -308,7 +308,7 @@ class ArgusV1(CubeSat):
         return Errors.NOERROR
 
     def __board_power_monitor_boot(self) -> list[int]:
-        """battery_power_monitor_boot: Boot sequence for the battery power 
+        """board_power_monitor_boot: Boot sequence for the battery power
            monitor
 
         :return: Error code if the battery power monitor failed to initialize
@@ -1244,8 +1244,8 @@ class ArgusV1(CubeSat):
             return Errors.DIAGNOSTICS_ERROR_RTC
         elif device is self.GPS:
             return Errors.DIAGNOSTICS_ERROR_GPS
-        elif device is self.BATTERY_POWER_MONITOR:
-            return Errors.DIAGNOSTICS_ERROR_BATTERY_POWER_MONITOR
+        elif device is self.BOARD_POWER_MONITOR:
+            return Errors.DIAGNOSTICS_ERROR_BOARD_POWER_MONITOR
         elif device is self.JETSON_POWER_MONITOR:
             return Errors.DIAGNOSTICS_ERROR_JETSON_POWER_MONITOR
         elif device is self.IMU:

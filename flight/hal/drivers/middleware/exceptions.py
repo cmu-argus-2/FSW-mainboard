@@ -17,8 +17,8 @@ class gps_fatal_exception(Exception):
         return f"{type(self.exception).__name__}: {self.exception}"
 
 
-class battery_power_monitor_fatal_exception(Exception):
-    """battery_power_monitor_fatal_exception: Exception for fatal battery power monitor errors"""
+class board_power_monitor_fatal_exception(Exception):
+    """board_power_monitor_fatal_exception: Exception for fatal board power monitor errors"""
 
     def __init__(self, exception: Exception):
         self.exception = exception

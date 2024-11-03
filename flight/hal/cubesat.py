@@ -29,33 +29,33 @@ class CubeSat:
         self.__charger = None
         self.__imu = None
         self.__jetson_monitor = None
-        # self.__torque_x = None
-        # self.__torque_xp_power_monitor = None
-        # self.__torque_xm_power_monitor = None
-        # self.__solar_xp_power_monitor = None
-        # self.__solar_xm_power_monitor = None
-        # self.__light_sensor_xp = None
-        # self.__light_sensor_xm = None
-        # self.__fuel_gauge = None
-        # self.__torque_y = None
-        # self.__torque_yp_power_monitor = None
-        # self.__torque_ym_power_monitor = None
-        # self.__solar_yp_power_monitor = None
-        # self.__solar_ym_power_monitor = None
-        # self.__light_sensor_yp = None
-        # self.__light_sensor_ym = None
+        self.__torque_x = None
+        self.__torque_xp_power_monitor = None
+        self.__torque_xm_power_monitor = None
+        self.__solar_xp_power_monitor = None
+        self.__solar_xm_power_monitor = None
+        self.__light_sensor_xp = None
+        self.__light_sensor_xm = None
+        self.__fuel_gauge = None
+        self.__torque_y = None
+        self.__torque_yp_power_monitor = None
+        self.__torque_ym_power_monitor = None
+        self.__solar_yp_power_monitor = None
+        self.__solar_ym_power_monitor = None
+        self.__light_sensor_yp = None
+        self.__light_sensor_ym = None
         self.__rtc = None
-        # self.__torque_z = None
-        # self.__torque_zp_power_monitor = None
-        # self.__torque_zm_power_monitor = None
-        # self.__solar_zp_power_monitor = None
-        # self.__light_sensor_zm = None
-        # # sun sensor here
-        # self.__gps = None
-        # self.__radio = None
+        self.__torque_z = None
+        self.__torque_zp_power_monitor = None
+        self.__torque_zm_power_monitor = None
+        self.__solar_zp_power_monitor = None
+        self.__light_sensor_zm = None
+        # sun sensor here
+        self.__gps = None
+        self.__radio = None
         self.__sd_card = None
-        # self.__burn_wires = None
-        # self.__payload_spi = None
+        self.__burn_wires = None
+        self.__payload_spi = None
         self.__vfs = None
 
         # # Debugging
@@ -131,7 +131,7 @@ class CubeSat:
 
     @property
     def BOARD_POWER_MONITOR(self):
-        """BATTERY_POWER_MONITOR: Returns the battery power monitor object
+        """BOARD_POWER_MONITOR: Returns the board power monitor object
         :return: object or None
         """
         return self.__board_power_monitor
