@@ -1,6 +1,6 @@
 import pytest
 
-from flight.apps.command.processor import COMMANDS, CommandProcessingStatus, process_command
+from flight.apps.command.processor import COMMANDS, CommandProcessingStatus, process_command  # noqa F401
 
 
 def mock_command_success(*args):

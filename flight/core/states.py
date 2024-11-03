@@ -22,7 +22,6 @@ state management plan.
 Author: Ibrahima S. Sow
 """
 
-from hal.configuration import SATELLITE
 from micropython import const
 
 

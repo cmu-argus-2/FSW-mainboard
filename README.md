@@ -1,7 +1,7 @@
 # Flight Software for the PyCubed Board (Argus-1)
 
 The repository contains the current flight software stack for the **Mainboard** of Argus-1. Argus-1 is a technology demonstration mission with the goal of:
-- Demonstrating Visual-Inertial Orbit Determination (A&OD) on a low-cost satellite (devoid of any GPS or ground involvement)
+- Demonstrating Vision-based Orbit Determination (A&OD) on a low-cost satellite (devoid of any GPS or ground involvement)
 - Collecting a dataset of images of the Earth to further efforts in CubeSat visual applications.
 - Demonstrating efficient on-orbit ML/GPU Payload processing 
 

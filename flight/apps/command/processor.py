@@ -37,10 +37,7 @@ from apps.command.commands import (
     TURN_OFF_DEVICE,
     TURN_ON_DEVICE,
 )
-from core import DataHandler as DH
 from core import logger
-from core.states import STATES
-from hal.configuration import SATELLITE
 
 # A command is defined as a tuple with the following elements:
 # - ID: A unique identifier for the command
