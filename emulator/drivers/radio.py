@@ -46,6 +46,14 @@ class Radio:
 
         self.test = RadioDebug(self)
 
+    def RX_available(self):
+        return not self._rx_queue.empty()
+
+    def read_fifo_buffer(self):
+        if self._rx_queue.empty():
+            return None
+        return self._rx_queue.get()
+
     def listen(self):
         self.listening = True
 

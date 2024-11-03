@@ -59,7 +59,11 @@ def create_build(source_folder, emulator_folder):
             print(f"Copied {source_path} to {build_path}")
 
     # Adding data_handler.py to the build folder
-    shutil.copy2("flight/core/data_handler.py", "build/lib/core/data_handler.py")
+    # shutil.copy2("flight/core/data_handler.py", "build/lib/core/data_handler.py")
+    with open("flight/core/data_handler.py", "r") as file:
+        updated_content = file.read().replace('_HOME_PATH = "/sd"', '_HOME_PATH = "sd"')
+    with open("build/lib/core/data_handler.py", "w") as file:
+        file.write(updated_content)
 
     # Create main.py file with single import statement "import main_module"
     build_folder = os.path.join(build_folder, "..")

@@ -27,7 +27,8 @@ class Task(TemplateTask):
         if not self.frequency_set:
             self.TX_COUNTER = 0
             if self.TX_heartbeat_frequency > self.frequency:
-                self.log_error("TX heartbeat frequency faster than task frequency")
+                self.log_error("TX heartbeat frequency faster than task frequency. Defaulting to task frequency.")
+                self.TX_heartbeat_frequency = self.frequency
             self.TX_COUNT_THRESHOLD = int(self.frequency / self.TX_heartbeat_frequency)
             self.frequency_set = True
 

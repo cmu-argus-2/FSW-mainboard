@@ -4,9 +4,9 @@ import time
 
 import microcontroller
 from apps.telemetry.constants import THERMAL_IDX
+from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
-from core.data_handler import DataHandler as DH
 from core.states import STATES
 from hal.configuration import SATELLITE
 

@@ -1,11 +1,22 @@
 import core.scheduler as scheduler
 from core import logger
+from core.states import STATES
 
 
 class StateManager:
     """Singleton Class"""
 
     _instance = None
+
+    __slots__ = (
+        "__current_state",
+        "__scheduled_tasks",
+        "__initialized",
+        "config",
+        "states",
+        "tasks",
+        "__previous_state",
+    )
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -27,12 +38,12 @@ class StateManager:
     def scheduled_tasks(self):
         return self.__scheduled_tasks
 
-    def start(self, start_state: str):
+    def start(self, start_state=STATES.STARTUP):
         """Starts the state machine
 
         Args:
         :param start_state: The state to start the state machine in
-        :type start_state: str
+        :type start_state: STATES
         """
         from core.sm_configuration import SM_CONFIGURATION
 
@@ -81,6 +92,10 @@ class StateManager:
 
         logger.info(f"Switched to state {new_state_id}")
 
+    def stop_all_tasks(self):
+        for name, task in self.__scheduled_tasks.items():
+            task.stop()
+
     def schedule_new_state_tasks(self, new_state):
 
         self.__scheduled_tasks = {}  # Reset
@@ -100,10 +115,6 @@ class StateManager:
             self.tasks[task_id].set_frequency(frequency)
 
             self.__scheduled_tasks[task_id] = schedule(frequency, task_fn, priority)
-
-    def stop_all_tasks(self):
-        for name, task in self.__scheduled_tasks.items():
-            task.stop()
 
     def query_task_states(self):
         state = {}
