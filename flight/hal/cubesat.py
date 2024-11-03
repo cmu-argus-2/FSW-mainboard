@@ -28,7 +28,7 @@ class CubeSat:
         self.__board_power_monitor = None
         self.__charger = None
         self.__imu = None
-        # self.__jetson_monitor = None
+        self.__jetson_monitor = None
         # self.__torque_x = None
         # self.__torque_xp_power_monitor = None
         # self.__torque_xm_power_monitor = None
