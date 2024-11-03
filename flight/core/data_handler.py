@@ -295,12 +295,11 @@ class DataProcess:
         Returns the path of a designated file available for transmission.
         If no file is available, the function returns None.
 
-        The function store the file path to be excluded in clean-up policies.
-        Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list.
+        The function store the file path to be excluded in a separate list.
+        Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list
+        and prepare for deletion.
         """
-        # Assumes correct ordering (monotonic timestamp)
-        # TODO
-        files = os.listdir(self.dir_path)
+        files = self.get_sorted_file_list()
         if len(files) > 1:  # Ignore process configuration file
 
             if latest:
@@ -337,16 +336,57 @@ class DataProcess:
 
     def clean_up(self) -> None:
         """
-        Clean up the files that have been transmitted and acknowledged.
+        Clean up the files that have been marked for deletion.
         """
-        for d_path in self.delete_paths:
+        for d_path in self.delete_paths[:]:  # IMPORTANT: Iterate over a COPY of the list
+            # shouldn't iterate over the same list we're removing from
             if path_exist(d_path):
                 os.remove(d_path)
             else:
                 # TODO - log error, use exception handling instead
                 logger.critical(f"File {d_path} does not exist.")
-
             self.delete_paths.remove(d_path)
+
+    def check_circular_buffer(self) -> None:
+        """
+        Checks the circular buffer for the number of files and manages the deletion of the oldest files if necessary.
+
+        This method performs the following steps:
+        1. Retrieves the list of files in the directory, excluding the process configuration file.
+        2. Compares the number of files against the circular buffer size, adjusted for excluded and delete paths.
+        3. If the number of files exceeds the circular buffer size, it marks the oldest file for deletion,
+           ignoring files in excluded_paths and delete_paths.
+
+        Note:
+            - The method updates the delete_paths list with the files marked for deletion.
+            - The actual deletion of files is not performed by this method.
+
+        Returns:
+            None
+        """
+        files = self.get_sorted_file_list()[1:]  # Ignore process configuration file
+        # Actual overflow of the buffer
+        diff = len(files) - (self.circular_buffer_size + len(self.excluded_paths) + len(self.delete_paths) - 1)
+        # -1 for the current file
+        mark_counter = 0
+        if diff > 0:
+            # diff files to mark for deletion
+            for file in files:
+                file = join_path(self.dir_path, file)
+                if file not in self.excluded_paths and file not in self.delete_paths and file != self.current_path:
+                    self.delete_paths.append(file)  # mark for deletion
+                    mark_counter += 1
+                if mark_counter == diff:
+                    break
+
+    def get_sorted_file_list(self) -> List[str]:
+        """
+        Returns a list of all files in the directory.
+
+        Returns:
+            A list of filenames.
+        """
+        return sorted(os.listdir(self.dir_path))
 
     def get_storage_info(self) -> Tuple[int, int]:
         """
@@ -457,12 +497,11 @@ class ImageProcess(DataProcess):
         Returns the path of a designated image available for transmission.
         If no image is available, the function returns None.
 
-        The function store the file path to be excluded in clean-up policies.
-        Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list.
+        The function store the file path to be excluded in a separate list.
+        Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list
+        and prepare for deletion.
         """
-        # Assumes correct ordering (monotonic timestamp)
-        # TODO
-        files = os.listdir(self.dir_path)
+        files = self.get_sorted_file_list()
         if len(files) > 1:  # Ignore process configuration file
 
             if latest:
@@ -783,8 +822,9 @@ class DataHandler:
         Returns the path of a designated file available for transmission.
         If no file is available, the function returns None.
 
-        The function store the file path to be excluded in clean-up policies.
-        Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list.
+        The function store the file path to be excluded in a separate list.
+        Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list
+        and prepare for deletion.
         """
         try:
             if tag_name in cls.data_process_registry:
@@ -800,8 +840,9 @@ class DataHandler:
         Returns the path of a designated image available for transmission.
         If no file is available, the function returns None.
 
-        The function store the file path to be excluded in clean-up policies.
-        Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list.
+        The function store the file path to be excluded in a separate list.
+        Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list
+        and prepare for deletion.
         """
         try:
             if "img" in cls.data_process_registry:
@@ -832,6 +873,15 @@ class DataHandler:
         """
         for tag_name in cls.data_process_registry:
             cls.data_process_registry[tag_name].clean_up()
+
+    @classmethod
+    def check_circular_buffers(cls):
+        """
+        Check the circular buffers for each data process and mark for deletion the oldest files if necessary
+        while taking into account the existing paths that are excluded or already marked for deletion.
+        """
+        for tag_name in cls.data_process_registry:
+            cls.data_process_registry[tag_name].check_circular_buffer()
 
     @classmethod
     def delete_all_files(cls, path=None):
