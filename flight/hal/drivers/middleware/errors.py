@@ -70,9 +70,12 @@ class Errors:
     # Jetson Comm
     JETSON_COMM_NOT_INITIALIZED = const(40)
 
+    # Fuel Gauge errors
+    MAX17205_NOT_INITIALIZED = const(63)
+
     # Diagnostics errors - occur when running diagnostics on the system fails
     DIAGNOSTICS_ERROR_GPS = const(41)
-    DIAGNOSTICS_ERROR_BATTERY_POWER_MONITOR = const(42)
+    DIAGNOSTICS_ERROR_BOARD_POWER_MONITOR = const(42)
     DIAGNOSTICS_ERROR_JETSON_POWER_MONITOR = const(43)
     DIAGNOSTICS_ERROR_IMU = const(44)
     DIAGNOSTICS_ERROR_CHARGER = const(45)
@@ -141,7 +144,7 @@ class Errors:
         JETSON_COMM_NOT_INITIALIZED: "jetson comms not initialized",
         VFS_NOT_INITIALIZED: "virtual file system not initialized",
         DIAGNOSTICS_ERROR_GPS: "GPS error",
-        DIAGNOSTICS_ERROR_BATTERY_POWER_MONITOR: "battery power monitor error",
+        DIAGNOSTICS_ERROR_BOARD_POWER_MONITOR: "battery power monitor error",
         DIAGNOSTICS_ERROR_JETSON_POWER_MONITOR: "jetson power monitor error",
         DIAGNOSTICS_ERROR_IMU: "imu error",
         DIAGNOSTICS_ERROR_CHARGER: "charger error",

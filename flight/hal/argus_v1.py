@@ -52,7 +52,7 @@ class ArgusV1Components:
     """
     Represents the components used in the Argus V1 system.
 
-    This class defines constants for various components such as GPS, battery power monitor,
+    This class defines constants for various components such as GPS, board power monitor,
     Jetson power monitor, IMU, charger, torque coils, light sensors, radio, and SD card.
     """
 
@@ -60,9 +60,9 @@ class ArgusV1Components:
     GPS_UART = ArgusV1Interfaces.UART1
     GPS_ENABLE = board.EN_GPS
 
-    # BATTERY POWER MONITOR
-    BATTERY_POWER_MONITOR_I2C = ArgusV1Interfaces.I2C1
-    BATTERY_POWER_MONITOR_I2C_ADDRESS = const(0x4A)
+    # BOARD POWER MONITOR
+    BOARD_POWER_MONITOR_I2C = ArgusV1Interfaces.I2C1
+    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x4A)
 
     # JETSON POWER MONITOR
     JETSON_POWER_MONITOR_I2C = ArgusV1Interfaces.I2C1
@@ -160,7 +160,7 @@ class ArgusV1(CubeSat):
         error_list.append(self.__imu_boot())  # 4% of RAM
         error_list.append(self.__rtc_boot())
         error_list.append(self.__gps_boot())
-        error_list.append(self.__battery_power_monitor_boot())
+        error_list.append(self.__board_power_monitor_boot())
         error_list.append(self.__jetson_power_monitor_boot())
         error_list.append(self.__charger_boot())
         error_list.append(self.__torque_xp_boot())
@@ -222,24 +222,24 @@ class ArgusV1(CubeSat):
 
         return Errors.NOERROR
 
-    def __battery_power_monitor_boot(self) -> list[int]:
-        """battery_power_monitor_boot: Boot sequence for the battery power monitor
+    def __board_power_monitor_boot(self) -> list[int]:
+        """board_power_monitor_boot: Boot sequence for the board power monitor
 
-        :return: Error code if the battery power monitor failed to initialize
+        :return: Error code if the board power monitor failed to initialize
         """
         try:
             from hal.drivers.adm1176 import ADM1176
 
-            battery_monitor = ADM1176(
-                ArgusV1Components.BATTERY_POWER_MONITOR_I2C,
-                ArgusV1Components.BATTERY_POWER_MONITOR_I2C_ADDRESS,
+            board_monitor = ADM1176(
+                ArgusV1Components.BOARD_POWER_MONITOR_I2C,
+                ArgusV1Components.BOARD_POWER_MONITOR_I2C_ADDRESS,
             )
 
             if self.__middleware_enabled:
-                battery_monitor = Middleware(battery_monitor)
+                board_monitor = Middleware(board_monitor)
 
-            self.__battery_monitor = battery_monitor
-            self.__device_list.append(battery_monitor)
+            self.__board_monitor = board_monitor
+            self.__device_list.append(board_monitor)
         except Exception as e:
             self.__battery_monitor = None
             print(e)
@@ -769,8 +769,8 @@ class ArgusV1(CubeSat):
             return Errors.DIAGNOSTICS_ERROR_RTC
         elif device is self.GPS:
             return Errors.DIAGNOSTICS_ERROR_GPS
-        elif device is self.BATTERY_POWER_MONITOR:
-            return Errors.DIAGNOSTICS_ERROR_BATTERY_POWER_MONITOR
+        elif device is self.BOARD_POWER_MONITOR:
+            return Errors.DIAGNOSTICS_ERROR_BOARD_POWER_MONITOR
         elif device is self.JETSON_POWER_MONITOR:
             return Errors.DIAGNOSTICS_ERROR_JETSON_POWER_MONITOR
         elif device is self.IMU:

@@ -48,43 +48,56 @@ class CubeSat:
         # State flags
         self.__state_flags = None
 
-        # Interfaces
-        self.__uart1 = None
-        self.__uart2 = None
-        self.__spi = None
-        self.__i2c1 = None
-        self.__i2c2 = None
+        # # # Interfaces
+        # self.__uart1 = None
+        # self.__uart2 = None
+        # self.__spi = None
+        # self.__i2c1 = None
+        # self.__i2c2 = None
 
         # Devices
-        self.__gps = None
-        self.__battery_monitor = None
-        self.__jetson_monitor = None
-        self.__imu = None
+        self.__board_power_monitor = None
         self.__charger = None
+        self.__imu = None
+        self.__jetson_monitor = None
         self.__torque_x = None
-        self.__torque_y = None
-        self.__torque_z = None
+        self.__torque_xp_power_monitor = None
+        self.__torque_xm_power_monitor = None
+        self.__solar_xp_power_monitor = None
+        self.__solar_xm_power_monitor = None
         self.__light_sensor_xp = None
         self.__light_sensor_xm = None
+        self.__fuel_gauge = None
+        self.__torque_y = None
+        self.__torque_yp_power_monitor = None
+        self.__torque_ym_power_monitor = None
+        self.__solar_yp_power_monitor = None
+        self.__solar_ym_power_monitor = None
         self.__light_sensor_yp = None
         self.__light_sensor_ym = None
-        self.__light_sensor_zm = None
         self.__rtc = None
+        self.__torque_z = None
+        self.__torque_zp_power_monitor = None
+        self.__torque_zm_power_monitor = None
+        self.__solar_zp_power_monitor = None
+        self.__light_sensor_zm = None
+        # sun sensor here
+        self.__gps = None
         self.__radio = None
         self.__sd_card = None
         self.__burn_wires = None
+        self.__payload_spi = None
         self.__vfs = None
-        self.__payload_uart = None
 
         # Debugging
         self._time_ref_boot = int(time.time())
 
-    ## ABSTRACT METHOD ##
+    # ABSTRACT METHOD #
     def boot_sequence(self) -> list[int]:
         """boot_sequence: Boot sequence for the CubeSat."""
         raise NotImplementedError("CubeSats must implement boot method")
 
-    ## ABSTRACT METHOD ##
+    # ABSTRACT METHOD #
     def run_system_diagnostics(self) -> list[int] | None:
         """run_diagnostic_test: Run all tests for the component"""
         raise NotImplementedError("CubeSats must implement diagnostics method")
@@ -110,32 +123,32 @@ class CubeSat:
         """
         return self._state_flags
 
-    ######################### INTERFACES #########################
+    # ######################### INTERFACES #########################
 
-    @property
-    def UART1(self):
-        """UART: Returns the UART interface"""
-        return self.__uart1
+    # @property
+    # def UART1(self):
+    #     """UART: Returns the UART interface"""
+    #     return self.__uart1
 
-    @property
-    def UART2(self):
-        """UART2: Returns the UART2 interface"""
-        return self.__uart2
+    # @property
+    # def UART2(self):
+    #     """UART2: Returns the UART2 interface"""
+    #     return self.__uart2
 
-    @property
-    def SPI(self):
-        """SPI: Returns the SPI interface"""
-        return self.__spi
+    # @property
+    # def SPI(self):
+    #     """SPI: Returns the SPI interface"""
+    #     return self.__spi
 
-    @property
-    def I2C1(self):
-        """I2C: Returns the I2C interface"""
-        return self.__i2c1
+    # @property
+    # def I2C1(self):
+    #     """I2C: Returns the I2C interface"""
+    #     return self.__i2c1
 
-    @property
-    def I2C2(self):
-        """I2C2: Returns the I2C2 interface"""
-        return self.__i2c2
+    # @property
+    # def I2C2(self):
+    #     """I2C2: Returns the I2C2 interface"""
+    #     return self.__i2c2
 
     ######################### DEVICES #########################
 
@@ -147,11 +160,11 @@ class CubeSat:
         return self.__gps
 
     @property
-    def BATTERY_POWER_MONITOR(self):
-        """BATTERY_POWER_MONITOR: Returns the battery power monitor object
+    def BOARD_POWER_MONITOR(self):
+        """BOARD_POWER_MONITOR: Returns the board power monitor object
         :return: object or None
         """
-        return self.__battery_monitor
+        return self.__board_power_monitor
 
     @property
     def JETSON_POWER_MONITOR(self):
@@ -180,6 +193,13 @@ class CubeSat:
         :return: object or None
         """
         return self.__torque_x
+
+    @property
+    def TORQUE_XP_POWER_MONITOR(self):
+        """TORQUE_XP: Returns the torque driver in the x+ direction
+        :return: object or None
+        """
+        return self.__torque_xp_power_monitor
 
     @property
     def TORQUE_Y(self):
