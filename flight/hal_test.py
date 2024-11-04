@@ -1,6 +1,7 @@
 from hal.configuration import SATELLITE
 
 # ---------- MAIN CODE STARTS HERE! ---------- ##
+
 boot_errors = SATELLITE.boot_sequence()
 print("ARGUS-1 booted.")
 print(f"Boot Errors: {boot_errors}")
@@ -21,6 +22,6 @@ print(f"Boot Errors: {boot_errors}")
 #         print(SATELLITE.IMU.gyro())
 
 # rtc test
-while True:
-    if SATELLITE.RTC is not None:
-        print(SATELLITE.RTC.datetime())
+# while True:
+#    if SATELLITE.RTC is not None:
+#        print(SATELLITE.RTC.datetime())
