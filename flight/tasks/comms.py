@@ -21,6 +21,7 @@ class Task(TemplateTask):
     def __init__(self, id):
         super().__init__(id)
         self.name = "COMMS"
+        self.comms_state = COMMS_STATE.RX
 
         # Counters for heartbeat frequency
         self.TX_COUNT_THRESHOLD = 0
@@ -30,14 +31,16 @@ class Task(TemplateTask):
         self.ground_pass = False
         self.RX_COUNTER = 0
 
+        # TODO: See if needed and remove
         SATELLITE_RADIO.listen()  # RX mode
 
     async def main_task(self):
-
+        # TODO: Check if this can be done in setup
         if not self.frequency_set:
-            # Reset counter and ensure HB frequency not too high
+            # Reset counter
             self.TX_COUNTER = 0
 
+            # Ensure HB frequency not too high
             if self.TX_heartbeat_frequency > self.frequency:
                 self.log_error("TX heartbeat frequency faster than task frequency")
 
@@ -58,30 +61,53 @@ class Task(TemplateTask):
             # Increment counter
             self.TX_COUNTER += 1
 
-            self.log_info(f"SAT currently in state {SATELLITE_RADIO.get_state()}")
-            if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD:
-                # Send out message
-                if TelemetryPacker.TM_AVAILABLE:
-                    SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
+            # Print current comms state
+            self.comms_state = SATELLITE_RADIO.get_state()
+            self.log_info(f"Comms currently in state {self.comms_state}")
 
-                self.tx_msg_id = SATELLITE_RADIO.transmit_message()
-                self.log_info(f"Sent message with ID: {self.tx_msg_id}")
-                self.TX_COUNTER = 0
+            if self.comms_state != COMMS_STATE.RX:
+                # Current state is TX state, transmit message
 
-                # SATELLITE_RADIO.listen()  # RX mode
+                if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD:
+                    # Set current TM frame
+                    if TelemetryPacker.TM_AVAILABLE and self.comms_state == COMMS_STATE.TX_HEARTBEAT:
+                        SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
 
-            if SATELLITE_RADIO.data_available():
-                # Read packet present in the RX buffer
-                self.rq_msg_id = SATELLITE_RADIO.receive_message()
-                if self.rq_msg_id != 0x00:
-                    self.log_info(f"GS requested message ID: {self.rq_msg_id}")
-                    self.ground_pass = True
+                    # Transmit a message from the satellite
+                    self.tx_msg_id = SATELLITE_RADIO.transmit_message()
+                    self.TX_COUNTER = 0
                     self.RX_COUNTER = 0
-            else:
-                # No packet received from GS yet
-                self.log_info(f"Nothing in RX buffer at {time.monotonic()}")
-                self.RX_COUNTER += 1
 
-                if self.RX_COUNTER > 8 and self.ground_pass:
-                    self.ground_pass = False
-                    SATELLITE_RADIO.set_state(COMMS_STATE.TX_HEARTBEAT)
+                    # State transition to RX state
+                    SATELLITE_RADIO.transition_state(0)
+
+                    self.log_info(f"Sent message with ID: {self.tx_msg_id}")
+
+            else:
+                # Current state is RX, receive message
+
+                if SATELLITE_RADIO.data_available():
+                    # Read packet present in the RX buffer
+                    self.rq_msg_id = SATELLITE_RADIO.receive_message()
+                    SATELLITE_RADIO.transition_state(0)
+
+                    # Check the response from the GS
+                    if self.rq_msg_id != 0x00:
+                        # GS requested valid message ID
+                        self.log_info(f"GS requested message ID: {self.rq_msg_id}")
+                        self.ground_pass = True
+                        self.RX_COUNTER = 0
+
+                    else:
+                        # GS requested invalid message ID
+                        self.log_warning(f"GS requested invalid message ID: {self.rq_msg_id}")
+
+                else:
+                    # No packet received from GS yet
+                    self.RX_COUNTER += 1
+                    self.log_info(f"Nothing in RX buffer, {self.RX_COUNTER}")
+
+                    if self.RX_COUNTER >= 8:
+                        # GS response timeout
+                        self.ground_pass = False
+                        SATELLITE_RADIO.transition_state(self.RX_COUNTER)

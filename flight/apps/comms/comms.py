@@ -41,7 +41,7 @@ class SATELLITE_RADIO:
     sat = SATELLITE
 
     # Comms state
-    state = COMMS_STATE.TX_HEARTBEAT
+    state = COMMS_STATE.RX
 
     # Init TM frame for preallocating memory
     tm_frame = bytearray(250)
@@ -75,16 +75,6 @@ class SATELLITE_RADIO:
     crc_count = 0
 
     """
-        Name: set_state
-        Description: Set internal COMMS_STATE
-    """
-
-    @classmethod
-    def set_state(self, state):
-        # Set state
-        self.state = state
-
-    """
         Name: get_state
         Description: Get internal COMMS_STATE
     """
@@ -93,6 +83,43 @@ class SATELLITE_RADIO:
     def get_state(self):
         # Get state
         return self.state
+
+    """
+        Name: transition_state
+        Description: Update internal COMMS_STATE
+    """
+
+    @classmethod
+    def transition_state(self, RX_COUNTER):
+        # Check current state
+        if self.state == COMMS_STATE.RX:
+            # State transitions to TX states only occur from RX state
+
+            # Error handling transition
+            if RX_COUNTER >= 8:
+                # Lost contact with GS, return to default state
+                self.state = COMMS_STATE.TX_HEARTBEAT
+
+            # Transitions based on GS ACKs
+            elif self.gs_req_message_ID == MSG_ID.SAT_HEARTBEAT:
+                # Send latest TM frame
+                self.state = COMMS_STATE.TX_HEARTBEAT
+
+            elif self.gs_req_message_ID == MSG_ID.SAT_FILE_METADATA:
+                # Send file metadata
+                self.state = COMMS_STATE.TX_METADATA
+
+            elif self.gs_req_message_ID == MSG_ID.SAT_FILE_PKT:
+                # Send file packet with specified sequence count
+                self.state = COMMS_STATE.TX_FILEPKT
+
+            else:
+                # Unknown message ID, return to default state
+                self.state = COMMS_STATE.TX_HEARTBEAT
+
+        else:
+            # Unconditional branch to RX state
+            self.state = COMMS_STATE.RX
 
     """
         Name: set_tm_frame
@@ -213,7 +240,6 @@ class SATELLITE_RADIO:
 
         if packet is None:
             # FIFO buffer does not contain a packet
-            self.state = COMMS_STATE.TX_HEARTBEAT
             self.gs_req_message_ID = 0x00
 
             return self.gs_req_message_ID
@@ -241,39 +267,23 @@ class SATELLITE_RADIO:
 
             # Verify GS RX message ID with previously transmitted message ID
             if self.tx_message_ID != self.gs_rx_message_ID:
-                # Logger warning
+                # RX ID mismatch, reset GS RQ'd ID
                 logger.warning(f"[COMMS ERROR] GS received {self.gs_rx_message_ID}")
-                self.state = COMMS_STATE.TX_HEARTBEAT
+                self.gs_req_message_ID = 0x00
 
                 return self.gs_req_message_ID
 
             # Verify CRC count was 0 for last received message
             if self.crc_count > 0:
-                # Logger warning
+                # CRC error, reset GS RQ'd ID
                 logger.warning("[COMMS ERROR] CRC error occured")
-                self.state = COMMS_STATE.TX_HEARTBEAT
+                self.gs_req_message_ID = 0x00
 
                 return self.gs_req_message_ID
 
-            if self.gs_req_message_ID == MSG_ID.SAT_HEARTBEAT:
-                # Send latest TM frame
-                self.state = COMMS_STATE.TX_HEARTBEAT
-
-            elif self.gs_req_message_ID == MSG_ID.SAT_FILE_METADATA:
-                # Send file metadata
-                self.state = COMMS_STATE.TX_METADATA
-
-            elif self.gs_req_message_ID == MSG_ID.SAT_FILE_PKT:
-                # Send file packet with specified sequence count
-                self.state = COMMS_STATE.TX_FILEPKT
-
-            else:
-                # Unknown message ID, return to default state
-                self.state = COMMS_STATE.TX_HEARTBEAT
-
         else:
-            # Unknown message ID, return to default state
-            self.state = COMMS_STATE.TX_HEARTBEAT
+            # Unknown message ID, reset GS RQ' ID
+            self.gs_req_message_ID = 0x00
 
         return self.gs_req_message_ID
 
@@ -339,15 +349,13 @@ class SATELLITE_RADIO:
             self.transmit_file_packet()
 
         else:
-            # Transmit SAT heartbeat
-            self.state = COMMS_STATE.TX_HEARTBEAT
+            # Unknown state, just send
+            logger.warning(f"[COMMS ERROR] SAT received {self.gs_rq_message_ID}")
             self.tx_message = self.tm_frame
 
         # Send a message to GS
         self.sat.RADIO.send(self.tx_message)
         self.crc_count = 0
-        # Probably do not need RX state
-        # self.state = COMMS_STATE.RX
 
         # Return TX message header
         self.tx_message_ID = int.from_bytes(self.tx_message[0:1], "big")
