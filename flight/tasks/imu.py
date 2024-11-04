@@ -1,9 +1,9 @@
 import time
 
 from apps.telemetry.constants import IMU_IDX
+from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
-from core.data_handler import DataHandler as DH
 from core.states import STATES
 from hal.configuration import SATELLITE
 
@@ -37,7 +37,7 @@ class Task(TemplateTask):
         if SM.current_state == STATES.NOMINAL:
 
             if not DH.data_process_exists("imu"):
-                DH.register_data_process("imu", "Lfffffffff", True, data_limit=100000, write_interval=10)
+                DH.register_data_process("imu", "Lfffffffff", True, data_limit=100000, write_interval=5)
 
             accel = SATELLITE.IMU.accel()
             mag = SATELLITE.IMU.mag()

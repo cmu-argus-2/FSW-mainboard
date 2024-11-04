@@ -34,8 +34,8 @@ from apps.telemetry.helpers import (
     pack_unsigned_short_int,
     unpack_unsigned_short_int,
 )
+from core import DataHandler as DH
 from core import logger
-from core.data_handler import DataHandler as DH
 from micropython import const
 
 
@@ -103,7 +103,7 @@ class TelemetryPacker:
             cls._FRAME[16] = cdh_data[CDH_IDX.HAL_BITFLAGS] & 0xFF
 
         else:
-            logger.error("No CDH data available")
+            logger.warning("No CDH data available")
 
         ############ EPS fields ############
 
@@ -198,7 +198,7 @@ class TelemetryPacker:
             # ZM solar charge current
             cls._FRAME[96:98] = pack_signed_short_int(eps_data, EPS_IDX.ZM_SOLAR_CHARGE_CURRENT)
         else:
-            logger.error("No EPS data available")
+            logger.warning("No EPS data available")
 
         ############ ADCS fields ############
         if DH.data_process_exists("adcs"):
@@ -285,7 +285,7 @@ class TelemetryPacker:
             # Star tracker attitude QZ
             cls._FRAME[190:194] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QZ])
         else:
-            logger.error("No ADCS data available")
+            logger.warning("No ADCS data available")
 
         ############ GPS fields ############
         if DH.data_process_exists("gps"):
@@ -324,7 +324,7 @@ class TelemetryPacker:
             # ECEF VZ
             cls._FRAME[239:243] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VZ)
         else:
-            logger.error("No GPS data available")
+            logger.warning("No GPS data available")
 
         ############ Thermal fields ############
 
@@ -339,7 +339,7 @@ class TelemetryPacker:
             cls._FRAME[247:249] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.BATTERY_PACK_TEMPERATURE)
 
         else:
-            logger.error("No Thermal data available")
+            logger.warning("No Thermal data available")
 
         cls._FRAME[:] = bytearray(cls._FRAME[:])
         gc.collect()

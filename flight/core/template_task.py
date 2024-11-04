@@ -1,3 +1,5 @@
+import gc
+
 from core import logger
 
 
@@ -48,6 +50,7 @@ class TemplateTask:
         try:
             # gc.collect()
             await self.main_task()
+            gc.collect()
         except Exception as e:
             self.debug(f"{e}")
 

@@ -625,8 +625,6 @@ def setup_logger(level="NOTSET", handler=None):
         handler = StreamHandler()
 
     formatter = Formatter(fmt="[{asctime}][{levelname}] {message}", datefmt="%Y-%m-%d %H:%M:%S", style="{")
-
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-
     logger.info(f"Logger set to level {level}")
