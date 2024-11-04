@@ -1,7 +1,4 @@
 # Communication task which uses the radio to transmit and receive messages.
-
-import time
-
 from apps.comms.comms import COMMS_STATE, SATELLITE_RADIO
 from apps.telemetry import TelemetryPacker
 from core import TemplateTask
@@ -46,7 +43,7 @@ class Task(TemplateTask):
 
             # Set frequency
             self.TX_COUNT_THRESHOLD = int(self.frequency / self.TX_heartbeat_frequency)
-            self.TX_COUNTER = self.TX_COUNT_THRESHOLD-1
+            self.TX_COUNTER = self.TX_COUNT_THRESHOLD - 1
             self.frequency_set = True
 
         if SM.current_state == STATES.NOMINAL:
