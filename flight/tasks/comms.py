@@ -46,6 +46,8 @@ class Task(TemplateTask):
             self.TX_COUNTER = self.TX_COUNT_THRESHOLD - 1
             self.frequency_set = True
 
+            self.log_info(f"Heartbeat frequency threshold set to {self.TX_COUNT_THRESHOLD}")
+
         if SM.current_state == STATES.NOMINAL:
             if not DH.data_process_exists("img"):
                 # TODO: Move image process to another task
@@ -105,7 +107,7 @@ class Task(TemplateTask):
                     self.RX_COUNTER += 1
                     self.log_info(f"Nothing in RX buffer, {self.RX_COUNTER}")
 
-                    if self.RX_COUNTER >= 8:
+                    if self.RX_COUNTER >= self.TX_COUNT_THRESHOLD:
                         # GS response timeout
                         self.ground_pass = False
                         SATELLITE_RADIO.transition_state(self.RX_COUNTER)
