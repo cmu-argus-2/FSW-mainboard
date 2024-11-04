@@ -98,8 +98,8 @@ class Task(TemplateTask):
 
             DH.log_data("eps", self.log_data)
             self.log_info(
-                f"Board Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, " +
-                f"Board Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA, " +
-                f"Jetson Voltage: {self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE]} mV, " +
-                f"Jetson Current: {self.log_data[EPS_IDX.JETSON_INPUT_CURRENT]} mA"
+                f"Board Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, "
+                + f"Board Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA, "
+                + f"Jetson Voltage: {self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE]} mV, "
+                + f"Jetson Current: {self.log_data[EPS_IDX.JETSON_INPUT_CURRENT]} mA"
             )
