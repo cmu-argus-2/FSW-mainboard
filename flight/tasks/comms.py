@@ -21,7 +21,7 @@ class Task(TemplateTask):
     def __init__(self, id):
         super().__init__(id)
         self.name = "COMMS"
-        self.comms_state = COMMS_STATE.RX
+        self.comms_state = COMMS_STATE.TX_HEARTBEAT
 
         # Counters for heartbeat frequency
         self.TX_COUNT_THRESHOLD = 0
@@ -46,6 +46,7 @@ class Task(TemplateTask):
 
             # Set frequency
             self.TX_COUNT_THRESHOLD = int(self.frequency / self.TX_heartbeat_frequency)
+            self.TX_COUNTER = self.TX_COUNT_THRESHOLD-1
             self.frequency_set = True
 
         if SM.current_state == STATES.NOMINAL:
@@ -63,12 +64,12 @@ class Task(TemplateTask):
 
             # Print current comms state
             self.comms_state = SATELLITE_RADIO.get_state()
-            self.log_info(f"Comms currently in state {self.comms_state}")
+            self.log_info(f"Comms state is {self.comms_state}")
 
             if self.comms_state != COMMS_STATE.RX:
                 # Current state is TX state, transmit message
 
-                if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD:
+                if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD or self.ground_pass:
                     # Set current TM frame
                     if TelemetryPacker.TM_AVAILABLE and self.comms_state == COMMS_STATE.TX_HEARTBEAT:
                         SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())

@@ -41,7 +41,7 @@ class SATELLITE_RADIO:
     sat = SATELLITE
 
     # Comms state
-    state = COMMS_STATE.RX
+    state = COMMS_STATE.TX_HEARTBEAT
 
     # Init TM frame for preallocating memory
     tm_frame = bytearray(250)
