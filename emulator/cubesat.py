@@ -46,7 +46,6 @@ class CubeSat:
         self._payload_uart = None
 
         # Debugging
-        self._neopixel = None
         self._time_ref_boot = int(time.time())
 
     # ABSTRACT METHOD #
@@ -186,13 +185,6 @@ class CubeSat:
         :return: object or None
         """
         return self._radio
-
-    @property
-    def NEOPIXEL(self):
-        """NEOPIXEL: Returns the neopixel object
-        :return: object or None
-        """
-        return self._neopixel
 
     @property
     def BURN_WIRES(self):

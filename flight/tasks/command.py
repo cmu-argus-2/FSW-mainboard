@@ -5,20 +5,24 @@
 import gc
 import time
 
+from apps.command import CommandQueue
+from apps.command.processor import handle_command_execution_status, process_command
 from apps.telemetry.constants import CDH_IDX
+from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
-from core.data_handler import DataHandler as DH
 from core.states import STATES, STR_STATES
 
 
 class Task(TemplateTask):
 
-    # To be removed - kept until proper logging is implemented
+    # To be removed
     # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "REBOOT_COUNT", "WATCHDOG_TIMER", "HAL_BITFLAGS"]
 
     log_data = [0] * 7
     data_format = "LbLbbbb"
+
+    log_commands = [0] * 3
 
     gc.collect()
     total_memory = gc.mem_alloc() + gc.mem_free()
@@ -47,18 +51,42 @@ class Task(TemplateTask):
             # DH.delete_all_files()
             self.log_info("SD card cleaned up.")
 
-            HAL_DIAGNOSTICS = True
-            # TODO For now
+            HAL_DIAGNOSTICS = True  # TODO For now
+
             if DH.SD_scanned and HAL_DIAGNOSTICS:
+
+                if not DH.data_process_exists("cdh"):
+                    DH.register_data_process("cdh", self.data_format, True, data_limit=100000)
+
+                if not DH.data_process_exists("cmd_logs"):
+                    DH.register_data_process("cmd_logs", "LBB", True, data_limit=100000)
+
                 SM.switch_to(STATES.NOMINAL)
                 self.log_info("Switching to NOMINAL state.")
 
+                # CommandQueue.push_command(0x01, [])
+                # CommandQueue.push_command(0x02, [])
+
         else:  # Run for all states
 
-            if not DH.data_process_exists("cdh"):
-                DH.register_data_process("cdh", self.data_format, True, data_limit=100000)
+            ### COMMAND PROCESSING ###
 
-            # gc.collect()
+            if CommandQueue.command_available():
+
+                (cmd_id, cmd_args), queue_error_code = CommandQueue.pop_command()
+
+                if queue_error_code == CommandQueue.OK:
+
+                    self.log_info(f"Processing command: {cmd_id} with args: {cmd_args}")
+                    status = process_command(cmd_id, *cmd_args)
+
+                    handle_command_execution_status(status)
+
+                    # Log the command execution history
+                    self.log_commands[0] = int(time.time())
+                    self.log_commands[1] = cmd_id
+                    self.log_commands[2] = status
+                    DH.log_data("cmd_logs", self.log_commands)
 
             self.log_data[CDH_IDX.TIME] = int(time.time())
             self.log_data[CDH_IDX.SC_STATE] = SM.current_state
@@ -69,9 +97,6 @@ class Task(TemplateTask):
             self.log_data[CDH_IDX.HAL_BITFLAGS] = 0
 
             DH.log_data("cdh", self.log_data)
-
-            # Command processing
-            # TODO
 
             # Burn wires
 
@@ -84,7 +109,3 @@ class Task(TemplateTask):
             self.log_print_counter = 0
             self.log_info(f"GLOBAL STATE: {STR_STATES[SM.current_state]}.")
             self.log_info(f"RAM USAGE: {self.log_data[CDH_IDX.CURRENT_RAM_USAGE]}%")
-
-        # gc.collect()
-        # print(int(gc.mem_alloc() / ( gc.mem_alloc() + gc.mem_free()) * 100))
-        # time.sleep(1000000000)

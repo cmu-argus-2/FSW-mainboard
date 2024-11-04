@@ -64,18 +64,18 @@ class Errors:
     # SD card errors
     SDCARD_NOT_INITIALIZED = const(37)
 
-    # Neopixel errors
-    NEOPIXEL_NOT_INITIALIZED = const(38)
-
     # Burn Wire errors
     BURNWIRES_NOT_INITIALIZED = const(39)
 
     # Jetson Comm
     JETSON_COMM_NOT_INITIALIZED = const(40)
 
+    # Fuel Gauge errors
+    MAX17205_NOT_INITIALIZED = const(63)
+
     # Diagnostics errors - occur when running diagnostics on the system fails
     DIAGNOSTICS_ERROR_GPS = const(41)
-    DIAGNOSTICS_ERROR_BATTERY_POWER_MONITOR = const(42)
+    DIAGNOSTICS_ERROR_BOARD_POWER_MONITOR = const(42)
     DIAGNOSTICS_ERROR_JETSON_POWER_MONITOR = const(43)
     DIAGNOSTICS_ERROR_IMU = const(44)
     DIAGNOSTICS_ERROR_CHARGER = const(45)
@@ -91,7 +91,6 @@ class Errors:
     DIAGNOSTICS_ERROR_SUN_SENSOR_ZM = const(55)
     DIAGNOSTICS_ERROR_RTC = const(57)
     DIAGNOSTICS_ERROR_RADIO = const(58)
-    DIAGNOSTICS_ERROR_NEOPIXEL = const(59)
     DIAGNOSTICS_ERROR_BURN_WIRES = const(60)
     DIAGNOSTICS_ERROR_UNKNOWN = const(61)
 
@@ -141,12 +140,11 @@ class Errors:
         DRV8830_THROTTLE_RAW_OUTSIDE_RANGE: "DRV8830 throttle raw outside range",
         RFM9X_NOT_INITIALIZED: "RFM9x not initialized",
         SDCARD_NOT_INITIALIZED: "SD card not initialized",
-        NEOPIXEL_NOT_INITIALIZED: "neopixel not initialized",
         BURNWIRES_NOT_INITIALIZED: "burnwires not initialized",
         JETSON_COMM_NOT_INITIALIZED: "jetson comms not initialized",
         VFS_NOT_INITIALIZED: "virtual file system not initialized",
         DIAGNOSTICS_ERROR_GPS: "GPS error",
-        DIAGNOSTICS_ERROR_BATTERY_POWER_MONITOR: "battery power monitor error",
+        DIAGNOSTICS_ERROR_BOARD_POWER_MONITOR: "battery power monitor error",
         DIAGNOSTICS_ERROR_JETSON_POWER_MONITOR: "jetson power monitor error",
         DIAGNOSTICS_ERROR_IMU: "imu error",
         DIAGNOSTICS_ERROR_CHARGER: "charger error",
@@ -162,7 +160,6 @@ class Errors:
         DIAGNOSTICS_ERROR_SUN_SENSOR_ZM: "light sensor zm error",
         DIAGNOSTICS_ERROR_RTC: "rtc error",
         DIAGNOSTICS_ERROR_RADIO: "radio error",
-        DIAGNOSTICS_ERROR_NEOPIXEL: "neopixel error",
         DIAGNOSTICS_ERROR_BURN_WIRES: "brunwires error",
         DIAGNOSTICS_ERROR_UNKNOWN: "unknown error",
     }

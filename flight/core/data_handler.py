@@ -36,7 +36,7 @@ import re
 import struct
 import time
 
-from core import logger
+from core.logging import logger
 from micropython import const
 
 try:
@@ -44,13 +44,13 @@ try:
 except ImportError:
     pass
 
-
+_HOME_PATH = "/sd"  # Default path for the SD card
 _CLOSED = const(20)
 _OPEN = const(21)
 _IMG_SIZE_LIMIT = const(100000)
 
 
-_PROCESS_CONFIG_FILENAME = ".process_configuration.json"
+_PROCESS_CONFIG_FILENAME = ".data_process_configuration.json"
 _IMG_TAG_NAME = "img"
 
 
@@ -67,13 +67,34 @@ class DataProcess:
         new_config_file (bool): Whether to create a new configuration file (default is False).
         write_interval (int): The interval of logs at which the data should be written to the file (default is 1).
         write_interval_counter (int): The counter for the write interval.
-        home_path (str): The home path for the file (default is "/sd/").
         status (str): The status of the file ("CLOSED" or "OPEN").
         file (file): The file object.
         dir_path (str): The directory path for the file.
         current_path (str): The current filename.
         bytesize (int): The size of each new data line to be written to the file.
     """
+
+    # For optimization purposes  (avoid creating a __dict__ and instantiate static memnory space for attributes)
+
+    __slots__ = (
+        "tag_name",
+        "data_format",
+        "persistent",
+        "data_limit",
+        "new_config_file",
+        "write_interval",
+        "write_interval_counter",
+        "circular_buffer_size",
+        "status",
+        "file",
+        "dir_path",
+        "current_path",
+        "bytesize",
+        "size_limit",
+        "last_data",
+        "delete_paths",
+        "excluded_paths",
+    )
 
     _FORMAT = {
         "b": 1,  # byte
@@ -97,8 +118,8 @@ class DataProcess:
         persistent: bool = True,
         data_limit: int = 100000,
         write_interval: int = 1,
+        circular_buffer_size: int = 10,
         new_config_file: bool = False,
-        home_path: str = "/sd",
     ) -> None:
         """
         Initializes a DataProcess object.
@@ -109,8 +130,9 @@ class DataProcess:
             persistent (bool, optional): Whether the file should be persistent or not (default is True).
             data_limit (int, optional): The maximum number of data in bytes allowed in the file (default is 100kb).
                                         This attribute will automatically get updated based on the line bytesize.
+            circular_buffer_size (int, optional): The size of the circular buffer for the files in
+                                        the directory (default is 10).
             new_config_file (bool, optional): Whether to create a new configuration file (default is False).
-            home_path (str, optional): The home path for the file (default is "/sd/").
         """
 
         self.tag_name = tag_name
@@ -118,6 +140,7 @@ class DataProcess:
         self.persistent = persistent
         self.write_interval = int(write_interval)
         self.write_interval_counter = self.write_interval - 1  # To write the first data point
+        self.circular_buffer_size = circular_buffer_size
 
         # TODO Check formating e.g. 'iff', 'iif', 'fff', 'iii', etc. ~ done within compute_bytesize()
         self.data_format = "<" + data_format
@@ -131,7 +154,7 @@ class DataProcess:
 
             self.status = _CLOSED
 
-            self.dir_path = home_path + "/" + tag_name + "/"
+            self.dir_path = join_path(_HOME_PATH, tag_name)
             self.create_folder()
 
             # To Be Resolved for each file process, TODO check if int, positive, etc
@@ -143,7 +166,7 @@ class DataProcess:
             self.delete_paths = []  # Paths that are flagged for deletion
             self.excluded_paths = []  # Paths that are currently being transmitted
 
-            config_file_path = self.dir_path + _PROCESS_CONFIG_FILENAME
+            config_file_path = join_path(self.dir_path, _PROCESS_CONFIG_FILENAME)
             if not path_exist(config_file_path) or new_config_file:
                 config_data = {
                     "data_format": self.data_format[1:],  # remove the < character
@@ -244,8 +267,8 @@ class DataProcess:
         Returns:
             str: The new filename.
         """
-        # TODO timestamp must be obtained through the REFERENCE TIME until the time module is done
-        return self.dir_path + self.tag_name + "_" + str(int(time.time())) + ".bin"
+        # Keeping the tag name in the filename for identification in debugging
+        return join_path(self.dir_path, self.tag_name) + "_" + str(int(time.time())) + ".bin"
 
     def open(self) -> None:
         """
@@ -272,12 +295,11 @@ class DataProcess:
         Returns the path of a designated file available for transmission.
         If no file is available, the function returns None.
 
-        The function store the file path to be excluded in clean-up policies.
-        Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list.
+        The function store the file path to be excluded in a separate list.
+        Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list
+        and prepare for deletion.
         """
-        # Assumes correct ordering (monotonic timestamp)
-        # TODO
-        files = os.listdir(self.dir_path)
+        files = self.get_sorted_file_list()
         if len(files) > 1:  # Ignore process configuration file
 
             if latest:
@@ -289,7 +311,7 @@ class DataProcess:
                 if transmit_file == _PROCESS_CONFIG_FILENAME:
                     transmit_file = files[1]
 
-            tm_path = self.dir_path + transmit_file
+            tm_path = join_path(self.dir_path, transmit_file)
 
             if tm_path == self.current_path:
                 self.close()
@@ -314,16 +336,57 @@ class DataProcess:
 
     def clean_up(self) -> None:
         """
-        Clean up the files that have been transmitted and acknowledged.
+        Clean up the files that have been marked for deletion.
         """
-        for d_path in self.delete_paths:
+        for d_path in self.delete_paths[:]:  # IMPORTANT: Iterate over a COPY of the list
+            # shouldn't iterate over the same list we're removing from
             if path_exist(d_path):
                 os.remove(d_path)
             else:
                 # TODO - log error, use exception handling instead
                 logger.critical(f"File {d_path} does not exist.")
-
             self.delete_paths.remove(d_path)
+
+    def check_circular_buffer(self) -> None:
+        """
+        Checks the circular buffer for the number of files and manages the deletion of the oldest files if necessary.
+
+        This method performs the following steps:
+        1. Retrieves the list of files in the directory, excluding the process configuration file.
+        2. Compares the number of files against the circular buffer size, adjusted for excluded and delete paths.
+        3. If the number of files exceeds the circular buffer size, it marks the oldest file for deletion,
+           ignoring files in excluded_paths and delete_paths.
+
+        Note:
+            - The method updates the delete_paths list with the files marked for deletion.
+            - The actual deletion of files is not performed by this method.
+
+        Returns:
+            None
+        """
+        files = self.get_sorted_file_list()[1:]  # Ignore process configuration file
+        # Actual overflow of the buffer
+        diff = len(files) - (self.circular_buffer_size + len(self.excluded_paths) + len(self.delete_paths) - 1)
+        # -1 for the current file
+        mark_counter = 0
+        if diff > 0:
+            # diff files to mark for deletion
+            for file in files:
+                file = join_path(self.dir_path, file)
+                if file not in self.excluded_paths and file not in self.delete_paths and file != self.current_path:
+                    self.delete_paths.append(file)  # mark for deletion
+                    mark_counter += 1
+                if mark_counter == diff:
+                    break
+
+    def get_sorted_file_list(self) -> List[str]:
+        """
+        Returns a list of all files in the directory.
+
+        Returns:
+            A list of filenames.
+        """
+        return sorted(os.listdir(self.dir_path))
 
     def get_storage_info(self) -> Tuple[int, int]:
         """
@@ -389,14 +452,14 @@ class DataProcess:
 
 
 class ImageProcess(DataProcess):
-    def __init__(self, tag_name: str, home_path: str = "/sd"):
+    def __init__(self, tag_name: str):
 
         self.tag_name = tag_name
         self.file = None
 
         self.status = _CLOSED
 
-        self.dir_path = home_path + "/" + self.tag_name + "/"
+        self.dir_path = join_path(_HOME_PATH, self.tag_name)
         self.create_folder()
 
         self.size_limit = _IMG_SIZE_LIMIT
@@ -405,7 +468,7 @@ class ImageProcess(DataProcess):
         self.delete_paths = []  # Paths that are flagged for deletion
         self.excluded_paths = []  # Paths that are currently being transmitted
 
-        config_file_path = self.dir_path + _PROCESS_CONFIG_FILENAME
+        config_file_path = join_path(self.dir_path, _PROCESS_CONFIG_FILENAME)
         if not path_exist(config_file_path):
             config_data = {_IMG_TAG_NAME: True}
             with open(config_file_path, "w") as config_file:
@@ -434,12 +497,11 @@ class ImageProcess(DataProcess):
         Returns the path of a designated image available for transmission.
         If no image is available, the function returns None.
 
-        The function store the file path to be excluded in clean-up policies.
-        Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list.
+        The function store the file path to be excluded in a separate list.
+        Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list
+        and prepare for deletion.
         """
-        # Assumes correct ordering (monotonic timestamp)
-        # TODO
-        files = os.listdir(self.dir_path)
+        files = self.get_sorted_file_list()
         if len(files) > 1:  # Ignore process configuration file
 
             if latest:
@@ -451,7 +513,7 @@ class ImageProcess(DataProcess):
                 if transmit_file == _PROCESS_CONFIG_FILENAME:
                     transmit_file = files[1]
 
-            tm_path = self.dir_path + transmit_file
+            tm_path = join_path(self.dir_path, transmit_file)
 
             if tm_path == self.current_path or not path_exist(tm_path):
                 return None
@@ -482,7 +544,6 @@ class DataHandler:
     Failure to do so can prevent the SD card from being recognized until it is powered off or re-inserted.
     """
 
-    sd_path = "/sd"
     # Keep track of all file processes
     data_process_registry = dict()
 
@@ -512,7 +573,7 @@ class DataHandler:
         """
         directories = cls.list_directories()
         for dir_name in directories:
-            config_file = join_path(cls.sd_path, dir_name, _PROCESS_CONFIG_FILENAME)
+            config_file = join_path(_HOME_PATH, dir_name, _PROCESS_CONFIG_FILENAME)
             if path_exist(config_file):
                 with open(config_file, "r") as f:
                     config_data = json.load(f)
@@ -562,12 +623,7 @@ class DataHandler:
         """
         if isinstance(data_limit, int) and data_limit > 0:
             cls.data_process_registry[tag_name] = DataProcess(
-                tag_name,
-                data_format,
-                persistent=persistent,
-                data_limit=data_limit,
-                write_interval=write_interval,
-                home_path=cls.sd_path,
+                tag_name, data_format, persistent=persistent, data_limit=data_limit, write_interval=write_interval
             )
         else:
             raise ValueError("Data limit must be a positive integer.")
@@ -673,7 +729,7 @@ class DataHandler:
         Example:
             directories = DataHandler.list_directories()
         """
-        return os.listdir(cls.sd_path)
+        return os.listdir(_HOME_PATH)
 
     # DEBUG ONLY
     @classmethod
@@ -766,8 +822,9 @@ class DataHandler:
         Returns the path of a designated file available for transmission.
         If no file is available, the function returns None.
 
-        The function store the file path to be excluded in clean-up policies.
-        Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list.
+        The function store the file path to be excluded in a separate list.
+        Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list
+        and prepare for deletion.
         """
         try:
             if tag_name in cls.data_process_registry:
@@ -783,8 +840,9 @@ class DataHandler:
         Returns the path of a designated image available for transmission.
         If no file is available, the function returns None.
 
-        The function store the file path to be excluded in clean-up policies.
-        Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list.
+        The function store the file path to be excluded in a separate list.
+        Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list
+        and prepare for deletion.
         """
         try:
             if "img" in cls.data_process_registry:
@@ -817,12 +875,21 @@ class DataHandler:
             cls.data_process_registry[tag_name].clean_up()
 
     @classmethod
+    def check_circular_buffers(cls):
+        """
+        Check the circular buffers for each data process and mark for deletion the oldest files if necessary
+        while taking into account the existing paths that are excluded or already marked for deletion.
+        """
+        for tag_name in cls.data_process_registry:
+            cls.data_process_registry[tag_name].check_circular_buffer()
+
+    @classmethod
     def delete_all_files(cls, path=None):
         if path is None:
-            path = cls.sd_path
+            path = _HOME_PATH
         try:
             for file_name in os.listdir(path):
-                file_path = path + "/" + file_name
+                file_path = join_path(path, file_name)
                 if os.stat(file_path)[0] & 0x8000:  # Check if file is a regular file
                     os.remove(file_path)
                 elif os.stat(file_path)[0] & 0x4000:  # Check if file is a directory
@@ -852,7 +919,7 @@ class DataHandler:
         """
         # TODO Remove recursion, really bad
         if root_path is None:
-            root_path = cls.sd_path
+            root_path = _HOME_PATH
         total_size: int = 0
         for entry in os.listdir(root_path):
             file_path: str = join_path(root_path, entry)
@@ -887,9 +954,9 @@ class DataHandler:
             None
         """
         if path is None:
-            path = cls.sd_path
+            path = _HOME_PATH
         for file in os.listdir(path):
-            stats = os.stat(path + "/" + file)
+            stats = os.stat(join_path(path, file))
             filesize = stats[6]
             isdir = stats[0] & 0x4000
             if filesize < 1000:
@@ -907,7 +974,7 @@ class DataHandler:
             print("{0:<40} Size: {1:>10}".format(printname, sizestr))
             # recursively print directory contents
             if isdir:
-                cls.print_directory(path + "/" + file, tabs + 1)
+                cls.print_directory(join_path(path, file), tabs + 1)
 
 
 def path_exist(path: str) -> bool:

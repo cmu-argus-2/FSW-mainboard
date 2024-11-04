@@ -3,9 +3,9 @@
 import time
 
 from apps.telemetry.constants import EPS_IDX
+from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
-from core.data_handler import DataHandler as DH
 from core.states import STATES
 from hal.configuration import SATELLITE
 
@@ -62,13 +62,18 @@ class Task(TemplateTask):
     ]"""
 
     log_data = [0] * 42
-    data_format = "Lhhb" + "h" * 38  # - use mV for voltage and mA for current  (h = short integer 2 bytes)
-    batt_voltage = 0
-    batt_current = 0
+    data_format = "Lhhb" + "h" * 38  # - use mV for voltage and mA for current (h = short integer 2 bytes)
+    board_voltage = 0
+    board_current = 0
 
     def __init__(self, id):
         super().__init__(id)
         self.name = "EPS"
+
+    def read_vc(self, sensor):
+        # return sensor.read_voltage_current() if sensor is not None else (-1, -1)
+        if sensor is not None:
+            sensor.read_voltage_current()
 
     async def main_task(self):
 
@@ -82,17 +87,19 @@ class Task(TemplateTask):
 
             # Get power system readings
 
-            (self.batt_voltage, self.batt_current) = SATELLITE.BATTERY_POWER_MONITOR.read_voltage_current()
+            (self.board_voltage, self.board_current) = self.read_vc(SATELLITE.BOARD_POWER_MONITOR)
+            (self.jetson_voltage, self.jetson_current) = self.read_vc(SATELLITE.JETSON_POWER_MONITOR)
 
             self.log_data[EPS_IDX.TIME_EPS] = int(time.time())
-            self.log_data[EPS_IDX.MAINBOARD_VOLTAGE] = int(self.batt_voltage * 1000)  # mV - max 8.4V
-            self.log_data[EPS_IDX.MAINBOARD_CURRENT] = int(self.batt_current * 1000)  # mA
-            ## ADDITIONAL EPS DATA HERE ##
-
-            ##
+            self.log_data[EPS_IDX.MAINBOARD_VOLTAGE] = int(self.board_voltage * 1000)  # mV - max 8.4V
+            self.log_data[EPS_IDX.MAINBOARD_CURRENT] = int(self.board_current * 1000)  # mA
+            self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE] = int(self.jetson_voltage * 1000)
+            self.log_data[EPS_IDX.JETSON_INPUT_CURRENT] = int(self.jetson_current * 1000)
 
             DH.log_data("eps", self.log_data)
             self.log_info(
-                f"Battery Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, \
-                Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA"
+                f"Board Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, "
+                + f"Board Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA, "
+                + f"Jetson Voltage: {self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE]} mV, "
+                + f"Jetson Current: {self.log_data[EPS_IDX.JETSON_INPUT_CURRENT]} mA"
             )
