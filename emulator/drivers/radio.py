@@ -64,7 +64,7 @@ class Radio:
             return None
         return self._rx_queue.get().observe()
 
-    def last_rssi(self):
+    def rssi(self, raw=True):
         return self._last_rssi
 
     def frequency_error(self):
