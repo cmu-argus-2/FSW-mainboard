@@ -176,7 +176,13 @@ class SATELLITE_RADIO:
 
     @classmethod
     def file_get_packet(self, sq_cnt):
-        self.file_obj = open(self.filepath, "rb")
+        if self.filepath != "":
+            self.file_obj = open(self.filepath, "rb")
+        else:
+            logger.warning("[COMMS ERROR] Undefined TX filepath")
+            self.file_array = [0x00, 0x00, 0x00, 0x00]
+
+            return 0x00
 
         # Seek to the correct sq_cnt
         if sq_cnt != self.file_message_count - 1:
