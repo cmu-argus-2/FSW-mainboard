@@ -34,6 +34,7 @@ jobs:
           cd simulation  # Move into the submodule directory
           python -m pip install --upgrade pip
           pip install .  # Install the package from within the submodule
+          echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV  # Add current directory to PYTHONPATH
           cd ..  # Go back to the root directory
 
       - name: Set up Python
