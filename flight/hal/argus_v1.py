@@ -163,11 +163,7 @@ class ArgusV1(CubeSat):
         error_list.append(self.__board_power_monitor_boot())
         error_list.append(self.__jetson_power_monitor_boot())
         error_list.append(self.__charger_boot())
-        error_list.append(self.__torque_xp_boot())
-        error_list.append(self.__torque_xm_boot())
-        error_list.append(self.__torque_yp_boot())
-        error_list.append(self.__torque_ym_boot())
-        error_list.append(self.__torque_z_boot())
+        error_list.append(self.__torque_drivers_boot())
         error_list.append(self.__light_sensors_boot())
         error_list.append(self.__radio_boot())
         error_list.append(self.__burn_wire_boot())
@@ -328,140 +324,45 @@ class ArgusV1(CubeSat):
 
         return Errors.NOERROR
 
-    def __torque_xp_boot(self) -> list[int]:
-        """torque_xp_boot: Boot sequence for the torque driver in the x+ direction
+    def __torque_drivers_boot(self) -> list[int]:
+        """Boot sequence for all torque drivers in predefined directions.
 
-        :return: Error code if the torque driver failed to initialize
+        :return: List of error codes for each torque driver in the order of directions
         """
-        try:
-            from hal.drivers.drv8830 import DRV8830
+        directions = {
+            "XP": ArgusV1Components.TORQUE_XP_I2C_ADDRESS,
+            "XM": ArgusV1Components.TORQUE_XM_I2C_ADDRESS,
+            "YP": ArgusV1Components.TORQUE_YP_I2C_ADDRESS,
+            "YM": ArgusV1Components.TORQUE_YM_I2C_ADDRESS,
+            "Z": ArgusV1Components.TORQUE_Z_I2C_ADDRESS,
+        }
 
-            torque_xp = DRV8830(
-                ArgusV1Components.TORQUE_COILS_I2C,
-                ArgusV1Components.TORQUE_XP_I2C_ADDRESS,
-            )
+        from hal.drivers.drv8830 import DRV8830
 
-            if self.__middleware_enabled:
-                torque_xp = Middleware(torque_xp)
+        error_codes = []
 
-            self.__torque_xp_driver = torque_xp
-            self.__device_list.append(torque_xp)
-        except Exception as e:
-            self.__torque_xp_driver = None
-            if self.__debug:
-                raise e
+        for direction, address in directions.items():
+            try:
+                torque_driver = DRV8830(
+                    ArgusV1Components.TORQUE_COILS_I2C,
+                    address,
+                )
 
-            return Errors.DRV8830_NOT_INITIALIZED
+                if self.__middleware_enabled:
+                    torque_driver = Middleware(torque_driver)
 
-        return Errors.NOERROR
+                self.__torque_drivers[direction] = torque_driver
+                self.__device_list.append(torque_driver)
+                error_codes.append(Errors.NOERROR)  # Append success code if no error
 
-    def __torque_xm_boot(self) -> list[int]:
-        """torque_xm_boot: Boot sequence for the torque driver in the x- direction
+            except Exception as e:
+                self.__torque_drivers[direction] = None
+                if self.__debug:
+                    print(f"Failed to initialize {direction} torque driver: {e}")
+                    raise e
+                error_codes.append(Errors.DRV8830_NOT_INITIALIZED)  # Append failure code
 
-        :return: Error code if the torque driver failed to initialize
-        """
-        try:
-            from hal.drivers.drv8830 import DRV8830
-
-            torque_xm = DRV8830(
-                ArgusV1Components.TORQUE_COILS_I2C,
-                ArgusV1Components.TORQUE_XM_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                torque_xm = Middleware(torque_xm)
-
-            self.__torque_xm_driver = torque_xm
-            self.__device_list.append(torque_xm)
-        except Exception as e:
-            self.__torque_xm_driver = None
-            if self.__debug:
-                raise e
-
-            return Errors.DRV8830_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __torque_yp_boot(self) -> list[int]:
-        """torque_yp_boot: Boot sequence for the torque driver in the y+ direction
-
-        :return: Error code if the torque driver failed to initialize
-        """
-        try:
-            from hal.drivers.drv8830 import DRV8830
-
-            torque_yp = DRV8830(
-                ArgusV1Components.TORQUE_COILS_I2C,
-                ArgusV1Components.TORQUE_YP_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                torque_yp = Middleware(torque_yp)
-
-            self.__torque_yp_driver = torque_yp
-            self.__device_list.append(torque_yp)
-        except Exception as e:
-            self.__torque_yp_driver = None
-            if self.__debug:
-                raise e
-
-            return Errors.DRV8830_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __torque_ym_boot(self) -> list[int]:
-        """torque_ym_boot: Boot sequence for the torque driver in the y- direction
-
-        :return: Error code if the torque driver failed to initialize
-        """
-        try:
-            from hal.drivers.drv8830 import DRV8830
-
-            torque_ym = DRV8830(
-                ArgusV1Components.TORQUE_COILS_I2C,
-                ArgusV1Components.TORQUE_YM_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                torque_ym = Middleware(torque_ym)
-
-            self.__torque_ym_driver = torque_ym
-            self.__device_list.append(torque_ym)
-        except Exception as e:
-            self.__torque_ym_driver = None
-            if self.__debug:
-                raise e
-
-            return Errors.DRV8830_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __torque_z_boot(self) -> list[int]:
-        """torque_z_boot: Boot sequence for the torque driver in the z direction
-
-        :return: Error code if the torque driver failed to initialize
-        """
-        try:
-            from hal.drivers.drv8830 import DRV8830
-
-            torque_z = DRV8830(
-                ArgusV1Components.TORQUE_COILS_I2C,
-                ArgusV1Components.TORQUE_Z_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                torque_z = Middleware(torque_z)
-
-            self.__torque_z_driver = torque_z
-            self.__device_list.append(torque_z)
-        except Exception as e:
-            self.__torque_z_driver = None
-            if self.__debug:
-                raise e
-
-            return Errors.DRV8830_NOT_INITIALIZED
-
-        return Errors.NOERROR
+        return error_codes
 
     def __light_sensors_boot(self) -> list[int]:
         """Boot sequence for all light sensors in predefined directions.
@@ -655,6 +556,14 @@ class ArgusV1(CubeSat):
             return Errors.PAYLOAD_UART_NOT_INITIALIZED
 
         return Errors.NOERROR
+
+    ######################## INTERFACES ########################
+    def APPLY_MAGNETIC_CONTROL(self, ctrl) -> None:
+        """CONTROL_COILS: Control the coils on the CubeSat, depending on the control mode (identical for all coils)."""
+        # TODO error handlling
+        for direction, value in ctrl.items():
+            if direction in self.__torque_drivers:
+                self.__torque_drivers[direction].set_throttle_volts(value)
 
     ######################## DIAGNOSTICS ########################
     def __get_device_diagnostic_error(self, device) -> list[int]:  # noqa: C901

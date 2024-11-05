@@ -30,9 +30,7 @@ class CubeSat:
         self._jetson_power_monitor = None
         self._imu = None
         self._charger = None
-        self._torque_x = None
-        self._torque_y = None
-        self._torque_z = None
+        self._torque_drivers = {}
         self._light_sensors = {}
         self._rtc = None
         self._radio = None
@@ -113,25 +111,14 @@ class CubeSat:
         return self._charger
 
     @property
-    def TORQUE_X(self):
-        """TORQUE_X: Returns the torque driver in the x direction
-        :return: object or None
-        """
-        return self._torque_x
+    def TORQUE_DRIVERS(self):
+        """Returns a dictionary of torque drivers with the direction as the key (e.g. 'XP', 'XM', 'YP', 'YM', 'ZM')"""
+        return self._torque_drivers
 
-    @property
-    def TORQUE_Y(self):
-        """TORQUE_Y: Returns the torque driver in the y direction
-        :return: object or None
-        """
-        return self._torque_y
-
-    @property
-    def TORQUE_Z(self):
-        """TORQUE_Z: Returns the torque driver in the z direction
-        :return: object or None
-        """
-        return self._torque_z
+    # ABSTRACT METHOD #
+    def APPLY_MAGNETIC_CONTROL(self, ctrl) -> None:
+        """CONTROL_COILS: Control the coils on the CubeSat, depending on the control mode (identiical for all coils)."""
+        raise NotImplementedError("CubeSats must implement the control coils method")
 
     @property
     def LIGHT_SENSORS(self):

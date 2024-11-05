@@ -13,6 +13,7 @@ from hal.drivers.radio import Radio
 from hal.drivers.rtc import RTC
 from hal.drivers.sd import SD
 from hal.drivers.sun_sensor import LightSensorArray
+from hal.drivers.torque_coil import TorqueCoilArray
 
 
 class device:
@@ -60,9 +61,7 @@ class EmulatedSatellite(CubeSat):
 
         self._light_sensors = LightSensorArray(simulator=self.__simulated_spacecraft)
 
-        self._torque_x = None
-        self._torque_y = None
-        self._torque_z = None
+        self._torque_drivers = TorqueCoilArray(simulator=self.__simulated_spacecraft)
 
         self._imu = self.init_device(IMU(simulator=self.__simulated_spacecraft))
         self._imu.enable()
@@ -82,3 +81,9 @@ class EmulatedSatellite(CubeSat):
 
     def run_system_diagnostics(self) -> Optional[List[int]]:
         pass
+
+    ######################## INTERFACES ########################
+    def APPLY_MAGNETIC_CONTROL(self, ctrl) -> None:
+        """CONTROL_COILS: Control the coils on the CubeSat, depending on the control mode (identical for all coils)."""
+        # TODO error handlling
+        self._torque_drivers.apply_control(ctrl)

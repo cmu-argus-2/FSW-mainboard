@@ -1,6 +1,7 @@
 import time
 from datetime import datetime, timedelta
 
+import numpy as np
 from argusloop.magnetorquer import Magnetorquer
 from argusloop.sensors import GPS, Gyroscope, Magnetometer, SunVector
 from argusloop.spacecraft import Spacecraft
@@ -32,7 +33,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
         self.base_dt = config["dt"]
 
         self.spacecraft = Spacecraft(config)
-        self.last_ctrl = []
+        self._last_sim_ctrl = np.zeros(3)
 
         # Need to init all simulated hardware
 
@@ -40,15 +41,14 @@ class Simulator:  # will be passed by reference to the emulated HAL
         self._gyroscope = Gyroscope(0.01, 0.2, 0.5)
         self._sun_vec = SunVector(0.1, 0.0)
         self._gps = GPS(10, 0.1)  # TODO rest of frame in argusloop
-        self._torquer = Magnetorquer()
-
-        print("Gyroscope: ", self._gyroscope.measure(self.spacecraft))
-        print("Magnetometer: ", self._magnetometer.measure(self.spacecraft))
-        print("Measured Lux: ", self._sun_vec.measure_lux(self.spacecraft))
-        print("Measured Sun Vector: ", self._sun_vec.measure(self.spacecraft))
-        print("GPS (ECEF): ", self._gps.measure(self.spacecraft))
-        print("Dipole Moment (voltage): ", self._torquer.set_dipole_moment_voltage(4))
-        print("Dipole Moment (current): ", self._torquer.set_dipole_moment_current(0.32))
+        self._torquers = {
+            "XP": Magnetorquer(),
+            "XM": Magnetorquer(),
+            "YP": Magnetorquer(),
+            "YM": Magnetorquer(),
+            "ZM": Magnetorquer(),
+            "ZP": Magnetorquer(),
+        }
 
     def gyro(self):
         self.advance_to_time()
@@ -70,6 +70,13 @@ class Simulator:  # will be passed by reference to the emulated HAL
         self.advance_to_time()
         return self._gps.measure(self.spacecraft)
 
+    def set_coil_throttle(self, direction, throttle_volts):
+        return self._torquers[direction].set_dipole_moment_voltage(throttle_volts)
+
+    def set_torque_to_spacecraft(self, dipole_moment):
+        self.advance_to_time()
+        self._last_sim_ctrl = self.spacecraft.compute_torque(dipole_moment)
+
     def get_time_diff_since_last(self):
         self.latest_real_epoch = self.starting_real_epoch
         self.starting_real_epoch = datetime.fromtimestamp(time.time())
@@ -81,7 +88,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
         iters = int(time_diff.total_seconds() / self.base_dt)
         # print(f"Advancing {iters} iterations")
         for _ in range(iters):
-            self.spacecraft.advance([0.0, 0.0, 0.0])
+            self.spacecraft.advance(self._last_sim_ctrl)
         self.sim_time += timedelta(seconds=(iters * self.base_dt))
 
     def checkout_ctrl(self):

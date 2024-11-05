@@ -17,6 +17,7 @@ from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
+from hal.configuration import SATELLITE
 from ulab import numpy as np
 
 
@@ -104,7 +105,6 @@ class Task(TemplateTask):
 
             #  Must return the array directly
             lux_readings = read_light_sensors()  # lux
-            print(lux_readings)
             self.sun_status, self.sun_vector = compute_body_sun_vector_from_lux(lux_readings)  # use full lux for sun vector
             self.eclipse_state = in_eclipse(
                 lux_readings,
@@ -116,7 +116,6 @@ class Task(TemplateTask):
             self.log_data[ADCS_IDX.SUN_VEC_Y] = self.sun_vector[1]
             self.log_data[ADCS_IDX.SUN_VEC_Z] = self.sun_vector[2]
             self.log_data[ADCS_IDX.ECLIPSE] = self.eclipse_state
-            print(self.eclipse_state)
             # Log dlux (decilux) instead of lux for TM space efficiency
             self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = int(lux_readings[0] / 10)
             self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = int(lux_readings[1] / 10)
@@ -126,8 +125,10 @@ class Task(TemplateTask):
             # Pyramid TBD
 
             ## Magnetic Control
-
+            # TODO controllers
             # TODO
+            # This is what should be called in the ADCS library in MCM
+            # SATELLITE.APPLY_MAGNETIC_CONTROL({"XP": 5.0, "XM": 5.1, "YP": 4.8, "YM": 5.0, "ZP": 4.1, "ZM": 4.1})
 
             ## Attitude Determination
 
