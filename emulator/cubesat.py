@@ -33,11 +33,7 @@ class CubeSat:
         self._torque_x = None
         self._torque_y = None
         self._torque_z = None
-        self._light_sensor_xp = None
-        self._light_sensor_xm = None
-        self._light_sensor_yp = None
-        self._light_sensor_ym = None
-        self._light_sensor_zm = None
+        self._light_sensors = {}
         self._rtc = None
         self._radio = None
         self._sd_card = None
@@ -138,39 +134,9 @@ class CubeSat:
         return self._torque_z
 
     @property
-    def LIGHT_SENSOR_XP(self):
-        """LIGHT_SENSOR_XP: Returns the light sensor in the x+ direction
-        :return: object or None
-        """
-        return self._light_sensor_xp
-
-    @property
-    def LIGHT_SENSOR_XM(self):
-        """LIGHT_SENSOR_XM: Returns the light sensor in the x- direction
-        :return: object or None
-        """
-        return self._light_sensor_xm
-
-    @property
-    def LIGHT_SENSOR_YP(self):
-        """LIGHT_SENSOR_YP: Returns the light sensor in the y+ direction
-        :return: object or None
-        """
-        return self._light_sensor_yp
-
-    @property
-    def LIGHT_SENSOR_YM(self):
-        """LIGHT_SENSOR_YM: Returns the light sensor in the y- direction
-        :return: object or None
-        """
-        return self._light_sensor_ym
-
-    @property
-    def LIGHT_SENSOR_ZM(self):
-        """LIGHT_SENSOR_ZM: Returns the light sensor in the z- direction
-        :return: object or None
-        """
-        return self._light_sensor_zm
+    def LIGHT_SENSORS(self):
+        """Returns a dictionary of light sensors with the direction as the key (e.g. 'XP', 'XM', 'YP', 'YM', 'ZM')"""
+        return self._light_sensors
 
     @property
     def RTC(self):

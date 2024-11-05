@@ -9,23 +9,26 @@ from argusloop.spacecraft import Spacecraft
 class Simulator:  # will be passed by reference to the emulated HAL
     def __init__(self):
 
-        # self.read_configuration("nothing_for_now")
+        # TODO self.read_configuration("nothing_for_now")
 
         config = {
             "mass": 1.5,
             "inertia": [10, 20, 10, 0.0, 0.0, 0.0],
-            "epoch": datetime.now(),
+            "epoch": datetime(2024, 6, 1, 12, 0, 0, 0),
             "dt": 0.01,
             "initial_attitude": [1.0, 0, 0, 0, 0.1, -0.2, 0.3],
-            "initial_orbit_oe": [6.92e6, 0.001, 0.001, 0, 0, 0],
-            "gravity_order": 10,
-            "gravity_degree": 10,
+            "initial_orbit_oe": [6.92e6, 0, 0, 0, 0, 0],
+            "gravity_order": 5,
+            "gravity_degree": 5,
             "drag": True,
             "third_body": True,
         }
         print(f"Here is the current satellite configuration:\n{config}")
 
-        self.time = config["epoch"]
+        self.starting_sim_epoch = config["epoch"]
+        self.starting_real_epoch = datetime.fromtimestamp(time.time())
+        self.latest_real_epoch = self.starting_real_epoch
+        self.sim_time = config["epoch"]
         self.base_dt = config["dt"]
 
         self.spacecraft = Spacecraft(config)
@@ -59,18 +62,27 @@ class Simulator:  # will be passed by reference to the emulated HAL
         self.advance_to_time()
         return self._sun_vec.measure(self.spacecraft)
 
+    def sun_lux(self):
+        self.advance_to_time()
+        return self._sun_vec.measure_lux(self.spacecraft)
+
     def gps(self):
         self.advance_to_time()
         return self._gps.measure(self.spacecraft)
 
+    def get_time_diff_since_last(self):
+        self.latest_real_epoch = self.starting_real_epoch
+        self.starting_real_epoch = datetime.fromtimestamp(time.time())
+        return self.starting_real_epoch - self.latest_real_epoch
+
     def advance_to_time(self):
-        time_diff = datetime.fromtimestamp(time.time()) - self.time
+        time_diff = self.get_time_diff_since_last()
         # TODO Handle granularity
         iters = int(time_diff.total_seconds() / self.base_dt)
         # print(f"Advancing {iters} iterations")
         for _ in range(iters):
             self.spacecraft.advance([0.0, 0.0, 0.0])
-        self.time += timedelta(seconds=(iters * self.base_dt))
+        self.sim_time += timedelta(seconds=(iters * self.base_dt))
 
     def checkout_ctrl(self):
         pass
@@ -98,6 +110,8 @@ if __name__ == "__main__":
     for _ in range(1000):
         sim.advance_to_time()
         time.sleep(0.08)
+        print(sim.sun_lux())
+        print(sim.sim_time)
 
     # sim.advance_to_time()
-    print(sim.time)
+    print(sim.sim_time)

@@ -168,11 +168,7 @@ class ArgusV1(CubeSat):
         error_list.append(self.__torque_yp_boot())
         error_list.append(self.__torque_ym_boot())
         error_list.append(self.__torque_z_boot())
-        error_list.append(self.__light_sensor_xp_boot())
-        error_list.append(self.__light_sensor_xm_boot())
-        error_list.append(self.__light_sensor_yp_boot())
-        error_list.append(self.__light_sensor_ym_boot())
-        error_list.append(self.__light_sensor_zm_boot())
+        error_list.append(self.__light_sensors_boot())
         error_list.append(self.__radio_boot())
         error_list.append(self.__burn_wire_boot())
         error_list.append(self.__payload_uart_boot())
@@ -467,145 +463,46 @@ class ArgusV1(CubeSat):
 
         return Errors.NOERROR
 
-    def __light_sensor_xp_boot(self) -> list[int]:
-        """light_sensor_xp_boot: Boot sequence for the light sensor in the x+ direction
+    def __light_sensors_boot(self) -> list[int]:
+        """Boot sequence for all light sensors in predefined directions.
 
-        :return: Error code if the light sensor failed to initialize
+        :return: List of error codes for each sensor in the order of directions
         """
-        try:
-            from hal.drivers.opt4001 import OPT4001
+        directions = {
+            "XP": ArgusV1Components.LIGHT_SENSOR_XP_I2C_ADDRESS,
+            "XM": ArgusV1Components.LIGHT_SENSOR_XM_I2C_ADDRESS,
+            "YP": ArgusV1Components.LIGHT_SENSOR_YP_I2C_ADDRESS,
+            "YM": ArgusV1Components.LIGHT_SENSOR_YM_I2C_ADDRESS,
+            "ZM": ArgusV1Components.LIGHT_SENSOR_ZM_I2C_ADDRESS,
+        }
 
-            light_sensor_xp = OPT4001(
-                ArgusV1Components.LIGHT_SENSORS_I2C,
-                ArgusV1Components.LIGHT_SENSOR_XP_I2C_ADDRESS,
-                conversion_time=ArgusV1Components.LIGHT_SENSOR_CONVERSION_TIME,
-            )
+        from hal.drivers.opt4001 import OPT4001
 
-            if self.__middleware_enabled:
-                light_sensor_xp = Middleware(light_sensor_xp)
+        error_codes = []  # List to store error codes per sensor
 
-            self.__light_sensor_xp = light_sensor_xp
-            self.__device_list.append(light_sensor_xp)
-        except Exception as e:
-            self.__light_sensor_xp = None
-            if self.__debug:
-                raise e
+        for direction, address in directions.items():
+            try:
+                light_sensor = OPT4001(
+                    ArgusV1Components.LIGHT_SENSORS_I2C,
+                    address,
+                    conversion_time=ArgusV1Components.LIGHT_SENSOR_CONVERSION_TIME,
+                )
 
-            return Errors.OPT4001_NOT_INITIALIZED
+                if self.__middleware_enabled:
+                    light_sensor = Middleware(light_sensor)
 
-        return Errors.NOERROR
+                self.__light_sensors[direction] = light_sensor
+                self.__device_list.append(light_sensor)
+                error_codes.append(Errors.NOERROR)  # Append success code if no error
 
-    def __light_sensor_xm_boot(self) -> list[int]:
-        """light_sensor_xm_boot: Boot sequence for the light sensor in the x- direction
+            except Exception as e:
+                self.__light_sensors[direction] = None
+                if self.__debug:
+                    print(f"Failed to initialize {direction} light sensor: {e}")
+                    raise e
+                error_codes.append(Errors.OPT4001_NOT_INITIALIZED)  # Append failure code
 
-        :return: Error code if the light sensor failed to initialize
-        """
-        try:
-            from hal.drivers.opt4001 import OPT4001
-
-            light_sensor_xm = OPT4001(
-                ArgusV1Components.LIGHT_SENSORS_I2C,
-                ArgusV1Components.LIGHT_SENSOR_XM_I2C_ADDRESS,
-                conversion_time=ArgusV1Components.LIGHT_SENSOR_CONVERSION_TIME,
-            )
-
-            if self.__middleware_enabled:
-                light_sensor_xm = Middleware(light_sensor_xm)
-
-            self.__light_sensor_xm = light_sensor_xm
-            self.__device_list.append(light_sensor_xm)
-        except Exception as e:
-            self.__light_sensor_xm = None
-            if self.__debug:
-                raise e
-
-            return Errors.OPT4001_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __light_sensor_yp_boot(self) -> list[int]:
-        """light_sensor_yp_boot: Boot sequence for the light sensor in the y+ direction
-
-        :return: Error code if the light sensor failed to initialize
-        """
-        try:
-            from hal.drivers.opt4001 import OPT4001
-
-            light_sensor_yp = OPT4001(
-                ArgusV1Components.LIGHT_SENSORS_I2C,
-                ArgusV1Components.LIGHT_SENSOR_YP_I2C_ADDRESS,
-                conversion_time=ArgusV1Components.LIGHT_SENSOR_CONVERSION_TIME,
-            )
-
-            if self.__middleware_enabled:
-                light_sensor_yp = Middleware(light_sensor_yp)
-
-            self.__light_sensor_yp = light_sensor_yp
-            self.__device_list.append(light_sensor_yp)
-        except Exception as e:
-            self.__light_sensor_yp = None
-            if self.__debug:
-                raise e
-
-            return Errors.OPT4001_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __light_sensor_ym_boot(self) -> list[int]:
-        """light_sensor_ym_boot: Boot sequence for the light sensor in the y- direction
-
-        :return: Error code if the light sensor failed to initialize
-        """
-        try:
-            from hal.drivers.opt4001 import OPT4001
-
-            light_sensor_ym = OPT4001(
-                ArgusV1Components.LIGHT_SENSORS_I2C,
-                ArgusV1Components.LIGHT_SENSOR_YM_I2C_ADDRESS,
-                conversion_time=ArgusV1Components.LIGHT_SENSOR_CONVERSION_TIME,
-            )
-
-            if self.__middleware_enabled:
-                light_sensor_ym = Middleware(light_sensor_ym)
-
-            self.__light_sensor_ym = light_sensor_ym
-            self.__device_list.append(light_sensor_ym)
-        except Exception as e:
-            self.__light_sensor_ym = None
-            if self.__debug:
-                raise e
-
-            return Errors.OPT4001_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __light_sensor_zm_boot(self) -> list[int]:
-        """light_sensor_zm_boot: Boot sequence for the light sensor in the z+ direction
-
-        :return: Error code if the light sensor failed to initialize
-        """
-        try:
-            from hal.drivers.opt4001 import OPT4001
-
-            light_sensor_zm = OPT4001(
-                ArgusV1Components.LIGHT_SENSORS_I2C,
-                ArgusV1Components.LIGHT_SENSOR_ZM_I2C_ADDRESS,
-                conversion_time=ArgusV1Components.LIGHT_SENSOR_CONVERSION_TIME,
-            )
-
-            if self.__middleware_enabled:
-                light_sensor_zm = Middleware(light_sensor_zm)
-
-            self.__light_sensor_zm = light_sensor_zm
-            self.__device_list.append(light_sensor_zm)
-        except Exception as e:
-            self.__light_sensor_zm = None
-            if self.__debug:
-                raise e
-
-            return Errors.OPT4001_NOT_INITIALIZED
-
-        return Errors.NOERROR
+        return error_codes
 
     def __radio_boot(self) -> list[int]:
         """radio_boot: Boot sequence for the radio

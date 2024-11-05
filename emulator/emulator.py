@@ -5,7 +5,6 @@ from hal.cubesat import CubeSat
 from hal.drivers.burnwire import BurnWires
 from hal.drivers.gps import GPS
 from hal.drivers.imu import IMU
-from hal.drivers.light_sensor import LightSensor
 from hal.drivers.middleware.generic_driver import Driver
 from hal.drivers.middleware.middleware import Middleware
 from hal.drivers.payload import Payload
@@ -13,6 +12,7 @@ from hal.drivers.power_monitor import PowerMonitor
 from hal.drivers.radio import Radio
 from hal.drivers.rtc import RTC
 from hal.drivers.sd import SD
+from hal.drivers.sun_sensor import LightSensorArray
 
 
 class device:
@@ -58,11 +58,7 @@ class EmulatedSatellite(CubeSat):
         self._gps = self.init_device(GPS(simulator=self.__simulated_spacecraft))
         self._charger = None
 
-        self._light_sensor_xp = self.init_device(LightSensor(900))
-        self._light_sensor_xm = self.init_device(LightSensor(48000))
-        self._light_sensor_yp = self.init_device(LightSensor(85000))
-        self._light_sensor_ym = self.init_device(LightSensor(200))
-        self._light_sensor_zm = self.init_device(LightSensor(12000))
+        self._light_sensors = LightSensorArray(simulator=self.__simulated_spacecraft)
 
         self._torque_x = None
         self._torque_y = None
