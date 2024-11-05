@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from hal.cubesat import CubeSat
 from hal.drivers.burnwire import BurnWires
+from hal.drivers.gps import GPS
 from hal.drivers.imu import IMU
 from hal.drivers.light_sensor import LightSensor
 from hal.drivers.middleware.generic_driver import Driver
@@ -54,7 +55,7 @@ class EmulatedSatellite(CubeSat):
         self._payload_uart = self.init_device(Payload())
 
         self._vfs = None
-        self._gps = None
+        self._gps = self.init_device(GPS(simulator=self.__simulated_spacecraft))
         self._charger = None
 
         self._light_sensor_xp = self.init_device(LightSensor(900))

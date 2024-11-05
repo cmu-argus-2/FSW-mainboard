@@ -17,7 +17,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
             "epoch": datetime.now(),
             "dt": 0.01,
             "initial_attitude": [1.0, 0, 0, 0, 0.1, -0.2, 0.3],
-            "initial_orbit_oe": [6.92e6, 0, 0, 0, 0, 0],
+            "initial_orbit_oe": [6.92e6, 0.001, 0.001, 0, 0, 0],
             "gravity_order": 10,
             "gravity_degree": 10,
             "drag": True,
@@ -36,7 +36,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
         self._magnetometer = Magnetometer(2.0)
         self._gyroscope = Gyroscope(0.01, 0.2, 0.5)
         self._sun_vec = SunVector(0.1, 0.0)
-        self._gps = GPS(10, 0.1)
+        self._gps = GPS(10, 0.1)  # TODO rest of frame in argusloop
         self._torquer = Magnetorquer()
 
         print("Gyroscope: ", self._gyroscope.measure(self.spacecraft))
