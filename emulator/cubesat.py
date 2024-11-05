@@ -26,8 +26,8 @@ class CubeSat:
 
         # Devices
         self._gps = None
-        self._battery_monitor = None
-        self._jetson_monitor = None
+        self._board_power_monitor = None
+        self._jetson_power_monitor = None
         self._imu = None
         self._charger = None
         self._torque_x = None
@@ -89,18 +89,18 @@ class CubeSat:
         return self._gps
 
     @property
-    def BATTERY_POWER_MONITOR(self):
-        """BATTERY_POWER_MONITOR: Returns the battery power monitor object
+    def BOARD_POWER_MONITOR(self):
+        """BOARD_POWER_MONITOR: Returns the board power monitor object
         :return: object or None
         """
-        return self._battery_monitor
+        return self._board_power_monitor
 
     @property
     def JETSON_POWER_MONITOR(self):
         """JETSON_MONITOR: Returns the Jetson monitor object
         :return: object or None
         """
-        return self._jetson_monitor
+        return self._jetson_power_monitor
 
     @property
     def IMU(self):

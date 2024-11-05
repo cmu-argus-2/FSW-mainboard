@@ -1,13 +1,22 @@
+import os
+
 from core import DataHandler as DH
 from hal.cubesat import CubeSat
-from hal.emulator import satellite
+from hal.emulator import EmulatedSatellite
+from hal.simulator import Simulator
 
 DH.sd_path = "sd"
 
 # Enable for Middleware
 DEBUG_MODE = True
 EN_MIDDLEWARE = True
-SOCKET_RADIO = True
+SIMULATION = bool(int(os.getenv("ARGUS_SIMULATION_FLAG", 0)))
+SOCKET_RADIO = False
 
-SATELLITE: CubeSat = None
-SATELLITE = satellite(enable_middleware=EN_MIDDLEWARE, debug=DEBUG_MODE, use_socket=SOCKET_RADIO)
+SimulatedSpacecraft: Simulator = None
+if SIMULATION:
+    SimulatedSpacecraft = Simulator()
+
+SATELLITE: CubeSat = EmulatedSatellite(
+    enable_middleware=EN_MIDDLEWARE, debug=DEBUG_MODE, simulator=SimulatedSpacecraft, use_socket=SOCKET_RADIO
+)

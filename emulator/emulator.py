@@ -12,7 +12,6 @@ from hal.drivers.power_monitor import PowerMonitor
 from hal.drivers.radio import Radio
 from hal.drivers.rtc import RTC
 from hal.drivers.sd import SD
-from numpy import array
 
 
 class device:
@@ -40,11 +39,12 @@ class device:
             return self._device
 
 
-class satellite(CubeSat):
-    def __init__(self, enable_middleware, debug, use_socket) -> None:
+class EmulatedSatellite(CubeSat):
+    def __init__(self, enable_middleware: bool, debug: bool, simulator, use_socket) -> None:
         self.__middleware_enabled = enable_middleware
         self.__debug = debug
         self.__use_socket = use_socket
+        self.__simulated_spacecraft = simulator
 
         super().__init__()
 
@@ -67,14 +67,11 @@ class satellite(CubeSat):
         self._torque_y = None
         self._torque_z = None
 
-        accel = array([1.0, 2.0, 3.0])
-        mag = array([4.0, 3.0, 1.0])
-        gyro = array([0.0, 0.0, 0.0])
-        self._imu = self.init_device(IMU(accel=accel, mag=mag, gyro=gyro, temp=20))
+        self._imu = self.init_device(IMU(simulator=self.__simulated_spacecraft))
         self._imu.enable()
 
-        self._jetson_monitor = self.init_device(PowerMonitor(4, 0.05))
-        self._battery_monitor = self.init_device(PowerMonitor(7.6, 0.1))
+        self._jetson_power_monitor = self.init_device(PowerMonitor(4, 0.05))
+        self._board_power_monitor = self.init_device(PowerMonitor(7.6, 0.1))
 
         self._rtc = self.init_device(RTC(time.gmtime()))
 
