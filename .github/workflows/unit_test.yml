@@ -23,7 +23,19 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: 'recursive'
-          
+
+      - name: Update submodules to latest commit
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --recursive --remote
+
+      - name: Install submodule dependencies
+        run: |
+          cd simulation  # Move into the submodule directory
+          python -m pip install --upgrade pip
+          pip install .  # Install the package from within the submodule
+          cd ..  # Go back to the root directory
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:

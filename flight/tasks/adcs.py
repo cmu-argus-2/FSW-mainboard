@@ -17,7 +17,6 @@ from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
-from hal.configuration import SATELLITE
 from ulab import numpy as np
 
 
@@ -127,8 +126,7 @@ class Task(TemplateTask):
             ## Magnetic Control
             # TODO controllers
             # TODO
-            # This is what should be called in the ADCS library in MCM
-            # SATELLITE.APPLY_MAGNETIC_CONTROL({"XP": 5.0, "XM": 5.1, "YP": 4.8, "YM": 5.0, "ZP": 4.1, "ZM": 4.1})
+            # see apps/adcs/mcm.py
 
             ## Attitude Determination
 

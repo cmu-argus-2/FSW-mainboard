@@ -1,6 +1,3 @@
-import datetime
-import time
-
 from hal.drivers.middleware.generic_driver import Driver
 from numpy import array
 
