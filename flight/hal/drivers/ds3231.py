@@ -46,16 +46,14 @@ Implementation Notes
 
 """
 from adafruit_bus_device.i2c_device import I2CDevice
-from adafruit_register import i2c_bit
-from adafruit_register import i2c_bits
-from adafruit_register import i2c_bcd_alarm
-from adafruit_register import i2c_bcd_datetime
+from adafruit_register import i2c_bcd_alarm, i2c_bcd_datetime, i2c_bit, i2c_bits
 
 try:
     # Used only for typing
     import typing  # pylint: disable=unused-import
-    from busio import I2C
     from time import struct_time
+
+    from busio import I2C
 except ImportError:
     pass
 
