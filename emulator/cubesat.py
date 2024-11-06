@@ -26,18 +26,12 @@ class CubeSat:
 
         # Devices
         self._gps = None
-        self._battery_monitor = None
-        self._jetson_monitor = None
+        self._board_power_monitor = None
+        self._jetson_power_monitor = None
         self._imu = None
         self._charger = None
-        self._torque_x = None
-        self._torque_y = None
-        self._torque_z = None
-        self._light_sensor_xp = None
-        self._light_sensor_xm = None
-        self._light_sensor_yp = None
-        self._light_sensor_ym = None
-        self._light_sensor_zm = None
+        self._torque_drivers = {}
+        self._light_sensors = {}
         self._rtc = None
         self._radio = None
         self._sd_card = None
@@ -89,18 +83,18 @@ class CubeSat:
         return self._gps
 
     @property
-    def BATTERY_POWER_MONITOR(self):
-        """BATTERY_POWER_MONITOR: Returns the battery power monitor object
+    def BOARD_POWER_MONITOR(self):
+        """BOARD_POWER_MONITOR: Returns the board power monitor object
         :return: object or None
         """
-        return self._battery_monitor
+        return self._board_power_monitor
 
     @property
     def JETSON_POWER_MONITOR(self):
         """JETSON_MONITOR: Returns the Jetson monitor object
         :return: object or None
         """
-        return self._jetson_monitor
+        return self._jetson_power_monitor
 
     @property
     def IMU(self):
@@ -117,60 +111,19 @@ class CubeSat:
         return self._charger
 
     @property
-    def TORQUE_X(self):
-        """TORQUE_X: Returns the torque driver in the x direction
-        :return: object or None
-        """
-        return self._torque_x
+    def TORQUE_DRIVERS(self):
+        """Returns a dictionary of torque drivers with the direction as the key (e.g. 'XP', 'XM', 'YP', 'YM', 'ZM')"""
+        return self._torque_drivers
+
+    # ABSTRACT METHOD #
+    def APPLY_MAGNETIC_CONTROL(self, ctrl) -> None:
+        """CONTROL_COILS: Control the coils on the CubeSat, depending on the control mode (identiical for all coils)."""
+        raise NotImplementedError("CubeSats must implement the control coils method")
 
     @property
-    def TORQUE_Y(self):
-        """TORQUE_Y: Returns the torque driver in the y direction
-        :return: object or None
-        """
-        return self._torque_y
-
-    @property
-    def TORQUE_Z(self):
-        """TORQUE_Z: Returns the torque driver in the z direction
-        :return: object or None
-        """
-        return self._torque_z
-
-    @property
-    def LIGHT_SENSOR_XP(self):
-        """LIGHT_SENSOR_XP: Returns the light sensor in the x+ direction
-        :return: object or None
-        """
-        return self._light_sensor_xp
-
-    @property
-    def LIGHT_SENSOR_XM(self):
-        """LIGHT_SENSOR_XM: Returns the light sensor in the x- direction
-        :return: object or None
-        """
-        return self._light_sensor_xm
-
-    @property
-    def LIGHT_SENSOR_YP(self):
-        """LIGHT_SENSOR_YP: Returns the light sensor in the y+ direction
-        :return: object or None
-        """
-        return self._light_sensor_yp
-
-    @property
-    def LIGHT_SENSOR_YM(self):
-        """LIGHT_SENSOR_YM: Returns the light sensor in the y- direction
-        :return: object or None
-        """
-        return self._light_sensor_ym
-
-    @property
-    def LIGHT_SENSOR_ZM(self):
-        """LIGHT_SENSOR_ZM: Returns the light sensor in the z- direction
-        :return: object or None
-        """
-        return self._light_sensor_zm
+    def LIGHT_SENSORS(self):
+        """Returns a dictionary of light sensors with the direction as the key (e.g. 'XP', 'XM', 'YP', 'YM', 'ZM')"""
+        return self._light_sensors
 
     @property
     def RTC(self):

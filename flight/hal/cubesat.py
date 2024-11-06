@@ -24,11 +24,7 @@ class CubeSat:
         "__torque_x",
         "__torque_y",
         "__torque_z",
-        "__light_sensor_xp",
-        "__light_sensor_xm",
-        "__light_sensor_yp",
-        "__light_sensor_ym",
-        "__light_sensor_zm",
+        "__light_sensors",
         "__rtc",
         "__radio",
         "__sd_card",
@@ -60,28 +56,21 @@ class CubeSat:
         self.__charger = None
         self.__imu = None
         self.__jetson_monitor = None
-        self.__torque_x = None
+        self.__light_sensors = {}
+        self.__torque_drivers = {}
         self.__torque_xp_power_monitor = None
         self.__torque_xm_power_monitor = None
         self.__solar_xp_power_monitor = None
         self.__solar_xm_power_monitor = None
-        self.__light_sensor_xp = None
-        self.__light_sensor_xm = None
         self.__fuel_gauge = None
-        self.__torque_y = None
         self.__torque_yp_power_monitor = None
         self.__torque_ym_power_monitor = None
         self.__solar_yp_power_monitor = None
         self.__solar_ym_power_monitor = None
-        self.__light_sensor_yp = None
-        self.__light_sensor_ym = None
         self.__rtc = None
-        self.__torque_z = None
         self.__torque_zp_power_monitor = None
         self.__torque_zm_power_monitor = None
         self.__solar_zp_power_monitor = None
-        self.__light_sensor_zm = None
-        # sun sensor here
         self.__gps = None
         self.__radio = None
         self.__sd_card = None
@@ -188,13 +177,6 @@ class CubeSat:
         return self.__charger
 
     @property
-    def TORQUE_X(self):
-        """TORQUE_X: Returns the torque driver in the x direction
-        :return: object or None
-        """
-        return self.__torque_x
-
-    @property
     def TORQUE_XP_POWER_MONITOR(self):
         """TORQUE_XP: Returns the torque driver in the x+ direction
         :return: object or None
@@ -202,53 +184,19 @@ class CubeSat:
         return self.__torque_xp_power_monitor
 
     @property
-    def TORQUE_Y(self):
-        """TORQUE_Y: Returns the torque driver in the y direction
-        :return: object or None
-        """
-        return self.__torque_y
+    def TORQUE_DRIVERS(self):
+        """Returns a dictionary of torque drivers with the direction as the key (e.g. 'XP', 'XM', 'YP', 'YM', 'ZM')"""
+        return self.__torque_drivers
+
+    # ABSTRACT METHOD #
+    def APPLY_MAGNETIC_CONTROL(self) -> None:
+        """CONTROL_COILS: Control the coils on the CubeSat, depending on the control mode (identiical for all coils)."""
+        raise NotImplementedError("CubeSats must implement the control coils method")
 
     @property
-    def TORQUE_Z(self):
-        """TORQUE_Z: Returns the torque driver in the z direction
-        :return: object or None
-        """
-        return self.__torque_z
-
-    @property
-    def LIGHT_SENSOR_XP(self):
-        """LIGHT_SENSOR_XP: Returns the light sensor in the x+ direction
-        :return: object or None
-        """
-        return self.__light_sensor_xp
-
-    @property
-    def LIGHT_SENSOR_XM(self):
-        """LIGHT_SENSOR_XM: Returns the light sensor in the x- direction
-        :return: object or None
-        """
-        return self.__light_sensor_xm
-
-    @property
-    def LIGHT_SENSOR_YP(self):
-        """LIGHT_SENSOR_YP: Returns the light sensor in the y+ direction
-        :return: object or None
-        """
-        return self.__light_sensor_yp
-
-    @property
-    def LIGHT_SENSOR_YM(self):
-        """LIGHT_SENSOR_YM: Returns the light sensor in the y- direction
-        :return: object or None
-        """
-        return self.__light_sensor_ym
-
-    @property
-    def LIGHT_SENSOR_ZM(self):
-        """LIGHT_SENSOR_ZM: Returns the light sensor in the z+ direction
-        :return: object or None
-        """
-        return self.__light_sensor_zm
+    def LIGHT_SENSORS(self):
+        """Returns a dictionary of light sensors with the direction as the key (e.g. 'XP', 'XM', 'YP', 'YM', 'ZM')"""
+        return self.__light_sensors
 
     @property
     def RTC(self):

@@ -16,8 +16,6 @@ def print_memory_stats(call_gc=True):
     print(f"Memory free: {int((gc.mem_alloc() / (gc.mem_alloc() + gc.mem_free())) * 100)}%")
 
 
-print_memory_stats(call_gc=True)
-
 for path in ["/hal", "/apps", "/core"]:
     if path not in sys.path:
         sys.path.append(path)
@@ -35,9 +33,6 @@ print(f"Boot Errors: {boot_errors}")
 print("Waiting 1 sec...")
 time.sleep(1)
 
-
-print_memory_stats(call_gc=True)
-# time.sleep(5000)
 
 """print("Running system diagnostics...")
 errors = SATELLITE.run_system_diagnostics()

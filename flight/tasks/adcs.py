@@ -124,8 +124,9 @@ class Task(TemplateTask):
             # Pyramid TBD
 
             ## Magnetic Control
-
+            # TODO controllers
             # TODO
+            # see apps/adcs/mcm.py
 
             ## Attitude Determination
 

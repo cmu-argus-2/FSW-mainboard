@@ -73,7 +73,7 @@ class Task(TemplateTask):
     def read_vc(self, sensor):
         # return sensor.read_voltage_current() if sensor is not None else (-1, -1)
         if sensor is not None:
-            sensor.read_voltage_current()
+            return sensor.read_voltage_current()
 
     async def main_task(self):
 
