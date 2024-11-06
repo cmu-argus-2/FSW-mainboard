@@ -132,7 +132,7 @@ class ArgusV1Components:
     # Y SOLAR CHARGING POWER MONITOR
     SOLAR_CHARGING_Y_POWER_MONITOR_I2C = ArgusV1Interfaces.I2C2
     SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS = const(0x49)  # 92
-    SOLAR_CHARGING_YM_POWER_MONITOR_ENABLE = const(0x48)  # 90
+    SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS = const(0x48)  # 90
 
     # Y LIGHT SENSOR
     LIGHT_SENSOR_Y_I2C = ArgusV1Interfaces.I2C2
@@ -923,7 +923,7 @@ class ArgusV1(CubeSat):
 
         return Errors.NOERROR
 
-    def __solar_charging_xp_power_monitor_boot(self) -> list[int]:
+    def __solar_xp_power_monitor_boot(self) -> list[int]:
         """solar_charging_xp_power_monitor_boot: Boot sequence for the solar
            charging xp power monitor
 
@@ -951,7 +951,7 @@ class ArgusV1(CubeSat):
 
         return Errors.NOERROR
 
-    def __solar_charging_xm_power_monitor_boot(self) -> list[int]:
+    def __solar_xm_power_monitor_boot(self) -> list[int]:
         """solar_charging_xm_power_monitor_boot: Boot sequence for the solar
            charging xm power monitor
 
@@ -979,7 +979,7 @@ class ArgusV1(CubeSat):
 
         return Errors.NOERROR
 
-    def __solar_charging_yp_power_monitor_boot(self) -> list[int]:
+    def __solar_yp_power_monitor_boot(self) -> list[int]:
         """solar_charging_yp_power_monitor_boot: Boot sequence for the solar
            charging yp power monitor
 
@@ -1007,7 +1007,7 @@ class ArgusV1(CubeSat):
 
         return Errors.NOERROR
 
-    def __solar_charging_ym_power_monitor_boot(self) -> list[int]:
+    def __solar_ym_power_monitor_boot(self) -> list[int]:
         """solar_charging_ym_power_monitor_boot: Boot sequence for the solar
            charging ym power monitor
 
@@ -1035,7 +1035,7 @@ class ArgusV1(CubeSat):
 
         return Errors.NOERROR
 
-    def __solar_charging_zp_power_monitor_boot(self) -> list[int]:
+    def __solar_zp_power_monitor_boot(self) -> list[int]:
         """solar_charging_zp_power_monitor_boot: Boot sequence for the solar
            charging zp power monitor
 

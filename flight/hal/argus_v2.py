@@ -117,7 +117,7 @@ class ArgusV2Components:
 
     # Y SOLAR CHARGING POWER MONITOR
     SOLAR_CHARGING_YM_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
-    SOLAR_CHARGING_YM_POWER_MONITOR_ENABLE = const(0x49)  # 90
+    SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS = const(0x49)  # 90
 
     # Y LIGHT SENSOR
     LIGHT_SENSOR_YM_I2C = ArgusV2Interfaces.I2C0
@@ -165,47 +165,47 @@ class ArgusV2Components:
     # CAMERA
 
     # X TORQUE COILS
-    TORQUE_COILS_X_I2C = ArgusV2Interfaces.I2C1
+    TORQUE_COILS_XP_I2C = ArgusV2Interfaces.I2C1
     TORQUE_XP_I2C_ADDRESS = const(0x64)
 
     # X COIL DRIVER POWER MONITOR
-    TORQUE_X_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
+    TORQUE_XP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
     TORQUE_XP_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 84
 
     # X SOLAR CHARGING POWER MONITOR
-    SOLAR_CHARGING_X_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
+    SOLAR_CHARGING_XP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
     SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS = const(0x49)  # 92
 
     # X LIGHT SENSOR
-    LIGHT_SENSOR_X_I2C = ArgusV2Interfaces.I2C1
+    LIGHT_SENSOR_XP_I2C = ArgusV2Interfaces.I2C1
     LIGHT_SENSOR_XP_I2C_ADDRESS = const(0x45)
 
     # Y TORQUE COILS
-    TORQUE_COILS_Y_I2C = ArgusV2Interfaces.I2C1
+    TORQUE_COILS_YP_I2C = ArgusV2Interfaces.I2C1
     TORQUE_YP_I2C_ADDRESS = const(0x64)
 
     # Y COIL DRIVER POWER MONITOR
-    TORQUE_Y_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
+    TORQUE_YP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
     TORQUE_YP_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 84
 
     # Y SOLAR CHARGING POWER MONITOR
-    SOLAR_CHARGING_Y_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
+    SOLAR_CHARGING_YP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
     SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS = const(0x49)  # 92
 
     # Y LIGHT SENSOR
-    LIGHT_SENSOR_Y_I2C = ArgusV2Interfaces.I2C1
+    LIGHT_SENSOR_YP_I2C = ArgusV2Interfaces.I2C1
     LIGHT_SENSOR_YP_I2C_ADDRESS = const(0x45)
 
     # Z TORQUE COILS
-    TORQUE_COILS_Z_I2C = ArgusV2Interfaces.I2C1
+    TORQUE_COILS_ZM_I2C = ArgusV2Interfaces.I2C1
     TORQUE_ZM_I2C_ADDRESS = const(0x63)
 
     # Z COIL DRIVER POWER MONITOR
-    TORQUE_Z_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
+    TORQUE_ZM_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
     TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS = const(0x40)  # 80
 
     # ZM LIGHT SENSOR
-    LIGHT_SENSOR_Z_I2C = ArgusV2Interfaces.I2C1
+    LIGHT_SENSOR_ZM_I2C = ArgusV2Interfaces.I2C1
     LIGHT_SENSOR_ZM_I2C_ADDRESS = const(0x44)  # Conflict with ZP
 
     ########
@@ -269,6 +269,8 @@ class ArgusV2Components:
     # VFS
     VFS_MOUNT_POINT = "/sd"
 
+    LIGHT_SENSOR_CONVERSION_TIME = 0b0000
+
 
 class ArgusV2(CubeSat):
     """ArgusV1: Represents the Argus V1 CubeSat."""
@@ -303,36 +305,14 @@ class ArgusV2(CubeSat):
         error_list.append(self.__imu_boot())
         error_list.append(self.__rtc_boot())
         error_list.append(self.__gps_boot())
-        error_list.append(self.__board_power_monitor_boot())
-        error_list.append(self.__jetson_power_monitor_boot())
+        error_list.append(self.__power_monitor_boot())
         error_list.append(self.__fuel_gauge_boot)
         error_list.append(self.__charger_boot())
-        error_list.append(self.__torque_xp_boot())
-        error_list.append(self.__torque_xm_boot())
-        error_list.append(self.__torque_yp_boot())
-        error_list.append(self.__torque_ym_boot())
-        error_list.append(self.__torque_zp_boot())
-        error_list.append(self.__torque_zm_boot())
-        error_list.append(self.__light_sensor_xp_boot())
-        error_list.append(self.__light_sensor_xm_boot())
-        error_list.append(self.__light_sensor_yp_boot())
-        error_list.append(self.__light_sensor_ym_boot())
-        error_list.append(self.__light_sensor_zm_boot())
-        # sun sensor here
+        error_list.append(self.__torque_drivers_boot())
+        error_list.append(self.__light_sensors_boot())  # light + sun sensors
         # error_list.append(self.__radio_boot())
         error_list.append(self.__neopixel_boot())
         # error_list.append(self.__burn_wire_boot())
-        error_list.append(self.__torque_xp_power_monitor_boot())
-        error_list.append(self.__torque_xm_power_monitor_boot())
-        error_list.append(self.__torque_yp_power_monitor_boot())
-        error_list.append(self.__torque_ym_power_monitor_boot())
-        error_list.append(self.__torque_zp_power_monitor_boot())
-        error_list.append(self.__torque_zm_power_monitor_boot())
-        error_list.append(self.__solar_xp_power_monitor_boot())
-        error_list.append(self.__solar_xm_power_monitor_boot())
-        error_list.append(self.__solar_yp_power_monitor_boot())
-        error_list.append(self.__solar_ym_power_monitor_boot())
-        error_list.append(self.__solar_zp_power_monitor_boot())
 
         error_list = [error for error in error_list if error != Errors.NOERROR]
 
@@ -376,59 +356,85 @@ class ArgusV2(CubeSat):
 
         return Errors.NOERROR
 
-    def __board_power_monitor_boot(self) -> list[int]:
-        """board_power_monitor_boot: Boot sequence for the battery power
-           monitor
+    def __power_monitor_boot(self) -> list[int]:
+        """power_monitor_boot: Boot sequence for the power monitor
 
-        :return: Error code if the battery power monitor failed to initialize
+        :return: Error code if the power monitor failed to initialize
         """
-        try:
-            from hal.drivers.adm1176 import ADM1176
 
-            board_power_monitor = ADM1176(
-                ArgusV2Components.BOARD_POWER_MONITOR_I2C,
-                ArgusV2Components.BOARD_POWER_MONITOR_I2C_ADDRESS,
-            )
+        locations = {
+            "BOARD": [ArgusV2Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.BOARD_POWER_MONITOR_I2C],
+            "JETSON": [ArgusV2Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.JETSON_POWER_MONITOR_I2C],
+            "TORQUE_XP": [
+                ArgusV2Components.TORQUE_XP_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV2Components.TORQUE_XP_POWER_MONITOR_I2C,
+            ],
+            "TORQUE_XM": [
+                ArgusV2Components.TORQUE_XM_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV2Components.TORQUE_XM_POWER_MONITOR_I2C,
+            ],
+            "TORQUE_YP": [
+                ArgusV2Components.TORQUE_YP_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV2Components.TORQUE_YP_POWER_MONITOR_I2C,
+            ],
+            "TORQUE_YM": [
+                ArgusV2Components.TORQUE_YM_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV2Components.TORQUE_YM_POWER_MONITOR_I2C,
+            ],
+            "TORQUE_ZP": [
+                ArgusV2Components.TORQUE_ZP_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV2Components.TORQUE_ZP_POWER_MONITOR_I2C,
+            ],
+            "TORQUE_ZM": [
+                ArgusV2Components.TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV2Components.TORQUE_ZM_POWER_MONITOR_I2C,
+            ],
+            "SOLAR_XP": [
+                ArgusV2Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV2Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C,
+            ],
+            "SOLAR_XM": [
+                ArgusV2Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV2Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C,
+            ],
+            "SOLAR_YP": [
+                ArgusV2Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV2Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C,
+            ],
+            "SOLAR_YM": [
+                ArgusV2Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV2Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C,
+            ],
+            "SOLAR_ZP": [
+                ArgusV2Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV2Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C,
+            ],
+        }
 
-            if self.__middleware_enabled:
-                board_power_monitor = Middleware(board_power_monitor)
+        from hal.drivers.adm1176 import ADM1176
 
-            self.__board_power_monitor = board_power_monitor
-            self.__device_list.append(board_power_monitor)
-        except Exception as e:
-            if self.__debug:
-                raise e
+        error_codes = []
 
-            return Errors.ADM1176_NOT_INITIALIZED
+        for location, busAndAddress in locations.items():
+            try:
+                address = busAndAddress[0]
+                bus = busAndAddress[1]
+                power_monitor = ADM1176(bus, address)
 
-        return Errors.NOERROR
+                if self.__middleware_enabled:
+                    power_monitor = Middleware(power_monitor)
 
-    def __jetson_power_monitor_boot(self) -> list[int]:
-        """jetson_power_monitor_boot: Boot sequence for the Jetson power
-           monitor
+                self.__power_monitor[location] = power_monitor
+                self.__device_list.append(power_monitor)
+                error_codes.append(Errors.NOERROR)  # Append success code if no error
+            except Exception as e:
+                self.__power_monitor[location] = None
+                if self.__debug:
+                    print(f"Failed to initialize {location} power driver: {e}")
+                    raise e
+                return Errors.ADM1176_NOT_INITIALIZED
 
-        :return: Error code if the Jetson power monitor failed to initialize
-        """
-        try:
-            from hal.drivers.adm1176 import ADM1176
-
-            jetson_monitor = ADM1176(
-                ArgusV2Components.JETSON_POWER_MONITOR_I2C,
-                ArgusV2Components.JETSON_POWER_MONITOR_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                jetson_monitor = Middleware(jetson_monitor)
-
-            self.__jetson_monitor = jetson_monitor
-            self.__device_list.append(jetson_monitor)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.ADM1176_NOT_INITIALIZED
-
-        return Errors.NOERROR
+        return error_codes
 
     def __imu_boot(self) -> list[int]:
         """imu_boot: Boot sequence for the IMU
@@ -482,609 +488,92 @@ class ArgusV2(CubeSat):
 
         return Errors.NOERROR
 
-    def __torque_xp_boot(self) -> list[int]:
-        """torque_xp_boot: Boot sequence for the torque driver in the x+
-           direction
+    def __torque_drivers_boot(self) -> list[int]:
+        """Boot sequence for all torque drivers in predefined directions.
 
-        :return: Error code if the torque driver failed to initialize
+        :return: List of error codes for each torque driver in the order of directions
         """
-        try:
-            from hal.drivers.drv8830 import DRV8830
+        directions = {
+            "XP": [ArgusV2Components.TORQUE_XP_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_XP_I2C],
+            "XM": [ArgusV2Components.TORQUE_XM_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_XM_I2C],
+            "YP": [ArgusV2Components.TORQUE_YP_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_YP_I2C],
+            "YM": [ArgusV2Components.TORQUE_YM_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_YM_I2C],
+            "ZP": [ArgusV2Components.TORQUE_ZP_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_ZP_I2C],
+            "ZM": [ArgusV2Components.TORQUE_ZM_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_ZM_I2C],
+        }
 
-            torque_xp = DRV8830(
-                ArgusV2Components.TORQUE_COILS_X_I2C,
-                ArgusV2Components.TORQUE_XP_I2C_ADDRESS,
-            )
+        from hal.drivers.drv8830 import DRV8830
 
-            if self.__middleware_enabled:
-                torque_xp = Middleware(torque_xp)
+        error_codes = []
 
-            self.__torque_xp_driver = torque_xp
-            self.__device_list.append(torque_xp)
-        except Exception as e:
-            if self.__debug:
-                raise e
+        for direction, busAndAddress in directions.items():
+            try:
+                address = busAndAddress[0]
+                bus = busAndAddress[1]
+                torque_driver = DRV8830(bus, address)
 
-            return Errors.DRV8830_NOT_INITIALIZED
+                if self.__middleware_enabled:
+                    torque_driver = Middleware(torque_driver)
 
-        return Errors.NOERROR
+                self.__torque_drivers[direction] = torque_driver
+                self.__device_list.append(torque_driver)
+                error_codes.append(Errors.NOERROR)  # Append success code if no error
 
-    def __torque_xp_power_monitor_boot(self) -> list[int]:
-        """torque_xp_power_monitor_boot: Boot sequence for the torque xp power
-           monitor
+            except Exception as e:
+                self.__torque_drivers[direction] = None
+                if self.__debug:
+                    print(f"Failed to initialize {direction} torque driver: {e}")
+                    raise e
+                error_codes.append(Errors.DRV8830_NOT_INITIALIZED)  # Append failure code
 
-        :return: Error code if the torque xp power monitor failed to initialize
+        return error_codes
+
+    def __light_sensors_boot(self) -> list[int]:
+        """Boot sequence for all light sensors in predefined directions.
+
+        :return: List of error codes for each sensor in the order of directions
         """
-        try:
-            from hal.drivers.adm1176 import ADM1176
-
-            torque_xp_power_monitor = ADM1176(
-                ArgusV2Components.TORQUE_X_POWER_MONITOR_I2C,
-                ArgusV2Components.TORQUE_XP_POWER_MONITOR_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                torque_xp_power_monitor = Middleware(torque_xp_power_monitor)
-
-            self.__torque_xp_power_monitor = torque_xp_power_monitor
-            self.__device_list.append(torque_xp_power_monitor)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.ADM1176_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __torque_xm_boot(self) -> list[int]:
-        """torque_xm_boot: Boot sequence for the torque driver in the x-
-           direction
-
-        :return: Error code if the torque driver failed to initialize
-        """
-        try:
-            from hal.drivers.drv8830 import DRV8830
-
-            torque_xm = DRV8830(
-                ArgusV2Components.TORQUE_COILS_X_I2C,
-                ArgusV2Components.TORQUE_XM_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                torque_xm = Middleware(torque_xm)
-
-            self.__torque_xm_driver = torque_xm
-            self.__device_list.append(torque_xm)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.DRV8830_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __torque_xm_power_monitor_boot(self) -> list[int]:
-        """torque_xm_power_monitor_boot: Boot sequence for the torque xm power
-           monitor
-
-        :return: Error code if the torque xm power monitor failed to initialize
-        """
-        try:
-            from hal.drivers.adm1176 import ADM1176
-
-            torque_xm_power_monitor = ADM1176(
-                ArgusV2Components.TORQUE_X_POWER_MONITOR_I2C,
-                ArgusV2Components.TORQUE_XM_POWER_MONITOR_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                torque_xm_power_monitor = Middleware(torque_xm_power_monitor)
-
-            self.__torque_xm_power_monitor = torque_xm_power_monitor
-            self.__device_list.append(torque_xm_power_monitor)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.ADM1176_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __torque_yp_boot(self) -> list[int]:
-        """torque_yp_boot: Boot sequence for the torque driver in the y+
-           direction
-
-        :return: Error code if the torque driver failed to initialize
-        """
-        try:
-            from hal.drivers.drv8830 import DRV8830
-
-            torque_yp = DRV8830(
-                ArgusV2Components.TORQUE_COILS_Y_I2C,
-                ArgusV2Components.TORQUE_YP_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                torque_yp = Middleware(torque_yp)
-
-            self.__torque_yp_driver = torque_yp
-            self.__device_list.append(torque_yp)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.DRV8830_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __torque_yp_power_monitor_boot(self) -> list[int]:
-        """torque_yp_power_monitor_boot: Boot sequence for the torque yp power
-           monitor
-
-        :return: Error code if the torque yp power monitor failed to initialize
-        """
-        try:
-            from hal.drivers.adm1176 import ADM1176
-
-            torque_yp_power_monitor = ADM1176(
-                ArgusV2Components.TORQUE_Y_POWER_MONITOR_I2C,
-                ArgusV2Components.TORQUE_YP_POWER_MONITOR_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                torque_yp_power_monitor = Middleware(torque_yp_power_monitor)
-
-            self.__torque_yp_power_monitor = torque_yp_power_monitor
-            self.__device_list.append(torque_yp_power_monitor)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.ADM1176_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __torque_ym_boot(self) -> list[int]:
-        """torque_ym_boot: Boot sequence for the torque driver in the y-
-           direction
-
-        :return: Error code if the torque driver failed to initialize
-        """
-        try:
-            from hal.drivers.drv8830 import DRV8830
-
-            torque_ym = DRV8830(
-                ArgusV2Components.TORQUE_COILS_Y_I2C,
-                ArgusV2Components.TORQUE_YM_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                torque_ym = Middleware(torque_ym)
-
-            self.__torque_ym_driver = torque_ym
-            self.__device_list.append(torque_ym)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.DRV8830_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __torque_ym_power_monitor_boot(self) -> list[int]:
-        """torque_ym_power_monitor_boot: Boot sequence for the torque ym power
-           monitor
-
-        :return: Error code if the torque ym power monitor failed to initialize
-        """
-        try:
-            from hal.drivers.adm1176 import ADM1176
-
-            torque_ym_power_monitor = ADM1176(
-                ArgusV2Components.TORQUE_Y_POWER_MONITOR_I2C,
-                ArgusV2Components.TORQUE_YM_POWER_MONITOR_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                torque_ym_power_monitor = Middleware(torque_ym_power_monitor)
-
-            self.__torque_ym_power_monitor = torque_ym_power_monitor
-            self.__device_list.append(torque_ym_power_monitor)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.ADM1176_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __torque_zp_boot(self) -> list[int]:
-        """torque_zp_boot: Boot sequence for the torque driver in the z
-           direction
-
-        :return: Error code if the torque driver failed to initialize
-        """
-        try:
-            from hal.drivers.drv8830 import DRV8830
-
-            torque_zp = DRV8830(
-                ArgusV2Components.TORQUE_COILS_Z_I2C,
-                ArgusV2Components.TORQUE_ZP_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                torque_zp = Middleware(torque_zp)
-
-            self.__torque_zp_driver = torque_zp
-            self.__device_list.append(torque_zp)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.DRV8830_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __torque_zp_power_monitor_boot(self) -> list[int]:
-        """torque_zp_power_monitor_boot: Boot sequence for the torque zp power
-           monitor
-
-        :return: Error code if the torque zp power monitor failed to initialize
-        """
-        try:
-            from hal.drivers.adm1176 import ADM1176
-
-            torque_zp_power_monitor = ADM1176(
-                ArgusV2Components.TORQUE_Z_POWER_MONITOR_I2C,
-                ArgusV2Components.TORQUE_ZP_POWER_MONITOR_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                torque_zp_power_monitor = Middleware(torque_zp_power_monitor)
-
-            self.__torque_zp_power_monitor = torque_zp_power_monitor
-            self.__device_list.append(torque_zp_power_monitor)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.ADM1176_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __torque_zm_boot(self) -> list[int]:
-        """torque_zm_boot: Boot sequence for the torque driver in the z
-           direction
-
-        :return: Error code if the torque driver failed to initialize
-        """
-        try:
-            from hal.drivers.drv8830 import DRV8830
-
-            torque_zm = DRV8830(
-                ArgusV2Components.TORQUE_COILS_Z_I2C,
-                ArgusV2Components.TORQUE_ZM_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                torque_zm = Middleware(torque_zm)
-
-            self.__torque_zm_driver = torque_zm
-            self.__device_list.append(torque_zm)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.DRV8830_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __torque_zm_power_monitor_boot(self) -> list[int]:
-        """torque_zm_power_monitor_boot: Boot sequence for the torque zm power
-           monitor
-
-        :return: Error code if the torque zm power monitor failed to initialize
-        """
-        try:
-            from hal.drivers.adm1176 import ADM1176
-
-            torque_zm_power_monitor = ADM1176(
-                ArgusV2Components.TORQUE_Z_POWER_MONITOR_I2C,
-                ArgusV2Components.TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                torque_zm_power_monitor = Middleware(torque_zm_power_monitor)
-
-            self.__torque_zm_power_monitor = torque_zm_power_monitor
-            self.__device_list.append(torque_zm_power_monitor)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.ADM1176_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __light_sensor_xp_boot(self) -> list[int]:
-        """light_sensor_xp_boot: Boot sequence for the light sensor in the x+
-           direction
-
-        :return: Error code if the light sensor failed to initialize
-        """
-        try:
-            from hal.drivers.opt4001 import OPT4001
-
-            light_sensor_xp = OPT4001(
-                ArgusV2Components.LIGHT_SENSORS_I2C,
-                ArgusV2Components.LIGHT_SENSOR_XP_I2C_ADDRESS,
-                conversion_time=ArgusV2Components.LIGHT_SENSOR_CONVERSION_TIME,
-            )
-
-            if self.__middleware_enabled:
-                light_sensor_xp = Middleware(light_sensor_xp)
-
-            self.__light_sensor_xp = light_sensor_xp
-            self.__device_list.append(light_sensor_xp)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.OPT4001_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __light_sensor_xm_boot(self) -> list[int]:
-        """light_sensor_xm_boot: Boot sequence for the light sensor in the x-
-           direction
-
-        :return: Error code if the light sensor failed to initialize
-        """
-        try:
-            from hal.drivers.opt4001 import OPT4001
-
-            light_sensor_xm = OPT4001(
-                ArgusV2Components.LIGHT_SENSORS_I2C,
-                ArgusV2Components.LIGHT_SENSOR_XM_I2C_ADDRESS,
-                conversion_time=ArgusV2Components.LIGHT_SENSOR_CONVERSION_TIME,
-            )
-
-            if self.__middleware_enabled:
-                light_sensor_xm = Middleware(light_sensor_xm)
-
-            self.__light_sensor_xm = light_sensor_xm
-            self.__device_list.append(light_sensor_xm)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.OPT4001_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __light_sensor_yp_boot(self) -> list[int]:
-        """light_sensor_yp_boot: Boot sequence for the light sensor in the y+
-           direction
-
-        :return: Error code if the light sensor failed to initialize
-        """
-        try:
-            from hal.drivers.opt4001 import OPT4001
-
-            light_sensor_yp = OPT4001(
-                ArgusV2Components.LIGHT_SENSORS_I2C,
-                ArgusV2Components.LIGHT_SENSOR_YP_I2C_ADDRESS,
-                conversion_time=ArgusV2Components.LIGHT_SENSOR_CONVERSION_TIME,
-            )
-
-            if self.__middleware_enabled:
-                light_sensor_yp = Middleware(light_sensor_yp)
-
-            self.__light_sensor_yp = light_sensor_yp
-            self.__device_list.append(light_sensor_yp)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.OPT4001_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __light_sensor_ym_boot(self) -> list[int]:
-        """light_sensor_ym_boot: Boot sequence for the light sensor in the y-
-           direction
-
-        :return: Error code if the light sensor failed to initialize
-        """
-        try:
-            from hal.drivers.opt4001 import OPT4001
-
-            light_sensor_ym = OPT4001(
-                ArgusV2Components.LIGHT_SENSORS_I2C,
-                ArgusV2Components.LIGHT_SENSOR_YM_I2C_ADDRESS,
-                conversion_time=ArgusV2Components.LIGHT_SENSOR_CONVERSION_TIME,
-            )
-
-            if self.__middleware_enabled:
-                light_sensor_ym = Middleware(light_sensor_ym)
-
-            self.__light_sensor_ym = light_sensor_ym
-            self.__device_list.append(light_sensor_ym)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.OPT4001_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __light_sensor_zm_boot(self) -> list[int]:
-        """light_sensor_zm_boot: Boot sequence for the light sensor in the z+
-           direction
-
-        :return: Error code if the light sensor failed to initialize
-        """
-        try:
-            from hal.drivers.opt4001 import OPT4001
-
-            light_sensor_zm = OPT4001(
-                ArgusV2Components.LIGHT_SENSORS_I2C,
-                ArgusV2Components.LIGHT_SENSOR_ZM_I2C_ADDRESS,
-                conversion_time=ArgusV2Components.LIGHT_SENSOR_CONVERSION_TIME,
-            )
-
-            if self.__middleware_enabled:
-                light_sensor_zm = Middleware(light_sensor_zm)
-
-            self.__light_sensor_zm = light_sensor_zm
-            self.__device_list.append(light_sensor_zm)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.OPT4001_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __solar_charging_xp_power_monitor_boot(self) -> list[int]:
-        """solar_charging_xp_power_monitor_boot: Boot sequence for the solar
-           charging xp power monitor
-
-        :return: Error code if the solar charging xp power monitor failed to
-                 initialize
-        """
-        try:
-            from hal.drivers.adm1176 import ADM1176
-
-            solar_charging_xp_power_monitor = ADM1176(
-                ArgusV2Components.SOLAR_CHARGING_X_POWER_MONITOR_I2C,
-                ArgusV2Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                solar_charging_xp_power_monitor = Middleware(solar_charging_xp_power_monitor)
-
-            self.__solar_charging_xp_power_monitor = solar_charging_xp_power_monitor
-            self.__device_list.append(solar_charging_xp_power_monitor)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.ADM1176_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __solar_charging_xm_power_monitor_boot(self) -> list[int]:
-        """solar_charging_xm_power_monitor_boot: Boot sequence for the solar
-           charging xm power monitor
-
-        :return: Error code if the solar charging xm power monitor failed to
-                 initialize
-        """
-        try:
-            from hal.drivers.adm1176 import ADM1176
-
-            solar_charging_xm_power_monitor = ADM1176(
-                ArgusV2Components.SOLAR_CHARGING_X_POWER_MONITOR_I2C,
-                ArgusV2Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                solar_charging_xm_power_monitor = Middleware(solar_charging_xm_power_monitor)
-
-            self.__solar_charging_xm_power_monitor = solar_charging_xm_power_monitor
-            self.__device_list.append(solar_charging_xm_power_monitor)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.ADM1176_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __solar_charging_yp_power_monitor_boot(self) -> list[int]:
-        """solar_charging_yp_power_monitor_boot: Boot sequence for the solar
-           charging yp power monitor
-
-        :return: Error code if the solar charging yp power monitor failed to
-                 initialize
-        """
-        try:
-            from hal.drivers.adm1176 import ADM1176
-
-            solar_charging_yp_power_monitor = ADM1176(
-                ArgusV2Components.SOLAR_CHARGING_Y_POWER_MONITOR_I2C,
-                ArgusV2Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                solar_charging_yp_power_monitor = Middleware(solar_charging_yp_power_monitor)
-
-            self.__solar_charging_yp_power_monitor = solar_charging_yp_power_monitor
-            self.__device_list.append(solar_charging_yp_power_monitor)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.ADM1176_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __solar_charging_ym_power_monitor_boot(self) -> list[int]:
-        """solar_charging_ym_power_monitor_boot: Boot sequence for the solar
-           charging ym power monitor
-
-        :return: Error code if the solar charging ym power monitor failed to
-                 initialize
-        """
-        try:
-            from hal.drivers.adm1176 import ADM1176
-
-            solar_charging_ym_power_monitor = ADM1176(
-                ArgusV2Components.SOLAR_CHARGING_Y_POWER_MONITOR_I2C,
-                ArgusV2Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                solar_charging_ym_power_monitor = Middleware(solar_charging_ym_power_monitor)
-
-            self.__solar_charging_ym_power_monitor = solar_charging_ym_power_monitor
-            self.__device_list.append(solar_charging_ym_power_monitor)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.ADM1176_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __solar_charging_zp_power_monitor_boot(self) -> list[int]:
-        """solar_charging_zp_power_monitor_boot: Boot sequence for the solar
-           charging zp power monitor
-
-        :return: Error code if the solar charging zp power monitor failed to
-                 initialize
-        """
-        try:
-            from hal.drivers.adm1176 import ADM1176
-
-            solar_charging_zp_power_monitor = ADM1176(
-                ArgusV2Components.SOLAR_CHARGING_Z_POWER_MONITOR_I2C,
-                ArgusV2Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS,
-            )
-
-            if self.__middleware_enabled:
-                solar_charging_zp_power_monitor = Middleware(solar_charging_zp_power_monitor)
-
-            self.__solar_charging_zp_power_monitor = solar_charging_zp_power_monitor
-            self.__device_list.append(solar_charging_zp_power_monitor)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.ADM1176_NOT_INITIALIZED
-
-        return Errors.NOERROR
+        directions = {
+            "XP": [ArgusV2Components.LIGHT_SENSOR_XP_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_XP_I2C],
+            "XM": [ArgusV2Components.LIGHT_SENSOR_XM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_XM_I2C],
+            "YP": [ArgusV2Components.LIGHT_SENSOR_YP_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_YP_I2C],
+            "YM": [ArgusV2Components.LIGHT_SENSOR_YM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_YM_I2C],
+            "ZM": [ArgusV2Components.LIGHT_SENSOR_ZM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_ZM_I2C],
+            "ZP1": [ArgusV2Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
+            "ZP2": [ArgusV2Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
+            "ZP3": [ArgusV2Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
+            "ZP4": [ArgusV2Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
+        }
+
+        from hal.drivers.opt4001 import OPT4001
+
+        error_codes = []  # List to store error codes per sensor
+
+        for direction, busAndAddress in directions.items():
+            try:
+                address = busAndAddress[0]
+                bus = busAndAddress[1]
+                light_sensor = OPT4001(
+                    bus,
+                    address,
+                    conversion_time=ArgusV2Components.LIGHT_SENSOR_CONVERSION_TIME,
+                )
+
+                if self.__middleware_enabled:
+                    light_sensor = Middleware(light_sensor)
+
+                self.__light_sensors[direction] = light_sensor
+                self.__device_list.append(light_sensor)
+                error_codes.append(Errors.NOERROR)  # Append success code if no error
+
+            except Exception as e:
+                self.__light_sensors[direction] = None
+                if self.__debug:
+                    print(f"Failed to initialize {direction} light sensor: {e}")
+                    raise e
+                error_codes.append(Errors.OPT4001_NOT_INITIALIZED)  # Append failure code
+
+        return error_codes
 
     def __radio_boot(self) -> list[int]:
         """radio_boot: Boot sequence for the radio

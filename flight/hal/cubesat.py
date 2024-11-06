@@ -52,25 +52,13 @@ class CubeSat:
         # self.__i2c2 = None
 
         # Devices
-        self.__board_power_monitor = None
         self.__charger = None
         self.__imu = None
-        self.__jetson_monitor = None
         self.__light_sensors = {}
         self.__torque_drivers = {}
-        self.__torque_xp_power_monitor = None
-        self.__torque_xm_power_monitor = None
-        self.__solar_xp_power_monitor = None
-        self.__solar_xm_power_monitor = None
+        self.__power_monitors = {}
         self.__fuel_gauge = None
-        self.__torque_yp_power_monitor = None
-        self.__torque_ym_power_monitor = None
-        self.__solar_yp_power_monitor = None
-        self.__solar_ym_power_monitor = None
         self.__rtc = None
-        self.__torque_zp_power_monitor = None
-        self.__torque_zm_power_monitor = None
-        self.__solar_zp_power_monitor = None
         self.__gps = None
         self.__radio = None
         self.__sd_card = None
@@ -149,18 +137,11 @@ class CubeSat:
         return self.__gps
 
     @property
-    def BOARD_POWER_MONITOR(self):
-        """BOARD_POWER_MONITOR: Returns the board power monitor object
+    def POWER_MONITORS(self):
+        """POWER_MONITORS: Returns a dictionary of power monitor with their locations
         :return: object or None
         """
-        return self.__board_power_monitor
-
-    @property
-    def JETSON_POWER_MONITOR(self):
-        """JETSON_MONITOR: Returns the Jetson monitor object
-        :return: object or None
-        """
-        return self.__jetson_monitor
+        return self.__power_monitors
 
     @property
     def IMU(self):
@@ -177,16 +158,16 @@ class CubeSat:
         return self.__charger
 
     @property
-    def TORQUE_XP_POWER_MONITOR(self):
-        """TORQUE_XP: Returns the torque driver in the x+ direction
-        :return: object or None
-        """
-        return self.__torque_xp_power_monitor
-
-    @property
     def TORQUE_DRIVERS(self):
         """Returns a dictionary of torque drivers with the direction as the key (e.g. 'XP', 'XM', 'YP', 'YM', 'ZM')"""
         return self.__torque_drivers
+
+    @property
+    def FUEL_GAUGE(self):
+        """FUEL_GAUGE: Returns the fuel gauge object
+        :return: object or None
+        """
+        return self.__fuel_gauge
 
     # ABSTRACT METHOD #
     def APPLY_MAGNETIC_CONTROL(self) -> None:
