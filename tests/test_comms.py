@@ -1,6 +1,7 @@
 import pytest
+
+from unittest.mock import MagicMock, patch  # noqa F401
 from flight.apps.comms.comms import COMMS_STATE, MSG_ID  # noqa F401
-from unittest.mock import MagicMock, patch
 
 
 # Mock SATELLITE for actual hardware interaction
