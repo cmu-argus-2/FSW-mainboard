@@ -474,7 +474,6 @@ class ArgusV2(CubeSat):
             self.__charger = charger
             self.__device_list.append(charger)
         except Exception as e:
-            print(f"charger: {e}")
             if self.__debug:
                 raise e
 

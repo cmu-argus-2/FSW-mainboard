@@ -71,7 +71,7 @@ class Task(TemplateTask):
         self.name = "EPS"
 
     def read_vc(self, sensor, voltage_idx, current_idx):
-        # return sensor.read_voltage_current() if sensor is not None else (-1, -1)
+        # log power monitor voltage and current
         if sensor is not None:
             board_voltage, board_current = sensor.read_voltage_current()
             self.log_data[voltage_idx] = int(board_voltage * 1000)  # mV - max 8.4V
@@ -90,16 +90,17 @@ class Task(TemplateTask):
             # Get power system readings
 
             self.log_data[EPS_IDX.TIME_EPS] = int(time.time())
+            DH.log_data("eps", self.log_data)
             for key in SATELLITE.POWER_MONITORS:
                 if key == "BOARD":
                     self.read_vc(SATELLITE.POWER_MONITORS[key], EPS_IDX.MAINBOARD_VOLTAGE, EPS_IDX.MAINBOARD_CURRENT)
+                    self.log_info(
+                        f"Board Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, "
+                        + f"Board Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA "
+                    )
                 elif key == "JETSON":
                     self.read_vc(SATELLITE.POWER_MONITORS[key], EPS_IDX.JETSON_INPUT_VOLTAGE, EPS_IDX.JETSON_INPUT_CURRENT)
-
-            DH.log_data("eps", self.log_data)
-            self.log_info(
-                f"Board Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, "
-                + f"Board Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA, "
-                + f"Jetson Voltage: {self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE]} mV, "
-                + f"Jetson Current: {self.log_data[EPS_IDX.JETSON_INPUT_CURRENT]} mA"
-            )
+                    self.log_info(
+                        f"Jetson Voltage: {self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE]} mV, "
+                        + f"Jetson Current: {self.log_data[EPS_IDX.JETSON_INPUT_CURRENT]} mA"
+                    )
