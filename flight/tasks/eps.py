@@ -70,10 +70,12 @@ class Task(TemplateTask):
         super().__init__(id)
         self.name = "EPS"
 
-    def read_vc(self, sensor):
+    def read_vc(self, sensor, voltage_idx, current_idx):
         # return sensor.read_voltage_current() if sensor is not None else (-1, -1)
         if sensor is not None:
-            return sensor.read_voltage_current()
+            board_voltage, board_current = sensor.read_voltage_current()
+            self.log_data[voltage_idx] = int(board_voltage * 1000)  # mV - max 8.4V
+            self.log_data[current_idx] = int(board_current * 1000)  # mA
 
     async def main_task(self):
 
@@ -87,14 +89,12 @@ class Task(TemplateTask):
 
             # Get power system readings
 
-            (self.board_voltage, self.board_current) = self.read_vc(SATELLITE.BOARD_POWER_MONITOR)
-            (self.jetson_voltage, self.jetson_current) = self.read_vc(SATELLITE.JETSON_POWER_MONITOR)
-
             self.log_data[EPS_IDX.TIME_EPS] = int(time.time())
-            self.log_data[EPS_IDX.MAINBOARD_VOLTAGE] = int(self.board_voltage * 1000)  # mV - max 8.4V
-            self.log_data[EPS_IDX.MAINBOARD_CURRENT] = int(self.board_current * 1000)  # mA
-            self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE] = int(self.jetson_voltage * 1000)
-            self.log_data[EPS_IDX.JETSON_INPUT_CURRENT] = int(self.jetson_current * 1000)
+            for key in SATELLITE.POWER_MONITORS:
+                if key == "BOARD":
+                    self.read_vc(SATELLITE.POWER_MONITORS[key], EPS_IDX.MAINBOARD_VOLTAGE, EPS_IDX.MAINBOARD_CURRENT)
+                elif key == "JETSON":
+                    self.read_vc(SATELLITE.POWER_MONITORS[key], EPS_IDX.JETSON_INPUT_VOLTAGE, EPS_IDX.JETSON_INPUT_CURRENT)
 
             DH.log_data("eps", self.log_data)
             self.log_info(

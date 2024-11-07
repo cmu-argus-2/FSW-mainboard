@@ -80,7 +80,7 @@ class ArgusV2Components:
 
     # IMU
     IMU_I2C = ArgusV2Interfaces.I2C0
-    IMU_I2C_ADDRESS = const(0x69)
+    IMU_I2C_ADDRESS = const(0x4A)
 
     # BATTERY BOARD FUEL GAUGE
     FUEL_GAUGE_I2C = ArgusV2Interfaces.I2C0
@@ -155,11 +155,11 @@ class ArgusV2Components:
 
     # GPS POWER MONITOR
     GPS_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    GPS_POWER_MONITOR_I2C_ADDRESS = const(0x40)  # 94
+    GPS_POWER_MONITOR_I2C_ADDRESS = const(0x40)
 
     # BOARD POWER MONITOR
     BOARD_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x4A)  # 94
+    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x48)
 
     # CAMERA
 
@@ -474,6 +474,7 @@ class ArgusV2(CubeSat):
             self.__charger = charger
             self.__device_list.append(charger)
         except Exception as e:
+            print(f"charger: {e}")
             if self.__debug:
                 raise e
 

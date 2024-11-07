@@ -7,9 +7,10 @@ print("ARGUS-1 booted.")
 print(f"Boot Errors: {boot_errors}")
 
 # Board Power Monitor Test
-while True:
-    if SATELLITE.BOARD_POWER_MONITOR is not None:
-        print(SATELLITE.BOARD_POWER_MONITOR.read_voltage_current())
+# while True:
+#     if SATELLITE.POWER_MONITORS != {}:
+#         for key in SATELLITE.POWER_MONITORS:
+#             print(SATELLITE.POWER_MONITORS[key].read_voltage_current())
 
 # # charger test
 # # while True:

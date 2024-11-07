@@ -19,6 +19,7 @@ class CubeSat:
         "__gps",
         "__battery_monitor",
         "__jetson_monitor",
+        "__power_monitors",
         "__imu",
         "__charger",
         "__torque_x",
