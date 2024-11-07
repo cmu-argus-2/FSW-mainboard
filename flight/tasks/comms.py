@@ -41,6 +41,7 @@ class Task(TemplateTask):
             if self.TX_heartbeat_frequency > self.frequency:
                 self.log_error("TX heartbeat frequency faster than task frequency. Defaulting to task frequency.")
                 self.TX_heartbeat_frequency = self.frequency
+
             self.TX_COUNT_THRESHOLD = int(self.frequency / self.TX_heartbeat_frequency)
             self.TX_COUNTER = self.TX_COUNT_THRESHOLD - 1
             self.frequency_set = True
@@ -78,7 +79,7 @@ class Task(TemplateTask):
                     self.RX_COUNTER = 0
 
                     # State transition to RX state
-                    SATELLITE_RADIO.transition_state(0)
+                    SATELLITE_RADIO.transition_state(False)
 
                     self.log_info(f"Sent message with ID: {self.tx_msg_id}")
 
@@ -88,7 +89,7 @@ class Task(TemplateTask):
                 if SATELLITE_RADIO.data_available():
                     # Read packet present in the RX buffer
                     self.rq_msg_id = SATELLITE_RADIO.receive_message()
-                    SATELLITE_RADIO.transition_state(0)
+                    SATELLITE_RADIO.transition_state(False)
 
                     # Check the response from the GS
                     if self.rq_msg_id != 0x00:
@@ -109,4 +110,4 @@ class Task(TemplateTask):
                     if self.RX_COUNTER >= self.TX_COUNT_THRESHOLD:
                         # GS response timeout
                         self.ground_pass = False
-                        SATELLITE_RADIO.transition_state(self.RX_COUNTER)
+                        SATELLITE_RADIO.transition_state(True)

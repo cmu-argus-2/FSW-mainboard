@@ -1,6 +1,6 @@
 import pytest
-from unittest.mock import MagicMock, patch
 from flight.apps.comms.comms import COMMS_STATE, MSG_ID
+from unittest.mock import MagicMock, patch
 
 
 # Mock SATELLITE for actual hardware interaction

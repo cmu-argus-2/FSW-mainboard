@@ -47,7 +47,7 @@ class SATELLITE_RADIO:
     tm_frame = bytearray(250)
 
     # Parameters for file downlinking (TEMPORARY HARDCODE)
-    filepath = ""
+    filepath = None
     file_ID = 0x00
     file_size = 0
     file_message_count = 0
@@ -90,13 +90,13 @@ class SATELLITE_RADIO:
     """
 
     @classmethod
-    def transition_state(self, RX_COUNTER):
+    def transition_state(self, timeout):
         # Check current state
         if self.state == COMMS_STATE.RX:
             # State transitions to TX states only occur from RX state
 
             # Error handling transition
-            if RX_COUNTER >= 8:
+            if timeout:
                 # Lost contact with GS, return to default state
                 self.state = COMMS_STATE.TX_HEARTBEAT
 
@@ -176,11 +176,12 @@ class SATELLITE_RADIO:
 
     @classmethod
     def file_get_packet(self, sq_cnt):
-        if self.filepath != "":
+        if self.filepath is not None:
             self.file_obj = open(self.filepath, "rb")
+
         else:
             logger.warning("[COMMS ERROR] Undefined TX filepath")
-            self.file_array = [0x00, 0x00, 0x00, 0x00]
+            self.file_array = bytes([0x00, 0x00, 0x00, 0x00])
 
             return 0x00
 
