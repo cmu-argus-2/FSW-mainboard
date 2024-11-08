@@ -435,12 +435,9 @@ class ArgusV2(CubeSat):
         :return: Error code if the IMU failed to initialize
         """
         try:
-            from hal.drivers.bno085 import BNO08X_I2C
+            from hal.drivers.adafruit_bno08x.i2c import BNO08X_I2C
 
-            imu = BNO08X_I2C(
-                ArgusV2Components.IMU_I2C,
-                address=ArgusV2Components.IMU_I2C_ADDRESS,
-            )
+            imu = BNO08X_I2C(ArgusV2Components.IMU_I2C)
 
             if self.__middleware_enabled:
                 imu = Middleware(imu)

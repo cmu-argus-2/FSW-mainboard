@@ -39,15 +39,6 @@ class Task(TemplateTask):
 
             if not DH.data_process_exists("imu"):
                 DH.register_data_process("imu", "Lfffffffff", True, data_limit=100000, write_interval=5)
-            # Calibrated Acceleration (m/s2)
-            BNO_REPORT_ACCELEROMETER = const(0x01)
-            # Calibrated gyroscope (rad/s).
-            BNO_REPORT_GYROSCOPE = const(0x02)
-            # Magnetic field calibrated (in µTesla). The fully calibrated magnetic field measurement.
-            BNO_REPORT_MAGNETOMETER = const(0x03)
-            # SATELLITE.IMU.enable_feature(BNO_REPORT_ACCELEROMETER)
-            # SATELLITE.IMU.enable_feature(BNO_REPORT_GYROSCOPE)
-            SATELLITE.IMU.enable_feature(BNO_REPORT_MAGNETOMETER)
             accel = SATELLITE.IMU.acceleration()
             mag = SATELLITE.IMU.magnetic()
             gyro = SATELLITE.IMU.gyro()
