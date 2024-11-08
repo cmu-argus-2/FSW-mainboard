@@ -92,9 +92,9 @@ SM_CONFIGURATION = {
     },
     STATES.SAFE: {
         "Tasks": {
-            TASK.COMMAND: {"Frequency": 1, "Priority": 1},
+            TASK.COMMAND: {"Frequency": 10, "Priority": 1},
             TASK.TIMING: {"Frequency": 1, "Priority": 2},
-            TASK.COMMS: {"Frequency": 1, "Priority": 1},
+            TASK.COMMS: {"Frequency": 5, "Priority": 1},
             TASK.EPS: {"Frequency": 1, "Priority": 1},
             TASK.OBDH: {"Frequency": 0.2, "Priority": 2},
             TASK.IMU: {"Frequency": 2, "Priority": 3},
