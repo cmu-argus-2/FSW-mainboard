@@ -72,7 +72,7 @@ class MAGNETIC_COIL_ALLOCATOR():
 
             elif not coils_are_active['P'] and coils_are_active['M']:
                 self._alloc_mat[face_idx['P']] = np.zeros(3)
-                self._alloc_mat[face_idx['M']] = 2 * self._default_alloc_mat[face_idx['P']]
+                self._alloc_mat[face_idx['M']] = 2 * self._default_alloc_mat[face_idx['M']]
 
             elif not coils_are_active['P'] and not coils_are_active['M']:
                 self._alloc_mat[face_idx['P']] = np.zeros(3)
