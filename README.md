@@ -47,4 +47,12 @@ To move to board:
 python move_to_board.py -s <source_folder_path> -d <destination_folder_path>
 ```
 
+### Troubleshooting 
+
+If the board ever gets stuck in read-only mode, access the REPL and type 
+```bash
+>>> import storage
+>>> storage.erase_filesystem()
+```
+THis will erase and reformat the filesystem.
 
