@@ -45,7 +45,7 @@ class Task(TemplateTask):
 
     async def main_task(self):
 
-        if SATELLITE.GPS is not None:
+        if SATELLITE.GPS_AVAILABLE:
 
             if SM.current_state == STATES.NOMINAL:
                 if not DH.data_process_exists("gps"):
