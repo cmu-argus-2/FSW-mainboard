@@ -123,10 +123,11 @@ class Task(TemplateTask):
             self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(lux_readings[4] / 10)
             # Pyramid TBD
 
-            ## Magnetic Control
-            # TODO controllers
-            # TODO
             # see apps/adcs/mcm.py
+
+            ## Magnetic Control
+            # TODO controller
+            # TODO allocate voltage
 
             ## Attitude Determination
 
