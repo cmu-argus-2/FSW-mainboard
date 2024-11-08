@@ -36,7 +36,6 @@ class Task(TemplateTask):
         "GPS_ECEF_VZ",
     ]"""
 
-    data_format = "LBBBHIiiiiHHHHHiiiiii"
     log_data = [0] * 21
 
     def __init__(self, id):
@@ -49,7 +48,8 @@ class Task(TemplateTask):
 
             if SM.current_state == STATES.NOMINAL:
                 if not DH.data_process_exists("gps"):
-                    DH.register_data_process("gps", self.data_format, True, data_limit=100000, write_interval=10)
+                    data_format = "LBBBHIiiiiHHHHHiiiiii"
+                    DH.register_data_process("gps", data_format, True, data_limit=100000, write_interval=10)
 
                 SATELLITE.GPS.update()
 

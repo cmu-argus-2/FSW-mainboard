@@ -61,8 +61,7 @@ class Task(TemplateTask):
         "ZM_SOLAR_CHARGE_CURRENT",
     ]"""
 
-    log_data = [0] * 42
-    data_format = "Lhhb" + "h" * 38  # - use mV for voltage and mA for current (h = short integer 2 bytes)
+    log_data = [0] * 42  # - use mV for voltage and mA for current (h = short integer 2 bytes)
 
     def __init__(self, id):
         super().__init__(id)
@@ -79,7 +78,8 @@ class Task(TemplateTask):
         elif SM.current_state == STATES.NOMINAL:
 
             if not DH.data_process_exists("eps"):
-                DH.register_data_process("eps", self.data_format, True, data_limit=100000)
+                data_format = "Lhhb" + "h" * 38  # - use mV for voltage and mA for current (h = short integer 2 bytes)
+                DH.register_data_process("eps", data_format, True, data_limit=100000)
 
             # Get power system readings
 
