@@ -61,19 +61,14 @@ class Task(TemplateTask):
         "ZM_SOLAR_CHARGE_CURRENT",
     ]"""
 
-    log_data = [0] * 42
-    data_format = "Lhhb" + "h" * 38  # - use mV for voltage and mA for current (h = short integer 2 bytes)
-    board_voltage = 0
-    board_current = 0
+    log_data = [0] * 42  # - use mV for voltage and mA for current (h = short integer 2 bytes)
 
     def __init__(self, id):
         super().__init__(id)
         self.name = "EPS"
 
     def read_vc(self, sensor):
-        # return sensor.read_voltage_current() if sensor is not None else (-1, -1)
-        if sensor is not None:
-            sensor.read_voltage_current()
+        return sensor.read_voltage_current() if sensor else (-1, -1)
 
     async def main_task(self):
 
@@ -83,18 +78,19 @@ class Task(TemplateTask):
         elif SM.current_state == STATES.NOMINAL:
 
             if not DH.data_process_exists("eps"):
-                DH.register_data_process("eps", self.data_format, True, data_limit=100000)
+                data_format = "Lhhb" + "h" * 38  # - use mV for voltage and mA for current (h = short integer 2 bytes)
+                DH.register_data_process("eps", data_format, True, data_limit=100000)
 
             # Get power system readings
 
-            (self.board_voltage, self.board_current) = self.read_vc(SATELLITE.BOARD_POWER_MONITOR)
-            (self.jetson_voltage, self.jetson_current) = self.read_vc(SATELLITE.JETSON_POWER_MONITOR)
+            (board_voltage, board_current) = self.read_vc(SATELLITE.BOARD_POWER_MONITOR)
+            (jetson_voltage, jetson_current) = self.read_vc(SATELLITE.JETSON_POWER_MONITOR)
 
             self.log_data[EPS_IDX.TIME_EPS] = int(time.time())
-            self.log_data[EPS_IDX.MAINBOARD_VOLTAGE] = int(self.board_voltage * 1000)  # mV - max 8.4V
-            self.log_data[EPS_IDX.MAINBOARD_CURRENT] = int(self.board_current * 1000)  # mA
-            self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE] = int(self.jetson_voltage * 1000)
-            self.log_data[EPS_IDX.JETSON_INPUT_CURRENT] = int(self.jetson_current * 1000)
+            self.log_data[EPS_IDX.MAINBOARD_VOLTAGE] = int(board_voltage * 1000)  # mV - max 8.4V
+            self.log_data[EPS_IDX.MAINBOARD_CURRENT] = int(board_current * 1000)  # mA
+            self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE] = int(jetson_voltage * 1000)
+            self.log_data[EPS_IDX.JETSON_INPUT_CURRENT] = int(jetson_current * 1000)
 
             DH.log_data("eps", self.log_data)
             self.log_info(
