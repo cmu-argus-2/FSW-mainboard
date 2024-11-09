@@ -80,9 +80,9 @@ class SATELLITE_RADIO:
     """
 
     @classmethod
-    def get_state(self):
+    def get_state(cls):
         # Get state
-        return self.state
+        return cls.state
 
     """
         Name: transition_state
@@ -90,36 +90,36 @@ class SATELLITE_RADIO:
     """
 
     @classmethod
-    def transition_state(self, timeout):
+    def transition_state(cls, timeout):
         # Check current state
-        if self.state == COMMS_STATE.RX:
+        if cls.state == COMMS_STATE.RX:
             # State transitions to TX states only occur from RX state
 
             # Error handling transition
             if timeout:
                 # Lost contact with GS, return to default state
-                self.state = COMMS_STATE.TX_HEARTBEAT
+                cls.state = COMMS_STATE.TX_HEARTBEAT
 
             # Transitions based on GS ACKs
-            elif self.gs_req_message_ID == MSG_ID.SAT_HEARTBEAT:
+            elif cls.gs_req_message_ID == MSG_ID.SAT_HEARTBEAT:
                 # Send latest TM frame
-                self.state = COMMS_STATE.TX_HEARTBEAT
+                cls.state = COMMS_STATE.TX_HEARTBEAT
 
-            elif self.gs_req_message_ID == MSG_ID.SAT_FILE_METADATA:
+            elif cls.gs_req_message_ID == MSG_ID.SAT_FILE_METADATA:
                 # Send file metadata
-                self.state = COMMS_STATE.TX_METADATA
+                cls.state = COMMS_STATE.TX_METADATA
 
-            elif self.gs_req_message_ID == MSG_ID.SAT_FILE_PKT:
+            elif cls.gs_req_message_ID == MSG_ID.SAT_FILE_PKT:
                 # Send file packet with specified sequence count
-                self.state = COMMS_STATE.TX_FILEPKT
+                cls.state = COMMS_STATE.TX_FILEPKT
 
             else:
                 # Unknown message ID, return to default state
-                self.state = COMMS_STATE.TX_HEARTBEAT
+                cls.state = COMMS_STATE.TX_HEARTBEAT
 
         else:
             # Unconditional branch to RX state
-            self.state = COMMS_STATE.RX
+            cls.state = COMMS_STATE.RX
 
     """
         Name: set_tm_frame
@@ -127,9 +127,9 @@ class SATELLITE_RADIO:
     """
 
     @classmethod
-    def set_tm_frame(self, tm_frame):
+    def set_tm_frame(cls, tm_frame):
         # Set internal TM frame definition
-        self.tm_frame = tm_frame
+        cls.tm_frame = tm_frame
 
     """
         Name: set_filepath
@@ -137,9 +137,9 @@ class SATELLITE_RADIO:
     """
 
     @classmethod
-    def set_filepath(self, filepath):
+    def set_filepath(cls, filepath):
         # Set internal TM frame definition
-        self.filepath = filepath
+        cls.filepath = filepath
 
     """
         Name: file_get_metadata
@@ -152,22 +152,22 @@ class SATELLITE_RADIO:
             # No file at filepath
             logger.warning("[COMMS ERROR] Undefined TX filepath")
 
-            self.file_ID = 0x00
-            self.file_size = 0
-            self.file_message_count = 0
+            cls.file_ID = 0x00
+            cls.file_size = 0
+            cls.file_message_count = 0
 
         else:
             # Valid filepath from DH, set size and message count
-            file_stat = os.stat(self.filepath)
-            self.file_ID = 0x01
-            self.file_size = int(file_stat[6])
-            self.file_message_count = int(self.file_size / FILE_PKTSIZE)
+            file_stat = os.stat(cls.filepath)
+            cls.file_ID = 0x01
+            cls.file_size = int(file_stat[6])
+            cls.file_message_count = int(cls.file_size / FILE_PKTSIZE)
 
             # Increment 1 to message count to account for division floor
-            if (self.file_size % FILE_PKTSIZE) > 0:
-                self.file_message_count += 1
+            if (cls.file_size % FILE_PKTSIZE) > 0:
+                cls.file_message_count += 1
 
-            # self.file_obj = open(self.filepath, "rb")
+            # cls.file_obj = open(cls.filepath, "rb")
 
     """
         Name: file_get_packet
@@ -175,30 +175,30 @@ class SATELLITE_RADIO:
     """
 
     @classmethod
-    def file_get_packet(self, sq_cnt):
-        if self.filepath is not None:
-            self.file_obj = open(self.filepath, "rb")
+    def file_get_packet(cls, sq_cnt):
+        if cls.filepath is not None:
+            cls.file_obj = open(cls.filepath, "rb")
 
         else:
             logger.warning("[COMMS ERROR] Undefined TX filepath")
-            self.file_array = bytes([0x00, 0x00, 0x00, 0x00])
+            cls.file_array = bytes([0x00, 0x00, 0x00, 0x00])
 
             return 0x00
 
         # Seek to the correct sq_cnt
-        if sq_cnt != self.file_message_count - 1:
-            self.file_obj.seek(sq_cnt * FILE_PKTSIZE)
-            self.file_array = self.file_obj.read(FILE_PKTSIZE)
-            self.file_obj.close()
+        if sq_cnt != cls.file_message_count - 1:
+            cls.file_obj.seek(sq_cnt * FILE_PKTSIZE)
+            cls.file_array = cls.file_obj.read(FILE_PKTSIZE)
+            cls.file_obj.close()
 
             return FILE_PKTSIZE
 
         else:
-            last_pkt_size = self.file_size - (self.file_message_count - 1) * FILE_PKTSIZE
+            last_pkt_size = cls.file_size - (cls.file_message_count - 1) * FILE_PKTSIZE
 
-            self.file_obj.seek(sq_cnt * FILE_PKTSIZE)
-            self.file_array = self.file_obj.read(last_pkt_size)
-            self.file_obj.close()
+            cls.file_obj.seek(sq_cnt * FILE_PKTSIZE)
+            cls.file_array = cls.file_obj.read(last_pkt_size)
+            cls.file_obj.close()
 
             return last_pkt_size
 
@@ -208,12 +208,12 @@ class SATELLITE_RADIO:
     """
 
     @classmethod
-    def file_pack_metadata(self):
+    def file_pack_metadata(cls):
         # Generate file metadata and file array
-        self.file_get_metadata()
+        cls.file_get_metadata()
 
         # Return file metadata payload message
-        return self.file_ID.to_bytes(1, "big") + self.file_size.to_bytes(4, "big") + self.file_message_count.to_bytes(2, "big")
+        return cls.file_ID.to_bytes(1, "big") + cls.file_size.to_bytes(4, "big") + cls.file_message_count.to_bytes(2, "big")
 
     """
         Name: listen
@@ -247,7 +247,7 @@ class SATELLITE_RADIO:
 
         if packet is None:
             # FIFO buffer does not contain a packet
-            self.gs_req_message_ID = 0x00
+            cls.gs_req_message_ID = 0x00
 
             return cls.gs_req_message_ID
 
@@ -273,24 +273,24 @@ class SATELLITE_RADIO:
             cls.gs_req_seq_count = int.from_bytes(packet[6:8], "big")
 
             # Verify GS RX message ID with previously transmitted message ID
-            if self.tx_message_ID != self.gs_rx_message_ID:
+            if cls.tx_message_ID != cls.gs_rx_message_ID:
                 # RX ID mismatch, reset GS RQ'd ID
-                logger.warning(f"[COMMS ERROR] GS received {self.gs_rx_message_ID}")
-                self.gs_req_message_ID = 0x00
+                logger.warning(f"[COMMS ERROR] GS received {cls.gs_rx_message_ID}")
+                cls.gs_req_message_ID = 0x00
 
                 return cls.gs_req_message_ID
 
             # Verify CRC count was 0 for last received message
-            if self.crc_count > 0:
+            if cls.crc_count > 0:
                 # CRC error, reset GS RQ'd ID
                 logger.warning("[COMMS ERROR] CRC error occured")
-                self.gs_req_message_ID = 0x00
+                cls.gs_req_message_ID = 0x00
 
                 return cls.gs_req_message_ID
 
         else:
             # Unknown message ID, reset GS RQ' ID
-            self.gs_req_message_ID = 0x00
+            cls.gs_req_message_ID = 0x00
 
         return cls.gs_req_message_ID
 
@@ -300,7 +300,7 @@ class SATELLITE_RADIO:
     """
 
     @classmethod
-    def transmit_file_metadata(self):
+    def transmit_file_metadata(cls):
         # Transmit stored file info
         tx_header = bytes(
             [
@@ -312,9 +312,9 @@ class SATELLITE_RADIO:
         )
 
         # Get file metatdata
-        tx_payload = self.file_pack_metadata()
+        tx_payload = cls.file_pack_metadata()
         # Pack entire message
-        self.tx_message = tx_header + tx_payload
+        cls.tx_message = tx_header + tx_payload
 
     """
         Name: transmit_file_packet
@@ -322,18 +322,18 @@ class SATELLITE_RADIO:
     """
 
     @classmethod
-    def transmit_file_packet(self):
+    def transmit_file_packet(cls):
         # Get bytes from file (stored in file_array)
-        pkt_size = self.file_get_packet(self.gs_req_seq_count)
+        pkt_size = cls.file_get_packet(cls.gs_req_seq_count)
 
         tx_header = (
             (MSG_ID.SAT_FILE_PKT).to_bytes(1, "big")
-            + (self.gs_req_seq_count).to_bytes(2, "big")
+            + (cls.gs_req_seq_count).to_bytes(2, "big")
             + (pkt_size).to_bytes(1, "big")
         )
 
         # Pack entire message
-        self.tx_message = tx_header + self.file_array
+        cls.tx_message = tx_header + cls.file_array
 
     """
         Name: transmit_message
@@ -353,16 +353,16 @@ class SATELLITE_RADIO:
 
         elif cls.state == COMMS_STATE.TX_FILEPKT:
             # Transmit file packets with requested sequence count
-            self.transmit_file_packet()
+            cls.transmit_file_packet()
 
         else:
             # Unknown state, just send
-            logger.warning(f"[COMMS ERROR] SAT received {self.gs_rq_message_ID}")
-            self.tx_message = self.tm_frame
+            logger.warning(f"[COMMS ERROR] SAT received {cls.gs_rq_message_ID}")
+            cls.tx_message = cls.tm_frame
 
         # Send a message to GS
-        self.sat.RADIO.send(self.tx_message)
-        self.crc_count = 0
+        cls.sat.RADIO.send(cls.tx_message)
+        cls.crc_count = 0
 
         # Return TX message header
         cls.tx_message_ID = int.from_bytes(cls.tx_message[0:1], "big")
