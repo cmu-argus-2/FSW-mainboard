@@ -47,7 +47,7 @@ class Task(TemplateTask):
             # Boot errors and system diagnostics
 
             # TODO: remove for flight
-            DH.delete_all_files()
+            # DH.delete_all_files()
             self.log_info("SD card cleaned up.")
 
             HAL_DIAGNOSTICS = True  # TODO For now
