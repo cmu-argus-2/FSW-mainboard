@@ -1,125 +1,24 @@
-# The MIT License (MIT)
-#
-# Copyright (c) 2017 Tony DiCola for Adafruit Industries
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
-"""
-`adafruit_gps`
-====================================================
+import time
+from typing import Optional
 
-GPS parsing module.  Can parse simple NMEA data sentences from serial GPS
-modules to read latitude, longitude, and more.
-
-* Author(s): Tony DiCola, Harry Rosmann
-
-Implementation Notes
---------------------
-
-**Hardware:**
-
-* Adafruit `Ultimate GPS Breakout <https://www.adafruit.com/product/746>`_
-* Adafruit `Ultimate GPS FeatherWing <https://www.adafruit.com/product/3133>`_
-
-**Software and Dependencies:**
-
-* Adafruit CircuitPython firmware for the ESP8622 and M0-based boards:
-  https://github.com/adafruit/circuitpython/releases
-
-"""
-from time import sleep, struct_time
-
+from busio import UART
 from digitalio import DigitalInOut
 from hal.drivers.middleware.errors import Errors
 from hal.drivers.middleware.generic_driver import Driver
 from micropython import const
 
-__version__ = "3.5.1"
-__repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_GPS.git"
 
-
-# Internal helper parsing functions.
-# These handle input that might be none or null and return none instead of
-# throwing errors.
-def _parse_degrees(nmea_data):
-    # Parse a NMEA lat/long data pair 'dddmm.mmmm' into a pure degrees value.
-    # Where ddd is the degrees, mm.mmmm is the minutes.
-    if nmea_data is None or len(nmea_data) < 3:
-        return None
-    raw = float(nmea_data)
-    deg = raw // 100
-    minutes = raw % 100
-    return deg + minutes / 60
-
-
-def _parse_int(nmea_data):
-    if nmea_data is None or nmea_data == "":
-        return None
-    return int(nmea_data)
-
-
-def _parse_float(nmea_data):
-    if nmea_data is None or nmea_data == "":
-        return None
-    return float(nmea_data)
-
-
-def _parse_str(nmea_data):
-    if nmea_data is None or nmea_data == "":
-        return None
-    return str(nmea_data)
-
-
-# lint warning about too many attributes disabled
-# pylint: disable-msg=R0902
 class GPS(Driver):
-    """GPS parsing module.  Can parse simple NMEA data sentences from serial
-    GPS modules to read latitude, longitude, and more.
-    """
-
-    def __init__(self, uart, enable=None, debug=False):
+    def __init__(self, uart: UART, enable=None, debug: bool = False) -> None:
         self._uart = uart
-        # Initialize null starting values for GPS attributes.
-        self.timestamp_utc = None
-        self.latitude = None
-        self.longitude = None
-        self.fix_quality = None
-        self.fix_quality_3d = None
-        self.satellites = None
-        self.satellites_prev = None
-        self.horizontal_dilution = None
-        self.altitude_m = None
-        self.height_geoid = None
-        self.speed_knots = None
-        self.track_angle_deg = None
-        self.sats = None
-        self.isactivedata = None
-        self.true_track = None
-        self.mag_track = None
-        self.sat_prns = None
-        self.sel_mode = None
-        self.pdop = None
-        self.hdop = None
-        self.vdop = None
-        self.total_mess_num = None
-        self.mess_num = None
-        self._raw_sentence = None
         self.debug = debug
+        self._msg = None
+        self._payload_len = 0
+        self._msg_id = 0
+        self._msg_cs = 0
+        self._payload = bytearray([0] * 59)
+        self._nav_data = {}
+        self.parsed_data = {}
 
         # Don't care to enable the GPS module during initialization
         self._enable = enable
@@ -128,347 +27,327 @@ class GPS(Driver):
             self._enable.switch_to_output()
             self._enable = False
 
-        super().__init__(self._enable)
+        super().__init__()
 
-    def update(self):
-        """Check for updated data from the GPS module and process it
-        accordingly.  Returns True if new data was processed, and False if
-        nothing new was received.
-        """
-        # Grab a sentence and check its data type to call the appropriate
-        # parsing function.
+    def update(self) -> bool:
         try:
-            sentence = self._parse_sentence()
+            msg = self._parse_sentence()
         except UnicodeError:
-            return None
-        if sentence is None:
             return False
+        if msg is None or len(msg) < 11:
+            return False
+
+        self._msg = [hex(i) for i in msg]
+        self._payload_len = ((msg[2] & 0xFF) << 8) | msg[3]
+        self._msg_id = msg[4]
+        self._msg_cs = msg[-3]
+        self._payload = bytearray(int(i, 16) for i in self._msg[4:-3])
+
+        if self._msg_id != 0xA8:
+            print("Invalid message ID, expected 0xA8, got: ", hex(self._msg_id))
+            # print("Message content: \n", self._msg)
+            return False
+
+        if self._payload_len != 59:
+            print("Invalid payload length, expected 59, got: ", self._payload_len)
+            return False
+
         if self.debug:
-            print(sentence)
-        data_type, args = sentence
-        data_type = bytes(data_type.upper(), "ascii")
-        # return sentence
-        if data_type in (
-            b"GPGLL",
-            b"GNGGL",
-        ):  # GLL, Geographic Position â€“ Latitude/Longitude
-            self._parse_gpgll(args)
-        elif data_type in (b"GPRMC", b"GNRMC"):  # RMC, minimum location info
-            self._parse_gprmc(args)
-        elif data_type in (b"GPGGA", b"GNGGA"):  # GGA, 3d location fix
-            self._parse_gpgga(args)
+            print("Raw message: \n", self._msg)
+            print("Payload: \n", self._payload)
+
+        cs = 0
+        for i in self._payload:
+            cs ^= i
+        if cs != self._msg_cs:
+            print("Checksum failed!")
+            return False
+
+        # Populate _nav_data as a dictionary
+        self._nav_data = {
+            "message_id": self._payload[0],
+            "fix_mode": self._payload[1],
+            "number_of_sv": self._payload[2],
+            "gps_week": (self._payload[3] << 8) | self._payload[4],
+            "tow": (self._payload[5] << 24) | (self._payload[6] << 16) | (self._payload[7] << 8) | self._payload[8],
+            "latitude": (self._payload[9] << 24) | (self._payload[10] << 16) | (self._payload[11] << 8) | self._payload[12],
+            "longitude": (self._payload[13] << 24) | (self._payload[14] << 16) | (self._payload[15] << 8) | self._payload[16],
+            "ellipsoid_alt": (self._payload[17] << 24)
+            | (self._payload[18] << 16)
+            | (self._payload[19] << 8)
+            | self._payload[20],
+            "mean_sea_lvl_alt": (self._payload[21] << 24)
+            | (self._payload[22] << 16)
+            | (self._payload[23] << 8)
+            | self._payload[24],
+            "gdop": (self._payload[25] << 8) | self._payload[26],
+            "pdop": (self._payload[27] << 8) | self._payload[28],
+            "hdop": (self._payload[29] << 8) | self._payload[30],
+            "vdop": (self._payload[31] << 8) | self._payload[32],
+            "tdop": (self._payload[33] << 8) | self._payload[34],
+            "ecef_x": (self._payload[35] << 24) | (self._payload[36] << 16) | (self._payload[37] << 8) | self._payload[38],
+            "ecef_y": (self._payload[39] << 24) | (self._payload[40] << 16) | (self._payload[41] << 8) | self._payload[42],
+            "ecef_z": (self._payload[43] << 24) | (self._payload[44] << 16) | (self._payload[45] << 8) | self._payload[46],
+            "ecef_vx": (self._payload[47] << 24) | (self._payload[48] << 16) | (self._payload[49] << 8) | self._payload[50],
+            "ecef_vy": (self._payload[51] << 24) | (self._payload[52] << 16) | (self._payload[53] << 8) | self._payload[54],
+            "ecef_vz": (self._payload[55] << 24) | (self._payload[56] << 16) | (self._payload[57] << 8) | self._payload[58],
+        }
+
+        if self.debug:
+            print("Nav data: \n", self._nav_data)
+
+        _ = self.parse_data()
+
         return True
 
-    def send_command(self, command, add_checksum=True):
-        """Send a command string to the GPS.  If add_checksum is True (the
-        default) a NMEA checksum will automatically be computed and added.
-        Note you should NOT add the leading $ and trailing * to the command
-        as they will automatically be added!
-        """
-        self.write(b"$")
-        self.write(command)
-        if add_checksum:
-            checksum = 0
-            for char in command:
-                checksum ^= char
-            self.write(b"*")
-            self.write(bytes("{:02x}".format(checksum).upper(), "ascii"))
-        self.write(b"\r\n")
+    @property
+    def parsed_nav_data(self) -> dict:
+        return self._parsed_data
+
+    def parse_fix_mode(self) -> str:
+        if self._nav_data["fix_mode"] == 0:
+            return "No fix"
+        if self._nav_data["fix_mode"] == 1:
+            return "2D fix"
+        elif self._nav_data["fix_mode"] == 2:
+            return "3D fix"
+        else:
+            return "3D + DGNSS fix"
 
     def has_fix(self):
         """True if a current fix for location information is available."""
-        return self.fix_quality is not None and self.fix_quality >= 1
+        return self._nav_data["fix_mode"] is not None and self._nav_data["fix_mode"] >= 1
 
     def has_3d_fix(self):
         """Returns true if there is a 3d fix available.
         use has_fix to determine if a 2d fix is available,
         passing it the same data"""
-        return self.fix_quality_3d is not None and self.fix_quality_3d >= 2
+        return self._nav_data["fix_mode"] is not None and self._nav_data["fix_mode"] >= 2
 
-    def datetime(self):
-        """Return struct_time object to feed rtc.set_time_source() function"""
-        return self.timestamp_utc
+    def parse_data(self) -> dict:
+        if not self._nav_data:
+            return
+        fix = self.parse_fix_mode()
+        sv_count = self._nav_data["number_of_sv"]
+        gnss_week = self._nav_data["gps_week"]
+        tow = self.parse_tow()
+        lat = self.parse_lat()
+        lon = self.parse_lon()
+        elip_alt = self.parse_elip_alt()
+        msl_alt = self.parse_msl_alt()
+        gdop = self.parse_gdop()
+        pdop = self.parse_pdop()
+        hdop = self.parse_hdop()
+        vdop = self.parse_vdop()
+        tdop = self.parse_tdop()
+        ecef_x = self.parse_ecef_x()
+        ecef_y = self.parse_ecef_y()
+        ecef_z = self.parse_ecef_z()
+        ecef_vx = self.parse_ecef_vx()
+        ecef_vy = self.parse_ecef_vy()
+        ecef_vz = self.parse_ecef_vz()
+        # dt = self.gps_datetime(gnss_week, tow)
 
-    def nmea_sentence(self):
-        """Return raw_sentence which is the raw NMEA sentence read from the GPS"""
-        return self._raw_sentence
+        self.parsed_data = {
+            "message_id": self._nav_data["message_id"],
+            "fix_mode": fix,
+            "number_of_sv": sv_count,
+            "gps_week": gnss_week,
+            "tow": tow,
+            "latitude": lat,
+            "longitude": lon,
+            "ellipsoid_alt": elip_alt,
+            "mean_sea_lvl_alt": msl_alt,
+            "gdop": gdop,
+            "pdop": pdop,
+            "hdop": hdop,
+            "vdop": vdop,
+            "tdop": tdop,
+            "ecef_x": ecef_x,
+            "ecef_y": ecef_y,
+            "ecef_z": ecef_z,
+            "ecef_vx": ecef_vx,
+            "ecef_vy": ecef_vy,
+            "ecef_vz": ecef_vz
+            # , "datetime": dt
+        }
+        return self.parsed_data
 
-    def read(self, num_bytes):
-        """Read up to num_bytes of data from the GPS directly, without parsing.
-        Returns a bytearray with up to num_bytes or None if nothing was read"""
-        return self._uart.read(num_bytes)
+    def parse_tow(self) -> int:
+        # Convert from 0.01 seconds to seconds
+        total_seconds = self._nav_data["tow"] / 100
 
-    def write(self, bytestr):
-        """Write a bytestring data to the GPS directly, without parsing
-        or checksums"""
+        # Calculate day of the week
+        days_of_week = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+        day_index = int(total_seconds // 86400) % 7
+        day_of_week = days_of_week[day_index]
+
+        # Calculate hours, minutes, and seconds
+        hours = int((total_seconds % 86400) // 3600)
+        minutes = int((total_seconds % 3600) // 60)
+        seconds = total_seconds % 60
+
+        # Format the output
+        time_of_week = f"{day_of_week}, {hours:02}:{minutes:02}:{seconds:05.2f} (hh:mm:ss.ss)"
+        return time_of_week
+
+    def parse_lat(self) -> float:
+        # Convert from scale 1/1e-7 to decimal degrees
+        latitude = self._nav_data["latitude"] * 1e-7
+
+        # Determine North or South
+        direction = "N" if latitude >= 0 else "S"
+        latitude = abs(latitude)
+
+        # Convert to degrees, minutes, and seconds
+        degrees = int(latitude)
+        minutes = int((latitude - degrees) * 60)
+        seconds = (latitude - degrees - minutes / 60) * 3600
+
+        # Format output
+        latitude_str = f"{degrees}° {minutes}' {seconds:.2f}\" {direction}"
+        return latitude_str
+
+    def parse_lon(self) -> float:
+        # Convert from scale 1/1e-7 to decimal degrees
+        longitude = self._nav_data["longitude"] * 1e-7
+
+        # Determine East or West
+        direction = "E" if longitude >= 0 else "W"
+        longitude = abs(longitude)
+
+        # Convert to degrees, minutes, and seconds
+        degrees = int(longitude)
+        minutes = int((longitude - degrees) * 60)
+        seconds = (longitude - degrees - minutes / 60) * 3600
+
+        # Format output
+        longitude_str = f"{degrees}° {minutes}' {seconds:.2f}\" {direction}"
+        return longitude_str
+
+    def parse_elip_alt(self) -> float:
+        # Convert from hundredths of a meter to meters
+        distance_meters = self._nav_data["ellipsoid_alt"] / 100
+
+        # Format output
+        distance_str = f"{distance_meters:.2f} m"
+        return distance_str
+
+    def parse_msl_alt(self) -> float:
+        # Convert from hundredths of a meter to meters
+        distance_meters = self._nav_data["mean_sea_lvl_alt"] / 100
+
+        # Format output
+        distance_str = f"{distance_meters:.2f} m"
+        return distance_str
+
+    def parse_gdop(self) -> float:
+        return self._nav_data["gdop"] * 0.01
+
+    def parse_pdop(self) -> float:
+        return self._nav_data["pdop"] * 0.01
+
+    def parse_hdop(self) -> float:
+        return self._nav_data["hdop"] * 0.01
+
+    def parse_vdop(self) -> float:
+        return self._nav_data["vdop"] * 0.01
+
+    def parse_tdop(self) -> float:
+        return self._nav_data["tdop"] * 0.01
+
+    def parse_ecef_x(self) -> float:
+        # Convert from hundredths of a meter to meters
+        distance_meters = self._nav_data["ecef_x"] / 100
+
+        # Format output
+        distance_str = f"{distance_meters:.2f} m"
+        return distance_str
+
+    def parse_ecef_y(self) -> float:
+        # Convert from hundredths of a meter to meters
+        distance_meters = self._nav_data["ecef_y"] / 100
+
+        # Format output
+        distance_str = f"{distance_meters:.2f} m"
+        return distance_str
+
+    def parse_ecef_z(self) -> float:
+        # Convert from hundredths of a meter to meters
+        distance_meters = self._nav_data["ecef_z"] / 100
+
+        # Format output
+        distance_str = f"{distance_meters:.2f} m"
+        return distance_str
+
+    def parse_ecef_vx(self) -> float:
+        # Convert from hundredths of a meter to meters
+        speed_meters = self._nav_data["ecef_vx"] / 100
+
+        # Format output
+        speed_meters = f"{speed_meters:.2f} m/s"
+        return speed_meters
+
+    def parse_ecef_vy(self) -> float:
+        # Convert from hundredths of a meter to meters
+        speed_meters = self._nav_data["ecef_vy"] / 100
+
+        # Format output
+        speed_meters = f"{speed_meters:.2f} m/s"
+        return speed_meters
+
+    def parse_ecef_vz(self) -> float:
+        # Convert from hundredths of a meter to meters
+        speed_meters = self._nav_data["ecef_vz"] / 100
+
+        # Format output
+        speed_meters = f"{speed_meters:.2f} m/s"
+        return speed_meters
+
+    # def gps_datetime(gps_week: int, tow: int) -> float:
+    #     """Get the unix time from GPS week and TOW (time of week)."""
+    #     usec = tow % 100 * 1000
+    #     # 86400 is number of seconds in a day
+    #     sec = (tow / 100) % 86400
+    #     day = ((tow / 100) / 86400) + (gps_week * 7)
+    #     dt = EPOCH + timedelta(days=day, seconds=sec, microseconds=usec)
+    #     return dt.timestamp()
+
+    def print_parsed_data(self):
+        print("Parsed Data:")
+        print("=" * 40)
+        for key, value in self.parsed_data.items():
+            print(f"{str(key)}: {value}")
+        print("=" * 40)
+
+    def get_parsed_data(self) -> dict:
+        """Returns the parsed data as a dictionary."""
+        return self.parsed_data
+
+    def get_nav_data(self) -> dict:
+        """Returns the current navigation data as a dictionary."""
+        return self._nav_data
+
+    def write(self, bytestr) -> Optional[int]:
         return self._uart.write(bytestr)
 
-    def in_waiting(self):
-        """Returns number of bytes available in UART read buffer"""
+    def set_to_binary(self) -> None:
+        self.write(b"\xA0\xA1\x00\x03\x09\x02\x00\x0B\x0D\x0A")
+
+    @property
+    def in_waiting(self) -> int:
         return self._uart.in_waiting
 
-    def readline(self):
-        """Returns a newline terminated bytearray, must have timeout set for
-        the underlying UART or this will block forever!"""
+    def readline(self) -> Optional[bytes]:
         return self._uart.readline()
 
-    def _read_sentence(self):
-        # Parse any NMEA sentence that is available.
-        # pylint: disable=len-as-condition
-        # This needs to be refactored when it can be tested.
-
-        # Only continue if we have at least 32 bytes in the input buffer
-        if self.in_waiting < 32:
+    def _read_sentence(self) -> Optional[bytes]:
+        if self.in_waiting < 11:
             return None
+        return self.readline()
 
-        sentence = self.readline()
-        if sentence is None or sentence == b"" or len(sentence) < 1:
-            return None
-        try:
-            sentence = str(sentence, "ascii").strip()
-        except UnicodeError:
-            return None
-        # Look for a checksum and validate it if present.
-        if len(sentence) > 7 and sentence[-3] == "*":
-            # Get included checksum, then calculate it and compare.
-            expected = int(sentence[-2:], 16)
-            actual = 0
-            for i in range(1, len(sentence) - 3):
-                actual ^= ord(sentence[i])
-            if actual != expected:
-                return None  # Failed to validate checksum.
-
-            # copy the raw sentence
-            self._raw_sentence = sentence
-
-            return sentence
-        # At this point we don't have a valid sentence
-        return None
-
-    def _parse_sentence(self):
-        sentence = self._read_sentence()
-
-        # sentence is a valid NMEA with a valid checksum
-        if sentence is None:
-            return None
-
-        # Remove checksum once validated.
-        sentence = sentence[:-3]
-        # Parse out the type of sentence (first string after $ up to comma)
-        # and then grab the rest as data within the sentence.
-        delimiter = sentence.find(",")
-        if delimiter == -1:
-            return None  # Invalid sentence, no comma after data type.
-        data_type = sentence[1:delimiter]
-        return (data_type, sentence[delimiter + 1 :])
-
-    def _parse_gpgll(self, args):
-        data = args.split(",")
-        if data is None or data[0] is None:
-            return  # Unexpected number of params.
-
-        # Parse latitude and longitude.
-        self.latitude = _parse_degrees(data[0])
-        if self.latitude is not None and data[1] is not None and data[1].lower() == "s":
-            self.latitude *= -1.0
-        self.longitude = _parse_degrees(data[2])
-        if self.longitude is not None and data[3] is not None and data[3].lower() == "w":
-            self.longitude *= -1.0
-        time_utc = int(_parse_int(float(data[4])))
-        if time_utc is not None:
-            hours = time_utc // 10000
-            mins = (time_utc // 100) % 100
-            secs = time_utc % 100
-            # Set or update time to a friendly python time struct.
-            if self.timestamp_utc is not None:
-                self.timestamp_utc = struct_time((0, 0, 0, hours, mins, secs, 0, 0, -1))
-            else:
-                self.timestamp_utc = struct_time((0, 0, 0, hours, mins, secs, 0, 0, -1))
-        # Parse data active or void
-        self.isactivedata = _parse_str(data[5])
-
-    def _parse_gprmc(self, args):
-        # Parse the arguments (everything after data type) for NMEA GPRMC
-        # minimum location fix sentence.
-        data = args.split(",")
-        if data is None or len(data) < 11 or data[0] is None:
-            return  # Unexpected number of params.
-        # Parse fix time.
-        time_utc = int(_parse_float(data[0]))
-        if time_utc is not None:
-            hours = time_utc // 10000
-            mins = (time_utc // 100) % 100
-            secs = time_utc % 100
-            # Set or update time to a friendly python time struct.
-            if self.timestamp_utc is not None:
-                self.timestamp_utc = struct_time(
-                    (
-                        self.timestamp_utc.tm_year,
-                        self.timestamp_utc.tm_mon,
-                        self.timestamp_utc.tm_mday,
-                        hours,
-                        mins,
-                        secs,
-                        0,
-                        0,
-                        -1,
-                    )
-                )
-            else:
-                self.timestamp_utc = struct_time((0, 0, 0, hours, mins, secs, 0, 0, -1))
-        # Parse status (active/fixed or void).
-        status = data[1]
-        self.fix_quality = 0
-        if status is not None and status.lower() == "a":
-            self.fix_quality = 1
-        # Parse latitude and longitude.
-        self.latitude = _parse_degrees(data[2])
-        if self.latitude is not None and data[3] is not None and data[3].lower() == "s":
-            self.latitude *= -1.0
-        self.longitude = _parse_degrees(data[4])
-        if self.longitude is not None and data[5] is not None and data[5].lower() == "w":
-            self.longitude *= -1.0
-        # Parse out speed and other simple numeric values.
-        self.speed_knots = _parse_float(data[6])
-        self.track_angle_deg = _parse_float(data[7])
-        # Parse date.
-        if data[8] is not None and len(data[8]) == 6:
-            day = int(data[8][0:2])
-            month = int(data[8][2:4])
-            year = 2000 + int(data[8][4:6])  # Y2k bug, 2 digit year assumption.
-            # This is a problem with the NMEA
-            # spec and not this code.
-            if self.timestamp_utc is not None:
-                # Replace the timestamp with an updated one.
-                # (struct_time is immutable and can't be changed in place)
-                self.timestamp_utc = struct_time(
-                    (
-                        year,
-                        month,
-                        day,
-                        self.timestamp_utc.tm_hour,
-                        self.timestamp_utc.tm_min,
-                        self.timestamp_utc.tm_sec,
-                        0,
-                        0,
-                        -1,
-                    )
-                )
-            else:
-                # Time hasn't been set so create it.
-                self.timestamp_utc = struct_time((year, month, day, 0, 0, 0, 0, 0, -1))
-
-    def _parse_gpgga(self, args):
-        # Parse the arguments (everything after data type) for NMEA GPGGA
-        # 3D location fix sentence.
-        data = args.split(",")
-        if data is None or len(data) != 14:
-            return  # Unexpected number of params.
-        # Parse fix time.
-        time_utc = int(_parse_float(data[0]))
-        if time_utc is not None:
-            hours = time_utc // 10000
-            mins = (time_utc // 100) % 100
-            secs = time_utc % 100
-            # Set or update time to a friendly python time struct.
-            if self.timestamp_utc is not None:
-                self.timestamp_utc = struct_time(
-                    (
-                        self.timestamp_utc.tm_year,
-                        self.timestamp_utc.tm_mon,
-                        self.timestamp_utc.tm_mday,
-                        hours,
-                        mins,
-                        secs,
-                        0,
-                        0,
-                        -1,
-                    )
-                )
-            else:
-                self.timestamp_utc = struct_time((0, 0, 0, hours, mins, secs, 0, 0, -1))
-        # Parse latitude and longitude.
-        self.latitude = _parse_degrees(data[1])
-        if self.latitude is not None and data[2] is not None and data[2].lower() == "s":
-            self.latitude *= -1.0
-        self.longitude = _parse_degrees(data[3])
-        if self.longitude is not None and data[4] is not None and data[4].lower() == "w":
-            self.longitude *= -1.0
-        # Parse out fix quality and other simple numeric values.
-        self.fix_quality = _parse_int(data[5])
-        self.satellites = _parse_int(data[6])
-        self.horizontal_dilution = _parse_float(data[7])
-        self.altitude_m = _parse_float(data[8])
-        self.height_geoid = _parse_float(data[10])
-
-    def _parse_gpgsa(self, args):
-        data = args.split(",")
-        if data is None:
-            return  # Unexpected number of params
-
-        # Parse selection mode
-        self.sel_mode = _parse_str(data[0])
-        # Parse 3d fix
-        self.fix_quality_3d = _parse_int(data[1])
-        satlist = list(filter(None, data[2:-4]))
-        self.sat_prns = {}
-        for i, sat in enumerate(satlist, 1):
-            self.sat_prns["gps{}".format(i)] = _parse_int(sat)
-
-        # Parse PDOP, dilution of precision
-        self.pdop = _parse_float(data[-3])
-        # Parse HDOP, horizontal dilution of precision
-        self.hdop = _parse_float(data[-2])
-        # Parse VDOP, vertical dilution of precision
-        self.vdop = _parse_float(data[-1])
-
-    def _parse_gpgsv(self, args):
-        # Parse the arguments (everything after data type) for NMEA GPGGA
-        # 3D location fix sentence.
-        data = args.split(",")
-        if data is None:
-            return  # Unexpected number of params.
-
-        # Parse number of messages
-        self.total_mess_num = _parse_int(data[0])  # Total number of messages
-        # Parse message number
-        self.mess_num = _parse_int(data[1])  # Message number
-        # Parse number of satellites in view
-        self.satellites = _parse_int(data[2])  # Number of satellites
-
-        if len(data) < 3:
-            return
-
-        sat_tup = data[3:]
-
-        satdict = {}
-        for i in range(len(sat_tup) / 4):
-            j = i * 4
-            key = "gps{}".format(i + (4 * (self.mess_num - 1)))
-            satnum = _parse_int(sat_tup[0 + j])  # Satellite number
-            satdeg = _parse_int(sat_tup[1 + j])  # Elevation in degrees
-            satazim = _parse_int(sat_tup[2 + j])  # Azimuth in degrees
-            satsnr = _parse_int(sat_tup[3 + j])  # signal-to-noise ratio in dB
-            value = (satnum, satdeg, satazim, satsnr)
-            satdict[key] = value
-
-        if self.sats is None:
-            self.sats = {}
-        for satnum in satdict:
-            self.sats[satnum] = satdict[satnum]
-
-        try:
-            if self.satellites < self.satellites_prev:
-                for i in self.sats:
-                    try:
-                        if int(i[-2]) >= self.satellites:
-                            del self.sats[i]
-                    except ValueError:
-                        if int(i[-1]) >= self.satellites:
-                            del self.sats[i]
-        except TypeError:
-            pass
-        self.satellites_prev = self.satellites
+    def _parse_sentence(self) -> Optional[bytes]:
+        return self._read_sentence()
 
     def enable(self) -> None:
         """Enable the GPS module through the enable pin"""
@@ -501,7 +380,7 @@ class GPS(Driver):
             if success:
                 return Errors.NOERROR
 
-            sleep(1)
+            time.sleep(1)
 
         return Errors.GPS_UPDATE_CHECK_FAILED
 

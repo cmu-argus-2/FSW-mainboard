@@ -14,9 +14,11 @@ else
 fi
 
 # Make the correct mpy-cross executable
-chmod +x build/$MPY_EXEC
+chmod +x build_tools/$MPY_EXEC
 
 echo "$MPY_EXEC is now executable"
+
+export ARGUS_SIMULATION_FLAG=0
 
 if [[ -z $1 ]];
 then
@@ -35,5 +37,9 @@ then
     cd -
 elif [ "$1" == "simulate" ];
 then
-    echo "Simulator still in the works :)"
+    export ARGUS_SIMULATION_FLAG=1
+    echo "ARGUS_SIMULATION_FLAG set to 1 for simulation mode."
+    python3 build_tools/build-emulator.py
+    cd build/ && python3 main.py
+    cd -
 fi

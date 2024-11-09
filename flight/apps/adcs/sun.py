@@ -35,38 +35,33 @@ class SUN_VECTOR_STATUS:
     MISSING_FULL_Z_AXIS_READING = 0xB
 
 
+def _read_light_sensor(face):
+    if SATELLITE.LIGHT_SENSORS[face] is not None:
+        return SATELLITE.LIGHT_SENSORS[face].lux()
+    else:
+        return ERROR_LUX
+
+
 def read_light_sensors():
     """
-    Read the light sensors on the x+,x-,y+,y-, and z- faces of the satellite
+    Read the light sensors on the x+,x-,y+,y-, and z- faces of the satellite.
 
     Returns:
-        lux_readings: list of lux readings on each face. A "ERROR_LUX" reading comes from a dysfunctional sensor
+        lux_readings: list of lux readings on each face. A "ERROR_LUX" reading comes from a dysfunctional sensor.
     """
 
-    sensor_faces = [
-        "LIGHT_SENSOR_XP",
-        "LIGHT_SENSOR_XM",
-        "LIGHT_SENSOR_YP",
-        "LIGHT_SENSOR_YM",
-        "LIGHT_SENSOR_ZM",
-    ]
-
+    faces = ["XP", "XM", "YP", "YM", "ZM"]
     lux_readings = []
 
-    for face in sensor_faces:
+    for face in faces:
         try:
-            s = getattr(SATELLITE, face).lux()
-            lux_readings.append(s)
-        except AttributeError as e:
-            # logging.error(f"AttributeError for {face}: {e}")
-            logger.warning(f"AttributeError for {face}: {e}")
-            lux_readings.append(ERROR_LUX)
+            lux_readings.append(_read_light_sensor(face))
         except Exception as e:
-            # logging.error(f"Error reading {face}: {e}")
             logger.warning(f"Error reading {face}: {e}")
             lux_readings.append(ERROR_LUX)
 
-    # Read the pyramid on z+ face - not implemented in the HAL yet
+    # Placeholder for the z+ face pyramid reading
+    # lux_readings.append(ERROR_LUX)
 
     return lux_readings
 

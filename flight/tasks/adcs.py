@@ -65,7 +65,6 @@ class Task(TemplateTask):
     time = int(time.time())
 
     log_data = [0] * 37
-    data_format = "LB" + 6 * "f" + "B" + 3 * "f" + "B" + 9 * "H" + 6 * "B" + 4 * "f" + "B" + 4 * "f"
     # For now - keep the floats, will optimize the telemetry packet afterwards
 
     # Sun Acquisition
@@ -88,7 +87,8 @@ class Task(TemplateTask):
         if SM.current_state == STATES.NOMINAL:
 
             if not DH.data_process_exists("adcs"):
-                DH.register_data_process("adcs", self.data_format, True, data_limit=100000, write_interval=5)
+                data_format = "LB" + 6 * "f" + "B" + 3 * "f" + "B" + 9 * "H" + 6 * "B" + 4 * "f" + "B" + 4 * "f"
+                DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
 
             self.time = int(time.time())
 
@@ -124,8 +124,9 @@ class Task(TemplateTask):
             # Pyramid TBD
 
             ## Magnetic Control
-
+            # TODO controllers
             # TODO
+            # see apps/adcs/mcm.py
 
             ## Attitude Determination
 
