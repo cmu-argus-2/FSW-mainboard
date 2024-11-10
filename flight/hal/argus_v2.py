@@ -161,7 +161,7 @@ class ArgusV2Components:
 
     # BOARD POWER MONITOR
     BOARD_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x40)
+    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x48)
 
     # CAMERA
 
@@ -580,17 +580,6 @@ class ArgusV2(CubeSat):
         try:
             from hal.drivers.sx1262 import SX1262
 
-            radio = SX1262(
-                spi_bus=1,
-                clk=ArgusV2Interfaces.SPI_SCK,
-                mosi=ArgusV2Interfaces.SPI_MOSI,
-                miso=ArgusV2Interfaces.SPI_MISO,
-                cs=ArgusV2Components.RADIO_CS,
-                irq=ArgusV2Components.RADIO_IRQ,
-                rst=ArgusV2Components.RADIO_RESET,
-                gpio=ArgusV2Components.RADIO_BUSY,
-            )
-
             radioEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_ENABLE)
             radioRxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_RX_EN)
             radioTxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_TX_EN)
@@ -602,6 +591,36 @@ class ArgusV2(CubeSat):
             radioEn.value = True
             radioRxEn.value = True
             radioTxEn.value = True
+
+            radio = SX1262(
+                spi_bus=1,
+                clk=ArgusV2Interfaces.SPI_SCK,
+                mosi=ArgusV2Interfaces.SPI_MOSI,
+                miso=ArgusV2Interfaces.SPI_MISO,
+                cs=ArgusV2Components.RADIO_CS,
+                irq=ArgusV2Components.RADIO_IRQ,
+                rst=ArgusV2Components.RADIO_RESET,
+                gpio=ArgusV2Components.RADIO_BUSY,
+            )
+
+            radio.begin(
+                freq=915.6,
+                bw=125,
+                sf=7,
+                cr=8,
+                syncWord=0x12,
+                power=22,
+                currentLimit=140.0,
+                preambleLength=8,
+                implicit=False,
+                implicitLen=0xFF,
+                crcOn=True,
+                txIq=False,
+                rxIq=False,
+                tcxoVoltage=1.7,
+                useRegulatorLDO=False,
+                blocking=True,
+            )
 
             if self.__middleware_enabled:
                 radio = Middleware(radio)

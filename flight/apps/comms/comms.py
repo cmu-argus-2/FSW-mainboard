@@ -222,7 +222,7 @@ class SATELLITE_RADIO:
 
     @classmethod
     def data_available(cls):
-        return SATELLITE.RADIO.RX_available()
+        return SATELLITE.RADIO.rx_available()
 
     """
         Name: receive_message
@@ -234,7 +234,7 @@ class SATELLITE_RADIO:
         # Get packet from radio over SPI
         # Assumes packet is in FIFO buffer
 
-        packet = SATELLITE.RADIO.read_fifo_buffer()
+        packet = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
 
         if packet is None:
             # FIFO buffer does not contain a packet
@@ -352,7 +352,9 @@ class SATELLITE_RADIO:
             cls.tx_message = cls.tm_frame
 
         # Send a message to GS
-        cls.sat.RADIO.send(cls.tx_message)
+        tx_msg = bytes([0xFF, 0xFF, 0x00, 0x00]) + cls.tx_message
+
+        cls.sat.RADIO.send(tx_msg)
         cls.crc_count = 0
 
         # Return TX message header

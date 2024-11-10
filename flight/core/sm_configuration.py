@@ -2,8 +2,7 @@ from core.states import STATES
 from micropython import const
 from tasks.adcs import Task as adcs
 from tasks.command import Task as command
-
-# from tasks.comms import Task as comms
+from tasks.comms import Task as comms
 from tasks.eps import Task as eps
 from tasks.gps import Task as gps
 from tasks.imu import Task as imu
