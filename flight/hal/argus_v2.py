@@ -578,7 +578,7 @@ class ArgusV2(CubeSat):
         :return: Error code if the radio failed to initialize
         """
         try:
-            from hal.drivers.sx1262 import SX1262
+            from hal.drivers.sx126x import SX1262
 
             radioEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_ENABLE)
             radioRxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_RX_EN)
@@ -593,7 +593,7 @@ class ArgusV2(CubeSat):
             radioTxEn.value = True
 
             radio = SX1262(
-                spi_bus=1,
+                spi_bus=ArgusV2Interfaces.SPI,
                 clk=ArgusV2Interfaces.SPI_SCK,
                 mosi=ArgusV2Interfaces.SPI_MOSI,
                 miso=ArgusV2Interfaces.SPI_MISO,
@@ -602,6 +602,8 @@ class ArgusV2(CubeSat):
                 rst=ArgusV2Components.RADIO_RESET,
                 gpio=ArgusV2Components.RADIO_BUSY,
             )
+
+            print(radio)
 
             radio.begin(
                 freq=915.6,
@@ -627,7 +629,9 @@ class ArgusV2(CubeSat):
 
             self.__radio = radio
             self.__device_list.append(radio)
+
         except Exception as e:
+            print(e)
             if self.__debug:
                 raise e
 

@@ -243,14 +243,11 @@ class SATELLITE_RADIO:
             return cls.gs_req_message_ID
 
         # Check CRC error on received packet
-        crc_check = SATELLITE.RADIO.crc_error()
+        crc_check = 0
 
         # Increment internal CRC count
         if crc_check > 0:
             cls.crc_count += 1
-
-        # Get RX message RSSI
-        cls.rx_message_rssi = SATELLITE.RADIO.rssi(raw=True)
 
         # Unpack RX message header
         cls.rx_message_ID = int.from_bytes(packet[0:1], "big")
