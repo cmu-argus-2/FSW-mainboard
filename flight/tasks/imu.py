@@ -6,8 +6,6 @@ from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
 from hal.configuration import SATELLITE
-from hal.drivers.adafruit_bno08x import BNO_REPORT_ACCELEROMETER, BNO_REPORT_GYROSCOPE, BNO_REPORT_MAGNETOMETER
-from micropython import const
 
 
 class Task(TemplateTask):
@@ -67,7 +65,4 @@ class Task(TemplateTask):
             if self.log_print_counter % 10 == 0:
                 # self.log_info(f"{dict(zip(self.data_keys, self.log_data))}")
                 self.log_print_counter = 0
-                self.log_info(f"accel: {self.log_data[IMU_IDX.ACCEL_X:IMU_IDX.ACCEL_Z]}")
-                self.log_info(f"mag: {self.log_data[IMU_IDX.MAGNETOMETER_X:IMU_IDX.MAGNETOMETER_Z]}")
-                self.log_info(f"gyro: {self.log_data[IMU_IDX.GYROSCOPE_X:IMU_IDX.GYROSCOPE_Z]}")
-                # self.log_info(f"(mag, gyro): {self.log_data[IMU_IDX.MAGNETOMETER_X:IMU_IDX.GYROSCOPE_Z]}")
+                self.log_info(f"(mag, gyro): {self.log_data[IMU_IDX.MAGNETOMETER_X:IMU_IDX.GYROSCOPE_Z]}")
