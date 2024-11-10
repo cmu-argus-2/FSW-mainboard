@@ -1,11 +1,12 @@
 """
 Author: Harry, Thomas, Ibrahima, Perrin
-Description: This file contains the definition of the ArgusV1 class and its associated interfaces and components.
+Description: This file contains the definition of the ArgusV2 class and its associated interfaces and components.
 """
 
 from sys import path
 
 import board
+import digitalio
 from busio import I2C, SPI, UART
 from hal.cubesat import CubeSat
 from hal.drivers.adafruit_bno08x import BNO_REPORT_ACCELEROMETER, BNO_REPORT_GYROSCOPE, BNO_REPORT_MAGNETOMETER
@@ -18,7 +19,7 @@ from storage import VfsFat, mount
 
 class ArgusV2Interfaces:
     """
-    This class represents the interfaces used in the ArgusV1 module.
+    This class represents the interfaces used in the ArgusV2 module.
     """
 
     I2C0_SDA = board.SDA0  # GPIO0
@@ -225,6 +226,7 @@ class ArgusV2Components:
     RADIO_TX_EN = board.LORA_TX_EN  # GPIO22
     RADIO_RX_EN = board.LORA_RX_EN  # GPIO20
     RADIO_BUSY = board.LORA_BUSY  # GPIO23
+    RADIO_IRQ = board.GPS_EN  # GPIO27_ADC1
     # RADIO_FREQ = 915.6
 
     ########
@@ -268,7 +270,7 @@ class ArgusV2Components:
 
 
 class ArgusV2(CubeSat):
-    """ArgusV1: Represents the Argus V1 CubeSat."""
+    """ArgusV2: Represents the Argus V1 CubeSat."""
 
     def __init__(self, enable_middleware: bool = False, debug: bool = False):
         """__init__: Initializes the Argus V1 CubeSat.
@@ -305,7 +307,7 @@ class ArgusV2(CubeSat):
         error_list.append(self.__charger_boot())
         # error_list.append(self.__torque_drivers_boot())
         # error_list.append(self.__light_sensors_boot())  # light + sun sensors
-        # error_list.append(self.__radio_boot())
+        error_list.append(self.__radio_boot())
         # error_list.append(self.__burn_wire_boot())
 
         error_list = [error for error in error_list if error != Errors.NOERROR]
@@ -576,16 +578,30 @@ class ArgusV2(CubeSat):
         :return: Error code if the radio failed to initialize
         """
         try:
-            from hal.drivers.rfm9x import RFM9x
+            from hal.drivers.sx1262 import SX1262
 
-            radio = RFM9x(
-                ArgusV2Components.RADIO_SPI,
-                ArgusV2Components.RADIO_CS,
-                ArgusV2Components.RADIO_DIO0,
-                ArgusV2Components.RADIO_RESET,
-                ArgusV2Components.RADIO_ENABLE,
-                ArgusV2Components.RADIO_FREQ,
+            radio = SX1262(
+                spi_bus=1,
+                clk=ArgusV2Interfaces.SPI_SCK,
+                mosi=ArgusV2Interfaces.SPI_MOSI,
+                miso=ArgusV2Interfaces.SPI_MISO,
+                cs=ArgusV2Components.RADIO_CS,
+                irq=ArgusV2Components.RADIO_IRQ,
+                rst=ArgusV2Components.RADIO_RESET,
+                gpio=ArgusV2Components.RADIO_BUSY,
             )
+
+            radioEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_ENABLE)
+            radioRxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_RX_EN)
+            radioTxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_TX_EN)
+
+            radioEn.direction = digitalio.Direction.OUTPUT
+            radioRxEn.direction = digitalio.Direction.OUTPUT
+            radioTxEn.direction = digitalio.Direction.OUTPUT
+
+            radioEn.value = True
+            radioRxEn.value = True
+            radioTxEn.value = True
 
             if self.__middleware_enabled:
                 radio = Middleware(radio)
