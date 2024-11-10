@@ -20,7 +20,7 @@ class TASK:
     OBDH = const(0x03)
     ADCS = const(0x04)
     IMU = const(0x05)
-    # COMMS = const(0x07)
+    COMMS = const(0x07)
     THERMAL = const(0x08)
     GPS = const(0x09)
     TM = const(0x0A)
@@ -33,7 +33,7 @@ TASK_REGISTRY = {
     TASK.OBDH: obdh,
     TASK.ADCS: adcs,
     TASK.IMU: imu,
-    # TASK.COMMS: comms,
+    TASK.COMMS: comms,
     TASK.THERMAL: thermal,
     TASK.GPS: gps,
     TASK.TM: telemetry,
@@ -83,7 +83,7 @@ SM_CONFIGURATION = {
         "Tasks": {
             TASK.COMMAND: {"Frequency": 10, "Priority": 1},
             TASK.TIMING: {"Frequency": 1, "Priority": 2},
-            # TASK.COMMS: {"Frequency": 1, "Priority": 1},
+            TASK.COMMS: {"Frequency": 1, "Priority": 1},
             TASK.EPS: {"Frequency": 1, "Priority": 1},
             TASK.OBDH: {"Frequency": 1, "Priority": 2},
             TASK.IMU: {"Frequency": 2, "Priority": 3},

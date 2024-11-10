@@ -17,8 +17,6 @@ class CubeSat:
         "__i2c1",
         "__i2c2",
         "__gps",
-        "__battery_monitor",
-        "__jetson_power_monitor",
         "__power_monitors",
         "__imu",
         "__charger",
@@ -146,33 +144,25 @@ class CubeSat:
         return self.__gps is not None
 
     @property
-    def BOARD_POWER_MONITOR(self):
-        """BOARD_POWER_MONITOR: Returns the board power monitor object
+    def POWER_MONITORS(self):
+        """POWER_MONITORS: Returns the power monitor object
         :return: object or None
         """
-        return self.__board_power_monitor
+        return self.__power_monitors
 
     @property
     def BOARD_POWER_MONITOR_AVAILABLE(self) -> bool:
         """BOARD_POWER_MONITOR_AVAILABLE: Returns True if the board power monitor is available
         :return: bool
         """
-        return self.__board_power_monitor is not None
-
-    @property
-    def JETSON_POWER_MONITOR(self):
-        """JETSON_MONITOR: Returns the Jetson monitor object
-        :return: object or None
-        """
-        return self.__jetson_power_monitor
+        return "BOARD" in self.__power_monitors
 
     @property
     def JETSON_POWER_MONITOR_AVAILABLE(self) -> bool:
         """JETSON_POWER_MONITOR_AVAILABLE: Returns True if the Jetson power monitor is available
         :return: bool
         """
-        return self.__jetson__power_monitor is not None
-        return self.__power_monitors
+        return "JETSON" in self.__power_monitor
 
     @property
     def IMU(self):
