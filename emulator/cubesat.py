@@ -74,13 +74,19 @@ class CubeSat:
         return self._state_flags
 
     ######################### DEVICES #########################
-
     @property
     def GPS(self):
         """GPS: Returns the gps object
         :return: object or None
         """
         return self._gps
+
+    @property
+    def GPS_AVAILABLE(self) -> bool:
+        """GPS_AVAILABLE: Returns True if the GPS is available
+        :return: bool
+        """
+        return self._gps is not None
 
     @property
     def BOARD_POWER_MONITOR(self):
@@ -90,11 +96,25 @@ class CubeSat:
         return self._board_power_monitor
 
     @property
+    def BOARD_POWER_MONITOR_AVAILABLE(self) -> bool:
+        """BOARD_POWER_MONITOR_AVAILABLE: Returns True if the board power monitor is available
+        :return: bool
+        """
+        return self._board_power_monitor is not None
+
+    @property
     def JETSON_POWER_MONITOR(self):
         """JETSON_MONITOR: Returns the Jetson monitor object
         :return: object or None
         """
         return self._jetson_power_monitor
+
+    @property
+    def JETSON_POWER_MONITOR_AVAILABLE(self) -> bool:
+        """JETSON_POWER_MONITOR_AVAILABLE: Returns True if the Jetson power monitor is available
+        :return: bool
+        """
+        return self._jetson_power_monitor is not None
 
     @property
     def IMU(self):
@@ -104,6 +124,13 @@ class CubeSat:
         return self._imu
 
     @property
+    def IMU_AVAILABLE(self) -> bool:
+        """IMU_AVAILABLE: Returns True if the IMU is available
+        :return: bool
+        """
+        return self._imu is not None
+
+    @property
     def CHARGER(self):
         """CHARGER: Returns the charger object
         :return: object or None
@@ -111,19 +138,51 @@ class CubeSat:
         return self._charger
 
     @property
+    def CHARGER_AVAILABLE(self) -> bool:
+        """CHARGER_AVAILABLE: Returns True if the charger is available
+        :return: bool
+        """
+        return self._charger is not None
+
+    @property
+    def TORQUE_XP_POWER_MONITOR(self):
+        """TORQUE_XP: Returns the torque driver in the x+ direction
+        :return: object or None
+        """
+        return self._torque_xp_power_monitor
+
+    @property
+    def TORQUE_XP_POWER_MONITOR_AVAILABLE(self) -> bool:
+        """TORQUE_XP_POWER_MONITOR_AVAILABLE: Returns True if the torque driver in the x+ direction is available
+        :return: bool
+        """
+        return self._torque_xp_power_monitor is not None
+
+    @property
     def TORQUE_DRIVERS(self):
         """Returns a dictionary of torque drivers with the direction as the key (e.g. 'XP', 'XM', 'YP', 'YM', 'ZM')"""
         return self._torque_drivers
 
-    # ABSTRACT METHOD #
-    def APPLY_MAGNETIC_CONTROL(self, ctrl) -> None:
-        """CONTROL_COILS: Control the coils on the CubeSat, depending on the control mode (identiical for all coils)."""
-        raise NotImplementedError("CubeSats must implement the control coils method")
+    def TORQUE_DRIVERS_AVAILABLE(self, dir: str) -> bool:
+        """Returns True if the specific torque driver for the given direction is available.
+
+        :param dir: The direction key (e.g., 'XP', 'XM', etc.)
+        :return: bool - True if the driver exists and is not None, False otherwise.
+        """
+        return dir in self._torque_drivers and self._torque_drivers[dir] is not None
 
     @property
     def LIGHT_SENSORS(self):
         """Returns a dictionary of light sensors with the direction as the key (e.g. 'XP', 'XM', 'YP', 'YM', 'ZM')"""
         return self._light_sensors
+
+    def LIGHT_SENSOR_AVAILABLE(self, dir: str) -> bool:
+        """Returns True if the specific light sensor for the given direction is available.
+
+        :param dir: The direction key (e.g., 'XP', 'XM', etc.)
+        :return: bool - True if the sensor exists and is not None, False otherwise.
+        """
+        return dir in self._light_sensors and self._light_sensors[dir] is not None
 
     @property
     def RTC(self):
@@ -133,11 +192,25 @@ class CubeSat:
         return self._rtc
 
     @property
+    def RTC_AVAILABLE(self) -> bool:
+        """RTC_AVAILABLE: Returns True if the RTC is available
+        :return: bool
+        """
+        return self._rtc is not None
+
+    @property
     def RADIO(self):
         """RADIO: Returns the radio object
         :return: object or None
         """
         return self._radio
+
+    @property
+    def RADIO_AVAILABLE(self) -> bool:
+        """RADIO_AVAILABLE: Returns True if the radio is available
+        :return: bool
+        """
+        return self._radio is not None
 
     @property
     def BURN_WIRES(self):
@@ -147,11 +220,25 @@ class CubeSat:
         return self._burn_wires
 
     @property
+    def BURN_WIRES_AVAILABLE(self) -> bool:
+        """BURN_WIRES_AVAILABLE: Returns True if the burn wires are available
+        :return: bool
+        """
+        return self._burn_wires is not None
+
+    @property
     def SD_CARD(self):
         """SD_CARD: Returns the SD card object
         :return: object or None
         """
         return self._sd_card
+
+    @property
+    def SD_CARD_AVAILABLE(self) -> bool:
+        """SD_CARD_AVAILABLE: Returns True if the SD card is available
+        :return: bool
+        """
+        return self._sd_card is not None
 
     @property
     def VFS(self):
@@ -161,11 +248,25 @@ class CubeSat:
         return self._vfs
 
     @property
+    def VFS_AVAILABLE(self) -> bool:
+        """VFS_AVAILABLE: Returns True if the VFS is available
+        :return: bool
+        """
+        return self._vfs is not None
+
+    @property
     def PAYLOADUART(self):
         """PAYLOAD_EN: Returns the payload enable object
         :return: object or None
         """
         return self._payload_uart
+
+    @property
+    def PAYLOADUART_AVAILABLE(self) -> bool:
+        """PAYLOADUART_AVAILABLE: Returns True if the payload UART is available
+        :return: bool
+        """
+        return self._payload_uart is not None
 
     @property
     def BOOTTIME(self):

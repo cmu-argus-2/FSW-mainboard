@@ -250,18 +250,18 @@ class ArgusV1(CubeSat):
         try:
             from hal.drivers.adm1176 import ADM1176
 
-            jetson_monitor = ADM1176(
+            jetson_power_monitor = ADM1176(
                 ArgusV1Components.JETSON_POWER_MONITOR_I2C,
                 ArgusV1Components.JETSON_POWER_MONITOR_I2C_ADDRESS,
             )
 
             if self.__middleware_enabled:
-                jetson_monitor = Middleware(jetson_monitor)
+                jetson_power_monitor = Middleware(jetson_power_monitor)
 
-            self.__jetson_monitor = jetson_monitor
-            self.__device_list.append(jetson_monitor)
+            self.__jetson_power_monitor = jetson_power_monitor
+            self.__device_list.append(jetson_power_monitor)
         except Exception as e:
-            self.__jetson_monitor = None
+            self.__jetson_power_monitor = None
             if self.__debug:
                 raise e
 
