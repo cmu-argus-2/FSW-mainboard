@@ -34,10 +34,10 @@ import time
 from collections import namedtuple
 from struct import pack_into, unpack_from
 
+from adafruit_bus_device import i2c_device
+from hal.drivers.middleware.errors import Errors
+from hal.drivers.middleware.generic_driver import Driver
 from micropython import const
-
-# TODO: Remove on release
-from .debug import channels, reports
 
 # For IDE type recognition
 try:
@@ -47,16 +47,74 @@ try:
 except ImportError:
     pass
 
+channels = {
+    0x0: "SHTP_COMMAND",
+    0x1: "EXE",
+    0x2: "CONTROL",
+    0x3: "INPUT_SENSOR_REPORTS",
+    0x4: "WAKE_INPUT_SENSOR_REPORTS",
+    0x5: "GYRO_ROTATION_VECTOR",
+}
+
+# Command Response
+
+reports = {
+    0xFB: "BASE_TIMESTAMP",
+    0xF2: "COMMAND_REQUEST",
+    0xF1: "COMMAND_RESPONSE",
+    0xF4: "FRS_READ_REQUEST",
+    0xF3: "FRS_READ_RESPONSE",
+    0xF6: "FRS_WRITE_DATA",
+    0xF7: "FRS_WRITE_REQUEST",
+    0xF5: "FRS_WRITE_RESPONSE",
+    0xFE: "GET_FEATURE_REQUEST",
+    0xFC: "GET_FEATURE_RESPONSE",
+    0xFD: "SET_FEATURE_COMMAND",
+    0xFA: "TIMESTAMP_REBASE",
+    0x01: "ACCELEROMETER",
+    0x29: "ARVR_STABILIZED_GAME_ROTATION_VECTOR",
+    0x28: "ARVR_STABILIZED_ROTATION_VECTOR",
+    0x22: "CIRCLE_DETECTOR",
+    0x1A: "FLIP_DETECTOR",
+    0x08: "GAME_ROTATION_VECTOR",
+    0x09: "GEOMAGNETIC_ROTATION_VECTOR",
+    0x06: "GRAVITY",
+    0x02: "GYROSCOPE",
+    0x04: "LINEAR_ACCELERATION",
+    0x03: "MAGNETIC_FIELD",
+    0x1E: "PERSONAL_ACTIVITY_CLASSIFIER",
+    0x1B: "PICKUP_DETECTOR",
+    0x21: "POCKET_DETECTOR",
+    0xF9: "PRODUCT_ID_REQUEST",
+    0xF8: "PRODUCT_ID_RESPONSE",
+    0x14: "RAW_ACCELEROMETER",
+    0x15: "RAW_GYROSCOPE",
+    0x16: "RAW_MAGNETOMETER",
+    0x05: "ROTATION_VECTOR",
+    0x17: "SAR",
+    0x19: "SHAKE_DETECTOR",
+    0x12: "SIGNIFICANT_MOTION",
+    0x1F: "SLEEP_DETECTOR",
+    0x13: "STABILITY_CLASSIFIER",
+    0x1C: "STABILITY_DETECTOR",
+    0x11: "STEP_COUNTER",
+    0x18: "STEP_DETECTOR",
+    0x10: "TAP_DETECTOR",
+    0x20: "TILT_DETECTOR",
+    0x07: "UNCALIBRATED_GYROSCOPE",
+    0x0F: "UNCALIBRATED_MAGNETIC_FIELD",
+}
+
 # TODO: shorten names
 # Channel 0: the SHTP command channel
 BNO_CHANNEL_SHTP_COMMAND = const(0)
 BNO_CHANNEL_EXE = const(1)
 _BNO_CHANNEL_CONTROL = const(2)
 _BNO_CHANNEL_INPUT_SENSOR_REPORTS = const(3)
-_BNO_CHANNEL_WAKE_INPUT_SENSOR_REPORTS = const(4)
-_BNO_CHANNEL_GYRO_ROTATION_VECTOR = const(5)
+# _BNO_CHANNEL_WAKE_INPUT_SENSOR_REPORTS = const(4)
+# _BNO_CHANNEL_GYRO_ROTATION_VECTOR = const(5)
 
-_GET_FEATURE_REQUEST = const(0xFE)
+# _GET_FEATURE_REQUEST = const(0xFE)
 _SET_FEATURE_COMMAND = const(0xFD)
 _GET_FEATURE_RESPONSE = const(0xFC)
 _BASE_TIMESTAMP = const(0xFB)
@@ -66,12 +124,12 @@ _TIMESTAMP_REBASE = const(0xFA)
 _SHTP_REPORT_PRODUCT_ID_RESPONSE = const(0xF8)
 _SHTP_REPORT_PRODUCT_ID_REQUEST = const(0xF9)
 
-_FRS_WRITE_REQUEST = const(0xF7)
-_FRS_WRITE_DATA = const(0xF6)
-_FRS_WRITE_RESPONSE = const(0xF5)
+# _FRS_WRITE_REQUEST = const(0xF7)
+# _FRS_WRITE_DATA = const(0xF6)
+# _FRS_WRITE_RESPONSE = const(0xF5)
 
-_FRS_READ_REQUEST = const(0xF4)
-_FRS_READ_RESPONSE = const(0xF3)
+# _FRS_READ_REQUEST = const(0xF4)
+# _FRS_READ_RESPONSE = const(0xF3)
 
 _COMMAND_REQUEST = const(0xF2)
 _COMMAND_RESPONSE = const(0xF1)
@@ -89,11 +147,11 @@ BNO_REPORT_GYROSCOPE = const(0x02)
 # Magnetic field calibrated (in µTesla). The fully calibrated magnetic field measurement.
 BNO_REPORT_MAGNETOMETER = const(0x03)
 # Linear acceleration (m/s2). Acceleration of the device with gravity removed
-BNO_REPORT_LINEAR_ACCELERATION = const(0x04)
+# BNO_REPORT_LINEAR_ACCELERATION = const(0x04)
 # Rotation Vector
 BNO_REPORT_ROTATION_VECTOR = const(0x05)
 # Gravity Vector (m/s2). Vector direction of gravity
-BNO_REPORT_GRAVITY = const(0x06)
+# BNO_REPORT_GRAVITY = const(0x06)
 # Game Rotation Vector
 BNO_REPORT_GAME_ROTATION_VECTOR = const(0x08)
 
@@ -101,9 +159,9 @@ BNO_REPORT_GEOMAGNETIC_ROTATION_VECTOR = const(0x09)
 
 BNO_REPORT_STEP_COUNTER = const(0x11)
 
-BNO_REPORT_RAW_ACCELEROMETER = const(0x14)
-BNO_REPORT_RAW_GYROSCOPE = const(0x15)
-BNO_REPORT_RAW_MAGNETOMETER = const(0x16)
+# BNO_REPORT_RAW_ACCELEROMETER = const(0x14)
+# BNO_REPORT_RAW_GYROSCOPE = const(0x15)
+# BNO_REPORT_RAW_MAGNETOMETER = const(0x16)
 BNO_REPORT_SHAKE_DETECTOR = const(0x19)
 
 BNO_REPORT_STABILITY_CLASSIFIER = const(0x13)
@@ -116,12 +174,12 @@ BNO_REPORT_GYRO_INTEGRATED_ROTATION_VECTOR = const(0x2A)
 # RAW ACCEL, MAG, GYRO # Sfe says each needs the non-raw enabled to work
 
 _DEFAULT_REPORT_INTERVAL = const(50000)  # in microseconds = 50ms
-_QUAT_READ_TIMEOUT = 0.500  # timeout in seconds
+# _QUAT_READ_TIMEOUT = 0.500  # timeout in seconds
 _PACKET_READ_TIMEOUT = 2.000  # timeout in seconds
 _FEATURE_ENABLE_TIMEOUT = 2.0
 _DEFAULT_TIMEOUT = 2.0
-_BNO08X_CMD_RESET = const(0x01)
-_QUAT_Q_POINT = const(14)
+# _BNO08X_CMD_RESET = const(0x01)
+# _QUAT_Q_POINT = const(14)
 _BNO_HEADER_LEN = const(4)
 
 _Q_POINT_14_SCALAR = 2 ** (14 * -1)
@@ -131,11 +189,11 @@ _Q_POINT_9_SCALAR = 2 ** (9 * -1)
 _Q_POINT_8_SCALAR = 2 ** (8 * -1)
 _Q_POINT_4_SCALAR = 2 ** (4 * -1)
 
-_GYRO_SCALAR = _Q_POINT_9_SCALAR
-_ACCEL_SCALAR = _Q_POINT_8_SCALAR
-_QUAT_SCALAR = _Q_POINT_14_SCALAR
-_GEO_QUAT_SCALAR = _Q_POINT_12_SCALAR
-_MAG_SCALAR = _Q_POINT_4_SCALAR
+# _GYRO_SCALAR = _Q_POINT_9_SCALAR
+# _ACCEL_SCALAR = _Q_POINT_8_SCALAR
+# _QUAT_SCALAR = _Q_POINT_14_SCALAR
+# _GEO_QUAT_SCALAR = _Q_POINT_12_SCALAR
+# _MAG_SCALAR = _Q_POINT_4_SCALAR
 
 _REPORT_LENGTHS = {
     _SHTP_REPORT_PRODUCT_ID_RESPONSE: 16,
@@ -146,27 +204,27 @@ _REPORT_LENGTHS = {
     _TIMESTAMP_REBASE: 5,
 }
 # these raw reports require their counterpart to be enabled
-_RAW_REPORTS = {
-    BNO_REPORT_RAW_ACCELEROMETER: BNO_REPORT_ACCELEROMETER,
-    BNO_REPORT_RAW_GYROSCOPE: BNO_REPORT_GYROSCOPE,
-    BNO_REPORT_RAW_MAGNETOMETER: BNO_REPORT_MAGNETOMETER,
-}
+# _RAW_REPORTS = {
+#     BNO_REPORT_RAW_ACCELEROMETER: BNO_REPORT_ACCELEROMETER,
+#     BNO_REPORT_RAW_GYROSCOPE: BNO_REPORT_GYROSCOPE,
+#     BNO_REPORT_RAW_MAGNETOMETER: BNO_REPORT_MAGNETOMETER,
+# }
 _AVAIL_SENSOR_REPORTS = {
     BNO_REPORT_ACCELEROMETER: (_Q_POINT_8_SCALAR, 3, 10),
-    BNO_REPORT_GRAVITY: (_Q_POINT_8_SCALAR, 3, 10),
+    # BNO_REPORT_GRAVITY: (_Q_POINT_8_SCALAR, 3, 10),
     BNO_REPORT_GYROSCOPE: (_Q_POINT_9_SCALAR, 3, 10),
     BNO_REPORT_MAGNETOMETER: (_Q_POINT_4_SCALAR, 3, 10),
-    BNO_REPORT_LINEAR_ACCELERATION: (_Q_POINT_8_SCALAR, 3, 10),
-    BNO_REPORT_ROTATION_VECTOR: (_Q_POINT_14_SCALAR, 4, 14),
+    # BNO_REPORT_LINEAR_ACCELERATION: (_Q_POINT_8_SCALAR, 3, 10),
+    # BNO_REPORT_ROTATION_VECTOR: (_Q_POINT_14_SCALAR, 4, 14),
     BNO_REPORT_GEOMAGNETIC_ROTATION_VECTOR: (_Q_POINT_12_SCALAR, 4, 14),
-    BNO_REPORT_GAME_ROTATION_VECTOR: (_Q_POINT_14_SCALAR, 4, 12),
-    BNO_REPORT_STEP_COUNTER: (1, 1, 12),
-    BNO_REPORT_SHAKE_DETECTOR: (1, 1, 6),
+    # BNO_REPORT_GAME_ROTATION_VECTOR: (_Q_POINT_14_SCALAR, 4, 12),
+    # BNO_REPORT_STEP_COUNTER: (1, 1, 12),
+    # BNO_REPORT_SHAKE_DETECTOR: (1, 1, 6),
     BNO_REPORT_STABILITY_CLASSIFIER: (1, 1, 6),
     BNO_REPORT_ACTIVITY_CLASSIFIER: (1, 1, 16),
-    BNO_REPORT_RAW_ACCELEROMETER: (1, 3, 16),
-    BNO_REPORT_RAW_GYROSCOPE: (1, 3, 16),
-    BNO_REPORT_RAW_MAGNETOMETER: (1, 3, 16),
+    # BNO_REPORT_RAW_ACCELEROMETER: (1, 3, 16),
+    # BNO_REPORT_RAW_GYROSCOPE: (1, 3, 16),
+    # BNO_REPORT_RAW_MAGNETOMETER: (1, 3, 16),
 }
 _INITIAL_REPORTS = {
     BNO_REPORT_ACTIVITY_CLASSIFIER: {
@@ -225,11 +283,11 @@ def _parse_sensor_report_data(report_bytes: bytearray) -> Tuple[Tuple, int]:
     data_offset = 4  # this may not always be true
     report_id = report_bytes[0]
     scalar, count, _report_length = _AVAIL_SENSOR_REPORTS[report_id]
-    if report_id in _RAW_REPORTS:
-        # raw reports are unsigned
-        format_str = "<H"
-    else:
-        format_str = "<h"
+    # if report_id in _RAW_REPORTS:
+    #     # raw reports are unsigned
+    #     format_str = "<H"
+    # else:
+    format_str = "<h"
     results = []
     accuracy = unpack_from("<B", report_bytes, offset=2)[0]
     accuracy &= 0b11
@@ -468,14 +526,15 @@ class Packet:
         return False
 
 
-class BNO08X:  # pylint: disable=too-many-instance-attributes, too-many-public-methods
-    """Library for the BNO08x IMUs from Hillcrest Laboratories
+class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-public-methods
+    """Library for the BNO085 IMUs from Hillcrest Laboratories
 
     :param ~busio.I2C i2c_bus: The I2C bus the BNO08x is connected to.
 
     """
 
-    def __init__(self, reset: Optional[DigitalInOut] = None, debug: bool = False) -> None:
+    def __init__(self, i2c_bus, address, reset: Optional[DigitalInOut] = None, debug: bool = False) -> None:
+        self.bus_device_obj = i2c_device.I2CDevice(i2c_bus, address)
         self._debug: bool = debug
         self._reset: Optional[DigitalInOut] = reset
         self._dbg("********** __init__ *************")
@@ -495,6 +554,7 @@ class BNO08X:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         self._id_read = False
         # for saving the most recent reading when decoding several packets
         self._readings: Dict[int, Any] = {}
+        super().__init__()
         self.initialize()
 
     def initialize(self) -> None:
@@ -505,8 +565,10 @@ class BNO08X:  # pylint: disable=too-many-instance-attributes, too-many-public-m
             try:
                 if self._check_id():
                     break
-            except:  # pylint:disable=bare-except
+            except Exception as e:  # pylint:disable=bare-except
                 time.sleep(0.5)
+                if self._debug:
+                    raise e
         else:
             raise RuntimeError("Could not read ID")
 
@@ -558,15 +620,15 @@ class BNO08X:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         except KeyError:
             raise RuntimeError("No steps report found, is it enabled?") from None
 
-    @property
-    def linear_acceleration(self) -> Optional[Tuple[float, float, float]]:
-        """A tuple representing the current linear acceleration values on the X, Y, and Z
-        axes in meters per second squared"""
-        self._process_available_packets()
-        try:
-            return self._readings[BNO_REPORT_LINEAR_ACCELERATION]
-        except KeyError:
-            raise RuntimeError("No lin. accel report found, is it enabled?") from None
+    # @property
+    # def linear_acceleration(self) -> Optional[Tuple[float, float, float]]:
+    #     """A tuple representing the current linear acceleration values on the X, Y, and Z
+    #     axes in meters per second squared"""
+    #     self._process_available_packets()
+    #     try:
+    #         return self._readings[BNO_REPORT_LINEAR_ACCELERATION]
+    #     except KeyError:
+    #         raise RuntimeError("No lin. accel report found, is it enabled?") from None
 
     @property
     def acceleration(self) -> Optional[Tuple[float, float, float]]:
@@ -578,15 +640,15 @@ class BNO08X:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         except KeyError:
             raise RuntimeError("No accel report found, is it enabled?") from None
 
-    @property
-    def gravity(self) -> Optional[Tuple[float, float, float]]:
-        """A tuple representing the gravity vector in the X, Y, and Z components
-        axes in meters per second squared"""
-        self._process_available_packets()
-        try:
-            return self._readings[BNO_REPORT_GRAVITY]
-        except KeyError:
-            raise RuntimeError("No gravity report found, is it enabled?") from None
+    # @property
+    # def gravity(self) -> Optional[Tuple[float, float, float]]:
+    #     """A tuple representing the gravity vector in the X, Y, and Z components
+    #     axes in meters per second squared"""
+    #     self._process_available_packets()
+    #     try:
+    #         return self._readings[BNO_REPORT_GRAVITY]
+    #     except KeyError:
+    #         raise RuntimeError("No gravity report found, is it enabled?") from None
 
     @property
     def gyro(self) -> Optional[Tuple[float, float, float]]:
@@ -659,35 +721,35 @@ class BNO08X:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         except KeyError:
             raise RuntimeError("No activity classification report found, is it enabled?") from None
 
-    @property
-    def raw_acceleration(self) -> Optional[Tuple[int, int, int]]:
-        """Returns the sensor's raw, unscaled value from the accelerometer registers"""
-        self._process_available_packets()
-        try:
-            raw_acceleration = self._readings[BNO_REPORT_RAW_ACCELEROMETER]
-            return raw_acceleration
-        except KeyError:
-            raise RuntimeError("No raw acceleration report found, is it enabled?") from None
+    # @property
+    # def raw_acceleration(self) -> Optional[Tuple[int, int, int]]:
+    #     """Returns the sensor's raw, unscaled value from the accelerometer registers"""
+    #     self._process_available_packets()
+    #     try:
+    #         raw_acceleration = self._readings[BNO_REPORT_RAW_ACCELEROMETER]
+    #         return raw_acceleration
+    #     except KeyError:
+    #         raise RuntimeError("No raw acceleration report found, is it enabled?") from None
 
-    @property
-    def raw_gyro(self) -> Optional[Tuple[int, int, int]]:
-        """Returns the sensor's raw, unscaled value from the gyro registers"""
-        self._process_available_packets()
-        try:
-            raw_gyro = self._readings[BNO_REPORT_RAW_GYROSCOPE]
-            return raw_gyro
-        except KeyError:
-            raise RuntimeError("No raw gyro report found, is it enabled?") from None
+    # @property
+    # def raw_gyro(self) -> Optional[Tuple[int, int, int]]:
+    #     """Returns the sensor's raw, unscaled value from the gyro registers"""
+    #     self._process_available_packets()
+    #     try:
+    #         raw_gyro = self._readings[BNO_REPORT_RAW_GYROSCOPE]
+    #         return raw_gyro
+    #     except KeyError:
+    #         raise RuntimeError("No raw gyro report found, is it enabled?") from None
 
-    @property
-    def raw_magnetic(self) -> Optional[Tuple[int, int, int]]:
-        """Returns the sensor's raw, unscaled value from the magnetometer registers"""
-        self._process_available_packets()
-        try:
-            raw_magnetic = self._readings[BNO_REPORT_RAW_MAGNETOMETER]
-            return raw_magnetic
-        except KeyError:
-            raise RuntimeError("No raw magnetic report found, is it enabled?") from None
+    # @property
+    # def raw_magnetic(self) -> Optional[Tuple[int, int, int]]:
+    #     """Returns the sensor's raw, unscaled value from the magnetometer registers"""
+    #     self._process_available_packets()
+    #     try:
+    #         raw_magnetic = self._readings[BNO_REPORT_RAW_MAGNETOMETER]
+    #         return raw_magnetic
+    #     except KeyError:
+    #         raise RuntimeError("No raw magnetic report found, is it enabled?") from None
 
     def begin_calibration(self) -> None:
         """Begin the sensor's self-calibration routine"""
@@ -949,11 +1011,11 @@ class BNO08X:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         else:
             set_feature_report = self._get_feature_enable_report(feature_id)
 
-        feature_dependency = _RAW_REPORTS.get(feature_id, None)
-        # if the feature was enabled it will have a key in the readings dict
-        if feature_dependency and feature_dependency not in self._readings:
-            self._dbg("Enabling feature depencency:", feature_dependency)
-            self.enable_feature(feature_dependency)
+        # feature_dependency = _RAW_REPORTS.get(feature_id, None)
+        # # if the feature was enabled it will have a key in the readings dict
+        # if feature_dependency and feature_dependency not in self._readings:
+        #     self._dbg("Enabling feature depencency:", feature_dependency)
+        #     self.enable_feature(feature_dependency)
 
         self._dbg("Enabling", feature_id)
         self._send_packet(_BNO_CHANNEL_CONTROL, set_feature_report)
@@ -1017,7 +1079,20 @@ class BNO08X:  # pylint: disable=too-many-instance-attributes, too-many-public-m
     # pylint:disable=no-self-use
     @property
     def _data_ready(self) -> None:
-        raise RuntimeError("Not implemented")
+        header = self._read_header()
+
+        if header.channel_number > 5:
+            self._dbg("channel number out of range:", header.channel_number)
+        if header.packet_byte_count == 0x7FFF:
+            print("Byte count is 0x7FFF/0xFFFF; Error?")
+            if header.sequence_number == 0xFF:
+                print("Sequence number is 0xFF; Error?")
+            ready = False
+        else:
+            ready = header.data_length > 0
+
+        # self._dbg("\tdata ready", ready)
+        return ready
 
     def hard_reset(self) -> None:
         """Hardware reset the sensor to an initial unconfigured state"""
@@ -1038,14 +1113,14 @@ class BNO08X:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         self._dbg("Soft resetting...", end="")
         data = bytearray(1)
         data[0] = 1
-        _seq = self._send_packet(BNO_CHANNEL_EXE, data)
+        self._send_packet(BNO_CHANNEL_EXE, data)
         time.sleep(0.5)
-        _seq = self._send_packet(BNO_CHANNEL_EXE, data)
+        self._send_packet(BNO_CHANNEL_EXE, data)
         time.sleep(0.5)
 
         for _i in range(3):
             try:
-                _packet = self._read_packet()
+                self._read_packet()
             except PacketError:
                 time.sleep(0.5)
 
@@ -1053,10 +1128,75 @@ class BNO08X:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         # all is good!
 
     def _send_packet(self, channel: int, data: bytearray) -> Optional[int]:
-        raise RuntimeError("Not implemented")
+        data_length = len(data)
+        write_length = data_length + 4
+
+        pack_into("<H", self._data_buffer, 0, write_length)
+        self._data_buffer[2] = channel
+        self._data_buffer[3] = self._sequence_number[channel]
+        for idx, send_byte in enumerate(data):
+            self._data_buffer[4 + idx] = send_byte
+        packet = Packet(self._data_buffer)
+        self._dbg("Sending packet:")
+        self._dbg(packet)
+        with self.bus_device_obj as i2c:
+            i2c.write(self._data_buffer, end=write_length)
+
+        self._sequence_number[channel] = (self._sequence_number[channel] + 1) % 256
+        return self._sequence_number[channel]
+
+    def _read_header(self):
+        """Reads the first 4 bytes available as a header"""
+        with self.bus_device_obj as i2c:
+            i2c.readinto(self._data_buffer, end=4)  # this is expecting a header
+        packet_header = Packet.header_from_buffer(self._data_buffer)
+        self._dbg(packet_header)
+        return packet_header
+
+    # returns true if all requested data was read
+    def _read(self, requested_read_length):
+        self._dbg("trying to read", requested_read_length, "bytes")
+        # +4 for the header
+        total_read_length = requested_read_length + 4
+        if total_read_length > DATA_BUFFER_SIZE:
+            self._data_buffer = bytearray(total_read_length)
+            self._dbg("!!!!!!!!!!!! ALLOCATION: increased _data_buffer to bytearray(%d) !!!!!!!!!!!!! " % total_read_length)
+        with self.bus_device_obj as i2c:
+            i2c.readinto(self._data_buffer, end=total_read_length)
 
     def _read_packet(self) -> Optional[Packet]:
-        raise RuntimeError("Not implemented")
+        with self.bus_device_obj as i2c:
+            i2c.readinto(self._data_buffer, end=4)  # this is expecting a header?
+        self._dbg("")
+        # print("SHTP READ packet header: ", [hex(x) for x in self._data_buffer[0:4]])
+
+        header = Packet.header_from_buffer(self._data_buffer)
+        packet_byte_count = header.packet_byte_count
+        channel_number = header.channel_number
+        sequence_number = header.sequence_number
+
+        self._sequence_number[channel_number] = sequence_number
+        if packet_byte_count == 0:
+            self._dbg("SKIPPING NO PACKETS AVAILABLE IN i2c._read_packet")
+            raise PacketError("No packet available")
+        packet_byte_count -= 4
+        self._dbg(
+            "channel",
+            channel_number,
+            "has",
+            packet_byte_count,
+            "bytes available to read",
+        )
+
+        self._read(packet_byte_count)
+
+        new_packet = Packet(self._data_buffer)
+        if self._debug:
+            print(new_packet)
+
+        self._update_sequence_number(new_packet)
+
+        return new_packet
 
     def _increment_report_seq(self, report_id: int) -> None:
         current = self._two_ended_sequence_numbers.get(report_id, 0)

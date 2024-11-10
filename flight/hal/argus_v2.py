@@ -307,7 +307,7 @@ class ArgusV2(CubeSat):
         error_list.append(self.__charger_boot())
         # error_list.append(self.__torque_drivers_boot())
         # error_list.append(self.__light_sensors_boot())  # light + sun sensors
-        error_list.append(self.__radio_boot())
+        # error_list.append(self.__radio_boot())
         # error_list.append(self.__burn_wire_boot())
 
         error_list = [error for error in error_list if error != Errors.NOERROR]
@@ -439,9 +439,9 @@ class ArgusV2(CubeSat):
         """
         try:
             # from hal.drivers.bno08x_i2c import BNO08X_I2C
-            from hal.drivers.adafruit_bno08x.i2c import BNO08X_I2C
+            from hal.drivers.bno085 import BNO085
 
-            imu = BNO08X_I2C(ArgusV2Components.IMU_I2C)
+            imu = BNO085(ArgusV2Components.IMU_I2C, ArgusV2Components.IMU_I2C_ADDRESS)
             imu.enable_feature(BNO_REPORT_ACCELEROMETER)
             imu.enable_feature(BNO_REPORT_GYROSCOPE)
             imu.enable_feature(BNO_REPORT_MAGNETOMETER)
@@ -452,6 +452,7 @@ class ArgusV2(CubeSat):
             self.__imu_name = "BNO08X"
             self.__device_list.append(imu)
         except Exception as e:
+            print(e)
             if self.__debug:
                 raise e
 
