@@ -44,7 +44,7 @@ class Task(TemplateTask):
                 accel = SATELLITE.IMU.acceleration
                 mag = SATELLITE.IMU.magnetic
                 gyro = SATELLITE.IMU.gyro
-            else:
+            elif SATELLITE.IMU_NAME == "BMX160":
                 accel = SATELLITE.IMU.accel()
                 mag = SATELLITE.IMU.mag()
                 gyro = SATELLITE.IMU.gyro()

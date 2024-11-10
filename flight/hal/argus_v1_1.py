@@ -297,51 +297,51 @@ class ArgusV1(CubeSat):
 
         locations = {
             "BOARD": [ArgusV1Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV1Components.BOARD_POWER_MONITOR_I2C],
-            "JETSON": [ArgusV1Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV1Components.JETSON_POWER_MONITOR_I2C],
-            "TORQUE_XP": [
-                ArgusV1Components.TORQUE_XP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV1Components.TORQUE_X_POWER_MONITOR_I2C,
-            ],
-            "TORQUE_XM": [
-                ArgusV1Components.TORQUE_XM_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV1Components.TORQUE_X_POWER_MONITOR_I2C,
-            ],
-            "TORQUE_YP": [
-                ArgusV1Components.TORQUE_YP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV1Components.TORQUE_Y_POWER_MONITOR_I2C,
-            ],
-            "TORQUE_YM": [
-                ArgusV1Components.TORQUE_YM_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV1Components.TORQUE_Y_POWER_MONITOR_I2C,
-            ],
-            "TORQUE_ZP": [
-                ArgusV1Components.TORQUE_ZP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV1Components.TORQUE_Z_POWER_MONITOR_I2C,
-            ],
-            "TORQUE_ZM": [
-                ArgusV1Components.TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV1Components.TORQUE_Z_POWER_MONITOR_I2C,
-            ],
-            "SOLAR_XP": [
-                ArgusV1Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV1Components.SOLAR_CHARGING_X_POWER_MONITOR_I2C,
-            ],
-            "SOLAR_XM": [
-                ArgusV1Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV1Components.SOLAR_CHARGING_X_POWER_MONITOR_I2C,
-            ],
-            "SOLAR_YP": [
-                ArgusV1Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV1Components.SOLAR_CHARGING_Y_POWER_MONITOR_I2C,
-            ],
-            "SOLAR_YM": [
-                ArgusV1Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV1Components.SOLAR_CHARGING_Y_POWER_MONITOR_I2C,
-            ],
-            "SOLAR_ZP": [
-                ArgusV1Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV1Components.SOLAR_CHARGING_Z_POWER_MONITOR_I2C,
-            ],
+            # "JETSON": [ArgusV1Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV1Components.JETSON_POWER_MONITOR_I2C],
+            # "TORQUE_XP": [
+            #     ArgusV1Components.TORQUE_XP_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.TORQUE_X_POWER_MONITOR_I2C,
+            # ],
+            # "TORQUE_XM": [
+            #     ArgusV1Components.TORQUE_XM_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.TORQUE_X_POWER_MONITOR_I2C,
+            # ],
+            # "TORQUE_YP": [
+            #     ArgusV1Components.TORQUE_YP_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.TORQUE_Y_POWER_MONITOR_I2C,
+            # ],
+            # "TORQUE_YM": [
+            #     ArgusV1Components.TORQUE_YM_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.TORQUE_Y_POWER_MONITOR_I2C,
+            # ],
+            # "TORQUE_ZP": [
+            #     ArgusV1Components.TORQUE_ZP_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.TORQUE_Z_POWER_MONITOR_I2C,
+            # ],
+            # "TORQUE_ZM": [
+            #     ArgusV1Components.TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.TORQUE_Z_POWER_MONITOR_I2C,
+            # ],
+            # "SOLAR_XP": [
+            #     ArgusV1Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.SOLAR_CHARGING_X_POWER_MONITOR_I2C,
+            # ],
+            # "SOLAR_XM": [
+            #     ArgusV1Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.SOLAR_CHARGING_X_POWER_MONITOR_I2C,
+            # ],
+            # "SOLAR_YP": [
+            #     ArgusV1Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.SOLAR_CHARGING_Y_POWER_MONITOR_I2C,
+            # ],
+            # "SOLAR_YM": [
+            #     ArgusV1Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.SOLAR_CHARGING_Y_POWER_MONITOR_I2C,
+            # ],
+            # "SOLAR_ZP": [
+            #     ArgusV1Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.SOLAR_CHARGING_Z_POWER_MONITOR_I2C,
+            # ],
         }
 
         from hal.drivers.adm1176 import ADM1176
