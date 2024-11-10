@@ -456,7 +456,7 @@ class ArgusV2(CubeSat):
             if self.__debug:
                 raise e
 
-            return Errors.BMX160_NOT_INITIALIZED
+            return Errors.IMU_NOT_INITIALIZED
 
         return Errors.NOERROR
 

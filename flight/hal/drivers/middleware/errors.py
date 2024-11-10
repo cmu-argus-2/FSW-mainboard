@@ -41,12 +41,12 @@ class Errors:
     PCF8523_BATTERY_LOW = const(21)
     PCF8523_LOST_POWER = const(22)
 
-    # BMX160 errors
-    BMX160_NOT_INITIALIZED = const(23)
-    BMX160_FATAL_ERROR = const(24)
-    BMX160_NON_FATAL_ERROR = const(25)
-    BMX160_DROP_COMMAND_ERROR = const(26)
-    BMX160_UNSPECIFIED_ERROR = const(27)
+    # IMU errors
+    IMU_NOT_INITIALIZED = const(23)
+    IMU_FATAL_ERROR = const(24)
+    IMU_NON_FATAL_ERROR = const(25)
+    IMU_DROP_COMMAND_ERROR = const(26)
+    IMU_UNSPECIFIED_ERROR = const(27)
 
     # DRV8830 errors
     DRV8830_NOT_INITIALIZED = const(28)
@@ -125,7 +125,7 @@ class Errors:
         PCF8523_NOT_INITIALIZED: "PCF8523 not initialized",
         PCF8523_BATTERY_LOW: "PCF8523 battery low",
         PCF8523_LOST_POWER: "PCF8523 lost power",
-        BMX160_NOT_INITIALIZED: "BMX160 not initialized",
+        IMU_NOT_INITIALIZED: "BMX160 not initialized",
         BMX160_FATAL_ERROR: "BMX160 fatal error",
         BMX160_NON_FATAL_ERROR: "BMX160 non fatal error",
         BMX160_DROP_COMMAND_ERROR: "BMX160 drop command error",

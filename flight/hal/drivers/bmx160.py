@@ -681,16 +681,16 @@ class BMX160(Driver):
 
         error_reg = self.query_error()
         if error_reg != NO_ERROR:
-            error_list.append(Errors.BMX160_UNSPECIFIED_ERROR)
+            error_list.append(Errors.IMU_UNSPECIFIED_ERROR)
 
         if self.fatal_err != 0:
-            error_list.append(Errors.BMX160_FATAL_ERROR)
+            error_list.append(Errors.IMU_FATAL_ERROR)
 
         if self.error_code in self.BMX160_ERROR_CODES:
-            error_list.append(Errors.BMX160_NON_FATAL_ERROR)
+            error_list.append(Errors.IMU_NON_FATAL_ERROR)
 
         if self.drop_cmd_err != 0:
-            error_list.append(Errors.BMX160_DROP_COMMAND_ERROR)
+            error_list.append(Errors.IMU_DROP_COMMAND_ERROR)
 
         if error_list.count() == 0:
             error_list.append(Errors.NOERROR)
