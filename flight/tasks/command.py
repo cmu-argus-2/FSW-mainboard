@@ -20,7 +20,6 @@ class Task(TemplateTask):
     # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "REBOOT_COUNT", "WATCHDOG_TIMER", "HAL_BITFLAGS"]
 
     log_data = [0] * 7
-    data_format = "LbLbbbb"
 
     log_commands = [0] * 3
 
@@ -48,7 +47,7 @@ class Task(TemplateTask):
             # Boot errors and system diagnostics
 
             # TODO: remove for flight
-            DH.delete_all_files()
+            # DH.delete_all_files()
             self.log_info("SD card cleaned up.")
 
             HAL_DIAGNOSTICS = True  # TODO For now
@@ -56,7 +55,8 @@ class Task(TemplateTask):
             if DH.SD_scanned and HAL_DIAGNOSTICS:
 
                 if not DH.data_process_exists("cdh"):
-                    DH.register_data_process("cdh", self.data_format, True, data_limit=100000)
+                    data_format = "LbLbbbb"
+                    DH.register_data_process("cdh", data_format, True, data_limit=100000)
 
                 if not DH.data_process_exists("cmd_logs"):
                     DH.register_data_process("cmd_logs", "LBB", True, data_limit=100000)
