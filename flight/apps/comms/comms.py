@@ -216,15 +216,6 @@ class SATELLITE_RADIO:
         return cls.file_ID.to_bytes(1, "big") + cls.file_size.to_bytes(4, "big") + cls.file_message_count.to_bytes(2, "big")
 
     """
-        Name: listen
-        Description: Switch radio to RX mode
-    """
-
-    @classmethod
-    def listen(cls):
-        SATELLITE.RADIO.listen()
-
-    """
         Name: data_available
         Description: Check if data is available in FIFO buffer
     """

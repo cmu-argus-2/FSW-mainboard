@@ -28,9 +28,6 @@ class Task(TemplateTask):
         self.ground_pass = False
         self.RX_COUNTER = 0
 
-        # TODO: See if needed and remove
-        SATELLITE_RADIO.listen()  # RX mode
-
     async def main_task(self):
         # TODO: Check if this can be done in setup
         if not self.frequency_set:
