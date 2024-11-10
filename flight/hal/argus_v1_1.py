@@ -386,6 +386,7 @@ class ArgusV1(CubeSat):
                 imu = Middleware(imu)
 
             self.__imu = imu
+            self.__imu_name = "BMX160"
             self.__device_list.append(imu)
         except Exception as e:
             if self.__debug:

@@ -8,6 +8,7 @@ from sys import path
 import board
 from busio import I2C, SPI, UART
 from hal.cubesat import CubeSat
+from hal.drivers.adafruit_bno08x import BNO_REPORT_ACCELEROMETER, BNO_REPORT_GYROSCOPE, BNO_REPORT_MAGNETOMETER
 from hal.drivers.middleware.errors import Errors
 from hal.drivers.middleware.middleware import Middleware
 from micropython import const
@@ -159,7 +160,7 @@ class ArgusV2Components:
 
     # BOARD POWER MONITOR
     BOARD_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x48)
+    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x40)
 
     # CAMERA
 
@@ -435,14 +436,18 @@ class ArgusV2(CubeSat):
         :return: Error code if the IMU failed to initialize
         """
         try:
+            # from hal.drivers.bno08x_i2c import BNO08X_I2C
             from hal.drivers.adafruit_bno08x.i2c import BNO08X_I2C
 
             imu = BNO08X_I2C(ArgusV2Components.IMU_I2C)
-
+            imu.enable_feature(BNO_REPORT_ACCELEROMETER)
+            imu.enable_feature(BNO_REPORT_GYROSCOPE)
+            imu.enable_feature(BNO_REPORT_MAGNETOMETER)
             if self.__middleware_enabled:
                 imu = Middleware(imu)
 
             self.__imu = imu
+            self.__imu_name = "BNO08X"
             self.__device_list.append(imu)
         except Exception as e:
             if self.__debug:

@@ -7,8 +7,10 @@
 
 """
 from struct import pack_into
+
 from adafruit_bus_device import i2c_device
-from . import BNO08X, DATA_BUFFER_SIZE, const, Packet, PacketError
+
+from . import BNO08X, DATA_BUFFER_SIZE, Packet, PacketError, const
 
 _BNO08X_DEFAULT_ADDRESS = const(0x4A)
 
@@ -20,9 +22,7 @@ class BNO08X_I2C(BNO08X):
 
     """
 
-    def __init__(
-        self, i2c_bus, reset=None, address=_BNO08X_DEFAULT_ADDRESS, debug=False
-    ):
+    def __init__(self, i2c_bus, reset=None, address=_BNO08X_DEFAULT_ADDRESS, debug=False):
         self.bus_device_obj = i2c_device.I2CDevice(i2c_bus, address)
         super().__init__(reset, debug)
 
@@ -96,10 +96,7 @@ class BNO08X_I2C(BNO08X):
         total_read_length = requested_read_length + 4
         if total_read_length > DATA_BUFFER_SIZE:
             self._data_buffer = bytearray(total_read_length)
-            self._dbg(
-                "!!!!!!!!!!!! ALLOCATION: increased _data_buffer to bytearray(%d) !!!!!!!!!!!!! "
-                % total_read_length
-            )
+            self._dbg("!!!!!!!!!!!! ALLOCATION: increased _data_buffer to bytearray(%d) !!!!!!!!!!!!! " % total_read_length)
         with self.bus_device_obj as i2c:
             i2c.readinto(self._data_buffer, end=total_read_length)
 

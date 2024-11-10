@@ -30,7 +30,8 @@ class Task(TemplateTask):
                 DH.register_data_process("thermal", self.data_format, True, data_limit=100000, write_interval=10)
 
             self.log_data[THERMAL_IDX.TIME_THERMAL] = int(time.time())
-            self.log_data[THERMAL_IDX.IMU_TEMPERATURE] = int(SATELLITE.IMU.temperature() * 100)
+            if SATELLITE.IMU_NAME == "BMX160":
+                self.log_data[THERMAL_IDX.IMU_TEMPERATURE] = int(SATELLITE.IMU.temperature() * 100)
             self.log_data[THERMAL_IDX.CPU_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
             self.log_data[THERMAL_IDX.BATTERY_PACK_TEMPERATURE] = 0  # Placeholder
 

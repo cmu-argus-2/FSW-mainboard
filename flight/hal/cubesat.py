@@ -55,6 +55,7 @@ class CubeSat:
         # Devices
         self.__charger = None
         self.__imu = None
+        self.__imu_name = None
         self.__light_sensors = {}
         self.__torque_drivers = {}
         self.__power_monitors = {}
@@ -150,6 +151,13 @@ class CubeSat:
         :return: object or None
         """
         return self.__imu
+
+    @property
+    def IMU_NAME(self):
+        """IMU_NAME: Returns the IMU name
+        :return: object or None
+        """
+        return self.__imu_name
 
     @property
     def CHARGER(self):
