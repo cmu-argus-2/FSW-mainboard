@@ -302,12 +302,12 @@ class ArgusV2(CubeSat):
         error_list.append(self.__imu_boot())
         error_list.append(self.__rtc_boot())
         # error_list.append(self.__gps_boot())
+        error_list.append(self.__radio_boot())
         error_list.append(self.__power_monitor_boot())
         # error_list.append(self.__fuel_gauge_boot)
         error_list.append(self.__charger_boot())
         # error_list.append(self.__torque_drivers_boot())
         # error_list.append(self.__light_sensors_boot())  # light + sun sensors
-        # error_list.append(self.__radio_boot())
         # error_list.append(self.__burn_wire_boot())
 
         error_list = [error for error in error_list if error != Errors.NOERROR]
@@ -360,6 +360,8 @@ class ArgusV2(CubeSat):
 
         locations = {
             "BOARD": [ArgusV2Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.BOARD_POWER_MONITOR_I2C],
+            "RADIO": [ArgusV2Components.RADIO_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.RADIO_POWER_MONITOR_I2C],
+            # "GPS": [ArgusV2Components.GPS_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.GPS_POWER_MONITOR_I2C],
             # "JETSON": [ArgusV2Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.JETSON_POWER_MONITOR_I2C],
             # "TORQUE_XP": [
             #     ArgusV2Components.TORQUE_XP_POWER_MONITOR_I2C_ADDRESS,
@@ -452,7 +454,6 @@ class ArgusV2(CubeSat):
             self.__imu_name = "BNO08X"
             self.__device_list.append(imu)
         except Exception as e:
-            print(e)
             if self.__debug:
                 raise e
 
@@ -578,20 +579,29 @@ class ArgusV2(CubeSat):
 
         :return: Error code if the radio failed to initialize
         """
+        radioEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_ENABLE)
+        radioRxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_RX_EN)
+        radioTxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_TX_EN)
+
+        radioEn.direction = digitalio.Direction.OUTPUT
+        radioRxEn.direction = digitalio.Direction.OUTPUT
+        radioTxEn.direction = digitalio.Direction.OUTPUT
+
+        radioEn.value = True
+        radioRxEn.value = True
+        radioTxEn.value = True
         try:
             from hal.drivers.sx1262 import SX1262
 
-            radioEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_ENABLE)
-            radioRxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_RX_EN)
-            radioTxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_TX_EN)
-
-            radioEn.direction = digitalio.Direction.OUTPUT
-            radioRxEn.direction = digitalio.Direction.OUTPUT
-            radioTxEn.direction = digitalio.Direction.OUTPUT
-
-            radioEn.value = True
-            radioRxEn.value = True
-            radioTxEn.value = True
+            # radioEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_ENABLE)
+            # radioRxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_RX_EN)
+            # radioTxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_TX_EN)
+            # radioEn.direction = digitalio.Direction.OUTPUT
+            # radioRxEn.direction = digitalio.Direction.OUTPUT
+            # radioTxEn.direction = digitalio.Direction.OUTPUT
+            # radioEn.value = True
+            # radioRxEn.value = True
+            # radioTxEn.value = True
 
             radio = SX1262(
                 spi_bus=1,
