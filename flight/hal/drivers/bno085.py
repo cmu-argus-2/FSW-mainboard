@@ -149,24 +149,24 @@ BNO_REPORT_MAGNETOMETER = const(0x03)
 # Linear acceleration (m/s2). Acceleration of the device with gravity removed
 # BNO_REPORT_LINEAR_ACCELERATION = const(0x04)
 # Rotation Vector
-BNO_REPORT_ROTATION_VECTOR = const(0x05)
+# BNO_REPORT_ROTATION_VECTOR = const(0x05)
 # Gravity Vector (m/s2). Vector direction of gravity
 # BNO_REPORT_GRAVITY = const(0x06)
 # Game Rotation Vector
-BNO_REPORT_GAME_ROTATION_VECTOR = const(0x08)
+# BNO_REPORT_GAME_ROTATION_VECTOR = const(0x08)
 
 BNO_REPORT_GEOMAGNETIC_ROTATION_VECTOR = const(0x09)
 
-BNO_REPORT_STEP_COUNTER = const(0x11)
+# BNO_REPORT_STEP_COUNTER = const(0x11)
 
 # BNO_REPORT_RAW_ACCELEROMETER = const(0x14)
 # BNO_REPORT_RAW_GYROSCOPE = const(0x15)
 # BNO_REPORT_RAW_MAGNETOMETER = const(0x16)
-BNO_REPORT_SHAKE_DETECTOR = const(0x19)
+# BNO_REPORT_SHAKE_DETECTOR = const(0x19)
 
-BNO_REPORT_STABILITY_CLASSIFIER = const(0x13)
-BNO_REPORT_ACTIVITY_CLASSIFIER = const(0x1E)
-BNO_REPORT_GYRO_INTEGRATED_ROTATION_VECTOR = const(0x2A)
+# BNO_REPORT_STABILITY_CLASSIFIER = const(0x13)
+# BNO_REPORT_ACTIVITY_CLASSIFIER = const(0x1E)
+# BNO_REPORT_GYRO_INTEGRATED_ROTATION_VECTOR = const(0x2A)
 # TODOz:
 # Calibrated Acceleration (m/s2)
 # Euler Angles (in degrees?)
@@ -182,7 +182,7 @@ _DEFAULT_TIMEOUT = 2.0
 # _QUAT_Q_POINT = const(14)
 _BNO_HEADER_LEN = const(4)
 
-_Q_POINT_14_SCALAR = 2 ** (14 * -1)
+# _Q_POINT_14_SCALAR = 2 ** (14 * -1)
 _Q_POINT_12_SCALAR = 2 ** (12 * -1)
 # _Q_POINT_10_SCALAR = 2 ** (10 * -1)
 _Q_POINT_9_SCALAR = 2 ** (9 * -1)
@@ -220,30 +220,30 @@ _AVAIL_SENSOR_REPORTS = {
     # BNO_REPORT_GAME_ROTATION_VECTOR: (_Q_POINT_14_SCALAR, 4, 12),
     # BNO_REPORT_STEP_COUNTER: (1, 1, 12),
     # BNO_REPORT_SHAKE_DETECTOR: (1, 1, 6),
-    BNO_REPORT_STABILITY_CLASSIFIER: (1, 1, 6),
-    BNO_REPORT_ACTIVITY_CLASSIFIER: (1, 1, 16),
+    # BNO_REPORT_STABILITY_CLASSIFIER: (1, 1, 6),
+    # BNO_REPORT_ACTIVITY_CLASSIFIER: (1, 1, 16),
     # BNO_REPORT_RAW_ACCELEROMETER: (1, 3, 16),
     # BNO_REPORT_RAW_GYROSCOPE: (1, 3, 16),
     # BNO_REPORT_RAW_MAGNETOMETER: (1, 3, 16),
 }
 _INITIAL_REPORTS = {
-    BNO_REPORT_ACTIVITY_CLASSIFIER: {
-        "Tilting": -1,
-        "most_likely": "Unknown",
-        "OnStairs": -1,
-        "On-Foot": -1,
-        "Other": -1,
-        "On-Bicycle": -1,
-        "Still": -1,
-        "Walking": -1,
-        "Unknown": -1,
-        "Running": -1,
-        "In-Vehicle": -1,
-    },
-    BNO_REPORT_STABILITY_CLASSIFIER: "Unknown",
-    BNO_REPORT_ROTATION_VECTOR: (0.0, 0.0, 0.0, 0.0),
-    BNO_REPORT_GAME_ROTATION_VECTOR: (0.0, 0.0, 0.0, 0.0),
-    BNO_REPORT_GEOMAGNETIC_ROTATION_VECTOR: (0.0, 0.0, 0.0, 0.0),
+    # BNO_REPORT_ACTIVITY_CLASSIFIER: {
+    #     "Tilting": -1,
+    #     "most_likely": "Unknown",
+    #     "OnStairs": -1,
+    #     "On-Foot": -1,
+    #     "Other": -1,
+    #     "On-Bicycle": -1,
+    #     "Still": -1,
+    #     "Walking": -1,
+    #     "Unknown": -1,
+    #     "Running": -1,
+    #     "In-Vehicle": -1,
+    # },
+    # BNO_REPORT_STABILITY_CLASSIFIER: "Unknown",
+    # BNO_REPORT_ROTATION_VECTOR: (0.0, 0.0, 0.0, 0.0),
+    # BNO_REPORT_GAME_ROTATION_VECTOR: (0.0, 0.0, 0.0, 0.0),
+    # BNO_REPORT_GEOMAGNETIC_ROTATION_VECTOR: (0.0, 0.0, 0.0, 0.0),
 }
 
 _ENABLED_ACTIVITIES = 0x1FF  # All activities; 1 bit set for each of 8 activities, + Unknown
@@ -302,13 +302,13 @@ def _parse_sensor_report_data(report_bytes: bytearray) -> Tuple[Tuple, int]:
     return (results_tuple, accuracy)
 
 
-def _parse_step_couter_report(report_bytes: bytearray) -> int:
-    return unpack_from("<H", report_bytes, offset=8)[0]
+# def _parse_step_couter_report(report_bytes: bytearray) -> int:
+#     return unpack_from("<H", report_bytes, offset=8)[0]
 
 
-def _parse_stability_classifier_report(report_bytes: bytearray) -> str:
-    classification_bitfield = unpack_from("<B", report_bytes, offset=4)[0]
-    return ["Unknown", "On Table", "Stationary", "Stable", "In motion"][classification_bitfield]
+# def _parse_stability_classifier_report(report_bytes: bytearray) -> str:
+#     classification_bitfield = unpack_from("<B", report_bytes, offset=4)[0]
+#     return ["Unknown", "On Table", "Stationary", "Stable", "In motion"][classification_bitfield]
 
 
 # report_id
@@ -329,37 +329,37 @@ def _parse_get_feature_response_report(report_bytes: bytearray) -> Tuple[Any, ..
 # 4 Page Number + EOS
 # 5 Most likely state
 # 6-15 Classification (10 x Page Number) + confidence
-def _parse_activity_classifier_report(report_bytes: bytearray) -> Dict[str, str]:
-    activities = [
-        "Unknown",
-        "In-Vehicle",  # look
-        "On-Bicycle",  # at
-        "On-Foot",  # all
-        "Still",  # this
-        "Tilting",  # room
-        "Walking",  # for
-        "Running",  # activities
-        "OnStairs",
-    ]
+# def _parse_activity_classifier_report(report_bytes: bytearray) -> Dict[str, str]:
+#     activities = [
+#         "Unknown",
+#         "In-Vehicle",  # look
+#         "On-Bicycle",  # at
+#         "On-Foot",  # all
+#         "Still",  # this
+#         "Tilting",  # room
+#         "Walking",  # for
+#         "Running",  # activities
+#         "OnStairs",
+#     ]
 
-    end_and_page_number = unpack_from("<B", report_bytes, offset=4)[0]
-    # last_page = (end_and_page_number & 0b10000000) > 0
-    page_number = end_and_page_number & 0x7F
-    most_likely = unpack_from("<B", report_bytes, offset=5)[0]
-    confidences = unpack_from("<BBBBBBBBB", report_bytes, offset=6)
+#     end_and_page_number = unpack_from("<B", report_bytes, offset=4)[0]
+#     # last_page = (end_and_page_number & 0b10000000) > 0
+#     page_number = end_and_page_number & 0x7F
+#     most_likely = unpack_from("<B", report_bytes, offset=5)[0]
+#     confidences = unpack_from("<BBBBBBBBB", report_bytes, offset=6)
 
-    classification = {}
-    classification["most_likely"] = activities[most_likely]
-    for idx, raw_confidence in enumerate(confidences):
-        confidence = (10 * page_number) + raw_confidence
-        activity_string = activities[idx]
-        classification[activity_string] = confidence
-    return classification
+#     classification = {}
+#     classification["most_likely"] = activities[most_likely]
+#     for idx, raw_confidence in enumerate(confidences):
+#         confidence = (10 * page_number) + raw_confidence
+#         activity_string = activities[idx]
+#         classification[activity_string] = confidence
+#     return classification
 
 
-def _parse_shake_report(report_bytes: bytearray) -> bool:
-    shake_bitfield = unpack_from("<H", report_bytes, offset=4)[0]
-    return (shake_bitfield & 0x111) > 0
+# def _parse_shake_report(report_bytes: bytearray) -> bool:
+#     shake_bitfield = unpack_from("<H", report_bytes, offset=4)[0]
+#     return (shake_bitfield & 0x111) > 0
 
 
 def parse_sensor_id(buffer: bytearray) -> Tuple[int, ...]:
@@ -581,44 +581,44 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
         except KeyError:
             raise RuntimeError("No magfield report found, is it enabled?") from None
 
-    @property
-    def quaternion(self) -> Optional[Tuple[float, float, float, float]]:
-        """A quaternion representing the current rotation vector"""
-        self._process_available_packets()
-        try:
-            return self._readings[BNO_REPORT_ROTATION_VECTOR]
-        except KeyError:
-            raise RuntimeError("No quaternion report found, is it enabled?") from None
+    # @property
+    # def quaternion(self) -> Optional[Tuple[float, float, float, float]]:
+    #     """A quaternion representing the current rotation vector"""
+    #     self._process_available_packets()
+    #     try:
+    #         return self._readings[BNO_REPORT_ROTATION_VECTOR]
+    #     except KeyError:
+    #         raise RuntimeError("No quaternion report found, is it enabled?") from None
 
-    @property
-    def geomagnetic_quaternion(self) -> Optional[Tuple[float, float, float, float]]:
-        """A quaternion representing the current geomagnetic rotation vector"""
-        self._process_available_packets()
-        try:
-            return self._readings[BNO_REPORT_GEOMAGNETIC_ROTATION_VECTOR]
-        except KeyError:
-            raise RuntimeError("No geomag quaternion report found, is it enabled?") from None
+    # @property
+    # def geomagnetic_quaternion(self) -> Optional[Tuple[float, float, float, float]]:
+    #     """A quaternion representing the current geomagnetic rotation vector"""
+    #     self._process_available_packets()
+    #     try:
+    #         return self._readings[BNO_REPORT_GEOMAGNETIC_ROTATION_VECTOR]
+    #     except KeyError:
+    #         raise RuntimeError("No geomag quaternion report found, is it enabled?") from None
 
-    @property
-    def game_quaternion(self) -> Optional[Tuple[float, float, float, float]]:
-        """A quaternion representing the current rotation vector expressed as a quaternion with no
-        specific reference for heading, while roll and pitch are referenced against gravity. To
-        prevent sudden jumps in heading due to corrections, the `game_quaternion` property is not
-        corrected using the magnetometer. Some drift is expected"""
-        self._process_available_packets()
-        try:
-            return self._readings[BNO_REPORT_GAME_ROTATION_VECTOR]
-        except KeyError:
-            raise RuntimeError("No game quaternion report found, is it enabled?") from None
+    # @property
+    # def game_quaternion(self) -> Optional[Tuple[float, float, float, float]]:
+    #     """A quaternion representing the current rotation vector expressed as a quaternion with no
+    #     specific reference for heading, while roll and pitch are referenced against gravity. To
+    #     prevent sudden jumps in heading due to corrections, the `game_quaternion` property is not
+    #     corrected using the magnetometer. Some drift is expected"""
+    #     self._process_available_packets()
+    #     try:
+    #         return self._readings[BNO_REPORT_GAME_ROTATION_VECTOR]
+    #     except KeyError:
+    #         raise RuntimeError("No game quaternion report found, is it enabled?") from None
 
-    @property
-    def steps(self) -> Optional[int]:
-        """The number of steps detected since the sensor was initialized"""
-        self._process_available_packets()
-        try:
-            return self._readings[BNO_REPORT_STEP_COUNTER]
-        except KeyError:
-            raise RuntimeError("No steps report found, is it enabled?") from None
+    # @property
+    # def steps(self) -> Optional[int]:
+    #     """The number of steps detected since the sensor was initialized"""
+    #     self._process_available_packets()
+    #     try:
+    #         return self._readings[BNO_REPORT_STEP_COUNTER]
+    #     except KeyError:
+    #         raise RuntimeError("No steps report found, is it enabled?") from None
 
     # @property
     # def linear_acceleration(self) -> Optional[Tuple[float, float, float]]:
@@ -660,66 +660,66 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
         except KeyError:
             raise RuntimeError("No gyro report found, is it enabled?") from None
 
-    @property
-    def shake(self) -> Optional[bool]:
-        """True if a shake was detected on any axis since the last time it was checked
+    # @property
+    # def shake(self) -> Optional[bool]:
+    #     """True if a shake was detected on any axis since the last time it was checked
 
-        This property has a "latching" behavior where once a shake is detected, it will stay in a
-        "shaken" state until the value is read. This prevents missing shake events but means that
-        this property is not guaranteed to reflect the shake state at the moment it is read
-        """
-        self._process_available_packets()
-        try:
-            shake_detected = self._readings[BNO_REPORT_SHAKE_DETECTOR]
-            # clear on read
-            if shake_detected:
-                self._readings[BNO_REPORT_SHAKE_DETECTOR] = False
-            return shake_detected
-        except KeyError:
-            raise RuntimeError("No shake report found, is it enabled?") from None
+    #     This property has a "latching" behavior where once a shake is detected, it will stay in a
+    #     "shaken" state until the value is read. This prevents missing shake events but means that
+    #     this property is not guaranteed to reflect the shake state at the moment it is read
+    #     """
+    #     self._process_available_packets()
+    #     try:
+    #         shake_detected = self._readings[BNO_REPORT_SHAKE_DETECTOR]
+    #         # clear on read
+    #         if shake_detected:
+    #             self._readings[BNO_REPORT_SHAKE_DETECTOR] = False
+    #         return shake_detected
+    #     except KeyError:
+    #         raise RuntimeError("No shake report found, is it enabled?") from None
 
-    @property
-    def stability_classification(self) -> Optional[str]:
-        """Returns the sensor's assessment of it's current stability, one of:
+    # @property
+    # def stability_classification(self) -> Optional[str]:
+    #     """Returns the sensor's assessment of it's current stability, one of:
 
-        * "Unknown" - The sensor is unable to classify the current stability
-        * "On Table" - The sensor is at rest on a stable surface with very little vibration
-        * "Stationary" -  The sensor’s motion is below the stable threshold but\
-        the stable duration requirement has not been met. This output is only available when\
-        gyro calibration is enabled
-        * "Stable" - The sensor’s motion has met the stable threshold and duration requirements.
-        * "In motion" - The sensor is moving.
+    #     * "Unknown" - The sensor is unable to classify the current stability
+    #     * "On Table" - The sensor is at rest on a stable surface with very little vibration
+    #     * "Stationary" -  The sensor’s motion is below the stable threshold but\
+    #     the stable duration requirement has not been met. This output is only available when\
+    #     gyro calibration is enabled
+    #     * "Stable" - The sensor’s motion has met the stable threshold and duration requirements.
+    #     * "In motion" - The sensor is moving.
 
-        """
-        self._process_available_packets()
-        try:
-            stability_classification = self._readings[BNO_REPORT_STABILITY_CLASSIFIER]
-            return stability_classification
-        except KeyError:
-            raise RuntimeError("No stability classification report found, is it enabled?") from None
+    #     """
+    #     self._process_available_packets()
+    #     try:
+    #         stability_classification = self._readings[BNO_REPORT_STABILITY_CLASSIFIER]
+    #         return stability_classification
+    #     except KeyError:
+    #         raise RuntimeError("No stability classification report found, is it enabled?") from None
 
-    @property
-    def activity_classification(self) -> Optional[dict]:
-        """Returns the sensor's assessment of the activity that is creating the motions\
-        that it is sensing, one of:
+    # @property
+    # def activity_classification(self) -> Optional[dict]:
+    #     """Returns the sensor's assessment of the activity that is creating the motions\
+    #     that it is sensing, one of:
 
-        * "Unknown"
-        * "In-Vehicle"
-        * "On-Bicycle"
-        * "On-Foot"
-        * "Still"
-        * "Tilting"
-        * "Walking"
-        * "Running"
-        * "On Stairs"
+    #     * "Unknown"
+    #     * "In-Vehicle"
+    #     * "On-Bicycle"
+    #     * "On-Foot"
+    #     * "Still"
+    #     * "Tilting"
+    #     * "Walking"
+    #     * "Running"
+    #     * "On Stairs"
 
-        """
-        self._process_available_packets()
-        try:
-            activity_classification = self._readings[BNO_REPORT_ACTIVITY_CLASSIFIER]
-            return activity_classification
-        except KeyError:
-            raise RuntimeError("No activity classification report found, is it enabled?") from None
+    #     """
+    #     self._process_available_packets()
+    #     try:
+    #         activity_classification = self._readings[BNO_REPORT_ACTIVITY_CLASSIFIER]
+    #         return activity_classification
+    #     except KeyError:
+    #         raise RuntimeError("No activity classification report found, is it enabled?") from None
 
     # @property
     # def raw_acceleration(self) -> Optional[Tuple[int, int, int]]:
@@ -953,29 +953,29 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
             self._dbg(outstr)
             self._dbg("")
 
-        if report_id == BNO_REPORT_STEP_COUNTER:
-            self._readings[report_id] = _parse_step_couter_report(report_bytes)
-            return
+        # if report_id == BNO_REPORT_STEP_COUNTER:
+        #     self._readings[report_id] = _parse_step_couter_report(report_bytes)
+        #     return
 
-        if report_id == BNO_REPORT_SHAKE_DETECTOR:
-            shake_detected = _parse_shake_report(report_bytes)
-            # shake not previously detected - auto cleared by 'shake' property
-            try:
-                if not self._readings[BNO_REPORT_SHAKE_DETECTOR]:
-                    self._readings[BNO_REPORT_SHAKE_DETECTOR] = shake_detected
-            except KeyError:
-                pass
-            return
+        # if report_id == BNO_REPORT_SHAKE_DETECTOR:
+        #     shake_detected = _parse_shake_report(report_bytes)
+        #     # shake not previously detected - auto cleared by 'shake' property
+        #     try:
+        #         if not self._readings[BNO_REPORT_SHAKE_DETECTOR]:
+        #             self._readings[BNO_REPORT_SHAKE_DETECTOR] = shake_detected
+        #     except KeyError:
+        #         pass
+        #     return
 
-        if report_id == BNO_REPORT_STABILITY_CLASSIFIER:
-            stability_classification = _parse_stability_classifier_report(report_bytes)
-            self._readings[BNO_REPORT_STABILITY_CLASSIFIER] = stability_classification
-            return
+        # if report_id == BNO_REPORT_STABILITY_CLASSIFIER:
+        #     stability_classification = _parse_stability_classifier_report(report_bytes)
+        #     self._readings[BNO_REPORT_STABILITY_CLASSIFIER] = stability_classification
+        #     return
 
-        if report_id == BNO_REPORT_ACTIVITY_CLASSIFIER:
-            activity_classification = _parse_activity_classifier_report(report_bytes)
-            self._readings[BNO_REPORT_ACTIVITY_CLASSIFIER] = activity_classification
-            return
+        # if report_id == BNO_REPORT_ACTIVITY_CLASSIFIER:
+        #     activity_classification = _parse_activity_classifier_report(report_bytes)
+        #     self._readings[BNO_REPORT_ACTIVITY_CLASSIFIER] = activity_classification
+        #     return
         sensor_data, accuracy = _parse_sensor_report_data(report_bytes)
         if report_id == BNO_REPORT_MAGNETOMETER:
             self._magnetometer_accuracy = accuracy
@@ -1006,10 +1006,10 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
         """Used to enable a given feature of the BNO08x"""
         self._dbg("\n********** Enabling feature id:", feature_id, "**********")
 
-        if feature_id == BNO_REPORT_ACTIVITY_CLASSIFIER:
-            set_feature_report = self._get_feature_enable_report(feature_id, sensor_specific_config=_ENABLED_ACTIVITIES)
-        else:
-            set_feature_report = self._get_feature_enable_report(feature_id)
+        # if feature_id == BNO_REPORT_ACTIVITY_CLASSIFIER:
+        #     set_feature_report = self._get_feature_enable_report(feature_id, sensor_specific_config=_ENABLED_ACTIVITIES)
+        # else:
+        set_feature_report = self._get_feature_enable_report(feature_id)
 
         # feature_dependency = _RAW_REPORTS.get(feature_id, None)
         # # if the feature was enabled it will have a key in the readings dict

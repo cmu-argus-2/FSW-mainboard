@@ -9,7 +9,6 @@ import board
 import digitalio
 from busio import I2C, SPI, UART
 from hal.cubesat import CubeSat
-from hal.drivers.adafruit_bno08x import BNO_REPORT_ACCELEROMETER, BNO_REPORT_GYROSCOPE, BNO_REPORT_MAGNETOMETER
 from hal.drivers.middleware.errors import Errors
 from hal.drivers.middleware.middleware import Middleware
 from micropython import const
@@ -302,7 +301,7 @@ class ArgusV2(CubeSat):
         error_list.append(self.__imu_boot())
         error_list.append(self.__rtc_boot())
         # error_list.append(self.__gps_boot())
-        error_list.append(self.__radio_boot())
+        # error_list.append(self.__radio_boot())
         error_list.append(self.__power_monitor_boot())
         # error_list.append(self.__fuel_gauge_boot)
         error_list.append(self.__charger_boot())
@@ -360,7 +359,7 @@ class ArgusV2(CubeSat):
 
         locations = {
             "BOARD": [ArgusV2Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.BOARD_POWER_MONITOR_I2C],
-            "RADIO": [ArgusV2Components.RADIO_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.RADIO_POWER_MONITOR_I2C],
+            # "RADIO": [ArgusV2Components.RADIO_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.RADIO_POWER_MONITOR_I2C],
             # "GPS": [ArgusV2Components.GPS_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.GPS_POWER_MONITOR_I2C],
             # "JETSON": [ArgusV2Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.JETSON_POWER_MONITOR_I2C],
             # "TORQUE_XP": [
@@ -441,7 +440,7 @@ class ArgusV2(CubeSat):
         """
         try:
             # from hal.drivers.bno08x_i2c import BNO08X_I2C
-            from hal.drivers.bno085 import BNO085
+            from hal.drivers.bno085 import BNO085, BNO_REPORT_ACCELEROMETER, BNO_REPORT_GYROSCOPE, BNO_REPORT_MAGNETOMETER
 
             imu = BNO085(ArgusV2Components.IMU_I2C, ArgusV2Components.IMU_I2C_ADDRESS)
             imu.enable_feature(BNO_REPORT_ACCELEROMETER)
@@ -579,29 +578,18 @@ class ArgusV2(CubeSat):
 
         :return: Error code if the radio failed to initialize
         """
-        radioEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_ENABLE)
-        radioRxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_RX_EN)
-        radioTxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_TX_EN)
-
-        radioEn.direction = digitalio.Direction.OUTPUT
-        radioRxEn.direction = digitalio.Direction.OUTPUT
-        radioTxEn.direction = digitalio.Direction.OUTPUT
-
-        radioEn.value = True
-        radioRxEn.value = True
-        radioTxEn.value = True
         try:
             from hal.drivers.sx126x import SX1262
 
-            # radioEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_ENABLE)
-            # radioRxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_RX_EN)
-            # radioTxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_TX_EN)
-            # radioEn.direction = digitalio.Direction.OUTPUT
-            # radioRxEn.direction = digitalio.Direction.OUTPUT
-            # radioTxEn.direction = digitalio.Direction.OUTPUT
-            # radioEn.value = True
-            # radioRxEn.value = True
-            # radioTxEn.value = True
+            radioEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_ENABLE)
+            radioRxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_RX_EN)
+            radioTxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_TX_EN)
+            radioEn.direction = digitalio.Direction.OUTPUT
+            radioRxEn.direction = digitalio.Direction.OUTPUT
+            radioTxEn.direction = digitalio.Direction.OUTPUT
+            radioEn.value = True
+            radioRxEn.value = True
+            radioTxEn.value = True
 
             radio = SX1262(
                 spi_bus=ArgusV2Interfaces.SPI,
@@ -613,8 +601,6 @@ class ArgusV2(CubeSat):
                 rst=ArgusV2Components.RADIO_RESET,
                 gpio=ArgusV2Components.RADIO_BUSY,
             )
-
-            print(radio)
 
             radio.begin(
                 freq=915.6,
@@ -642,7 +628,6 @@ class ArgusV2(CubeSat):
             self.__device_list.append(radio)
 
         except Exception as e:
-            print(e)
             if self.__debug:
                 raise e
 
