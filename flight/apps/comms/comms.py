@@ -242,9 +242,6 @@ class SATELLITE_RADIO:
 
             return cls.gs_req_message_ID
 
-        # TODO: Integrate Radiohead compliance into driver
-        packet = packet[4:]
-
         # Check CRC error on received packet
         crc_check = 0
 
@@ -352,10 +349,7 @@ class SATELLITE_RADIO:
             cls.tx_message = cls.tm_frame
 
         # Send a message to GS
-        # TODO: Integrate Radiohead compliance into driver
-        tx_msg = bytes([0xFF, 0xFF, 0x00, 0x00]) + cls.tx_message
-
-        cls.sat.RADIO.send(tx_msg)
+        cls.sat.RADIO.send(cls.tx_message)
         cls.crc_count = 0
 
         # Return TX message header
