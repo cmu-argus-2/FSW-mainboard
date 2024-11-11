@@ -7,3 +7,10 @@ CHIP_VARIANT = RP2040
 CHIP_FAMILY = rp2
 
 EXTERNAL_FLASH_DEVICES = "W25Q32JVxQ"
+
+CIRCUITPY_DRIVE_LABEL = "ARGUS"
+CIRCUITPY_ULAB = 1
+
+FROZEN_MPY_DIRS += $(TOP)/frozen/Adafruit_CircuitPython_BusDevice
+FROZEN_MPY_DIRS += $(TOP)/frozen/Adafruit_CircuitPython_Register
+FROZEN_MPY_DIRS += $(TOP)/frozen/Adafruit_CircuitPython_SD

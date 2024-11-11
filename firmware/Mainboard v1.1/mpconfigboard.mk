@@ -25,6 +25,5 @@ CIRCUITPY_BLEIO_HCI = 0
 CIRCUITPY_BLEIO = 0
 
 FROZEN_MPY_DIRS += $(TOP)/frozen/Adafruit_CircuitPython_BusDevice
-FROZEN_MPY_DIRS += $(TOP)/frozen/Adafruit_CircuitPython_NeoPixel
 FROZEN_MPY_DIRS += $(TOP)/frozen/Adafruit_CircuitPython_Register
 FROZEN_MPY_DIRS += $(TOP)/frozen/Adafruit_CircuitPython_SD
