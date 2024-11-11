@@ -234,13 +234,16 @@ class SATELLITE_RADIO:
         # Get packet from radio over SPI
         # Assumes packet is in FIFO buffer
 
-        packet = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
+        packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
 
         if packet is None:
             # FIFO buffer does not contain a packet
             cls.gs_req_message_ID = 0x00
 
             return cls.gs_req_message_ID
+
+        # TODO: Integrate Radiohead compliance into driver
+        packet = packet[4:]
 
         # Check CRC error on received packet
         crc_check = 0
@@ -349,6 +352,7 @@ class SATELLITE_RADIO:
             cls.tx_message = cls.tm_frame
 
         # Send a message to GS
+        # TODO: Integrate Radiohead compliance into driver
         tx_msg = bytes([0xFF, 0xFF, 0x00, 0x00]) + cls.tx_message
 
         cls.sat.RADIO.send(tx_msg)
