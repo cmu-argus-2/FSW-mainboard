@@ -302,12 +302,12 @@ class ArgusV2(CubeSat):
         error_list.append(self.__imu_boot())
         error_list.append(self.__rtc_boot())
         # error_list.append(self.__gps_boot())
+        error_list.append(self.__radio_boot())
         error_list.append(self.__power_monitor_boot())
         # error_list.append(self.__fuel_gauge_boot)
         error_list.append(self.__charger_boot())
         # error_list.append(self.__torque_drivers_boot())
         # error_list.append(self.__light_sensors_boot())  # light + sun sensors
-        error_list.append(self.__radio_boot())
         # error_list.append(self.__burn_wire_boot())
 
         error_list = [error for error in error_list if error != Errors.NOERROR]
@@ -360,6 +360,8 @@ class ArgusV2(CubeSat):
 
         locations = {
             "BOARD": [ArgusV2Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.BOARD_POWER_MONITOR_I2C],
+            "RADIO": [ArgusV2Components.RADIO_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.RADIO_POWER_MONITOR_I2C],
+            # "GPS": [ArgusV2Components.GPS_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.GPS_POWER_MONITOR_I2C],
             # "JETSON": [ArgusV2Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.JETSON_POWER_MONITOR_I2C],
             # "TORQUE_XP": [
             #     ArgusV2Components.TORQUE_XP_POWER_MONITOR_I2C_ADDRESS,
@@ -439,9 +441,9 @@ class ArgusV2(CubeSat):
         """
         try:
             # from hal.drivers.bno08x_i2c import BNO08X_I2C
-            from hal.drivers.adafruit_bno08x.i2c import BNO08X_I2C
+            from hal.drivers.bno085 import BNO085
 
-            imu = BNO08X_I2C(ArgusV2Components.IMU_I2C)
+            imu = BNO085(ArgusV2Components.IMU_I2C, ArgusV2Components.IMU_I2C_ADDRESS)
             imu.enable_feature(BNO_REPORT_ACCELEROMETER)
             imu.enable_feature(BNO_REPORT_GYROSCOPE)
             imu.enable_feature(BNO_REPORT_MAGNETOMETER)
@@ -455,7 +457,7 @@ class ArgusV2(CubeSat):
             if self.__debug:
                 raise e
 
-            return Errors.BMX160_NOT_INITIALIZED
+            return Errors.IMU_NOT_INITIALIZED
 
         return Errors.NOERROR
 
@@ -577,20 +579,29 @@ class ArgusV2(CubeSat):
 
         :return: Error code if the radio failed to initialize
         """
+        radioEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_ENABLE)
+        radioRxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_RX_EN)
+        radioTxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_TX_EN)
+
+        radioEn.direction = digitalio.Direction.OUTPUT
+        radioRxEn.direction = digitalio.Direction.OUTPUT
+        radioTxEn.direction = digitalio.Direction.OUTPUT
+
+        radioEn.value = True
+        radioRxEn.value = True
+        radioTxEn.value = True
         try:
             from hal.drivers.sx126x import SX1262
 
-            radioEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_ENABLE)
-            radioRxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_RX_EN)
-            radioTxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_TX_EN)
-
-            radioEn.direction = digitalio.Direction.OUTPUT
-            radioRxEn.direction = digitalio.Direction.OUTPUT
-            radioTxEn.direction = digitalio.Direction.OUTPUT
-
-            radioEn.value = True
-            radioRxEn.value = True
-            radioTxEn.value = True
+            # radioEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_ENABLE)
+            # radioRxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_RX_EN)
+            # radioTxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_TX_EN)
+            # radioEn.direction = digitalio.Direction.OUTPUT
+            # radioRxEn.direction = digitalio.Direction.OUTPUT
+            # radioTxEn.direction = digitalio.Direction.OUTPUT
+            # radioEn.value = True
+            # radioRxEn.value = True
+            # radioTxEn.value = True
 
             radio = SX1262(
                 spi_bus=ArgusV2Interfaces.SPI,
