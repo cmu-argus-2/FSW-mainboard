@@ -54,7 +54,7 @@ SM_CONFIGURATION = {
             TASK.TIMING: {"Frequency": 1, "Priority": 2},
             TASK.EPS: {"Frequency": 1, "Priority": 1},
             TASK.OBDH: {"Frequency": 1, "Priority": 2},
-            TASK.IMU: {"Frequency": 10, "Priority": 5},
+            TASK.IMU: {"Frequency": 1, "Priority": 5},
             TASK.ADCS: {"Frequency": 1, "Priority": 2, "ScheduleLater": True},
             TASK.COMMS: {"Frequency": 1, "Priority": 2, "ScheduleLater": True},
             TASK.THERMAL: {"Frequency": 1, "Priority": 5, "ScheduleLater": True},

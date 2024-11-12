@@ -635,9 +635,9 @@ class SX126X:
             timeout = timeout_ms * 1000
 
         if timeout_en:
-            timeoutValue = int(float(timeout) / 15.625)
+            timeoutValue = int(float(timeout) / 15.625)  # noqa F841
         else:
-            timeoutValue = SX126X_RX_TIMEOUT_NONE
+            timeoutValue = SX126X_RX_TIMEOUT_NONE  # noqa F841
 
         if self.RX_available():
             if self._headerType == SX126X_LORA_HEADER_IMPLICIT and self.getPacketType() == SX126X_PACKET_TYPE_LORA:
@@ -708,9 +708,9 @@ class SX126X:
 
     def setDio1Action(self, func):
         try:
-            self.irq.callback(trigger=Pin.IRQ_RISING, handler=func)  # Pycom variant uPy
-        except:
-            self.irq.irq(trigger=Pin.IRQ_RISING, handler=func)  # Generic variant uPy
+            self.irq.callback(trigger=Pin.IRQ_RISING, handler=func)  # noqa F821
+        except:  # noqa E722
+            self.irq.irq(trigger=Pin.IRQ_RISING, handler=func)  # noqa F821
 
     def clearDio1Action(self):
         self.irq.deinit()
@@ -900,7 +900,7 @@ class SX126X:
         }
         try:
             self._bw = switch[bw_div2]
-        except:
+        except:  # noqa E722
             return ERR_INVALID_BANDWIDTH
 
         self._bwKhz = bw
@@ -1410,7 +1410,7 @@ class SX126X:
         }
         try:
             return switch[status]
-        except:
+        except:  # noqa E722
             return ERR_NONE
 
 
@@ -1530,7 +1530,7 @@ class SX1262(SX126X):
         if not self.blocking:
             state = super().startReceive()
             ASSERT(state)
-            if callback != None:
+            if callback is not None:
                 self._callbackFunction = callback
                 super().setDio1Action(self._onIRQ)
             else:
