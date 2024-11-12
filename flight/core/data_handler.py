@@ -148,7 +148,7 @@ class DataProcess:
         # (https://stackoverflow.com/questions/47750056/python-struct-unpack-length-error/47750278#47750278)
         self.bytesize = self.compute_bytesize(self.data_format)
 
-        self.last_data = {}
+        self.last_data = None
 
         if self.persistent:
 
@@ -229,7 +229,7 @@ class DataProcess:
 
         gc.collect()
 
-    def get_latest_data(self) -> List:
+    def get_latest_data(self) -> Optional[List]:
         """
         Returns the latest data point.
 
@@ -237,14 +237,27 @@ class DataProcess:
         If no data point has been logged yet, it returns None.
 
         Returns:
-            The latest data point or None if no data point has been logged yet.
+            The latest data point or None if no data point is available yet.
         """
         if self.last_data is not None:
             return self.last_data
         else:
-            # TODO handle case where no data has been logged yet?
+            logger.warning("No latest data point available.")
             return None
-            # raise ValueError("No latest data point available.")
+
+    def clear_latest_data(self) -> bool:
+        """
+        Clears the latest data point.
+        """
+        self.last_data = None
+
+    def data_available(self) -> bool:
+        """
+        Returns whether data is available in the internal buffer (latest).
+        If data is  not available, it is either because nothing has been logged yet
+        or the data has been cleared.
+        """
+        return self.last_data is not None
 
     def resolve_current_file(self) -> None:
         """
@@ -704,19 +717,46 @@ class DataHandler:
         Parameters:
         - tag_name (str): The name of the data process.
 
-        Raises:
-        - KeyError: If the provided tag name is not registered in the data process registry.
+        Returns:
+        - The latest data point for the specified data process or None if the data process does not exist.
+        """
+        if cls._check_tag_name(tag_name):
+            return cls.data_process_registry[tag_name].get_latest_data()
+        else:
+            return None
+
+    @classmethod
+    def clear_latest_data(cls, tag_name: str) -> bool:
+        """
+        Clears the latest data point for the specified data process.
+
+        Parameters:
+        - tag_name (str): The name of the data process.
+
+        Returns True if the latest data point was cleared, False otherwise
+        (and if a tag_name associated to a data process does not exist).
+        """
+        if cls._check_tag_name(tag_name):
+            return cls.data_process_registry[tag_name].clear_latest_data()
+        else:
+            return False
+
+    @classmethod
+    def data_available(cls, tag_name: str) -> bool:
+        """
+        Returns whether data is available in the internal buffer (latest) for the specified data process.
+        If data is not available, it is either because nothing has been logged yet or the data has been cleared.
+
+        Parameters:
+        - tag_name (str): The name of the data process.
 
         Returns:
-        - The latest data point for the specified data process.
+        - bool: True if data is available, False otherwise (and if a tag_name associated to a data process does not exist).
         """
-        try:
-            if tag_name in cls.data_process_registry:
-                return cls.data_process_registry[tag_name].get_latest_data()
-            else:
-                raise KeyError("Data process not registered!")
-        except KeyError as e:
-            logger.critical(f"Error: {e}")
+        if cls._check_tag_name(tag_name):
+            return cls.data_process_registry[tag_name].data_available()
+        else:
+            return False
 
     @classmethod
     def list_directories(cls) -> List[str]:
@@ -975,6 +1015,17 @@ class DataHandler:
             # recursively print directory contents
             if isdir:
                 cls.print_directory(join_path(path, file), tabs + 1)
+
+    @classmethod
+    def _check_tag_name(cls, tag_name: str) -> bool:
+        """
+        Checks if the tag name is valid.
+        """
+        if tag_name in cls.data_process_registry:
+            return True
+        else:
+            logger.critical("Data process '{}' not registered!".format(tag_name))
+            return False
 
 
 def path_exist(path: str) -> bool:
