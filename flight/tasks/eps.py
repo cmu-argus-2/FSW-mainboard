@@ -72,7 +72,7 @@ class Task(TemplateTask):
         if sensor is not None:
             board_voltage, board_current = sensor.read_voltage_current()
             self.log_data[voltage_idx] = int(board_voltage * 1000)  # mV - max 8.4V
-            self.log_data[current_idx] = int(board_current * 1000)  # mA
+            self.log_data[current_idx] = int(board_current * 1000 * 1000)  # uA
 
     async def main_task(self):
 
@@ -94,17 +94,17 @@ class Task(TemplateTask):
                     self.read_vc(SATELLITE.POWER_MONITORS[key], EPS_IDX.MAINBOARD_VOLTAGE, EPS_IDX.MAINBOARD_CURRENT)
                     self.log_info(
                         f"Board Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, "
-                        + f"Board Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA "
+                        + f"Board Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} uA "
                     )
                 elif key == "JETSON":
                     self.read_vc(SATELLITE.POWER_MONITORS[key], EPS_IDX.JETSON_INPUT_VOLTAGE, EPS_IDX.JETSON_INPUT_CURRENT)
                     self.log_info(
                         f"Jetson Voltage: {self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE]} mV, "
-                        + f"Jetson Current: {self.log_data[EPS_IDX.JETSON_INPUT_CURRENT]} mA"
+                        + f"Jetson Current: {self.log_data[EPS_IDX.JETSON_INPUT_CURRENT]} uA"
                     )
                 elif key == "RADIO":
                     self.read_vc(SATELLITE.POWER_MONITORS[key], EPS_IDX.RF_LDO_OUTPUT_VOLTAGE, EPS_IDX.RF_LDO_OUTPUT_CURRENT)
                     self.log_info(
                         f"Radio Voltage: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_VOLTAGE]} mV, "
-                        + f"Radio Current: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_CURRENT]} mA"
+                        + f"Radio Current: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_CURRENT]} uA"
                     )

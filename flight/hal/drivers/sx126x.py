@@ -1588,8 +1588,12 @@ class SX1262(SX126X):
         else:
             return b"", state
 
+        radiohead_check = bytes([0xFF, 0xFF, 0x00, 0x00])
+
         # Compatibility with Radiohead
-        data = data[4:]
+        if data[:4] == radiohead_check:
+            print(data)
+            data = data[4:]
 
         return bytes(data), state
 

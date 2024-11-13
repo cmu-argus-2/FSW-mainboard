@@ -3,6 +3,7 @@
 # from hal.pycubed import hardware
 import time
 
+import rtc
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
@@ -17,9 +18,9 @@ class Task(TemplateTask):
     async def main_task(self):
 
         if SM.current_state == STATES.STARTUP:
-            # r = rtc.RTC()
-            SATELLITE.RTC.set_datetime(time.struct_time((2024, 4, 24, 9, 30, 0, 3, 115, -1)))
-            # rtc.set_time_source(r)
+            # Bad
+            # SATELLITE.RTC.set_datetime(time.struct_time((2024, 4, 24, 9, 30, 0, 3, 115, -1)))
+            rtc.set_time_source(SATELLITE.RTC)
         elif SM.current_state == STATES.NOMINAL:
             self.log_info(f"Time: {int(time.time())}")
             self.log_info(f"Time since boot: {int(time.time()) - SATELLITE.BOOTTIME}")
