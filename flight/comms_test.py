@@ -1,6 +1,6 @@
 import time
 
-from apps.comms.comms import COMMS_STATE, SATELLITE_RADIO
+from apps.comms.comms import SATELLITE_RADIO
 from hal.configuration import SATELLITE
 
 print("Booting ARGUS-1...")
