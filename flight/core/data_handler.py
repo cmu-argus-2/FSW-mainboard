@@ -617,6 +617,7 @@ class DataHandler:
         persistent: bool,
         data_limit: int = 100000,
         write_interval: int = 1,
+        circular_buffer_size: int = 10,
     ) -> None:
         """
         Register a data process with the given parameters.
@@ -627,6 +628,7 @@ class DataHandler:
         - persistent (bool): Whether the data should be logged to a file.
         - data_limit (int, optional): The maximum number of data lines to store. Defaults to 100000 bytes.
         - write_interval (int, optional): The interval of logs at which the data should be written to the file. Defaults to 1.
+        - circular_buffer_size (int, optional): The size of the circular buffer for the files in the directory. Defaults to 10.
 
         Raises:
         - ValueError: If data_limit is not a positive integer.
@@ -636,7 +638,12 @@ class DataHandler:
         """
         if isinstance(data_limit, int) and data_limit > 0:
             cls.data_process_registry[tag_name] = DataProcess(
-                tag_name, data_format, persistent=persistent, data_limit=data_limit, write_interval=write_interval
+                tag_name,
+                data_format,
+                persistent=persistent,
+                data_limit=data_limit,
+                write_interval=write_interval,
+                circular_buffer_size=circular_buffer_size,
             )
         else:
             raise ValueError("Data limit must be a positive integer.")
