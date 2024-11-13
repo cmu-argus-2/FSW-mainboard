@@ -463,8 +463,8 @@ class GPS:
         print(
             f"Timestamp (UTC): {self.timestamp_utc.get('year')}-{self.timestamp_utc.get('month')}-",
             f"{self.timestamp_utc.get('day')} {self.timestamp_utc.get('hour')}:",
-            f"{self.timestamp_utc.get('minute')}:{self.timestamp_utc.get('second')}"
-            )
+            f"{self.timestamp_utc.get('minute')}:{self.timestamp_utc.get('second')}",
+        )
         print("=" * 40)
 
     def get_nav_data(self) -> dict:
