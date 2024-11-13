@@ -122,6 +122,16 @@ class SATELLITE_RADIO:
             cls.state = COMMS_STATE.RX
 
     """
+        Name: get_rssi
+        Description: Get RSSI of received packet
+    """
+
+    @classmethod
+    def get_rssi(cls):
+        # Get state
+        return cls.rx_message_rssi
+
+    """
         Name: set_tm_frame
         Description: Set internal TM frame for TX
     """
@@ -241,6 +251,8 @@ class SATELLITE_RADIO:
             cls.gs_req_message_ID = 0x00
 
             return cls.gs_req_message_ID
+
+        cls.rx_message_rssi = SATELLITE.RADIO.rssi()
 
         # Check CRC error on received packet
         crc_check = 0

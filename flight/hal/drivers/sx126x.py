@@ -1561,6 +1561,9 @@ class SX1262(SX126X):
         else:
             return self._transmit(tx_data)
 
+    def rssi(self):
+        return super().getRSSI()
+
     def _events(self):
         return super().getIrqStatus()
 

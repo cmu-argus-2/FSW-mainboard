@@ -29,6 +29,10 @@ class Task(TemplateTask):
         self.RX_COUNTER = 0
 
     async def main_task(self):
+
+        if not DH.data_process_exists("comms"):
+            DH.register_data_process("comms", "f", True, 100000)
+
         # TODO: Check if this can be done in setup
         if not self.frequency_set:
             # Reset counter
@@ -91,7 +95,11 @@ class Task(TemplateTask):
                     # Check the response from the GS
                     if self.rq_msg_id != 0x00:
                         # GS requested valid message ID
+                        self.log_info(f"RX message RSSI: {SATELLITE_RADIO.get_rssi()}")
                         self.log_info(f"GS requested message ID: {self.rq_msg_id}")
+
+                        DH.log_data("comms", [SATELLITE_RADIO.get_rssi()])
+
                         self.ground_pass = True
                         self.RX_COUNTER = 0
 

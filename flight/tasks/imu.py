@@ -38,31 +38,38 @@ class Task(TemplateTask):
             if not DH.data_process_exists("imu"):
                 DH.register_data_process("imu", "Lfffffffff", True, data_limit=100000, write_interval=5)
 
-            if SATELLITE.IMU_NAME == "BNO08X":
-                accel = SATELLITE.IMU.acceleration
-                mag = SATELLITE.IMU.magnetic
-                gyro = SATELLITE.IMU.gyro
-            elif SATELLITE.IMU_NAME == "BMX160":
-                accel = SATELLITE.IMU.accel()
-                mag = SATELLITE.IMU.mag()
-                gyro = SATELLITE.IMU.gyro()
+            if SATELLITE.IMU_AVAILABLE:
+                if SATELLITE.IMU_NAME == "BNO08X":
+                    accel = SATELLITE.IMU.acceleration
+                    mag = SATELLITE.IMU.magnetic
+                    gyro = SATELLITE.IMU.gyro
+                elif SATELLITE.IMU_NAME == "BMX160":
+                    accel = SATELLITE.IMU.accel()
+                    mag = SATELLITE.IMU.mag()
+                    gyro = SATELLITE.IMU.gyro()
 
-            # Replace data in the pre-allocated list
-            self.log_data[IMU_IDX.TIME_IMU] = int(time.time())
-            self.log_data[IMU_IDX.ACCEL_X] = accel[0]
-            self.log_data[IMU_IDX.ACCEL_Y] = accel[1]
-            self.log_data[IMU_IDX.ACCEL_Z] = accel[2]
-            self.log_data[IMU_IDX.MAGNETOMETER_X] = mag[0]
-            self.log_data[IMU_IDX.MAGNETOMETER_Y] = mag[1]
-            self.log_data[IMU_IDX.MAGNETOMETER_Z] = mag[2]
-            self.log_data[IMU_IDX.GYROSCOPE_X] = gyro[0]
-            self.log_data[IMU_IDX.GYROSCOPE_Y] = gyro[1]
-            self.log_data[IMU_IDX.GYROSCOPE_Z] = gyro[2]
+                # Replace data in the pre-allocated list
+                self.log_data[IMU_IDX.TIME_IMU] = int(time.time())
+                self.log_data[IMU_IDX.ACCEL_X] = accel[0]
+                self.log_data[IMU_IDX.ACCEL_Y] = accel[1]
+                self.log_data[IMU_IDX.ACCEL_Z] = accel[2]
+                self.log_data[IMU_IDX.MAGNETOMETER_X] = mag[0]
+                self.log_data[IMU_IDX.MAGNETOMETER_Y] = mag[1]
+                self.log_data[IMU_IDX.MAGNETOMETER_Z] = mag[2]
+                self.log_data[IMU_IDX.GYROSCOPE_X] = gyro[0]
+                self.log_data[IMU_IDX.GYROSCOPE_Y] = gyro[1]
+                self.log_data[IMU_IDX.GYROSCOPE_Z] = gyro[2]
 
-            DH.log_data("imu", self.log_data)
+                DH.log_data("imu", self.log_data)
 
-            self.log_print_counter += 1
-            if self.log_print_counter % 2 == 0:
-                # self.log_info(f"{dict(zip(self.data_keys, self.log_data))}")
-                self.log_print_counter = 0
-                self.log_info(f"(mag, gyro): {self.log_data[IMU_IDX.MAGNETOMETER_X:IMU_IDX.GYROSCOPE_Z]}")
+                self.log_print_counter += 1
+                if self.log_print_counter % 2 == 0:
+                    # self.log_info(f"{dict(zip(self.data_keys, self.log_data))}")
+                    self.log_print_counter = 0
+                    self.log_info(f"(mag, gyro): {self.log_data[IMU_IDX.MAGNETOMETER_X:IMU_IDX.GYROSCOPE_Z]}")
+
+            else:
+                self.log_print_counter += 1
+                if self.log_print_counter % 10 == 0:
+                    self.log_print_counter = 0
+                    self.log_info("IMU not available")
