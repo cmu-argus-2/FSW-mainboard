@@ -88,7 +88,7 @@ sample0 = [
 ]
 
 
-class GPS:
+class GPS(Driver):
     def __init__(self, uart: UART, enable=None, debug: bool = False) -> None:
         self._uart = uart
         self.debug = debug
