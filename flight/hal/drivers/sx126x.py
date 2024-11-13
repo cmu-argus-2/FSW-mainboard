@@ -1,6 +1,5 @@
 from time import monotonic_ns, sleep
 
-import busio
 import digitalio
 from micropython import const
 
