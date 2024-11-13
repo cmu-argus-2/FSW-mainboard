@@ -88,7 +88,7 @@ sample0 = [
 ]
 
 
-class GPS(Driver):
+class GPS:
     def __init__(self, uart: UART, enable=None, debug: bool = False) -> None:
         self._uart = uart
         self.debug = debug
@@ -461,10 +461,10 @@ class GPS(Driver):
         print(f"ECEF Vy:                    {self.ecef_vy}")
         print(f"ECEF Vz:                    {self.ecef_vz}")
         print(
-            f"Timestamp (UTC): {self.timestamp_utc.get('year')}-{self.timestamp_utc.get('month')}-"
-            f"{self.timestamp_utc.get('day')} {self.timestamp_utc.get('hour')}:"
+            f"Timestamp (UTC): {self.timestamp_utc.get('year')}-{self.timestamp_utc.get('month')}-",
+            f"{self.timestamp_utc.get('day')} {self.timestamp_utc.get('hour')}:",
             f"{self.timestamp_utc.get('minute')}:{self.timestamp_utc.get('second')}"
-        )
+            )
         print("=" * 40)
 
     def get_nav_data(self) -> dict:
