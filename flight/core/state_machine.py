@@ -126,3 +126,9 @@ class StateManager:
         """Prints all current tasks being executed"""
         for task_name in self.__scheduled_tasks:
             print(task_name)
+
+    def change_task_frequency(self, task_id, freq_hz):
+        """Changes the frequency of a task"""
+        self.__scheduled_tasks[task_id].change_rate(freq_hz)
+        logger.info(f"Task {task_id} frequency changed to {freq_hz}")
+        # TODO - change the persistent sm_configuration

@@ -44,11 +44,7 @@ class Task(TemplateTask):
             # verification checklist  TODO: Add more checks
             # Goal is to report error but still allow to switch to operations
             # Errors must be localized and not affect other tasks
-            # Boot errors and system diagnostics
-
-            # TODO: remove for flight
-            # DH.delete_all_files()
-            self.log_info("SD card cleaned up.")
+            # Boot errors and system diagnostics must be logged
 
             HAL_DIAGNOSTICS = True  # TODO For now
 

@@ -3,11 +3,6 @@ import time
 _monotonic_ns = time.monotonic_ns
 
 
-def set_time_provider(monotonic_ns):
-    global _monotonic_ns
-    _monotonic_ns = monotonic_ns
-
-
 def _yield_once():
     """await the return value of this function to yield the processor"""
 
@@ -159,7 +154,6 @@ class Loop:
 
     def enable_debug_logging(self):
         self._debug = True
-        print("Task scheduler debug logging enabled")
 
     def add_task(self, awaitable_task, priority):
         """
@@ -198,27 +192,7 @@ class Loop:
             await self._sleep_until_nanos(start_nanos)
             await awaitable_task
 
-        # Added a priority parameter
         self.add_task(_run_later(), priority)
-
-    def suspend(self):
-        """
-        For making library functions that suspend and then resume later on some condition
-        E.g., a scope manager for SPI
-
-        To use this you will stash the resumer somewhere to call from another coroutine, AND
-        you will `await suspender` to pause this stack at the spot you choose.
-
-        :returns (async_suspender, resumer)
-        """
-        assert self._current is not None, "You can only suspend the current task if you are running the event loop."
-        suspended = self._current
-
-        def resume():
-            self._tasks.append(suspended)
-
-        self._current = None
-        return _yield_once(), resume
 
     def schedule(self, hz: float, coroutine_function, priority, *args, **kwargs):
         """
@@ -239,7 +213,6 @@ class Loop:
 
         :param hz: How many times per second should the function run?
         :param coroutine_function: the async def function you want invoked on your schedule
-        :param event_loop: An event loop that can .sleep() and .add_task.  Like BudgetEventLoop.
         """
         assert coroutine_function is not None, "coroutine function must not be none"
         task = ScheduledTask(self, hz, coroutine_function, priority, args, kwargs)
