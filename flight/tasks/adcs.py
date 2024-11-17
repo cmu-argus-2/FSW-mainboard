@@ -12,6 +12,7 @@ from apps.adcs.sun import (
     in_eclipse,
     read_light_sensors,
 )
+from apps.adcs.mcm import MAGNETIC_COIL_ALLOCATOR
 from apps.telemetry.constants import ADCS_IDX, GPS_IDX, IMU_IDX
 from core import DataHandler as DH
 from core import TemplateTask
@@ -74,6 +75,7 @@ class Task(TemplateTask):
     eclipse_state = False
 
     # Magnetic Control
+    magnetic_coil_allocator = MAGNETIC_COIL_ALLOCATOR()
 
     # Attitude Determination
     coarse_attitude = np.zeros(4)
@@ -127,7 +129,8 @@ class Task(TemplateTask):
 
             ## Magnetic Control
             # TODO controller
-            # TODO allocate voltage
+            #dipole_moment_cmd = controller.get_dipole_moment()
+            #self.magnetic_coil_allocator.set_voltages(dipole_moment_cmd)
 
             ## Attitude Determination
 
