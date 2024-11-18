@@ -5,6 +5,7 @@ import time
 from apps.adcs.ad import TRIAD
 from apps.adcs.frames import ecef_to_eci
 from apps.adcs.igrf import igrf_eci
+from apps.adcs.mcm import ControllerHandler, MagneticCoilAllocator
 from apps.adcs.sun import (
     SUN_VECTOR_STATUS,
     approx_sun_position_ECI,
@@ -12,7 +13,6 @@ from apps.adcs.sun import (
     in_eclipse,
     read_light_sensors,
 )
-from apps.adcs.mcm import ControllerHandler, MagneticCoilAllocator
 from apps.telemetry.constants import ADCS_IDX, GPS_IDX, IMU_IDX
 from core import DataHandler as DH
 from core import TemplateTask
@@ -126,11 +126,11 @@ class Task(TemplateTask):
 
             ## Magnetic Control
             # TODO state machine handling for control modes
-            '''
+            """
             dipole_moment_cmd = ControllerHandler.get_dipole_moment_command(
                 sun_vector, magnetic_field, angular_velocity)
             MagneticCoilAllocator.set_voltages(dipole_moment_cmd)
-            '''
+            """
 
             ## Attitude Determination
 
