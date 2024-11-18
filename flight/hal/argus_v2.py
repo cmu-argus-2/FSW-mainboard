@@ -581,14 +581,10 @@ class ArgusV2(CubeSat):
         try:
             from hal.drivers.sx126x import SX1262
 
+            # Enable power to the radio
             radioEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_ENABLE)
-            radioRxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_RX_EN)
-            radioTxEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_TX_EN)
             radioEn.direction = digitalio.Direction.OUTPUT
-            radioRxEn.direction = digitalio.Direction.OUTPUT
-            radioTxEn.direction = digitalio.Direction.OUTPUT
             radioEn.value = True
-            radioTxEn.value = True
 
             radio = SX1262(
                 spi_bus=ArgusV2Interfaces.SPI,
@@ -596,6 +592,8 @@ class ArgusV2(CubeSat):
                 irq=ArgusV2Components.RADIO_IRQ,
                 rst=ArgusV2Components.RADIO_RESET,
                 gpio=ArgusV2Components.RADIO_BUSY,
+                tx_en=ArgusV2Components.RADIO_TX_EN,
+                rx_en=ArgusV2Components.RADIO_RX_EN,
             )
 
             radio.begin(

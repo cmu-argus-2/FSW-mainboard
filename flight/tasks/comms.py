@@ -37,6 +37,7 @@ class Task(TemplateTask):
         if not self.frequency_set:
             # Reset counter
             self.TX_COUNTER = 0
+            self.RX_COUNTER = 0
 
             # Ensure HB frequency not too high
             if self.TX_heartbeat_frequency > self.frequency:

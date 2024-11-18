@@ -443,7 +443,7 @@ def ticks_diff(end, start):
 
 
 class SX126X:
-    def __init__(self, spi_bus, cs, irq, rst, gpio):
+    def __init__(self, spi_bus, cs, irq, rst, gpio, tx_en, rx_en):
         self._irq = irq
 
         self.spi = spi_bus
@@ -451,6 +451,7 @@ class SX126X:
             pass
         self.spi.configure(baudrate=2000000, phase=0, polarity=0, bits=8)
         self.spi.unlock()
+
         self.cs = digitalio.DigitalInOut(cs)
         self.cs.switch_to_output(value=True)
         self.irq = digitalio.DigitalInOut(irq)
@@ -459,6 +460,16 @@ class SX126X:
         self.rst.switch_to_output(value=True)
         self.gpio = digitalio.DigitalInOut(gpio)
         self.gpio.switch_to_input()
+
+        # GPIO for TX and RX enable
+        self.tx_en = digitalio.DigitalInOut(tx_en)
+        self.tx_en.switch_to_output(value=True)
+        self.rx_en = digitalio.DigitalInOut(rx_en)
+        self.rx_en.switch_to_output(value=True)
+
+        # Enable RX and disable TX
+        self.rx_en.value = True
+        self.tx_en.value = False
 
         self._bwKhz = 0
         self._sf = 0
@@ -571,6 +582,10 @@ class SX126X:
             sleep_ms(10)
 
     def transmit(self, data, len_, addr=0):
+        # Enable TX and disable RX
+        self.tx_en.value = True
+        self.rx_en.value = False
+
         state = self.standby()
         ASSERT(state)
 
@@ -608,6 +623,10 @@ class SX126X:
         # Switch to receive mode instanly after transmitting
         state = self.startReceive(SX126X_RX_TIMEOUT_INF)
         ASSERT(state)
+
+        # Enable RX and disable TX
+        self.rx_en.value = True
+        self.tx_en.value = False
 
         return state
 
@@ -1418,8 +1437,8 @@ class SX1262(SX126X):
     RX_DONE = SX126X_IRQ_RX_DONE
     STATUS = ERROR
 
-    def __init__(self, spi_bus, cs, irq, rst, gpio):
-        super().__init__(spi_bus, cs, irq, rst, gpio)
+    def __init__(self, spi_bus, cs, irq, rst, gpio, tx_en, rx_en):
+        super().__init__(spi_bus, cs, irq, rst, gpio, tx_en, rx_en)
         self._callbackFunction = self._dummyFunction
 
     def begin(
