@@ -12,10 +12,7 @@ from apps.adcs.sun import (
     in_eclipse,
     read_light_sensors,
 )
-from apps.adcs.mcm import (
-    MagneticCoilAllocator, MomentumGuidance, BCrossController,
-    PDSunPointingController
-)
+from apps.adcs.mcm import ControllerHandler, MagneticCoilAllocator
 from apps.telemetry.constants import ADCS_IDX, GPS_IDX, IMU_IDX
 from core import DataHandler as DH
 from core import TemplateTask
@@ -130,14 +127,8 @@ class Task(TemplateTask):
             ## Magnetic Control
             # TODO state machine handling for control modes
             '''
-            if not MomentumGuidance.is_spin_stable(angular_velocity):
-                dipole_moment_cmd = BCrossController.get_dipole_moment_command(
-                    magnetic_field, angular_velocity
-                )
-            elif not MomentumGuidance.is_sun_pointing(sun_vector, angular_velocity):
-                dipole_moment_cmd = PDSunPointingController.get_dipole_moment_command(
-                    sun_vector, magnetic_field, angular_velocity
-                )
+            dipole_moment_cmd = ControllerHandler.get_dipole_moment_command(
+                sun_vector, magnetic_field, angular_velocity)
             MagneticCoilAllocator.set_voltages(dipole_moment_cmd)
             '''
 
