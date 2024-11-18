@@ -443,7 +443,7 @@ def ticks_diff(end, start):
 
 
 class SX126X:
-    def __init__(self, spi_bus, clk, mosi, miso, cs, irq, rst, gpio):
+    def __init__(self, spi_bus, cs, irq, rst, gpio):
         self._irq = irq
 
         self.spi = spi_bus
@@ -1418,8 +1418,8 @@ class SX1262(SX126X):
     RX_DONE = SX126X_IRQ_RX_DONE
     STATUS = ERROR
 
-    def __init__(self, spi_bus, clk, mosi, miso, cs, irq, rst, gpio):
-        super().__init__(spi_bus, clk, mosi, miso, cs, irq, rst, gpio)
+    def __init__(self, spi_bus, cs, irq, rst, gpio):
+        super().__init__(spi_bus, cs, irq, rst, gpio)
         self._callbackFunction = self._dummyFunction
 
     def begin(

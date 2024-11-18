@@ -588,14 +588,10 @@ class ArgusV2(CubeSat):
             radioRxEn.direction = digitalio.Direction.OUTPUT
             radioTxEn.direction = digitalio.Direction.OUTPUT
             radioEn.value = True
-            radioRxEn.value = True
             radioTxEn.value = True
 
             radio = SX1262(
                 spi_bus=ArgusV2Interfaces.SPI,
-                clk=ArgusV2Interfaces.SPI_SCK,
-                mosi=ArgusV2Interfaces.SPI_MOSI,
-                miso=ArgusV2Interfaces.SPI_MISO,
                 cs=ArgusV2Components.RADIO_CS,
                 irq=ArgusV2Components.RADIO_IRQ,
                 rst=ArgusV2Components.RADIO_RESET,
