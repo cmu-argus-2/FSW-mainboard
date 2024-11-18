@@ -11,13 +11,43 @@
 
 import copy
 from typing import Tuple
+from abc import ABC, abstractmethod
 
 from ulab import numpy as np
 
 from hal.configuration import SATELLITE
 
 
-class BCrossController():
+'''
+Template controllers for spin stabilizing and sun pointing.
+'''
+class SpinStabilizingController(ABC):
+    @classmethod
+    @abstractmethod
+    def get_dipole_moment_command(
+        self,
+        magnetic_field: np.ndarray,
+        angular_velocity: np.ndarray,
+    ) -> np.ndarray:
+        raise NotImplementedError()
+
+
+class SunPointingController(ABC):
+    @classmethod
+    @abstractmethod
+    def get_dipole_moment_command(
+        self,
+        sun_vector: np.ndarray,
+        magnetic_field: np.ndarray,
+        angular_velocity: np.ndarray,
+    ) -> np.ndarray:
+        raise NotImplementedError()
+
+
+'''
+Spin stabilizing and sun pointing control laws.
+'''
+class BCrossController(SpinStabilizingController):
     _k = 1.0
 
     @classmethod
@@ -25,13 +55,66 @@ class BCrossController():
         self,
         magnetic_field: np.ndarray,
         angular_velocity: np.ndarray,
-        angular_velocity_ref: np.ndarray,
     ) -> np.ndarray:
         """
-        B-cross law: https://arc.aiaa.org/doi/epdf/10.2514/1.53074
+        B-cross law: https://arc.aiaa.org/doi/epdf/10.2514/1.53074.
+        All sensor estimates are in the body-fixed reference frame.
         """
         unit_field = magnetic_field / np.linalg.norm(magnetic_field)
-        return -self._k * np.cross(unit_field, angular_velocity - angular_velocity_ref)
+        ang_vel_err = angular_velocity - MomentumGuidance.angular_velocity_ref
+        return -self._k * np.cross(unit_field, ang_vel_err)
+
+
+class PDSunPointingController(SunPointingController):
+    _PD_gains = np.array([
+        [0.7071, 0.0, 0.0, 0.0028, 0.0, 0.0],
+        [0.0, 0.7071, 0.0, 0.0, 0.0028, 0.0],
+        [0.0, 0.0, 0.7071, 0.0, 0.0, 0.0028],
+    ])
+
+
+class MomentumGuidance():
+    _J = np.array([
+        0.001796, 0.0, 0.000716,
+        0.0, 0.002081, 0.0,
+        0.000716, 0.0, 0.002232,
+    ])
+
+    _ang_vel_norm_target = 0.175
+
+    _ang_vel_norm_threshold = 0.262
+
+    def _init_spin_axis(self) -> np.ndarray:
+        eigvecs, eigvals = np.linalg.eig(self._J)
+        spin_axis = eigvecs[:, np.argmax(eigvals)]
+        if spin_axis[np.argmax(np.abs(spin_axis))] < 0:
+            spin_axis = -spin_axis
+        return spin_axis
+
+    _spin_axis = _init_spin_axis()
+
+    angular_velocity_reference = _spin_axis * _ang_vel_norm_target
+
+    _ang_mtm_norm_target = np.linalg.norm(_J @ angular_velocity_reference)
+
+    @classmethod
+    def is_spin_stable(
+        self,
+        angular_velocity: np.ndarray,
+    ) -> bool:
+        h = self._J @ angular_velocity
+        spin_err = np.linalg.norm( self._spin_axis - (h / self._ang_mtm_norm_target) )
+        return spin_err < self._ang_vel_norm_threshold
+
+    @classmethod
+    def is_sun_pointing(
+        self,
+        sun_vector: np.ndarray,
+        angular_velocity: np.ndarray,
+    ) -> bool:
+        h = self._J @ angular_velocity
+        pointing_err = np.linalg.norm( sun_vector - (h / np.linalg.norm(h)) )
+        return pointing_err < self._ang_vel_norm_target
 
 
 class MagneticCoilAllocator():
@@ -58,12 +141,9 @@ class MagneticCoilAllocator():
 
     _alloc_mat = copy.deepcopy(_default_alloc_mat)
 
-    _Vs_max = [5.0, 5.0, 5.0, 5.0, 5.0, 5.0]
+    _Vs_max = np.array([5.0, 5.0, 5.0, 5.0, 5.0, 5.0])
 
     _sat = SATELLITE
-
-    _n_coil = len(_alloc_mat)
-
 
     @classmethod
     def set_voltages(
