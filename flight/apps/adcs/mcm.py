@@ -9,7 +9,7 @@
 # To apply the voltages to the coils, the following function is used:
 # SATELLITE.APPLY_MAGNETIC_CONTROL({'XP': 5.0, 'XM': 5.1, 'YP': 4.8, 'YM': 5.0, 'ZP': 4.1, 'ZM': 4.1})
 
-
+import copy
 from typing import Tuple
 
 from ulab import numpy as np
@@ -17,37 +17,55 @@ from ulab import numpy as np
 from hal.configuration import SATELLITE
 
 
-class MAGNETIC_COIL_ALLOCATOR():
-    _axis_idx  = {
-        'X': {'P': 0, 'M': 1},
-        'Y': {'P': 2, 'M': 3},
-        'Z': {'P': 4, 'M': 5},
-    }
+class BCrossController():
+    _k = 1.0
 
-    _default_alloc_mat = [
-        [0.5, 0.0, 0.0],
-        [0.5, 0.0, 0.0],
-        [0.0, 0.5, 0.0],
-        [0.0, 0.5, 0.0],
-        [0.0, 0.0, 0.5],
-        [0.0, 0.0, 0.5],
-    ]
+    @classmethod
+    def get_dipole_moment_command(
+        self,
+        magnetic_field: np.ndarray,
+        angular_velocity: np.ndarray,
+        angular_velocity_ref: np.ndarray,
+    ) -> np.ndarray:
+        """
+        B-cross law: https://arc.aiaa.org/doi/epdf/10.2514/1.53074
+        """
+        unit_field = magnetic_field / np.linalg.norm(magnetic_field)
+        return -self._k * np.cross(unit_field, angular_velocity - angular_velocity_ref)
 
+
+class MagneticCoilAllocator():
     _Vs_ctrl = {
         'XP': 0.0, 'XM': 0.0,
         'YP': 0.0, 'YM': 0.0,
         'zP': 0.0, 'zM': 0.0,
     }
 
+    _axis_idx  = {
+        'X': {'P': 0, 'M': 1},
+        'Y': {'P': 2, 'M': 3},
+        'Z': {'P': 4, 'M': 5},
+    }
+
+    _default_alloc_mat = np.array([
+        [0.5, 0.0, 0.0],
+        [0.5, 0.0, 0.0],
+        [0.0, 0.5, 0.0],
+        [0.0, 0.5, 0.0],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+    ])
+
+    _alloc_mat = copy.deepcopy(_default_alloc_mat)
+
     _Vs_max = [5.0, 5.0, 5.0, 5.0, 5.0, 5.0]
 
     _sat = SATELLITE
 
-    def __init__(self) -> None:
-        self._alloc_mat = np.array(self._default_alloc_mat)
-        self._default_alloc_mat = np.array(self._default_alloc_mat)
-        self._n_coil = len(self._alloc_mat)
+    _n_coil = len(_alloc_mat)
 
+
+    @classmethod
     def set_voltages(
         self,
         dipole_moment: np.ndarray,
@@ -60,6 +78,7 @@ class MAGNETIC_COIL_ALLOCATOR():
             self._Vs_ctrl[axis + 'M'] = Vs_bd[face_idx['M']]
         self._sat.APPLY_MAGNETIC_CONTROL(self._Vs_ctrl)
 
+    @classmethod
     def _coils_on_axis_are_available(
         self,
         axis: str,
@@ -68,6 +87,7 @@ class MAGNETIC_COIL_ALLOCATOR():
         M_avail = self._sat.TORQUE_DRIVERS_AVAILABLE(axis + 'M')
         return (P_avail, M_avail)
 
+    @classmethod
     def _update_matrix(self) -> None:
         for axis, face_idx in self._axis_idx.items():
             P_avail, M_avail = self._coils_on_axis_are_available(axis)

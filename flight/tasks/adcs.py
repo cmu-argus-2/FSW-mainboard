@@ -12,7 +12,7 @@ from apps.adcs.sun import (
     in_eclipse,
     read_light_sensors,
 )
-from apps.adcs.mcm import MAGNETIC_COIL_ALLOCATOR
+from apps.adcs.mcm import MagneticCoilAllocator, BCrossController
 from apps.telemetry.constants import ADCS_IDX, GPS_IDX, IMU_IDX
 from core import DataHandler as DH
 from core import TemplateTask
@@ -74,9 +74,6 @@ class Task(TemplateTask):
     sun_vector = np.zeros(3)
     eclipse_state = False
 
-    # Magnetic Control
-    magnetic_coil_allocator = MAGNETIC_COIL_ALLOCATOR()
-
     # Attitude Determination
     coarse_attitude = np.zeros(4)
 
@@ -128,9 +125,9 @@ class Task(TemplateTask):
             # see apps/adcs/mcm.py
 
             ## Magnetic Control
-            # TODO controller
-            #dipole_moment_cmd = controller.get_dipole_moment()
-            #self.magnetic_coil_allocator.set_voltages(dipole_moment_cmd)
+            # TODO get magnetic field + angular velocity readings, angular velocity reference
+            #dipole_moment_cmd = BCrossController.get_dipole_moment_command()
+            #MagneticCoilAllocator.set_voltages(dipole_moment_cmd)
 
             ## Attitude Determination
 
