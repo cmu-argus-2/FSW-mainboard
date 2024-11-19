@@ -95,15 +95,9 @@ High-level controller and allocation managers.
 class ControllerHandler(MagnetorquerController):
     _J = np.array(
         [
-            0.001796,
-            0.0,
-            0.000716,
-            0.0,
-            0.002081,
-            0.0,
-            0.000716,
-            0.0,
-            0.002232,
+            [0.001796, 0.0, 0.000716],
+            [0.0, 0.002081, 0.0],
+            [0.000716, 0.0, 0.002232],
         ]
     )
 
