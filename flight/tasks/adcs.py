@@ -6,6 +6,7 @@ from apps.adcs.ad import TRIAD
 from apps.adcs.frames import ecef_to_eci
 from apps.adcs.igrf import igrf_eci
 from apps.adcs.mcm import ControllerHandler, MagneticCoilAllocator
+from apps.adcs.modes import ADCSMode
 from apps.adcs.sun import (
     SUN_VECTOR_STATUS,
     approx_sun_position_ECI,
@@ -18,6 +19,7 @@ from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
+from hal.configuration import SATELLITE
 from ulab import numpy as np
 
 
@@ -63,7 +65,8 @@ class Task(TemplateTask):
         "STAR_TRACKER_ATTITUDE_QZ",
     ]"""
 
-    time = int(time.time())
+    ## ADCS Modes
+    MODE = ADCSMode.DETUMBLING
 
     log_data = [0] * 37
     # For now - keep the floats, will optimize the telemetry packet afterwards
@@ -90,17 +93,17 @@ class Task(TemplateTask):
                 DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
 
             self.time = int(time.time())
+            self.log_data[ADCS_IDX.TIME_ADCS] = self.time
 
             # Log IMU data
-            self.log_data[ADCS_IDX.TIME_ADCS] = self.time
-            imu_mag_data = DH.get_latest_data("imu")[IMU_IDX.MAGNETOMETER_X : IMU_IDX.MAGNETOMETER_Z + 1]
-            self.log_data[ADCS_IDX.MAG_X : ADCS_IDX.MAG_Z + 1] = imu_mag_data
-            self.log_data[ADCS_IDX.GYRO_X : ADCS_IDX.GYRO_Z + 1] = DH.get_latest_data("imu")[
-                IMU_IDX.GYROSCOPE_X : IMU_IDX.GYROSCOPE_Z + 1
-            ]
+            if SATELLITE.IMU_AVAILABLE:
+                imu_mag_data = DH.get_latest_data("imu")[IMU_IDX.MAGNETOMETER_X : IMU_IDX.MAGNETOMETER_Z + 1]
+                self.log_data[ADCS_IDX.MAG_X : ADCS_IDX.MAG_Z + 1] = imu_mag_data
+                self.log_data[ADCS_IDX.GYRO_X : ADCS_IDX.GYRO_Z + 1] = DH.get_latest_data("imu")[
+                    IMU_IDX.GYROSCOPE_X : IMU_IDX.GYROSCOPE_Z + 1
+                ]
 
             ## Sun Acquisition
-
             #  Must return the array directly
             lux_readings = read_light_sensors()  # lux
             self.sun_status, self.sun_vector = compute_body_sun_vector_from_lux(lux_readings)  # use full lux for sun vector
@@ -108,7 +111,6 @@ class Task(TemplateTask):
                 lux_readings,
                 threshold_lux_illumination=self.THRESHOLD_ILLUMINATION_LUX,
             )
-
             self.log_data[ADCS_IDX.SUN_STATUS] = self.sun_status
             self.log_data[ADCS_IDX.SUN_VEC_X] = self.sun_vector[0]
             self.log_data[ADCS_IDX.SUN_VEC_Y] = self.sun_vector[1]
@@ -122,15 +124,16 @@ class Task(TemplateTask):
             self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(lux_readings[4] / 10)
             # Pyramid TBD
 
-            # see apps/adcs/mcm.py
-
             ## Magnetic Control
-            # TODO state machine handling for control modes
-            """
-            dipole_moment_cmd = ControllerHandler.get_dipole_moment_command(
-                sun_vector, magnetic_field, angular_velocity)
-            MagneticCoilAllocator.set_voltages(dipole_moment_cmd)
-            """
+            # TODO controllers ~ apps/adcs/mcm.py
+            if self.MODE == ADCSMode.DETUMBLING:
+                pass
+
+            elif self.MODE == ADCSMode.SPIN_STABILIZATION:
+                pass
+
+            elif self.MODE == ADCSMode.SUN_POINTING:
+                pass
 
             ## Attitude Determination
 
@@ -162,8 +165,6 @@ class Task(TemplateTask):
 
             # Data logging
             DH.log_data("adcs", self.log_data)
-            # self.log_info(f"{dict(zip(self.data_keys[8:13], self.log_data[8:13]))}")  # Sun
-            # self.log_info(f"{dict(zip(self.data_keys[28:32], self.log_data[28:32]))}")  # Coarse attitude
             self.log_info(f"Sun: {self.log_data[8:13]}")
             self.log_info(f"Coarse attitude: {self.log_data[28:32]}")
 
