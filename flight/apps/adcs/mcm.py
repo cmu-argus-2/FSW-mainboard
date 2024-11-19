@@ -56,7 +56,7 @@ class BCrossController(MagnetorquerController):
         All sensor estimates are in the body-fixed reference frame.
         """
         unit_field = magnetic_field / magnetic_field_norm
-        ang_vel_err = angular_velocity - ControllerHandler.ang_vel_reference
+        ang_vel_err = ControllerHandler.ang_vel_reference - angular_velocity
         return -self._k * np.cross(unit_field, ang_vel_err)
 
 
@@ -118,7 +118,7 @@ class ControllerHandler(MagnetorquerController):
     ang_vel_reference = spin_axis * _ang_vel_norm_target
 
     _h_norm_target = np.linalg.norm(_J @ ang_vel_reference)
-
+    """
     @classmethod
     def _get_reused_values(
         self,
@@ -128,9 +128,10 @@ class ControllerHandler(MagnetorquerController):
         h = self._J @ angular_velocity
         b_norm = np.linalg.norm(magnetic_field)
         return h, b_norm
+    """
 
     @classmethod
-    def _is_spin_stable(
+    def is_spin_stable(
         self,
         angular_momentum: np.ndarray,
     ) -> bool:
@@ -138,7 +139,7 @@ class ControllerHandler(MagnetorquerController):
         return spin_err < self._ang_vel_norm_threshold
 
     @classmethod
-    def _is_sun_pointing(
+    def is_sun_pointing(
         self,
         sun_vector: np.ndarray,
         angular_momentum: np.ndarray,
@@ -147,6 +148,7 @@ class ControllerHandler(MagnetorquerController):
         pointing_err = np.linalg.norm(sun_vector - (angular_momentum / h_norm))
         return pointing_err < self._ang_vel_norm_target
 
+    """
     @classmethod
     def get_dipole_moment_command(
         self,
@@ -162,6 +164,7 @@ class ControllerHandler(MagnetorquerController):
             return PDSunPointingController.get_dipole_moment_command(sun_vector, magnetic_field, b_norm, angular_velocity)
         else:
             return np.zeros(3)
+    """
 
 
 class MagneticCoilAllocator:

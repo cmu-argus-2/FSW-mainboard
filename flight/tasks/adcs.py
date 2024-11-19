@@ -2,11 +2,10 @@
 
 import time
 
+from apps.adcs import mcm, modes
 from apps.adcs.ad import TRIAD
 from apps.adcs.frames import ecef_to_eci
 from apps.adcs.igrf import igrf_eci
-from apps.adcs.mcm import ControllerHandler, MagneticCoilAllocator
-from apps.adcs.modes import ADCSMode
 from apps.adcs.sun import (
     SUN_VECTOR_STATUS,
     approx_sun_position_ECI,
@@ -66,7 +65,7 @@ class Task(TemplateTask):
     ]"""
 
     ## ADCS Modes
-    MODE = ADCSMode.DETUMBLING
+    MODE = modes.TUMBLING
 
     log_data = [0] * 37
     # For now - keep the floats, will optimize the telemetry packet afterwards
@@ -75,6 +74,8 @@ class Task(TemplateTask):
     THRESHOLD_ILLUMINATION_LUX = 3000
     sun_status = SUN_VECTOR_STATUS.NO_READINGS
     sun_vector = np.zeros(3)
+    magnetic_field = np.zeros(3)
+    angular_velocity = np.zeros(3)
     eclipse_state = False
 
     # Attitude Determination
@@ -97,11 +98,10 @@ class Task(TemplateTask):
 
             # Log IMU data
             if SATELLITE.IMU_AVAILABLE:
-                imu_mag_data = DH.get_latest_data("imu")[IMU_IDX.MAGNETOMETER_X : IMU_IDX.MAGNETOMETER_Z + 1]
-                self.log_data[ADCS_IDX.MAG_X : ADCS_IDX.MAG_Z + 1] = imu_mag_data
-                self.log_data[ADCS_IDX.GYRO_X : ADCS_IDX.GYRO_Z + 1] = DH.get_latest_data("imu")[
-                    IMU_IDX.GYROSCOPE_X : IMU_IDX.GYROSCOPE_Z + 1
-                ]
+                self.magnetic_field = DH.get_latest_data("imu")[IMU_IDX.MAGNETOMETER_X : IMU_IDX.MAGNETOMETER_Z + 1]
+                self.log_data[ADCS_IDX.MAG_X : ADCS_IDX.MAG_Z + 1] = self.magnetic_field
+                self.angular_velocity = DH.get_latest_data("imu")[IMU_IDX.GYROSCOPE_X : IMU_IDX.GYROSCOPE_Z + 1]
+                self.log_data[ADCS_IDX.GYRO_X : ADCS_IDX.GYRO_Z + 1] = self.angular_velocity
 
             ## Sun Acquisition
             #  Must return the array directly
@@ -124,16 +124,31 @@ class Task(TemplateTask):
             self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(lux_readings[4] / 10)
             # Pyramid TBD
 
-            ## Magnetic Control
-            # TODO controllers ~ apps/adcs/mcm.py
-            if self.MODE == ADCSMode.DETUMBLING:
-                pass
+            # ADCS mode management
+            # need to account for if gyro / sun vector unavailable
+            if np.linalg.norm(self.angular_velocity) > modes.Constants.STABLE_TOLERANCE:
+                self.MODE = modes.TUMBLING
+            elif (
+                np.linalg.norm(modes.Constants.SUN_VECTOR_REFERENCE - self.sun_vector) > modes.Constants.SUN_POINTED_TOLERANCE
+            ):
+                self.MODE = modes.STABLE
+            else:
+                self.MODE = modes.SUN_POINTED
 
-            elif self.MODE == ADCSMode.SPIN_STABILIZATION:
-                pass
-
-            elif self.MODE == ADCSMode.SUN_POINTING:
-                pass
+            ## Magnetorquer attitude control
+            h = self._J @ self.angular_velocity
+            b_norm = np.linalg.norm(self.magnetic_field)
+            if not mcm.ControllerHandler.is_spin_stable(h):
+                dipole_moment = mcm.BCrossController.get_dipole_moment_command(
+                    self.magnetic_field, b_norm, self.angular_velocity
+                )
+            elif not mcm.ControllerHandler.is_sun_pointing(self.sun_vector, h):
+                dipole_moment = mcm.PDSunPointingController.get_dipole_moment_command(
+                    self.sun_vector, self.magnetic_field, b_norm, self.angular_velocity
+                )
+            else:
+                dipole_moment = np.zeros(3)
+            mcm.MagneticCoilAllocator.set_voltages(dipole_moment)
 
             ## Attitude Determination
 
@@ -149,7 +164,7 @@ class Task(TemplateTask):
                 sun_eci = approx_sun_position_ECI(self.time)
 
                 # TRIAD
-                self.coarse_attitude = TRIAD(sun_eci, mag_eci, self.sun_vector, imu_mag_data)
+                self.coarse_attitude = TRIAD(sun_eci, mag_eci, self.sun_vector, self.magnetic_field)
                 self.log_data[ADCS_IDX.COARSE_ATTITUDE_QW] = (
                     self.coarse_attitude[0] if not is_nan(self.coarse_attitude[0]) else 0
                 )
