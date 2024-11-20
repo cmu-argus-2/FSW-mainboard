@@ -50,7 +50,7 @@ class Task(TemplateTask):
 
             self.log_info(f"Heartbeat frequency threshold set to {self.TX_COUNT_THRESHOLD}")
 
-        if SM.current_state == STATES.NOMINAL:
+        if SM.current_state == STATES.NOMINAL or SM.current_state == STATES.DOWNLINK:
             if not DH.data_process_exists("img"):
                 # TODO: Move image process to another task
                 DH.register_data_process("img", "b", True)
@@ -104,6 +104,10 @@ class Task(TemplateTask):
                         self.ground_pass = True
                         self.RX_COUNTER = 0
 
+                        # Ground pass, switch to DOWNLINK state
+                        if SM.current_state == STATES.NOMINAL:
+                            SM.switch_to(STATES.DOWNLINK)
+
                     else:
                         # GS requested invalid message ID
                         self.log_warning(f"GS requested invalid message ID: {self.rq_msg_id}")
@@ -117,3 +121,7 @@ class Task(TemplateTask):
                         # GS response timeout
                         self.ground_pass = False
                         SATELLITE_RADIO.transition_state(True)
+
+                        # Ground pass over, switch to DOWNLINK state
+                        if SM.current_state == STATES.DOWNLINK:
+                            SM.switch_to(STATES.NOMINAL)
