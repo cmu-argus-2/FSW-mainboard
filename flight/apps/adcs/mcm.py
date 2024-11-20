@@ -18,6 +18,36 @@ from hal.configuration import SATELLITE
 from ulab import numpy as np
 
 
+def get_b_cross_dipole_moment(
+    magnetic_field: np.ndarray,
+    magnetic_field_norm: float,
+    angular_velocity: np.ndarray,
+) -> np.ndarray:
+    """
+    B-cross law: https://arc.aiaa.org/doi/epdf/10.2514/1.53074.
+    All sensor estimates are in the body-fixed reference frame.
+    """
+    unit_field = magnetic_field / magnetic_field_norm
+    ang_vel_err = ControllerHandler.ang_vel_reference - angular_velocity
+    return -MCMConstants.BCROSS_GAIN * np.cross(unit_field, ang_vel_err)
+
+
+def get_pd_sun_pointing_dipole_moment(
+    sun_vector: np.ndarray,
+    magnetic_field: np.ndarray,
+    magnetic_field_norm: float,
+    angular_velocity: np.ndarray,
+) -> np.ndarray:
+    Bhat_pinv = skew(magnetic_field).T / magnetic_field_norm**2
+    att_angvel_err = np.hstack(
+        (
+            -ControllerHandler.spin_axis - sun_vector,
+            ControllerHandler.ang_vel_reference - angular_velocity,
+        )
+    )
+    return Bhat_pinv @ MCMConstants.PD_GAINS @ att_angvel_err
+
+
 class ControllerHandler:
     """ """
 
@@ -77,54 +107,6 @@ class ControllerHandler:
         else:
             return np.zeros(3)
     """
-
-
-class MagnetorquerController:
-    """
-    Template for magnetic dipole moment control.
-    """
-
-    def get_dipole_moment_command():
-        raise NotImplementedError()
-
-
-class BCrossController(MagnetorquerController):
-    """
-    B-cross law: https://arc.aiaa.org/doi/epdf/10.2514/1.53074.
-    All sensor estimates are in the body-fixed reference frame.
-    """
-
-    @classmethod
-    def get_dipole_moment_command(
-        self,
-        magnetic_field: np.ndarray,
-        magnetic_field_norm: float,
-        angular_velocity: np.ndarray,
-    ) -> np.ndarray:
-        unit_field = magnetic_field / magnetic_field_norm
-        ang_vel_err = ControllerHandler.ang_vel_reference - angular_velocity
-        return -MCMConstants.BCROSS_GAIN * np.cross(unit_field, ang_vel_err)
-
-
-class PDSunPointingController(MagnetorquerController):
-    """ """
-
-    @classmethod
-    def get_dipole_moment_command(
-        self,
-        sun_vector: np.ndarray,
-        magnetic_field: np.ndarray,
-        magnetic_field_norm: float,
-        angular_velocity: np.ndarray,
-    ) -> np.ndarray:
-        Bhat_pinv = skew(magnetic_field).T / magnetic_field_norm**2
-        att_angvel_err = np.hstack(
-            (
-                -ControllerHandler.spin_axis - sun_vector,
-                ControllerHandler.ang_vel_reference - angular_velocity,
-            )
-        )
-        return Bhat_pinv @ MCMConstants.PD_GAINS @ att_angvel_err
 
 
 class MagneticCoilAllocator:

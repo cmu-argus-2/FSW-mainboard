@@ -6,7 +6,12 @@ from apps.adcs.ad import TRIAD
 from apps.adcs.consts import ModeConstants, PhysicalConstants
 from apps.adcs.frames import ecef_to_eci
 from apps.adcs.igrf import igrf_eci
-from apps.adcs.mcm import BCrossController, ControllerHandler, MagneticCoilAllocator, PDSunPointingController
+from apps.adcs.mcm import (
+    ControllerHandler,
+    MagneticCoilAllocator,
+    get_b_cross_dipole_moment,
+    get_pd_sun_pointing_dipole_moment,
+)
 from apps.adcs.modes import Modes
 from apps.adcs.sun import (
     SUN_VECTOR_STATUS,
@@ -139,9 +144,9 @@ class Task(TemplateTask):
             h = PhysicalConstants.INERTIA_TENSOR @ self.angular_velocity
             b_norm = np.linalg.norm(self.magnetic_field)
             if not ControllerHandler.is_spin_stable(h):
-                dipole_moment = BCrossController.get_dipole_moment_command(self.magnetic_field, b_norm, self.angular_velocity)
+                dipole_moment = get_b_cross_dipole_moment(self.magnetic_field, b_norm, self.angular_velocity)
             elif not ControllerHandler.is_sun_pointing(self.sun_vector, h):
-                dipole_moment = PDSunPointingController.get_dipole_moment_command(
+                dipole_moment = get_pd_sun_pointing_dipole_moment(
                     self.sun_vector, self.magnetic_field, b_norm, self.angular_velocity
                 )
             else:
