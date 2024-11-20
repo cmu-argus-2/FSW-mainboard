@@ -2,10 +2,12 @@
 
 import time
 
-from apps.adcs import mcm, modes
 from apps.adcs.ad import TRIAD
+from apps.adcs.consts import ModeConstants, PhysicalConstants
 from apps.adcs.frames import ecef_to_eci
 from apps.adcs.igrf import igrf_eci
+from apps.adcs.mcm import BCrossController, ControllerHandler, MagneticCoilAllocator, PDSunPointingController
+from apps.adcs.modes import Modes
 from apps.adcs.sun import (
     SUN_VECTOR_STATUS,
     approx_sun_position_ECI,
@@ -65,7 +67,7 @@ class Task(TemplateTask):
     ]"""
 
     ## ADCS Modes
-    MODE = modes.TUMBLING
+    MODE = Modes.TUMBLING
 
     log_data = [0] * 37
     # For now - keep the floats, will optimize the telemetry packet afterwards
@@ -126,29 +128,25 @@ class Task(TemplateTask):
 
             # ADCS mode management
             # need to account for if gyro / sun vector unavailable
-            if np.linalg.norm(self.angular_velocity) > modes.Constants.STABLE_TOLERANCE:
-                self.MODE = modes.TUMBLING
-            elif (
-                np.linalg.norm(modes.Constants.SUN_VECTOR_REFERENCE - self.sun_vector) > modes.Constants.SUN_POINTED_TOLERANCE
-            ):
-                self.MODE = modes.STABLE
+            if np.linalg.norm(self.angular_velocity) > ModeConstants.STABLE_TOLERANCE:
+                self.MODE = Modes.TUMBLING
+            elif np.linalg.norm(ModeConstants.SUN_VECTOR_REFERENCE - self.sun_vector) > ModeConstants.SUN_POINTED_TOLERANCE:
+                self.MODE = Modes.STABLE
             else:
-                self.MODE = modes.SUN_POINTED
+                self.MODE = Modes.SUN_POINTED
 
             ## Magnetorquer attitude control
-            h = self._J @ self.angular_velocity
+            h = PhysicalConstants.INERTIA_TENSOR @ self.angular_velocity
             b_norm = np.linalg.norm(self.magnetic_field)
-            if not mcm.ControllerHandler.is_spin_stable(h):
-                dipole_moment = mcm.BCrossController.get_dipole_moment_command(
-                    self.magnetic_field, b_norm, self.angular_velocity
-                )
-            elif not mcm.ControllerHandler.is_sun_pointing(self.sun_vector, h):
-                dipole_moment = mcm.PDSunPointingController.get_dipole_moment_command(
+            if not ControllerHandler.is_spin_stable(h):
+                dipole_moment = BCrossController.get_dipole_moment_command(self.magnetic_field, b_norm, self.angular_velocity)
+            elif not ControllerHandler.is_sun_pointing(self.sun_vector, h):
+                dipole_moment = PDSunPointingController.get_dipole_moment_command(
                     self.sun_vector, self.magnetic_field, b_norm, self.angular_velocity
                 )
             else:
                 dipole_moment = np.zeros(3)
-            mcm.MagneticCoilAllocator.set_voltages(dipole_moment)
+            MagneticCoilAllocator.set_voltages(dipole_moment)
 
             ## Attitude Determination
 

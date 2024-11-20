@@ -18,14 +18,8 @@ of the Sun, the satellite can maintain the desired attitude passively. If the Su
 the satellite will default to STABLE mode.
 """
 
-from ulab import numpy as np
 
-TUMBLING = 0  # Satellite is spinning outside the "stable" bounds.
-STABLE = 1  # Satellite is spinning inside the "stable" bounds.
-SUN_POINTED = 2  # Satellite is generally pointed towards the sun.
-
-
-class Constants:
-    STABLE_TOLERANCE = 0.05  # Considered "stable" if ang vel < 0.05 rad/s = 2.86 deg/s.
-    SUN_POINTED_TOLERANCE = 0.09  # Considered "sun-pointed" if att err < 0.09 rad = 5 deg.
-    SUN_VECTOR_REFERENCE = np.array([0.0, 0.0, 1.0])
+class Modes:
+    TUMBLING = 0  # Satellite is spinning outside the "stable" bounds.
+    STABLE = 1  # Satellite is spinning inside the "stable" bounds.
+    SUN_POINTED = 2  # Satellite is generally pointed towards the sun.
