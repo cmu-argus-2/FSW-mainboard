@@ -56,7 +56,7 @@ SM_CONFIGURATION = {
             TASK.OBDH: {"Frequency": 1, "Priority": 2},
             TASK.IMU: {"Frequency": 10, "Priority": 5},
             TASK.ADCS: {"Frequency": 1, "Priority": 2, "ScheduleLater": True},
-            TASK.COMMS: {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
+            TASK.COMMS: {"Frequency": 1, "Priority": 2, "ScheduleLater": True},
             TASK.THERMAL: {"Frequency": 1, "Priority": 5, "ScheduleLater": True},
             TASK.GPS: {"Frequency": 0.5, "Priority": 5, "ScheduleLater": True},
             TASK.TM: {"Frequency": 1, "Priority": 4, "ScheduleLater": True},
@@ -65,9 +65,9 @@ SM_CONFIGURATION = {
     },
     STATES.DOWNLINK: {
         "Tasks": {
-            TASK.COMMAND: {"Frequency": 5, "Priority": 2},
+            TASK.COMMAND: {"Frequency": 10, "Priority": 1},
             TASK.TIMING: {"Frequency": 1, "Priority": 2},
-            TASK.COMMS: {"Frequency": 10, "Priority": 1},
+            TASK.COMMS: {"Frequency": 5, "Priority": 2},
             TASK.EPS: {"Frequency": 1, "Priority": 2},
             TASK.OBDH: {"Frequency": 1, "Priority": 2},
         },
