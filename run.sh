@@ -38,6 +38,7 @@ then
 elif [ "$1" == "simulate" ];
 then
     export ARGUS_SIMULATION_FLAG=1
+    export ARGUS_ROOT=$(pwd)
     echo "ARGUS_SIMULATION_FLAG set to 1 for simulation mode."
     python3 build_tools/build-emulator.py
     cd build/ && python3 main.py

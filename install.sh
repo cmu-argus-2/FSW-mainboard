@@ -4,9 +4,7 @@ source .venv/bin/activate
 
 # C++ sim setup
 cd simulation
-sh sim_installer.sh
-./build_sim_debug.sh
-pip install -r requirements.txt
+sh install.sh
 cd ../
 
 # Copy the montecarlo folder into FSW to store results
