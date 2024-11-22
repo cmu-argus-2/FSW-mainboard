@@ -1,7 +1,7 @@
 import os
 import random
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import numpy as np
 from argusim.simulation_manager.sim import Simulator as cppSim
