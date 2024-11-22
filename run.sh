@@ -2,7 +2,7 @@
 
 # Detect the operating system
 OS=$(uname -s)
-export ARGUS_ROOT=$(pwd)
+export ARGUS_ROOT=$(dirname $0)
 
 # Set the correct mpy-cross executable based on the OS
 if [ "$OS" == "Linux" ]; then
