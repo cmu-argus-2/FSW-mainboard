@@ -8,25 +8,32 @@ from core.states import STATES
 
 
 class Task(TemplateTask):
-    tx_msg_id = 0x00
-    rq_msg_id = 0x00
-
-    # Setup for heartbeat frequency
-    frequency_set = False
-    TX_heartbeat_frequency = 0.2  # 5 seconds
-
     def __init__(self, id):
         super().__init__(id)
+
         self.name = "COMMS"
         self.comms_state = COMMS_STATE.TX_HEARTBEAT
 
-        # Counters for heartbeat frequency
+        # IDs returned from application
+        self.tx_msg_id = 0x00
+        self.rq_msg_id = 0x00
+
+        # Setup for heartbeat frequency
+        self.frequency_set = False
+
+        self.TX_heartbeat_frequency = 0.2
+        self.RX_timeout_frequency = 0.5
+
+        # Counter for TX frequency
         self.TX_COUNT_THRESHOLD = 0
         self.TX_COUNTER = 0
 
+        # Counter for RX frequency
+        self.RX_COUNT_THRESHOLD = 0
+        self.RX_COUNTER = 0
+
         # Counter for ground pass timeout
         self.ground_pass = False
-        self.RX_COUNTER = 0
 
     async def main_task(self):
 
@@ -39,16 +46,26 @@ class Task(TemplateTask):
             self.TX_COUNTER = 0
             self.RX_COUNTER = 0
 
-            # Ensure HB frequency not too high
+            # Ensure TX frequency not too high
             if self.TX_heartbeat_frequency > self.frequency:
                 self.log_error("TX heartbeat frequency faster than task frequency. Defaulting to task frequency.")
                 self.TX_heartbeat_frequency = self.frequency
 
             self.TX_COUNT_THRESHOLD = int(self.frequency / self.TX_heartbeat_frequency)
             self.TX_COUNTER = self.TX_COUNT_THRESHOLD - 1
+
+            # Ensure RX frequency not too high
+            if self.RX_timeout_frequency > self.frequency:
+                self.log_error("RX timeout frequency faster than task frequency. Defaulting to task frequency.")
+                self.RX_timeout_frequency = self.frequency
+
+            self.RX_COUNT_THRESHOLD = int(self.frequency / self.RX_timeout_frequency)
+            self.RX_COUNTER = 0
+
             self.frequency_set = True
 
             self.log_info(f"Heartbeat frequency threshold set to {self.TX_COUNT_THRESHOLD}")
+            self.log_info(f"RX timeout threshold set to {self.RX_COUNT_THRESHOLD}")
 
         if SM.current_state == STATES.NOMINAL or SM.current_state == STATES.DOWNLINK:
             if not DH.data_process_exists("img"):
@@ -107,6 +124,7 @@ class Task(TemplateTask):
                         # Ground pass, switch to DOWNLINK state
                         if SM.current_state == STATES.NOMINAL:
                             SM.switch_to(STATES.DOWNLINK)
+                            self.frequency_set = False
 
                     else:
                         # GS requested invalid message ID
@@ -117,7 +135,7 @@ class Task(TemplateTask):
                     self.RX_COUNTER += 1
                     self.log_info(f"Nothing in RX buffer, {self.RX_COUNTER}")
 
-                    if self.RX_COUNTER >= self.TX_COUNT_THRESHOLD:
+                    if self.RX_COUNTER >= self.RX_COUNT_THRESHOLD:
                         # GS response timeout
                         self.ground_pass = False
                         SATELLITE_RADIO.transition_state(True)
@@ -125,3 +143,4 @@ class Task(TemplateTask):
                         # Ground pass over, switch to DOWNLINK state
                         if SM.current_state == STATES.DOWNLINK:
                             SM.switch_to(STATES.NOMINAL)
+                            self.frequency_set = False
