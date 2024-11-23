@@ -6,8 +6,9 @@ from datetime import datetime
 import numpy as np
 from argusim.simulation_manager.sim import Simulator as cppSim
 
-RESULTS_ROOT_FOLDER = os.path.join(os.getenv("ARGUS_ROOT", os.path.join(os.getcwd(), "../")), "results")
-CONFIG_FILE = os.path.join(os.getenv("ARGUS_ROOT"), "params.yaml")
+ARGUS_ROOT = os.getenv("ARGUS_ROOT", os.path.join(os.getcwd(), "../"))
+RESULTS_ROOT_FOLDER = os.path.join(ARGUS_ROOT, "results")
+CONFIG_FILE = os.path.join(ARGUS_ROOT, "params.yaml")
 
 
 class Simulator:  # will be passed by reference to the emulated HAL
