@@ -26,12 +26,16 @@ class TorqueCoilArray:
             "XM": CoilDriver(1, simulator),
             "YP": CoilDriver(2, simulator),
             "YM": CoilDriver(3, simulator),
-            "ZM": CoilDriver(4, simulator),
+            "ZP": CoilDriver(4, simulator),
+            "ZM": CoilDriver(5, simulator),
         }
         self.__simulator = simulator
 
-    def __getitem__(self, face):
+    def __getitem__(self, face: str):
         return self.torque_coils.get(face, None)
+
+    def exist(self, face: str):
+        return face in self.torque_coils
 
     def apply_control(self, ctrl):
         if self.__simulator is not None:
