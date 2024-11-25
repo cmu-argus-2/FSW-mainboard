@@ -81,8 +81,6 @@ class Task(TemplateTask):
     THRESHOLD_ILLUMINATION_LUX = 3000
     sun_status = SUN_VECTOR_STATUS.NO_READINGS
     sun_vector = np.zeros(3)
-    magnetic_field = np.zeros(3)
-    angular_velocity = np.zeros(3)
     eclipse_state = False
 
     # Attitude Determination
@@ -105,10 +103,10 @@ class Task(TemplateTask):
 
             # Log IMU data
             if SATELLITE.IMU_AVAILABLE:
-                self.magnetic_field = DH.get_latest_data("imu")[IMU_IDX.MAGNETOMETER_X : IMU_IDX.MAGNETOMETER_Z + 1]
-                self.log_data[ADCS_IDX.MAG_X : ADCS_IDX.MAG_Z + 1] = self.magnetic_field
-                self.angular_velocity = DH.get_latest_data("imu")[IMU_IDX.GYROSCOPE_X : IMU_IDX.GYROSCOPE_Z + 1]
-                self.log_data[ADCS_IDX.GYRO_X : ADCS_IDX.GYRO_Z + 1] = self.angular_velocity
+                imu_mag_data = DH.get_latest_data("imu")[IMU_IDX.MAGNETOMETER_X : IMU_IDX.MAGNETOMETER_Z + 1]
+                self.log_data[ADCS_IDX.MAG_X : ADCS_IDX.MAG_Z + 1] = imu_mag_data
+                imu_ang_vel = DH.get_latest_data("imu")[IMU_IDX.GYROSCOPE_X : IMU_IDX.GYROSCOPE_Z + 1]
+                self.log_data[ADCS_IDX.GYRO_X : ADCS_IDX.GYRO_Z + 1] = imu_ang_vel
 
             ## Sun Acquisition
             #  Must return the array directly
@@ -133,7 +131,7 @@ class Task(TemplateTask):
 
             # ADCS mode management
             # need to account for if gyro / sun vector unavailable
-            if np.linalg.norm(self.angular_velocity) > ModeConstants.STABLE_TOLERANCE:
+            if np.linalg.norm(imu_ang_vel) > ModeConstants.STABLE_TOLERANCE:
                 self.MODE = Modes.TUMBLING
             elif np.linalg.norm(ModeConstants.SUN_VECTOR_REFERENCE - self.sun_vector) > ModeConstants.SUN_POINTED_TOLERANCE:
                 self.MODE = Modes.STABLE
@@ -141,14 +139,13 @@ class Task(TemplateTask):
                 self.MODE = Modes.SUN_POINTED
 
             ## Magnetorquer attitude control
-            h = PhysicalConstants.INERTIA_TENSOR @ self.angular_velocity
-            b_norm = np.linalg.norm(self.magnetic_field)
+            h = PhysicalConstants.INERTIA_TENSOR @ imu_ang_vel
+            b_norm = np.linalg.norm(imu_mag_data)
+
             if not ControllerHandler.is_spin_stable(h):
-                dipole_moment = get_b_cross_dipole_moment(self.magnetic_field, b_norm, self.angular_velocity)
+                dipole_moment = get_b_cross_dipole_moment(imu_mag_data, b_norm, imu_ang_vel)
             elif not ControllerHandler.is_sun_pointing(self.sun_vector, h):
-                dipole_moment = get_pd_sun_pointing_dipole_moment(
-                    self.sun_vector, self.magnetic_field, b_norm, self.angular_velocity
-                )
+                dipole_moment = get_pd_sun_pointing_dipole_moment(self.sun_vector, imu_mag_data, b_norm, imu_ang_vel)
             else:
                 dipole_moment = np.zeros(3)
             MagneticCoilAllocator.set_voltages(dipole_moment)
@@ -167,7 +164,7 @@ class Task(TemplateTask):
                 sun_eci = approx_sun_position_ECI(self.time)
 
                 # TRIAD
-                self.coarse_attitude = TRIAD(sun_eci, mag_eci, self.sun_vector, self.magnetic_field)
+                self.coarse_attitude = TRIAD(sun_eci, mag_eci, self.sun_vector, imu_mag_data)
                 self.log_data[ADCS_IDX.COARSE_ATTITUDE_QW] = (
                     self.coarse_attitude[0] if not is_nan(self.coarse_attitude[0]) else 0
                 )
