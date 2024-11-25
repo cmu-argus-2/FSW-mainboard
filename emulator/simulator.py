@@ -152,7 +152,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
             direction (str): The direction of the magnetorquer.
             throttle_volts (float): The voltage to set for the dipole moment.
         """
-        self._torquers[direction].set_dipole_moment_voltage(throttle_volts)
+        return self._torquers[direction].set_dipole_moment_voltage(throttle_volts)
 
     def set_torque_to_spacecraft(self, dipole_moment: np.ndarray) -> None:
         """
