@@ -119,8 +119,8 @@ class MagneticCoilAllocator:
         "XM": 0.0,
         "YP": 0.0,
         "YM": 0.0,
-        "zP": 0.0,
-        "zM": 0.0,
+        "ZP": 0.0,
+        "ZM": 0.0,
     }
 
     _alloc_mat = copy.deepcopy(MCMConstants.ALLOCATION_MATRIX)
