@@ -50,11 +50,13 @@ def get_pd_sun_pointing_dipole_moment(
 
 
 class ControllerHandler:
-    """ """
+    """
+    "Handler" for determining controller modes and references.
+    """
 
     # Init spin direction
-    eigvals, eigvecs = np.linalg.eig(PhysicalConstants.INERTIA_TENSOR)
-    spin_axis = eigvecs[:, np.argmax(eigvals)]
+    _eigvals, _eigvecs = np.linalg.eig(PhysicalConstants.INERTIA_TENSOR)
+    spin_axis = _eigvecs[:, np.argmax(_eigvals)]
     if spin_axis[np.argmax(np.abs(spin_axis))] < 0:
         spin_axis = -spin_axis
 
