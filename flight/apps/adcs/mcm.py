@@ -12,7 +12,7 @@
 import copy
 from typing import Tuple
 
-from apps.adcs.consts import MCMConstants, PhysicalConstants
+from apps.adcs.consts import MagnetorquerConstants, MCMConstants, PhysicalConstants
 from apps.adcs.math import skew
 from hal.configuration import SATELLITE
 from ulab import numpy as np
@@ -29,6 +29,7 @@ def get_b_cross_dipole_moment(
     """
     unit_field = magnetic_field / magnetic_field_norm
     ang_vel_err = ControllerHandler.ang_vel_reference - angular_velocity
+    print("ANG VEL ERR:", ang_vel_err)
     return -MCMConstants.BCROSS_GAIN * np.cross(unit_field, ang_vel_err)
 
 
@@ -111,7 +112,7 @@ class ControllerHandler:
 
 class MagneticCoilAllocator:
     """
-    High-level voltage allocator.
+    Dipole moment-to-voltage allocator.
     """
 
     _Vs_ctrl = {
@@ -125,8 +126,6 @@ class MagneticCoilAllocator:
 
     _alloc_mat = copy.deepcopy(MCMConstants.ALLOCATION_MATRIX)
 
-    _Vs_max = np.array([5.0, 5.0, 5.0, 5.0, 5.0, 5.0])
-
     _sat = SATELLITE
 
     @classmethod
@@ -135,8 +134,8 @@ class MagneticCoilAllocator:
         dipole_moment: np.ndarray,
     ) -> None:
         self._update_matrix()
-        Vs = self._alloc_mat @ dipole_moment
-        Vs_bd = np.clip(Vs, -self._Vs_max, self._Vs_max)
+        Vs = MagnetorquerConstants.V_CONVERSION * self._alloc_mat @ dipole_moment
+        Vs_bd = np.clip(Vs, -MagnetorquerConstants.V_MAX, MagnetorquerConstants.V_MAX)
         for axis, face_idx in MCMConstants.AXIS_FACE_INDICES.items():
             self._Vs_ctrl[axis + "P"] = Vs_bd[face_idx["P"]]
             self._Vs_ctrl[axis + "M"] = Vs_bd[face_idx["M"]]
