@@ -1,5 +1,4 @@
 import pytest
-from ulab import numpy as np
 
 from flight.apps.adcs.mcm import (
     ControllerHandler,
@@ -7,6 +6,7 @@ from flight.apps.adcs.mcm import (
     get_b_cross_dipole_moment,
     get_pd_sun_pointing_dipole_moment,
 )
+from ulab import numpy as np
 
 
 @pytest.fixture
