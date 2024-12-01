@@ -1,3 +1,9 @@
+"""
+Convenience math functions.
+
+Author(s): Derek Fan
+"""
+
 from ulab import numpy as np
 
 

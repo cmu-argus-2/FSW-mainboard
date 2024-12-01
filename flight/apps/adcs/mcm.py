@@ -1,6 +1,9 @@
 """
-Attitude Determination and Control Subsystem (ADCS)
-Magnetic Control Module
+Magnetic Control Module.
+Includes magnetorquer controllers for spin stabilizing and sun pointing,
+controller reference handler, and magnetorquer voltage allocator.
+
+Author(s): Derek Fan
 """
 
 import copy

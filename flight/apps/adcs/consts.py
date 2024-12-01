@@ -1,3 +1,8 @@
+"""
+Constants used in ADCS apps.
+
+Author(s): Derek Fan
+"""
 from ulab import numpy as np
 
 

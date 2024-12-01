@@ -16,6 +16,8 @@ SUN_POINTED:
 satellite is spin stabilized and the Sun Vector is detected. Given the inertially fixed direction
 of the Sun, the satellite can maintain the desired attitude passively. If the Sun Vector is lost,
 the satellite will default to STABLE mode.
+
+Author(s): Ibrahima S. Sow, Derek Fan
 """
 
 
