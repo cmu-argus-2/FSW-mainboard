@@ -1,12 +1,13 @@
+import numpy as np
 import pytest
 
+import tests.cp_mock  # noqa: F401
 from flight.apps.adcs.mcm import (
     ControllerHandler,
     MagneticCoilAllocator,
     get_spin_stabilizing_dipole_moment,
     get_sun_pointing_dipole_moment,
 )
-from ulab import numpy as np
 
 
 @pytest.fixture
