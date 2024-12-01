@@ -3,8 +3,8 @@ import pytest
 from flight.apps.adcs.mcm import (
     ControllerHandler,
     MagneticCoilAllocator,
-    get_b_cross_dipole_moment,
-    get_pd_sun_pointing_dipole_moment,
+    get_spin_stabilizing_dipole_moment,
+    get_sun_pointing_dipole_moment,
 )
 from ulab import numpy as np
 
@@ -13,52 +13,42 @@ from ulab import numpy as np
 def readings() -> dict:
     sun_vector = np.random.uniform(size=3)
     magnetic_field = np.random.uniform(size=3)
-    magnetic_field_norm = np.linalg.norm(magnetic_field)
-    angular_velocity = np.random.uniform(size=3)
-    angular_momentum = np.random.uniform(size=3)
+    spin_error = np.random.uniform(size=3)
+    pointing_error = np.random.uniform(size=3)
     dipole_moment = np.random.uniform(size=3)
     return {
         "sun_vector": sun_vector,
         "magnetic_field": magnetic_field,
-        "magnetic_field_norm": magnetic_field_norm,
-        "angular_velocity": angular_velocity,
-        "angular_momentum": angular_momentum,
+        "spin_error": spin_error,
+        "pointing_error": pointing_error,
         "dipole_moment": dipole_moment,
     }
 
 
-def test_b_cross(readings) -> None:
-    dipole_moment = get_b_cross_dipole_moment(
+def test_spin_stabilizing(readings) -> None:
+    dipole_moment = get_spin_stabilizing_dipole_moment(
         readings["magnetic_field"],
-        readings["magnetic_field_norm"],
-        readings["angular_velocity"],
+        readings["spin_error"],
     )
     assert dipole_moment.shape == (3,)
 
 
-def test_pd_sun_pointing(readings) -> None:
-    dipole_moment = get_pd_sun_pointing_dipole_moment(
+def test_sun_pointing(readings) -> None:
+    dipole_moment = get_sun_pointing_dipole_moment(
         readings["sun_vector"],
-        readings["magnetic_field"],
-        readings["magnetic_field_norm"],
-        readings["angular_velocity"],
+        readings["pointing_error"],
     )
     assert dipole_moment.shape == (3,)
 
 
-def test_controller_handler(readings) -> None:
+def test_controller_handler() -> None:
+    assert ControllerHandler.u_max.shape == (3,)
     assert ControllerHandler.spin_axis.shape == (3,)
     assert ControllerHandler.ang_vel_reference.shape == (3,)
-    assert type(ControllerHandler._h_norm_target) is float or type(ControllerHandler._h_norm_target) is np.float64
+    assert type(ControllerHandler.ang_vel_target) is float or type(ControllerHandler.ang_vel_target) is np.float64
 
-    is_spin_stable = ControllerHandler.is_spin_stable(readings["angular_momentum"])
-    assert type(is_spin_stable) is bool or type(is_spin_stable) is np.bool_
-
-    is_sun_pointing = ControllerHandler.is_sun_pointing(
-        readings["sun_vector"],
-        readings["angular_momentum"],
-    )
-    assert type(is_sun_pointing) is bool or type(is_sun_pointing) is np.bool_
+    ControllerHandler.update_max_dipole_moment()
+    assert ControllerHandler.u_max.shape == (3,)
 
 
 def test_allocator(readings) -> None:

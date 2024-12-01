@@ -3,14 +3,14 @@
 import time
 
 from apps.adcs.ad import TRIAD
-from apps.adcs.consts import ModeConst, PhysicalConst
+from apps.adcs.consts import MCMConst, ModeConst
 from apps.adcs.frames import ecef_to_eci
 from apps.adcs.igrf import igrf_eci
 from apps.adcs.mcm import (
     ControllerHandler,
     MagneticCoilAllocator,
-    get_b_cross_dipole_moment,
-    get_pd_sun_pointing_dipole_moment,
+    get_spin_stabilizing_dipole_moment,
+    get_sun_pointing_dipole_moment,
 )
 from apps.adcs.modes import Modes
 from apps.adcs.sun import (
@@ -131,22 +131,35 @@ class Task(TemplateTask):
 
             # ADCS mode management
             # need to account for if gyro / sun vector unavailable
-            sun_vec_err = ModeConst.SUN_VECTOR_REFERENCE - self.sun_vector
-            if np.linalg.norm(imu_ang_vel) > ModeConst.STABLE_TOLERANCE:
+            sun_vec_err = ModeConst.SUN_VECTOR_REF - self.sun_vector
+            if np.linalg.norm(imu_ang_vel) > ModeConst.STABLE_TOL:
                 self.MODE = Modes.TUMBLING
-            elif np.linalg.norm(sun_vec_err) > ModeConst.SUN_POINTED_TOLERANCE:
+            elif np.linalg.norm(sun_vec_err) > ModeConst.SUN_POINTED_TOL:
                 self.MODE = Modes.STABLE
             else:
                 self.MODE = Modes.SUN_POINTED
 
             ## Magnetorquer attitude control
-            h = PhysicalConst.INERTIA_MAT @ imu_ang_vel
-            b_norm = np.linalg.norm(imu_mag_data)
+            scaled_ang_vel = imu_ang_vel / ControllerHandler.ang_vel_target
+            spin_err = ControllerHandler.spin_axis - scaled_ang_vel
+            spin_point_err = self.sun_vector - scaled_ang_vel
 
-            if not ControllerHandler.is_spin_stable(h):
-                dipole_moment = get_b_cross_dipole_moment(imu_mag_data, b_norm, imu_ang_vel)
-            elif not ControllerHandler.is_sun_pointing(self.sun_vector, h):
-                dipole_moment = get_pd_sun_pointing_dipole_moment(self.sun_vector, imu_mag_data, b_norm, imu_ang_vel)
+            print("\n", "MODE:", self.MODE)
+            print("SPIN ERROR:", np.linalg.norm(spin_err))
+            print("POINTING ERROR:", np.linalg.norm(spin_point_err), "\n")
+
+            # if not ControllerHandler.is_spin_stable(spin_err):
+            if not np.linalg.norm(spin_err) < MCMConst.SPIN_STABLE_TOL:
+                dipole_moment = get_spin_stabilizing_dipole_moment(
+                    imu_mag_data,
+                    spin_err,
+                )
+            # elif not ControllerHandler.is_sun_pointing(spin_point_err):
+            elif not np.linalg.norm(spin_point_err) < MCMConst.STABLE_POINTED_TOL:
+                dipole_moment = get_sun_pointing_dipole_moment(
+                    imu_mag_data,
+                    spin_point_err,
+                )
             else:
                 dipole_moment = np.zeros(3)
             MagneticCoilAllocator.set_voltages(dipole_moment)

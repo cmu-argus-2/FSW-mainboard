@@ -6,9 +6,9 @@ class ModeConst:
     Constants used for determining ADCS mode.
     """
 
-    STABLE_TOLERANCE = 0.05  # "stable" if ang vel < 0.05 rad/s = 2.86 deg/s.
-    SUN_POINTED_TOLERANCE = 0.09  # "sun-pointed" if att err < 0.09 rad = 5 deg.
-    SUN_VECTOR_REFERENCE = np.array([0.0, 0.0, 1.0])
+    SUN_VECTOR_REF = np.array([0.0, 0.0, 1.0])
+    STABLE_TOL = 0.05  # "stable" if ang vel < 0.05 rad/s = 2.86 deg/s.
+    SUN_POINTED_TOL = 0.09  # "sun-pointed" if att err < 0.09 rad = 5 deg.
 
 
 class PhysicalConst:
@@ -18,9 +18,9 @@ class PhysicalConst:
 
     INERTIA_MAT = np.array(
         [
-            [0.001796, 0.0, 0.000716],
-            [0.0, 0.002081, 0.0],
-            [0.000716, 0.0, 0.002232],
+            [0.0066, 0.0, 0.0],
+            [0.0, 0.0033, 0.0],
+            [0.0, 0.0, 0.0033],
         ]
     )
 
@@ -55,6 +55,11 @@ class MCMConst:
     Constants used for magnetorquer control and allocation.
     """
 
+    REF_FACTOR = 0.6
+    SPIN_STABLE_TOL = 0.8
+    STABLE_POINTED_TOL = 0.4
+    BCROSS_GAIN = 5.0e04
+
     AXIS_FACE_INDICES = {
         "X": {"P": 0, "M": 1},
         "Y": {"P": 2, "M": 3},
@@ -79,7 +84,3 @@ class MCMConst:
             [0.0, 0.0, 0.7071, 0.0, 0.0, 0.0028],
         ]
     )
-
-    BCROSS_GAIN = 0.0028
-    ANG_VEL_NORM_TARGET = 0.175
-    ANG_VEL_NORM_THRESHOLD = 0.262
