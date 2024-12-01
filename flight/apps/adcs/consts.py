@@ -1,7 +1,7 @@
 from ulab import numpy as np
 
 
-class ModeConstants:
+class ModeConst:
     """
     Constants used for determining ADCS mode.
     """
@@ -11,12 +11,12 @@ class ModeConstants:
     SUN_VECTOR_REFERENCE = np.array([0.0, 0.0, 1.0])
 
 
-class PhysicalConstants:
+class PhysicalConst:
     """
     Constants associated with physical satellite bus parameters.
     """
 
-    INERTIA_TENSOR = np.array(
+    INERTIA_MAT = np.array(
         [
             [0.001796, 0.0, 0.000716],
             [0.0, 0.002081, 0.0],
@@ -25,7 +25,7 @@ class PhysicalConstants:
     )
 
 
-class MagnetorquerConstants:
+class MagnetorquerConst:
     """
     Constants associated with physical magnetorquer parameters.
     Assume all magnetorquers are identical.
@@ -40,17 +40,17 @@ class MagnetorquerConstants:
     GAP_WIDTH = 8.999e-5
 
     PCB_SIDE_MAX = 0.1
-    COPPER_RESISTIVITY = 1.724e-8
+    COPPER_RESIST = 1.724e-8
 
     COIL_WIDTH = TRACE_WIDTH + GAP_WIDTH
     COIL_LENGTH = 4 * (PCB_SIDE_MAX - COILS_PER_LAYER * COIL_WIDTH) * COILS_PER_LAYER * NUM_LAYERS
 
     A_CROSS = (PCB_SIDE_MAX - COILS_PER_LAYER * COIL_WIDTH) ** 2
-    RESISTANCE = COPPER_RESISTIVITY * COIL_LENGTH / (TRACE_WIDTH * TRACE_THICKNESS)
-    V_CONVERSION = RESISTANCE / (COILS_PER_LAYER * NUM_LAYERS * A_CROSS)
+    RESIST = COPPER_RESIST * COIL_LENGTH / (TRACE_WIDTH * TRACE_THICKNESS)
+    V_CONVERT = RESIST / (COILS_PER_LAYER * NUM_LAYERS * A_CROSS)
 
 
-class MCMConstants:
+class MCMConst:
     """
     Constants used for magnetorquer control and allocation.
     """
@@ -61,7 +61,7 @@ class MCMConstants:
         "Z": {"P": 4, "M": 5},
     }
 
-    ALLOCATION_MATRIX = np.array(
+    ALLOC_MAT = np.array(
         [
             [0.5, 0.0, 0.0],
             [0.5, 0.0, 0.0],

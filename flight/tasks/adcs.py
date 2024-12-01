@@ -3,7 +3,7 @@
 import time
 
 from apps.adcs.ad import TRIAD
-from apps.adcs.consts import ModeConstants, PhysicalConstants
+from apps.adcs.consts import ModeConst, PhysicalConst
 from apps.adcs.frames import ecef_to_eci
 from apps.adcs.igrf import igrf_eci
 from apps.adcs.mcm import (
@@ -131,15 +131,16 @@ class Task(TemplateTask):
 
             # ADCS mode management
             # need to account for if gyro / sun vector unavailable
-            if np.linalg.norm(imu_ang_vel) > ModeConstants.STABLE_TOLERANCE:
+            sun_vec_err = ModeConst.SUN_VECTOR_REFERENCE - self.sun_vector
+            if np.linalg.norm(imu_ang_vel) > ModeConst.STABLE_TOLERANCE:
                 self.MODE = Modes.TUMBLING
-            elif np.linalg.norm(ModeConstants.SUN_VECTOR_REFERENCE - self.sun_vector) > ModeConstants.SUN_POINTED_TOLERANCE:
+            elif np.linalg.norm(sun_vec_err) > ModeConst.SUN_POINTED_TOLERANCE:
                 self.MODE = Modes.STABLE
             else:
                 self.MODE = Modes.SUN_POINTED
 
             ## Magnetorquer attitude control
-            h = PhysicalConstants.INERTIA_TENSOR @ imu_ang_vel
+            h = PhysicalConst.INERTIA_MAT @ imu_ang_vel
             b_norm = np.linalg.norm(imu_mag_data)
 
             if not ControllerHandler.is_spin_stable(h):
