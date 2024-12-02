@@ -46,7 +46,7 @@ def test_controller_handler() -> None:
     assert ControllerHandler.u_max.shape == (3,)
     assert ControllerHandler.spin_axis.shape == (3,)
     assert ControllerHandler.ang_vel_reference.shape == (3,)
-    assert type(ControllerHandler.ang_vel_target) is float or type(ControllerHandler.ang_vel_target) is np.float64
+    assert type(ControllerHandler.momentum_target) is float or type(ControllerHandler.momentum_target) is np.float64
 
     ControllerHandler.update_max_dipole_moment()
     assert ControllerHandler.u_max.shape == (3,)

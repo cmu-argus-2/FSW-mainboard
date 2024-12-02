@@ -24,7 +24,7 @@ def get_spin_stabilizing_dipole_moment(
     Augmented with tanh function for soft clipping.
     All sensor estimates are in the body-fixed reference frame.
     """
-    u_dir = MCMConst.BCROSS_GAIN * np.cross(magnetic_field, spin_error)
+    u_dir = MCMConst.SPIN_STABILIZING_GAIN * np.cross(magnetic_field, spin_error)
     return ControllerHandler.u_max * np.tanh(u_dir)
 
 
@@ -54,6 +54,9 @@ class ControllerHandler:
     # Max dipole moment computed from max voltage
     u_max = np.zeros(3)
 
+    # Max dipole moment conversion factor
+    _u_max_convert = MagnetorquerConst.V_MAX / MagnetorquerConst.V_CONVERT
+
     # Init spin direction
     _eigvals, _eigvecs = np.linalg.eig(PhysicalConst.INERTIA_MAT)
     _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
@@ -63,7 +66,8 @@ class ControllerHandler:
 
     # References and targets
     ang_vel_reference = spin_axis * MCMConst.REF_FACTOR * ModeConst.STABLE_TOL
-    ang_vel_target = np.linalg.norm(ang_vel_reference)
+    # ang_vel_target = np.linalg.norm(ang_vel_reference)
+    momentum_target = np.linalg.norm(PhysicalConst.INERTIA_MAT @ ang_vel_reference)
 
     @classmethod
     def update_max_dipole_moment(self) -> None:
@@ -71,7 +75,7 @@ class ControllerHandler:
         for row in MagneticCoilAllocator.mat:
             if not np.all(row == 0.0):
                 row_norm = np.linalg.norm(row)
-                u_max += row / row_norm * (MagnetorquerConst.V_MAX / MagnetorquerConst.V_CONVERT)
+                u_max += row / row_norm * self._u_max_convert
         self.u_max = u_max
 
 

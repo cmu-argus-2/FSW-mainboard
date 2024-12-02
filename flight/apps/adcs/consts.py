@@ -12,8 +12,8 @@ class ModeConst:
     """
 
     SUN_VECTOR_REF = np.array([0.0, 0.0, 1.0])
-    STABLE_TOL = 0.05  # "stable" if ang vel < 0.05 rad/s = 2.86 deg/s.
-    SUN_POINTED_TOL = 0.09  # "sun-pointed" if att err < 0.09 rad = 5 deg.
+    STABLE_TOL = 0.14  # 0.05  # "stable" if ang vel < 0.05 rad/s = 2.86 deg/s.
+    SUN_POINTED_TOL = 0.1  # "sun-pointed" if att err < 0.09 rad = 5 deg.
 
 
 class PhysicalConst:
@@ -23,9 +23,9 @@ class PhysicalConst:
 
     INERTIA_MAT = np.array(
         [
-            [0.0066, 0.0, 0.0],
+            [0.0033, 0.0, 0.0],
             [0.0, 0.0033, 0.0],
-            [0.0, 0.0, 0.0033],
+            [0.0, 0.0, 0.0066],
         ]
     )
 
@@ -60,10 +60,11 @@ class MCMConst:
     Constants used for magnetorquer control and allocation.
     """
 
-    REF_FACTOR = 0.6
-    SPIN_STABLE_TOL = 0.8
-    STABLE_POINTED_TOL = 0.4
-    BCROSS_GAIN = 5.0e04
+    REF_FACTOR = 0.75
+    SPIN_ERROR_TOL = 0.15
+    POINTING_ERROR_TOL = 0.01
+    SPIN_STABILIZING_GAIN = 1.0e06
+    # SUN_POINTING_GAIN = 5.0e05
 
     AXIS_FACE_INDICES = {
         "X": {"P": 0, "M": 1},
@@ -79,13 +80,5 @@ class MCMConst:
             [0.0, 0.5, 0.0],
             [0.0, 0.0, 0.5],
             [0.0, 0.0, 0.5],
-        ]
-    )
-
-    PD_GAINS = np.array(
-        [
-            [0.7071, 0.0, 0.0, 0.0028, 0.0, 0.0],
-            [0.0, 0.7071, 0.0, 0.0, 0.0028, 0.0],
-            [0.0, 0.0, 0.7071, 0.0, 0.0, 0.0028],
         ]
     )
