@@ -108,7 +108,7 @@ class MagneticCoilAllocator:
         Vs = MagnetorquerConst.V_CONVERT * self.mat @ dipole_moment
         Vs_bd = np.clip(Vs, -MagnetorquerConst.V_MAX, MagnetorquerConst.V_MAX)
 
-        print("\n", "VOLTAGES:", Vs_bd, "\n")
+        # print("\n", "VOLTAGES:", Vs_bd, "\n")
 
         for axis, face_idx in MCMConst.AXIS_FACE_INDICES.items():
             self._Vs_ctrl[axis + "P"] = Vs_bd[face_idx["P"]]
