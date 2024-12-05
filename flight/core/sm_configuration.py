@@ -1,5 +1,4 @@
-from core.states import STATES
-from micropython import const
+from core.states import STATES, TASK
 from tasks.adcs import Task as adcs
 from tasks.command import Task as command
 from tasks.comms import Task as comms
@@ -10,20 +9,6 @@ from tasks.obdh import Task as obdh
 from tasks.telemetry import Task as telemetry
 from tasks.thermal import Task as thermal
 from tasks.timing import Task as timing
-
-
-class TASK:
-    COMMAND = const(0x00)
-    TIMING = const(0x01)
-    EPS = const(0x02)
-    OBDH = const(0x03)
-    ADCS = const(0x04)
-    IMU = const(0x05)
-    COMMS = const(0x07)
-    THERMAL = const(0x08)
-    GPS = const(0x09)
-    TM = const(0x0A)
-
 
 TASK_REGISTRY = {
     TASK.COMMAND: command,

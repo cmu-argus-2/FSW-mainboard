@@ -9,6 +9,9 @@ is in an eclipse based on the sensor readings.
 Argus posseses 5 light sensors, 1 on each of the x+, x-, y+, y-, and z- faces of the
 satellite, and a pyramid of 4 light sensors angled at 45 degrees on the z+ face.
 
+The accuracy of the computed sun vector directly affects the performance of the ADCS system,
+both for the mode transitions, sun pointing controller accuracy, and attitude determination.
+
 """
 
 from core import logger
