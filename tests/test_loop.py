@@ -1,9 +1,7 @@
-# Temporary move
-# TODO - move to pytest
-
-"""
-from unittest import TestCase
-
+"""from unittest import TestCase
+import sys
+sys.path.append("flight/")
+import time
 from flight.core.scheduler import Loop
 from flight.core.scheduler.loop import _yield_once, set_time_provider
 
@@ -150,29 +148,4 @@ class TestLoop(TestCase):
 
         self.assertEqual(deferred_ticks, 1)
         self.assertAlmostEqual(control_ticks, 10, delta=2)
-
-    def test_run_later(self):
-        loop = Loop()
-        count = 0
-
-        async def run_later():
-            nonlocal count
-            while True:
-                count = count + 1
-                await _yield_once()  # For testing
-
-        loop.run_later(seconds_to_delay=0.1, awaitable_task=run_later())
-
-        self.assertEqual(
-            0, count, "count should not increment upon coroutine instantiation"
-        )
-        loop._step()
-        self.assertEqual(
-            0, count, "count should not increment before waiting long enough"
-        )
-
-        time.sleep(
-            0.1
-        )  # Make sure enough time has passed for step to pick up the task
-        loop._step()
-        self.assertEqual(1, count, "count should increment once per step")"""
+"""

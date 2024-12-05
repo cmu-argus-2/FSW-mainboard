@@ -12,9 +12,9 @@ class StateManager:
         "__current_state",
         "__scheduled_tasks",
         "__initialized",
-        "config",
-        "states",
-        "tasks",
+        "__config",
+        "__states",
+        "__tasks",
         "__previous_state",
     )
 
@@ -28,7 +28,7 @@ class StateManager:
         self.__current_state = None
         self.__scheduled_tasks = {}
         self.__initialized = False
-        self.config = None
+        self.__config = None
 
     @property
     def current_state(self):
@@ -47,15 +47,15 @@ class StateManager:
         """
         from core.sm_configuration import SM_CONFIGURATION
 
-        self.config = SM_CONFIGURATION
+        self.__config = SM_CONFIGURATION
 
         # TODO Validate the configuration and registry
-        self.states = list(self.config.keys())
+        self.__states = list(self.__config.keys())
 
         # init task objects
         from core.sm_configuration import TASK_REGISTRY
 
-        self.tasks = {id: task(id) for id, task in TASK_REGISTRY.items()}
+        self.__tasks = {id: task(id) for id, task in TASK_REGISTRY.items()}
 
         self.__current_state = start_state
 
@@ -71,13 +71,13 @@ class StateManager:
         :type new_state_id: id
         """
 
-        if new_state_id not in self.states:
+        if new_state_id not in self.__states:
             logger.critical(f"State {new_state_id} is not in the list of states")
             raise ValueError(f"State {new_state_id} is not in the list of states")
 
         if self.__initialized:
             # prevent illegal transitions
-            if not (new_state_id in self.config[self.__current_state]["MovesTo"]):
+            if not (new_state_id in self.__config[self.__current_state]["MovesTo"]):
                 logger.critical(f"No transition from {self.__current_state} to {new_state_id}")
                 raise ValueError(f"No transition from {self.__current_state} to {new_state_id}")
         else:
@@ -100,7 +100,7 @@ class StateManager:
 
         self.__scheduled_tasks = {}  # Reset
         self.__current_state = new_state
-        state_config = self.config[new_state]
+        state_config = self.__config[new_state]
 
         for task_id, props in state_config["Tasks"].items():
 
@@ -111,8 +111,8 @@ class StateManager:
 
             frequency = props["Frequency"]
             priority = props["Priority"]
-            task_fn = self.tasks[task_id]._run
-            self.tasks[task_id].set_frequency(frequency)
+            task_fn = self.__tasks[task_id]._run
+            self.__tasks[task_id].set_frequency(frequency)
 
             self.__scheduled_tasks[task_id] = schedule(frequency, task_fn, priority)
 
@@ -126,3 +126,9 @@ class StateManager:
         """Prints all current tasks being executed"""
         for task_name in self.__scheduled_tasks:
             print(task_name)
+
+    def change_task_frequency(self, task_id, freq_hz):
+        """Changes the frequency of a task"""
+        self.__scheduled_tasks[task_id].change_rate(freq_hz)
+        logger.info(f"Task {task_id} frequency changed to {freq_hz}")
+        # TODO - change the persistent sm_configuration
