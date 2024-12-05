@@ -35,37 +35,98 @@ class Task(TemplateTask):
         # Counter for ground pass timeout
         self.ground_pass = False
 
-    async def main_task(self):
+    def cls_change_counter_frequency(self):
+        # Reset counter
+        self.TX_COUNTER = 0
+        self.RX_COUNTER = 0
 
-        if not DH.data_process_exists("comms"):
-            DH.register_data_process("comms", "f", True, 100000)
+        # Ensure TX frequency not too high
+        if self.TX_heartbeat_frequency > self.frequency:
+            self.log_error("TX heartbeat frequency faster than task frequency. Defaulting to task frequency.")
+            self.TX_heartbeat_frequency = self.frequency
 
-        # TODO: Check if this can be done in setup
-        if not self.frequency_set:
-            # Reset counter
+        self.TX_COUNT_THRESHOLD = int(self.frequency / self.TX_heartbeat_frequency)
+        self.TX_COUNTER = self.TX_COUNT_THRESHOLD - 1
+
+        # Ensure RX frequency not too high
+        if self.RX_timeout_frequency > self.frequency:
+            self.log_error("RX timeout frequency faster than task frequency. Defaulting to task frequency.")
+            self.RX_timeout_frequency = self.frequency
+
+        self.RX_COUNT_THRESHOLD = int(self.frequency / self.RX_timeout_frequency)
+        self.RX_COUNTER = 0
+
+        self.frequency_set = True
+
+        self.log_info(f"Heartbeat frequency threshold set to {self.TX_COUNT_THRESHOLD}")
+        self.log_info(f"RX timeout threshold set to {self.RX_COUNT_THRESHOLD}")
+
+    def cls_transmit_message(self):
+        if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD or self.ground_pass:
+            # Set current TM frame
+            if TelemetryPacker.TM_AVAILABLE and self.comms_state == COMMS_STATE.TX_HEARTBEAT:
+                SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
+
+            # Transmit a message from the satellite
+            self.tx_msg_id = SATELLITE_RADIO.transmit_message()
             self.TX_COUNTER = 0
             self.RX_COUNTER = 0
 
-            # Ensure TX frequency not too high
-            if self.TX_heartbeat_frequency > self.frequency:
-                self.log_error("TX heartbeat frequency faster than task frequency. Defaulting to task frequency.")
-                self.TX_heartbeat_frequency = self.frequency
+            # State transition to RX state
+            SATELLITE_RADIO.transition_state(False)
 
-            self.TX_COUNT_THRESHOLD = int(self.frequency / self.TX_heartbeat_frequency)
-            self.TX_COUNTER = self.TX_COUNT_THRESHOLD - 1
+            self.log_info(f"Sent message with ID: {self.tx_msg_id}")
 
-            # Ensure RX frequency not too high
-            if self.RX_timeout_frequency > self.frequency:
-                self.log_error("RX timeout frequency faster than task frequency. Defaulting to task frequency.")
-                self.RX_timeout_frequency = self.frequency
+    def cls_receive_message(self):
+        if SATELLITE_RADIO.data_available():
+            # Read packet present in the RX buffer
+            self.rq_msg_id = SATELLITE_RADIO.receive_message()
+            SATELLITE_RADIO.transition_state(False)
 
-            self.RX_COUNT_THRESHOLD = int(self.frequency / self.RX_timeout_frequency)
-            self.RX_COUNTER = 0
+            # Check the response from the GS
+            if self.rq_msg_id != 0x00:
+                # GS requested valid message ID
+                self.log_info(f"RX message RSSI: {SATELLITE_RADIO.get_rssi()}")
+                self.log_info(f"GS requested message ID: {self.rq_msg_id}")
 
-            self.frequency_set = True
+                DH.log_data("comms", [SATELLITE_RADIO.get_rssi()])
 
-            self.log_info(f"Heartbeat frequency threshold set to {self.TX_COUNT_THRESHOLD}")
-            self.log_info(f"RX timeout threshold set to {self.RX_COUNT_THRESHOLD}")
+                self.ground_pass = True
+                self.RX_COUNTER = 0
+
+                # Ground pass, switch to DOWNLINK state
+                # TODO: Move state transitions to command
+                if SM.current_state == STATES.NOMINAL:
+                    SM.switch_to(STATES.DOWNLINK)
+                    self.frequency_set = False
+
+            else:
+                # GS requested invalid message ID
+                self.log_warning(f"GS requested invalid message ID: {self.rq_msg_id}")
+
+        else:
+            # No packet received from GS yet
+            self.RX_COUNTER += 1
+            self.log_info(f"Nothing in RX buffer, {self.RX_COUNTER}")
+
+            if self.RX_COUNTER >= self.RX_COUNT_THRESHOLD:
+                # GS response timeout
+                self.ground_pass = False
+                SATELLITE_RADIO.transition_state(True)
+
+                # Ground pass over, switch to DOWNLINK state
+                # TODO: Move state transitions to command
+                if SM.current_state == STATES.DOWNLINK:
+                    SM.switch_to(STATES.NOMINAL)
+                    self.frequency_set = False
+
+    async def main_task(self):
+        # Main comms task loop
+        if not DH.data_process_exists("comms"):
+            DH.register_data_process("comms", "f", True, 100000)
+
+        if not self.frequency_set:
+            self.cls_change_counter_frequency()
 
         if SM.current_state == STATES.NOMINAL or SM.current_state == STATES.DOWNLINK:
             if not DH.data_process_exists("img"):
@@ -86,61 +147,8 @@ class Task(TemplateTask):
 
             if self.comms_state != COMMS_STATE.RX:
                 # Current state is TX state, transmit message
-
-                if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD or self.ground_pass:
-                    # Set current TM frame
-                    if TelemetryPacker.TM_AVAILABLE and self.comms_state == COMMS_STATE.TX_HEARTBEAT:
-                        SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
-
-                    # Transmit a message from the satellite
-                    self.tx_msg_id = SATELLITE_RADIO.transmit_message()
-                    self.TX_COUNTER = 0
-                    self.RX_COUNTER = 0
-
-                    # State transition to RX state
-                    SATELLITE_RADIO.transition_state(False)
-
-                    self.log_info(f"Sent message with ID: {self.tx_msg_id}")
+                self.cls_transmit_message()
 
             else:
                 # Current state is RX, receive message
-
-                if SATELLITE_RADIO.data_available():
-                    # Read packet present in the RX buffer
-                    self.rq_msg_id = SATELLITE_RADIO.receive_message()
-                    SATELLITE_RADIO.transition_state(False)
-
-                    # Check the response from the GS
-                    if self.rq_msg_id != 0x00:
-                        # GS requested valid message ID
-                        self.log_info(f"RX message RSSI: {SATELLITE_RADIO.get_rssi()}")
-                        self.log_info(f"GS requested message ID: {self.rq_msg_id}")
-
-                        DH.log_data("comms", [SATELLITE_RADIO.get_rssi()])
-
-                        self.ground_pass = True
-                        self.RX_COUNTER = 0
-
-                        # Ground pass, switch to DOWNLINK state
-                        if SM.current_state == STATES.NOMINAL:
-                            SM.switch_to(STATES.DOWNLINK)
-                            self.frequency_set = False
-
-                    else:
-                        # GS requested invalid message ID
-                        self.log_warning(f"GS requested invalid message ID: {self.rq_msg_id}")
-
-                else:
-                    # No packet received from GS yet
-                    self.RX_COUNTER += 1
-                    self.log_info(f"Nothing in RX buffer, {self.RX_COUNTER}")
-
-                    if self.RX_COUNTER >= self.RX_COUNT_THRESHOLD:
-                        # GS response timeout
-                        self.ground_pass = False
-                        SATELLITE_RADIO.transition_state(True)
-
-                        # Ground pass over, switch to DOWNLINK state
-                        if SM.current_state == STATES.DOWNLINK:
-                            SM.switch_to(STATES.NOMINAL)
-                            self.frequency_set = False
+                self.cls_receive_message()
