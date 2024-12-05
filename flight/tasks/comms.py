@@ -74,6 +74,7 @@ class Task(TemplateTask):
 
             # State transition to RX state
             SATELLITE_RADIO.transition_state(False)
+            self.comms_state = SATELLITE_RADIO.get_state()
 
             self.log_info(f"Sent message with ID: {self.tx_msg_id}")
 
@@ -82,6 +83,7 @@ class Task(TemplateTask):
             # Read packet present in the RX buffer
             self.rq_msg_id = SATELLITE_RADIO.receive_message()
             SATELLITE_RADIO.transition_state(False)
+            self.comms_state = SATELLITE_RADIO.get_state()
 
             # Check the response from the GS
             if self.rq_msg_id != 0x00:
@@ -113,6 +115,7 @@ class Task(TemplateTask):
                 # GS response timeout
                 self.ground_pass = False
                 SATELLITE_RADIO.transition_state(True)
+                self.comms_state = SATELLITE_RADIO.get_state()
 
                 # Ground pass over, switch to DOWNLINK state
                 # TODO: Move state transitions to command

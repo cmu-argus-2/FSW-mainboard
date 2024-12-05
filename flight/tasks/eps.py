@@ -79,7 +79,7 @@ class Task(TemplateTask):
         if SM.current_state == STATES.STARTUP:
             pass
 
-        elif SM.current_state == STATES.NOMINAL:
+        else:
 
             if not DH.data_process_exists("eps"):
                 data_format = "Lhhb" + "h" * 38  # - use mV for voltage and mA for current (h = short integer 2 bytes)

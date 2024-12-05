@@ -66,9 +66,8 @@ SM_CONFIGURATION = {
     STATES.DOWNLINK: {
         "Tasks": {
             TASK.COMMAND: {"Frequency": 2, "Priority": 1},
-            TASK.TIMING: {"Frequency": 0.1, "Priority": 2},
-            TASK.COMMS: {"Frequency": 1, "Priority": 1},
-            TASK.EPS: {"Frequency": 0.2, "Priority": 2},
+            TASK.COMMS: {"Frequency": 4, "Priority": 2},
+            TASK.EPS: {"Frequency": 0.2, "Priority": 1},
             TASK.OBDH: {"Frequency": 0.2, "Priority": 2},
         },
         "MovesTo": [STATES.NOMINAL, STATES.SAFE],
