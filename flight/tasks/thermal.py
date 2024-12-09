@@ -31,7 +31,9 @@ class Task(TemplateTask):
             # TODO: Make a better interface to the IMU's temperature sensor
             self.log_data[THERMAL_IDX.TIME_THERMAL] = int(time.time())
             self.log_data[THERMAL_IDX.IMU_TEMPERATURE] = (
-                int(SATELLITE.IMU.temperature() * 100) if (SATELLITE.IMU_AVAILABLE and SATELLITE.IMU_TEMPERATURE_AVAILABLE) else 0
+                int(SATELLITE.IMU.temperature() * 100)
+                if (SATELLITE.IMU_AVAILABLE and SATELLITE.IMU_TEMPERATURE_AVAILABLE)
+                else 0
             )
             self.log_data[THERMAL_IDX.CPU_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
             self.log_data[THERMAL_IDX.BATTERY_PACK_TEMPERATURE] = 0  # Placeholder
