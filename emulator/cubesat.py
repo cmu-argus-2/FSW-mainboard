@@ -29,6 +29,7 @@ class CubeSat:
         self._board_power_monitor = None
         self._jetson_power_monitor = None
         self._imu = None
+        self._imu_temp_flag = False
         self._charger = None
         self._torque_drivers = {}
         self._light_sensors = {}
@@ -129,6 +130,13 @@ class CubeSat:
         :return: bool
         """
         return self._imu is not None
+
+    @property
+    def IMU_TEMPERATURE_AVAILABLE(self) -> bool:
+        """IMU_AVAILABLE: Returns True if the IMU is available
+        :return: bool
+        """
+        return self._imu_temp_flag
 
     @property
     def CHARGER(self):

@@ -179,6 +179,13 @@ class CubeSat:
         return self.__imu is not None
 
     @property
+    def IMU_TEMPERATURE_AVAILABLE(self) -> bool:
+        """IMU_AVAILABLE: Returns True if the IMU is available
+        :return: bool
+        """
+        return self.__imu_temp_flag
+
+    @property
     def CHARGER(self):
         """CHARGER: Returns the charger object
         :return: object or None

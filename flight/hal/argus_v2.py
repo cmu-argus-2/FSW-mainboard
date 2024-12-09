@@ -451,6 +451,7 @@ class ArgusV2(CubeSat):
 
             self.__imu = imu
             self.__imu_name = "BNO08X"
+            self.__imu_temp_flag = False
             self.__device_list.append(imu)
         except Exception as e:
             if self.__debug:
