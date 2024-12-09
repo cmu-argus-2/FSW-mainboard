@@ -8,7 +8,6 @@ from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
-from hal.configuration import SATELLITE
 
 
 class Task(TemplateTask):
