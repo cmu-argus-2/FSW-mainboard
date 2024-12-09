@@ -572,8 +572,8 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
         else:
             raise RuntimeError("Could not read ID")
 
-    @property
-    def magnetic(self) -> Optional[Tuple[float, float, float]]:
+    # @property
+    def mag(self) -> Optional[Tuple[float, float, float]]:
         """A tuple of the current magnetic field measurements on the X, Y, and Z axes"""
         self._process_available_packets()  # decorator?
         try:
@@ -630,8 +630,8 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
     #     except KeyError:
     #         raise RuntimeError("No lin. accel report found, is it enabled?") from None
 
-    @property
-    def acceleration(self) -> Optional[Tuple[float, float, float]]:
+    # @property
+    def accel(self) -> Optional[Tuple[float, float, float]]:
         """A tuple representing the acceleration measurements on the X, Y, and Z
         axes in meters per second squared"""
         self._process_available_packets()
@@ -650,7 +650,7 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
     #     except KeyError:
     #         raise RuntimeError("No gravity report found, is it enabled?") from None
 
-    @property
+    # @property
     def gyro(self) -> Optional[Tuple[float, float, float]]:
         """A tuple representing Gyro's rotation measurements on the X, Y, and Z
         axes in radians per second"""

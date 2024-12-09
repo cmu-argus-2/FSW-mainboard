@@ -28,11 +28,9 @@ class Task(TemplateTask):
             if not DH.data_process_exists("thermal"):
                 DH.register_data_process("thermal", "LHHH", True, data_limit=100000, write_interval=10)
 
+            # TODO: Make a better interface to the IMU's temperature sensor
             self.log_data[THERMAL_IDX.TIME_THERMAL] = int(time.time())
-            if SATELLITE.IMU_NAME == "BMX160":
-                self.log_data[THERMAL_IDX.IMU_TEMPERATURE] = (
-                    int(SATELLITE.IMU.temperature() * 100) if SATELLITE.IMU_AVAILABLE else 0
-                )
+            self.log_data[THERMAL_IDX.IMU_TEMPERATURE] = 11 * 100
             self.log_data[THERMAL_IDX.CPU_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
             self.log_data[THERMAL_IDX.BATTERY_PACK_TEMPERATURE] = 0  # Placeholder
 
