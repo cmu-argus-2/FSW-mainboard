@@ -172,13 +172,6 @@ class CubeSat:
         return self.__imu
 
     @property
-    def IMU_NAME(self):
-        """IMU_NAME: Returns the IMU name
-        :return: object or None
-        """
-        return self.__imu_name
-
-    @property
     def IMU_AVAILABLE(self) -> bool:
         """IMU_AVAILABLE: Returns True if the IMU is available
         :return: bool

@@ -15,6 +15,7 @@ SOCKET_RADIO = False
 SimulatedSpacecraft = None
 if SIMULATION:
     from hal.simulator import Simulator
+
     SimulatedSpacecraft = Simulator()
 
 SATELLITE: CubeSat = EmulatedSatellite(
