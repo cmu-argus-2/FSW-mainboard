@@ -3,6 +3,7 @@ import filecmp
 import os
 import platform
 import shutil
+import sys
 
 ROOT_PATH = os.getcwd()
 
@@ -11,8 +12,16 @@ if platform.system() == "Darwin":
     MPY_CROSS_NAME = "mpy-cross-macos"
 if platform.node() == "raspberrypi":
     MPY_CROSS_NAME = "mpy-cross-rpi"
+    
 MPY_CROSS_PATH = f"{os.getcwd()}/build_tools/{MPY_CROSS_NAME}"
 
+if platform.system() == "Windows":
+    MPY_CROSS_PATH = shutil.which("mpy-cross")
+    if MPY_CROSS_PATH:
+        print(f"mpy-cross found at {MPY_CROSS_PATH}")
+    else:
+        print(f"mpy-cross not found, please install with 'pip install mpy_cross'")
+        sys.exit(-1)
 
 def check_directory_location(source_folder):
     if not os.path.exists(MPY_CROSS_PATH):
