@@ -169,7 +169,7 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'XM', etc.)
         :return: bool - True if the driver exists and is not None, False otherwise.
         """
-        return dir in self._torque_drivers and self._torque_drivers[dir] is not None
+        return self._torque_drivers.exist(dir) and self._torque_drivers[dir] is not None
 
     @property
     def LIGHT_SENSORS(self):
