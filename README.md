@@ -1,9 +1,18 @@
-# Flight Software for the PyCubed Board (Argus-1)
+# Flight Software for the Argus Board
 
-The repository contains the current flight software stack for the **Mainboard** of Argus-1. Argus-1 is a technology demonstration mission with the goal of:
-- Demonstrating Vision-based Orbit Determination (A&OD) on a low-cost satellite (devoid of any GPS or ground involvement)
-- Collecting a dataset of images of the Earth to further efforts in CubeSat visual applications.
-- Demonstrating efficient on-orbit ML/GPU Payload processing 
+The repository contains the current flight software for the **Mainboard** of Argus. Argus is a technology demonstration mission with the goal of demonstrating vision-based Orbit Determination on a low-cost satellite (devoid of any GPS or ground involvement). We also aim to collect a decent dataset of images of the Earth to further efforts in CubeSat visual applications and demonstrate efficient on-orbit ML/GPU processing.
+
+## Architecture 
+
+See [High-Level Architecture](docs/architecture.md)
+
+## Hardware 
+
+The flight software currently supports:
+- Argus v1 (ATSAMD51J20)
+- Argus v1.1
+- Argus v2 (RP2040, in testing)
+- Argus v3 (STM32 variant, board in dev) 
 
 ## Build and Execution
 
@@ -13,7 +22,7 @@ Building current files and moving them to the board can be handled by the run.sh
 ```bash
 ./run.sh
 ```
-The script first builds and compiles the flight software files to .mpy files and transfers them to the mainboard you are connected to.
+The script first builds and compiles the flight software files to .mpy files and transfers them to the mainboard you are connected to. The compilation is supported on Linux, MacOS, and Windows.
 
 ### Without mainboard
 

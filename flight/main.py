@@ -20,7 +20,7 @@ for path in ["/hal", "/apps", "/core"]:
     if path not in sys.path:
         sys.path.append(path)
 
-setup_logger(level="NOTHING")
+setup_logger(level="INFO")
 
 print_memory_stats(call_gc=True)
 
