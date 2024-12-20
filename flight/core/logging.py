@@ -37,8 +37,11 @@ Attributes
     ERROR: int
         The ERROR logging level for Python exceptions that occur during runtime.
     CRITICAL: int
-        The CRITICAL logging level, which is the highest (most severe) level for
+        The CRITICAL logging level, which is the most severe level for
         unrecoverable errors that have caused the code to halt and exit.
+    NOTHING: int
+        The NOTHING logging level, which is a special level that can be used to
+        disable all logging output.
 
 """
 
@@ -79,6 +82,7 @@ INFO = const(20)
 WARNING = const(30)
 ERROR = const(40)
 CRITICAL = const(50)
+NOTHING = const(100)
 
 # LEVELS tuple used for mapping
 LEVELS = [
@@ -88,6 +92,7 @@ LEVELS = [
     (WARNING, "WARNING"),
     (ERROR, "ERROR"),
     (CRITICAL, "CRITICAL"),
+    (NOTHING, "NOTHING"),
 ]
 
 
@@ -520,8 +525,8 @@ class Logger:
         :param args: arguments to ``msg % args``;
             can be empty
         """
-
-        self._log(level, msg, *args)
+        if self._level <= level:  # bypass the function call if the level is too low
+            self._log(level, msg, *args)
 
     def debug(self, msg: str, *args) -> None:
         """Log a debug message.
@@ -531,7 +536,8 @@ class Logger:
         :param args: arguments to ``msg % args``;
             can be empty
         """
-        self._log(DEBUG, msg, *args)
+        if self._level <= DEBUG:
+            self._log(DEBUG, msg, *args)
 
     def info(self, msg: str, *args) -> None:
         """Log a info message.
@@ -541,8 +547,8 @@ class Logger:
         :param args: arguments to ``msg % args``;
             can be empty
         """
-
-        self._log(INFO, msg, *args)
+        if self._level <= INFO:
+            self._log(INFO, msg, *args)
 
     def warning(self, msg: str, *args) -> None:
         """Log a warning message.
@@ -552,8 +558,8 @@ class Logger:
         :param args: arguments to ``msg % args``;
             can be empty
         """
-
-        self._log(WARNING, msg, *args)
+        if self._level <= WARNING:
+            self._log(WARNING, msg, *args)
 
     def error(self, msg: str, *args) -> None:
         """Log a error message.
@@ -563,8 +569,8 @@ class Logger:
         :param args: arguments to ``msg % args``;
             can be empty
         """
-
-        self._log(ERROR, msg, *args)
+        if self._level <= ERROR:
+            self._log(ERROR, msg, *args)
 
     def critical(self, msg: str, *args) -> None:
         """Log a critical message.
@@ -574,7 +580,8 @@ class Logger:
         :param args: arguments to ``msg % args``;
             can be empty
         """
-        self._log(CRITICAL, msg, *args)
+        if self._level <= CRITICAL:
+            self._log(CRITICAL, msg, *args)
 
     # pylint: disable=no-value-for-parameter; value and tb are optional for traceback
     def exception(self, err: Exception) -> None:
@@ -618,7 +625,7 @@ def setup_logger(level="NOTSET", handler=None):
 
     logger.setLevel(set_level)
 
-    if level == "NOTSET":
+    if level == "NOTSET" or level == "NOTHING":
         return
 
     if handler is None:
