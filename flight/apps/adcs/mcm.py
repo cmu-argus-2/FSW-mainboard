@@ -70,13 +70,13 @@ class ControllerHandler:
     momentum_target = np.linalg.norm(PhysicalConst.INERTIA_MAT @ ang_vel_reference)
 
     @classmethod
-    def update_max_dipole_moment(self) -> None:
+    def update_max_dipole_moment(cls) -> None:
         u_max = np.zeros(3)
         for row in MagneticCoilAllocator.mat:
             if not np.all(row == 0.0):
                 row_norm = np.linalg.norm(row)
-                u_max += row / row_norm * self._u_max_convert
-        self.u_max = u_max
+                u_max += row / row_norm * cls._u_max_convert
+        cls.u_max = u_max
 
 
 class MagneticCoilAllocator:
@@ -99,49 +99,49 @@ class MagneticCoilAllocator:
 
     @classmethod
     def set_voltages(
-        self,
+        cls,
         dipole_moment: np.ndarray,
     ) -> None:
-        self._update_matrix()
+        cls._update_matrix()
         ControllerHandler.update_max_dipole_moment()
 
-        Vs = MagnetorquerConst.V_CONVERT * self.mat @ dipole_moment
+        Vs = MagnetorquerConst.V_CONVERT * cls.mat @ dipole_moment
         Vs_bd = np.clip(Vs, -MagnetorquerConst.V_MAX, MagnetorquerConst.V_MAX)
 
         # print("\n", "VOLTAGES:", Vs_bd, "\n")
 
         for axis, face_idx in MCMConst.AXIS_FACE_INDICES.items():
-            self._Vs_ctrl[axis + "P"] = Vs_bd[face_idx["P"]]
-            self._Vs_ctrl[axis + "M"] = Vs_bd[face_idx["M"]]
-        self._sat.APPLY_MAGNETIC_CONTROL(self._Vs_ctrl)
+            cls._Vs_ctrl[axis + "P"] = Vs_bd[face_idx["P"]]
+            cls._Vs_ctrl[axis + "M"] = Vs_bd[face_idx["M"]]
+        cls._sat.APPLY_MAGNETIC_CONTROL(cls._Vs_ctrl)
 
     @classmethod
     def _coils_on_axis_are_available(
-        self,
+        cls,
         axis: str,
     ) -> Tuple[bool, bool]:
-        P_avail = self._sat.TORQUE_DRIVERS_AVAILABLE(axis + "P")
-        M_avail = self._sat.TORQUE_DRIVERS_AVAILABLE(axis + "M")
+        P_avail = cls._sat.TORQUE_DRIVERS_AVAILABLE(axis + "P")
+        M_avail = cls._sat.TORQUE_DRIVERS_AVAILABLE(axis + "M")
         return P_avail, M_avail
 
     @classmethod
-    def _update_matrix(self) -> None:
+    def _update_matrix(cls) -> None:
         for axis, face_idx in MCMConst.AXIS_FACE_INDICES.items():
-            P_avail, M_avail = self._coils_on_axis_are_available(axis)
+            P_avail, M_avail = cls._coils_on_axis_are_available(axis)
 
             # Different combinations of active coils
             if P_avail and M_avail:
-                self.mat[face_idx["P"]] = MCMConst.ALLOC_MAT[face_idx["P"]]
-                self.mat[face_idx["M"]] = MCMConst.ALLOC_MAT[face_idx["M"]]
+                cls.mat[face_idx["P"]] = MCMConst.ALLOC_MAT[face_idx["P"]]
+                cls.mat[face_idx["M"]] = MCMConst.ALLOC_MAT[face_idx["M"]]
 
             elif P_avail and not M_avail:
-                self.mat[face_idx["P"]] = 2 * MCMConst.ALLOC_MAT[face_idx["P"]]
-                self.mat[face_idx["M"]] = np.zeros(3)
+                cls.mat[face_idx["P"]] = 2 * MCMConst.ALLOC_MAT[face_idx["P"]]
+                cls.mat[face_idx["M"]] = np.zeros(3)
 
             elif not P_avail and M_avail:
-                self.mat[face_idx["P"]] = np.zeros(3)
-                self.mat[face_idx["M"]] = 2 * MCMConst.ALLOC_MAT[face_idx["M"]]
+                cls.mat[face_idx["P"]] = np.zeros(3)
+                cls.mat[face_idx["M"]] = 2 * MCMConst.ALLOC_MAT[face_idx["M"]]
 
             elif not P_avail and not M_avail:
-                self.mat[face_idx["P"]] = np.zeros(3)
-                self.mat[face_idx["M"]] = np.zeros(3)
+                cls.mat[face_idx["P"]] = np.zeros(3)
+                cls.mat[face_idx["M"]] = np.zeros(3)

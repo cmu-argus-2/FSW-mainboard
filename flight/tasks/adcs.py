@@ -122,11 +122,11 @@ class Task(TemplateTask):
             self.log_data[ADCS_IDX.SUN_VEC_Z] = self.sun_vector[2]
             self.log_data[ADCS_IDX.ECLIPSE] = self.eclipse_state
             # Log dlux (decilux) instead of lux for TM space efficiency
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = int(lux_readings[0] / 10)
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = int(lux_readings[1] / 10)
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = int(lux_readings[2] / 10)
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = int(lux_readings[3] / 10)
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(lux_readings[4] / 10)
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = int(lux_readings[0] * 0.1)
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = int(lux_readings[1] * 0.1)
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = int(lux_readings[2] * 0.1)
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = int(lux_readings[3] * 0.1)
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(lux_readings[4] * 0.1)
             # Pyramid TBD
 
             # ADCS mode management
@@ -143,7 +143,7 @@ class Task(TemplateTask):
             else:
                 self.MODE = Modes.SUN_POINTED
 
-            ## Magnetorquer attitude control
+            ## Magnetorquer Attitude Control
             """
             scaled_ang_vel = imu_ang_vel / ControllerHandler.ang_vel_target
             spin_err = ControllerHandler.spin_axis - scaled_ang_vel
