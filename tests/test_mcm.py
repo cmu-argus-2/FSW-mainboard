@@ -1,3 +1,12 @@
+"""
+PR comments: See corresponding issue.
+
+Here, testing the shape output is good but you want to test the computation as well with a clear input value (no random values)
+and compare it to your reference output to make sure the computation is correct.
+
+You want also to test nominal cases and corner cases (near zero) or when a zero norm appears somewhere.
+
+"""
 import numpy as np
 import pytest
 

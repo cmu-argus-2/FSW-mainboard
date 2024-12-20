@@ -71,12 +71,11 @@ class ControllerHandler:
 
     @classmethod
     def update_max_dipole_moment(cls) -> None:
-        u_max = np.zeros(3)
+        cls.u_max[:] = 0  # Reset the existing array in place
         for row in MagneticCoilAllocator.mat:
             if not np.all(row == 0.0):
                 row_norm = np.linalg.norm(row)
-                u_max += row / row_norm * cls._u_max_convert
-        cls.u_max = u_max
+                cls.u_max += row / row_norm * cls._u_max_convert
 
 
 class MagneticCoilAllocator:
