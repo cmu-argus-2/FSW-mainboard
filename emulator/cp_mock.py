@@ -1,4 +1,3 @@
-import importlib
 import sys
 
 sys.path.append("./lib/hal/cp/")
