@@ -51,8 +51,9 @@ elif [ "$1" == "emulate-profile" ]; then
     mprof plot -o output.png
     cd -
 elif [ "$1" == "simulate" ]; then
-    $PYTHON_CMD build_tools/build.py
     export ARGUS_SIMULATION_FLAG=1
+    echo "ARGUS_SIMULATION_FLAG set to 1 for simulation mode."
+    $PYTHON_CMD build_tools/build.py
     $PYTHON_CMD build_tools/build-emulator.py
     cd build/ && $PYTHON_CMD main.py
     cd -
