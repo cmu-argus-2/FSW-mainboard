@@ -22,7 +22,7 @@ Building current files and moving them to the board can be handled by the run.sh
 ```bash
 ./run.sh
 ```
-The script first builds and compiles the flight software files to .mpy files and transfers them to the mainboard you are connected to. The compilation is supported on Linux, MacOS, and Windows.
+The script first builds and compiles the flight software files to .mpy files and transfers them to the mainboard you are connected to. The compilation is supported on Linux, MacOS, Windows, and RPi.
 
 ### Without mainboard
 
@@ -32,6 +32,8 @@ To run the emulator:
 ```bash
 ./run.sh emulate
 ```
+
+To install the simulator, follow the main README [here](https://github.com/cmu-argus-1/argusloop). The software-in-the-loop is currently transitioning to a newly developed C++ simulator.
 
 To run the simulator:
 ```bash
