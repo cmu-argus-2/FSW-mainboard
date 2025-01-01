@@ -85,8 +85,6 @@ class StateManager:
 
         self.__previous_state = self.__current_state
 
-        # TODO transition functions
-
         self.stop_all_tasks()
         self.schedule_new_state_tasks(new_state_id)
 
