@@ -12,6 +12,7 @@ from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES, STR_STATES
+from hal.configuration import SATELLITE
 
 
 class Task(TemplateTask):
@@ -41,10 +42,16 @@ class Task(TemplateTask):
             # Must perform / check all startup tasks here (rtc, sd, etc.)
 
             # TODO
-            # verification checklist  TODO: Add more checks
+            # verification checklist
             # Goal is to report error but still allow to switch to operations
             # Errors must be localized and not affect other tasks
             # Boot errors and system diagnostics must be logged
+
+            ### RTC setup
+
+            # r = rtc.RTC()
+            SATELLITE.RTC.set_datetime(time.struct_time((2024, 4, 24, 9, 30, 0, 3, 115, -1)))
+            # rtc.set_time_source(r)
 
             HAL_DIAGNOSTICS = True  # TODO For now
 
@@ -103,5 +110,7 @@ class Task(TemplateTask):
         self.log_print_counter += 1
         if self.log_print_counter % self.frequency == 0:
             self.log_print_counter = 0
+            self.log_info(f"Time: {int(time.time())}")
+            self.log_info(f"Time since boot: {int(time.time()) - SATELLITE.BOOTTIME}")
             self.log_info(f"GLOBAL STATE: {STR_STATES[SM.current_state]}.")
             self.log_info(f"RAM USAGE: {self.log_data[CDH_IDX.CURRENT_RAM_USAGE]}%")

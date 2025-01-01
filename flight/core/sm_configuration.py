@@ -8,11 +8,9 @@ from tasks.imu import Task as imu
 from tasks.obdh import Task as obdh
 from tasks.telemetry import Task as telemetry
 from tasks.thermal import Task as thermal
-from tasks.timing import Task as timing
 
 TASK_REGISTRY = {
     TASK.COMMAND: command,
-    TASK.TIMING: timing,
     TASK.EPS: eps,
     TASK.OBDH: obdh,
     TASK.ADCS: adcs,
@@ -27,7 +25,6 @@ SM_CONFIGURATION = {
     STATES.STARTUP: {
         "Tasks": {
             TASK.COMMAND: {"Frequency": 1, "Priority": 1},
-            TASK.TIMING: {"Frequency": 1, "Priority": 2},
             TASK.OBDH: {"Frequency": 1, "Priority": 3},
             TASK.EPS: {"Frequency": 1, "Priority": 1},
         },
@@ -36,7 +33,6 @@ SM_CONFIGURATION = {
     STATES.NOMINAL: {
         "Tasks": {
             TASK.COMMAND: {"Frequency": 10, "Priority": 1},
-            TASK.TIMING: {"Frequency": 1, "Priority": 2},
             TASK.EPS: {"Frequency": 1, "Priority": 1},
             TASK.OBDH: {"Frequency": 1, "Priority": 2},
             TASK.IMU: {"Frequency": 10, "Priority": 5},
@@ -51,7 +47,6 @@ SM_CONFIGURATION = {
     STATES.DOWNLINK: {
         "Tasks": {
             TASK.COMMAND: {"Frequency": 10, "Priority": 1},
-            TASK.TIMING: {"Frequency": 1, "Priority": 2},
             TASK.COMMS: {"Frequency": 5, "Priority": 1},
             TASK.TM: {"Frequency": 1, "Priority": 1},
             TASK.EPS: {"Frequency": 1, "Priority": 1},
@@ -66,7 +61,6 @@ SM_CONFIGURATION = {
     STATES.LOW_POWER: {
         "Tasks": {
             TASK.COMMAND: {"Frequency": 10, "Priority": 1},
-            TASK.TIMING: {"Frequency": 1, "Priority": 2},
             TASK.COMMS: {"Frequency": 1, "Priority": 1},
             TASK.EPS: {"Frequency": 1, "Priority": 1},
             TASK.OBDH: {"Frequency": 1, "Priority": 2},
@@ -78,7 +72,6 @@ SM_CONFIGURATION = {
     STATES.SAFE: {
         "Tasks": {
             TASK.COMMAND: {"Frequency": 10, "Priority": 1},
-            TASK.TIMING: {"Frequency": 1, "Priority": 2},
             TASK.COMMS: {"Frequency": 5, "Priority": 1},
             TASK.EPS: {"Frequency": 1, "Priority": 1},
             TASK.OBDH: {"Frequency": 0.2, "Priority": 2},
