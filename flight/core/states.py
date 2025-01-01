@@ -25,15 +25,13 @@ from micropython import const
 
 class TASK:
     COMMAND = const(0x00)
-    TIMING = const(0x01)
-    EPS = const(0x02)
-    OBDH = const(0x03)
-    ADCS = const(0x04)
-    IMU = const(0x05)
-    COMMS = const(0x07)
-    THERMAL = const(0x08)
-    GPS = const(0x09)
-    TM = const(0x0A)
+    EPS = const(0x01)
+    OBDH = const(0x02)
+    ADCS = const(0x03)
+    IMU = const(0x04)
+    COMMS = const(0x05)
+    THERMAL = const(0x06)
+    GPS = const(0x07)
 
 
 class STATES:

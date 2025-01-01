@@ -69,6 +69,10 @@ class Task(TemplateTask):
                 # Current state is TX state, transmit message
 
                 if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD or self.ground_pass:
+                    # Pack telemetry
+                    self.packed = TelemetryPacker.pack_tm_frame()
+                    if self.packed:
+                        self.log_info("Telemetry packed")
                     # Set current TM frame
                     if TelemetryPacker.TM_AVAILABLE and self.comms_state == COMMS_STATE.TX_HEARTBEAT:
                         SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
