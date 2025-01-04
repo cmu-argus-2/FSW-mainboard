@@ -73,3 +73,11 @@ def test_allocator(readings) -> None:
     for face, voltage in MagneticCoilAllocator._Vs_ctrl.items():
         assert type(face) is str
         assert type(voltage) is float or type(voltage) is np.float64
+
+
+def test_sun_pointing_near_zero() -> None:
+    # Check for NaN, which may occur when the argument vectors are orthogonal
+    magnetic_field = np.array([1.0, 0.0, 0.0])
+    pointing_err = np.array([0.0, 1.0, 0.0])
+    dipole_moment = get_sun_pointing_dipole_moment(magnetic_field, pointing_err)
+    assert not np.any(np.isnan(dipole_moment))
