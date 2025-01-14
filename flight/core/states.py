@@ -25,13 +25,15 @@ from micropython import const
 
 class TASK:
     COMMAND = const(0x00)
-    EPS = const(0x01)
-    OBDH = const(0x02)
-    ADCS = const(0x03)
-    IMU = const(0x04)
-    COMMS = const(0x05)
-    THERMAL = const(0x06)
-    GPS = const(0x07)
+    WATCHDOG = const(0x01)
+    EPS = const(0x02)
+    OBDH = const(0x03)
+    COMMS = const(0x04)
+    IMU = const(0x05)
+    ADCS = const(0x06)
+    THERMAL = const(0x07)
+    GPS = const(0x08)
+    PAYLOAD = const(0x09)
 
 
 class STATES:
@@ -40,6 +42,14 @@ class STATES:
     DOWNLINK = const(0x02)
     LOW_POWER = const(0x03)
     SAFE = const(0x04)
+
+    TRANSITIONS = {
+        STARTUP: [NOMINAL, SAFE],
+        NOMINAL: [DOWNLINK, LOW_POWER, SAFE],
+        DOWNLINK: [NOMINAL, LOW_POWER, SAFE],
+        LOW_POWER: [NOMINAL, SAFE],
+        SAFE: [NOMINAL],
+    }
 
 
 STR_STATES = ["STARTUP", "NOMINAL", "DOWNLINK", "LOW_POWER", "SAFE"]
