@@ -35,30 +35,6 @@ def SWITCH_TO_AUTONOMOUS_MODE(target_state):
     pass
 
 
-def ENABLE_DEVICE(device_id):
-    """Enables the specified device and updates the configuration file."""
-    logger.info(f"Executing ENABLE_DEVICE with device_id: {device_id}")
-    pass
-
-
-def DISABLE_DEVICE(device_id):
-    """Disables the specified device and updates the configuration file."""
-    logger.info(f"Executing DISABLE_DEVICE with device_id: {device_id}")
-    pass
-
-
-def ENABLE_TASK(task_id, state_flags):
-    """Enables a task in a specific state or set of states."""
-    logger.info(f"Executing ENABLE_TASK with task_id: {task_id} and state_flags: {state_flags}")
-    pass
-
-
-def DISABLE_TASK(task_id, state_flags):
-    """Disables a task in a specific state or set of states."""
-    logger.info(f"Executing DISABLE_TASK with task_id: {task_id} and state_flags: {state_flags}")
-    pass
-
-
 def REQUEST_TELEMETRY(tm_type):
     """Requests telemetry data from the satellite."""
     logger.info(f"Executing REQUEST_TELEMETRY with tm_type: {tm_type}")

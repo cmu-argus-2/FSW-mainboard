@@ -1,4 +1,4 @@
-from core.states import STATES, TASK
+from core.states import TASK
 from tasks.adcs import Task as adcs
 from tasks.command import Task as command
 from tasks.comms import Task as comms

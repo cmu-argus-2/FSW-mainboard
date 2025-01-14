@@ -21,11 +21,7 @@ Author: Ibrahima S. Sow
 """
 
 from apps.command.commands import (
-    DISABLE_DEVICE,
-    DISABLE_TASK,
     DOWNLINK_MISSION_DATA,
-    ENABLE_DEVICE,
-    ENABLE_TASK,
     REQUEST_FILE,
     REQUEST_IMAGE,
     REQUEST_STORAGE_STATUS,
@@ -58,60 +54,36 @@ COMMANDS = [
     ),
     (
         0x03,
-        lambda device_id: True,  # TODO: Check if the device is ON
-        ["device_id"],
-        ENABLE_DEVICE,
-    ),
-    (
-        0x04,
-        lambda device_id: True,  # TODO: Check if the device is OFF
-        ["device_id"],
-        DISABLE_DEVICE,
-    ),
-    (
-        0x05,
-        lambda task_id: True,  # TODO: Ensure the task ID exists
-        ["task_id", "state_flags"],
-        ENABLE_TASK,
-    ),
-    (
-        0x06,
-        lambda task_id: True,  # TODO: Ensure the task ID exists
-        ["task_id", "state_flags"],
-        DISABLE_TASK,
-    ),
-    (
-        0x07,
         lambda: True,
         ["tm_type"],
         REQUEST_TELEMETRY,
     ),
     (
-        0x08,
+        0x04,
         lambda file_tag: True,  # TODO: Validate if the file exists
         ["file_tag", "time_window"],
         REQUEST_FILE,
     ),
     (
-        0x09,
+        0x05,
         lambda: True,  # TODO: Check for image availability
         [],
         REQUEST_IMAGE,
     ),
     (
-        0x0A,
+        0x06,
         lambda: True,
         [],
         REQUEST_STORAGE_STATUS,
     ),
     (
-        0x0B,
+        0x07,
         lambda: True,  # TODO: Check for power and readiness
         [],
         SCHEDULE_OD_EXPERIMENT,
     ),
     (
-        0x0C,
+        0x08,
         lambda: True,
         [],
         DOWNLINK_MISSION_DATA,
