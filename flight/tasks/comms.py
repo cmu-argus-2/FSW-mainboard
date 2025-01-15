@@ -63,6 +63,15 @@ class Task(TemplateTask):
 
     def cls_transmit_message(self):
         if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD or self.ground_pass:
+            # If heartbeat TX counter has elapsed, or currently in an active ground pass
+
+            # TODO: Set frame / filepath here based on the active GS command
+
+            # Pack telemetry
+            self.packed = TelemetryPacker.pack_tm_frame()
+            if self.packed:
+                self.log_info("Telemetry packed")
+
             # Set current TM frame
             if TelemetryPacker.TM_AVAILABLE and self.comms_state == COMMS_STATE.TX_HEARTBEAT:
                 SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
@@ -77,11 +86,16 @@ class Task(TemplateTask):
             self.comms_state = SATELLITE_RADIO.get_state()
 
             self.log_info(f"Sent message with ID: {self.tx_msg_id}")
+        else:
+            # If not, do nothing
+            pass
 
     def cls_receive_message(self):
         if SATELLITE_RADIO.data_available():
             # Read packet present in the RX buffer
             self.rq_msg_id = SATELLITE_RADIO.receive_message()
+
+            # State transition based on RX'd packet
             SATELLITE_RADIO.transition_state(False)
             self.comms_state = SATELLITE_RADIO.get_state()
 
@@ -96,12 +110,6 @@ class Task(TemplateTask):
                 self.ground_pass = True
                 self.RX_COUNTER = 0
 
-                # Ground pass, switch to DOWNLINK state
-                # TODO: Move state transitions to command
-                if SM.current_state == STATES.NOMINAL:
-                    SM.switch_to(STATES.DOWNLINK)
-                    self.frequency_set = False
-
             else:
                 # GS requested invalid message ID
                 self.log_warning(f"GS requested invalid message ID: {self.rq_msg_id}")
@@ -109,19 +117,19 @@ class Task(TemplateTask):
         else:
             # No packet received from GS yet
             self.RX_COUNTER += 1
-            self.log_info(f"Nothing in RX buffer, {self.RX_COUNTER}")
 
             if self.RX_COUNTER >= self.RX_COUNT_THRESHOLD:
                 # GS response timeout
                 self.ground_pass = False
+
+                # State transition back to TX_HEARTBEAT state
                 SATELLITE_RADIO.transition_state(True)
                 self.comms_state = SATELLITE_RADIO.get_state()
 
-                # Ground pass over, switch to DOWNLINK state
-                # TODO: Move state transitions to command
-                if SM.current_state == STATES.DOWNLINK:
-                    SM.switch_to(STATES.NOMINAL)
-                    self.frequency_set = False
+                self.log_info("Timeout in GS communication")
+            else:
+                # No timeout yet
+                pass
 
     async def main_task(self):
         # Main comms task loop
@@ -144,32 +152,13 @@ class Task(TemplateTask):
             # Increment counter
             self.TX_COUNTER += 1
 
-            # Print current comms state
+            # Get current comms state
             self.comms_state = SATELLITE_RADIO.get_state()
-            self.log_info(f"Comms state is {self.comms_state}")
+            # self.log_info(f"Comms state is {self.comms_state}")
 
             if self.comms_state != COMMS_STATE.RX:
                 # Current state is TX state, transmit message
-
-                if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD or self.ground_pass:
-                    # Pack telemetry
-                    self.packed = TelemetryPacker.pack_tm_frame()
-                    if self.packed:
-                        self.log_info("Telemetry packed")
-                    # Set current TM frame
-                    if TelemetryPacker.TM_AVAILABLE and self.comms_state == COMMS_STATE.TX_HEARTBEAT:
-                        SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
-
-                    # Transmit a message from the satellite
-                    self.tx_msg_id = SATELLITE_RADIO.transmit_message()
-                    self.TX_COUNTER = 0
-                    self.RX_COUNTER = 0
-
-                    # State transition to RX state
-                    SATELLITE_RADIO.transition_state(False)
-
-                    self.log_info(f"Sent message with ID: {self.tx_msg_id}")
-
+                self.cls_transmit_message()
             else:
                 # Current state is RX, receive message
                 self.cls_receive_message()

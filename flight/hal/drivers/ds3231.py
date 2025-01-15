@@ -145,8 +145,7 @@ class DS3231:
         then starts the clock."""
         return self.datetime_register
 
-    @datetime.setter
-    def datetime(self, value: struct_time) -> None:
+    def set_datetime(self, value: struct_time) -> None:
         self.datetime_register = value
         self.disable_oscillator = False
         self.lost_power = False
