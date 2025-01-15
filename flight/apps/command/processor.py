@@ -21,134 +21,97 @@ Author: Ibrahima S. Sow
 """
 
 from apps.command.commands import (
+    DISABLE_DEVICE,
     DISABLE_TASK,
     DOWNLINK_MISSION_DATA,
+    ENABLE_DEVICE,
     ENABLE_TASK,
     REQUEST_FILE,
     REQUEST_IMAGE,
-    REQUEST_STORAGE_STATUS_MAINBOARD,
-    REQUEST_STORAGE_STATUS_PAYLOAD,
+    REQUEST_STORAGE_STATUS,
     REQUEST_TELEMETRY,
     SCHEDULE_OD_EXPERIMENT,
-    STOP_STREAM_TELEMETRY,
-    STREAM_TELEMETRY,
     SWITCH_TO_AUTONOMOUS_MODE,
-    SWITCH_TO_OVERRIDE_MODE,
-    TURN_OFF_DEVICE,
-    TURN_ON_DEVICE,
+    SWITCH_TO_SAFE_MODE,
 )
 from core import logger
 
+# See commands.py for function definitions (command functions and eventual preconditions)
 # A command is defined as a tuple with the following elements:
 # - ID: A unique identifier for the command
 # - Precondition: A function that checks if the command can be executed
 # - Arguments: A list of parameters that the command accepts
 # - Execute: The function that executes the command
 
-# See commands.py for function definitions (command functions and eventual preconditions)
-
 COMMANDS = [
-    # REQUEST_TELEMETRY (no precondition needed)
     (
         0x01,
         lambda: True,
         [],
-        REQUEST_TELEMETRY,
+        SWITCH_TO_SAFE_MODE,
     ),
-    # STREAM_TELEMETRY (requires NOMINAL, DOWNLINK, SAFE state)
     (
         0x02,
-        lambda: True,  # TODO: Add a state precondition
-        ["time_duration", "tm_type"],
-        STREAM_TELEMETRY,
-    ),
-    # STOP_STREAM_TELEMETRY (requires TM streaming mode)
-    (
-        0x03,
-        lambda: True,  # TODO: Add a condition to check if telemetry is being streamed
-        [],
-        STOP_STREAM_TELEMETRY,
-    ),
-    # SWITCH_TO_OVERRIDE_MODE (requires autonomous mode)
-    (
-        0x04,
-        lambda: True,  # TODO: Add a condition to check if the state is in autonomous mode
+        lambda: True,  # TODO: Validate the target state
         ["target_state"],
-        SWITCH_TO_OVERRIDE_MODE,
-    ),
-    # SWITCH_TO_AUTONOMOUS_MODE (requires override mode)
-    (
-        0x05,
-        lambda: True,  # TODO: Add a condition to check if the state is in override mode
-        ["initial_state"],
         SWITCH_TO_AUTONOMOUS_MODE,
     ),
-    # TURN_OFF_DEVICE (requires device to be ON)
+    (
+        0x03,
+        lambda device_id: True,  # TODO: Check if the device is ON
+        ["device_id"],
+        ENABLE_DEVICE,
+    ),
+    (
+        0x04,
+        lambda device_id: True,  # TODO: Check if the device is OFF
+        ["device_id"],
+        DISABLE_DEVICE,
+    ),
+    (
+        0x05,
+        lambda task_id: True,  # TODO: Ensure the task ID exists
+        ["task_id", "state_flags"],
+        ENABLE_TASK,
+    ),
     (
         0x06,
-        lambda device_id: True,  # TODO Add a condition to check if the device is ON
-        ["device_id"],
-        TURN_OFF_DEVICE,
+        lambda task_id: True,  # TODO: Ensure the task ID exists
+        ["task_id", "state_flags"],
+        DISABLE_TASK,
     ),
-    # TURN_ON_DEVICE (requires device to be OFF)
     (
         0x07,
-        lambda device_id: True,  # TODO Add a condition to check if the device is OFF
-        ["device_id"],
-        TURN_ON_DEVICE,
+        lambda: True,
+        ["tm_type"],
+        REQUEST_TELEMETRY,
     ),
-    # REQUEST_FILE (requires file process to exist)
     (
         0x08,
-        lambda tag: True,  # TODO Add a condition to check if the file process exists
+        lambda file_tag: True,  # TODO: Validate if the file exists
         ["file_tag", "time_window"],
         REQUEST_FILE,
     ),
-    # REQUEST_IMAGE (requires presence of images)
     (
         0x09,
-        lambda: True,  # TODO Add a condition to check if images are available
-        ["time_window"],
+        lambda: True,  # TODO: Check for image availability
+        [],
         REQUEST_IMAGE,
     ),
-    # REQUEST_STORAGE_STATUS_MAINBOARD (no precondition needed)
     (
         0x0A,
         lambda: True,
         [],
-        REQUEST_STORAGE_STATUS_MAINBOARD,
+        REQUEST_STORAGE_STATUS,
     ),
-    # REQUEST_STORAGE_STATUS_PAYLOAD (turn on payload if needed)
     (
         0x0B,
-        lambda: True,  # TODO Add a condition to check if the payload is ON OR
-        ["turn_on_payload"],
-        REQUEST_STORAGE_STATUS_PAYLOAD,
-    ),
-    # ENABLE_TASK (requires Task ID to exist)
-    (
-        0x0C,
-        lambda task_id: True,  # TODO Add a condition to check if the task exists
-        ["task_id", "state_flags"],
-        ENABLE_TASK,
-    ),
-    # DISABLE_TASK (requires Task ID to exist)
-    (
-        0x0D,
-        lambda task_id: True,  # TODO Add a condition to check if the task exists
-        ["task_id", "state_flags"],
-        DISABLE_TASK,
-    ),
-    # SCHEDULE_OD_EXPERIMENT (requires power available)
-    (
-        0x0E,
-        lambda: True,  # TODO Add a condition to check if enough power is available from EPS or add it to the task list
-        ["after_ground_pass"],
+        lambda: True,  # TODO: Check for power and readiness
+        [],
         SCHEDULE_OD_EXPERIMENT,
     ),
-    # DOWNLINK_MISSION_DATA (no precondition needed)
     (
-        0x0F,
+        0x0C,
         lambda: True,
         [],
         DOWNLINK_MISSION_DATA,

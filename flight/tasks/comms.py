@@ -150,7 +150,25 @@ class Task(TemplateTask):
 
             if self.comms_state != COMMS_STATE.RX:
                 # Current state is TX state, transmit message
-                self.cls_transmit_message()
+
+                if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD or self.ground_pass:
+                    # Pack telemetry
+                    self.packed = TelemetryPacker.pack_tm_frame()
+                    if self.packed:
+                        self.log_info("Telemetry packed")
+                    # Set current TM frame
+                    if TelemetryPacker.TM_AVAILABLE and self.comms_state == COMMS_STATE.TX_HEARTBEAT:
+                        SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
+
+                    # Transmit a message from the satellite
+                    self.tx_msg_id = SATELLITE_RADIO.transmit_message()
+                    self.TX_COUNTER = 0
+                    self.RX_COUNTER = 0
+
+                    # State transition to RX state
+                    SATELLITE_RADIO.transition_state(False)
+
+                    self.log_info(f"Sent message with ID: {self.tx_msg_id}")
 
             else:
                 # Current state is RX, receive message

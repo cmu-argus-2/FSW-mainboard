@@ -23,106 +23,73 @@ Author: Ibrahima S. Sow
 from core import logger
 
 
-def REQUEST_TELEMETRY():
-    """Requests telemetry data from the satellite."""
-    logger.info("Executing REQUEST_TELEMETRY")
+def SWITCH_TO_SAFE_MODE():
+    """Force switches the satellite to SAFE mode."""
+    logger.info("Executing SWITCH_TO_SAFE_MODE")
     pass
-    # return True
 
 
-def STREAM_TELEMETRY(time_duration, tm_type):
-    """Streams telemetry data from the satellite."""
-    logger.info("Executing STREAM_TELEMETRY")
+def SWITCH_TO_AUTONOMOUS_MODE(target_state):
+    """Switches the satellite back to autonomous mode."""
+    logger.info(f"Executing SWITCH_TO_AUTONOMOUS_MODE with target_state: {target_state}")
     pass
-    # return True
 
 
-def STOP_STREAM_TELEMETRY():
-    """Stops the telemetry data streaming."""
-    logger.info("Executing STOP_STREAM_TELEMETRY")
+def ENABLE_DEVICE(device_id):
+    """Enables the specified device and updates the configuration file."""
+    logger.info(f"Executing ENABLE_DEVICE with device_id: {device_id}")
     pass
-    # return True
 
 
-def SWITCH_TO_OVERRIDE_MODE(target_state):
-    """Switches the satellite to override mode."""
-    logger.info(f"Executing SWITCH_TO_OVERRIDE_MODE with target_state: {target_state}")
+def DISABLE_DEVICE(device_id):
+    """Disables the specified device and updates the configuration file."""
+    logger.info(f"Executing DISABLE_DEVICE with device_id: {device_id}")
     pass
-    # return True
-
-
-def SWITCH_TO_AUTONOMOUS_MODE(initial_state):
-    """Switches the satellite to autonomous mode."""
-    logger.info(f"Executing SWITCH_TO_AUTONOMOUS_MODE with initial_state: {initial_state}")
-    pass
-    # return True
-
-
-def TURN_OFF_DEVICE(device_id):
-    """Turns off a specified device."""
-    logger.info(f"Executing TURN_OFF_DEVICE with device_id: {device_id}")
-    pass
-    # return True
-
-
-def TURN_ON_DEVICE(device_id):
-    """Turns on a specified device."""
-    logger.info(f"Executing TURN_ON_DEVICE with device_id: {device_id}")
-    pass
-    # return True
-
-
-def REQUEST_FILE(file_tag, time_window):
-    """Requests a file from the satellite."""
-    logger.info(f"Executing REQUEST_FILE with file_tag: {file_tag} and time_window: {time_window}")
-    pass
-    # return True
-
-
-def REQUEST_IMAGE(time_window):
-    """Requests an image from the satellite."""
-    logger.info(f"Executing REQUEST_IMAGE with time_window: {time_window}")
-    pass
-    # return True
-
-
-def REQUEST_STORAGE_STATUS_MAINBOARD():
-    """Requests the storage status of the mainboard."""
-    logger.info("Executing REQUEST_STORAGE_STATUS_MAINBOARD")
-    pass
-    # return True
-
-
-def REQUEST_STORAGE_STATUS_PAYLOAD():
-    """Requests the storage status of the payload."""
-    logger.info("Executing REQUEST_STORAGE_STATUS_PAYLOAD")
-    pass
-    # return True
 
 
 def ENABLE_TASK(task_id, state_flags):
-    """Enables a specified task."""
+    """Enables a task in a specific state or set of states."""
     logger.info(f"Executing ENABLE_TASK with task_id: {task_id} and state_flags: {state_flags}")
     pass
-    # return True
 
 
 def DISABLE_TASK(task_id, state_flags):
-    """Disables a specified task."""
+    """Disables a task in a specific state or set of states."""
     logger.info(f"Executing DISABLE_TASK with task_id: {task_id} and state_flags: {state_flags}")
     pass
-    # return True
 
 
-def SCHEDULE_OD_EXPERIMENT(after_ground_pass):
-    """Schedules an OD experiment."""
-    logger.info(f"Executing SCHEDULE_OD_EXPERIMENT with after_ground_pass: {after_ground_pass}")
+def REQUEST_TELEMETRY(tm_type):
+    """Requests telemetry data from the satellite."""
+    logger.info(f"Executing REQUEST_TELEMETRY with tm_type: {tm_type}")
     pass
-    # return True
+
+
+def REQUEST_FILE(file_tag, time_window=None):
+    """Requests a specific file from the satellite."""
+    logger.info(f"Executing REQUEST_FILE with file_tag: {file_tag} and time_window: {time_window}")
+    pass
+
+
+def REQUEST_IMAGE():
+    """Requests an image from the satellite storage."""
+    logger.info("Executing REQUEST_IMAGE")
+    pass
+
+
+def REQUEST_STORAGE_STATUS():
+    """Requests the storage status of the mainboard."""
+    logger.info("Executing REQUEST_STORAGE_STATUS")
+    pass
+
+
+def SCHEDULE_OD_EXPERIMENT():
+    """Schedules an orbit determination experiment."""
+    logger.info("Executing SCHEDULE_OD_EXPERIMENT")
+    pass
 
 
 def DOWNLINK_MISSION_DATA():
-    """Downlinks mission data from the satellite."""
+    """Downlinks mission data to the ground station."""
     logger.info("Executing DOWNLINK_MISSION_DATA")
     pass
-    # return True

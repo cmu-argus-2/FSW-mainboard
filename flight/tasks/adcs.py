@@ -3,9 +3,16 @@
 import time
 
 from apps.adcs.ad import TRIAD
+from apps.adcs.consts import MCMConst, ModeConst, PhysicalConst
 from apps.adcs.frames import ecef_to_eci
 from apps.adcs.igrf import igrf_eci
-from apps.adcs.modes import ADCSMode
+from apps.adcs.mcm import (
+    ControllerHandler,
+    MagneticCoilAllocator,
+    get_spin_stabilizing_dipole_moment,
+    get_sun_pointing_dipole_moment,
+)
+from apps.adcs.modes import Modes
 from apps.adcs.sun import (
     SUN_VECTOR_STATUS,
     approx_sun_position_ECI,
@@ -65,7 +72,7 @@ class Task(TemplateTask):
     ]"""
 
     ## ADCS Modes
-    MODE = ADCSMode.DETUMBLING
+    MODE = Modes.TUMBLING
 
     log_data = [0] * 37
     # For now - keep the floats, will optimize the telemetry packet afterwards
@@ -75,8 +82,6 @@ class Task(TemplateTask):
     sun_status = SUN_VECTOR_STATUS.NO_READINGS
     sun_vector = np.zeros(3)
     eclipse_state = False
-
-    # Magnetic Control
 
     # Attitude Determination
     coarse_attitude = np.zeros(4)
@@ -100,9 +105,8 @@ class Task(TemplateTask):
             if SATELLITE.IMU_AVAILABLE:
                 imu_mag_data = DH.get_latest_data("imu")[IMU_IDX.MAGNETOMETER_X : IMU_IDX.MAGNETOMETER_Z + 1]
                 self.log_data[ADCS_IDX.MAG_X : ADCS_IDX.MAG_Z + 1] = imu_mag_data
-                self.log_data[ADCS_IDX.GYRO_X : ADCS_IDX.GYRO_Z + 1] = DH.get_latest_data("imu")[
-                    IMU_IDX.GYROSCOPE_X : IMU_IDX.GYROSCOPE_Z + 1
-                ]
+                imu_ang_vel = DH.get_latest_data("imu")[IMU_IDX.GYROSCOPE_X : IMU_IDX.GYROSCOPE_Z + 1]
+                self.log_data[ADCS_IDX.GYRO_X : ADCS_IDX.GYRO_Z + 1] = imu_ang_vel
 
             ## Sun Acquisition
             #  Must return the array directly
@@ -118,23 +122,62 @@ class Task(TemplateTask):
             self.log_data[ADCS_IDX.SUN_VEC_Z] = self.sun_vector[2]
             self.log_data[ADCS_IDX.ECLIPSE] = self.eclipse_state
             # Log dlux (decilux) instead of lux for TM space efficiency
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = int(lux_readings[0] / 10)
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = int(lux_readings[1] / 10)
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = int(lux_readings[2] / 10)
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = int(lux_readings[3] / 10)
-            self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(lux_readings[4] / 10)
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = int(lux_readings[0] * 0.1)
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = int(lux_readings[1] * 0.1)
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = int(lux_readings[2] * 0.1)
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = int(lux_readings[3] * 0.1)
+            self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(lux_readings[4] * 0.1)
             # Pyramid TBD
 
-            ## Magnetic Control
-            # TODO controllers ~ apps/adcs/mcm.py
-            if self.MODE == ADCSMode.DETUMBLING:
-                pass
+            # ADCS mode management
+            # need to account for if gyro / sun vector unavailable
+            if self.eclipse_state:
+                sun_vector_err = ModeConst.SUN_POINTED_TOL
+            else:
+                sun_vector_err = ModeConst.SUN_VECTOR_REF - self.sun_vector
 
-            elif self.MODE == ADCSMode.SPIN_STABILIZATION:
-                pass
+            if np.linalg.norm(imu_ang_vel) >= ModeConst.STABLE_TOL:
+                self.MODE = Modes.TUMBLING
+            elif np.linalg.norm(sun_vector_err) >= ModeConst.SUN_POINTED_TOL:
+                self.MODE = Modes.STABLE
+            else:
+                self.MODE = Modes.SUN_POINTED
 
-            elif self.MODE == ADCSMode.SUN_POINTING:
-                pass
+            ## Magnetorquer Attitude Control
+            """
+            scaled_ang_vel = imu_ang_vel / ControllerHandler.ang_vel_target
+            spin_err = ControllerHandler.spin_axis - scaled_ang_vel
+            pointing_err = self.sun_vector - scaled_ang_vel
+            """
+            ang_momentum = PhysicalConst.INERTIA_MAT @ imu_ang_vel
+            scaled_momentum = ang_momentum / ControllerHandler.momentum_target
+            spin_err = ControllerHandler.spin_axis - scaled_momentum
+            pointing_err = self.sun_vector - scaled_momentum
+
+            if not np.linalg.norm(spin_err) < MCMConst.SPIN_ERROR_TOL:
+                dipole_moment = get_spin_stabilizing_dipole_moment(
+                    imu_mag_data,
+                    spin_err,
+                )
+            elif not self.eclipse_state and not np.linalg.norm(sun_vector_err) < MCMConst.POINTING_ERROR_TOL:
+                dipole_moment = get_sun_pointing_dipole_moment(
+                    imu_mag_data,
+                    pointing_err,
+                )
+            else:
+                dipole_moment = np.zeros(3)
+            MagneticCoilAllocator.set_voltages(dipole_moment)
+
+            """
+            print()
+            print("MODE:", self.MODE)
+            print("SPIN ERROR:", np.linalg.norm(spin_err))
+            print("POINTING ERROR:", np.linalg.norm(pointing_err))
+            print("GYRO:", imu_ang_vel)
+            print("SUN_VECTOR:", self.sun_vector)
+            print('ECLIPSE:', self.eclipse_state)
+            print()
+            """
 
             ## Attitude Determination
 
