@@ -3,9 +3,10 @@
 import time
 
 from apps.adcs.ad import TRIAD
-from apps.adcs.consts import MCMConst, ModeConst, PhysicalConst
+from apps.adcs.consts import ModeConst #, MCMConst, PhysicalConst
 from apps.adcs.frames import ecef_to_eci
 from apps.adcs.igrf import igrf_eci
+
 """from apps.adcs.mcm import (
     ControllerHandler,
     MagneticCoilAllocator,
@@ -150,7 +151,7 @@ class Task(TemplateTask):
             spin_err = ControllerHandler.spin_axis - scaled_ang_vel
             pointing_err = self.sun_vector - scaled_ang_vel
             """
-            
+
             """ang_momentum = PhysicalConst.INERTIA_MAT @ imu_ang_vel
             scaled_momentum = ang_momentum / ControllerHandler.momentum_target
             spin_err = ControllerHandler.spin_axis - scaled_momentum
