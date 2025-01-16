@@ -440,9 +440,13 @@ class ArgusV2(CubeSat):
         """
         try:
             # from hal.drivers.bno08x_i2c import BNO08X_I2C
+            # TODO: Modify HAL for getting raw values from the IMU
             from hal.drivers.bno085 import BNO085, BNO_REPORT_ACCELEROMETER, BNO_REPORT_GYROSCOPE, BNO_REPORT_MAGNETOMETER
 
             imu = BNO085(ArgusV2Components.IMU_I2C, ArgusV2Components.IMU_I2C_ADDRESS)
+            # imu.enable_feature(BNO_REPORT_RAW_ACCELEROMETER)
+            # imu.enable_feature(BNO_REPORT_RAW_GYROSCOPE)
+            # imu.enable_feature(BNO_REPORT_RAW_MAGNETOMETER)
             imu.enable_feature(BNO_REPORT_ACCELEROMETER)
             imu.enable_feature(BNO_REPORT_GYROSCOPE)
             imu.enable_feature(BNO_REPORT_MAGNETOMETER)

@@ -31,7 +31,6 @@ from ulab import numpy as np
 
 
 class Task(TemplateTask):
-
     """data_keys = [
         "TIME_ADCS",
         "ADCS_STATE",
