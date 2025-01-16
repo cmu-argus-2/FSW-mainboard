@@ -154,8 +154,7 @@ class Task(TemplateTask):
 
             # Get current comms state
             self.comms_state = SATELLITE_RADIO.get_state()
-            # self.log_info(f"Comms state is {self.comms_state}")
-
+            
             if self.comms_state != COMMS_STATE.RX:
                 # Current state is TX state, transmit message
                 self.cls_transmit_message()

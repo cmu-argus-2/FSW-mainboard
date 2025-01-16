@@ -53,7 +53,6 @@ class CubeSat:
         # Devices
         self.__charger = None
         self.__imu = None
-        self.__imu_name = None
         self.__light_sensors = {}
         self.__torque_drivers = {}
         self.__power_monitors = {}
