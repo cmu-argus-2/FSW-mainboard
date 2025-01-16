@@ -3,7 +3,7 @@
 import time
 
 from apps.adcs.ad import TRIAD
-from apps.adcs.consts import ModeConst #, MCMConst, PhysicalConst
+from apps.adcs.consts import ModeConst  # , MCMConst, PhysicalConst
 from apps.adcs.frames import ecef_to_eci
 from apps.adcs.igrf import igrf_eci
 
