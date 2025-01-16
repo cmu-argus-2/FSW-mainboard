@@ -1,6 +1,5 @@
 from core.states import STATES, TASK
-
-# from tasks.adcs import Task as adcs
+from tasks.adcs import Task as adcs
 from tasks.command import Task as command
 from tasks.comms import Task as comms
 from tasks.eps import Task as eps
@@ -13,7 +12,7 @@ TASK_REGISTRY = {
     TASK.COMMAND: command,
     TASK.EPS: eps,
     TASK.OBDH: obdh,
-    # TASK.ADCS: adcs,
+    TASK.ADCS: adcs,
     TASK.IMU: imu,
     TASK.COMMS: comms,
     TASK.THERMAL: thermal,
@@ -36,7 +35,7 @@ SM_CONFIGURATION = {
             TASK.EPS: {"Frequency": 1, "Priority": 1},
             TASK.OBDH: {"Frequency": 1, "Priority": 2},
             TASK.IMU: {"Frequency": 10, "Priority": 1},
-            # TASK.ADCS: {"Frequency": 5, "Priority": 1, "ScheduleLater": True},
+            TASK.ADCS: {"Frequency": 5, "Priority": 1, "ScheduleLater": True},
             TASK.THERMAL: {"Frequency": 0.1, "Priority": 5, "ScheduleLater": True},
             TASK.GPS: {"Frequency": 0.03, "Priority": 5, "ScheduleLater": True},
         },
@@ -49,7 +48,7 @@ SM_CONFIGURATION = {
             TASK.EPS: {"Frequency": 1, "Priority": 1},
             TASK.OBDH: {"Frequency": 1, "Priority": 2},
             TASK.IMU: {"Frequency": 10, "Priority": 1},
-            # TASK.ADCS: {"Frequency": 5, "Priority": 2, "ScheduleLater": True},
+            TASK.ADCS: {"Frequency": 5, "Priority": 2, "ScheduleLater": True},
             TASK.THERMAL: {"Frequency": 0.1, "Priority": 5, "ScheduleLater": True},
             TASK.GPS: {"Frequency": 0.03, "Priority": 5, "ScheduleLater": True},
         },
@@ -62,7 +61,7 @@ SM_CONFIGURATION = {
             TASK.EPS: {"Frequency": 2, "Priority": 1},
             TASK.OBDH: {"Frequency": 1, "Priority": 2},
             TASK.IMU: {"Frequency": 10, "Priority": 1},
-            # TASK.ADCS: {"Frequency": 5, "Priority": 2, "ScheduleLater": True},
+            TASK.ADCS: {"Frequency": 5, "Priority": 2, "ScheduleLater": True},
             TASK.THERMAL: {"Frequency": 0.1, "Priority": 5, "ScheduleLater": True},
             TASK.GPS: {"Frequency": 0.03, "Priority": 5, "ScheduleLater": True},
         },
@@ -75,7 +74,7 @@ SM_CONFIGURATION = {
             TASK.EPS: {"Frequency": 1, "Priority": 1},
             TASK.OBDH: {"Frequency": 0.2, "Priority": 2},
             TASK.IMU: {"Frequency": 10, "Priority": 1},
-            # TASK.ADCS: {"Frequency": 5, "Priority": 2, "ScheduleLater": True},
+            TASK.ADCS: {"Frequency": 5, "Priority": 2, "ScheduleLater": True},
             TASK.THERMAL: {"Frequency": 0.1, "Priority": 5, "ScheduleLater": True},
             TASK.GPS: {"Frequency": 0.03, "Priority": 5, "ScheduleLater": True},
         },

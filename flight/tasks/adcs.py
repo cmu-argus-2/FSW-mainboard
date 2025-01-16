@@ -6,12 +6,12 @@ from apps.adcs.ad import TRIAD
 from apps.adcs.consts import MCMConst, ModeConst, PhysicalConst
 from apps.adcs.frames import ecef_to_eci
 from apps.adcs.igrf import igrf_eci
-from apps.adcs.mcm import (
+"""from apps.adcs.mcm import (
     ControllerHandler,
     MagneticCoilAllocator,
     get_spin_stabilizing_dipole_moment,
     get_sun_pointing_dipole_moment,
-)
+)"""
 from apps.adcs.modes import Modes
 from apps.adcs.sun import (
     SUN_VECTOR_STATUS,
@@ -144,12 +144,14 @@ class Task(TemplateTask):
                 self.MODE = Modes.SUN_POINTED
 
             ## Magnetorquer Attitude Control
+            # TODO: Fix attitude control stack for Circuitpython + hardware testing
             """
             scaled_ang_vel = imu_ang_vel / ControllerHandler.ang_vel_target
             spin_err = ControllerHandler.spin_axis - scaled_ang_vel
             pointing_err = self.sun_vector - scaled_ang_vel
             """
-            ang_momentum = PhysicalConst.INERTIA_MAT @ imu_ang_vel
+            
+            """ang_momentum = PhysicalConst.INERTIA_MAT @ imu_ang_vel
             scaled_momentum = ang_momentum / ControllerHandler.momentum_target
             spin_err = ControllerHandler.spin_axis - scaled_momentum
             pointing_err = self.sun_vector - scaled_momentum
@@ -166,7 +168,7 @@ class Task(TemplateTask):
                 )
             else:
                 dipole_moment = np.zeros(3)
-            MagneticCoilAllocator.set_voltages(dipole_moment)
+            MagneticCoilAllocator.set_voltages(dipole_moment)"""
 
             """
             print()
