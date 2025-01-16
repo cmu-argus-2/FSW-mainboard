@@ -47,7 +47,7 @@ class StateManager:
         :type start_state: STATES
         """
 
-        from flight.core.task_configuration import TASK_CONFIG
+        from core.task_configuration import TASK_CONFIG
 
         self.__task_config = TASK_CONFIG
         self.__states = [STATES.STARTUP, STATES.NOMINAL, STATES.DOWNLINK, STATES.LOW_POWER, STATES.SAFE]
