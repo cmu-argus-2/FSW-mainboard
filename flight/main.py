@@ -46,9 +46,9 @@ print_memory_stats(call_gc=True)
 try:
     # Run forever
 
-    from core import DataHandler as DH
+    # from core import DataHandler as DH
 
-    DH.delete_all_files()
+    # DH.delete_all_files()
 
     logger.info("Starting state manager")
     state_manager.start()

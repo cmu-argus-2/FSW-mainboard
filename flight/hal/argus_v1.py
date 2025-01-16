@@ -2,6 +2,7 @@
 Author: Harry, Thomas, Ibrahima
 Description: This file contains the definition of the ArgusV1 class and its associated interfaces and components.
 """
+
 import gc
 from sys import path
 
@@ -287,13 +288,14 @@ class ArgusV1(CubeSat):
                 imu = Middleware(imu)
 
             self.__imu = imu
+            self.__imu_temp_flag = True
             self.__device_list.append(imu)
         except Exception as e:
             self.__imu = None
             if self.__debug:
                 raise e
 
-            return Errors.BMX160_NOT_INITIALIZED
+            return Errors.IMU_NOT_INITIALIZED
 
         return Errors.NOERROR
 

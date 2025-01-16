@@ -6,9 +6,6 @@ controller reference handler, and magnetorquer voltage allocator.
 Author(s): Derek Fan
 """
 
-import copy
-from typing import Tuple
-
 from apps.adcs.consts import MagnetorquerConst, MCMConst, ModeConst, PhysicalConst
 from apps.adcs.math import is_near
 from hal.configuration import SATELLITE
@@ -61,8 +58,9 @@ class ControllerHandler:
     _eigvals, _eigvecs = np.linalg.eig(PhysicalConst.INERTIA_MAT)
     _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
     spin_axis = _unscaled_axis / np.linalg.norm(_unscaled_axis)
-    if spin_axis[np.argmax(np.abs(spin_axis))] < 0:
-        spin_axis = -spin_axis
+    # TODO: Fix for Circuitpython
+    # if spin_axis[np.argmax(np.abs(spin_axis))] < 0:
+    #    spin_axis = -spin_axis
 
     # References and targets
     ang_vel_reference = spin_axis * MCMConst.REF_FACTOR * ModeConst.STABLE_TOL
@@ -92,7 +90,7 @@ class MagneticCoilAllocator:
         "ZM": 0.0,
     }
 
-    mat = copy.deepcopy(MCMConst.ALLOC_MAT)
+    mat = np.array(MCMConst.ALLOC_MAT)
 
     _sat = SATELLITE
 
@@ -118,7 +116,7 @@ class MagneticCoilAllocator:
     def _coils_on_axis_are_available(
         cls,
         axis: str,
-    ) -> Tuple[bool, bool]:
+    ):
         P_avail = cls._sat.TORQUE_DRIVERS_AVAILABLE(axis + "P")
         M_avail = cls._sat.TORQUE_DRIVERS_AVAILABLE(axis + "M")
         return P_avail, M_avail
