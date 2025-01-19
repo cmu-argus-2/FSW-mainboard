@@ -55,6 +55,8 @@ class Task(TemplateTask):
             SATELLITE.RTC.set_datetime(time.struct_time((2024, 4, 24, 9, 30, 0, 3, 115, -1)))
             # rtc.set_time_source(r)
 
+            # TODO: Burn wires
+
             # HAL_DIAGNOSTICS
             time_since_boot = int(time.time()) - SATELLITE.BOOTTIME
             if DH.SD_scanned and time_since_boot > 5:  # seconds into start-up
@@ -119,12 +121,6 @@ class Task(TemplateTask):
             self.log_data[CDH_IDX.HAL_BITFLAGS] = 0
 
             DH.log_data("cdh", self.log_data)
-
-            # Burn wires
-
-            # Handle middleware flags / HW states
-
-            # periodic system checks (HW) - better another task for this
 
         self.log_print_counter += 1
         if self.log_print_counter % self.frequency == 0:

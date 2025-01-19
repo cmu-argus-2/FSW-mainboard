@@ -67,6 +67,9 @@ class DataProcess:
         new_config_file (bool): Whether to create a new configuration file (default is False).
         write_interval (int): The interval of logs at which the data should be written to the file (default is 1).
         write_interval_counter (int): The counter for the write interval.
+        circular_buffer_size (int): The size of the circular buffer for the files in the directory (default is 10).
+        retrieve_latest_data (bool): Whether to attempt to retrieve the latest data point and load it into the
+                                    internal buffer (default is True).
         status (str): The status of the file ("CLOSED" or "OPEN").
         file (file): The file object.
         dir_path (str): The directory path for the file.
@@ -85,6 +88,7 @@ class DataProcess:
         "write_interval",
         "write_interval_counter",
         "circular_buffer_size",
+        "retrieve_latest_data",
         "status",
         "file",
         "dir_path",
@@ -119,6 +123,7 @@ class DataProcess:
         data_limit: int = 100000,
         write_interval: int = 1,
         circular_buffer_size: int = 10,
+        retrieve_latest_data: bool = True,
         new_config_file: bool = False,
     ) -> None:
         """
@@ -132,6 +137,8 @@ class DataProcess:
                                         This attribute will automatically get updated based on the line bytesize.
             circular_buffer_size (int, optional): The size of the circular buffer for the files in
                                         the directory (default is 10).
+            retrieve_latest_data (bool, optional): Whether to attempt to retrieve the latest data point (default is True)
+                                        and load it into the internal buffer.
             new_config_file (bool, optional): Whether to create a new configuration file (default is False).
         """
 
@@ -162,7 +169,13 @@ class DataProcess:
                 data_limit // self.bytesize
             )  # + (data_limit % self.bytesize)   # Default size limit is 1000 data lines
 
+            if retrieve_latest_data:
+                # attempt to retrieve the latest data point and load it into the internal buffer
+                self.retrieve_last_data_from_latest_file()
+
+            # NOTE: Appending to the current file is another feature to add
             self.current_path = self.create_new_path()
+
             self.delete_paths = []  # Paths that are flagged for deletion
             self.excluded_paths = []  # Paths that are currently being transmitted
 
@@ -172,6 +185,7 @@ class DataProcess:
                     "data_format": self.data_format[1:],  # remove the < character
                     "data_limit": data_limit,
                     "write_interval": write_interval,
+                    "retrieve_latest_data": retrieve_latest_data,
                 }
                 with open(config_file_path, "w") as config_file:
                     json.dump(config_data, config_file)
@@ -227,8 +241,6 @@ class DataProcess:
             self.file.flush()  # Flush immediately
             self.write_interval_counter = 0
 
-        gc.collect()
-
     def get_latest_data(self) -> Optional[List]:
         """
         Returns the latest data point.
@@ -283,6 +295,27 @@ class DataProcess:
         # Keeping the tag name in the filename for identification in debugging
         return join_path(self.dir_path, self.tag_name) + "_" + str(int(time.time())) + ".bin"
 
+    def retrieve_last_data_from_latest_file(self) -> bool:
+        """
+        Retrieve the last data point from the latest file in the directory.
+        Returns True if the data was successfully retrieved, False otherwise.
+        """
+        latest_file = self._get_latest_file()
+        if latest_file is not None:
+            try:
+                with open(latest_file, "rb") as file:
+                    file.seek(-self.bytesize, os.SEEK_END)
+                    cr = file.read(self.bytesize)
+                    if len(cr) != self.bytesize:  # Handle incomplete data
+                        return False
+                    self.last_data = struct.unpack(self.data_format, cr)
+                    return True
+            except (OSError, ValueError, struct.error) as e:
+                logger.warning(f"Error reading file {latest_file}: {e}")
+                return False
+        else:
+            return False
+
     def open(self) -> None:
         """
         Open the file for writing.
@@ -302,6 +335,21 @@ class DataProcess:
             self.status = _CLOSED
         else:
             logger.info("File is already closed.")
+
+    def _get_latest_file(self) -> Optional[str]:
+        """
+        Helper functions that returns the path of the latest file in the directory if it exists.
+        If no file is available, the function returns None.
+        """
+        files = self.get_sorted_file_list()
+        if len(files) > 1:  # Ignore process configuration file
+            file = files[-1]
+            if file == _PROCESS_CONFIG_FILENAME:
+                file = files[-2]
+            path = join_path(self.dir_path, file)
+            return path
+        else:
+            return None
 
     def request_TM_path(self, latest: bool = False) -> Optional[str]:
         """
@@ -598,6 +646,7 @@ class DataHandler:
                     data_format: str = config_data.get("data_format")
                     data_limit: int = config_data.get("data_limit")
                     write_interval: int = config_data.get("write_interval")
+                    retrieve_latest_data: bool = config_data.get("retrieve_latest_data")
                     if data_format and data_limit:
                         cls.register_data_process(
                             tag_name=dir_name,
@@ -605,6 +654,7 @@ class DataHandler:
                             persistent=True,
                             data_limit=data_limit,
                             write_interval=write_interval,
+                            retrieve_latest_data=retrieve_latest_data,
                         )
 
         cls._SD_SCANNED = True

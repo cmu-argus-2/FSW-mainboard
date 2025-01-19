@@ -40,12 +40,10 @@ if [[ -z $1 ]]; then
     $PYTHON_CMD build_tools/build.py
     $PYTHON_CMD build_tools/move_to_board.py
 elif [ "$1" == "emulate" ]; then
-    $PYTHON_CMD build_tools/build.py
     $PYTHON_CMD build_tools/build-emulator.py
     cd build/ && $PYTHON_CMD main.py
     cd -
 elif [ "$1" == "emulate-profile" ]; then
-    $PYTHON_CMD build_tools/build.py
     $PYTHON_CMD build_tools/build-emulator.py
     cd build/ && mprof run --python main.py
     mprof plot -o output.png
@@ -53,7 +51,6 @@ elif [ "$1" == "emulate-profile" ]; then
 elif [ "$1" == "simulate" ]; then
     export ARGUS_SIMULATION_FLAG=1
     echo "ARGUS_SIMULATION_FLAG set to 1 for simulation mode."
-    $PYTHON_CMD build_tools/build.py
     $PYTHON_CMD build_tools/build-emulator.py
     cd build/ && $PYTHON_CMD main.py
     cd -

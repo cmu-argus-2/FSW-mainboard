@@ -9,7 +9,7 @@ from core.states import STATES
 class Task(TemplateTask):
 
     frequency_set = False
-    cleanup_frequency = 0.2  # 5 seconds
+    cleanup_frequency = 0.1  # 10 seconds
 
     def __init__(self, id):
         super().__init__(id)
