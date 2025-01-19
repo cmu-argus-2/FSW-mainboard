@@ -64,8 +64,8 @@ class Task(TemplateTask):
                 if not DH.data_process_exists("cmd_logs"):
                     DH.register_data_process("cmd_logs", "LBB", True, data_limit=100000)
 
-                SM.switch_to(STATES.NOMINAL)
-                self.log_info("Switching to NOMINAL state.")
+                SM.switch_to(STATES.DETUMBLING)
+                self.log_info("Switching to DETUMBLING state.")
 
                 # CommandQueue.push_command(0x01, [])
                 # CommandQueue.push_command(0x02, [])
