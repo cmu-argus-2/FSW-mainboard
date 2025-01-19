@@ -20,7 +20,7 @@ class Task(TemplateTask):
     async def main_task(self):
 
         if SM.current_state == STATES.STARTUP:
-            if not DH.SD_scanned:
+            if not DH.SD_SCANNED():
                 DH.scan_SD_card()
                 # DH.update_SD_usage()
 

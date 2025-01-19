@@ -66,6 +66,7 @@ class StateManager:
 
         self.__current_state = start_state
 
+        self.__time_since_last_state_change = time.monotonic()
         self.switch_to(start_state)
         scheduler.run()
 

@@ -172,6 +172,7 @@ class Task(TemplateTask):
                 self.MODE = Modes.SUN_POINTED
 
             self.log_data[ADCS_IDX.MODE] = self.MODE
+            self.log_info(f"Mode: {self.MODE}")
 
             # TODO: Fix attitude control stack for Circuitpython + hardware testing
             """

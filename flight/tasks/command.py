@@ -59,7 +59,7 @@ class Task(TemplateTask):
 
             # HAL_DIAGNOSTICS
             time_since_boot = int(time.time()) - SATELLITE.BOOTTIME
-            if DH.SD_scanned and time_since_boot > 5:  # seconds into start-up
+            if DH.SD_SCANNED() and time_since_boot > 5:  # seconds into start-up
 
                 if not DH.data_process_exists("cdh"):
                     data_format = "LbLbbbbb"
