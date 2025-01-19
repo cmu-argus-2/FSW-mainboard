@@ -274,17 +274,6 @@ class TelemetryPacker:
             # Coarse attitude QZ
             cls._FRAME[173:177] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.COARSE_ATTITUDE_QZ])
 
-            # Star tracker status
-            cls._FRAME[177] = adcs_data[ADCS_IDX.STAR_TRACKER_STATUS] & 0xFF
-
-            # Star tracker attitude QW
-            cls._FRAME[178:182] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QW])
-            # Star tracker attitude QX
-            cls._FRAME[182:186] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QX])
-            # Star tracker attitude QY
-            cls._FRAME[186:190] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QY])
-            # Star tracker attitude QZ
-            cls._FRAME[190:194] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.STAR_TRACKER_ATTITUDE_QZ])
         else:
             logger.warning("No ADCS data available")
 

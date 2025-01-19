@@ -64,11 +64,6 @@ class Task(TemplateTask):
         "COARSE_ATTITUDE_QX",
         "COARSE_ATTITUDE_QY",
         "COARSE_ATTITUDE_QZ",
-        "STAR_TRACKER_STATUS",
-        "STAR_TRACKER_ATTITUDE_QW",  # will keep the 4 bytes precision
-        "STAR_TRACKER_ATTITUDE_QX",
-        "STAR_TRACKER_ATTITUDE_QY",
-        "STAR_TRACKER_ATTITUDE_QZ",
     ]"""
 
     ## ADCS Modes
