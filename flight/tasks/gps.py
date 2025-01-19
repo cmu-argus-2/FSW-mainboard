@@ -11,7 +11,6 @@ from hal.configuration import SATELLITE
 
 
 class Task(TemplateTask):
-
     """data_keys = [
         "TIME",
         "GPS_MESSAGE_ID",

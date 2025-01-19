@@ -122,6 +122,16 @@ class SATELLITE_RADIO:
             cls.state = COMMS_STATE.RX
 
     """
+        Name: get_rssi
+        Description: Get RSSI of received packet
+    """
+
+    @classmethod
+    def get_rssi(cls):
+        # Get state
+        return cls.rx_message_rssi
+
+    """
         Name: set_tm_frame
         Description: Set internal TM frame for TX
     """
@@ -216,22 +226,13 @@ class SATELLITE_RADIO:
         return cls.file_ID.to_bytes(1, "big") + cls.file_size.to_bytes(4, "big") + cls.file_message_count.to_bytes(2, "big")
 
     """
-        Name: listen
-        Description: Switch radio to RX mode
-    """
-
-    @classmethod
-    def listen(cls):
-        SATELLITE.RADIO.listen()
-
-    """
         Name: data_available
         Description: Check if data is available in FIFO buffer
     """
 
     @classmethod
     def data_available(cls):
-        return SATELLITE.RADIO.RX_available()
+        return SATELLITE.RADIO.rx_available()
 
     """
         Name: receive_message
@@ -243,7 +244,7 @@ class SATELLITE_RADIO:
         # Get packet from radio over SPI
         # Assumes packet is in FIFO buffer
 
-        packet = SATELLITE.RADIO.read_fifo_buffer()
+        packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
 
         if packet is None:
             # FIFO buffer does not contain a packet
@@ -251,15 +252,14 @@ class SATELLITE_RADIO:
 
             return cls.gs_req_message_ID
 
+        cls.rx_message_rssi = SATELLITE.RADIO.rssi()
+
         # Check CRC error on received packet
-        crc_check = SATELLITE.RADIO.crc_error()
+        crc_check = 0
 
         # Increment internal CRC count
         if crc_check > 0:
             cls.crc_count += 1
-
-        # Get RX message RSSI
-        cls.rx_message_rssi = SATELLITE.RADIO.rssi(raw=True)
 
         # Unpack RX message header
         cls.rx_message_ID = int.from_bytes(packet[0:1], "big")

@@ -4,6 +4,7 @@ Fifth order approximation of the IGRF-13 model.
 Based on: https://github.com/RoboticExplorationLab/pycubed_circuitpython/blob/master/IGRF/igrf.py
 
 """
+
 # flake8: noqa E741
 
 import apps.adcs.frames as frames

@@ -168,7 +168,7 @@ class GPS(Driver):
             "ecef_z": ecef_z,
             "ecef_vx": ecef_vx,
             "ecef_vy": ecef_vy,
-            "ecef_vz": ecef_vz
+            "ecef_vz": ecef_vz,
             # , "datetime": dt
         }
         return self.parsed_data
