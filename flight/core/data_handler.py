@@ -3,15 +3,22 @@ Onboard Data Handling (OBDH) Module
 
 ======================
 
-This module provides the main interface for the onboard data handling system consisting of:
+The OBDH module serves as the backbone of the satellite's data management system, providing a robust and efficient interface
+for handling onboard persistent storage, inter-task communication, and telemetry.
+
+This module provides the main interface for the onboard data handling system with the following features:
 - Persistent storage management and single point of access for the onboard mass storage system (SD Card)
-- Logging interface for flight software tasks
-- Automated file services for the flight software, including telemetry (TM) and telecommand (TC)
-file generation for transmission
-- Data processing and formatting for the flight software
+- Enables data retrieval and system state restoration across reboot cycles.
+- Supports logging for flight software tasks with configurable intervals, storage limits, and buffering.
+- Manages telemetry (TM) and telecommand (TC) file generation for transmission.
+- Provides file exclusion, flagging, and deletion as an interface for the communication subsystem.
+- File exclusion, flagging, and deletion as interface for a communication subsystem
+- Handles binary encoding and decoding with configurable formats for efficient numerical and image data storage.
+- Facilitates seamless data sharing and communication between flight software components.
+- Binary encoding and decoding with configurable formats for compact and efficient storage of numerical and image data.
+- Easily adaptable to diverse mission requirements.
 
 Author: Ibrahima Sory Sow
-
 
 Data format (character: byte size):
     "b": 1,  # byte
@@ -28,6 +35,7 @@ Data format (character: byte size):
     "d": 8,  # double
 
 """
+
 
 import gc
 import json
@@ -312,6 +320,7 @@ class DataProcess:
                     return True
             except (OSError, ValueError, struct.error) as e:
                 logger.warning(f"Error reading file {latest_file}: {e}")
+                # might want to delete the file in case of corruption if we don't have mechanism to "repair" it
                 return False
         else:
             return False
@@ -668,6 +677,7 @@ class DataHandler:
         data_limit: int = 100000,
         write_interval: int = 1,
         circular_buffer_size: int = 10,
+        retrieve_latest_data: bool = True,
     ) -> None:
         """
         Register a data process with the given parameters.
@@ -694,6 +704,7 @@ class DataHandler:
                 data_limit=data_limit,
                 write_interval=write_interval,
                 circular_buffer_size=circular_buffer_size,
+                retrieve_latest_data=retrieve_latest_data,
             )
         else:
             raise ValueError("Data limit must be a positive integer.")
