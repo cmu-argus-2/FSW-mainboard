@@ -10,7 +10,6 @@ from hal.configuration import SATELLITE
 
 class Task(TemplateTask):
 
-    # To be removed - kept until proper logging is implemented
     """data_keys = [
         "time",
         "accel_x",
@@ -61,9 +60,9 @@ class Task(TemplateTask):
 
                 DH.log_data("imu", self.log_data)
 
-            self.log_print_counter += 1
-            if self.log_print_counter % 10 == 0:
-                # self.log_info(f"{dict(zip(self.data_keys, self.log_data))}")
-                self.log_print_counter = 0
-                self.log_info(f"gyro: {self.log_data[IMU_IDX.GYROSCOPE_X:IMU_IDX.GYROSCOPE_Z + 1]}")
-                self.log_info(f"mag: {self.log_data[IMU_IDX.MAGNETOMETER_X:IMU_IDX.MAGNETOMETER_Z + 1]}")
+                self.log_print_counter += 1
+                if self.log_print_counter % 10 == 0:
+                    # self.log_info(f"{dict(zip(self.data_keys, self.log_data))}")
+                    self.log_print_counter = 0
+                    self.log_info(f"gyro: {self.log_data[IMU_IDX.GYROSCOPE_X:IMU_IDX.GYROSCOPE_Z + 1]}")
+                    self.log_info(f"mag: {self.log_data[IMU_IDX.MAGNETOMETER_X:IMU_IDX.MAGNETOMETER_Z + 1]}")

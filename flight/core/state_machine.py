@@ -1,3 +1,5 @@
+import time
+
 import core.scheduler as scheduler
 from core import logger
 from core.states import STATES
@@ -16,6 +18,7 @@ class StateManager:
         "__states",
         "__tasks",
         "__previous_state",
+        "__time_since_last_state_change",
     )
 
     def __new__(cls, *args, **kwargs):
@@ -30,6 +33,7 @@ class StateManager:
         self.__initialized = False
         self.__task_config = None
         self.__tasks = {}
+        self.__time_since_last_state_change = 0
 
     @property
     def current_state(self):
@@ -38,6 +42,10 @@ class StateManager:
     @property
     def scheduled_tasks(self):
         return self.__scheduled_tasks
+
+    @property
+    def time_since_last_state_change(self):
+        return time.monotonic() - self.__time_since_last_state_change
 
     def start(self, start_state=STATES.STARTUP):
         """Starts the state machine
@@ -84,6 +92,7 @@ class StateManager:
 
         self.__previous_state = self.__current_state
         self.__current_state = new_state_id
+        self.__time_since_last_state_change = time.monotonic()
         logger.info(f"Switched to state {new_state_id}")
 
     def schedule_tasks(self):

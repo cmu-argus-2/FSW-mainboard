@@ -72,6 +72,18 @@ class Task(TemplateTask):
 
         else:  # Run for all states
 
+            ### STATE MACHINE ###
+            if SM.current_state == STATES.DETUMBLING:
+                # TODO: must check status from the ADCS
+
+                if SM.time_since_last_state_change > STATES.DETUMBLING_TIMEOUT_DURATION:
+
+                    self.log_info("DETUMBLING timeout - Setting Detumbling Issue Flag.")
+                    # TODO: Set the detumbling issue flag in the NVM
+                    self.log_info("Switching to NOMINAL state after DETUMBLING timeout.")
+                    SM.switch_to(STATES.NOMINAL)
+                pass
+
             ### COMMAND PROCESSING ###
 
             if CommandQueue.command_available():
