@@ -97,6 +97,7 @@ class DataProcess:
         "write_interval_counter",
         "circular_buffer_size",
         "retrieve_latest_data",
+        "append_to_current",
         "status",
         "file",
         "dir_path",
@@ -132,6 +133,7 @@ class DataProcess:
         write_interval: int = 1,
         circular_buffer_size: int = 10,
         retrieve_latest_data: bool = True,
+        append_to_current: bool = True,
         new_config_file: bool = False,
     ) -> None:
         """
@@ -147,6 +149,8 @@ class DataProcess:
                                         the directory (default is 10).
             retrieve_latest_data (bool, optional): Whether to attempt to retrieve the latest data point (default is True)
                                         and load it into the internal buffer.
+            append_to_current (bool, optional): Whether to attempt to append to the current file (default is True) instead
+                                                of creating a new file.
             new_config_file (bool, optional): Whether to create a new configuration file (default is False).
         """
 
@@ -156,6 +160,10 @@ class DataProcess:
         self.write_interval = int(write_interval)
         self.write_interval_counter = self.write_interval - 1  # To write the first data point
         self.circular_buffer_size = circular_buffer_size
+        self.retrieve_latest_data = retrieve_latest_data
+        self.append_to_current = append_to_current
+
+        self.current_path = None
 
         # TODO Check formating e.g. 'iff', 'iif', 'fff', 'iii', etc. ~ done within compute_bytesize()
         self.data_format = "<" + data_format
@@ -181,8 +189,7 @@ class DataProcess:
                 # attempt to retrieve the latest data point and load it into the internal buffer
                 self.retrieve_last_data_from_latest_file()
 
-            # NOTE: Appending to the current file is another feature to add
-            self.current_path = self.create_new_path()
+            self.initialize_current_file()
 
             self.delete_paths = []  # Paths that are flagged for deletion
             self.excluded_paths = []  # Paths that are currently being transmitted
@@ -194,6 +201,7 @@ class DataProcess:
                     "data_limit": data_limit,
                     "write_interval": write_interval,
                     "retrieve_latest_data": retrieve_latest_data,
+                    "append_to_current": append_to_current,
                 }
                 with open(config_file_path, "w") as config_file:
                     json.dump(config_data, config_file)
@@ -302,6 +310,32 @@ class DataProcess:
         """
         # Keeping the tag name in the filename for identification in debugging
         return join_path(self.dir_path, self.tag_name) + "_" + str(int(time.time())) + ".bin"
+
+    def try_to_reuse_latest_file(self) -> bool:
+        """
+        Attempt to reuse the latest file in the directory.
+        Returns True if the file was successfully reused, False otherwise.
+        """
+        latest_file = self._get_latest_file()
+        if latest_file is not None:
+            try:
+                self.current_path = latest_file
+                self.open()
+                return True
+            except Exception as e:
+                logger.error(f"Error reusing latest file {latest_file}: {e}")
+                return False
+        else:
+            return False
+
+    def initialize_current_file(self) -> None:
+        """
+        Initialize the current file path, either by reusing the latest file or creating a new one.
+        """
+        if not self.append_to_current or not self.try_to_reuse_latest_file():
+            self.current_path = self.create_new_path()
+        # else: # for debugging
+        #    print("Reusing latest file ", self.current_path)
 
     def retrieve_last_data_from_latest_file(self) -> bool:
         """
@@ -656,6 +690,7 @@ class DataHandler:
                     data_limit: int = config_data.get("data_limit")
                     write_interval: int = config_data.get("write_interval")
                     retrieve_latest_data: bool = config_data.get("retrieve_latest_data")
+                    append_to_current: bool = config_data.get("append_to_current")
                     if data_format and data_limit:
                         cls.register_data_process(
                             tag_name=dir_name,
@@ -664,6 +699,7 @@ class DataHandler:
                             data_limit=data_limit,
                             write_interval=write_interval,
                             retrieve_latest_data=retrieve_latest_data,
+                            append_to_current=append_to_current,
                         )
 
         cls._SD_SCANNED = True
@@ -678,6 +714,7 @@ class DataHandler:
         write_interval: int = 1,
         circular_buffer_size: int = 10,
         retrieve_latest_data: bool = True,
+        append_to_current: bool = True,
     ) -> None:
         """
         Register a data process with the given parameters.
@@ -689,6 +726,10 @@ class DataHandler:
         - data_limit (int, optional): The maximum number of data lines to store. Defaults to 100000 bytes.
         - write_interval (int, optional): The interval of logs at which the data should be written to the file. Defaults to 1.
         - circular_buffer_size (int, optional): The size of the circular buffer for the files in the directory. Defaults to 10.
+        - retrieve_latest_data (bool, optional): Whether to attempt to retrieve the latest data point and load it into the
+        internal buffer. Defaults to True.
+        - append_to_current (bool, optional): Whether to attempt to append to the current file instead of creating a new file.
+        Defaults to True.
 
         Raises:
         - ValueError: If data_limit is not a positive integer.
@@ -705,6 +746,7 @@ class DataHandler:
                 write_interval=write_interval,
                 circular_buffer_size=circular_buffer_size,
                 retrieve_latest_data=retrieve_latest_data,
+                append_to_current=append_to_current,
             )
         else:
             raise ValueError("Data limit must be a positive integer.")
