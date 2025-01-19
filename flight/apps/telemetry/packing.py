@@ -209,7 +209,7 @@ class TelemetryPacker:
             adcs_data = DH.get_latest_data("adcs")
 
             # ADCS state
-            cls._FRAME[98] = adcs_data[ADCS_IDX.ADCS_STATE] & 0xFF
+            cls._FRAME[98] = adcs_data[ADCS_IDX.MODE] & 0xFF
 
             # Gyro X
             cls._FRAME[99:103] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.GYRO_X])

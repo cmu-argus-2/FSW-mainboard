@@ -5,9 +5,10 @@
 import gc
 import time
 
+from apps.adcs.modes import Modes
 from apps.command import CommandQueue
 from apps.command.processor import handle_command_execution_status, process_command
-from apps.telemetry.constants import CDH_IDX
+from apps.telemetry.constants import ADCS_IDX, CDH_IDX
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
@@ -75,16 +76,20 @@ class Task(TemplateTask):
 
             ### STATE MACHINE ###
             if SM.current_state == STATES.DETUMBLING:
-                # TODO: must check status from the ADCS
 
+                # Check detumbling status from the ADCS
+                if DH.data_process_exists("adcs"):
+                    if DH.get_latest_data("adcs")[ADCS_IDX.MODE] != Modes.TUMBLING:
+                        self.log_info("Detumbling complete - Switching to NOMINAL state.")
+                        SM.switch_to(STATES.NOMINAL)
+
+                # Detumbling timeout in case the ADCS is not working
                 if SM.time_since_last_state_change > STATES.DETUMBLING_TIMEOUT_DURATION:
-
                     self.log_info("DETUMBLING timeout - Setting Detumbling Error Flag.")
                     # Set the detumbling issue flag in the NVM
                     self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1
                     self.log_info("Switching to NOMINAL state after DETUMBLING timeout.")
                     SM.switch_to(STATES.NOMINAL)
-                pass
 
             ### COMMAND PROCESSING ###
 

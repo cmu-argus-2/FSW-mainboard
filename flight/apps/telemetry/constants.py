@@ -61,7 +61,7 @@ class EPS_IDX:
 
 class ADCS_IDX:
     TIME_ADCS = const(0)
-    ADCS_STATE = const(1)
+    MODE = const(1)
     GYRO_X = const(2)
     GYRO_Y = const(3)
     GYRO_Z = const(4)

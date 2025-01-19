@@ -33,7 +33,7 @@ from ulab import numpy as np
 class Task(TemplateTask):
     """data_keys = [
         "TIME_ADCS",
-        "ADCS_STATE",
+        "MODE",
         "GYRO_X",
         "GYRO_Y",
         "GYRO_Z",
@@ -170,6 +170,8 @@ class Task(TemplateTask):
                 self.MODE = Modes.STABLE
             else:
                 self.MODE = Modes.SUN_POINTED
+
+            self.log_data[ADCS_IDX.MODE] = self.MODE
 
             # TODO: Fix attitude control stack for Circuitpython + hardware testing
             """
