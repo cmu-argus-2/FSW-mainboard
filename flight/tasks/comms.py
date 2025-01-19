@@ -139,7 +139,7 @@ class Task(TemplateTask):
         if not self.frequency_set:
             self.cls_change_counter_frequency()
 
-        if SM.current_state == STATES.NOMINAL or SM.current_state == STATES.DOWNLINK:
+        if SM.current_state == STATES.DETUMBLING or SM.current_state == STATES.NOMINAL or SM.current_state == STATES.LOW_POWER:
             if not DH.data_process_exists("img"):
                 # TODO: Move image process to another task
                 DH.register_data_process("img", "b", True)

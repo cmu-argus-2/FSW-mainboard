@@ -92,7 +92,10 @@ class Task(TemplateTask):
 
     async def main_task(self):
 
-        if SM.current_state == STATES.NOMINAL:
+        if SM.current_state == STATES.STARTUP:
+            pass
+
+        else:
 
             if not DH.data_process_exists("adcs"):
                 data_format = "LB" + 6 * "f" + "B" + 3 * "f" + "B" + 9 * "H" + 6 * "B" + 4 * "f" + "B" + 4 * "f"
