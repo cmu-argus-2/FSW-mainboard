@@ -11,6 +11,7 @@ class CDH_IDX:
     REBOOT_COUNT = const(4)
     WATCHDOG_TIMER = const(5)
     HAL_BITFLAGS = const(6)
+    DETUMBLING_ERROR_FLAG = const(7)
 
 
 class EPS_IDX:

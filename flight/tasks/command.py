@@ -18,9 +18,10 @@ from hal.configuration import SATELLITE
 class Task(TemplateTask):
 
     # To be removed
-    # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "REBOOT_COUNT", "WATCHDOG_TIMER", "HAL_BITFLAGS"]
+    # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "REBOOT_COUNT",
+    # "WATCHDOG_TIMER", "HAL_BITFLAGS", "DETUMBLING_ERROR_FLAG"]
 
-    log_data = [0] * 7
+    log_data = [0] * 8
 
     log_commands = [0] * 3
 
@@ -58,7 +59,7 @@ class Task(TemplateTask):
             if DH.SD_scanned and time_since_boot > 5:  # seconds into start-up
 
                 if not DH.data_process_exists("cdh"):
-                    data_format = "LbLbbbb"
+                    data_format = "LbLbbbbb"
                     DH.register_data_process("cdh", data_format, True, data_limit=100000)
 
                 if not DH.data_process_exists("cmd_logs"):
@@ -78,8 +79,9 @@ class Task(TemplateTask):
 
                 if SM.time_since_last_state_change > STATES.DETUMBLING_TIMEOUT_DURATION:
 
-                    self.log_info("DETUMBLING timeout - Setting Detumbling Issue Flag.")
-                    # TODO: Set the detumbling issue flag in the NVM
+                    self.log_info("DETUMBLING timeout - Setting Detumbling Error Flag.")
+                    # Set the detumbling issue flag in the NVM
+                    self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1
                     self.log_info("Switching to NOMINAL state after DETUMBLING timeout.")
                     SM.switch_to(STATES.NOMINAL)
                 pass

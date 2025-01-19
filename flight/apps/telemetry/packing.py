@@ -102,6 +102,8 @@ class TelemetryPacker:
             cls._FRAME[15] = cdh_data[CDH_IDX.WATCHDOG_TIMER] & 0xFF
             # HAL Bitflags
             cls._FRAME[16] = cdh_data[CDH_IDX.HAL_BITFLAGS] & 0xFF
+            # Detumbling Error Flag
+            # TODO
 
         else:
             logger.warning("No CDH data available")
@@ -281,6 +283,8 @@ class TelemetryPacker:
         if DH.data_process_exists("gps"):
 
             gps_data = DH.get_latest_data("gps")
+
+            # TODO: fix indices (compress TM frame)
 
             # message ID
             cls._FRAME[194] = gps_data[GPS_IDX.GPS_MESSAGE_ID] & 0xFF
