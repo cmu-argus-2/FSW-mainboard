@@ -58,7 +58,7 @@ class Task(TemplateTask):
                 DH.log_data("imu", self.log_data)
 
             self.log_print_counter += 1
-            if self.log_print_counter % 2 == 0:
+            if self.log_print_counter % 10 == 0:
                 # self.log_info(f"{dict(zip(self.data_keys, self.log_data))}")
                 self.log_print_counter = 0
                 self.log_info(f"gyro: {self.log_data[IMU_IDX.GYROSCOPE_X:IMU_IDX.GYROSCOPE_Z + 1]}")
