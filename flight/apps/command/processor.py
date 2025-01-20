@@ -21,18 +21,19 @@ Author: Ibrahima S. Sow
 """
 
 from apps.command.commands import (
-    DISABLE_DEVICE,
-    DISABLE_TASK,
-    DOWNLINK_MISSION_DATA,
-    ENABLE_DEVICE,
-    ENABLE_TASK,
-    REQUEST_FILE,
+    FORCE_REBOOT,
+    REQUEST_FILE_METADATA,
+    REQUEST_FILE_PKT,
     REQUEST_IMAGE,
-    REQUEST_STORAGE_STATUS,
-    REQUEST_TELEMETRY,
+    REQUEST_TM_HAL,
+    REQUEST_TM_HEARTBEAT,
+    REQUEST_TM_PAYLOAD,
+    REQUEST_TM_STORAGE,
     SCHEDULE_OD_EXPERIMENT,
-    SWITCH_TO_AUTONOMOUS_MODE,
-    SWITCH_TO_SAFE_MODE,
+    SWITCH_TO_STATE,
+    TURN_OFF_PAYLOAD,
+    UPLINK_ORBIT_REFERENCE,
+    UPLINK_TIME_REFERENCE,
 )
 from core import logger
 
@@ -44,78 +45,19 @@ from core import logger
 # - Execute: The function that executes the command
 
 COMMANDS = [
-    (
-        0x01,
-        lambda: True,
-        [],
-        SWITCH_TO_SAFE_MODE,
-    ),
-    (
-        0x02,
-        lambda: True,  # TODO: Validate the target state
-        ["target_state"],
-        SWITCH_TO_AUTONOMOUS_MODE,
-    ),
-    (
-        0x03,
-        lambda device_id: True,  # TODO: Check if the device is ON
-        ["device_id"],
-        ENABLE_DEVICE,
-    ),
-    (
-        0x04,
-        lambda device_id: True,  # TODO: Check if the device is OFF
-        ["device_id"],
-        DISABLE_DEVICE,
-    ),
-    (
-        0x05,
-        lambda task_id: True,  # TODO: Ensure the task ID exists
-        ["task_id", "state_flags"],
-        ENABLE_TASK,
-    ),
-    (
-        0x06,
-        lambda task_id: True,  # TODO: Ensure the task ID exists
-        ["task_id", "state_flags"],
-        DISABLE_TASK,
-    ),
-    (
-        0x07,
-        lambda: True,
-        ["tm_type"],
-        REQUEST_TELEMETRY,
-    ),
-    (
-        0x08,
-        lambda file_tag: True,  # TODO: Validate if the file exists
-        ["file_tag", "time_window"],
-        REQUEST_FILE,
-    ),
-    (
-        0x09,
-        lambda: True,  # TODO: Check for image availability
-        [],
-        REQUEST_IMAGE,
-    ),
-    (
-        0x0A,
-        lambda: True,
-        [],
-        REQUEST_STORAGE_STATUS,
-    ),
-    (
-        0x0B,
-        lambda: True,  # TODO: Check for power and readiness
-        [],
-        SCHEDULE_OD_EXPERIMENT,
-    ),
-    (
-        0x0C,
-        lambda: True,
-        [],
-        DOWNLINK_MISSION_DATA,
-    ),
+    (0x00, lambda: True, [], FORCE_REBOOT),
+    (0x01, lambda: True, ["target_state_id"], SWITCH_TO_STATE),
+    (0x02, lambda: True, ["current_time"], UPLINK_TIME_REFERENCE),
+    (0x03, lambda: True, ["orbital_parameters"], UPLINK_ORBIT_REFERENCE),
+    (0x04, lambda: True, [], TURN_OFF_PAYLOAD),
+    (0x05, lambda: True, [], SCHEDULE_OD_EXPERIMENT),
+    (0x06, lambda: True, [], REQUEST_TM_HEARTBEAT),
+    (0x07, lambda: True, [], REQUEST_TM_HAL),
+    (0x08, lambda: True, [], REQUEST_TM_STORAGE),
+    (0x09, lambda: True, [], REQUEST_TM_PAYLOAD),
+    (0x0A, lambda file_tag, requested_time: True, ["file_tag", "requested_time"], REQUEST_FILE_METADATA),
+    (0x0B, lambda file_tag: True, ["file_tag"], REQUEST_FILE_PKT),
+    (0x0C, lambda: True, [], REQUEST_IMAGE),
 ]
 
 
@@ -164,7 +106,7 @@ def handle_command_execution_status(status):
 
     if status == CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS:
         logger.info("Command execution successful")
-        # TODO build success response
+        # TODO build success response - ACK
     else:  # All other cases are errors
-        # TODO build error response
+        # TODO build error response - Error messages
         pass

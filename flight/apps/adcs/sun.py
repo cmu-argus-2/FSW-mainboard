@@ -16,11 +16,13 @@ both for the mode transitions, sun pointing controller accuracy, and attitude de
 
 from core import logger
 from hal.configuration import SATELLITE
+from micropython import const
 from ulab import numpy as np
 
-MAX_RANGE = 117000  # OPT4001
-NUM_LIGHT_SENSORS = 5
-ERROR_LUX = -1
+MAX_RANGE = const(117000)  # OPT4001
+THRESHOLD_ILLUMINATION_LUX = const(3000)
+NUM_LIGHT_SENSORS = const(5)
+ERROR_LUX = const(-1)
 
 
 class SUN_VECTOR_STATUS:
@@ -130,7 +132,7 @@ def compute_body_sun_vector_from_lux(I_vec):
     return status, sun_body
 
 
-def in_eclipse(raw_readings, threshold_lux_illumination=1000):
+def in_eclipse(raw_readings, threshold_lux_illumination=THRESHOLD_ILLUMINATION_LUX):
     """
     Check the eclipse conditions based on the lux readings
 

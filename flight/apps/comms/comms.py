@@ -232,7 +232,7 @@ class SATELLITE_RADIO:
 
     @classmethod
     def data_available(cls):
-        return SATELLITE.RADIO.rx_available()
+        return SATELLITE.RADIO.RX_available()
 
     """
         Name: receive_message
