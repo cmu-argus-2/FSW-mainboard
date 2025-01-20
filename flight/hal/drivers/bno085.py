@@ -580,24 +580,13 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
 
     # @property
     # Built-in, calibrated mag function
-    def mag(self) -> Optional[Tuple[float, float, float]]:
-        """A tuple of the current magnetic field measurements on the X, Y, and Z axes"""
-        self._process_available_packets()  # decorator?
-        try:
-            return self._readings[BNO_REPORT_MAGNETOMETER]
-        except KeyError:
-            raise RuntimeError("No magfield report found, is it enabled?") from None
-        # [25.125, -6.625, -21.0]
-        # [-10.9375, -15.25, -25.75]
-
-    # custom uncalibrated mag function, scaled from raw_mag
-    # def mag(self) -> Optional[Tuple[float, float, float]]:
-    #     raw_mag = self.raw_magnetic()
-
-    #     bit_wdith = const(16)
-    #     scalar = const(1 << (bit_wdith - 1))
-
-    #     return tuple((raw_mag[0] - scalar, raw_mag[1] - scalar, raw_mag[2] - scalar))
+    # def cal_mag(self) -> Optional[Tuple[float, float, float]]:
+    #     """A tuple of the current magnetic field measurements on the X, Y, and Z axes"""
+    #     self._process_available_packets()  # decorator?
+    #     try:
+    #         return self._readings[BNO_REPORT_MAGNETOMETER]
+    #     except KeyError:
+    #         raise RuntimeError("No magfield report found, is it enabled?") from None
 
     # @property
     # def quaternion(self) -> Optional[Tuple[float, float, float, float]]:
@@ -649,7 +638,7 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
     #         raise RuntimeError("No lin. accel report found, is it enabled?") from None
 
     # @property
-    # def accel(self) -> Optional[Tuple[float, float, float]]:
+    # def cal_accel(self) -> Optional[Tuple[float, float, float]]:
     #     """A tuple representing the acceleration measurements on the X, Y, and Z
     #     axes in meters per second squared"""
     #     self._process_available_packets()
@@ -670,7 +659,7 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
 
     # @property
     # built in calibrated gyro
-    # def gyro(self) -> Optional[Tuple[float, float, float]]:
+    # def cal_gyro(self) -> Optional[Tuple[float, float, float]]:
     #     """A tuple representing Gyro's rotation measurements on the X, Y, and Z
     #     axes in radians per second"""
     #     self._process_available_packets()
@@ -678,13 +667,6 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
     #         return self._readings[BNO_REPORT_GYROSCOPE]
     #     except KeyError:
     #         raise RuntimeError("No gyro report found, is it enabled?") from None
-
-    # uncalibrated gyro from raw value
-    # def gyro(self) -> Optional[Tuple[float, float, float]]:
-    #     raw_gyro_val = self.raw_gyro()
-    #     bit_wdith = const(16)
-    #     scalar = const(1 << (bit_wdith - 1))
-    #     return tuple((raw_gyro_val[0] - scalar, raw_gyro_val[1] - scalar, raw_gyro_val[2] - scalar))
 
     # @property
     # def shake(self) -> Optional[bool]:
@@ -767,7 +749,7 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
     #     except KeyError:
     #         raise RuntimeError("No raw gyro report found, is it enabled?") from None
 
-    def uncal_gyro(self) -> Optional[Tuple[int, int, int]]:
+    def gyro(self) -> Optional[Tuple[int, int, int]]:
         """Returns the sensor's uncalibrated value from the gyro registers"""
         self._process_available_packets()
         try:
@@ -776,7 +758,7 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
         except KeyError:
             raise RuntimeError("No uncal gyro report found, is it enabled?") from None
 
-    def uncal_magnetic(self) -> Optional[Tuple[int, int, int]]:
+    def mag(self) -> Optional[Tuple[int, int, int]]:
         """Returns the sensor's uncalibrated value from the magnetometer registers"""
         self._process_available_packets()
         try:

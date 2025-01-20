@@ -453,7 +453,6 @@ class ArgusV2(CubeSat):
             self.__imu_temp_flag = False
             self.__device_list.append(imu)
         except Exception as e:
-            print(e)
             if self.__debug:
                 raise e
 

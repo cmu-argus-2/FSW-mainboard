@@ -39,8 +39,8 @@ class Task(TemplateTask):
                 DH.register_data_process("imu", "Lfffffffff", True, data_limit=100000, write_interval=5)
 
             if SATELLITE.IMU_AVAILABLE:
-                mag = SATELLITE.IMU.uncal_magnetic()
-                gyro = SATELLITE.IMU.uncal_gyro()
+                mag = SATELLITE.IMU.mag()
+                gyro = SATELLITE.IMU.gyro()
 
                 # Replace data in the pre-allocated list
                 self.log_data[IMU_IDX.TIME_IMU] = int(time.time())
