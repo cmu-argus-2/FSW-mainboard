@@ -12,7 +12,7 @@ The flight software currently supports:
 - Argus v1 (ATSAMD51J20)
 - Argus v1.1
 - Argus v2 (RP2040, in testing)
-- Argus v3 (STM32 variant, board in dev) 
+- Argus v3 (RP2350, board in dev) 
 
 ## Build and Execution
 
