@@ -144,8 +144,12 @@ _ME_GET_CAL = const(0x01)
 BNO_REPORT_ACCELEROMETER = const(0x01)
 # Calibrated gyroscope (rad/s).
 BNO_REPORT_GYROSCOPE = const(0x02)
+# Uncalibrated gyroscope (rad/s).
+BNO_REPORT_UNCAL_GYROSCOPE = const(0x07)
 # Magnetic field calibrated (in µTesla). The fully calibrated magnetic field measurement.
 BNO_REPORT_MAGNETOMETER = const(0x03)
+# Uncalibrated magnetic field (in µTesla). The uncalibrated magnetic field measurement.
+BNO_REPORT_UNCAL_MAGNETOMETER = const(0x0F)
 # Linear acceleration (m/s2). Acceleration of the device with gravity removed
 # BNO_REPORT_LINEAR_ACCELERATION = const(0x04)
 # Rotation Vector
@@ -159,9 +163,9 @@ BNO_REPORT_GEOMAGNETIC_ROTATION_VECTOR = const(0x09)
 
 # BNO_REPORT_STEP_COUNTER = const(0x11)
 
-# BNO_REPORT_RAW_ACCELEROMETER = const(0x14)
-# BNO_REPORT_RAW_GYROSCOPE = const(0x15)
-# BNO_REPORT_RAW_MAGNETOMETER = const(0x16)
+BNO_REPORT_RAW_ACCELEROMETER = const(0x14)
+BNO_REPORT_RAW_GYROSCOPE = const(0x15)
+BNO_REPORT_RAW_MAGNETOMETER = const(0x16)
 # BNO_REPORT_SHAKE_DETECTOR = const(0x19)
 
 # BNO_REPORT_STABILITY_CLASSIFIER = const(0x13)
@@ -204,11 +208,11 @@ _REPORT_LENGTHS = {
     _TIMESTAMP_REBASE: 5,
 }
 # these raw reports require their counterpart to be enabled
-# _RAW_REPORTS = {
-#     BNO_REPORT_RAW_ACCELEROMETER: BNO_REPORT_ACCELEROMETER,
-#     BNO_REPORT_RAW_GYROSCOPE: BNO_REPORT_GYROSCOPE,
-#     BNO_REPORT_RAW_MAGNETOMETER: BNO_REPORT_MAGNETOMETER,
-# }
+_RAW_REPORTS = {
+    BNO_REPORT_RAW_ACCELEROMETER: BNO_REPORT_ACCELEROMETER,
+    BNO_REPORT_RAW_GYROSCOPE: BNO_REPORT_GYROSCOPE,
+    BNO_REPORT_RAW_MAGNETOMETER: BNO_REPORT_MAGNETOMETER,
+}
 _AVAIL_SENSOR_REPORTS = {
     BNO_REPORT_ACCELEROMETER: (_Q_POINT_8_SCALAR, 3, 10),
     # BNO_REPORT_GRAVITY: (_Q_POINT_8_SCALAR, 3, 10),
@@ -222,9 +226,11 @@ _AVAIL_SENSOR_REPORTS = {
     # BNO_REPORT_SHAKE_DETECTOR: (1, 1, 6),
     # BNO_REPORT_STABILITY_CLASSIFIER: (1, 1, 6),
     # BNO_REPORT_ACTIVITY_CLASSIFIER: (1, 1, 16),
-    # BNO_REPORT_RAW_ACCELEROMETER: (1, 3, 16),
-    # BNO_REPORT_RAW_GYROSCOPE: (1, 3, 16),
-    # BNO_REPORT_RAW_MAGNETOMETER: (1, 3, 16),
+    BNO_REPORT_RAW_ACCELEROMETER: (1, 3, 16),
+    BNO_REPORT_RAW_GYROSCOPE: (1, 3, 16),
+    BNO_REPORT_UNCAL_GYROSCOPE: (_Q_POINT_9_SCALAR, 3, 16),
+    BNO_REPORT_RAW_MAGNETOMETER: (1, 3, 16),
+    BNO_REPORT_UNCAL_MAGNETOMETER: (_Q_POINT_4_SCALAR, 3, 16),
 }
 _INITIAL_REPORTS = {
     # BNO_REPORT_ACTIVITY_CLASSIFIER: {
@@ -573,13 +579,14 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
             raise RuntimeError("Could not read ID")
 
     # @property
-    def mag(self) -> Optional[Tuple[float, float, float]]:
-        """A tuple of the current magnetic field measurements on the X, Y, and Z axes"""
-        self._process_available_packets()  # decorator?
-        try:
-            return self._readings[BNO_REPORT_MAGNETOMETER]
-        except KeyError:
-            raise RuntimeError("No magfield report found, is it enabled?") from None
+    # Built-in, calibrated mag function
+    # def cal_mag(self) -> Optional[Tuple[float, float, float]]:
+    #     """A tuple of the current magnetic field measurements on the X, Y, and Z axes"""
+    #     self._process_available_packets()  # decorator?
+    #     try:
+    #         return self._readings[BNO_REPORT_MAGNETOMETER]
+    #     except KeyError:
+    #         raise RuntimeError("No magfield report found, is it enabled?") from None
 
     # @property
     # def quaternion(self) -> Optional[Tuple[float, float, float, float]]:
@@ -631,14 +638,14 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
     #         raise RuntimeError("No lin. accel report found, is it enabled?") from None
 
     # @property
-    def accel(self) -> Optional[Tuple[float, float, float]]:
-        """A tuple representing the acceleration measurements on the X, Y, and Z
-        axes in meters per second squared"""
-        self._process_available_packets()
-        try:
-            return self._readings[BNO_REPORT_ACCELEROMETER]
-        except KeyError:
-            raise RuntimeError("No accel report found, is it enabled?") from None
+    # def cal_accel(self) -> Optional[Tuple[float, float, float]]:
+    #     """A tuple representing the acceleration measurements on the X, Y, and Z
+    #     axes in meters per second squared"""
+    #     self._process_available_packets()
+    #     try:
+    #         return self._readings[BNO_REPORT_ACCELEROMETER]
+    #     except KeyError:
+    #         raise RuntimeError("No accel report found, is it enabled?") from None
 
     # @property
     # def gravity(self) -> Optional[Tuple[float, float, float]]:
@@ -651,14 +658,15 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
     #         raise RuntimeError("No gravity report found, is it enabled?") from None
 
     # @property
-    def gyro(self) -> Optional[Tuple[float, float, float]]:
-        """A tuple representing Gyro's rotation measurements on the X, Y, and Z
-        axes in radians per second"""
-        self._process_available_packets()
-        try:
-            return self._readings[BNO_REPORT_GYROSCOPE]
-        except KeyError:
-            raise RuntimeError("No gyro report found, is it enabled?") from None
+    # built in calibrated gyro
+    # def cal_gyro(self) -> Optional[Tuple[float, float, float]]:
+    #     """A tuple representing Gyro's rotation measurements on the X, Y, and Z
+    #     axes in radians per second"""
+    #     self._process_available_packets()
+    #     try:
+    #         return self._readings[BNO_REPORT_GYROSCOPE]
+    #     except KeyError:
+    #         raise RuntimeError("No gyro report found, is it enabled?") from None
 
     # @property
     # def shake(self) -> Optional[bool]:
@@ -741,6 +749,24 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
     #     except KeyError:
     #         raise RuntimeError("No raw gyro report found, is it enabled?") from None
 
+    def gyro(self) -> Optional[Tuple[int, int, int]]:
+        """Returns the sensor's uncalibrated value from the gyro registers"""
+        self._process_available_packets()
+        try:
+            uncal_gyro = self._readings[BNO_REPORT_UNCAL_GYROSCOPE]
+            return uncal_gyro
+        except KeyError:
+            raise RuntimeError("No uncal gyro report found, is it enabled?") from None
+
+    def mag(self) -> Optional[Tuple[int, int, int]]:
+        """Returns the sensor's uncalibrated value from the magnetometer registers"""
+        self._process_available_packets()
+        try:
+            uncal_mag = self._readings[BNO_REPORT_UNCAL_MAGNETOMETER]
+            return uncal_mag
+        except KeyError:
+            raise RuntimeError("No uncal mag report found, is it enabled?") from None
+
     # @property
     # def raw_magnetic(self) -> Optional[Tuple[int, int, int]]:
     #     """Returns the sensor's raw, unscaled value from the magnetometer registers"""
@@ -751,41 +777,41 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
     #     except KeyError:
     #         raise RuntimeError("No raw magnetic report found, is it enabled?") from None
 
-    def begin_calibration(self) -> None:
-        """Begin the sensor's self-calibration routine"""
-        # start calibration for accel, gyro, and mag
-        self._send_me_command(
-            [
-                1,  # calibrate accel
-                1,  # calibrate gyro
-                1,  # calibrate mag
-                _ME_CAL_CONFIG,
-                0,  # calibrate planar acceleration
-                0,  # 'on_table' calibration
-                0,  # reserved
-                0,  # reserved
-                0,  # reserved
-            ]
-        )
-        self._calibration_complete = False
+    # def begin_calibration(self) -> None:
+    #     """Begin the sensor's self-calibration routine"""
+    #     # start calibration for accel, gyro, and mag
+    #     self._send_me_command(
+    #         [
+    #             1,  # calibrate accel
+    #             1,  # calibrate gyro
+    #             1,  # calibrate mag
+    #             _ME_CAL_CONFIG,
+    #             0,  # calibrate planar acceleration
+    #             0,  # 'on_table' calibration
+    #             0,  # reserved
+    #             0,  # reserved
+    #             0,  # reserved
+    #         ]
+    #     )
+    #     self._calibration_complete = False
 
-    @property
-    def calibration_status(self) -> int:
-        """Get the status of the self-calibration"""
-        self._send_me_command(
-            [
-                0,  # calibrate accel
-                0,  # calibrate gyro
-                0,  # calibrate mag
-                _ME_GET_CAL,
-                0,  # calibrate planar acceleration
-                0,  # 'on_table' calibration
-                0,  # reserved
-                0,  # reserved
-                0,  # reserved
-            ]
-        )
-        return self._magnetometer_accuracy
+    # @property
+    # def calibration_status(self) -> int:
+    #     """Get the status of the self-calibration"""
+    #     self._send_me_command(
+    #         [
+    #             0,  # calibrate accel
+    #             0,  # calibrate gyro
+    #             0,  # calibrate mag
+    #             _ME_GET_CAL,
+    #             0,  # calibrate planar acceleration
+    #             0,  # 'on_table' calibration
+    #             0,  # reserved
+    #             0,  # reserved
+    #             0,  # reserved
+    #         ]
+    #     )
+    #     return self._magnetometer_accuracy
 
     def _send_me_command(self, subcommand_params: Optional[List[int]]) -> None:
         start_time = time.monotonic()
