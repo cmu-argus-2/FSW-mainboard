@@ -47,70 +47,70 @@ try:
 except ImportError:
     pass
 
-channels = {
-    0x0: "SHTP_COMMAND",
-    0x1: "EXE",
-    0x2: "CONTROL",
-    0x3: "INPUT_SENSOR_REPORTS",
-    0x4: "WAKE_INPUT_SENSOR_REPORTS",
-    0x5: "GYRO_ROTATION_VECTOR",
-}
+# channels = {
+#     0x0: "SHTP_COMMAND",
+#     0x1: "EXE",
+#     0x2: "CONTROL",
+#     0x3: "INPUT_SENSOR_REPORTS",
+#     0x4: "WAKE_INPUT_SENSOR_REPORTS",
+#     0x5: "GYRO_ROTATION_VECTOR",
+# }
 
 # Command Response
 
-reports = {
-    0xFB: "BASE_TIMESTAMP",
-    0xF2: "COMMAND_REQUEST",
-    0xF1: "COMMAND_RESPONSE",
-    0xF4: "FRS_READ_REQUEST",
-    0xF3: "FRS_READ_RESPONSE",
-    0xF6: "FRS_WRITE_DATA",
-    0xF7: "FRS_WRITE_REQUEST",
-    0xF5: "FRS_WRITE_RESPONSE",
-    0xFE: "GET_FEATURE_REQUEST",
-    0xFC: "GET_FEATURE_RESPONSE",
-    0xFD: "SET_FEATURE_COMMAND",
-    0xFA: "TIMESTAMP_REBASE",
-    0x01: "ACCELEROMETER",
-    0x29: "ARVR_STABILIZED_GAME_ROTATION_VECTOR",
-    0x28: "ARVR_STABILIZED_ROTATION_VECTOR",
-    0x22: "CIRCLE_DETECTOR",
-    0x1A: "FLIP_DETECTOR",
-    0x08: "GAME_ROTATION_VECTOR",
-    0x09: "GEOMAGNETIC_ROTATION_VECTOR",
-    0x06: "GRAVITY",
-    0x02: "GYROSCOPE",
-    0x04: "LINEAR_ACCELERATION",
-    0x03: "MAGNETIC_FIELD",
-    0x1E: "PERSONAL_ACTIVITY_CLASSIFIER",
-    0x1B: "PICKUP_DETECTOR",
-    0x21: "POCKET_DETECTOR",
-    0xF9: "PRODUCT_ID_REQUEST",
-    0xF8: "PRODUCT_ID_RESPONSE",
-    0x14: "RAW_ACCELEROMETER",
-    0x15: "RAW_GYROSCOPE",
-    0x16: "RAW_MAGNETOMETER",
-    0x05: "ROTATION_VECTOR",
-    0x17: "SAR",
-    0x19: "SHAKE_DETECTOR",
-    0x12: "SIGNIFICANT_MOTION",
-    0x1F: "SLEEP_DETECTOR",
-    0x13: "STABILITY_CLASSIFIER",
-    0x1C: "STABILITY_DETECTOR",
-    0x11: "STEP_COUNTER",
-    0x18: "STEP_DETECTOR",
-    0x10: "TAP_DETECTOR",
-    0x20: "TILT_DETECTOR",
-    0x07: "UNCALIBRATED_GYROSCOPE",
-    0x0F: "UNCALIBRATED_MAGNETIC_FIELD",
-}
+# reports = {
+#     0xFB: "BASE_TIMESTAMP",
+#     0xF2: "COMMAND_REQUEST",
+#     0xF1: "COMMAND_RESPONSE",
+#     0xF4: "FRS_READ_REQUEST",
+#     0xF3: "FRS_READ_RESPONSE",
+#     0xF6: "FRS_WRITE_DATA",
+#     0xF7: "FRS_WRITE_REQUEST",
+#     0xF5: "FRS_WRITE_RESPONSE",
+#     0xFE: "GET_FEATURE_REQUEST",
+#     0xFC: "GET_FEATURE_RESPONSE",
+#     0xFD: "SET_FEATURE_COMMAND",
+#     0xFA: "TIMESTAMP_REBASE",
+#     0x01: "ACCELEROMETER",
+#     0x29: "ARVR_STABILIZED_GAME_ROTATION_VECTOR",
+#     0x28: "ARVR_STABILIZED_ROTATION_VECTOR",
+#     0x22: "CIRCLE_DETECTOR",
+#     0x1A: "FLIP_DETECTOR",
+#     0x08: "GAME_ROTATION_VECTOR",
+#     0x09: "GEOMAGNETIC_ROTATION_VECTOR",
+#     0x06: "GRAVITY",
+#     0x02: "GYROSCOPE",
+#     0x04: "LINEAR_ACCELERATION",
+#     0x03: "MAGNETIC_FIELD",
+#     0x1E: "PERSONAL_ACTIVITY_CLASSIFIER",
+#     0x1B: "PICKUP_DETECTOR",
+#     0x21: "POCKET_DETECTOR",
+#     0xF9: "PRODUCT_ID_REQUEST",
+#     0xF8: "PRODUCT_ID_RESPONSE",
+#     0x14: "RAW_ACCELEROMETER",
+#     0x15: "RAW_GYROSCOPE",
+#     0x16: "RAW_MAGNETOMETER",
+#     0x05: "ROTATION_VECTOR",
+#     0x17: "SAR",
+#     0x19: "SHAKE_DETECTOR",
+#     0x12: "SIGNIFICANT_MOTION",
+#     0x1F: "SLEEP_DETECTOR",
+#     0x13: "STABILITY_CLASSIFIER",
+#     0x1C: "STABILITY_DETECTOR",
+#     0x11: "STEP_COUNTER",
+#     0x18: "STEP_DETECTOR",
+#     0x10: "TAP_DETECTOR",
+#     0x20: "TILT_DETECTOR",
+#     0x07: "UNCALIBRATED_GYROSCOPE",
+#     0x0F: "UNCALIBRATED_MAGNETIC_FIELD",
+# }
 
 # TODO: shorten names
 # Channel 0: the SHTP command channel
 BNO_CHANNEL_SHTP_COMMAND = const(0)
 BNO_CHANNEL_EXE = const(1)
 _BNO_CHANNEL_CONTROL = const(2)
-_BNO_CHANNEL_INPUT_SENSOR_REPORTS = const(3)
+# _BNO_CHANNEL_INPUT_SENSOR_REPORTS = const(3)
 # _BNO_CHANNEL_WAKE_INPUT_SENSOR_REPORTS = const(4)
 # _BNO_CHANNEL_GYRO_ROTATION_VECTOR = const(5)
 
@@ -137,17 +137,17 @@ _COMMAND_RESPONSE = const(0xF1)
 # DCD/ ME Calibration commands and sub-commands
 _SAVE_DCD = const(0x6)
 _ME_CALIBRATE = const(0x7)
-_ME_CAL_CONFIG = const(0x00)
-_ME_GET_CAL = const(0x01)
+# _ME_CAL_CONFIG = const(0x00)
+# _ME_GET_CAL = const(0x01)
 
 # Calibrated Acceleration (m/s2)
-BNO_REPORT_ACCELEROMETER = const(0x01)
+# BNO_REPORT_ACCELEROMETER = const(0x01)
 # Calibrated gyroscope (rad/s).
-BNO_REPORT_GYROSCOPE = const(0x02)
+# BNO_REPORT_GYROSCOPE = const(0x02)
 # Uncalibrated gyroscope (rad/s).
 BNO_REPORT_UNCAL_GYROSCOPE = const(0x07)
 # Magnetic field calibrated (in µTesla). The fully calibrated magnetic field measurement.
-BNO_REPORT_MAGNETOMETER = const(0x03)
+# BNO_REPORT_MAGNETOMETER = const(0x03)
 # Uncalibrated magnetic field (in µTesla). The uncalibrated magnetic field measurement.
 BNO_REPORT_UNCAL_MAGNETOMETER = const(0x0F)
 # Linear acceleration (m/s2). Acceleration of the device with gravity removed
@@ -159,13 +159,13 @@ BNO_REPORT_UNCAL_MAGNETOMETER = const(0x0F)
 # Game Rotation Vector
 # BNO_REPORT_GAME_ROTATION_VECTOR = const(0x08)
 
-BNO_REPORT_GEOMAGNETIC_ROTATION_VECTOR = const(0x09)
+# BNO_REPORT_GEOMAGNETIC_ROTATION_VECTOR = const(0x09)
 
 # BNO_REPORT_STEP_COUNTER = const(0x11)
 
-BNO_REPORT_RAW_ACCELEROMETER = const(0x14)
-BNO_REPORT_RAW_GYROSCOPE = const(0x15)
-BNO_REPORT_RAW_MAGNETOMETER = const(0x16)
+# BNO_REPORT_RAW_ACCELEROMETER = const(0x14)
+# BNO_REPORT_RAW_GYROSCOPE = const(0x15)
+# BNO_REPORT_RAW_MAGNETOMETER = const(0x16)
 # BNO_REPORT_SHAKE_DETECTOR = const(0x19)
 
 # BNO_REPORT_STABILITY_CLASSIFIER = const(0x13)
@@ -187,10 +187,10 @@ _DEFAULT_TIMEOUT = 2.0
 _BNO_HEADER_LEN = const(4)
 
 # _Q_POINT_14_SCALAR = 2 ** (14 * -1)
-_Q_POINT_12_SCALAR = 2 ** (12 * -1)
+# _Q_POINT_12_SCALAR = 2 ** (12 * -1)
 # _Q_POINT_10_SCALAR = 2 ** (10 * -1)
 _Q_POINT_9_SCALAR = 2 ** (9 * -1)
-_Q_POINT_8_SCALAR = 2 ** (8 * -1)
+# _Q_POINT_8_SCALAR = 2 ** (8 * -1)
 _Q_POINT_4_SCALAR = 2 ** (4 * -1)
 
 # _GYRO_SCALAR = _Q_POINT_9_SCALAR
@@ -208,51 +208,51 @@ _REPORT_LENGTHS = {
     _TIMESTAMP_REBASE: 5,
 }
 # these raw reports require their counterpart to be enabled
-_RAW_REPORTS = {
-    BNO_REPORT_RAW_ACCELEROMETER: BNO_REPORT_ACCELEROMETER,
-    BNO_REPORT_RAW_GYROSCOPE: BNO_REPORT_GYROSCOPE,
-    BNO_REPORT_RAW_MAGNETOMETER: BNO_REPORT_MAGNETOMETER,
-}
+# _RAW_REPORTS = {
+#     BNO_REPORT_RAW_ACCELEROMETER: BNO_REPORT_ACCELEROMETER,
+#     BNO_REPORT_RAW_GYROSCOPE: BNO_REPORT_GYROSCOPE,
+#     BNO_REPORT_RAW_MAGNETOMETER: BNO_REPORT_MAGNETOMETER,
+# }
 _AVAIL_SENSOR_REPORTS = {
-    BNO_REPORT_ACCELEROMETER: (_Q_POINT_8_SCALAR, 3, 10),
+    # BNO_REPORT_ACCELEROMETER: (_Q_POINT_8_SCALAR, 3, 10),
     # BNO_REPORT_GRAVITY: (_Q_POINT_8_SCALAR, 3, 10),
-    BNO_REPORT_GYROSCOPE: (_Q_POINT_9_SCALAR, 3, 10),
-    BNO_REPORT_MAGNETOMETER: (_Q_POINT_4_SCALAR, 3, 10),
+    # BNO_REPORT_GYROSCOPE: (_Q_POINT_9_SCALAR, 3, 10),
+    # BNO_REPORT_MAGNETOMETER: (_Q_POINT_4_SCALAR, 3, 10),
     # BNO_REPORT_LINEAR_ACCELERATION: (_Q_POINT_8_SCALAR, 3, 10),
     # BNO_REPORT_ROTATION_VECTOR: (_Q_POINT_14_SCALAR, 4, 14),
-    BNO_REPORT_GEOMAGNETIC_ROTATION_VECTOR: (_Q_POINT_12_SCALAR, 4, 14),
+    # BNO_REPORT_GEOMAGNETIC_ROTATION_VECTOR: (_Q_POINT_12_SCALAR, 4, 14),
     # BNO_REPORT_GAME_ROTATION_VECTOR: (_Q_POINT_14_SCALAR, 4, 12),
     # BNO_REPORT_STEP_COUNTER: (1, 1, 12),
     # BNO_REPORT_SHAKE_DETECTOR: (1, 1, 6),
     # BNO_REPORT_STABILITY_CLASSIFIER: (1, 1, 6),
     # BNO_REPORT_ACTIVITY_CLASSIFIER: (1, 1, 16),
-    BNO_REPORT_RAW_ACCELEROMETER: (1, 3, 16),
-    BNO_REPORT_RAW_GYROSCOPE: (1, 3, 16),
+    # BNO_REPORT_RAW_ACCELEROMETER: (1, 3, 16),
+    # BNO_REPORT_RAW_GYROSCOPE: (1, 3, 16),
     BNO_REPORT_UNCAL_GYROSCOPE: (_Q_POINT_9_SCALAR, 3, 16),
-    BNO_REPORT_RAW_MAGNETOMETER: (1, 3, 16),
+    # BNO_REPORT_RAW_MAGNETOMETER: (1, 3, 16),
     BNO_REPORT_UNCAL_MAGNETOMETER: (_Q_POINT_4_SCALAR, 3, 16),
 }
-_INITIAL_REPORTS = {
-    # BNO_REPORT_ACTIVITY_CLASSIFIER: {
-    #     "Tilting": -1,
-    #     "most_likely": "Unknown",
-    #     "OnStairs": -1,
-    #     "On-Foot": -1,
-    #     "Other": -1,
-    #     "On-Bicycle": -1,
-    #     "Still": -1,
-    #     "Walking": -1,
-    #     "Unknown": -1,
-    #     "Running": -1,
-    #     "In-Vehicle": -1,
-    # },
-    # BNO_REPORT_STABILITY_CLASSIFIER: "Unknown",
-    # BNO_REPORT_ROTATION_VECTOR: (0.0, 0.0, 0.0, 0.0),
-    # BNO_REPORT_GAME_ROTATION_VECTOR: (0.0, 0.0, 0.0, 0.0),
-    # BNO_REPORT_GEOMAGNETIC_ROTATION_VECTOR: (0.0, 0.0, 0.0, 0.0),
-}
+# _INITIAL_REPORTS = {
+# BNO_REPORT_ACTIVITY_CLASSIFIER: {
+#     "Tilting": -1,
+#     "most_likely": "Unknown",
+#     "OnStairs": -1,
+#     "On-Foot": -1,
+#     "Other": -1,
+#     "On-Bicycle": -1,
+#     "Still": -1,
+#     "Walking": -1,
+#     "Unknown": -1,
+#     "Running": -1,
+#     "In-Vehicle": -1,
+# },
+# BNO_REPORT_STABILITY_CLASSIFIER: "Unknown",
+# BNO_REPORT_ROTATION_VECTOR: (0.0, 0.0, 0.0, 0.0),
+# BNO_REPORT_GAME_ROTATION_VECTOR: (0.0, 0.0, 0.0, 0.0),
+# BNO_REPORT_GEOMAGNETIC_ROTATION_VECTOR: (0.0, 0.0, 0.0, 0.0),
+# }
 
-_ENABLED_ACTIVITIES = 0x1FF  # All activities; 1 bit set for each of 8 activities, + Unknown
+# _ENABLED_ACTIVITIES = 0x1FF  # All activities; 1 bit set for each of 8 activities, + Unknown
 
 DATA_BUFFER_SIZE = const(512)  # data buffer size. obviously eats ram
 PacketHeader = namedtuple(
@@ -452,52 +452,52 @@ class Packet:
         data_end_index = self.header.data_length + _BNO_HEADER_LEN
         self.data = packet_bytes[_BNO_HEADER_LEN:data_end_index]
 
-    def __str__(self) -> str:
-        length = self.header.packet_byte_count
-        outstr = "\n\t\t********** Packet *************\n"
-        outstr += "DBG::\t\t HEADER:\n"
+    # def __str__(self) -> str:
+    #     length = self.header.packet_byte_count
+    #     outstr = "\n\t\t********** Packet *************\n"
+    #     outstr += "DBG::\t\t HEADER:\n"
 
-        outstr += "DBG::\t\t Data Len: %d\n" % (self.header.data_length)
-        outstr += "DBG::\t\t Channel: %s (%d)\n" % (
-            channels[self.channel_number],
-            self.channel_number,
-        )
-        if self.channel_number in [
-            _BNO_CHANNEL_CONTROL,
-            _BNO_CHANNEL_INPUT_SENSOR_REPORTS,
-        ]:
-            if self.report_id in reports:
-                outstr += "DBG::\t\t \tReport Type: %s (0x%x)\n" % (
-                    reports[self.report_id],
-                    self.report_id,
-                )
-            else:
-                outstr += "DBG::\t\t \t** UNKNOWN Report Type **: %s\n" % hex(self.report_id)
+    #     outstr += "DBG::\t\t Data Len: %d\n" % (self.header.data_length)
+    #     outstr += "DBG::\t\t Channel: %s (%d)\n" % (
+    #         channels[self.channel_number],
+    #         self.channel_number,
+    #     )
+    #     if self.channel_number in [
+    #         _BNO_CHANNEL_CONTROL,
+    #         _BNO_CHANNEL_INPUT_SENSOR_REPORTS,
+    #     ]:
+    #         if self.report_id in reports:
+    #             outstr += "DBG::\t\t \tReport Type: %s (0x%x)\n" % (
+    #                 reports[self.report_id],
+    #                 self.report_id,
+    #             )
+    #         else:
+    #             outstr += "DBG::\t\t \t** UNKNOWN Report Type **: %s\n" % hex(self.report_id)
 
-            if self.report_id > 0xF0 and len(self.data) >= 6 and self.data[5] in reports:
-                outstr += "DBG::\t\t \tSensor Report Type: %s(%s)\n" % (
-                    reports[self.data[5]],
-                    hex(self.data[5]),
-                )
+    #         if self.report_id > 0xF0 and len(self.data) >= 6 and self.data[5] in reports:
+    #             outstr += "DBG::\t\t \tSensor Report Type: %s(%s)\n" % (
+    #                 reports[self.data[5]],
+    #                 hex(self.data[5]),
+    #             )
 
-            if self.report_id == 0xFC and len(self.data) >= 6 and self.data[1] in reports:
-                outstr += "DBG::\t\t \tEnabled Feature: %s(%s)\n" % (
-                    reports[self.data[1]],
-                    hex(self.data[5]),
-                )
-        outstr += "DBG::\t\t Sequence number: %s\n" % self.header.sequence_number
-        outstr += "\n"
-        outstr += "DBG::\t\t Data:"
+    #         if self.report_id == 0xFC and len(self.data) >= 6 and self.data[1] in reports:
+    #             outstr += "DBG::\t\t \tEnabled Feature: %s(%s)\n" % (
+    #                 reports[self.data[1]],
+    #                 hex(self.data[5]),
+    #             )
+    #     outstr += "DBG::\t\t Sequence number: %s\n" % self.header.sequence_number
+    #     outstr += "\n"
+    #     outstr += "DBG::\t\t Data:"
 
-        for idx, packet_byte in enumerate(self.data[:length]):
-            packet_index = idx + 4
-            if (packet_index % 4) == 0:
-                outstr += "\nDBG::\t\t[0x{:02X}] ".format(packet_index)
-            outstr += "0x{:02X} ".format(packet_byte)
-        outstr += "\n"
-        outstr += "\t\t*******************************\n"
+    #     for idx, packet_byte in enumerate(self.data[:length]):
+    #         packet_index = idx + 4
+    #         if (packet_index % 4) == 0:
+    #             outstr += "\nDBG::\t\t[0x{:02X}] ".format(packet_index)
+    #         outstr += "0x{:02X} ".format(packet_byte)
+    #     outstr += "\n"
+    #     outstr += "\t\t*******************************\n"
 
-        return outstr
+    #     return outstr
 
     @property
     def report_id(self) -> int:
@@ -937,7 +937,7 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
         if report_id == _GET_FEATURE_RESPONSE:
             get_feature_report = _parse_get_feature_response_report(report_bytes)
             _report_id, feature_report_id, *_remainder = get_feature_report
-            self._readings[feature_report_id] = _INITIAL_REPORTS.get(feature_report_id, (0.0, 0.0, 0.0))
+            # self._readings[feature_report_id] = _INITIAL_REPORTS.get(feature_report_id, (0.0, 0.0, 0.0))
         if report_id == _COMMAND_RESPONSE:
             self._handle_command_response(report_bytes)
 
@@ -968,7 +968,7 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
         if report_id >= 0xF0:
             self._handle_control_report(report_id, report_bytes)
             return
-        self._dbg("\tProcessing report:", reports[report_id])
+        # self._dbg("\tProcessing report:", reports[report_id])
         if self._debug:
             outstr = ""
             for idx, packet_byte in enumerate(report_bytes):
@@ -1003,8 +1003,8 @@ class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-
         #     self._readings[BNO_REPORT_ACTIVITY_CLASSIFIER] = activity_classification
         #     return
         sensor_data, accuracy = _parse_sensor_report_data(report_bytes)
-        if report_id == BNO_REPORT_MAGNETOMETER:
-            self._magnetometer_accuracy = accuracy
+        # if report_id == BNO_REPORT_MAGNETOMETER:
+        #     self._magnetometer_accuracy = accuracy
         # TODO: FIXME; Sensor reports are batched in a LIFO which means that multiple reports
         # for the same type will end with the oldest/last being kept and the other
         # newer reports thrown away
