@@ -96,7 +96,7 @@ class Task(TemplateTask):
 
             elif SM.current_state == STATES.NOMINAL:
                 pass
-            elif SM.current_state == STATES.PAYLOAD:
+            elif SM.current_state == STATES.EXPERIMENT:
                 pass
             elif SM.current_state == STATES.LOW_POWER:
                 pass

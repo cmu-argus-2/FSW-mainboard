@@ -58,7 +58,7 @@ class StateManager:
         from core.task_configuration import TASK_CONFIG
 
         self.__task_config = TASK_CONFIG
-        self.__states = [STATES.STARTUP, STATES.DETUMBLING, STATES.NOMINAL, STATES.PAYLOAD, STATES.LOW_POWER]
+        self.__states = [STATES.STARTUP, STATES.DETUMBLING, STATES.NOMINAL, STATES.EXPERIMENT, STATES.LOW_POWER]
 
         # init task objects
         for task_id, task_params in self.__task_config.items():
