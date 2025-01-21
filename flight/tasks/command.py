@@ -71,10 +71,11 @@ class Task(TemplateTask):
                 SM.switch_to(STATES.DETUMBLING)
                 self.log_info("Switching to DETUMBLING state.")
 
+                # Just for testing
                 # CommandQueue.push_command(0x01, [])
                 # CommandQueue.push_command(0x02, [])
 
-        else:  # Run for all states
+        else:  # Run for all other states
 
             ### STATE MACHINE ###
             if SM.current_state == STATES.DETUMBLING:
@@ -92,6 +93,13 @@ class Task(TemplateTask):
                     self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1
                     self.log_info("Switching to NOMINAL state after DETUMBLING timeout.")
                     SM.switch_to(STATES.NOMINAL)
+
+            elif SM.current_state == STATES.NOMINAL:
+                pass
+            elif SM.current_state == STATES.PAYLOAD:
+                pass
+            elif SM.current_state == STATES.LOW_POWER:
+                pass
 
             ### COMMAND PROCESSING ###
 
@@ -119,7 +127,9 @@ class Task(TemplateTask):
             self.log_data[CDH_IDX.REBOOT_COUNT] = 0
             self.log_data[CDH_IDX.WATCHDOG_TIMER] = 0
             self.log_data[CDH_IDX.HAL_BITFLAGS] = 0
+            # the detumbling error flag is set in the DETUMBLING state
 
+            # Should always run
             DH.log_data("cdh", self.log_data)
 
         self.log_print_counter += 1

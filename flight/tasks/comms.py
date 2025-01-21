@@ -68,9 +68,9 @@ class Task(TemplateTask):
             # TODO: Set frame / filepath here based on the active GS command
 
             # Pack telemetry
-            self.packed = TelemetryPacker.pack_tm_frame()
+            self.packed = TelemetryPacker.pack_tm_heartbeat()
             if self.packed:
-                self.log_info("Telemetry packed")
+                self.log_info("Telemetry heartbeat packed")
 
             # Set current TM frame
             if TelemetryPacker.TM_AVAILABLE and self.comms_state == COMMS_STATE.TX_HEARTBEAT:
