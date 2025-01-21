@@ -26,6 +26,7 @@ from core import logger
 def FORCE_REBOOT():
     """Forces a power cycle of the spacecraft."""
     logger.info("Executing FORCE_REBOOT")
+    # https://learn.adafruit.com/circuitpython-essentials/circuitpython-resetting
     pass
 
 
