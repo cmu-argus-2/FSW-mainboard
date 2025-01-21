@@ -50,7 +50,7 @@ class STATES:
         DETUMBLING: [NOMINAL, LOW_POWER],
         NOMINAL: [LOW_POWER, DETUMBLING, PAYLOAD],
         PAYLOAD: [NOMINAL],
-        LOW_POWER: [NOMINAL],
+        LOW_POWER: [NOMINAL, LOW_POWER],
     }
 
     DETUMBLING_TIMEOUT_DURATION = 15  # seconds - TODO: Update with actual value
