@@ -68,8 +68,8 @@ class EmulatedSatellite(CubeSat):
 
         self._jetson_power_monitor = self.init_device(PowerMonitor(4, 0.05))
         self._board_power_monitor = self.init_device(PowerMonitor(7.6, 0.1))
-        self._power_monitors["BOARD"] = self._jetson_power_monitor
-        self._power_monitors["JETSON"] = self._board_power_monitor
+        self._power_monitors["BOARD"] = self._board_power_monitor
+        self._power_monitors["JETSON"] = self._jetson_power_monitor
 
         self._rtc = self.init_device(RTC(time.gmtime()))
 
