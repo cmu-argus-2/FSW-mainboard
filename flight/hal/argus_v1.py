@@ -10,7 +10,6 @@ import board
 from busio import I2C, SPI, UART
 from hal.cubesat import CubeSat
 from hal.drivers.middleware.errors import Errors
-from hal.drivers.middleware.middleware import Middleware
 from micropython import const
 
 
@@ -130,14 +129,11 @@ class ArgusV1Components:
 class ArgusV1(CubeSat):
     """ArgusV1: Represents the Argus V1 CubeSat."""
 
-    __slots__ = ("__middleware_enabled", "__debug")
+    __slots__ = ("__debug")
 
-    def __init__(self, enable_middleware: bool = False, debug: bool = False):
+    def __init__(self, debug: bool = False):
         """__init__: Initializes the Argus V1 CubeSat.
-
-        :param enable_middleware: Enable middleware for the Argus V1 CubeSat
         """
-        self.__middleware_enabled = enable_middleware
         self.__debug = debug
         super().__init__()
 
@@ -201,9 +197,6 @@ class ArgusV1(CubeSat):
 
             gps1 = GPS(ArgusV1Components.GPS_UART, ArgusV1Components.GPS_ENABLE)
 
-            if self.__middleware_enabled:
-                gps1 = Middleware(gps1)
-
             self.__gps = gps1
             self.__device_list.append(gps1)
         except Exception as e:
@@ -227,9 +220,6 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.BOARD_POWER_MONITOR_I2C,
                 ArgusV1Components.BOARD_POWER_MONITOR_I2C_ADDRESS,
             )
-
-            if self.__middleware_enabled:
-                board_monitor = Middleware(board_monitor)
 
             self.__board_monitor = board_monitor
             self.__device_list.append(board_monitor)
@@ -256,9 +246,6 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.JETSON_POWER_MONITOR_I2C_ADDRESS,
             )
 
-            if self.__middleware_enabled:
-                jetson_power_monitor = Middleware(jetson_power_monitor)
-
             self.__jetson_power_monitor = jetson_power_monitor
             self.__device_list.append(jetson_power_monitor)
         except Exception as e:
@@ -284,9 +271,6 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.IMU_ENABLE,
             )
 
-            if self.__middleware_enabled:
-                imu = Middleware(imu)
-
             self.__imu = imu
             self.__imu_temp_flag = True
             self.__device_list.append(imu)
@@ -311,9 +295,6 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.CHARGER_I2C,
                 ArgusV1Components.CHARGER_I2C_ADDRESS,
             )
-
-            if self.__middleware_enabled:
-                charger = Middleware(charger)
 
             self.__charger = charger
             self.__device_list.append(charger)
@@ -349,9 +330,6 @@ class ArgusV1(CubeSat):
                     ArgusV1Components.TORQUE_COILS_I2C,
                     address,
                 )
-
-                if self.__middleware_enabled:
-                    torque_driver = Middleware(torque_driver)
 
                 self.__torque_drivers[direction] = torque_driver
                 self.__device_list.append(torque_driver)
@@ -391,9 +369,6 @@ class ArgusV1(CubeSat):
                     conversion_time=ArgusV1Components.LIGHT_SENSOR_CONVERSION_TIME,
                 )
 
-                if self.__middleware_enabled:
-                    light_sensor = Middleware(light_sensor)
-
                 self.__light_sensors[direction] = light_sensor
                 self.__device_list.append(light_sensor)
                 error_codes.append(Errors.NOERROR)  # Append success code if no error
@@ -424,9 +399,6 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.RADIO_FREQ,
             )
 
-            if self.__middleware_enabled:
-                radio = Middleware(radio)
-
             self.__radio = radio
             self.__device_list.append(radio)
         except Exception as e:
@@ -447,9 +419,6 @@ class ArgusV1(CubeSat):
             from hal.drivers.pcf8523 import PCF8523
 
             rtc = PCF8523(ArgusV1Components.RTC_I2C, ArgusV1Components.RTC_I2C_ADDRESS)
-
-            if self.__middleware_enabled:
-                rtc = Middleware(rtc)
 
             self.__rtc = rtc
             self.__device_list.append(rtc)
@@ -521,9 +490,6 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.BURN_WIRE_YM,
             )
 
-            if self.__middleware_enabled:
-                burn_wires = Middleware(burn_wires)
-
             self.__burn_wires = burn_wires
             self.append_device(burn_wires)
         except Exception as e:
@@ -544,9 +510,6 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.PAYLOAD_UART,
                 ArgusV1Components.PAYLOAD_ENABLE,
             )
-
-            if self.__middleware_enabled:
-                payload_uart = Middleware(payload_uart)
 
             self.__payload_uart = payload_uart
             self.__device_list.append(self.__payload_uart)
@@ -570,8 +533,6 @@ class ArgusV1(CubeSat):
     ######################## DIAGNOSTICS ########################
     def __get_device_diagnostic_error(self, device) -> list[int]:  # noqa: C901
         """__get_device_diagnostic_error: Get the error code for a device that failed to initialize"""
-        if isinstance(device, Middleware):  # Convert device to the wrapped instance
-            device = device.get_instance()
 
         if device is self.RTC:
             return Errors.DIAGNOSTICS_ERROR_RTC
