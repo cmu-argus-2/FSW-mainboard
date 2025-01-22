@@ -60,7 +60,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
             "inertia": [10, 20, 10, 0.0, 0.0, 0.0],
             "epoch": datetime(2024, 6, 1, 12, 0, 0, 0),
             "dt": 0.01,
-            "initial_attitude": [1.0, 0, 0, 0, 0.1, -0.2, 0.3],
+            "initial_attitude": [1.0, 0, 0, 0, 5.1, -9.2, 0.3],
             "initial_orbit_oe": [6.92e6, 0, 0, 0, 0, 0],
             "gravity_order": 5,
             "gravity_degree": 5,

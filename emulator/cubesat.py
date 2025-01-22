@@ -31,6 +31,7 @@ class CubeSat:
         self._imu = None
         self._imu_temp_flag = False
         self._charger = None
+        self._power_monitors = {}
         self._torque_drivers = {}
         self._light_sensors = {}
         self._rtc = None
@@ -88,6 +89,13 @@ class CubeSat:
         :return: bool
         """
         return self._gps is not None
+
+    @property
+    def POWER_MONITORS(self):
+        """POWER_MONITORS: Returns the power monitor object
+        :return: object or None
+        """
+        return self._power_monitors
 
     @property
     def BOARD_POWER_MONITOR(self):
