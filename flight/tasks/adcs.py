@@ -168,16 +168,14 @@ class Task(TemplateTask):
                 dipole_moment = np.zeros(3)
             MagneticCoilAllocator.set_voltages(dipole_moment)
 
-            """
             print()
             print("MODE:", self.MODE)
             print("SPIN ERROR:", np.linalg.norm(spin_err))
             print("POINTING ERROR:", np.linalg.norm(pointing_err))
             print("GYRO:", imu_ang_vel)
             print("SUN_VECTOR:", self.sun_vector)
-            print('ECLIPSE:', self.eclipse_state)
+            print("ECLIPSE:", self.eclipse_state)
             print()
-            """
 
             ## Attitude Determination
 

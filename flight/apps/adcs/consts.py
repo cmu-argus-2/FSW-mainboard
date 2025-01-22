@@ -12,8 +12,8 @@ class ModeConst:
     """
 
     SUN_VECTOR_REF = np.array([0.0, 0.0, 1.0])
-    STABLE_TOL = 0.14  # 0.05  # "stable" if ang vel < 0.05 rad/s = 2.86 deg/s.
-    SUN_POINTED_TOL = 0.1  # "sun-pointed" if att err < 0.09 rad = 5 deg.
+    STABLE_TOL = 0.05  # 0.05  # "stable" if ang vel < 0.05 rad/s = 2.86 deg/s.
+    SUN_POINTED_TOL = 0.09  # "sun-pointed" if att err < 0.09 rad = 5 deg.
 
 
 class PhysicalConst:
@@ -60,9 +60,9 @@ class MCMConst:
     Constants used for magnetorquer control and allocation.
     """
 
-    REF_FACTOR = 0.75
-    SPIN_ERROR_TOL = 0.15
-    POINTING_ERROR_TOL = 0.01
+    REF_FACTOR = 1.0
+    SPIN_ERROR_TOL = 0.262
+    POINTING_ERROR_TOL = 0.175
     SPIN_STABILIZING_GAIN = 1.0e06
     # SUN_POINTING_GAIN = 5.0e05
 
