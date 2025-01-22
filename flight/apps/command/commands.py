@@ -21,6 +21,8 @@ Author: Ibrahima S. Sow
 """
 
 from core import logger
+from core import state_manager as SM
+from core.states import STATES, STR_STATES
 
 
 def FORCE_REBOOT():
@@ -32,7 +34,8 @@ def FORCE_REBOOT():
 
 def SWITCH_TO_STATE(target_state_id):
     """Forces a switch of the spacecraft to a specific state."""
-    logger.info(f"Executing SWITCH_TO_STATE with target_state_id: {target_state_id}")
+    SM.switch_to(target_state_id)
+    logger.info(f"Executing SWITCH_TO_STATE with target_state: {STR_STATES[target_state_id]}")
     pass
 
 

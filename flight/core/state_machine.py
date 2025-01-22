@@ -2,7 +2,7 @@ import time
 
 import core.scheduler as scheduler
 from core import logger
-from core.states import STATES
+from core.states import STATES,STR_STATES
 
 
 class StateManager:
@@ -94,7 +94,7 @@ class StateManager:
         self.__previous_state = self.__current_state
         self.__current_state = new_state_id
         self.__time_since_last_state_change = time.monotonic()
-        logger.info(f"Switched to state {new_state_id}")
+        logger.info(f"Switched to state {new_state_id} - {STR_STATES[new_state_id]}")
 
     def schedule_tasks(self):
         self.__scheduled_tasks = {}  # Reset
