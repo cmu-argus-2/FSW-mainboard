@@ -68,9 +68,9 @@ class Task(TemplateTask):
             # TODO: Set frame / filepath here based on the active GS command
 
             # Pack telemetry
-            self.packed = TelemetryPacker.pack_tm_frame()
+            self.packed = TelemetryPacker.pack_tm_heartbeat()
             if self.packed:
-                self.log_info("Telemetry packed")
+                self.log_info("Telemetry heartbeat packed")
 
             # Set current TM frame
             if TelemetryPacker.TM_AVAILABLE and self.comms_state == COMMS_STATE.TX_HEARTBEAT:
@@ -133,13 +133,15 @@ class Task(TemplateTask):
 
     async def main_task(self):
         # Main comms task loop
-        if not DH.data_process_exists("comms"):
-            DH.register_data_process("comms", "f", True, 100000)
 
         if not self.frequency_set:
             self.cls_change_counter_frequency()
 
-        if SM.current_state == STATES.NOMINAL or SM.current_state == STATES.DOWNLINK:
+        if SM.current_state == STATES.DETUMBLING or SM.current_state == STATES.NOMINAL or SM.current_state == STATES.LOW_POWER:
+
+            if not DH.data_process_exists("comms"):  # avoid registering in startup
+                DH.register_data_process("comms", "f", True, 100000)
+
             if not DH.data_process_exists("img"):
                 # TODO: Move image process to another task
                 DH.register_data_process("img", "b", True)
