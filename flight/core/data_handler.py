@@ -348,7 +348,8 @@ class DataProcess:
         if latest_file is not None:
             try:
                 with open(latest_file, "rb") as file:
-                    file.seek(-self.bytesize, os.SEEK_END)
+                    SEEK_END = 2
+                    file.seek(-self.bytesize, SEEK_END)  # SEEK_END == 2
                     cr = file.read(self.bytesize)
                     if len(cr) != self.bytesize:  # Handle incomplete data
                         return False
