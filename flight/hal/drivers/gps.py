@@ -5,7 +5,8 @@ try:
     from busio import UART
     from digitalio import DigitalInOut
     from hal.drivers.middleware.errors import Errors
-    from hal.drivers.middleware.generic_driver import Driver
+
+    # from hal.drivers.middleware.generic_driver import Driver
     from micropython import const
 except ImportError:
     pass
@@ -14,6 +15,7 @@ except ImportError:
 EPOCH_YEAR = 1980
 EPOCH_MONTH = 1
 EPOCH_DAY = 5
+
 
 class GPS:
     def __init__(self, uart: UART, enable=None, debug: bool = False) -> None:
@@ -57,7 +59,6 @@ class GPS:
             self._enable.switch_to_output()
             self._enable = False
 
-
         self.mock = True
         # From app note:
         # self.mock_message = (
@@ -68,10 +69,10 @@ class GPS:
         # )
         # From Ridge Test:
         self.mock_message = (
-        b"\xa0\xa1\x00\x3b\xa8\x02\x0f\x09\x26\x01\x66\x7a\x4f\x18\x1e\xac\x4f\xd0\x71"
-        b"\x40\xae\x00\x00\x91\x87\x00\x00\x9e\x7f\x00\xb1\x00\x96\x00\x56\x00\x7b\x00"
-        b"\x5d\x05\x22\x92\x4e\xe3\x7e\x60\xe7\x18\x8b\x33\x6f\xff\xff\xff\xff\xff\xff"
-        b"\xff\xfe\x00\x00\x00\x00\xfd\x0d\x0a"
+            b"\xa0\xa1\x00\x3b\xa8\x02\x0f\x09\x26\x01\x66\x7a\x4f\x18\x1e\xac\x4f\xd0\x71"
+            b"\x40\xae\x00\x00\x91\x87\x00\x00\x9e\x7f\x00\xb1\x00\x96\x00\x56\x00\x7b\x00"
+            b"\x5d\x05\x22\x92\x4e\xe3\x7e\x60\xe7\x18\x8b\x33\x6f\xff\xff\xff\xff\xff\xff"
+            b"\xff\xfe\x00\x00\x00\x00\xfd\x0d\x0a"
         )
 
         super().__init__()
@@ -84,7 +85,7 @@ class GPS:
         if msg is None or len(msg) < 11:
             return False
 
-        if self.debug == True:
+        if self.debug:
             print(msg)
 
         if self.mock:
@@ -125,8 +126,14 @@ class GPS:
             "tow": (self._payload[5] << 24) | (self._payload[6] << 16) | (self._payload[7] << 8) | self._payload[8],
             "latitude": (self._payload[9] << 24) | (self._payload[10] << 16) | (self._payload[11] << 8) | self._payload[12],
             "longitude": (self._payload[13] << 24) | (self._payload[14] << 16) | (self._payload[15] << 8) | self._payload[16],
-            "ellipsoid_alt": (self._payload[17] << 24) | (self._payload[18] << 16) | (self._payload[19] << 8) | self._payload[20],
-            "mean_sea_lvl_alt": (self._payload[21] << 24) | (self._payload[22] << 16) | (self._payload[23] << 8) | self._payload[24],
+            "ellipsoid_alt": (self._payload[17] << 24)
+            | (self._payload[18] << 16)
+            | (self._payload[19] << 8)
+            | self._payload[20],
+            "mean_sea_lvl_alt": (self._payload[21] << 24)
+            | (self._payload[22] << 16)
+            | (self._payload[23] << 8)
+            | self._payload[24],
             "gdop": (self._payload[25] << 8) | self._payload[26],
             "pdop": (self._payload[27] << 8) | self._payload[28],
             "hdop": (self._payload[29] << 8) | self._payload[30],
@@ -222,7 +229,6 @@ class GPS:
         # Format output
         longitude_str = f"{degrees}° {minutes}' {seconds:.2f}\" {direction}"
         return longitude_str
-
 
     def parse_elip_alt(self) -> float:
         # Convert from hundredths of a meter to meters
@@ -419,9 +425,9 @@ class GPS:
         print(f"ECEF Vy:                    {self.ecef_vy}")
         print(f"ECEF Vz:                    {self.ecef_vz}")
         print(
-              f"Timestamp (UTC):            {self.timestamp_utc.get('year')}-{self.timestamp_utc.get('month')}-",
-              f"{self.timestamp_utc.get('day')} {self.timestamp_utc.get('hour')}:",
-              f"{self.timestamp_utc.get('minute')}:{self.timestamp_utc.get('second')}",
+            f"Timestamp (UTC):            {self.timestamp_utc.get('year')}-{self.timestamp_utc.get('month')}-",
+            f"{self.timestamp_utc.get('day')} {self.timestamp_utc.get('hour')}:",
+            f"{self.timestamp_utc.get('minute')}:{self.timestamp_utc.get('second')}",
         )
         print("=" * 40)
 
