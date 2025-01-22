@@ -6,6 +6,7 @@ from adafruit_register.i2c_bits import ROBits, RWBits
 from adafruit_register.i2c_struct import Struct
 from digitalio import DigitalInOut
 from hal.drivers.middleware.errors import Errors
+from hal.drivers.middleware.generic_driver import Driver
 from micropython import const
 
 # Chip ID
@@ -205,7 +206,7 @@ AccelSensitivity2Gravity = const(16384)  # accelerometer sensitivity. See Sectio
 GyroSensitivity2DegPerSec = 131.2  # gyroscope sensitivity. See Section 1.2, Table 3
 
 
-class BMX160:
+class BMX160(Driver):
     """
     Driver for the BMX160 accelerometer, magnetometer, gyroscope.
 

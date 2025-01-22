@@ -1,11 +1,11 @@
-from time import sleep
+import time
 
 from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register.i2c_bit import ROBit
 from adafruit_register.i2c_bits import ROBits, RWBits
 from adafruit_register.i2c_struct import Struct
-from digitalio import DigitalInOut
-from hal.drivers.middleware.errors import Errors
+
+# from adafruit_bus_device.spi_device import SPIDevice
 from micropython import const
 
 # Chip ID
@@ -74,7 +74,7 @@ BMX160_MAG_IF_3_ADDR = const(0x4F)
 BMX160_FOC_CONF_ADDR = const(0x69)
 BMX160_CONF_ADDR = const(0x6A)
 
-# BMX160_ACCEL_BW_NORMAL_AVG4 = const(0x02)
+BMX160_ACCEL_BW_NORMAL_AVG4 = const(0x02)
 BMX160_GYRO_BW_NORMAL_MODE = const(0x02)
 
 # BMX160_SELF_TEST_ADDR                = const(0x6D)
@@ -84,35 +84,69 @@ BMX160_GYRO_BW_NORMAL_MODE = const(0x02)
 # BMX160_ACCEL_SELF_TEST_NEGATIVE_EN   = const(0x09)
 # BMX160_ACCEL_SELF_TEST_LIMIT         = const(8192)
 
-
 # Power mode settings
 # Accel power mode
 BMX160_ACCEL_NORMAL_MODE = const(0x11)
-# BMX160_ACCEL_LOWPOWER_MODE = const(0x12)
-# BMX160_ACCEL_SUSPEND_MODE = const(0x10)
+BMX160_ACCEL_LOWPOWER_MODE = const(0x12)
+BMX160_ACCEL_SUSPEND_MODE = const(0x10)
+
+BMX160_ACCEL_MODES = [
+    BMX160_ACCEL_NORMAL_MODE,
+    BMX160_ACCEL_LOWPOWER_MODE,
+    BMX160_ACCEL_SUSPEND_MODE,
+]
 
 # Gyro power mode
-# BMX160_GYRO_SUSPEND_MODE = const(0x14)
+BMX160_GYRO_SUSPEND_MODE = const(0x14)
 BMX160_GYRO_NORMAL_MODE = const(0x15)
-# BMX160_GYRO_FASTSTARTUP_MODE = const(0x17)
+BMX160_GYRO_FASTSTARTUP_MODE = const(0x17)
+
+BMX160_GYRO_MODES = [
+    BMX160_GYRO_SUSPEND_MODE,
+    BMX160_GYRO_NORMAL_MODE,
+    BMX160_GYRO_FASTSTARTUP_MODE,
+]
 
 # Mag power mode
-# BMX160_MAG_SUSPEND_MODE = const(0x18)
+BMX160_MAG_SUSPEND_MODE = const(0x18)
 BMX160_MAG_NORMAL_MODE = const(0x19)
 BMX160_MAG_LOWPOWER_MODE = const(0x1A)
 
 # Accel Range
-# BMX160_ACCEL_RANGE_2G = const(0x03)
-# BMX160_ACCEL_RANGE_4G = const(0x05)
+BMX160_ACCEL_RANGE_2G = const(0x03)
+BMX160_ACCEL_RANGE_4G = const(0x05)
 BMX160_ACCEL_RANGE_8G = const(0x08)
-# BMX160_ACCEL_RANGE_16G = const(0x0C)
+BMX160_ACCEL_RANGE_16G = const(0x0C)
+
+# BMX160_ACCEL_RANGE_CONSTANTS = [BMX160_ACCEL_RANGE_16G,
+#                                 BMX160_ACCEL_RANGE_8G,
+#                                 BMX160_ACCEL_RANGE_4G,
+#                                 BMX160_ACCEL_RANGE_2G]
+# BMX160_ACCEL_RANGE_VALUES = [16, 8, 4, 2]
+BMX160_ACCEL_RANGE_CONSTANTS = [
+    BMX160_ACCEL_RANGE_2G,
+    BMX160_ACCEL_RANGE_4G,
+    BMX160_ACCEL_RANGE_8G,
+    BMX160_ACCEL_RANGE_16G,
+]
+BMX160_ACCEL_RANGE_VALUES = [2, 4, 8, 16]
+
 
 # Gyro Range
-# BMX160_GYRO_RANGE_2000_DPS = const(0x00)
-# BMX160_GYRO_RANGE_1000_DPS = const(0x01)
+BMX160_GYRO_RANGE_2000_DPS = const(0x00)
+BMX160_GYRO_RANGE_1000_DPS = const(0x01)
 BMX160_GYRO_RANGE_500_DPS = const(0x02)
-# BMX160_GYRO_RANGE_250_DPS = const(0x03)
-# BMX160_GYRO_RANGE_125_DPS = const(0x04)
+BMX160_GYRO_RANGE_250_DPS = const(0x03)
+BMX160_GYRO_RANGE_125_DPS = const(0x04)
+
+BMX160_GYRO_RANGE_CONSTANTS = [
+    BMX160_GYRO_RANGE_2000_DPS,
+    BMX160_GYRO_RANGE_1000_DPS,
+    BMX160_GYRO_RANGE_500_DPS,
+    BMX160_GYRO_RANGE_250_DPS,
+    BMX160_GYRO_RANGE_125_DPS,
+]
+BMX160_GYRO_RANGE_VALUES = [2000, 1000, 500, 250, 125]
 
 # Delay in ms settings
 # BMX160_ACCEL_DELAY                   = 0.005
@@ -125,63 +159,108 @@ BMX160_GYRO_RANGE_500_DPS = const(0x02)
 # Output Data Rate settings
 # Accel Output data rate
 # BMX160_ACCEL_ODR_RESERVED            = const(0x00)
-# BMX160_ACCEL_ODR_0_78HZ = const(0x01)
-# BMX160_ACCEL_ODR_1_56HZ = const(0x02)
-# BMX160_ACCEL_ODR_3_12HZ = const(0x03)
-# BMX160_ACCEL_ODR_6_25HZ = const(0x04)
-# BMX160_ACCEL_ODR_12_5HZ = const(0x05)
-# BMX160_ACCEL_ODR_25HZ = const(0x06)
-# BMX160_ACCEL_ODR_50HZ = const(0x07)
-# BMX160_ACCEL_ODR_100HZ = const(0x08)
-# BMX160_ACCEL_ODR_200HZ = const(0x09)
-# BMX160_ACCEL_ODR_400HZ = const(0x0A)
-# BMX160_ACCEL_ODR_800HZ = const(0x0B)
-# BMX160_ACCEL_ODR_1600HZ = const(0x0C)
+BMX160_ACCEL_ODR_0_78HZ = const(0x01)
+BMX160_ACCEL_ODR_1_56HZ = const(0x02)
+BMX160_ACCEL_ODR_3_12HZ = const(0x03)
+BMX160_ACCEL_ODR_6_25HZ = const(0x04)
+BMX160_ACCEL_ODR_12_5HZ = const(0x05)
+BMX160_ACCEL_ODR_25HZ = const(0x06)
+BMX160_ACCEL_ODR_50HZ = const(0x07)
+BMX160_ACCEL_ODR_100HZ = const(0x08)
+BMX160_ACCEL_ODR_200HZ = const(0x09)
+BMX160_ACCEL_ODR_400HZ = const(0x0A)
+BMX160_ACCEL_ODR_800HZ = const(0x0B)
+BMX160_ACCEL_ODR_1600HZ = const(0x0C)
 # BMX160_ACCEL_ODR_RESERVED0           = const(0x0D)
 # BMX160_ACCEL_ODR_RESERVED1           = const(0x0E)
 # BMX160_ACCEL_ODR_RESERVED2           = const(0x0F)
 
+BMX160_ACCEL_ODR_CONSTANTS = [
+    BMX160_ACCEL_ODR_1600HZ,
+    BMX160_ACCEL_ODR_800HZ,
+    BMX160_ACCEL_ODR_400HZ,
+    BMX160_ACCEL_ODR_200HZ,
+    BMX160_ACCEL_ODR_100HZ,
+    BMX160_ACCEL_ODR_50HZ,
+    BMX160_ACCEL_ODR_25HZ,
+    BMX160_ACCEL_ODR_12_5HZ,
+    BMX160_ACCEL_ODR_6_25HZ,
+    BMX160_ACCEL_ODR_3_12HZ,
+    BMX160_ACCEL_ODR_1_56HZ,
+    BMX160_ACCEL_ODR_0_78HZ,
+]
+BMX160_ACCEL_ODR_VALUES = [
+    1600,
+    800,
+    400,
+    200,
+    100,
+    50,
+    25,
+    12.5,
+    6.25,
+    3.12,
+    1.56,
+    0.78,
+]
 
 # Gyro Output data rate
 # BMX160_GYRO_ODR_RESERVED             = const(0x00)
-# BMX160_GYRO_ODR_25HZ = const(0x06)
-# BMX160_GYRO_ODR_50HZ = const(0x07)
-# BMX160_GYRO_ODR_100HZ = const(0x08)
-# BMX160_GYRO_ODR_200HZ = const(0x09)
-# BMX160_GYRO_ODR_400HZ = const(0x0A)
-# BMX160_GYRO_ODR_800HZ = const(0x0B)
-# BMX160_GYRO_ODR_1600HZ = const(0x0C)
-# BMX160_GYRO_ODR_3200HZ = const(0x0D)
+BMX160_GYRO_ODR_25HZ = const(0x06)
+BMX160_GYRO_ODR_50HZ = const(0x07)
+BMX160_GYRO_ODR_100HZ = const(0x08)
+BMX160_GYRO_ODR_200HZ = const(0x09)
+BMX160_GYRO_ODR_400HZ = const(0x0A)
+BMX160_GYRO_ODR_800HZ = const(0x0B)
+BMX160_GYRO_ODR_1600HZ = const(0x0C)
+BMX160_GYRO_ODR_3200HZ = const(0x0D)
 
+BMX160_GYRO_ODR_CONSTANTS = [
+    BMX160_GYRO_ODR_3200HZ,
+    BMX160_GYRO_ODR_1600HZ,
+    BMX160_GYRO_ODR_800HZ,
+    BMX160_GYRO_ODR_400HZ,
+    BMX160_GYRO_ODR_200HZ,
+    BMX160_GYRO_ODR_100HZ,
+    BMX160_GYRO_ODR_50HZ,
+]
+BMX160_GYRO_ODR_VALUES = [3200, 1600, 800, 400, 200, 100, 50]
 
 # Auxiliary sensor Output data rate
 # BMX160_MAG_ODR_RESERVED              = const(0x00)
-# BMX160_MAG_ODR_0_78HZ = const(0x01)
-# BMX160_MAG_ODR_1_56HZ = const(0x02)
-# BMX160_MAG_ODR_3_12HZ = const(0x03)
-# BMX160_MAG_ODR_6_25HZ = const(0x04)
-# BMX160_MAG_ODR_12_5HZ = const(0x05)
+BMX160_MAG_ODR_0_78HZ = const(0x01)
+BMX160_MAG_ODR_1_56HZ = const(0x02)
+BMX160_MAG_ODR_3_12HZ = const(0x03)
+BMX160_MAG_ODR_6_25HZ = const(0x04)
+BMX160_MAG_ODR_12_5HZ = const(0x05)
 BMX160_MAG_ODR_25HZ = const(0x06)
-# BMX160_MAG_ODR_50HZ = const(0x07)
-# BMX160_MAG_ODR_100HZ = const(0x08)
-# BMX160_MAG_ODR_200HZ = const(0x09)
-# BMX160_MAG_ODR_400HZ = const(0x0A)
-# BMX160_MAG_ODR_800HZ = const(0x0B)
+BMX160_MAG_ODR_50HZ = const(0x07)
+BMX160_MAG_ODR_100HZ = const(0x08)
+BMX160_MAG_ODR_200HZ = const(0x09)
+BMX160_MAG_ODR_400HZ = const(0x0A)
+BMX160_MAG_ODR_800HZ = const(0x0B)
 
 # Accel, gyro and aux. sensor length and also their combined length definitions in FIFO
-# BMX160_FIFO_G_LENGTH = const(6)
-# BMX160_FIFO_A_LENGTH = const(6)
-# BMX160_FIFO_M_LENGTH = const(8)
-# BMX160_FIFO_GA_LENGTH = const(12)
-# BMX160_FIFO_MA_LENGTH = const(14)
-# BMX160_FIFO_MG_LENGTH = const(14)
-# BMX160_FIFO_MGA_LENGTH = const(20)
+BMX160_FIFO_G_LENGTH = const(6)
+BMX160_FIFO_A_LENGTH = const(6)
+BMX160_FIFO_M_LENGTH = const(8)
+BMX160_FIFO_GA_LENGTH = const(12)
+BMX160_FIFO_MA_LENGTH = const(14)
+BMX160_FIFO_MG_LENGTH = const(14)
+BMX160_FIFO_MGA_LENGTH = const(20)
 
+# I2C address
+BMX160_I2C_ADDR = const(0x68)
+BMX160_I2C_ALT_ADDR = const(0x69)  # alternate address
+# Interface settings
+BMX160_SPI_INTF = const(1)
+BMX160_I2C_INTF = const(0)
+BMX160_SPI_RD_MASK = const(0x80)
+BMX160_SPI_WR_MASK = const(0x7F)
 
 # Error related
-# BMX160_OK = const(0)
-# BMX160_ERROR = -1
-BMX160_ERROR_CODES = [0x1, 0x2, 0x3, 0x6, 0x7]
+BMX160_OK = const(0)
+BMX160_ERROR = const(-1)
 
 # Each goes with a different sensitivity in decreasing order
 AccelSensitivity2Gravity_values = [
@@ -190,7 +269,6 @@ AccelSensitivity2Gravity_values = [
     8192,
     16384,
 ]  # accelerometer sensitivity. See Section 1.2, Table 2
-
 GyroSensitivity2DegPerSec_values = [
     16.4,
     32.8,
@@ -203,6 +281,24 @@ g_TO_METERS_PER_SECOND_SQUARED = 1 / 9.80665  # in m/s^2
 
 AccelSensitivity2Gravity = const(16384)  # accelerometer sensitivity. See Section 1.2, Table 2
 GyroSensitivity2DegPerSec = 131.2  # gyroscope sensitivity. See Section 1.2, Table 3
+
+
+class _ScaledReadOnlyStruct(Struct):
+    def __init__(self, register_address, struct_format, scale):
+        super(_ScaledReadOnlyStruct, self).__init__(register_address, struct_format)
+        self.scale = scale
+
+    # NOTE: I think super() may be an allocating operation.
+    def __get__(self, obj, objtype=None):
+        result = super(_ScaledReadOnlyStruct, self).__get__(obj, objtype)
+        return tuple(self.scale * v for v in result)
+
+    def __set__(self, obj, value):
+        raise NotImplementedError()
+
+
+# TODO replace _SclaedReadOnlyStruct with Struct in BMX160 so that the
+# scale factor can be changed as a function of range mode
 
 
 class BMX160:
@@ -245,24 +341,31 @@ class BMX160:
     fatal_err = ROBit(BMX160_ERROR_REG_ADDR, 0)
 
     # straight from the datasheet. Need to be renamed and better explained
+    @property
     def drdy_acc(self):
         return (self.status >> 7) & 1
 
+    @property
     def drdy_gyr(self):
         return (self.status >> 6) & 1
 
+    @property
     def drdy_mag(self):
         return (self.status >> 5) & 1
 
+    @property
     def nvm_rdy(self):
         return (self.status >> 4) & 1
 
+    @property
     def foc_rdy(self):
         return (self.status >> 3) & 1
 
+    @property
     def mag_man_op(self):
         return (self.status >> 2) & 1
 
+    @property
     def gyro_self_test_ok(self):
         return (self.status >> 1) & 1
 
@@ -285,82 +388,60 @@ class BMX160:
     _mag_odr = 25  # Hz
     _mag_range = 250  # deg/sec
 
-    def __init__(self, i2c, i2c_address, enable_pin=None):
-        self._enable = None
-        if enable_pin is not None:
-            self._enable = DigitalInOut(enable_pin)
-            self._enable.switch_to_output(value=True)
-
-        super().__init__(self._enable)
-
-        self.i2c_device = I2CDevice(i2c, i2c_address, probe=True)
-
+    def __init__(self):
         # soft reset & reboot
         self.cmd = BMX160_SOFT_RESET_CMD
-        sleep(0.001)
+        time.sleep(0.001)
         # Check ID registers.
         ID = self.read_u8(BMX160_CHIP_ID_ADDR)
         if ID != BMX160_CHIP_ID:
             raise RuntimeError("Could not find BMX160, check wiring!")
 
-        # SET THE DEFAULT SETTINGS
+        # print("status:", format_binary(self.status))
+        # set the default settings
         self.init_mag()
         self.init_accel()
         self.init_gyro()
-
-    """
-    ----------------------- HANDLER METHODS -----------------------
-    """
-
-    def get_flags(self):
-        return {}
-
-    ######################## I2C HELPERS ########################
-    def read_u8(self, address):
-        with self.i2c_device as i2c:
-            self._BUFFER[0] = address & 0xFF
-            i2c.write_then_readinto(self._BUFFER, self._BUFFER, out_end=1, in_start=1, in_end=2)
-        return self._BUFFER[1]
-
-    def read_bytes(self, address, count, buf):
-        with self.i2c_device as i2c:
-            buf[0] = address & 0xFF
-            i2c.write_then_readinto(buf, buf, out_end=1, in_end=count)
-        return buf
-
-    def write_u8(self, address, val):
-        with self.i2c_device as i2c:
-            self._BUFFER[0] = address & 0xFF
-            self._BUFFER[1] = val & 0xFF
-            i2c.write(self._BUFFER, end=2)
+        # print("status:", format_binary(self.status))
 
     ######################## SENSOR API ########################
 
     def read_all(self):
         return self.read_bytes(BMX160_MAG_DATA_ADDR, 20, self._BUFFER)
 
+    # synonymous
+    # @property
+    # def error_status(self):
+    #     return format_binary(self._error_status)
+    @property
     def query_error(self):
         return format_binary(self._error_status)
 
     ### ACTUAL API
+    @property
     def gyro(self):
         # deg/s
         return tuple(x * self.GYR_SCALAR for x in self._gyro)
 
+    @property
     def accel(self):
         # m/s^2
         return tuple(x * self.ACC_SCALAR for x in self._accel)
 
+    @property
     def mag(self):
         # uT
         return tuple(x * self.MAG_SCALAR for x in self._mag)
 
+    @property
     def temperature(self):
         return self._temp[0] * self.TEMP_SCALAR + 23
 
+    @property
     def temp(self):
         return self._temp[0] * self.TEMP_SCALAR + 23
 
+    @property
     def sensortime(self):
         tbuf = self.read_bytes(BMX160_SENSOR_TIME_ADDR, 3, self._smallbuf)
         t0, t1, t2 = tbuf[:3]
@@ -384,8 +465,12 @@ class BMX160:
         self.gyro_odr = 25
         self.gyro_powermode = BMX160_GYRO_NORMAL_MODE
 
-    '''
-    def set_gyro_range(self, rangeconst):
+    @property
+    def gyro_range(self):
+        return self._gyro_range
+
+    @gyro_range.setter
+    def gyro_range(self, rangeconst):
         """
         The input is expected to be the BMX160-constant associated with the range.
 
@@ -401,15 +486,6 @@ class BMX160:
         equivalent to: bmx.gyro_range = 2
         BMX160_GYRO_RANGE_VALUES = [2000, 1000, 500, 250, 125]
         """
-        BMX160_GYRO_RANGE_CONSTANTS = [
-            BMX160_GYRO_RANGE_2000_DPS,
-            BMX160_GYRO_RANGE_1000_DPS,
-            BMX160_GYRO_RANGE_500_DPS,
-            BMX160_GYRO_RANGE_250_DPS,
-            BMX160_GYRO_RANGE_125_DPS,
-        ]
-
-        BMX160_GYRO_RANGE_VALUES = [2000, 1000, 500, 250, 125]
 
         if rangeconst in BMX160_GYRO_RANGE_CONSTANTS:
             self._gyro_range = rangeconst
@@ -420,23 +496,17 @@ class BMX160:
         else:
             pass
 
-    def set_gyro_odr(self, odr):
+    @property
+    def gyro_odr(self):
+        return self._gyro_odr
+
+    @gyro_odr.setter
+    def gyro_odr(self, odr):
         """
         Set the output data rate of the gyroscope. The possible ODRs are 1600, 800, 400, 200, 100,
         50, 25, 12.5, 6.25, 3.12, 1.56, and 0.78 Hz. Note, setting a value between the listed ones
         will round *downwards*.
         """
-        BMX160_GYRO_ODR_CONSTANTS = [
-            BMX160_GYRO_ODR_3200HZ,
-            BMX160_GYRO_ODR_1600HZ,
-            BMX160_GYRO_ODR_800HZ,
-            BMX160_GYRO_ODR_400HZ,
-            BMX160_GYRO_ODR_200HZ,
-            BMX160_GYRO_ODR_100HZ,
-            BMX160_GYRO_ODR_50HZ,
-        ]
-        BMX160_GYRO_ODR_VALUES = [3200, 1600, 800, 400, 200, 100, 50]
-
         res = self.generic_setter(
             odr,
             BMX160_GYRO_ODR_VALUES,
@@ -447,7 +517,12 @@ class BMX160:
         if res is not None:
             self._gyro_odr = res[1]
 
-    def set_gyro_powermode(self, powermode):
+    @property
+    def gyro_powermode(self):
+        return self._gyro_powermode
+
+    @gyro_powermode.setter
+    def gyro_powermode(self, powermode):
         """
         Set the power mode of the gyroscope. Unlike other setters, this one has to directly take the
         BMX160-const associated with the power mode. The possible modes are:
@@ -455,27 +530,19 @@ class BMX160:
         `BMX160_GYRO_NORMAL_MODE`
         `BMX160_GYRO_FASTSTARTUP_MODE`
         """
-        BMX160_GYRO_MODES = [
-            BMX160_GYRO_SUSPEND_MODE,
-            BMX160_GYRO_NORMAL_MODE,
-            BMX160_GYRO_FASTSTARTUP_MODE,
-        ]
-
-
         if powermode not in BMX160_GYRO_MODES:
             print("Unknown gyroscope powermode: " + str(powermode))
             return
 
         self.write_u8(BMX160_COMMAND_REG_ADDR, powermode)
-        if int(self.query_error()) == 0:
+        if int(self.query_error) == 0:
             self._gyro_powermode = powermode
         else:
             settingswarning("gyroscope power mode")
 
         # NOTE: this delay is a worst case. If we need repeated switching
         # we can choose the delay on a case-by-case basis.
-        sleep(0.0081)
-    '''
+        time.sleep(0.0081)
 
     ############## ACCELEROMETER SETTINGS  ##############
 
@@ -488,8 +555,12 @@ class BMX160:
         self.accel_odr = 25
         self.accel_powermode = BMX160_ACCEL_NORMAL_MODE
 
-    '''
-    def set_accel_range(self, rangeconst):
+    @property
+    def accel_range(self):
+        return self._accel_range
+
+    @accel_range.setter
+    def accel_range(self, rangeconst):
         """
         The input is expected to be the BMX160-constant associated with the range.
 
@@ -503,13 +574,6 @@ class BMX160:
         ex: bmx.accel_range = BMX160_ACCEL_RANGE_4G
         equivalent to: bmx.accel_range = 5
         """
-        BMX160_ACCEL_RANGE_CONSTANTS = [
-            BMX160_ACCEL_RANGE_2G,
-            BMX160_ACCEL_RANGE_4G,
-            BMX160_ACCEL_RANGE_8G,
-            BMX160_ACCEL_RANGE_16G,
-        ]
-        BMX160_ACCEL_RANGE_VALUES = [2, 4, 8, 16]
 
         if rangeconst in BMX160_ACCEL_RANGE_CONSTANTS:
             self._accel_range = rangeconst
@@ -522,38 +586,12 @@ class BMX160:
         else:
             pass
 
-    def set_accel_odr(self, odr):
+    @property
+    def accel_odr(self):
+        return self._accel_odr
 
-        BMX160_ACCEL_ODR_CONSTANTS = [
-            BMX160_ACCEL_ODR_1600HZ,
-            BMX160_ACCEL_ODR_800HZ,
-            BMX160_ACCEL_ODR_400HZ,
-            BMX160_ACCEL_ODR_200HZ,
-            BMX160_ACCEL_ODR_100HZ,
-            BMX160_ACCEL_ODR_50HZ,
-            BMX160_ACCEL_ODR_25HZ,
-            BMX160_ACCEL_ODR_12_5HZ,
-            BMX160_ACCEL_ODR_6_25HZ,
-            BMX160_ACCEL_ODR_3_12HZ,
-            BMX160_ACCEL_ODR_1_56HZ,
-            BMX160_ACCEL_ODR_0_78HZ,
-        ]
-
-        BMX160_ACCEL_ODR_VALUES = [
-            1600,
-            800,
-            400,
-            200,
-            100,
-            50,
-            25,
-            12.5,
-            6.25,
-            3.12,
-            1.56,
-            0.78,
-        ]
-
+    @accel_odr.setter
+    def accel_odr(self, odr):
         res = self.generic_setter(
             odr,
             BMX160_ACCEL_ODR_VALUES,
@@ -564,8 +602,12 @@ class BMX160:
         if res is not None:
             self._accel_odr = res[1]
 
+    @property
+    def accel_powermode(self):
+        return self._accel_powermode
 
-    def set_accel_powermode(self, powermode):
+    @accel_powermode.setter
+    def accel_powermode(self, powermode):
         """
         Set the power mode of the accelerometer. Unlike other setters, this one has to directly take the
         BMX160-const associated with the power mode. The possible modes are:
@@ -573,34 +615,26 @@ class BMX160:
         `BMI160_ACCEL_LOWPOWER_MODE`
         `BMI160_ACCEL_SUSPEND_MODE`
         """
-
-        BMX160_ACCEL_MODES = [
-            BMX160_ACCEL_NORMAL_MODE,
-            BMX160_ACCEL_LOWPOWER_MODE,
-            BMX160_ACCEL_SUSPEND_MODE,
-        ]
-
         if powermode not in BMX160_ACCEL_MODES:
             print("Unknown accelerometer power mode: " + str(powermode))
             return
 
         self.write_u8(BMX160_COMMAND_REG_ADDR, powermode)
-        if int(self.query_error()) == 0:
+        if int(self.query_error) == 0:
             self._accel_powermode = powermode
         else:
             settingswarning("accelerometer power mode")
 
         # NOTE: this delay is a worst case. If we need repeated switching
         # we can choose the delay on a case-by-case basis.
-        sleep(0.005)
-    '''
+        time.sleep(0.005)
 
-    ############## MAGNETOMETER SETTINGS  ##############
+    ############## MAGENTOMETER SETTINGS  ##############
 
     def init_mag(self):
         # see pg 25 of: https://ae-bst.resource.bosch.com/media/_tech/media/datasheets/BST-BMX160-DS000.pdf
         self.write_u8(BMX160_COMMAND_REG_ADDR, BMX160_MAG_NORMAL_MODE)
-        sleep(0.00065)  # datasheet says wait for 650microsec
+        time.sleep(0.00065)  # datasheet says wait for 650microsec
         self.write_u8(BMX160_MAG_IF_0_ADDR, 0x80)
         # put mag into sleep mode
         self.write_u8(BMX160_MAG_IF_3_ADDR, 0x01)
@@ -620,10 +654,14 @@ class BMX160:
         self.write_u8(BMX160_MAG_IF_0_ADDR, 0x00)
         # put in low power mode.
         self.write_u8(BMX160_COMMAND_REG_ADDR, BMX160_MAG_LOWPOWER_MODE)
-        sleep(0.1)  # takes this long to warm up (empirically)
+        time.sleep(0.1)  # takes this long to warm up (empirically)
 
-    '''
-    def set_mag_powermode(self, powermode):
+    @property
+    def mag_powermode(self):
+        return self._mag_powermode
+
+    @mag_powermode.setter
+    def mag_powermode(self, powermode):
         """
         Set the power mode of the magnetometer. Unlike other setters, this one has to directly take the
         BMX160-const associated with the power mode. The possible modes are:
@@ -636,17 +674,15 @@ class BMX160:
         #     return
 
         self.write_u8(BMX160_COMMAND_REG_ADDR, powermode)
-        if int(self.query_error()) == 0:
+        if int(self.query_error) == 0:
             self._mag_powermode = powermode
         else:
             settingswarning("mag power mode")
 
         # NOTE: this delay is a worst case. If we need repeated switching
         # we can choose the delay on a case-by-case basis.
-        sleep(0.001)
-    '''
+        time.sleep(0.001)
 
-    """
     ## UTILS:
     def generic_setter(
         self,
@@ -666,54 +702,69 @@ class BMX160:
             return (i, rounded)
         else:
             settingswarning(warning_interp)
-    """
-    ######################### DIAGNOSTICS #########################
-
-    def __check_for_errors(self) -> list[int]:
-        """_check_for_errors: Checks for any device errors on BMX160
-
-        :return: List of error conditions if present
-        """
-        NO_ERROR = const(0x00)
-
-        error_list = []
-
-        error_reg = self.query_error()
-        if error_reg != NO_ERROR:
-            error_list.append(Errors.IMU_UNSPECIFIED_ERROR)
-
-        if self.fatal_err != 0:
-            error_list.append(Errors.IMU_FATAL_ERROR)
-
-        if self.error_code in self.BMX160_ERROR_CODES:
-            error_list.append(Errors.IMU_NON_FATAL_ERROR)
-
-        if self.drop_cmd_err != 0:
-            error_list.append(Errors.IMU_DROP_COMMAND_ERROR)
-
-        if error_list.count() == 0:
-            error_list.append(Errors.NOERROR)
-
-    def run_diagnostics(self) -> list[int] | None:
-        """run_diagnostic_test: Run all tests for the component
-
-        :return: List of error codes
-        """
-        error_list = []
-
-        error_list = self.__check_for_errors()
-
-        error_list = list(set(error_list))
-
-        if Errors.NOERROR not in error_list:
-            self.errors_present = True
-
-        return error_list
 
 
-######################### UTILS #########################
+class BMX160_I2C(BMX160):
+    """Driver for the BMX160 connect over I2C."""
 
-"""
+    def __init__(self, i2c):
+
+        try:
+            self.i2c_device = I2CDevice(i2c, BMX160_I2C_ADDR, probe=False)
+        except Exception:
+            self.i2c_device = I2CDevice(i2c, BMX160_I2C_ALT_ADDR, probe=False)
+
+        super().__init__()
+
+    def read_u8(self, address):
+        with self.i2c_device as i2c:
+            self._BUFFER[0] = address & 0xFF
+            i2c.write_then_readinto(self._BUFFER, self._BUFFER, out_end=1, in_start=1, in_end=2)
+        return self._BUFFER[1]
+
+    def read_bytes(self, address, count, buf):
+        with self.i2c_device as i2c:
+            buf[0] = address & 0xFF
+            i2c.write_then_readinto(buf, buf, out_end=1, in_end=count)
+        return buf
+
+    def write_u8(self, address, val):
+        with self.i2c_device as i2c:
+            self._BUFFER[0] = address & 0xFF
+            self._BUFFER[1] = val & 0xFF
+            i2c.write(self._BUFFER, end=2)
+
+
+# class BMX160_SPI(BMX160):
+#     """Driver for the BMX160 connect over SPI."""
+#     def __init__(self, spi, cs):
+#         self.i2c_device = SPIDevice(spi, cs)
+#         super().__init__()
+
+#     def read_u8(self, address):
+#         with self.i2c_device as spi:
+#             self._BUFFER[0] = (address | 0x80) & 0xFF
+#             spi.write(self._BUFFER, end=1)
+#             spi.readinto(self._BUFFER, end=1)
+#         return self._BUFFER[0]
+
+#     def read_bytes(self, address, count, buf):
+#         with self.i2c_device as spi:
+#             buf[0] = (address | 0x80) & 0xFF
+#             spi.write(buf, end=1)
+#             spi.readinto(buf, end=count)
+#         return buf
+
+#     def write_u8(self, address, val):
+#         with self.i2c_device as spi:
+#             self._BUFFER[0] = (address & 0x7F) & 0xFF
+#             self._BUFFER[1] = val & 0xFF
+#             spi.write(self._BUFFER, end=2)
+
+
+# GENERIC UTILS:
+
+
 def find_nearest_valid(desired, possible_values):
     # NOTE: assumes `possible_values` is sorted in decreasing order
 
@@ -725,12 +776,15 @@ def find_nearest_valid(desired, possible_values):
     except Exception:
         return -1
 
+
 def settingswarning(interp=""):
     if interp != "":
         interp = " --" + interp + " -- "
-    print(f"BMX160 error occurred during {interp} setting change.")
-    print("Setting not successfully changed and BMX160 may be in error state.")
-"""
+    print(
+        "BMX160 error occurred during "
+        + interp
+        + "setting change. \nSetting not successfully changed and BMX160 may be in error state."
+    )
 
 
 def format_binary(b):

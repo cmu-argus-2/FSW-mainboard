@@ -15,6 +15,7 @@ from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register.i2c_bit import RWBit
 from adafruit_register.i2c_bits import ROBits, RWBits
 from hal.drivers.middleware.errors import Errors
+from hal.drivers.middleware.generic_driver import Driver
 from micropython import const
 
 # Registers
@@ -64,7 +65,7 @@ def _to_signed(num):
     return num
 
 
-class BQ25883:
+class BQ25883(Driver):
     """BQ25883: The"""
 
     _pn = ROBits(4, _PART_INFO, 3, 1, False)

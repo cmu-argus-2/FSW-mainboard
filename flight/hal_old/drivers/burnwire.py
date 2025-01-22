@@ -8,11 +8,12 @@ Date: March 28, 2024
 from time import sleep
 
 from digitalio import DigitalInOut, DriveMode
+from hal.drivers.middleware.generic_driver import Driver
 from micropython import const
 from pwmio import PWMOut
 
 
-class BurnWires:
+class BurnWires(Driver):
     """
     The BurnWires class provides functionality for controlling burn wires.
 

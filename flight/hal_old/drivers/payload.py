@@ -10,9 +10,10 @@ Author(s): Harry Rosmann
 
 from digitalio import DigitalInOut
 from hal.drivers.middleware.errors import Errors
+from hal.drivers.middleware.generic_driver import Driver
 
 
-class PayloadUART:
+class PayloadUART(Driver):
     """Payload: Payload uart driver for the ARGUS-1 CubeSat"""
 
     def __init__(self, uart, enable_pin):
