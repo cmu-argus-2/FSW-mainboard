@@ -10,7 +10,6 @@ import neopixel
 from busio import I2C, SPI, UART
 from hal.cubesat import CubeSat
 from hal.drivers.middleware.errors import Errors
-from hal.drivers.middleware.middleware import Middleware
 from micropython import const
 from sdcardio import SDCard
 from storage import VfsFat, mount
@@ -209,12 +208,9 @@ class ArgusV1Components:
 class ArgusV1(CubeSat):
     """ArgusV1: Represents the Argus V1 CubeSat."""
 
-    def __init__(self, enable_middleware: bool = False, debug: bool = False):
+    def __init__(self, debug: bool = False):
         """__init__: Initializes the Argus V1 CubeSat.
-
-        :param enable_middleware: Enable middleware for the Argus V1 CubeSat
         """
-        self.__middleware_enabled = enable_middleware
         self.__debug = debug
 
         super().__init__()
@@ -275,9 +271,6 @@ class ArgusV1(CubeSat):
             from hal.drivers.gps import GPS
 
             gps1 = GPS(ArgusV1Components.GPS_UART, ArgusV1Components.GPS_ENABLE)
-
-            if self.__middleware_enabled:
-                gps1 = Middleware(gps1)
 
             self.__gps = gps1
             self.__device_list.append(gps1)
@@ -354,9 +347,6 @@ class ArgusV1(CubeSat):
                 bus = busAndAddress[1]
                 power_monitor = ADM1176(bus, address)
 
-                if self.__middleware_enabled:
-                    power_monitor = Middleware(power_monitor)
-
                 self.__power_monitors[location] = power_monitor
                 self.__device_list.append(power_monitor)
                 error_codes.append(Errors.NOERROR)  # Append success code if no error
@@ -382,9 +372,6 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.IMU_I2C_ADDRESS,
             )
 
-            if self.__middleware_enabled:
-                imu = Middleware(imu)
-
             self.__imu = imu
             self.__imu_temp_flag = True
             self.__device_list.append(imu)
@@ -408,9 +395,6 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.CHARGER_I2C,
                 ArgusV1Components.CHARGER_I2C_ADDRESS,
             )
-
-            if self.__middleware_enabled:
-                charger = Middleware(charger)
 
             self.__charger = charger
             self.__device_list.append(charger)
@@ -445,9 +429,6 @@ class ArgusV1(CubeSat):
                 address = busAndAddress[0]
                 bus = busAndAddress[1]
                 torque_driver = DRV8830(bus, address)
-
-                if self.__middleware_enabled:
-                    torque_driver = Middleware(torque_driver)
 
                 self.__torque_drivers[direction] = torque_driver
                 self.__device_list.append(torque_driver)
@@ -493,9 +474,6 @@ class ArgusV1(CubeSat):
                     conversion_time=ArgusV1Components.LIGHT_SENSOR_CONVERSION_TIME,
                 )
 
-                if self.__middleware_enabled:
-                    light_sensor = Middleware(light_sensor)
-
                 self.__light_sensors[direction] = light_sensor
                 self.__device_list.append(light_sensor)
                 error_codes.append(Errors.NOERROR)  # Append success code if no error
@@ -526,9 +504,6 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.RADIO_FREQ,
             )
 
-            if self.__middleware_enabled:
-                radio = Middleware(radio)
-
             self.__radio = radio
             self.__device_list.append(radio)
         except Exception as e:
@@ -548,9 +523,6 @@ class ArgusV1(CubeSat):
             from hal.drivers.pcf8523 import PCF8523
 
             rtc = PCF8523(ArgusV1Components.RTC_I2C, ArgusV1Components.RTC_I2C_ADDRESS)
-
-            if self.__middleware_enabled:
-                rtc = Middleware(rtc)
 
             self.__rtc = rtc
             self.__device_list.append(rtc)
@@ -635,9 +607,6 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.BURN_WIRE_YM,
             )
 
-            if self.__middleware_enabled:
-                burn_wires = Middleware(burn_wires)
-
             self.__burn_wires = burn_wires
             self.append_device(burn_wires)
         except Exception as e:
@@ -658,9 +627,6 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.FUEL_GAUGE_I2C_ADDRESS,
             )
 
-            if self.__middleware_enabled:
-                fuel_gauge = Middleware(fuel_gauge)
-
             self.__fuel_gauge = fuel_gauge
             self.append_device(fuel_gauge)
         except Exception as e:
@@ -670,82 +636,3 @@ class ArgusV1(CubeSat):
             return Errors.MAX17205_NOT_INITIALIZED
 
         return Errors.NOERROR
-
-    ######################## DIAGNOSTICS ########################
-    def __get_device_diagnostic_error(self, device) -> list[int]:  # noqa: C901
-        """__get_device_diagnostic_error: Get the error code for a device that
-        failed to initialize"""
-        # Convert device to the wrapped instance
-        if isinstance(device, Middleware):
-            device = device.get_instance()
-
-        if device is self.RTC:
-            return Errors.DIAGNOSTICS_ERROR_RTC
-        elif device is self.GPS:
-            return Errors.DIAGNOSTICS_ERROR_GPS
-        elif device is self.BOARD_POWER_MONITOR:
-            return Errors.DIAGNOSTICS_ERROR_BOARD_POWER_MONITOR
-        elif device is self.JETSON_POWER_MONITOR:
-            return Errors.DIAGNOSTICS_ERROR_JETSON_POWER_MONITOR
-        elif device is self.IMU:
-            return Errors.DIAGNOSTICS_ERROR_IMU
-        elif device is self.CHARGER:
-            return Errors.DIAGNOSTICS_ERROR_CHARGER
-        elif device is self.__torque_xp_driver:
-            return Errors.DIAGNOSTICS_ERROR_TORQUE_XP
-        elif device is self.__torque_xm_driver:
-            return Errors.DIAGNOSTICS_ERROR_TORQUE_XM
-        elif device is self.__torque_yp_driver:
-            return Errors.DIAGNOSTICS_ERROR_TORQUE_YP
-        elif device is self.__torque_ym_driver:
-            return Errors.DIAGNOSTICS_ERROR_TORQUE_YM
-        elif device is self.__torque_z_driver:
-            return Errors.DIAGNOSTICS_ERROR_TORQUE_Z
-        elif device is self.LIGHT_SENSOR_XP:
-            return Errors.DIAGNOSTICS_ERROR_LIGHT_SENSOR_XP
-        elif device is self.LIGHT_SENSOR_XM:
-            return Errors.DIAGNOSTICS_ERROR_LIGHT_SENSOR_XM
-        elif device is self.LIGHT_SENSOR_YP:
-            return Errors.DIAGNOSTICS_ERROR_LIGHT_SENSOR_YP
-        elif device is self.LIGHT_SENSOR_YM:
-            return Errors.DIAGNOSTICS_ERROR_LIGHT_SENSOR_YM
-        elif device is self.LIGHT_SENSOR_ZM:
-            return Errors.DIAGNOSTICS_ERROR_LIGHT_SENSOR_ZM
-        elif device is self.RADIO:
-            return Errors.DIAGNOSTICS_ERROR_RADIO
-        elif device is self.NEOPIXEL:
-            return Errors.DIAGNOSTICS_ERROR_NEOPIXEL
-        elif device is self.BURN_WIRES:
-            return Errors.DIAGNOSTICS_ERROR_BURN_WIRES
-        else:
-            return Errors.DIAGNOSTICS_ERROR_UNKNOWN
-
-    def run_system_diagnostics(self) -> list[int] | None:
-        """run_diagnostic_test: Run all diagnostics across all components
-
-        :return: A list of error codes if any errors are present
-        """
-        error_list: list[int] = []
-
-        for device in self.device_list:
-            try:
-                # Enable the devices that are resetable
-                if device.resetable:
-                    device.enable()
-
-                # Concancate the error list from running diagnostics
-                error_list += device.run_diagnostics()
-
-                # Disable the devices that are resetable
-                if device.resetable:
-                    device.disable()
-            except Exception:
-                error_list.append(self.__get_device_diagnostic_error(device))
-                continue
-
-        error_list = [err for err in error_list if err != Errors.NOERROR]
-        error_list = list(set(error_list))  # Remove duplicate errors
-
-        self.__recent_errors = error_list
-
-        return error_list
