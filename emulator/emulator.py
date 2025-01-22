@@ -5,8 +5,6 @@ from hal.cubesat import CubeSat
 from hal.drivers.burnwire import BurnWires
 from hal.drivers.gps import GPS
 from hal.drivers.imu import IMU
-from hal.drivers.middleware.generic_driver import Driver
-from hal.drivers.middleware.middleware import Middleware
 from hal.drivers.payload import Payload
 from hal.drivers.power_monitor import PowerMonitor
 from hal.drivers.radio import Radio
@@ -42,8 +40,7 @@ class device:
 
 
 class EmulatedSatellite(CubeSat):
-    def __init__(self, enable_middleware: bool, debug: bool, simulator, use_socket) -> None:
-        self.__middleware_enabled = enable_middleware
+    def __init__(self, debug: bool, simulator, use_socket) -> None:
         self.__debug = debug
         self.__use_socket = use_socket
         self.__simulated_spacecraft = simulator
@@ -68,12 +65,12 @@ class EmulatedSatellite(CubeSat):
 
         self._jetson_power_monitor = self.init_device(PowerMonitor(4, 0.05))
         self._board_power_monitor = self.init_device(PowerMonitor(7.6, 0.1))
+        self._power_monitors["BOARD"] = self._board_power_monitor
+        self._power_monitors["JETSON"] = self._jetson_power_monitor
 
         self._rtc = self.init_device(RTC(time.gmtime()))
 
-    def init_device(self, device) -> Driver:
-        if self.__middleware_enabled:
-            return Middleware(device)
+    def init_device(self, device):
         return device
 
     def boot_sequence(self) -> List[int]:

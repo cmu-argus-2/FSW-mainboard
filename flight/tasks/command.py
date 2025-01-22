@@ -5,9 +5,10 @@
 import gc
 import time
 
+from apps.adcs.modes import Modes
 from apps.command import CommandQueue
 from apps.command.processor import handle_command_execution_status, process_command
-from apps.telemetry.constants import CDH_IDX
+from apps.telemetry.constants import ADCS_IDX, CDH_IDX
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
@@ -18,9 +19,10 @@ from hal.configuration import SATELLITE
 class Task(TemplateTask):
 
     # To be removed
-    # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "REBOOT_COUNT", "WATCHDOG_TIMER", "HAL_BITFLAGS"]
+    # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "REBOOT_COUNT",
+    # "WATCHDOG_TIMER", "HAL_BITFLAGS", "DETUMBLING_ERROR_FLAG"]
 
-    log_data = [0] * 7
+    log_data = [0] * 8
 
     log_commands = [0] * 3
 
@@ -53,24 +55,51 @@ class Task(TemplateTask):
             SATELLITE.RTC.set_datetime(time.struct_time((2024, 4, 24, 9, 30, 0, 3, 115, -1)))
             # rtc.set_time_source(r)
 
+            # TODO: Burn wires
+
             # HAL_DIAGNOSTICS
             time_since_boot = int(time.time()) - SATELLITE.BOOTTIME
-            if DH.SD_scanned and time_since_boot > 5:  # seconds into start-up
+            if DH.SD_SCANNED() and time_since_boot > 5:  # seconds into start-up
 
                 if not DH.data_process_exists("cdh"):
-                    data_format = "LbLbbbb"
+                    data_format = "LbLbbbbb"
                     DH.register_data_process("cdh", data_format, True, data_limit=100000)
 
                 if not DH.data_process_exists("cmd_logs"):
                     DH.register_data_process("cmd_logs", "LBB", True, data_limit=100000)
 
-                SM.switch_to(STATES.NOMINAL)
-                self.log_info("Switching to NOMINAL state.")
+                SM.switch_to(STATES.DETUMBLING)
+                self.log_info("Switching to DETUMBLING state.")
 
+                # Just for testing
                 # CommandQueue.push_command(0x01, [])
                 # CommandQueue.push_command(0x02, [])
 
-        else:  # Run for all states
+        else:  # Run for all other states
+
+            ### STATE MACHINE ###
+            if SM.current_state == STATES.DETUMBLING:
+
+                # Check detumbling status from the ADCS
+                if DH.data_process_exists("adcs"):
+                    if DH.get_latest_data("adcs")[ADCS_IDX.MODE] != Modes.TUMBLING:
+                        self.log_info("Detumbling complete - Switching to NOMINAL state.")
+                        SM.switch_to(STATES.NOMINAL)
+
+                # Detumbling timeout in case the ADCS is not working
+                if SM.time_since_last_state_change > STATES.DETUMBLING_TIMEOUT_DURATION:
+                    self.log_info("DETUMBLING timeout - Setting Detumbling Error Flag.")
+                    # Set the detumbling issue flag in the NVM
+                    self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1
+                    self.log_info("Switching to NOMINAL state after DETUMBLING timeout.")
+                    SM.switch_to(STATES.NOMINAL)
+
+            elif SM.current_state == STATES.NOMINAL:
+                pass
+            elif SM.current_state == STATES.EXPERIMENT:
+                pass
+            elif SM.current_state == STATES.LOW_POWER:
+                pass
 
             ### COMMAND PROCESSING ###
 
@@ -98,14 +127,10 @@ class Task(TemplateTask):
             self.log_data[CDH_IDX.REBOOT_COUNT] = 0
             self.log_data[CDH_IDX.WATCHDOG_TIMER] = 0
             self.log_data[CDH_IDX.HAL_BITFLAGS] = 0
+            # the detumbling error flag is set in the DETUMBLING state
 
+            # Should always run
             DH.log_data("cdh", self.log_data)
-
-            # Burn wires
-
-            # Handle middleware flags / HW states
-
-            # periodic system checks (HW) - better another task for this
 
         self.log_print_counter += 1
         if self.log_print_counter % self.frequency == 0:

@@ -1562,9 +1562,6 @@ class SX1262(SX126X):
             super().clearDio1Action()
             return state
 
-    def rx_available(self):
-        return super().RX_available()
-
     def recv(self, len=0, timeout_en=False, timeout_ms=0):
         if not self.blocking:
             return self._readData(len)

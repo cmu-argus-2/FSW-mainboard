@@ -1,7 +1,6 @@
 import time
 
 from hal.drivers.middleware.errors import Errors
-from hal.drivers.middleware.generic_driver import Driver
 
 
 class CubeSat:
@@ -35,7 +34,7 @@ class CubeSat:
 
     def __init__(self):
         # List of successfully initialized devices
-        self.__device_list: list[Driver] = []
+        self.__device_list = []
 
         # List of errors from most recent system diagnostic test
         self.__recent_errors: list[int] = [Errors.NOERROR]

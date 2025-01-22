@@ -1,8 +1,7 @@
-from hal.drivers.middleware.generic_driver import Driver
 from numpy import array
 
 
-class IMU(Driver):
+class IMU:
     def __init__(self, simulator=None) -> None:
         self.__simulator = simulator
 
@@ -12,7 +11,6 @@ class IMU(Driver):
         self.__enable = False
 
         self.__accel = array([0.0, 0.0, 0.0])
-        super().__init__(None)
 
     def accel(self):
         return self.__accel if self.__enable else None

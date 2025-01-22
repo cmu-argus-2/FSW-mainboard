@@ -11,6 +11,7 @@ class CDH_IDX:
     REBOOT_COUNT = const(4)
     WATCHDOG_TIMER = const(5)
     HAL_BITFLAGS = const(6)
+    DETUMBLING_ERROR_FLAG = const(7)
 
 
 class EPS_IDX:
@@ -60,7 +61,7 @@ class EPS_IDX:
 
 class ADCS_IDX:
     TIME_ADCS = const(0)
-    ADCS_STATE = const(1)
+    MODE = const(1)
     GYRO_X = const(2)
     GYRO_Y = const(3)
     GYRO_Z = const(4)
@@ -91,11 +92,6 @@ class ADCS_IDX:
     COARSE_ATTITUDE_QX = const(29)
     COARSE_ATTITUDE_QY = const(30)
     COARSE_ATTITUDE_QZ = const(31)
-    STAR_TRACKER_STATUS = const(32)
-    STAR_TRACKER_ATTITUDE_QW = const(33)
-    STAR_TRACKER_ATTITUDE_QX = const(34)
-    STAR_TRACKER_ATTITUDE_QY = const(35)
-    STAR_TRACKER_ATTITUDE_QZ = const(36)
 
 
 class IMU_IDX:

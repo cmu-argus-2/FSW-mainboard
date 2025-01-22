@@ -45,7 +45,10 @@ class Task(TemplateTask):
 
         if SATELLITE.GPS_AVAILABLE:
 
-            if SM.current_state == STATES.NOMINAL:
+            if SM.current_state == STATES.STARTUP:
+                pass
+
+            else:
                 if not DH.data_process_exists("gps"):
                     # TODO : This format is no longer correct
                     data_format = "LBBBHIiiiiHHHHHiiiiii"
