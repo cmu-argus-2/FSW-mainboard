@@ -36,6 +36,7 @@ from struct import pack_into, unpack_from
 
 from adafruit_bus_device import i2c_device
 from hal.drivers.middleware.errors import Errors  # noqa F401
+from hal.drivers.middleware.generic_driver import Driver
 from micropython import const
 
 # For IDE type recognition
@@ -531,7 +532,7 @@ class Packet:
         return False
 
 
-class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-methods
+class BNO085(Driver):  # pylint: disable=too-many-instance-attributes, too-many-public-methods
     """Library for the BNO085 IMUs from Hillcrest Laboratories
 
     :param ~busio.I2C i2c_bus: The I2C bus the BNO08x is connected to.

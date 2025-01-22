@@ -10,6 +10,7 @@ import digitalio
 from busio import I2C, SPI, UART
 from hal.cubesat import CubeSat
 from hal.drivers.middleware.errors import Errors
+from hal.drivers.middleware.middleware import Middleware
 from micropython import const
 from sdcardio import SDCard
 from storage import VfsFat, mount
@@ -27,6 +28,7 @@ class ArgusV2Interfaces:
     try:
         I2C0 = I2C(I2C0_SCL, I2C0_SDA)
     except Exception as e:
+        print(e)
         I2C0 = None
 
     I2C1_SDA = board.SDA1  # GPIO2
@@ -36,6 +38,7 @@ class ArgusV2Interfaces:
     try:
         I2C1 = I2C(I2C1_SCL, I2C1_SDA)
     except Exception as e:
+        print(e)
         I2C1 = None
 
     JET_SPI_SCK = board.CLK1  # GPIO10
@@ -266,10 +269,14 @@ class ArgusV2Components:
 
 
 class ArgusV2(CubeSat):
-    """ArgusV2: Represents the Argus V2 CubeSat."""
+    """ArgusV2: Represents the Argus V1 CubeSat."""
 
-    def __init__(self, debug: bool = False):
-        """__init__: Initializes the Argus V2 CubeSat."""
+    def __init__(self, enable_middleware: bool = False, debug: bool = False):
+        """__init__: Initializes the Argus V1 CubeSat.
+
+        :param enable_middleware: Enable middleware for the Argus V1 CubeSat
+        """
+        self.__middleware_enabled = enable_middleware
         self.__debug = debug
 
         super().__init__()
@@ -330,6 +337,9 @@ class ArgusV2(CubeSat):
             from hal.drivers.gps import GPS
 
             gps1 = GPS(ArgusV2Components.GPS_UART, ArgusV2Components.GPS_ENABLE)
+
+            if self.__middleware_enabled:
+                gps1 = Middleware(gps1)
 
             self.__gps = gps1
             self.__device_list.append(gps1)
@@ -408,6 +418,9 @@ class ArgusV2(CubeSat):
                 bus = busAndAddress[1]
                 power_monitor = ADM1176(bus, address)
 
+                if self.__middleware_enabled:
+                    power_monitor = Middleware(power_monitor)
+
                 self.__power_monitors[location] = power_monitor
                 self.__device_list.append(power_monitor)
                 error_codes.append(Errors.NOERROR)  # Append success code if no error
@@ -433,6 +446,8 @@ class ArgusV2(CubeSat):
             imu = BNO085(ArgusV2Components.IMU_I2C, ArgusV2Components.IMU_I2C_ADDRESS)
             imu.enable_feature(BNO_REPORT_UNCAL_MAGNETOMETER)
             imu.enable_feature(BNO_REPORT_UNCAL_GYROSCOPE)
+            if self.__middleware_enabled:
+                imu = Middleware(imu)
 
             self.__imu = imu
             self.__imu_temp_flag = False
@@ -457,6 +472,9 @@ class ArgusV2(CubeSat):
                 ArgusV2Components.CHARGER_I2C,
                 ArgusV2Components.CHARGER_I2C_ADDRESS,
             )
+
+            if self.__middleware_enabled:
+                charger = Middleware(charger)
 
             self.__charger = charger
             self.__device_list.append(charger)
@@ -491,6 +509,9 @@ class ArgusV2(CubeSat):
                 address = busAndAddress[0]
                 bus = busAndAddress[1]
                 torque_driver = DRV8830(bus, address)
+
+                if self.__middleware_enabled:
+                    torque_driver = Middleware(torque_driver)
 
                 self.__torque_drivers[direction] = torque_driver
                 self.__device_list.append(torque_driver)
@@ -535,6 +556,9 @@ class ArgusV2(CubeSat):
                     address,
                     conversion_time=ArgusV2Components.LIGHT_SENSOR_CONVERSION_TIME,
                 )
+
+                if self.__middleware_enabled:
+                    light_sensor = Middleware(light_sensor)
 
                 self.__light_sensors[direction] = light_sensor
                 self.__device_list.append(light_sensor)
@@ -591,6 +615,9 @@ class ArgusV2(CubeSat):
                 blocking=True,
             )
 
+            if self.__middleware_enabled:
+                radio = Middleware(radio)
+
             self.__radio = radio
             self.__device_list.append(radio)
 
@@ -611,6 +638,9 @@ class ArgusV2(CubeSat):
             from hal.drivers.ds3231 import DS3231
 
             rtc = DS3231(ArgusV2Components.RTC_I2C, ArgusV2Components.RTC_I2C_ADDRESS)
+
+            if self.__middleware_enabled:
+                rtc = Middleware(rtc)
 
             self.__rtc = rtc
             self.__device_list.append(rtc)
@@ -673,6 +703,9 @@ class ArgusV2(CubeSat):
                 ArgusV2Components.BURN_WIRE_YM,
             )
 
+            if self.__middleware_enabled:
+                burn_wires = Middleware(burn_wires)
+
             self.__burn_wires = burn_wires
             self.append_device(burn_wires)
         except Exception as e:
@@ -693,6 +726,9 @@ class ArgusV2(CubeSat):
                 ArgusV2Components.FUEL_GAUGE_I2C_ADDRESS,
             )
 
+            if self.__middleware_enabled:
+                fuel_gauge = Middleware(fuel_gauge)
+
             self.__fuel_gauge = fuel_gauge
             self.append_device(fuel_gauge)
         except Exception as e:
@@ -707,6 +743,9 @@ class ArgusV2(CubeSat):
     def __get_device_diagnostic_error(self, device) -> list[int]:  # noqa: C901
         """__get_device_diagnostic_error: Get the error code for a device that
         failed to initialize"""
+        # Convert device to the wrapped instance
+        if isinstance(device, Middleware):
+            device = device.get_instance()
 
         if device is self.RTC:
             return Errors.DIAGNOSTICS_ERROR_RTC

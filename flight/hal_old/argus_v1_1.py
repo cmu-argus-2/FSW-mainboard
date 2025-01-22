@@ -1,65 +1,73 @@
 """
 Author: Harry, Thomas, Ibrahima, Perrin
-Description: This file contains the definition of the ArgusV2 class and its associated interfaces and components.
+Description: This file contains the definition of the ArgusV1 class and its associated interfaces and components.
 """
 
 from sys import path
 
 import board
-import digitalio
+import neopixel
 from busio import I2C, SPI, UART
 from hal.cubesat import CubeSat
 from hal.drivers.middleware.errors import Errors
+from hal.drivers.middleware.middleware import Middleware
 from micropython import const
 from sdcardio import SDCard
 from storage import VfsFat, mount
 
 
-class ArgusV2Interfaces:
+class ArgusV1Interfaces:
     """
-    This class represents the interfaces used in the ArgusV2 module.
+    This class represents the interfaces used in the ArgusV1 module.
     """
 
-    I2C0_SDA = board.SDA0  # GPIO0
-    I2C0_SCL = board.SCL0  # GPIO1
-
-    # Line may not be connected, try except sequence
-    try:
-        I2C0 = I2C(I2C0_SCL, I2C0_SDA)
-    except Exception as e:
-        I2C0 = None
-
-    I2C1_SDA = board.SDA1  # GPIO2
-    I2C1_SCL = board.SCL1  # GPIO3
+    I2C1_SDA = board.SDA1  # PB12
+    I2C1_SCL = board.SCL1  # PB13
 
     # Line may not be connected, try except sequence
     try:
         I2C1 = I2C(I2C1_SCL, I2C1_SDA)
     except Exception as e:
+        print(e)
         I2C1 = None
 
-    JET_SPI_SCK = board.CLK1  # GPIO10
-    JET_SPI_MOSI = board.MOSI1  # GPIO11
-    JET_SPI_MISO = board.MISO1  # GPIO08
+    I2C2_SDA = board.SDA2  # PA22
+    I2C2_SCL = board.SCL2  # PA23
+
+    # Line may not be connected, try except sequence
+    try:
+        I2C2 = I2C(I2C2_SCL, I2C2_SDA)
+    except Exception as e:
+        print(e)
+        I2C2 = None
+
+    I2C3_SDA = board.SDA3  # PA16
+    I2C3_SCL = board.SCL3  # PA17
+
+    # Line may not be connected, try except sequence
+    try:
+        I2C3 = I2C(I2C3_SCL, I2C3_SDA)
+    except Exception as e:
+        print(e)
+        I2C3 = None
+
+    JET_SPI_SCK = board.JETSON_SCK  # PA5
+    JET_SPI_MOSI = board.JETSON_MOSI  # PA4
+    JET_SPI_MISO = board.JETSON_MISO  # PA6
     JET_SPI = SPI(JET_SPI_SCK, MOSI=JET_SPI_MOSI, MISO=JET_SPI_MISO)
 
-    SPI_SCK = board.CLK0  # GPIO18
-    SPI_MOSI = board.MOSI0  # GPIO19
-    SPI_MISO = board.MISO0  # GPIO16
+    SPI_SCK = board.SCK  # PA13
+    SPI_MOSI = board.MOSI  # PA12
+    SPI_MISO = board.MISO  # PA14
     SPI = SPI(SPI_SCK, MOSI=SPI_MOSI, MISO=SPI_MISO)
 
-    UART0_BAUD = const(9600)
-    UART0_TX = board.TX0  # GPIO12
-    UART0_RX = board.RX0  # GPIO13
-    UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD)
-
     UART1_BAUD = const(9600)
-    UART1_TX = board.TX1  # GPIO4
-    UART1_RX = board.RX1  # GPIO5
+    UART1_TX = board.TX  # PB2
+    UART1_RX = board.RX  # PB3
     UART1 = UART(UART1_TX, UART1_RX, baudrate=UART1_BAUD)
 
 
-class ArgusV2Components:
+class ArgusV1Components:
     """
     Represents the components used in the Argus V1 system.
 
@@ -68,208 +76,145 @@ class ArgusV2Components:
     light sensors, radio, and SD card.
     """
 
-    ########
-    # I2C0 #
-    ########
+    # I2C
 
-    # RTC
-    RTC_I2C = ArgusV2Interfaces.I2C0
-    RTC_I2C_ADDRESS = const(0x68)
+    # BOARD POWER MONITOR
+    BOARD_POWER_MONITOR_I2C = ArgusV1Interfaces.I2C1
+    # 94(clash with X+ solar charging power monitor)
+    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x4A)
+
+    # CHARGER
+    CHARGER_I2C = ArgusV1Interfaces.I2C1
+    CHARGER_I2C_ADDRESS = const(0x6B)
 
     # IMU
-    IMU_I2C = ArgusV2Interfaces.I2C0
-    IMU_I2C_ADDRESS = const(0x4A)
-
-    # BATTERY BOARD FUEL GAUGE
-    FUEL_GAUGE_I2C = ArgusV2Interfaces.I2C0
-    FUEL_GAUGE_I2C_ADDRESS = const(0x6C)
+    IMU_I2C = ArgusV1Interfaces.I2C1
+    IMU_I2C_ADDRESS = const(0x69)
 
     # JETSON POWER MONITOR
-    JETSON_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
+    JETSON_POWER_MONITOR_I2C = ArgusV1Interfaces.I2C1
     JETSON_POWER_MONITOR_I2C_ADDRESS = const(0x45)  # 8A
 
-    # XM TORQUE COILS
-    TORQUE_COILS_XM_I2C = ArgusV2Interfaces.I2C0
+    # X TORQUE COILS
+    TORQUE_COILS_X_I2C = ArgusV1Interfaces.I2C1
+    TORQUE_XP_I2C_ADDRESS = const(0x64)
     TORQUE_XM_I2C_ADDRESS = const(0x63)
 
-    # XM COIL DRIVER POWER MONITOR
-    TORQUE_XM_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
+    # X COIL DRIVER POWER MONITOR
+    TORQUE_X_POWER_MONITOR_I2C = ArgusV1Interfaces.I2C1
+    TORQUE_XP_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 84
     TORQUE_XM_POWER_MONITOR_I2C_ADDRESS = const(0x40)  # 80
 
-    # XM SOLAR CHARGING POWER MONITOR
-    SOLAR_CHARGING_XM_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
+    # X SOLAR CHARGING POWER MONITOR
+    SOLAR_CHARGING_X_POWER_MONITOR_I2C = ArgusV1Interfaces.I2C1
+    SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS = const(0x49)  # 92
     SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS = const(0x48)  # 90
 
-    # XM LIGHT SENSOR
-    LIGHT_SENSOR_XM_I2C = ArgusV2Interfaces.I2C0
+    # X LIGHT SENSOR
+    LIGHT_SENSOR_X_I2C = ArgusV1Interfaces.I2C1
+    LIGHT_SENSOR_XP_I2C_ADDRESS = const(0x45)
     LIGHT_SENSOR_XM_I2C_ADDRESS = const(0x44)
 
-    # YM TORQUE COILS
-    TORQUE_COILS_YM_I2C = ArgusV2Interfaces.I2C0
-    TORQUE_YM_I2C_ADDRESS = const(0x64)
+    # BATTERY BOARD FUEL GAUGE
+    FUEL_GAUGE_I2C = ArgusV1Interfaces.I2C2
+    FUEL_GAUGE_I2C_ADDRESS = const(0x6C)
+
+    # Y TORQUE COILS
+    TORQUE_COILS_Y_I2C = ArgusV1Interfaces.I2C2
+    TORQUE_YP_I2C_ADDRESS = const(0x64)
+    TORQUE_YM_I2C_ADDRESS = const(0x63)
 
     # Y COIL DRIVER POWER MONITOR
-    TORQUE_YM_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
-    TORQUE_YM_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 80
+    TORQUE_Y_POWER_MONITOR_I2C = ArgusV1Interfaces.I2C2
+    TORQUE_YP_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 84
+    TORQUE_YM_POWER_MONITOR_I2C_ADDRESS = const(0x40)  # 80
 
     # Y SOLAR CHARGING POWER MONITOR
-    SOLAR_CHARGING_YM_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
-    SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS = const(0x49)  # 90
+    SOLAR_CHARGING_Y_POWER_MONITOR_I2C = ArgusV1Interfaces.I2C2
+    SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS = const(0x49)  # 92
+    SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS = const(0x48)  # 90
 
     # Y LIGHT SENSOR
-    LIGHT_SENSOR_YM_I2C = ArgusV2Interfaces.I2C0
-    LIGHT_SENSOR_YM_I2C_ADDRESS = const(0x45)
+    LIGHT_SENSOR_Y_I2C = ArgusV1Interfaces.I2C2
+    LIGHT_SENSOR_YP_I2C_ADDRESS = const(0x45)
+    LIGHT_SENSOR_YM_I2C_ADDRESS = const(0x44)
+
+    # RTC
+    RTC_I2C = ArgusV1Interfaces.I2C3
+    RTC_I2C_ADDRESS = const(0x68)
 
     # Z TORQUE COILS
-    TORQUE_COILS_ZP_I2C = ArgusV2Interfaces.I2C0
+    TORQUE_COILS_Z_I2C = ArgusV1Interfaces.I2C3
     TORQUE_ZP_I2C_ADDRESS = const(0x64)
+    TORQUE_ZM_I2C_ADDRESS = const(0x63)
 
     # Z COIL DRIVER POWER MONITOR
-    TORQUE_ZP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
+    TORQUE_Z_POWER_MONITOR_I2C = ArgusV1Interfaces.I2C3
     TORQUE_ZP_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 84
+    TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS = const(0x40)  # 80
 
     # ZP SOLAR CHARGING POWER MONITOR
-    SOLAR_CHARGING_ZP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
+    SOLAR_CHARGING_Z_POWER_MONITOR_I2C = ArgusV1Interfaces.I2C3
     SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS = const(0x4A)  # 94
 
+    # ZM LIGHT SENSOR
+    LIGHT_SENSOR_Z_I2C = ArgusV1Interfaces.I2C3
+    LIGHT_SENSOR_ZM_I2C_ADDRESS = const(0x44)  # Conflict with ZP
+
     # ZP SUN SENSOR
-    SUN_SENSOR_ZP_I2C = ArgusV2Interfaces.I2C0
+    SUN_SENSOR_ZP_I2C = ArgusV1Interfaces.I2C3
     SUN_SENSOR_ZP1_I2C_ADDRESS = const(0x44)  # Conflict with ZM
     SUN_SENSOR_ZP2_I2C_ADDRESS = const(0x45)
     SUN_SENSOR_ZP3_I2C_ADDRESS = const(0x46)
     SUN_SENSOR_ZP4_I2C_ADDRESS = const(0x47)
 
-    ########
-    # I2C1 #
-    ########
-
-    # LORA POWER MONITOR
-    RADIO_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    RADIO_POWER_MONITOR_I2C_ADDRESS = const(0x42)
-
-    # USB CHARGER
-    CHARGER_I2C = ArgusV2Interfaces.I2C1
-    CHARGER_I2C_ADDRESS = const(0x6B)
-
-    # GPS POWER MONITOR
-    GPS_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    GPS_POWER_MONITOR_I2C_ADDRESS = const(0x40)
-
-    # BOARD POWER MONITOR
-    BOARD_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x48)
-
-    # CAMERA
-
-    # X TORQUE COILS
-    TORQUE_COILS_XP_I2C = ArgusV2Interfaces.I2C1
-    TORQUE_XP_I2C_ADDRESS = const(0x64)
-
-    # X COIL DRIVER POWER MONITOR
-    TORQUE_XP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    TORQUE_XP_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 84
-
-    # X SOLAR CHARGING POWER MONITOR
-    SOLAR_CHARGING_XP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS = const(0x49)  # 92
-
-    # X LIGHT SENSOR
-    LIGHT_SENSOR_XP_I2C = ArgusV2Interfaces.I2C1
-    LIGHT_SENSOR_XP_I2C_ADDRESS = const(0x45)
-
-    # Y TORQUE COILS
-    TORQUE_COILS_YP_I2C = ArgusV2Interfaces.I2C1
-    TORQUE_YP_I2C_ADDRESS = const(0x64)
-
-    # Y COIL DRIVER POWER MONITOR
-    TORQUE_YP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    TORQUE_YP_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 84
-
-    # Y SOLAR CHARGING POWER MONITOR
-    SOLAR_CHARGING_YP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS = const(0x49)  # 92
-
-    # Y LIGHT SENSOR
-    LIGHT_SENSOR_YP_I2C = ArgusV2Interfaces.I2C1
-    LIGHT_SENSOR_YP_I2C_ADDRESS = const(0x45)
-
-    # Z TORQUE COILS
-    TORQUE_COILS_ZM_I2C = ArgusV2Interfaces.I2C1
-    TORQUE_ZM_I2C_ADDRESS = const(0x63)
-
-    # Z COIL DRIVER POWER MONITOR
-    TORQUE_ZM_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS = const(0x40)  # 80
-
-    # ZM LIGHT SENSOR
-    LIGHT_SENSOR_ZM_I2C = ArgusV2Interfaces.I2C1
-    LIGHT_SENSOR_ZM_I2C_ADDRESS = const(0x44)  # Conflict with ZP
-
-    ########
-    # SPI0 #
-    ########
-
-    # SD CARD
-    SD_CARD_SPI = ArgusV2Interfaces.SPI
-    SD_CARD_CS = board.SD_CS  # GPIO26_ADC0
-    SD_BAUD = const(4000000)  # 4 MHz
+    # GPS
+    GPS_UART = ArgusV1Interfaces.UART1
+    GPS_ENABLE = board.GPS_EN  # PB1
 
     # RADIO
-    RADIO_SPI = ArgusV2Interfaces.SPI
-    RADIO_CS = board.LORA_CS  # GPIO17
-    RADIO_RESET = board.LORA_nRST  # GPIO21
-    RADIO_ENABLE = board.LORA_EN  # GPIO28_ADC2
-    RADIO_TX_EN = board.LORA_TX_EN  # GPIO22
-    RADIO_RX_EN = board.LORA_RX_EN  # GPIO20
-    RADIO_BUSY = board.LORA_BUSY  # GPIO23
-    RADIO_IRQ = board.GPS_EN  # GPIO27_ADC1
+    RADIO_SPI = ArgusV1Interfaces.SPI
+    # RADIO_CS = board.RF1_CS
+    # RADIO_RESET = board.RF1_RST
+    # RADIO_ENABLE = board.EN_RF
+    # RADIO_DIO0 = board.RF1_IO0
     # RADIO_FREQ = 915.6
 
-    ########
-    # SPI1 #
-    ########
-
-    # PAYLOAD(JETSON)
-    PAYLOAD_SPI = ArgusV2Interfaces.JET_SPI
-    PAYLOAD_CS = board.JETSON_CS  # GPIO9
-    PAYLOAD_ENABLE = board.JETSON_EN  # GPIO24
-
-    #########
-    # UART0 #
-    #########
-
-    # GPS
-    GPS_UART = ArgusV2Interfaces.UART0
-    GPS_ENABLE = board.GPS_EN  # GPIO27_ADC1
-
-    #########
-    # UART1 #
-    #########
-
-    # RS485
-
-    ########
-    # OLD #
-    ########
+    # SD CARD
+    SD_CARD_SPI = ArgusV1Interfaces.SPI
+    SD_CARD_CS = board.SD_CS  # PA27
+    SD_BAUD = const(4000000)  # 4 MHz
 
     # BURN WIRES
-    # BURN_WIRE_ENABLE = board.RELAY_A
-    # BURN_WIRE_XP = board.BURN1
-    # BURN_WIRE_XM = board.BURN2
-    # BURN_WIRE_YP = board.BURN3
-    # BURN_WIRE_YM = board.BURN4
+    BURN_WIRE_ENABLE = board.RELAY_A
+    BURN_WIRE_XP = board.BURN1
+    BURN_WIRE_XM = board.BURN2
+    BURN_WIRE_YP = board.BURN3
+    BURN_WIRE_YM = board.BURN4
+
+    # NEOPIXEL
+    NEOPIXEL_SDA = board.NEOPIXEL
+    NEOPIXEL_N = const(1)  # Number of neopixels in chain
+    NEOPIXEL_BRIGHTNESS = 0.2
+
+    # PAYLOAD
+    PAYLOAD_SPI = ArgusV1Interfaces.JET_SPI
+    PAYLOAD_CS = board.JETSON_CS
+    PAYLOAD_ENABLE = board.JETSON_EN
 
     # VFS
     VFS_MOUNT_POINT = "/sd"
 
-    LIGHT_SENSOR_CONVERSION_TIME = 0b0000
 
+class ArgusV1(CubeSat):
+    """ArgusV1: Represents the Argus V1 CubeSat."""
 
-class ArgusV2(CubeSat):
-    """ArgusV2: Represents the Argus V2 CubeSat."""
+    def __init__(self, enable_middleware: bool = False, debug: bool = False):
+        """__init__: Initializes the Argus V1 CubeSat.
 
-    def __init__(self, debug: bool = False):
-        """__init__: Initializes the Argus V2 CubeSat."""
+        :param enable_middleware: Enable middleware for the Argus V1 CubeSat
+        """
+        self.__middleware_enabled = enable_middleware
         self.__debug = debug
 
         super().__init__()
@@ -294,12 +239,12 @@ class ArgusV2(CubeSat):
         error_list.append(self.__imu_boot())
         error_list.append(self.__rtc_boot())
         # error_list.append(self.__gps_boot())
-        error_list.append(self.__radio_boot())
         error_list.append(self.__power_monitor_boot())
-        # error_list.append(self.__fuel_gauge_boot)
         error_list.append(self.__charger_boot())
         # error_list.append(self.__torque_drivers_boot())
         # error_list.append(self.__light_sensors_boot())  # light + sun sensors
+        # error_list.append(self.__radio_boot())
+        error_list.append(self.__neopixel_boot())
         # error_list.append(self.__burn_wire_boot())
 
         error_list = [error for error in error_list if error != Errors.NOERROR]
@@ -329,7 +274,10 @@ class ArgusV2(CubeSat):
         try:
             from hal.drivers.gps import GPS
 
-            gps1 = GPS(ArgusV2Components.GPS_UART, ArgusV2Components.GPS_ENABLE)
+            gps1 = GPS(ArgusV1Components.GPS_UART, ArgusV1Components.GPS_ENABLE)
+
+            if self.__middleware_enabled:
+                gps1 = Middleware(gps1)
 
             self.__gps = gps1
             self.__device_list.append(gps1)
@@ -348,53 +296,51 @@ class ArgusV2(CubeSat):
         """
 
         locations = {
-            "BOARD": [ArgusV2Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.BOARD_POWER_MONITOR_I2C],
-            "RADIO": [ArgusV2Components.RADIO_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.RADIO_POWER_MONITOR_I2C],
-            # "GPS": [ArgusV2Components.GPS_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.GPS_POWER_MONITOR_I2C],
-            # "JETSON": [ArgusV2Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.JETSON_POWER_MONITOR_I2C],
+            "BOARD": [ArgusV1Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV1Components.BOARD_POWER_MONITOR_I2C],
+            # "JETSON": [ArgusV1Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV1Components.JETSON_POWER_MONITOR_I2C],
             # "TORQUE_XP": [
-            #     ArgusV2Components.TORQUE_XP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.TORQUE_XP_POWER_MONITOR_I2C,
+            #     ArgusV1Components.TORQUE_XP_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.TORQUE_X_POWER_MONITOR_I2C,
             # ],
             # "TORQUE_XM": [
-            #     ArgusV2Components.TORQUE_XM_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.TORQUE_XM_POWER_MONITOR_I2C,
+            #     ArgusV1Components.TORQUE_XM_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.TORQUE_X_POWER_MONITOR_I2C,
             # ],
             # "TORQUE_YP": [
-            #     ArgusV2Components.TORQUE_YP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.TORQUE_YP_POWER_MONITOR_I2C,
+            #     ArgusV1Components.TORQUE_YP_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.TORQUE_Y_POWER_MONITOR_I2C,
             # ],
             # "TORQUE_YM": [
-            #     ArgusV2Components.TORQUE_YM_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.TORQUE_YM_POWER_MONITOR_I2C,
+            #     ArgusV1Components.TORQUE_YM_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.TORQUE_Y_POWER_MONITOR_I2C,
             # ],
             # "TORQUE_ZP": [
-            #     ArgusV2Components.TORQUE_ZP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.TORQUE_ZP_POWER_MONITOR_I2C,
+            #     ArgusV1Components.TORQUE_ZP_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.TORQUE_Z_POWER_MONITOR_I2C,
             # ],
             # "TORQUE_ZM": [
-            #     ArgusV2Components.TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.TORQUE_ZM_POWER_MONITOR_I2C,
+            #     ArgusV1Components.TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.TORQUE_Z_POWER_MONITOR_I2C,
             # ],
             # "SOLAR_XP": [
-            #     ArgusV2Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C,
+            #     ArgusV1Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.SOLAR_CHARGING_X_POWER_MONITOR_I2C,
             # ],
             # "SOLAR_XM": [
-            #     ArgusV2Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C,
+            #     ArgusV1Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.SOLAR_CHARGING_X_POWER_MONITOR_I2C,
             # ],
             # "SOLAR_YP": [
-            #     ArgusV2Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C,
+            #     ArgusV1Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.SOLAR_CHARGING_Y_POWER_MONITOR_I2C,
             # ],
             # "SOLAR_YM": [
-            #     ArgusV2Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C,
+            #     ArgusV1Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.SOLAR_CHARGING_Y_POWER_MONITOR_I2C,
             # ],
             # "SOLAR_ZP": [
-            #     ArgusV2Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C,
+            #     ArgusV1Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS,
+            #     ArgusV1Components.SOLAR_CHARGING_Z_POWER_MONITOR_I2C,
             # ],
         }
 
@@ -407,6 +353,9 @@ class ArgusV2(CubeSat):
                 address = busAndAddress[0]
                 bus = busAndAddress[1]
                 power_monitor = ADM1176(bus, address)
+
+                if self.__middleware_enabled:
+                    power_monitor = Middleware(power_monitor)
 
                 self.__power_monitors[location] = power_monitor
                 self.__device_list.append(power_monitor)
@@ -426,16 +375,18 @@ class ArgusV2(CubeSat):
         :return: Error code if the IMU failed to initialize
         """
         try:
-            # from hal.drivers.bno08x_i2c import BNO08X_I2C
-            # TODO: Modify HAL for getting raw values from the IMU
-            from hal.drivers.bno085 import BNO085, BNO_REPORT_UNCAL_GYROSCOPE, BNO_REPORT_UNCAL_MAGNETOMETER
+            from hal.drivers.bmx160 import BMX160
 
-            imu = BNO085(ArgusV2Components.IMU_I2C, ArgusV2Components.IMU_I2C_ADDRESS)
-            imu.enable_feature(BNO_REPORT_UNCAL_MAGNETOMETER)
-            imu.enable_feature(BNO_REPORT_UNCAL_GYROSCOPE)
+            imu = BMX160(
+                ArgusV1Components.IMU_I2C,
+                ArgusV1Components.IMU_I2C_ADDRESS,
+            )
+
+            if self.__middleware_enabled:
+                imu = Middleware(imu)
 
             self.__imu = imu
-            self.__imu_temp_flag = False
+            self.__imu_temp_flag = True
             self.__device_list.append(imu)
         except Exception as e:
             if self.__debug:
@@ -454,9 +405,12 @@ class ArgusV2(CubeSat):
             from hal.drivers.bq25883 import BQ25883
 
             charger = BQ25883(
-                ArgusV2Components.CHARGER_I2C,
-                ArgusV2Components.CHARGER_I2C_ADDRESS,
+                ArgusV1Components.CHARGER_I2C,
+                ArgusV1Components.CHARGER_I2C_ADDRESS,
             )
+
+            if self.__middleware_enabled:
+                charger = Middleware(charger)
 
             self.__charger = charger
             self.__device_list.append(charger)
@@ -474,12 +428,12 @@ class ArgusV2(CubeSat):
         :return: List of error codes for each torque driver in the order of directions
         """
         directions = {
-            "XP": [ArgusV2Components.TORQUE_XP_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_XP_I2C],
-            "XM": [ArgusV2Components.TORQUE_XM_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_XM_I2C],
-            "YP": [ArgusV2Components.TORQUE_YP_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_YP_I2C],
-            "YM": [ArgusV2Components.TORQUE_YM_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_YM_I2C],
-            "ZP": [ArgusV2Components.TORQUE_ZP_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_ZP_I2C],
-            "ZM": [ArgusV2Components.TORQUE_ZM_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_ZM_I2C],
+            "XP": [ArgusV1Components.TORQUE_XP_I2C_ADDRESS, ArgusV1Components.TORQUE_COILS_X_I2C],
+            "XM": [ArgusV1Components.TORQUE_XM_I2C_ADDRESS, ArgusV1Components.TORQUE_COILS_X_I2C],
+            "YP": [ArgusV1Components.TORQUE_YP_I2C_ADDRESS, ArgusV1Components.TORQUE_COILS_Y_I2C],
+            "YM": [ArgusV1Components.TORQUE_YM_I2C_ADDRESS, ArgusV1Components.TORQUE_COILS_Y_I2C],
+            "ZP": [ArgusV1Components.TORQUE_ZP_I2C_ADDRESS, ArgusV1Components.TORQUE_COILS_Z_I2C],
+            "ZM": [ArgusV1Components.TORQUE_ZM_I2C_ADDRESS, ArgusV1Components.TORQUE_COILS_Z_I2C],
         }
 
         from hal.drivers.drv8830 import DRV8830
@@ -491,6 +445,9 @@ class ArgusV2(CubeSat):
                 address = busAndAddress[0]
                 bus = busAndAddress[1]
                 torque_driver = DRV8830(bus, address)
+
+                if self.__middleware_enabled:
+                    torque_driver = Middleware(torque_driver)
 
                 self.__torque_drivers[direction] = torque_driver
                 self.__device_list.append(torque_driver)
@@ -511,15 +468,15 @@ class ArgusV2(CubeSat):
         :return: List of error codes for each sensor in the order of directions
         """
         directions = {
-            "XP": [ArgusV2Components.LIGHT_SENSOR_XP_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_XP_I2C],
-            "XM": [ArgusV2Components.LIGHT_SENSOR_XM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_XM_I2C],
-            "YP": [ArgusV2Components.LIGHT_SENSOR_YP_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_YP_I2C],
-            "YM": [ArgusV2Components.LIGHT_SENSOR_YM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_YM_I2C],
-            "ZM": [ArgusV2Components.LIGHT_SENSOR_ZM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_ZM_I2C],
-            "ZP1": [ArgusV2Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
-            "ZP2": [ArgusV2Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
-            "ZP3": [ArgusV2Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
-            "ZP4": [ArgusV2Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
+            "XP": [ArgusV1Components.LIGHT_SENSOR_XP_I2C_ADDRESS, ArgusV1Components.LIGHT_SENSOR_X_I2C],
+            "XM": [ArgusV1Components.LIGHT_SENSOR_XM_I2C_ADDRESS, ArgusV1Components.LIGHT_SENSOR_X_I2C],
+            "YP": [ArgusV1Components.LIGHT_SENSOR_YP_I2C_ADDRESS, ArgusV1Components.LIGHT_SENSOR_Y_I2C],
+            "YM": [ArgusV1Components.LIGHT_SENSOR_YM_I2C_ADDRESS, ArgusV1Components.LIGHT_SENSOR_Y_I2C],
+            "ZM": [ArgusV1Components.LIGHT_SENSOR_ZM_I2C_ADDRESS, ArgusV1Components.LIGHT_SENSOR_Z_I2C],
+            "ZP1": [ArgusV1Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
+            "ZP2": [ArgusV1Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
+            "ZP3": [ArgusV1Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
+            "ZP4": [ArgusV1Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
         }
 
         from hal.drivers.opt4001 import OPT4001
@@ -533,8 +490,11 @@ class ArgusV2(CubeSat):
                 light_sensor = OPT4001(
                     bus,
                     address,
-                    conversion_time=ArgusV2Components.LIGHT_SENSOR_CONVERSION_TIME,
+                    conversion_time=ArgusV1Components.LIGHT_SENSOR_CONVERSION_TIME,
                 )
+
+                if self.__middleware_enabled:
+                    light_sensor = Middleware(light_sensor)
 
                 self.__light_sensors[direction] = light_sensor
                 self.__device_list.append(light_sensor)
@@ -555,45 +515,22 @@ class ArgusV2(CubeSat):
         :return: Error code if the radio failed to initialize
         """
         try:
-            from hal.drivers.sx126x import SX1262
+            from hal.drivers.rfm9x import RFM9x
 
-            # Enable power to the radio
-            radioEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_ENABLE)
-            radioEn.direction = digitalio.Direction.OUTPUT
-            radioEn.value = True
-
-            radio = SX1262(
-                spi_bus=ArgusV2Interfaces.SPI,
-                cs=ArgusV2Components.RADIO_CS,
-                irq=ArgusV2Components.RADIO_IRQ,
-                rst=ArgusV2Components.RADIO_RESET,
-                gpio=ArgusV2Components.RADIO_BUSY,
-                tx_en=ArgusV2Components.RADIO_TX_EN,
-                rx_en=ArgusV2Components.RADIO_RX_EN,
+            radio = RFM9x(
+                ArgusV1Components.RADIO_SPI,
+                ArgusV1Components.RADIO_CS,
+                ArgusV1Components.RADIO_DIO0,
+                ArgusV1Components.RADIO_RESET,
+                ArgusV1Components.RADIO_ENABLE,
+                ArgusV1Components.RADIO_FREQ,
             )
 
-            radio.begin(
-                freq=915.6,
-                bw=125,
-                sf=7,
-                cr=8,
-                syncWord=0x12,
-                power=22,
-                currentLimit=140.0,
-                preambleLength=8,
-                implicit=False,
-                implicitLen=0xFF,
-                crcOn=True,
-                txIq=False,
-                rxIq=False,
-                tcxoVoltage=1.7,
-                useRegulatorLDO=False,
-                blocking=True,
-            )
+            if self.__middleware_enabled:
+                radio = Middleware(radio)
 
             self.__radio = radio
             self.__device_list.append(radio)
-
         except Exception as e:
             if self.__debug:
                 raise e
@@ -608,9 +545,12 @@ class ArgusV2(CubeSat):
         :return: Error code if the RTC failed to initialize
         """
         try:
-            from hal.drivers.ds3231 import DS3231
+            from hal.drivers.pcf8523 import PCF8523
 
-            rtc = DS3231(ArgusV2Components.RTC_I2C, ArgusV2Components.RTC_I2C_ADDRESS)
+            rtc = PCF8523(ArgusV1Components.RTC_I2C, ArgusV1Components.RTC_I2C_ADDRESS)
+
+            if self.__middleware_enabled:
+                rtc = Middleware(rtc)
 
             self.__rtc = rtc
             self.__device_list.append(rtc)
@@ -622,13 +562,33 @@ class ArgusV2(CubeSat):
 
         return Errors.NOERROR
 
+    def __neopixel_boot(self) -> list[int]:
+        """neopixel_boot: Boot sequence for the neopixel"""
+        try:
+            np = neopixel.NeoPixel(
+                ArgusV1Components.NEOPIXEL_SDA,
+                ArgusV1Components.NEOPIXEL_N,
+                brightness=ArgusV1Components.NEOPIXEL_BRIGHTNESS,
+                pixel_order=neopixel.GRB,
+            )
+            self.__neopixel = np
+            self.__device_list.append(neopixel)
+            self.append_device(neopixel)
+        except Exception as e:
+            if self.__debug:
+                raise e
+
+            return Errors.NEOPIXEL_NOT_INITIALIZED
+
+        return Errors.NOERROR
+
     def __sd_card_boot(self) -> list[int]:
         """sd_card_boot: Boot sequence for the SD card"""
         try:
             sd_card = SDCard(
-                ArgusV2Components.SD_CARD_SPI,
-                ArgusV2Components.SD_CARD_CS,
-                ArgusV2Components.SD_BAUD,
+                ArgusV1Components.SD_CARD_SPI,
+                ArgusV1Components.SD_CARD_CS,
+                ArgusV1Components.SD_BAUD,
             )
             self.__sd_card = sd_card
             self.append_device(sd_card)
@@ -648,14 +608,16 @@ class ArgusV2(CubeSat):
         try:
             vfs = VfsFat(self.__sd_card)
 
-            mount(vfs, ArgusV2Components.VFS_MOUNT_POINT)
-            path.append(ArgusV2Components.VFS_MOUNT_POINT)
+            mount(vfs, ArgusV1Components.VFS_MOUNT_POINT)
+            path.append(ArgusV1Components.VFS_MOUNT_POINT)
 
-            path.append(ArgusV2Components.VFS_MOUNT_POINT)
+            path.append(ArgusV1Components.VFS_MOUNT_POINT)
             self.__vfs = vfs
         except Exception as e:
             if self.__debug:
                 raise e
+            raise e
+
             return Errors.VFS_NOT_INITIALIZED
 
         return Errors.NOERROR
@@ -666,12 +628,15 @@ class ArgusV2(CubeSat):
             from hal.drivers.burnwire import BurnWires
 
             burn_wires = BurnWires(
-                ArgusV2Components.BURN_WIRE_ENABLE,
-                ArgusV2Components.BURN_WIRE_XP,
-                ArgusV2Components.BURN_WIRE_XM,
-                ArgusV2Components.BURN_WIRE_YP,
-                ArgusV2Components.BURN_WIRE_YM,
+                ArgusV1Components.BURN_WIRE_ENABLE,
+                ArgusV1Components.BURN_WIRE_XP,
+                ArgusV1Components.BURN_WIRE_XM,
+                ArgusV1Components.BURN_WIRE_YP,
+                ArgusV1Components.BURN_WIRE_YM,
             )
+
+            if self.__middleware_enabled:
+                burn_wires = Middleware(burn_wires)
 
             self.__burn_wires = burn_wires
             self.append_device(burn_wires)
@@ -689,9 +654,12 @@ class ArgusV2(CubeSat):
             from hal.drivers.max17205 import MAX17205
 
             fuel_gauge = MAX17205(
-                ArgusV2Components.FUEL_GAUGE_I2C,
-                ArgusV2Components.FUEL_GAUGE_I2C_ADDRESS,
+                ArgusV1Components.FUEL_GAUGE_I2C,
+                ArgusV1Components.FUEL_GAUGE_I2C_ADDRESS,
             )
+
+            if self.__middleware_enabled:
+                fuel_gauge = Middleware(fuel_gauge)
 
             self.__fuel_gauge = fuel_gauge
             self.append_device(fuel_gauge)
@@ -707,11 +675,18 @@ class ArgusV2(CubeSat):
     def __get_device_diagnostic_error(self, device) -> list[int]:  # noqa: C901
         """__get_device_diagnostic_error: Get the error code for a device that
         failed to initialize"""
+        # Convert device to the wrapped instance
+        if isinstance(device, Middleware):
+            device = device.get_instance()
 
         if device is self.RTC:
             return Errors.DIAGNOSTICS_ERROR_RTC
         elif device is self.GPS:
             return Errors.DIAGNOSTICS_ERROR_GPS
+        elif device is self.BOARD_POWER_MONITOR:
+            return Errors.DIAGNOSTICS_ERROR_BOARD_POWER_MONITOR
+        elif device is self.JETSON_POWER_MONITOR:
+            return Errors.DIAGNOSTICS_ERROR_JETSON_POWER_MONITOR
         elif device is self.IMU:
             return Errors.DIAGNOSTICS_ERROR_IMU
         elif device is self.CHARGER:
@@ -726,8 +701,20 @@ class ArgusV2(CubeSat):
             return Errors.DIAGNOSTICS_ERROR_TORQUE_YM
         elif device is self.__torque_z_driver:
             return Errors.DIAGNOSTICS_ERROR_TORQUE_Z
+        elif device is self.LIGHT_SENSOR_XP:
+            return Errors.DIAGNOSTICS_ERROR_LIGHT_SENSOR_XP
+        elif device is self.LIGHT_SENSOR_XM:
+            return Errors.DIAGNOSTICS_ERROR_LIGHT_SENSOR_XM
+        elif device is self.LIGHT_SENSOR_YP:
+            return Errors.DIAGNOSTICS_ERROR_LIGHT_SENSOR_YP
+        elif device is self.LIGHT_SENSOR_YM:
+            return Errors.DIAGNOSTICS_ERROR_LIGHT_SENSOR_YM
+        elif device is self.LIGHT_SENSOR_ZM:
+            return Errors.DIAGNOSTICS_ERROR_LIGHT_SENSOR_ZM
         elif device is self.RADIO:
             return Errors.DIAGNOSTICS_ERROR_RADIO
+        elif device is self.NEOPIXEL:
+            return Errors.DIAGNOSTICS_ERROR_NEOPIXEL
         elif device is self.BURN_WIRES:
             return Errors.DIAGNOSTICS_ERROR_BURN_WIRES
         else:
