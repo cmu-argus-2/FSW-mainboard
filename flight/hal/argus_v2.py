@@ -243,7 +243,7 @@ class ArgusV2Components:
 
     # GPS
     GPS_UART = ArgusV2Interfaces.UART0
-    GPS_ENABLE = board.GPS_EN  # GPIO27_ADC1
+    # GPS_ENABLE = board.GPS_EN  # GPIO27_ADC1
 
     #########
     # UART1 #
@@ -336,7 +336,9 @@ class ArgusV2(CubeSat):
         try:
             from hal.drivers.gps import GPS
 
-            gps1 = GPS(ArgusV2Components.GPS_UART, ArgusV2Components.GPS_ENABLE)
+            # For v2 mainboards, GPS_EN is used for RADIO_IRQ
+            # Boards should be modified to have GPS always on
+            gps1 = GPS(ArgusV2Components.GPS_UART, None)
 
             if self.__middleware_enabled:
                 gps1 = Middleware(gps1)
