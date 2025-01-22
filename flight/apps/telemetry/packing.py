@@ -82,6 +82,8 @@ class TelemetryPacker:
         if not cls._TM_AVAILABLE:
             cls._TM_AVAILABLE = True
 
+        cls._FRAME[0] = const(0x46)  # message ID for tm_heartbeat
+
         ############ CDH fields ############
         if DH.data_process_exists("cdh"):
 
@@ -361,13 +363,16 @@ class TelemetryPacker:
     @classmethod
     def pack_tm_hal(cls):
         # TODO: CDH, HAL status, error codes, EPS
+        cls._FRAME[0] = const(0x47)  # message ID for tm_hal
         pass
 
     @classmethod
     def pack_tm_storage(cls):
         # TODO: CDH, DH snapshot
+        cls._FRAME[0] = const(0x48)  # message ID for tm_storage
         pass
 
     @classmethod
     def pack_tm_payload(cls):
+        cls._FRAME[0] = const(0x49)  # message ID for tm_payload
         pass

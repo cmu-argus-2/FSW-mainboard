@@ -76,8 +76,8 @@ class Task(TemplateTask):
                 # CommandQueue.push_command(0x02, [])
 
                 # Testing single-element queue
-                #CommandQueue.overwrite_command(0x01,[STATES.LOW_POWER])
-                #CommandQueue.overwrite_command(0x01,[STATES.DETUMBLING]) #should only execute this with overwrite
+                CommandQueue.overwrite_command(0x01,[STATES.LOW_POWER, 0x00])
+                CommandQueue.overwrite_command(0x01,[STATES.DETUMBLING, 0x00]) #should only execute this with overwrite
 
 
         else:  # Run for all other states
