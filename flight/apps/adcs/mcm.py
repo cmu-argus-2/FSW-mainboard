@@ -6,7 +6,6 @@ controller reference handler, and magnetorquer voltage allocator.
 Author(s): Derek Fan
 """
 
-import copy
 from typing import Tuple
 
 from apps.adcs.consts import MagnetorquerConst, MCMConst, ModeConst, PhysicalConst
@@ -93,7 +92,7 @@ class MagneticCoilAllocator:
         "ZM": 0.0,
     }
 
-    mat = copy.deepcopy(MCMConst.ALLOC_MAT)
+    mat = MCMConst.ALLOC_MAT[:]
 
     _sat = SATELLITE
 
