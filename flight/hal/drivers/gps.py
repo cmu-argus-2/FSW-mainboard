@@ -1,14 +1,21 @@
-import time
-from typing import Optional
+try:
+    import time
+    from typing import Optional
 
-from busio import UART
-from digitalio import DigitalInOut
-from hal.drivers.middleware.errors import Errors
-from hal.drivers.middleware.generic_driver import Driver
-from micropython import const
+    from busio import UART
+    from digitalio import DigitalInOut
+    from hal.drivers.middleware.errors import Errors
+    from hal.drivers.middleware.generic_driver import Driver
+    from micropython import const
+except ImportError:
+    pass
 
 
-class GPS(Driver):
+EPOCH_YEAR = 1980
+EPOCH_MONTH = 1
+EPOCH_DAY = 5
+
+class GPS:
     def __init__(self, uart: UART, enable=None, debug: bool = False) -> None:
         self._uart = uart
         self.debug = debug
@@ -18,7 +25,30 @@ class GPS(Driver):
         self._msg_cs = 0
         self._payload = bytearray([0] * 59)
         self._nav_data = {}
-        self.parsed_data = {}
+
+        # TODO: Check the formats of these values as used in the FSW
+        # Initialize null starting values for GPS attributes
+        self.timestamp_utc = None  # UTC as a dictionary in the form {year, month, day, hour, minute, second}
+        self.message_id = None  # Message ID
+        self.fix_mode = None  # Fix mode as a text string
+        self.number_of_sv = None  # Number of satellites used in the solution
+        self.week = None  # The number of weeks since the GPS epoch
+        self.tow = None  # Time of week in 1/100 seconds [TODO: Check this]
+        self.latitude = None  # Latitude as a text string
+        self.longitude = None  # Longitude as a text string
+        self.ellipsoid_altitude = None  # Ellipsoid altitude in meters
+        self.mean_sea_level_altitude = None  # Mean sea level altitude in meters
+        self.gdop = None  # Geometric dilution of precision
+        self.pdop = None  # Position dilution of precision
+        self.hdop = None  # Horizontal dilution of precision
+        self.vdop = None  # Vertical dilution of precision
+        self.tdop = None  # Time dilution of precision
+        self.ecef_x = None  # ECEF X coordinate in meters
+        self.ecef_y = None  # ECEF Y coordinate in meters
+        self.ecef_z = None  # ECEF Z coordinate in meters
+        self.ecef_vx = None  # ECEF X velocity in meters per second
+        self.ecef_vy = None  # ECEF Y velocity in meters per second
+        self.ecef_vz = None  # ECEF Z velocity in meters per second
 
         # Don't care to enable the GPS module during initialization
         self._enable = enable
@@ -26,6 +56,23 @@ class GPS(Driver):
             self._enable = DigitalInOut(enable)
             self._enable.switch_to_output()
             self._enable = False
+
+
+        self.mock = True
+        # From app note:
+        # self.mock_message = (
+        # b"\xa0\xa1\x00\x3b\xa8\x02\x07\x08\x6a\x03\x21\x7a\x1f\x1b\x1f\x16\xf1\xb6\xe1"
+        # b"\x3c\x1c\x00\x00\x0f\x6f\x00\x00\x17\xb7\x01\x0d\x00\xe4\x00\x7e\x00\xbd\x00"
+        # b"\x8f\xf1\x97\x18\xd2\xe9\x88\x7d\x90\x1a\xfb\x26\xf7\x03\xF5\x09\xFE\x01\x79"
+        # b"\x7C\x4A\xFB\x9B\xA8\x40\x68\x0d\x0a"
+        # )
+        # From Ridge Test:
+        self.mock_message = (
+        b"\xa0\xa1\x00\x3b\xa8\x02\x0f\x09\x26\x01\x66\x7a\x4f\x18\x1e\xac\x4f\xd0\x71"
+        b"\x40\xae\x00\x00\x91\x87\x00\x00\x9e\x7f\x00\xb1\x00\x96\x00\x56\x00\x7b\x00"
+        b"\x5d\x05\x22\x92\x4e\xe3\x7e\x60\xe7\x18\x8b\x33\x6f\xff\xff\xff\xff\xff\xff"
+        b"\xff\xfe\x00\x00\x00\x00\xfd\x0d\x0a"
+        )
 
         super().__init__()
 
@@ -37,6 +84,13 @@ class GPS(Driver):
         if msg is None or len(msg) < 11:
             return False
 
+        if self.debug == True:
+            print(msg)
+
+        if self.mock:
+            msg = self.mock_message
+            print("Mock message: /n", msg)
+
         self._msg = [hex(i) for i in msg]
         self._payload_len = ((msg[2] & 0xFF) << 8) | msg[3]
         self._msg_id = msg[4]
@@ -45,7 +99,6 @@ class GPS(Driver):
 
         if self._msg_id != 0xA8:
             print("Invalid message ID, expected 0xA8, got: ", hex(self._msg_id))
-            # print("Message content: \n", self._msg)
             return False
 
         if self._payload_len != 59:
@@ -72,14 +125,8 @@ class GPS(Driver):
             "tow": (self._payload[5] << 24) | (self._payload[6] << 16) | (self._payload[7] << 8) | self._payload[8],
             "latitude": (self._payload[9] << 24) | (self._payload[10] << 16) | (self._payload[11] << 8) | self._payload[12],
             "longitude": (self._payload[13] << 24) | (self._payload[14] << 16) | (self._payload[15] << 8) | self._payload[16],
-            "ellipsoid_alt": (self._payload[17] << 24)
-            | (self._payload[18] << 16)
-            | (self._payload[19] << 8)
-            | self._payload[20],
-            "mean_sea_lvl_alt": (self._payload[21] << 24)
-            | (self._payload[22] << 16)
-            | (self._payload[23] << 8)
-            | self._payload[24],
+            "ellipsoid_alt": (self._payload[17] << 24) | (self._payload[18] << 16) | (self._payload[19] << 8) | self._payload[20],
+            "mean_sea_lvl_alt": (self._payload[21] << 24) | (self._payload[22] << 16) | (self._payload[23] << 8) | self._payload[24],
             "gdop": (self._payload[25] << 8) | self._payload[26],
             "pdop": (self._payload[27] << 8) | self._payload[28],
             "hdop": (self._payload[29] << 8) | self._payload[30],
@@ -93,10 +140,16 @@ class GPS(Driver):
             "ecef_vz": (self._payload[55] << 24) | (self._payload[56] << 16) | (self._payload[57] << 8) | self._payload[58],
         }
 
+        # Print the navigation data if debug is enabled line by line:
         if self.debug:
-            print("Nav data: \n", self._nav_data)
+            print("~~~~DEBUG~~~~")
+            print("Navigation Data:")
+            print("=" * 40)
+            for key, value in self._nav_data.items():
+                print(f"{str(key)}: {value}")
+            print("=" * 40)
 
-        _ = self.parse_data()
+        self.parse_data()
 
         return True
 
@@ -124,74 +177,7 @@ class GPS(Driver):
         passing it the same data"""
         return self._nav_data["fix_mode"] is not None and self._nav_data["fix_mode"] >= 2
 
-    def parse_data(self) -> dict:
-        if not self._nav_data:
-            return
-        fix = self.parse_fix_mode()
-        sv_count = self._nav_data["number_of_sv"]
-        gnss_week = self._nav_data["gps_week"]
-        tow = self.parse_tow()
-        lat = self.parse_lat()
-        lon = self.parse_lon()
-        elip_alt = self.parse_elip_alt()
-        msl_alt = self.parse_msl_alt()
-        gdop = self.parse_gdop()
-        pdop = self.parse_pdop()
-        hdop = self.parse_hdop()
-        vdop = self.parse_vdop()
-        tdop = self.parse_tdop()
-        ecef_x = self.parse_ecef_x()
-        ecef_y = self.parse_ecef_y()
-        ecef_z = self.parse_ecef_z()
-        ecef_vx = self.parse_ecef_vx()
-        ecef_vy = self.parse_ecef_vy()
-        ecef_vz = self.parse_ecef_vz()
-        # dt = self.gps_datetime(gnss_week, tow)
-
-        self.parsed_data = {
-            "message_id": self._nav_data["message_id"],
-            "fix_mode": fix,
-            "number_of_sv": sv_count,
-            "gps_week": gnss_week,
-            "tow": tow,
-            "latitude": lat,
-            "longitude": lon,
-            "ellipsoid_alt": elip_alt,
-            "mean_sea_lvl_alt": msl_alt,
-            "gdop": gdop,
-            "pdop": pdop,
-            "hdop": hdop,
-            "vdop": vdop,
-            "tdop": tdop,
-            "ecef_x": ecef_x,
-            "ecef_y": ecef_y,
-            "ecef_z": ecef_z,
-            "ecef_vx": ecef_vx,
-            "ecef_vy": ecef_vy,
-            "ecef_vz": ecef_vz,
-            # , "datetime": dt
-        }
-        return self.parsed_data
-
-    def parse_tow(self) -> int:
-        # Convert from 0.01 seconds to seconds
-        total_seconds = self._nav_data["tow"] / 100
-
-        # Calculate day of the week
-        days_of_week = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-        day_index = int(total_seconds // 86400) % 7
-        day_of_week = days_of_week[day_index]
-
-        # Calculate hours, minutes, and seconds
-        hours = int((total_seconds % 86400) // 3600)
-        minutes = int((total_seconds % 3600) // 60)
-        seconds = total_seconds % 60
-
-        # Format the output
-        time_of_week = f"{day_of_week}, {hours:02}:{minutes:02}:{seconds:05.2f} (hh:mm:ss.ss)"
-        return time_of_week
-
-    def parse_lat(self) -> float:
+    def parse_lat(self) -> str:
         # Convert from scale 1/1e-7 to decimal degrees
         latitude = self._nav_data["latitude"] * 1e-7
 
@@ -208,9 +194,21 @@ class GPS(Driver):
         latitude_str = f"{degrees}° {minutes}' {seconds:.2f}\" {direction}"
         return latitude_str
 
-    def parse_lon(self) -> float:
-        # Convert from scale 1/1e-7 to decimal degrees
-        longitude = self._nav_data["longitude"] * 1e-7
+    def parse_lon(self) -> str:
+        # Convert raw longitude as signed 32-bit integer
+        raw_longitude = self._nav_data["longitude"]
+        if raw_longitude > 0x7FFFFFFF:  # Handle 32-bit signed conversion
+            raw_longitude -= 0x100000000
+
+        if self.debug:
+            print("Raw Longitude:", raw_longitude)
+
+        # Convert to decimal degrees
+        longitude = raw_longitude / 1e7
+
+        # Normalize longitude to -180 to 180 range (if needed)
+        if longitude > 180:
+            longitude -= 360
 
         # Determine East or West
         direction = "E" if longitude >= 0 else "W"
@@ -224,6 +222,7 @@ class GPS(Driver):
         # Format output
         longitude_str = f"{degrees}° {minutes}' {seconds:.2f}\" {direction}"
         return longitude_str
+
 
     def parse_elip_alt(self) -> float:
         # Convert from hundredths of a meter to meters
@@ -304,25 +303,127 @@ class GPS(Driver):
         speed_meters = f"{speed_meters:.2f} m/s"
         return speed_meters
 
-    # def gps_datetime(gps_week: int, tow: int) -> float:
-    #     """Get the unix time from GPS week and TOW (time of week)."""
-    #     usec = tow % 100 * 1000
-    #     # 86400 is number of seconds in a day
-    #     sec = (tow / 100) % 86400
-    #     day = ((tow / 100) / 86400) + (gps_week * 7)
-    #     dt = EPOCH + timedelta(days=day, seconds=sec, microseconds=usec)
-    #     return dt.timestamp()
+    def gps_datetime(self, gps_week: int, tow: int) -> dict:
+        """Get the date and time as a dictionary from GPS week and TOW (time of week in 1/100 seconds)."""
 
-    def print_parsed_data(self):
-        print("Parsed Data:")
-        print("=" * 40)
-        for key, value in self.parsed_data.items():
-            print(f"{str(key)}: {value}")
-        print("=" * 40)
+        # Number of days in each month (non-leap year)
+        days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-    def get_parsed_data(self) -> dict:
-        """Returns the parsed data as a dictionary."""
-        return self.parsed_data
+        # Helper function to check for leap years
+        def is_leap_year(year):
+            return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
+        # Calculate the total number of days from GPS weeks
+        total_days = gps_week * 7
+
+        # Start from the epoch date and add total days
+        year = EPOCH_YEAR
+        month = EPOCH_MONTH
+        day = EPOCH_DAY
+
+        while total_days > 0:
+            # Adjust days in February for leap years
+            if is_leap_year(year):
+                days_in_month[1] = 29
+            else:
+                days_in_month[1] = 28
+
+            # Check if remaining days fit in the current month
+            if total_days >= (days_in_month[month - 1] - day + 1):
+                total_days -= days_in_month[month - 1] - day + 1
+                day = 1
+                month += 1
+                if month > 12:
+                    month = 1
+                    year += 1
+            else:
+                day += total_days
+                total_days = 0
+
+        # Convert days to seconds for Unix time calculation
+        days_since_unix_epoch = (year - 1970) * 365 + sum(is_leap_year(y) for y in range(1970, year))
+        for m in range(1, month):
+            days_since_unix_epoch += days_in_month[m - 1]
+        days_since_unix_epoch += day - 1
+
+        # Convert days to seconds
+        unix_time = int(days_since_unix_epoch) * int(86400)
+
+        # Add TOW (convert from 1/100 sec to seconds)
+        print("TOW:", tow)
+        unix_time += tow / 100
+
+        # Calculate hours, minutes, and seconds
+        seconds_in_day = unix_time % 86400
+        hours = int(seconds_in_day // 3600)
+        minutes = int((seconds_in_day % 3600) // 60)
+        seconds = seconds_in_day % 60
+
+        if self.debug:
+            print("Year:    ", year)
+            print("Month:   ", month)
+            print("Day:     ", day)
+            print("Hours:   ", hours)
+            print("Minutes: ", minutes)
+            print("Seconds: ", seconds)
+
+        # Return the date and time as a dictionary
+        return {"year": year, "month": month, "day": day, "hour": hours, "minute": minutes, "second": round(seconds, 2)}
+
+    def parse_data(self) -> dict:
+        if not self._nav_data:
+            return
+        self.message_id = self._nav_data["message_id"]
+        self.fix_mode = self.parse_fix_mode()
+        self.number_of_sv = self._nav_data["number_of_sv"]
+        self.week = self._nav_data["gps_week"]
+        self.tow = self._nav_data["tow"]
+        self.latitude = self.parse_lat()
+        self.longitude = self.parse_lon()
+        self.ellipsoid_altitude = self.parse_elip_alt()
+        self.mean_sea_level_altitude = self.parse_msl_alt()
+        self.gdop = self.parse_gdop()
+        self.pdop = self.parse_pdop()
+        self.hdop = self.parse_hdop()
+        self.vdop = self.parse_vdop()
+        self.tdop = self.parse_tdop()
+        self.ecef_x = self.parse_ecef_x()
+        self.ecef_y = self.parse_ecef_y()
+        self.ecef_z = self.parse_ecef_z()
+        self.ecef_vx = self.parse_ecef_vx()
+        self.ecef_vy = self.parse_ecef_vy()
+        self.ecef_vz = self.parse_ecef_vz()
+        self.timestamp_utc = self.gps_datetime(self.week, self._nav_data["tow"])
+
+    def print_parsed_msg(self):
+        print("Parsed Message:")
+        print("=" * 40)
+        print(f"Message ID:                 {self.message_id}")
+        print(f"Fix Mode:                   {self.fix_mode}")
+        print(f"Number of Satellites:       {self.number_of_sv}")
+        print(f"GPS Week:                   {self.week}")
+        print(f"Time of Week:               {self.tow}")
+        print(f"Latitude:                   {self.latitude}")
+        print(f"Longitude:                  {self.longitude}")
+        print(f"Ellipsoid Altitude:         {self.ellipsoid_altitude}")
+        print(f"Mean Sea Level Altitude:    {self.mean_sea_level_altitude}")
+        print(f"GDOP:                       {self.gdop}")
+        print(f"PDOP:                       {self.pdop}")
+        print(f"HDOP:                       {self.hdop}")
+        print(f"VDOP:                       {self.vdop}")
+        print(f"TDOP:                       {self.tdop}")
+        print(f"ECEF X:                     {self.ecef_x}")
+        print(f"ECEF Y:                     {self.ecef_y}")
+        print(f"ECEF Z:                     {self.ecef_z}")
+        print(f"ECEF Vx:                    {self.ecef_vx}")
+        print(f"ECEF Vy:                    {self.ecef_vy}")
+        print(f"ECEF Vz:                    {self.ecef_vz}")
+        print(
+              f"Timestamp (UTC):            {self.timestamp_utc.get('year')}-{self.timestamp_utc.get('month')}-",
+              f"{self.timestamp_utc.get('day')} {self.timestamp_utc.get('hour')}:",
+              f"{self.timestamp_utc.get('minute')}:{self.timestamp_utc.get('second')}",
+        )
+        print("=" * 40)
 
     def get_nav_data(self) -> dict:
         """Returns the current navigation data as a dictionary."""
@@ -331,6 +432,10 @@ class GPS(Driver):
     def write(self, bytestr) -> Optional[int]:
         return self._uart.write(bytestr)
 
+    def send_binary(self, bytestr) -> None:
+        self.write(bytestr)
+
+    # TODO : Change this so that it always sends the binary message rather than needing set on each run
     def set_to_binary(self) -> None:
         self.write(b"\xA0\xA1\x00\x03\x09\x02\x00\x0B\x0D\x0A")
 
@@ -349,6 +454,8 @@ class GPS(Driver):
     def _parse_sentence(self) -> Optional[bytes]:
         return self._read_sentence()
 
+    # TODO : Implement the enable and disable methods
+    # TODO : CHeck if this is still possible on new board
     def enable(self) -> None:
         """Enable the GPS module through the enable pin"""
         self.__enable = True
