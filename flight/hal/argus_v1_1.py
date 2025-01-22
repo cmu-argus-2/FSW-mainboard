@@ -209,8 +209,7 @@ class ArgusV1(CubeSat):
     """ArgusV1: Represents the Argus V1 CubeSat."""
 
     def __init__(self, debug: bool = False):
-        """__init__: Initializes the Argus V1 CubeSat.
-        """
+        """__init__: Initializes the Argus V1 CubeSat."""
         self.__debug = debug
 
         super().__init__()
