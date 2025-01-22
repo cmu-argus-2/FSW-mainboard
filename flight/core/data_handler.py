@@ -354,7 +354,7 @@ class DataProcess:
                         return False
                     self.last_data = struct.unpack(self.data_format, cr)
                     return True
-            except (OSError, ValueError, struct.error) as e:
+            except Exception as e:
                 logger.warning(f"Error reading file {latest_file}: {e}")
                 # might want to delete the file in case of corruption if we don't have mechanism to "repair" it
                 return False
