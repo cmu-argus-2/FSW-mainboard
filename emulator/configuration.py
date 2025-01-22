@@ -18,5 +18,5 @@ if SIMULATION:
     SimulatedSpacecraft = Simulator()
 
 SATELLITE: CubeSat = EmulatedSatellite(
-    enable_middleware=EN_MIDDLEWARE, debug=DEBUG_MODE, simulator=SimulatedSpacecraft, use_socket=SOCKET_RADIO
+    debug=DEBUG_MODE, simulator=SimulatedSpacecraft, use_socket=SOCKET_RADIO
 )
