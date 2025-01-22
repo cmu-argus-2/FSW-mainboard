@@ -26,7 +26,7 @@ class ArgusV2Interfaces:
     # Line may not be connected, try except sequence
     try:
         I2C0 = I2C(I2C0_SCL, I2C0_SDA)
-    except Exception as e:
+    except Exception:
         I2C0 = None
 
     I2C1_SDA = board.SDA1  # GPIO2
@@ -35,7 +35,7 @@ class ArgusV2Interfaces:
     # Line may not be connected, try except sequence
     try:
         I2C1 = I2C(I2C1_SCL, I2C1_SDA)
-    except Exception as e:
+    except Exception:
         I2C1 = None
 
     JET_SPI_SCK = board.CLK1  # GPIO10
