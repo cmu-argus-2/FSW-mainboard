@@ -44,7 +44,6 @@ from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register.i2c_bit import ROBit, RWBit
 from adafruit_register.i2c_bits import RWBits
 from hal.drivers.middleware.errors import Errors
-from hal.drivers.middleware.generic_driver import Driver
 from micropython import const
 
 try:
@@ -72,7 +71,7 @@ SOT_5X3 = const(0)
 PICOSTAR = const(1)
 
 
-class OPT4001(Driver):
+class OPT4001:
     """
     Driver for the OPT4001 ambient light sensor
 

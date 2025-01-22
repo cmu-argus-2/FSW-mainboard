@@ -11,9 +11,7 @@ ARGUS_V2 = const(3)
 # HARDWARE_VERSION = ARGUS_V1_1
 HARDWARE_VERSION = ARGUS_V2
 
-# Enable for Middleware
 DEBUG_MODE = False
-EN_MIDDLEWARE = False
 
 SATELLITE: CubeSat = None
 
@@ -27,17 +25,17 @@ elif HARDWARE_VERSION == ARGUS_V1:
 
     from hal.argus_v1 import ArgusV1
 
-    SATELLITE = ArgusV1(enable_middleware=EN_MIDDLEWARE, debug=DEBUG_MODE)
+    SATELLITE = ArgusV1(debug=DEBUG_MODE)
 
 elif HARDWARE_VERSION == ARGUS_V1_1:
     from hal.argus_v1_1 import ArgusV1 as ArgusV1_1
 
-    SATELLITE = ArgusV1_1(enable_middleware=EN_MIDDLEWARE, debug=DEBUG_MODE)
+    SATELLITE = ArgusV1_1(debug=DEBUG_MODE)
 
 elif HARDWARE_VERSION == ARGUS_V2:
     from hal.argus_v2 import ArgusV2
 
-    SATELLITE = ArgusV2(enable_middleware=EN_MIDDLEWARE, debug=DEBUG_MODE)
+    SATELLITE = ArgusV2(debug=DEBUG_MODE)
 
 else:
 

@@ -11,7 +11,6 @@ from time import monotonic, sleep
 import adafruit_bus_device.spi_device as spidev
 from digitalio import DigitalInOut, Pull
 from hal.drivers.middleware.errors import Errors
-from hal.drivers.middleware.generic_driver import Driver
 from micropython import const
 
 # pylint: disable=bad-whitespace
@@ -109,7 +108,7 @@ _bigbuffer = bytearray(256)
 bw_bins = (7800, 10400, 15600, 20800, 31250, 41700, 62500, 125000, 250000)
 
 
-class RFM9x(Driver):
+class RFM9x:
     """Interface to a RFM95/6/7/8 LoRa radio module.  Allows sending and
     receivng bytes of data in long range LoRa mode at a support board frequency
     (433/915mhz).
