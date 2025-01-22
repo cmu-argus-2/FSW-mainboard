@@ -49,7 +49,6 @@ __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_PCF8523.git"
 from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register import i2c_bcd_alarm, i2c_bcd_datetime, i2c_bit, i2c_bits
 from hal.drivers.middleware.errors import Errors
-from hal.drivers.middleware.generic_driver import Driver
 
 try:
     import typing  # noqa: F401
@@ -63,7 +62,7 @@ STANDARD_BATTERY_SWITCHOVER_AND_DETECTION = 0b000
 BATTERY_SWITCHOVER_OFF = 0b111
 
 
-class PCF8523(Driver):
+class PCF8523:
     """Interface to the PCF8523 RTC.
 
     :param ~busio.I2C i2c_bus: The I2C bus the device is connected to

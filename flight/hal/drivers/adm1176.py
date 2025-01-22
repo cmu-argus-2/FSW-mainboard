@@ -13,7 +13,6 @@ Implementation Notes
 
 from adafruit_bus_device.i2c_device import I2CDevice
 from hal.drivers.middleware.errors import Errors
-from hal.drivers.middleware.generic_driver import Driver
 from micropython import const
 
 
@@ -53,7 +52,7 @@ CONTROL_REG_ADDR = const(0x83)
 CONTROL_SWOFF = const(0x1 << 0)
 
 
-class ADM1176(Driver):
+class ADM1176:
     def __init__(self, i2c_bus, addr=0x4A):
         self.i2c_device = I2CDevice(i2c_bus, addr, probe=False)
         self.i2c_addr = addr
@@ -70,8 +69,6 @@ class ADM1176(Driver):
 
         self.v_fs_over_res = 26.35 / 4096
         self.i_fs_over_res = 0.10584 / 4096
-
-        super().__init__()
 
     def config(self, value: str) -> None:
         """config: sets voltage current readout configuration.

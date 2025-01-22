@@ -49,7 +49,6 @@ from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register.i2c_bit import ROBit, RWBit
 from adafruit_register.i2c_bits import RWBits
 from hal.drivers.middleware.errors import Errors
-from hal.drivers.middleware.generic_driver import Driver
 
 # DEVICE REGISTER MAP
 _CONTROL = 0x00  # Control Register      -W
@@ -109,7 +108,7 @@ class Faults:
     DESCRIPTOR = ["FAULT", "OCP", "UVLO", "OTS", "ILIMIT"]
 
 
-class DRV8830(Driver):
+class DRV8830:
     """DC motor driver with I2C interface. Using an internal PWM scheme, the
     DRV8830 produces a regulated output voltage from a normalized input value
     (-1.0 to +1.0) or voltage input value (-5.06 to +5.06 volts).
