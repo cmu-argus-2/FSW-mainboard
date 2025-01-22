@@ -1,30 +1,26 @@
 # Fuel Gauge IC MAX17205 driver
-import time, math
 from adafruit_bus_device.i2c_device import I2CDevice
 from micropython import const
 
+MAX1720X_I2CADDR_WR = const(0x0B)
+MAX1720X_I2CADDR_RD = const(0x36)
 
-MAX1720X_I2CADDR_WR = 0x0B
-MAX1720X_I2CADDR_RD = 0x36
+MAX1720X_STATUS_ADDR = const(0x00)  # Contains alert status and chip status
+MAX1720X_VCELL_ADDR = const(0x09)  # Lowest cell voltage of a pack
+MAX1720X_REPSOC_ADDR = const(0x06)  # Reported state of charge
+MAX1720X_REPCAP_ADDR = const(0x05)  # Reported remaining capacity
+MAX1720X_TEMP_ADDR = const(0x08)  # Temperature
+MAX1720X_CURRENT_ADDR = const(0x0A)  # Battery current
+MAX1720X_TTE_ADDR = const(0x11)  # Time to empty
+MAX1720X_TTF_ADDR = const(0x20)  # Time to full
+MAX1720X_CAPACITY_ADDR = const(0x10)  # Full capacity estimation
+MAX1720X_VBAT_ADDR = const(0xDA)  # Battery pack voltage
+MAX1720X_AVCELL_ADDR = const(0x17)  # Battery cycles
+MAX1720X_TIMERH_ADDR = const(0xBE)  # Time since power up
 
-MAX1720X_STATUS_ADDR = 0x00  # Contains alert status and chip status
-MAX1720X_VCELL_ADDR = 0x09  # Lowest cell voltage of a pack
-MAX1720X_REPSOC_ADDR = 0x06  # Reported state of charge
-MAX1720X_REPCAP_ADDR = 0x05  # Reported remaining capacity
-MAX1720X_TEMP_ADDR = 0x08  # Temperature
-MAX1720X_CURRENT_ADDR = 0x0A  # Battery current
-MAX1720X_TTE_ADDR = 0x11  # Time to empty
-MAX1720X_TTF_ADDR = 0x20  # Time to full
-MAX1720X_CAPACITY_ADDR = 0x10  # Full capacity estimation
-MAX1720X_VBAT_ADDR = 0xDA  # Battery pack voltage
-MAX1720X_AVCELL_ADDR = 0x17  # Battery cycles
-MAX1720X_TIMERH_ADDR = 0xBE  # Time since power up
-
-MAX1720X_COMMAND_ADDR = 0x60  # Command register
-MAX1720X_CONFIG2_ADDR = 0xBB  # Command register
-MAX1720X_CFGPACK_ADDR = 0xB5  # nPackCfg register
-
-NPACKCFG_BALCFG = const(0x7 << 5) # cell balance config 
+MAX1720X_COMMAND_ADDR = const(0x60)  # Command register
+MAX1720X_CONFIG2_ADDR = const(0xBB)  # Command register
+MAX1720X_CFGPACK_ADDR = const(0xB5)  # nPackCfg register
 
 
 def unpack_signed_short_int(byte_list):
@@ -59,10 +55,6 @@ class MAX17205():
         # with self.i2c_device_cfg as i2c:
         #     # Read 2 bytes from MAX1720X_CFGPACK_ADDR
         #     i2c.write(bytes([MAX1720X_CFGPACK_ADDR, DATA_LOW, DATA_HIGH]))
-    def enable_cell_balancing(self, threshold):
-        balcfg = int(math.log2(threshold / (0.00125))) # need to adjust this
-        with self.i2c_device_cfg as i2c:
-            i2c.write(bytes([MAX1720X_CFGPACK_ADDR, balcfg]))
 
     def read_cfg(self):
         with self.i2c_device_cfg as i2c:
@@ -123,7 +115,7 @@ class MAX17205():
         current_raw = unpack_signed_short_int(self.rx_buffer)
 
         # Cast int16 to a float and scale for mA current
-        self.current = float(current_raw) * 0.0015625/0.01
+        self.current = float(current_raw) * 0.0015625 / 0.01
 
         return self.current
 
