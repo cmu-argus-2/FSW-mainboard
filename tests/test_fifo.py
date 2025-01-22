@@ -10,6 +10,11 @@ def setup_queue():
     CommandQueue.configure(max_size=5)  # Set a small max size for testing
     return CommandQueue
 
+def setup_single_element_queue():
+    """Fixture to reset the CommandQueue before each test of a single element queue."""
+    CommandQueue._queue = []
+    CommandQueue.configure(max_size=1) 
+    return CommandQueue
 
 def test_push_command_success(setup_queue):
     queue = setup_queue
@@ -64,3 +69,13 @@ def test_command_available(setup_queue):
     assert not queue.command_available()
     queue.push_command(0x01, ["arg1"])
     assert queue.command_available()
+
+def test_overwrite_command(setup_single_element_queue):
+    queue = setup_single_element_queue
+    queue.overwrite_command(0x01, ["arg1"])
+    assert queue.get_size() == 1
+    queue.overwrite_command(0x02, ["arg2"])
+    assert queue.get_size() == 1
+    cmd, status = queue.pop_command()
+    assert status == queue.OK
+    assert cmd == (0x02, ["arg2"])

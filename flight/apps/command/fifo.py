@@ -17,12 +17,13 @@ class CommandQueue:
     """First-In-First-Out (FIFO) queue implementation with a fixed maximum size."""
 
     _queue = []  # The list representing the queue.
-    _max_size = 20  # The maximum size of the queue.
+    _max_size = 1  # The maximum size of the queue.
 
     # Error codes
     OK = const(0)  # Error code indicating successful operation.
     OVERFLOW = const(1)  # Error code indicating the queue is full.
     EMPTY = const(2)  # Error code indicating the queue is empty.
+    OVERWRITE = const(3) # Error code indicating failure to overwrite a 1 element queue.
 
     @classmethod
     def configure(cls, max_size):
@@ -45,6 +46,16 @@ class CommandQueue:
             return cls._queue.pop(0), cls.OK  # Pops the first element (FIFO), returns (cmd_id, args), error code
         else:
             return None, cls.EMPTY
+        
+    @classmethod
+    def overwrite_command(cls, cmd_id, args):
+        """ Overwrites the command in a 1 element queue. Returns an error code."""
+        cls._queue = [(cmd_id,args)]
+
+        if len(cls._queue) == 1:
+            return cls.OK
+        else:
+            return cls.OVERWRITE
 
     @classmethod
     def command_available(cls):
