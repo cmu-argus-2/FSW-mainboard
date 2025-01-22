@@ -59,6 +59,7 @@ class GPS:
             self._enable.switch_to_output()
             self._enable = False
 
+        # TODO : This needs to be removed for any infield testing
         self.mock = True
         # From app note:
         # self.mock_message = (
@@ -99,11 +100,13 @@ class GPS:
         self._payload = bytearray(int(i, 16) for i in self._msg[4:-3])
 
         if self._msg_id != 0xA8:
-            print("Invalid message ID, expected 0xA8, got: ", hex(self._msg_id))
+            if self.debug:
+                print("Invalid message ID, expected 0xA8, got: ", hex(self._msg_id))
             return False
 
         if self._payload_len != 59:
-            print("Invalid payload length, expected 59, got: ", self._payload_len)
+            if self.debug:
+                print("Invalid payload length, expected 59, got: ", self._payload_len)
             return False
 
         if self.debug:
@@ -114,7 +117,8 @@ class GPS:
         for i in self._payload:
             cs ^= i
         if cs != self._msg_cs:
-            print("Checksum failed!")
+            if self.debug:
+                print("Checksum failed!")
             return False
 
         # Populate _nav_data as a dictionary
