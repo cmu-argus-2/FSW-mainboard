@@ -2,7 +2,7 @@ import time
 
 import core.scheduler as scheduler
 from core import logger
-from core.states import STATES,STR_STATES
+from core.states import STATES, STR_STATES
 
 
 class StateManager:
