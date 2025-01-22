@@ -689,8 +689,7 @@ class ArgusV2(CubeSat):
             from hal.drivers.max17205 import MAX17205
 
             fuel_gauge = MAX17205(
-                ArgusV2Components.FUEL_GAUGE_I2C,
-                ArgusV2Components.FUEL_GAUGE_I2C_ADDRESS,
+                ArgusV2Components.FUEL_GAUGE_I2C
             )
 
             self.__fuel_gauge = fuel_gauge
