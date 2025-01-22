@@ -23,7 +23,7 @@ class CommandQueue:
     OK = const(0)  # Error code indicating successful operation.
     OVERFLOW = const(1)  # Error code indicating the queue is full.
     EMPTY = const(2)  # Error code indicating the queue is empty.
-    OVERWRITE = const(3) # Error code indicating failure to overwrite a 1 element queue.
+    OVERWRITE = const(3)  # Error code indicating failure to overwrite a 1 element queue.
 
     @classmethod
     def configure(cls, max_size):
@@ -46,11 +46,11 @@ class CommandQueue:
             return cls._queue.pop(0), cls.OK  # Pops the first element (FIFO), returns (cmd_id, args), error code
         else:
             return None, cls.EMPTY
-        
+
     @classmethod
     def overwrite_command(cls, cmd_id, args):
-        """ Overwrites the command in a 1 element queue. Returns an error code."""
-        cls._queue = [(cmd_id,args)]
+        """Overwrites the command in a 1 element queue. Returns an error code."""
+        cls._queue = [(cmd_id, args)]
 
         if len(cls._queue) == 1:
             return cls.OK

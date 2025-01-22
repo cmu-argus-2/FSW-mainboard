@@ -22,7 +22,7 @@ Author: Ibrahima S. Sow
 
 from core import logger
 from core import state_manager as SM
-from core.states import STATES, STR_STATES
+from core.states import STR_STATES
 
 
 def FORCE_REBOOT():
@@ -35,19 +35,21 @@ def FORCE_REBOOT():
 def SWITCH_TO_STATE(target_state_id, time_in_state=None):
     """Forces a switch of the spacecraft to a specific state."""
     SM.switch_to(target_state_id)
-    logger.info(f"Executing SWITCH_TO_STATE with target_state: {STR_STATES[target_state_id]}")
+    logger.info(f"Executing SWITCH_TO_STATE with target_state: {STR_STATES[target_state_id]}, time_in_state: {time_in_state}")
     pass
 
 
 def UPLINK_TIME_REFERENCE(time_in_state):
     """Sends a time reference to the spacecraft to update the time processing module."""
-    logger.info(f"Executing UPLINK_TIME_REFERENCE with current_time: {current_time}")
+    logger.info(f"Executing UPLINK_TIME_REFERENCE with current_time: {time_in_state}")
     pass
 
 
 def UPLINK_ORBIT_REFERENCE(time_in_state, orbital_parameters):
     """Sends time-referenced orbital information to update the orbit reference."""
-    logger.info(f"Executing UPLINK_ORBIT_REFERENCE with orbital_parameters: {orbital_parameters}")
+    logger.info(
+        f"Executing UPLINK_ORBIT_REFERENCE with orbital_parameters: {orbital_parameters}, time_in_state: {time_in_state}"
+    )
     pass
 
 

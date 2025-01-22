@@ -48,7 +48,7 @@ COMMANDS = [
     (0x00, lambda: True, [], FORCE_REBOOT),
     (0x01, lambda: True, ["target_state_id", "time_in_state"], SWITCH_TO_STATE),
     (0x02, lambda: True, ["time_in_state"], UPLINK_TIME_REFERENCE),
-    (0x03, lambda: True, ["time_in_state","orbital_parameters"], UPLINK_ORBIT_REFERENCE),
+    (0x03, lambda: True, ["time_in_state", "orbital_parameters"], UPLINK_ORBIT_REFERENCE),
     (0x04, lambda: True, [], TURN_OFF_PAYLOAD),
     (0x05, lambda: True, [], SCHEDULE_OD_EXPERIMENT),
     (0x06, lambda: True, [], REQUEST_TM_HEARTBEAT),

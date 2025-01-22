@@ -10,11 +10,14 @@ def setup_queue():
     CommandQueue.configure(max_size=5)  # Set a small max size for testing
     return CommandQueue
 
+
+@pytest.fixture
 def setup_single_element_queue():
     """Fixture to reset the CommandQueue before each test of a single element queue."""
     CommandQueue._queue = []
-    CommandQueue.configure(max_size=1) 
+    CommandQueue.configure(max_size=1)
     return CommandQueue
+
 
 def test_push_command_success(setup_queue):
     queue = setup_queue
@@ -69,6 +72,7 @@ def test_command_available(setup_queue):
     assert not queue.command_available()
     queue.push_command(0x01, ["arg1"])
     assert queue.command_available()
+
 
 def test_overwrite_command(setup_single_element_queue):
     queue = setup_single_element_queue
