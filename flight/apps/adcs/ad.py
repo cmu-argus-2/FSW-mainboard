@@ -59,3 +59,105 @@ def TRIAD(n1, n2, b1, b2):
     Q = np.dot(T, W.transpose())
 
     return rotm2quat(Q)
+
+"""
+    Attitude Determination Class
+    
+    Contains functions for the following:
+        - Initializing the MEKF
+        - Reading Sensors
+        - Propagating MEKF
+"""
+class AttitudeDetermination:
+    
+    # Initialized Flag to retry initialization
+    initialized = False
+    
+    # State
+    estimated_state = np.zeros() # TODO
+    
+    # Time storage
+    
+    
+    
+    # ------------------------------------------------------------------------------------------------------------------------------------
+    """ SENSOR READ FUNCTIONS """
+    # ------------------------------------------------------------------------------------------------------------------------------------
+    def read_sun_position(self):
+        """
+            - Gets the measured sun vector from light sensor measurements
+            - Accesses functions inside sun.py which in turn call HAL
+        """
+        pass
+    
+    def read_gyro(self):
+        """
+            - Reads the angular velocity from the gyro
+            - NOTE : THIS SHOULD REPLACE THE IMU TASK
+        """
+        pass
+    
+    def read_magnetometer(self):
+        """
+            - Reads the magnetic field reading from the IMU
+            - This is separate from the gyro measurement to allow gyro to be read faster than magnetometer
+        """
+        pass
+    
+    def read_gps(self):
+        """
+            - Get the current position and velocity from GPS
+            - NOTE: Since GPS is a task, this function will read values from C&DH
+        """
+        pass
+    
+    # ------------------------------------------------------------------------------------------------------------------------------------
+    """ MEKF INITIALIZATION """
+    # ------------------------------------------------------------------------------------------------------------------------------------
+    def initialize_mekf(self):
+        """
+            - Initializes the MEKF using TRIAD and position from GPS
+            - This function is not directly written into init to allow multiple retires of initialization
+            - Sets the initialized attribute of the class once done
+        """
+        pass
+    
+    # ------------------------------------------------------------------------------------------------------------------------------------
+    """ MEKF PROPAGATION """
+    # ------------------------------------------------------------------------------------------------------------------------------------
+    def position_update(self):
+        """
+            - Performs a position update
+            - Accesses functions from orbit_propagation.py
+            - Updates the last_position_update time attribute
+            - NOTE: This is not an MEKF update. We assume that the estimated position is true
+        """
+        pass
+    
+    def sun_position_update(self):
+        """
+            Performs an MEKF update step for Sun position
+        """
+        pass
+    
+    def gyro_update(self):
+        """
+            Performs an MEKF update step for Gyro
+        """
+        pass
+    
+    def magnetometer_update(self):
+        """
+            Performs an MEKF update step for magnetometer
+        """
+        pass
+    
+    def update(self):
+        """
+            - Updates the estimated state from Attitude Determination
+            - If measurements are available, it updates the 
+        """
+    
+    
+    
+    
