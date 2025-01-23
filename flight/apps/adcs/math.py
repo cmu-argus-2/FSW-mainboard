@@ -20,7 +20,10 @@ def skew(v: np.ndarray):
 def is_near(a: float, b: float, tol=1e-6) -> bool:
     return abs(a - b) < tol
 
-def R_from_quat(q : np.ndarray) -> np.ndarray:
+def quat_to_R(q : np.ndarray) -> np.ndarray:
+    """
+        Converts a quaternion [w, x, y, z] into its 3x3 rotation matrix
+    """
     q0 = q[0]
     q1 = q[1]
     q2 = q[2]
@@ -47,3 +50,38 @@ def R_from_quat(q : np.ndarray) -> np.ndarray:
                            [r20, r21, r22]])
                             
     return rot_matrix
+
+def R_to_quat(R : np.ndarray) -> np.ndarray:
+    """
+        Converts a 3x3 rotation matrix into its quaternion representation
+    """
+    # TODO : assertions to ensure R is a 3x3 matrix
+    
+    w = np.sqrt(1.0 + R[0,0] + R[1,1] + R[2,2]) / 2.0
+    w4 = (4.0 * w)
+ 
+    x = (R[2,1] - R[1,2]) / w4
+    y = (R[0,2] - R[2,0]) / w4
+    z = (R[1,0] - R[0,1]) / w4
+    
+    return np.array([w, x, y, z])
+
+def rotvec_to_R(vec : np.ndarray) -> np.ndarray:
+    """
+        Converts an axis-angle vector into its 3x3 rotation matrix
+    """
+    theta = np.linalg.norm(vec)
+    ct = np.cos(theta)
+    st = np.sin(theta)
+    
+    unit_vec = vec/theta
+    vx = unit_vec[0]
+    vy = unit_vec[1]
+    vz = unit_vec[2]
+    
+    
+    R = np.array([[ct + vx**2*(1-ct), vx*vy*(1-ct) - vz*st, vx*vz*(1-ct) + vy*st],
+                  [vx*vy*(1-ct)+ vz*st, ct + vy**2*(1-ct), vy*vz*(1-ct) - vz*st],
+                  [vz*vx*(1-ct) - vy*st, vz*vy*(1-ct) + vx*st, ct + vz**2*(1-ct)]])
+    
+    return R

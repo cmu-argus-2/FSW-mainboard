@@ -69,7 +69,7 @@ from apps.telemetry.constants import GPS_IDX, IMU_IDX
 from apps.adcs.frames import ecef_to_eci
 from apps.adcs.orbit_propagation import propagate_orbit
 from apps.adcs.sun import read_light_sensors, compute_body_sun_vector_from_lux, approx_sun_position_ECI
-from apps.adcs.math import skew, R_from_quat
+from apps.adcs.math import skew, quat_to_R, R_to_quat, rotvec_to_R
 from apps.adcs.igrf import igrf_eci
 
 """
@@ -93,15 +93,20 @@ class AttitudeDetermination:
     # Time storage
     position_update_frequency = 1 # Hz ~8km
     last_position_update_time = 0
-    
-    # EKF Covariances
-    P = np.zeros((6,6))
-    Q = np.zeros((6,6)) # TODO : define Q based on noise measurements
+    last_gyro_update_time = 0
+    last_gyro_cov_update_time = 0
     
     # Sensor noise covariances
+    gyro_white_noise_sigma = 0.01 # TODO : characetrize sensor and update
+    gyro_bias_sigma = 0.01 # TODO : characetrize sensor and update
     sun_sensor_sigma = 0.01 # TODO : characetrize sensor and update
     magnetometer_sigma = 0.01 # TODO : characetrize sensor and update
     
+    # EKF Covariances
+    P = np.zeros((6,6))
+    Q = np.eye(6)
+    Q[0:3, 0:3] *= gyro_white_noise_sigma**2
+    Q[3:6, 3:6] *= gyro_bias_sigma**2 
     
     
     # ------------------------------------------------------------------------------------------------------------------------------------
@@ -120,20 +125,31 @@ class AttitudeDetermination:
     def read_gyro(self):
         """
             - Reads the angular velocity from the gyro
-            - NOTE : THIS SHOULD REPLACE THE IMU TASK
+            - NOTE : This replaces the data querying portion of the IMU task. Data logging still happens within the ADCS task
         """
-        pass
+
+        if SATELLITE.IMU_AVAILABLE:
+            gyro = SATELLITE.IMU.gyro()
+            query_time = int(time.time())
+            
+            return 1, query_time, gyro
+        else:
+            return 0, np.zeros((3,))
     
     def read_magnetometer(self):
         """
             - Reads the magnetic field reading from the IMU
             - This is separate from the gyro measurement to allow gyro to be read faster than magnetometer
         """
+
         if SATELLITE.IMU_AVAILABLE:
-                imu_mag_data = DH.get_latest_data("imu")[IMU_IDX.MAGNETOMETER_X : IMU_IDX.MAGNETOMETER_Z + 1]
-                return 1, imu_mag_data
+            mag = SATELLITE.IMU.mag()
+            query_time = int(time.time())
+            
+            return 1, query_time, mag
+            
         else:
-            return 0, imu_mag_data
+            return 0, np.zeros((3,))
                 
     
     def read_gps(self):
@@ -195,20 +211,19 @@ class AttitudeDetermination:
         # Update last update time
         self.last_position_update_time = self.time
     
-    def sun_position_update(self):
+    def sun_position_update(self, sun_status : bool, sun_pos_body : np.ndarray):
         """
             Performs an MEKF update step for Sun position
         """
-        status, sun_pos_body = self.read_sun_position()
         
-        self.state[-1] = status
+        self.state[-1] = sun_status
         self.state[16:19] = sun_pos_body
         
-        if status:
+        if sun_status:
             true_sun_pos_eci = approx_sun_position_ECI(self.time)
             true_sun_pos_eci = true_sun_pos_eci/np.linalg.norm(true_sun_pos_eci)
             
-            measured_sun_pos_eci = np.dot(R_from_quat(self.state[3:7]), sun_pos_body)
+            measured_sun_pos_eci = np.dot(quat_to_R(self.state[3:7]), sun_pos_body)
             measured_sun_pos_eci = measured_sun_pos_eci/np.linalg.norm(measured_sun_pos_eci)
             
             # EKF update
@@ -221,24 +236,60 @@ class AttitudeDetermination:
             
             self.EKF_update(H, innovation, Cov_sunsensor)
     
-    def gyro_update(self):
+    def gyro_update(self, status : bool, update_time : int, omega_body : np.ndarray, update_error_covariance = False):
         """
             Performs an MEKF update step for Gyro
+            If update_error_covariance is False, the gyro measurements just update the attitude
+            but do not reduce uncertainity in error measurements
         """
-        pass
+        if status:
+            self.state[7:10] = omega_body
+            bias = self.state[11:13]
+            dt = update_time - self.last_gyro_update_time
+            
+            unbiased_omega = omega_body - bias
+            rotvec = unbiased_omega * dt
+            
+            delta_rotation = rotvec_to_R(rotvec)
+            R_q_prev = quat_to_R(self.state[3:7])
+            R_q_next = R_q_prev * delta_rotation
+            self.state[3:7] = R_to_quat(R_q_next)
+            
+            # If update_error_covariance, update covariance matrices
+            if update_error_covariance:
+                dt = update_time - self.last_gyro_cov_update_time
+                F = np.zeros((6,6))
+                F[0:3, 3:6] = -R_q_next
+                
+                G = np.zeros((6,6))
+                G[0:3, 0:3] = -R_q_next
+                G[3:6, 3:6] = np.eye(3)
+                
+                A = np.zeros((12,12))
+                A[0:6, 0:6] = F
+                A[0:6, 6:12] = G @ self.Q @ G.transpose()
+                A[6:12, 6:12] = F.transpose()
+                A = A*dt
+                
+                Aexp = np.eye(12) + A
+                Phi = Aexp[6:12, 6:12].transpose()
+                Qdk = Phi @ self.P @ Phi.T + Qdk
+                
+                self.last_gyro_cov_update_time = update_time
+            
+            self.last_gyro_update_time = update_time
     
-    def magnetometer_update(self):
+    def magnetometer_update(self, status : bool, mag_field_body : np.ndarray):
         """
             Performs an MEKF update step for magnetometer
         """
-        status, mag_field_body = self.read_magnetometer()
         
         if status: # Update EKF
             
             true_mag_field_eci = igrf_eci(self.time, self.state[0:3]/1000)
             true_mag_field_eci = true_mag_field_eci/np.linalg.norm(true_mag_field_eci)
             
-            measured_mag_field_eci = np.dot(R_from_quat(self.state[3:7]), mag_field_body)
+            measured_mag_field_eci = np.dot(quat_to_R(self.state[3:7]), mag_field_body)
             measured_mag_field_eci = measured_mag_field_eci/np.linalg.norm(measured_mag_field_eci)
             
             # EKF update
@@ -262,19 +313,19 @@ class AttitudeDetermination:
         """
             - Updates the state estimate based on available information
         """
-        '''S = H @ self.P @ H.T + R_noise
+        S = H @ self.P @ H.T + R_noise
         K = self.P @ H.T @ np.linalg.pinv(S, 1e-4)  # TODO tuneme
         dx = K @ innovation
 
-        attitude_correction = R.from_rotvec(dx[:3])
-        self.set_ECI_R_b(attitude_correction * self.get_ECI_R_b())
+        attitude_correction = rotvec_to_R(dx[:3])
+        self.state[3:7] = R_to_quat(attitude_correction * quat_to_R(self.state[3:7]))
 
         gyro_bias_correction = dx[3:]
-        self.set_gyro_bias(self.get_gyro_bias() + gyro_bias_correction)
+        self.state[11:13] = self.state[11:13] + gyro_bias_correction
 
         # Symmetric Joseph update
         Identity = np.eye(6)
-        self.P = (Identity - K @ H) @ self.P @ (Identity - K @ H).T + K @ R_noise @ K.T'''
+        self.P = (Identity - K @ H) @ self.P @ (Identity - K @ H).T + K @ R_noise @ K.T
         
     
     
