@@ -9,57 +9,6 @@ magnetic field data on the mainboard.
 
 """
 
-from ulab import numpy as np
-
-
-def rotm2quat(r):
-    """
-    Convert a rotation matrix to a quaternion.
-
-    Args:
-        r (np.ndarray): Rotation matrix.
-
-    Returns:
-        np.ndarray: Quaternion [q0, q1, q2, q3].
-    """
-    q = np.zeros(4)
-    q[0] = 0.5 * np.sqrt(1 + r[0, 0] + r[1, 1] + r[2, 2])
-    q[1] = (1 / (4 * q[0])) * (r[2][1] - r[1][2])
-    q[2] = (1 / (4 * q[0])) * (r[0][2] - r[2][0])
-    q[3] = (1 / (4 * q[0])) * (r[1][0] - r[0][1])
-    return np.array(q)
-
-
-def TRIAD(n1, n2, b1, b2):
-
-    n1 = np.array(n1)
-    n2 = np.array(n2)
-    b1 = np.array(b1)
-    b2 = np.array(b2)
-
-    # Normalize the input vectors
-    n1 /= np.linalg.norm(n1)
-    n2 /= np.linalg.norm(n2)
-    b1 /= np.linalg.norm(b1)
-    b2 /= np.linalg.norm(b2)
-
-    # Inertial triad
-    t1 = n1
-    t2 = np.cross(n1, n2) / np.linalg.norm(np.cross(n1, n2))  # Third linearly independant vector
-    t3 = np.cross(t1, t2) / np.linalg.norm(np.cross(t1, t2))
-    T = np.array([t1, t2, t3]).transpose()
-
-    # Body triad
-    w1 = b1
-    w2 = np.cross(b1, b2) / np.linalg.norm(np.cross(b1, b2))
-    w3 = np.cross(w1, w2) / np.linalg.norm(np.cross(w1, w2))
-    W = np.array([w1, w2, w3]).transpose()
-
-    # Determine attitude
-    Q = np.dot(T, W.transpose())
-
-    return rotm2quat(Q)
-
 import time
 from ulab import numpy as np
 
@@ -179,7 +128,77 @@ class AttitudeDetermination:
             - This function is not directly written into init to allow multiple retires of initialization
             - Sets the initialized attribute of the class once done
         """
-        pass
+        # Get a valid GPS position
+        gps_valid, gps_record_time, gps_pos_ecef = self.read_gps()
+        if not gps_valid:
+            return
+        
+        # Get a valid sun position
+        sun_status, sun_pos_body = self.read_sun_position()
+        if not sun_status:
+            return
+        
+        # Get a valid magnetometer reading
+        magnetometer_status, _, mag_field_body = self.read_magnetometer()
+        if not magnetometer_status:
+            return
+        
+        # Get a gyro reading (just to store state in)
+        gyro_status, _ , omega_body = self.read_gyro()
+        
+        self.time = int(time.time())
+        
+        # Inertial position
+        true_pos_eci = ecef_to_eci(self.time)
+        
+        # Inertial sun position
+        true_sun_pos_eci = approx_sun_position_ECI(self.time)
+        
+        # Inertial magnetic field vector
+        true_mag_field_eci = igrf_eci(self.time, true_pos_eci)
+        
+        self.state[0:3] = true_pos_eci
+        self.state[3:7] = self.TRIAD(true_sun_pos_eci, true_mag_field_eci, sun_pos_body, mag_field_body)
+        self.state[7:10] = omega_body if gyro_status else np.zeros((3,))
+        self.state[10:13] = np.zeros((3,))
+        self.state[13:16] = mag_field_body
+        self.state[16:19] = sun_pos_body
+        
+        self.initialized = True
+        
+    
+    def TRIAD(self, n1, n2, b1, b2):
+        """
+            Computes the attitude of the sdapcecraft based on two independent vectors provided in the body and inertial frames
+        """
+
+        n1 = np.array(n1)
+        n2 = np.array(n2)
+        b1 = np.array(b1)
+        b2 = np.array(b2)
+
+        # Normalize the input vectors
+        n1 /= np.linalg.norm(n1)
+        n2 /= np.linalg.norm(n2)
+        b1 /= np.linalg.norm(b1)
+        b2 /= np.linalg.norm(b2)
+
+        # Inertial triad
+        t1 = n1
+        t2 = np.cross(n1, n2) / np.linalg.norm(np.cross(n1, n2))  # Third linearly independant vector
+        t3 = np.cross(t1, t2) / np.linalg.norm(np.cross(t1, t2))
+        T = np.array([t1, t2, t3]).transpose()
+
+        # Body triad
+        w1 = b1
+        w2 = np.cross(b1, b2) / np.linalg.norm(np.cross(b1, b2))
+        w3 = np.cross(w1, w2) / np.linalg.norm(np.cross(w1, w2))
+        W = np.array([w1, w2, w3]).transpose()
+
+        # Determine attitude
+        Q = np.dot(T, W.transpose())
+
+        return R_to_quat(Q)
     
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ MEKF PROPAGATION """
