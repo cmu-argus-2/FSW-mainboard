@@ -9,14 +9,16 @@ from ulab import numpy as np
 def propagate_orbit(current_time : int, last_update_time : int, last_updated_position : np.ndarray, 
                     last_updated_velocity : np.ndarray) -> np.ndarray:
 
-    # Euler integration timestep
-    timestep = 1 # seconds
+    # Earth Constants
+    mu_earth = 3.986004418e14  # m^3s^-2 Earth standard gravitational parameter
     
-    mu_earth = 1 # Earth gravitational constant
-    acceleration = lambda state : -mu_earth*(np.linalg.norm(state[0:3])**3)*state[0:3] 
+    # Integration settings
+    timestep = 1 # seconds
+    num_steps = (last_update_time - current_time)//timestep
     
     state = np.concatenate(last_updated_position, last_updated_velocity)
-    num_steps = (last_update_time - current_time)//timestep
+    acceleration = lambda state : -mu_earth*(np.linalg.norm(state[0:3])**3)*state[0:3] 
+    
     for _ in range(num_steps):
         # Update state based on Euler integration
         state_derivative = np.concatenate(acceleration(state), state[3:6])
