@@ -36,9 +36,18 @@ class AttitudeDetermination:
     initialized = False
     
     """
-        STATE DEFINITION : [position_eci (3x1), attitude_body2eci (4x1), angular_rate_body (3x1), gyro_bias (3x1), magnetic_field_body (3x1), sun_pos_body (3x1), sun_status (1x1)]
+        STATE DEFINITION : [position_eci (3x1), velocity_eci (3x1), attitude_body2eci (4x1), angular_rate_body (3x1), 
+                            gyro_bias (3x1), magnetic_field_body (3x1), sun_pos_body (3x1), sun_status (1x1)]
     """
-    estimated_state = np.zeros((20,)) # TODO
+    estimated_state = np.zeros((23,)) # TODO
+    position_idx = slice(0,3)
+    velocity_idx = slice(3,6)
+    attitude_idx = slice(6,10)
+    omega_idx = slice(10,13)
+    bias_idx = slice(13,16)
+    mag_field_idx = slice(16,19)
+    sun_pos_idx = slice(19,22)
+    sun_status_idx = slice(22,23)
     
     # Time storage
     position_update_frequency = 1 # Hz ~8km
@@ -114,9 +123,10 @@ class AttitudeDetermination:
             # Get last GPS update time and position at that time
             gps_record_time = DH.get_latest_data("gps")[GPS_IDX.TIME_GPS]
             gps_pos_ecef = (np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,)) * 0.01)
+            gps_vel_ecef = (np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_VX : GPS_IDX.GPS_ECEF_VZ + 1]).reshape((3,)) * 0.01)
             # TODO : define validity of gps signal
             
-            return 1, gps_record_time, gps_pos_ecef
+            return 1, gps_record_time, gps_pos_ecef, gps_vel_ecef
         else:
             return 0, 0, np.zeros((3,))
             
@@ -131,7 +141,7 @@ class AttitudeDetermination:
             - Sets the initialized attribute of the class once done
         """
         # Get a valid GPS position
-        gps_valid, gps_record_time, gps_pos_ecef = self.read_gps()
+        gps_valid, gps_record_time, gps_pos_ecef, gps_vel_ecef = self.read_gps()
         if not gps_valid:
             return 0
         
@@ -151,7 +161,9 @@ class AttitudeDetermination:
         self.time = int(time.time())
         
         # Inertial position
-        true_pos_eci = ecef_to_eci(self.time)
+        R_ecef2eci = ecef_to_eci(self.time)
+        true_pos_eci = R_ecef2eci@gps_pos_ecef
+        true_vel_eci = R_ecef2eci@gps_vel_ecef
         
         # Inertial sun position
         true_sun_pos_eci = approx_sun_position_ECI(self.time)
@@ -159,12 +171,14 @@ class AttitudeDetermination:
         # Inertial magnetic field vector
         true_mag_field_eci = igrf_eci(self.time, true_pos_eci)
         
-        self.state[0:3] = true_pos_eci
-        self.state[3:7] = self.TRIAD(true_sun_pos_eci, true_mag_field_eci, sun_pos_body, mag_field_body)
-        self.state[7:10] = omega_body if gyro_status else 100*np.ones((3,)) # Set some high omega so ADCS doesn't think its done detumbling
-        self.state[10:13] = np.zeros((3,))
-        self.state[13:16] = mag_field_body
-        self.state[16:19] = sun_pos_body
+        self.state[self.position_idx] = true_pos_eci
+        self.state[self.velocity_idx] = true_vel_eci
+        self.state[self.attitude_idx] = self.TRIAD(true_sun_pos_eci, true_mag_field_eci, sun_pos_body, mag_field_body)
+        self.state[self.omega_idx] = omega_body if gyro_status else 100*np.ones((3,)) # Set some high omega so ADCS doesn't think its done detumbling
+        self.state[self.bias_idx] = np.zeros((3,))
+        self.state[self.mag_field_idx] = mag_field_body
+        self.state[self.sun_pos_idx] = sun_pos_body
+        self.state[self.sun_status_idx] = 1
         
         self.initialized = True
         
@@ -214,22 +228,26 @@ class AttitudeDetermination:
             - Updates the last_position_update time attribute
             - NOTE: This is not an MEKF update. We assume that the estimated position is true
         """
-        gps_valid, gps_record_time, gps_pos_ecef = self.read_gps()
+        gps_valid, gps_record_time, gps_pos_ecef, gps_vel_ecef = self.read_gps()
         
         if not gps_valid:
             # Update GPS based on past estimate of state
-                self.state[0:3] = propagate_orbit(self.time, self.last_position_update_time, self.state[0:3])
+                self.state[self.position_idx], self.state[self.velocity_idx] = propagate_orbit(self.time, \
+                    self.last_position_update_time, self.state[self.position_idx], self.state[self.velocity_idx])
         else:
             if abs(self.time - gps_record_time) < (1/self.position_update_frequency):
                     # Use current GPS measurement without propagation
                     R_ecef2eci = ecef_to_eci(self.time)
-                    self.state[0:3] = np.dot(R_ecef2eci, gps_pos_ecef)
+                    self.state[self.position_idx] = np.dot(R_ecef2eci, gps_pos_ecef)
+                    self.state[self.velocity_idx] = np.dot(R_ecef2eci, gps_vel_ecef)
                     
             else: 
                 # Propagate from GPS measurement record
                 R_ecef2eci = ecef_to_eci(self.time)
                 gps_pos_eci = np.dot(R_ecef2eci, gps_pos_ecef)
-                self.state[0:3] = propagate_orbit(self.time, gps_record_time, gps_pos_eci)
+                gps_vel_eci = np.dot(R_ecef2eci, gps_vel_ecef)
+                self.state[self.position_idx], self.state[self.velocity_idx] = propagate_orbit(self.time, \
+                    gps_record_time, gps_pos_eci, gps_vel_eci)
             
         # Update last update time
         self.last_position_update_time = self.time
@@ -239,14 +257,14 @@ class AttitudeDetermination:
             Performs an MEKF update step for Sun position
         """
         
-        self.state[-1] = sun_status
-        self.state[16:19] = sun_pos_body
+        self.state[self.sun_status_idx] = sun_status
+        self.state[self.sun_pos_idx] = sun_pos_body
         
         if sun_status:
             true_sun_pos_eci = approx_sun_position_ECI(self.time)
             true_sun_pos_eci = true_sun_pos_eci/np.linalg.norm(true_sun_pos_eci)
             
-            measured_sun_pos_eci = np.dot(quat_to_R(self.state[3:7]), sun_pos_body)
+            measured_sun_pos_eci = np.dot(quat_to_R(self.state[self.attitude_idx]), sun_pos_body)
             measured_sun_pos_eci = measured_sun_pos_eci/np.linalg.norm(measured_sun_pos_eci)
             
             # EKF update
@@ -266,17 +284,17 @@ class AttitudeDetermination:
             but do not reduce uncertainity in error measurements
         """
         if status:
-            self.state[7:10] = omega_body
-            bias = self.state[11:13]
+            self.state[self.omega_idx] = omega_body
+            bias = self.state[self.bias_idx]
             dt = update_time - self.last_gyro_update_time
             
             unbiased_omega = omega_body - bias
             rotvec = unbiased_omega * dt
             
             delta_rotation = rotvec_to_R(rotvec)
-            R_q_prev = quat_to_R(self.state[3:7])
+            R_q_prev = quat_to_R(self.state[self.attitude_idx])
             R_q_next = R_q_prev * delta_rotation
-            self.state[3:7] = R_to_quat(R_q_next)
+            self.state[self.attitude_idx] = R_to_quat(R_q_next)
             
             # If update_error_covariance, update covariance matrices
             if update_error_covariance:
@@ -309,10 +327,10 @@ class AttitudeDetermination:
         
         if status: # Update EKF
             
-            true_mag_field_eci = igrf_eci(self.time, self.state[0:3]/1000)
+            true_mag_field_eci = igrf_eci(self.time, self.state[self.position_idx]/1000)
             true_mag_field_eci = true_mag_field_eci/np.linalg.norm(true_mag_field_eci)
             
-            measured_mag_field_eci = np.dot(quat_to_R(self.state[3:7]), mag_field_body)
+            measured_mag_field_eci = np.dot(quat_to_R(self.state[self.attitude_idx]), mag_field_body)
             measured_mag_field_eci = measured_mag_field_eci/np.linalg.norm(measured_mag_field_eci)
             
             # EKF update
@@ -325,7 +343,7 @@ class AttitudeDetermination:
             
             self.EKF_update(H, innovation, Cov_mag_field)
              
-            self.state[13:16] = mag_field_body # store magnetic field reading
+            self.state[self.mag_field_idx] = mag_field_body # store magnetic field reading
             
         else: # We still need magnetic field for ACS
             # TODO : decide if we want to continue using the previous B-field or update based on position, igrf and attitude
@@ -341,10 +359,10 @@ class AttitudeDetermination:
         dx = K @ innovation
 
         attitude_correction = rotvec_to_R(dx[:3])
-        self.state[3:7] = R_to_quat(attitude_correction * quat_to_R(self.state[3:7]))
+        self.state[self.attitude_idx] = R_to_quat(attitude_correction * quat_to_R(self.state[self.attitude_idx]))
 
         gyro_bias_correction = dx[3:]
-        self.state[11:13] = self.state[11:13] + gyro_bias_correction
+        self.state[self.bias_idx] = self.state[self.bias_idx] + gyro_bias_correction
 
         # Symmetric Joseph update
         Identity = np.eye(6)
