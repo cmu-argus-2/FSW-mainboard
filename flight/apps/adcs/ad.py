@@ -60,6 +60,15 @@ def TRIAD(n1, n2, b1, b2):
 
     return rotm2quat(Q)
 
+import time
+from ulab import numpy as np
+
+from core import DataHandler as DH
+from hal.configuration import SATELLITE
+from apps.telemetry.constants import GPS_IDX
+from apps.adcs.frames import ecef_to_eci
+from apps.adcs.orbit_propagation import propagate_orbit
+
 """
     Attitude Determination Class
     
@@ -74,9 +83,11 @@ class AttitudeDetermination:
     initialized = False
     
     # State
-    estimated_state = np.zeros() # TODO
+    estimated_state = np.zeros((19,)) # TODO
     
     # Time storage
+    position_update_frequency = 1 # Hz ~8km
+    last_position_update_time = 0
     
     
     
@@ -109,7 +120,41 @@ class AttitudeDetermination:
             - Get the current position and velocity from GPS
             - NOTE: Since GPS is a task, this function will read values from C&DH
         """
-        pass
+        if DH.data_process_exists("gps") and SATELLITE.GPS_AVAILABLE:
+            
+            # Get last GPS update time
+            gps_record_time = DH.get_latest_data("gps")[GPS_IDX.TIME_GPS]
+            query_time = int(time.time())
+            
+            # If last obtained GPS measurement was within the update interval, use that position
+            # NOTE: Ensure GPS position is valid before using it
+            gps_pos_ecef = (np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,)) * 0.01)
+            
+            if not isvalid(gps_pos_ecef): # TODO : define the isvalid criterion
+                
+                # Update GPS based on past estimate of state
+                self.state[0:3] = propagate_orbit(query_time, self.last_position_update_time, self.state[0:3])
+
+            else:
+                if abs(query_time - gps_record_time) < (1/self.position_update_frequency):
+                    
+                    # Use current GPS measurement without propagation
+                    R_eci2ecef = ecef_to_eci(self.time)
+                    self.state[0:3] = np.dot(ecef_to_eci, gps_pos_ecef)
+                    
+                else:
+                    
+                    # Propagate from GPS measurement record
+                    R_eci2ecef = ecef_to_eci(self.time)
+                    gps_pos_eci = np.dot(ecef_to_eci, gps_pos_ecef)
+                    self.state[0:3] = propagate_orbit(query_time, gps_record_time, gps_pos_eci)
+        else:
+            # Update GPS based on past estimate of state
+            self.state[0:3] = propagate_orbit(query_time, self.last_position_update_time, self.state[0:3])
+            
+        # Update last update time
+        self.last_position_update_time = query_time 
+            
     
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ MEKF INITIALIZATION """
