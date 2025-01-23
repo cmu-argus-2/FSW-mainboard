@@ -77,15 +77,16 @@ class Task(TemplateTask):
     def read_fuel_gauge(self):
         # read values from MAX17205
         fuel_gauge = SATELLITE.FUEL_GAUGE
-        self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] = fuel_gauge.read_soc()
-        self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY] = fuel_gauge.read_capacity()
-        self.log_data[EPS_IDX.BATTERY_PACK_CURRENT] = fuel_gauge.read_current()
-        self.log_data[EPS_IDX.BATTERY_PACK_VOLTAGE] = fuel_gauge.read_voltage()
-        self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE] = fuel_gauge.read_midvoltage()
-        self.log_data[EPS_IDX.BATTERY_CYCLES] = fuel_gauge.read_cycles()
-        self.log_data[EPS_IDX.BATTERY_PACK_TTE] = fuel_gauge.read_tte()
-        self.log_data[EPS_IDX.BATTERY_PACK_TTF] = fuel_gauge.read_ttf()
-        self.log_data[EPS_IDX.BATTERY_TIME_SINCE_POWER_UP] = fuel_gauge.read_time_pwrup()
+        if (fuel_gauge is not None):
+            self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] = fuel_gauge.read_soc()
+            self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY] = fuel_gauge.read_capacity()
+            self.log_data[EPS_IDX.BATTERY_PACK_CURRENT] = fuel_gauge.read_current()
+            self.log_data[EPS_IDX.BATTERY_PACK_VOLTAGE] = fuel_gauge.read_voltage()
+            self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE] = fuel_gauge.read_midvoltage()
+            self.log_data[EPS_IDX.BATTERY_CYCLES] = fuel_gauge.read_cycles()
+            self.log_data[EPS_IDX.BATTERY_PACK_TTE] = fuel_gauge.read_tte()
+            self.log_data[EPS_IDX.BATTERY_PACK_TTF] = fuel_gauge.read_ttf()
+            self.log_data[EPS_IDX.BATTERY_TIME_SINCE_POWER_UP] = fuel_gauge.read_time_pwrup()
 
     async def main_task(self):
 
