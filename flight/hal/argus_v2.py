@@ -296,7 +296,7 @@ class ArgusV2(CubeSat):
         # error_list.append(self.__gps_boot())
         error_list.append(self.__radio_boot())
         error_list.append(self.__power_monitor_boot())
-        error_list.append(self.__fuel_gauge_boot)
+        error_list.append(self.__fuel_gauge_boot())
         error_list.append(self.__charger_boot())
         # error_list.append(self.__torque_drivers_boot())
         # error_list.append(self.__light_sensors_boot())  # light + sun sensors
@@ -693,12 +693,17 @@ class ArgusV2(CubeSat):
                 ArgusV2Components.FUEL_GAUGE_I2C_ADDRESS,
             )
 
+            print("FUEL GAUGE")
+            print(fuel_gauge)
+
             self.__fuel_gauge = fuel_gauge
             self.append_device(fuel_gauge)
         except Exception as e:
             if self.__debug:
                 raise e
 
+            print(e)
+            print(Errors.MAX17205_NOT_INITIALIZED)
             return Errors.MAX17205_NOT_INITIALIZED
 
         return Errors.NOERROR

@@ -11,15 +11,13 @@ I2C0_SCL = board.SCL0  # GPIO1
 try:
     I2C0 = I2C(I2C0_SCL, I2C0_SDA)
 except Exception as e:
-    print(e)
+    print("Error:", e)
     I2C0 = None
 
 FUEL_GAUGE_I2C = I2C0
 FUEL_GAUGE_I2C_ADDRESS = const(0x36)
 
-fuel_gauge = MAX17205(
-    FUEL_GAUGE_I2C
-)
+fuel_gauge = MAX17205(FUEL_GAUGE_I2C, FUEL_GAUGE_I2C_ADDRESS)
 
 while(True):
     print("soc: ", fuel_gauge.read_soc())
