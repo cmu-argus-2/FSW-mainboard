@@ -15,11 +15,12 @@ from ulab import numpy as np
 from core import DataHandler as DH
 from hal.configuration import SATELLITE
 from apps.telemetry.constants import GPS_IDX, IMU_IDX
+
+from apps.adcs.math import skew, quat_to_R, R_to_quat, rotvec_to_R
 from apps.adcs.frames import ecef_to_eci
+from apps.adcs.igrf import igrf_eci
 from apps.adcs.orbit_propagation import propagate_orbit
 from apps.adcs.sun import read_light_sensors, compute_body_sun_vector_from_lux, approx_sun_position_ECI
-from apps.adcs.math import skew, quat_to_R, R_to_quat, rotvec_to_R
-from apps.adcs.igrf import igrf_eci
 
 """
     Attitude Determination Class
@@ -45,7 +46,7 @@ class AttitudeDetermination:
     last_gyro_update_time = 0
     last_gyro_cov_update_time = 0
     
-    # Sensor noise covariances
+    # Sensor noise covariances (Decide if these numbers should be hardcoded here or placed in adcs/consts.py)
     gyro_white_noise_sigma = 0.01 # TODO : characetrize sensor and update
     gyro_bias_sigma = 0.01 # TODO : characetrize sensor and update
     sun_sensor_sigma = 0.01 # TODO : characetrize sensor and update
@@ -83,7 +84,7 @@ class AttitudeDetermination:
             
             return 1, query_time, gyro
         else:
-            return 0, np.zeros((3,))
+            return 0, 0, 100*np.ones((3,))
     
     def read_magnetometer(self):
         """
@@ -98,7 +99,7 @@ class AttitudeDetermination:
             return 1, query_time, mag
             
         else:
-            return 0, np.zeros((3,))
+            return 0, 0, np.zeros((3,))
                 
     
     def read_gps(self):
@@ -112,9 +113,9 @@ class AttitudeDetermination:
             # Get last GPS update time and position at that time
             gps_record_time = DH.get_latest_data("gps")[GPS_IDX.TIME_GPS]
             gps_pos_ecef = (np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,)) * 0.01)
-            valid = isvalid(gps_pos_ecef) # TODO : define validity of gps signal
+            # TODO : define validity of gps signal
             
-            return valid, gps_record_time, gps_pos_ecef
+            return 1, gps_record_time, gps_pos_ecef
         else:
             return 0, 0, np.zeros((3,))
             
@@ -131,17 +132,17 @@ class AttitudeDetermination:
         # Get a valid GPS position
         gps_valid, gps_record_time, gps_pos_ecef = self.read_gps()
         if not gps_valid:
-            return
+            return 0
         
         # Get a valid sun position
         sun_status, sun_pos_body = self.read_sun_position()
         if not sun_status:
-            return
+            return 0
         
         # Get a valid magnetometer reading
         magnetometer_status, _, mag_field_body = self.read_magnetometer()
         if not magnetometer_status:
-            return
+            return 0
         
         # Get a gyro reading (just to store state in)
         gyro_status, _ , omega_body = self.read_gyro()
@@ -159,12 +160,14 @@ class AttitudeDetermination:
         
         self.state[0:3] = true_pos_eci
         self.state[3:7] = self.TRIAD(true_sun_pos_eci, true_mag_field_eci, sun_pos_body, mag_field_body)
-        self.state[7:10] = omega_body if gyro_status else np.zeros((3,))
+        self.state[7:10] = omega_body if gyro_status else 100*np.ones((3,)) # Set some high omega so ADCS doesn't think its done detumbling
         self.state[10:13] = np.zeros((3,))
         self.state[13:16] = mag_field_body
         self.state[16:19] = sun_pos_body
         
         self.initialized = True
+        
+        return 1
         
     
     def TRIAD(self, n1, n2, b1, b2):
