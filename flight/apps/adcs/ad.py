@@ -65,9 +65,12 @@ from ulab import numpy as np
 
 from core import DataHandler as DH
 from hal.configuration import SATELLITE
-from apps.telemetry.constants import GPS_IDX
+from apps.telemetry.constants import GPS_IDX, IMU_IDX
 from apps.adcs.frames import ecef_to_eci
 from apps.adcs.orbit_propagation import propagate_orbit
+from apps.adcs.sun import read_light_sensors, compute_body_sun_vector_from_lux, approx_sun_position_ECI
+from apps.adcs.math import skew, R_from_quat
+from apps.adcs.igrf import igrf_eci
 
 """
     Attitude Determination Class
@@ -82,12 +85,22 @@ class AttitudeDetermination:
     # Initialized Flag to retry initialization
     initialized = False
     
-    # State
-    estimated_state = np.zeros((19,)) # TODO
+    """
+        STATE DEFINITION : [position_eci (3x1), attitude_body2eci (4x1), angular_rate_body (3x1), gyro_bias (3x1), magnetic_field_body (3x1), sun_pos_body (3x1), sun_status (1x1)]
+    """
+    estimated_state = np.zeros((20,)) # TODO
     
     # Time storage
     position_update_frequency = 1 # Hz ~8km
     last_position_update_time = 0
+    
+    # EKF Covariances
+    P = np.zeros((6,6))
+    Q = np.zeros((6,6)) # TODO : define Q based on noise measurements
+    
+    # Sensor noise covariances
+    sun_sensor_sigma = 0.01 # TODO : characetrize sensor and update
+    magnetometer_sigma = 0.01 # TODO : characetrize sensor and update
     
     
     
@@ -99,7 +112,10 @@ class AttitudeDetermination:
             - Gets the measured sun vector from light sensor measurements
             - Accesses functions inside sun.py which in turn call HAL
         """
-        pass
+        status, sun_pos_body = compute_body_sun_vector_from_lux(read_light_sensors())
+        
+        return status, sun_pos_body
+        
     
     def read_gyro(self):
         """
@@ -113,47 +129,29 @@ class AttitudeDetermination:
             - Reads the magnetic field reading from the IMU
             - This is separate from the gyro measurement to allow gyro to be read faster than magnetometer
         """
-        pass
+        if SATELLITE.IMU_AVAILABLE:
+                imu_mag_data = DH.get_latest_data("imu")[IMU_IDX.MAGNETOMETER_X : IMU_IDX.MAGNETOMETER_Z + 1]
+                return 1, imu_mag_data
+        else:
+            return 0, imu_mag_data
+                
     
     def read_gps(self):
         """
-            - Get the current position and velocity from GPS
+            - Get the current position from GPS
             - NOTE: Since GPS is a task, this function will read values from C&DH
         """
+        self.time = int(time.time())
         if DH.data_process_exists("gps") and SATELLITE.GPS_AVAILABLE:
             
-            # Get last GPS update time
+            # Get last GPS update time and position at that time
             gps_record_time = DH.get_latest_data("gps")[GPS_IDX.TIME_GPS]
-            query_time = int(time.time())
-            
-            # If last obtained GPS measurement was within the update interval, use that position
-            # NOTE: Ensure GPS position is valid before using it
             gps_pos_ecef = (np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,)) * 0.01)
+            valid = isvalid(gps_pos_ecef) # TODO : define validity of gps signal
             
-            if not isvalid(gps_pos_ecef): # TODO : define the isvalid criterion
-                
-                # Update GPS based on past estimate of state
-                self.state[0:3] = propagate_orbit(query_time, self.last_position_update_time, self.state[0:3])
-
-            else:
-                if abs(query_time - gps_record_time) < (1/self.position_update_frequency):
-                    
-                    # Use current GPS measurement without propagation
-                    R_eci2ecef = ecef_to_eci(self.time)
-                    self.state[0:3] = np.dot(ecef_to_eci, gps_pos_ecef)
-                    
-                else:
-                    
-                    # Propagate from GPS measurement record
-                    R_eci2ecef = ecef_to_eci(self.time)
-                    gps_pos_eci = np.dot(ecef_to_eci, gps_pos_ecef)
-                    self.state[0:3] = propagate_orbit(query_time, gps_record_time, gps_pos_eci)
+            return valid, gps_record_time, gps_pos_ecef
         else:
-            # Update GPS based on past estimate of state
-            self.state[0:3] = propagate_orbit(query_time, self.last_position_update_time, self.state[0:3])
-            
-        # Update last update time
-        self.last_position_update_time = query_time 
+            return 0, 0, np.zeros((3,))
             
     
     # ------------------------------------------------------------------------------------------------------------------------------------
@@ -177,13 +175,51 @@ class AttitudeDetermination:
             - Updates the last_position_update time attribute
             - NOTE: This is not an MEKF update. We assume that the estimated position is true
         """
-        pass
+        gps_valid, gps_record_time, gps_pos_ecef = self.read_gps()
+        
+        if not gps_valid:
+            # Update GPS based on past estimate of state
+                self.state[0:3] = propagate_orbit(self.time, self.last_position_update_time, self.state[0:3])
+        else:
+            if abs(self.time - gps_record_time) < (1/self.position_update_frequency):
+                    # Use current GPS measurement without propagation
+                    R_ecef2eci = ecef_to_eci(self.time)
+                    self.state[0:3] = np.dot(R_ecef2eci, gps_pos_ecef)
+                    
+            else: 
+                # Propagate from GPS measurement record
+                R_ecef2eci = ecef_to_eci(self.time)
+                gps_pos_eci = np.dot(R_ecef2eci, gps_pos_ecef)
+                self.state[0:3] = propagate_orbit(self.time, gps_record_time, gps_pos_eci)
+            
+        # Update last update time
+        self.last_position_update_time = self.time
     
     def sun_position_update(self):
         """
             Performs an MEKF update step for Sun position
         """
-        pass
+        status, sun_pos_body = self.read_sun_position()
+        
+        self.state[-1] = status
+        self.state[16:19] = sun_pos_body
+        
+        if status:
+            true_sun_pos_eci = approx_sun_position_ECI(self.time)
+            true_sun_pos_eci = true_sun_pos_eci/np.linalg.norm(true_sun_pos_eci)
+            
+            measured_sun_pos_eci = np.dot(R_from_quat(self.state[3:7]), sun_pos_body)
+            measured_sun_pos_eci = measured_sun_pos_eci/np.linalg.norm(measured_sun_pos_eci)
+            
+            # EKF update
+            innovation = true_sun_pos_eci - measured_sun_pos_eci
+            s_cross = skew(true_sun_pos_eci)
+            Cov_sunsensor = self.sun_sensor_sigma**2 * s_cross @ np.eye(3) @ s_cross.T
+            
+            H = np.zeros((6,6))
+            H[0:3, 0:3] = -s_cross
+            
+            self.EKF_update(H, innovation, Cov_sunsensor)
     
     def gyro_update(self):
         """
@@ -195,13 +231,51 @@ class AttitudeDetermination:
         """
             Performs an MEKF update step for magnetometer
         """
-        pass
+        status, mag_field_body = self.read_magnetometer()
+        
+        if status: # Update EKF
+            
+            true_mag_field_eci = igrf_eci(self.time, self.state[0:3]/1000)
+            true_mag_field_eci = true_mag_field_eci/np.linalg.norm(true_mag_field_eci)
+            
+            measured_mag_field_eci = np.dot(R_from_quat(self.state[3:7]), mag_field_body)
+            measured_mag_field_eci = measured_mag_field_eci/np.linalg.norm(measured_mag_field_eci)
+            
+            # EKF update
+            innovation = true_mag_field_eci - measured_mag_field_eci
+            s_cross = skew(true_mag_field_eci)
+            Cov_mag_field = self.magnetometer_sigma**2 * s_cross @ np.eye(3) @ s_cross.T
+
+            H = H = np.zeros((6,6))
+            H[0:3, 0:3] = -s_cross
+            
+            self.EKF_update(H, innovation, Cov_mag_field)
+             
+            self.state[13:16] = mag_field_body # store magnetic field reading
+            
+        else: # We still need magnetic field for ACS
+            # TODO : decide if we want to continue using the previous B-field or update based on position, igrf and attitude
+            pass
+            
     
-    def update(self):
+    def EKF_update(self, H : np.ndarray, innovation : np.ndarray, R_noise : np.ndarray):
         """
-            - Updates the estimated state from Attitude Determination
-            - If measurements are available, it updates the 
+            - Updates the state estimate based on available information
         """
+        '''S = H @ self.P @ H.T + R_noise
+        K = self.P @ H.T @ np.linalg.pinv(S, 1e-4)  # TODO tuneme
+        dx = K @ innovation
+
+        attitude_correction = R.from_rotvec(dx[:3])
+        self.set_ECI_R_b(attitude_correction * self.get_ECI_R_b())
+
+        gyro_bias_correction = dx[3:]
+        self.set_gyro_bias(self.get_gyro_bias() + gyro_bias_correction)
+
+        # Symmetric Joseph update
+        Identity = np.eye(6)
+        self.P = (Identity - K @ H) @ self.P @ (Identity - K @ H).T + K @ R_noise @ K.T'''
+        
     
     
     
