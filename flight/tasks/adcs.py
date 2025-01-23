@@ -102,7 +102,7 @@ class Task(TemplateTask):
                         self.AD.position_update()
                         
                         # Update sun sensor estimates
-                        sun_status, sun_pos_body = self.AD.read_sun_position()
+                        sun_status, sun_pos_body, light_sensor_lux_readings = self.AD.read_sun_position()
                         self.AD.sun_position_update(sun_status, sun_pos_body)
                         
                         # Update magnetometer
@@ -152,7 +152,15 @@ class Task(TemplateTask):
                         self.log_data[ADCS_IDX.SUN_VEC_X] = self.AD.state[16]
                         self.log_data[ADCS_IDX.SUN_VEC_Y] = self.AD.state[17]
                         self.log_data[ADCS_IDX.SUN_VEC_Z] = self.AD.state[18]
-                        # TODO : extract and add light sensors
+                        self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = light_sensor_lux_readings[0]
+                        self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = light_sensor_lux_readings[1]
+                        self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = light_sensor_lux_readings[2]
+                        self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = light_sensor_lux_readings[3]
+                        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = light_sensor_lux_readings[4]
+                        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP1] = light_sensor_lux_readings[5]
+                        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP2] = light_sensor_lux_readings[6]
+                        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP3] = light_sensor_lux_readings[7]
+                        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP4] = light_sensor_lux_readings[8]
                         # TODO : extract and add coil status
                         self.log_data[ADCS_IDX.COARSE_ATTITUDE_QW] = self.AD.state[3]
                         self.log_data[ADCS_IDX.COARSE_ATTITUDE_QX] = self.AD.state[4]

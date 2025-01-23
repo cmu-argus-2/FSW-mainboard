@@ -67,9 +67,10 @@ class AttitudeDetermination:
             - Gets the measured sun vector from light sensor measurements
             - Accesses functions inside sun.py which in turn call HAL
         """
-        status, sun_pos_body = compute_body_sun_vector_from_lux(read_light_sensors())
+        light_sensor_lux_readings = read_light_sensors()
+        status, sun_pos_body = compute_body_sun_vector_from_lux(light_sensor_lux_readings)
         
-        return status, sun_pos_body
+        return status, sun_pos_body, light_sensor_lux_readings
         
     
     def read_gyro(self):
