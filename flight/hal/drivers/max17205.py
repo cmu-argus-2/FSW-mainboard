@@ -2,9 +2,6 @@
 from adafruit_bus_device.i2c_device import I2CDevice
 from micropython import const
 
-MAX1720X_I2CADDR_WR = const(0x0B)
-MAX1720X_I2CADDR_RD = const(0x36)
-
 MAX1720X_STATUS_ADDR = const(0x00)  # Contains alert status and chip status
 MAX1720X_VCELL_ADDR = const(0x09)  # Lowest cell voltage of a pack
 MAX1720X_REPSOC_ADDR = const(0x06)  # Reported state of charge
@@ -36,9 +33,8 @@ def unpack_signed_short_int(byte_list):
 
 
 class MAX17205():
-    def __init__(self, i2c):
-        self.i2c_device = I2CDevice(i2c, MAX1720X_I2CADDR_RD)
-        self.i2c_device_cfg = I2CDevice(i2c, MAX1720X_I2CADDR_WR)
+    def __init__(self, i2c, i2c_addr):
+        self.i2c_device = I2CDevice(i2c, i2c_addr)
         self.rx_buffer = bytearray(2)
 
         self.voltage = 0.0
@@ -51,20 +47,6 @@ class MAX17205():
         self.tte = 0
         self.ttf = 0
         self.time_pwrup = 0
-
-        # with self.i2c_device_cfg as i2c:
-        #     # Read 2 bytes from MAX1720X_CFGPACK_ADDR
-        #     i2c.write(bytes([MAX1720X_CFGPACK_ADDR, DATA_LOW, DATA_HIGH]))
-
-    def read_cfg(self):
-        with self.i2c_device_cfg as i2c:
-            # Read 2 bytes from MAX1720X_CFGPACK_ADDR
-            i2c.write(bytes([MAX1720X_CFGPACK_ADDR]))
-
-        with self.i2c_device_cfg as i2c:
-            i2c.readinto(self.rx_buffer)
-
-        return self.rx_buffer
 
     def read_soc(self):
         """

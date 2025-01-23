@@ -125,14 +125,12 @@ class Task(TemplateTask):
 
             self.read_fuel_gauge()
             DH.log_data("eps", self.log_data)
-            self.log_info(
-                f"Battery Pack Reported SOC: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]}% \n"
-                + f"Battery Pack Reported Capacity: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY]} mAh \n"
-                + f"Battery Pack Current: {self.log_data[EPS_IDX.BATTERY_PACK_CURRENT]} mA \n"
-                + f"Battery Pack Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_VOLTAGE]} mV \n"
-                + f"Battery Pack Midpoint Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE]} mV \n"
-                + f"Battery Cycles: {self.log_data[EPS_IDX.BATTERY_CYCLES]} cycles \n"
-                + f"Battery Pack Time-to-Empty: {self.log_data[EPS_IDX.BATTERY_PACK_TTE]} seconds \n"
-                + f"Battery Pack Time-to-Full {self.log_data[EPS_IDX.BATTERY_PACK_TTF]} seconds \n"
-                + f"Battery Pack Time Since Power Up {self.log_data[EPS_IDX.BATTERY_TIME_SINCE_POWER_UP]} seconds"
-            )
+            self.log_info(f"Battery Pack Reported SOC: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]}% ")
+            self.log_info(f"Battery Pack Reported Capacity: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY]} mAh ")
+            self.log_info(f"Battery Pack Current: {self.log_data[EPS_IDX.BATTERY_PACK_CURRENT]} mA ")
+            self.log_info(f"Battery Pack Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_VOLTAGE]} mV ")
+            self.log_info(f"Battery Pack Midpoint Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE]} mV ")
+            self.log_info(f"Battery Cycles: {self.log_data[EPS_IDX.BATTERY_CYCLES]} cycles ")
+            self.log_info(f"Battery Pack Time-to-Empty: {self.log_data[EPS_IDX.BATTERY_PACK_TTE]} seconds ")
+            self.log_info(f"Battery Pack Time-to-Full {self.log_data[EPS_IDX.BATTERY_PACK_TTF]} seconds ")
+            self.log_info(f"Battery Pack Time Since Power Up {self.log_data[EPS_IDX.BATTERY_TIME_SINCE_POWER_UP]} seconds ")
