@@ -79,10 +79,8 @@ class Task(TemplateTask):
                 # CommandQueue.overwrite_command(0x01,[STATES.LOW_POWER, 0x00])
                 # CommandQueue.overwrite_command(0x01,[STATES.DETUMBLING, 0x00])  #should only execute this with overwrite
         else:  # Run for all other states
-
             ### STATE MACHINE ###
             if SM.current_state == STATES.DETUMBLING:
-
                 # Check detumbling status from the ADCS
                 if DH.data_process_exists("adcs"):
                     if DH.get_latest_data("adcs")[ADCS_IDX.MODE] != Modes.TUMBLING:
@@ -107,15 +105,13 @@ class Task(TemplateTask):
             ### COMMAND PROCESSING ###
 
             if CommandQueue.command_available():
-
                 (cmd_id, cmd_args), queue_error_code = CommandQueue.pop_command()
 
                 if queue_error_code == CommandQueue.OK:
-
                     self.log_info(f"Processing command: {cmd_id} with args: {cmd_args}")
-                    status = process_command(cmd_id, *cmd_args)
+                    status, response_args = process_command(cmd_id, *cmd_args)
 
-                    handle_command_execution_status(status)
+                    handle_command_execution_status(status, response_args)
 
                     # Log the command execution history
                     self.log_commands[0] = int(time.time())

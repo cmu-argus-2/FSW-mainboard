@@ -1,4 +1,5 @@
 # Communication task which uses the radio to transmit and receive messages.
+from apps.command import ResponseQueue
 from apps.comms.comms import COMMS_STATE, SATELLITE_RADIO
 from apps.telemetry import TelemetryPacker
 from core import TemplateTask
@@ -136,6 +137,13 @@ class Task(TemplateTask):
 
         if not self.frequency_set:
             self.cls_change_counter_frequency()
+
+        if ResponseQueue.response_available():
+            (response_id, response_args), queue_error_code = ResponseQueue.pop_response()
+
+            if queue_error_code == ResponseQueue.OK:
+                self.log_info(f"Response: {response_id}, with args: {response_args}")
+                # TODO add logic for handling a response from CDH after command execution
 
         if SM.current_state == STATES.DETUMBLING or SM.current_state == STATES.NOMINAL or SM.current_state == STATES.LOW_POWER:
 

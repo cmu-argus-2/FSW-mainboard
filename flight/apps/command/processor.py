@@ -20,6 +20,7 @@ See documentation for a full description of each commands.
 Author: Ibrahima S. Sow
 """
 
+from apps.command import ResponseQueue
 from apps.command.commands import (
     FORCE_REBOOT,
     REQUEST_FILE_METADATA,
@@ -45,19 +46,19 @@ from core import logger
 # - Execute: The function that executes the command
 
 COMMANDS = [
-    (0x00, lambda: True, [], FORCE_REBOOT),
-    (0x01, lambda: True, ["target_state_id", "time_in_state"], SWITCH_TO_STATE),
-    (0x02, lambda: True, ["time_in_state"], UPLINK_TIME_REFERENCE),
-    (0x03, lambda: True, ["time_in_state", "orbital_parameters"], UPLINK_ORBIT_REFERENCE),
-    (0x04, lambda: True, [], TURN_OFF_PAYLOAD),
-    (0x05, lambda: True, [], SCHEDULE_OD_EXPERIMENT),
-    (0x06, lambda: True, [], REQUEST_TM_HEARTBEAT),
-    (0x07, lambda: True, [], REQUEST_TM_HAL),
-    (0x08, lambda: True, [], REQUEST_TM_STORAGE),
-    (0x09, lambda: True, [], REQUEST_TM_PAYLOAD),
-    (0x0A, lambda file_tag, requested_time: True, ["file_tag", "requested_time"], REQUEST_FILE_METADATA),
-    (0x0B, lambda file_tag: True, ["file_tag"], REQUEST_FILE_PKT),
-    (0x0C, lambda: True, [], REQUEST_IMAGE),
+    (0x40, lambda: True, [], FORCE_REBOOT),
+    (0x41, lambda: True, ["target_state_id", "time_in_state"], SWITCH_TO_STATE),
+    (0x42, lambda: True, ["time_in_state"], UPLINK_TIME_REFERENCE),
+    (0x43, lambda: True, ["time_in_state", "orbital_parameters"], UPLINK_ORBIT_REFERENCE),
+    (0x44, lambda: True, [], TURN_OFF_PAYLOAD),
+    (0x45, lambda: True, [], SCHEDULE_OD_EXPERIMENT),
+    (0x46, lambda: True, [], REQUEST_TM_HEARTBEAT),
+    (0x47, lambda: True, [], REQUEST_TM_HAL),
+    (0x48, lambda: True, [], REQUEST_TM_STORAGE),
+    (0x49, lambda: True, [], REQUEST_TM_PAYLOAD),
+    (0x4A, lambda file_tag, requested_time: True, ["file_tag", "requested_time"], REQUEST_FILE_METADATA),
+    (0x4B, lambda file_tag: True, ["file_tag"], REQUEST_FILE_PKT),
+    (0x4C, lambda: True, [], REQUEST_IMAGE),
 ]
 
 
@@ -78,35 +79,41 @@ def process_command(cmd_id, *args):
             # Verify precondition
             if not precondition():
                 logger.error("Cmd: Precondition failed")
-                return CommandProcessingStatus.PRECONDITION_FAILED
+                return CommandProcessingStatus.PRECONDITION_FAILED, [cmd_id]
 
             # Verify the argument count
             if len(args) != len(arg_list):
                 print(arg_list)
                 logger.error(f"Cmd: Argument count mismatch for command ID {cmd_id}")
-                return CommandProcessingStatus.ARGUMENT_COUNT_MISMATCH
+                return CommandProcessingStatus.ARGUMENT_COUNT_MISMATCH, [cmd_id]
 
             # Execute the command function with arguments
             try:
-                execute(*args)
-                return CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS
+                # TODO when format of args is decided on, unpack byte string:
+                # command_arguments = unpack_command_arguments(cmd_id, *args)
+                response_args = execute(*args)
+                return CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS, [cmd_id] + response_args
             except Exception as e:
                 logger.error(f"Cmd: Command execution failed: {e}")
                 # Optionally log stack trace to a file for deeper diagnostics
-                return CommandProcessingStatus.COMMAND_EXECUTION_FAILED
+                return CommandProcessingStatus.COMMAND_EXECUTION_FAILED, [cmd_id]
 
     logger.warning("Cmd: Unknown command ID")
-    return CommandProcessingStatus.UNKNOWN_COMMAND_ID
+    return CommandProcessingStatus.UNKNOWN_COMMAND_ID, [cmd_id]
 
 
-def handle_command_execution_status(status):
+def handle_command_execution_status(status, response_args):
     # TODO: Implement response handling based on the command execution status
     # If the command execution was successful, send a success response
     # If the command execution failed, send an error response with the error code
 
+    ResponseQueue.overwrite_response(status, response_args)
+
     if status == CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS:
         logger.info("Command execution successful")
         # TODO build success response - ACK
+
     else:  # All other cases are errors
         # TODO build error response - Error messages
+        logger.info(f"Command execution not successful due to error: {status}")
         pass
