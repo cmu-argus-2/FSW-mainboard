@@ -367,6 +367,14 @@ class SATELLITE_RADIO:
             # Transmit SAT heartbeat
             cls.tx_message = cls.tm_frame
 
+        elif cls.state == COMMS_STATE.TX_ACK:
+            # Transmit SAT ACK
+            cls.tx_message = bytes([MSG_ID.SAT_ACK, 0x00, 0x00, 0x01, 0x00])
+
+        elif cls.state == COMMS_STATE.TX_FRAME:
+            # Transmit SAT heartbeat
+            cls.tx_message = cls.tm_frame
+
         elif cls.state == COMMS_STATE.TX_METADATA:
             # Transmit file metatdata
             cls.transmit_file_metadata()
