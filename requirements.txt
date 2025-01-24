@@ -1,5 +1,7 @@
 numpy>=1.23.5
 pytest>=7.4.3
+mypy
+pybind11-stubgen
 pytest-html
 pytest-cov
 flake8
