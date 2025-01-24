@@ -693,17 +693,11 @@ class ArgusV2(CubeSat):
                 ArgusV2Components.FUEL_GAUGE_I2C_ADDRESS,
             )
 
-            print("FUEL GAUGE")
-            print(fuel_gauge)
-
             self.__fuel_gauge = fuel_gauge
             self.append_device(fuel_gauge)
         except Exception as e:
             if self.__debug:
                 raise e
-
-            print(e)
-            print(Errors.MAX17205_NOT_INITIALIZED)
             return Errors.MAX17205_NOT_INITIALIZED
 
         return Errors.NOERROR

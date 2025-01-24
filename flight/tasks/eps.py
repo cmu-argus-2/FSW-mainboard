@@ -84,8 +84,8 @@ class Task(TemplateTask):
             self.log_data[EPS_IDX.BATTERY_PACK_VOLTAGE] = int(fuel_gauge.read_voltage())
             self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE] = int(fuel_gauge.read_midvoltage())
             self.log_data[EPS_IDX.BATTERY_CYCLES] = int(fuel_gauge.read_cycles())
-            # self.log_data[EPS_IDX.BATTERY_PACK_TTE] = int(fuel_gauge.read_tte())
-            # self.log_data[EPS_IDX.BATTERY_PACK_TTF] = int(fuel_gauge.read_ttf())
+            self.log_data[EPS_IDX.BATTERY_PACK_TTE] = int(fuel_gauge.read_tte())
+            self.log_data[EPS_IDX.BATTERY_PACK_TTF] = int(fuel_gauge.read_ttf())
             self.log_data[EPS_IDX.BATTERY_TIME_SINCE_POWER_UP] = int(fuel_gauge.read_time_pwrup())
 
     async def main_task(self):
