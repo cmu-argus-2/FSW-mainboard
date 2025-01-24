@@ -1606,6 +1606,7 @@ class SX1262(SX126X):
         except AssertionError as e:
             state = list(ERROR.keys())[list(ERROR.values()).index(str(e))]
 
+        # TODO: CRC checks
         if state == ERR_NONE or state == ERR_CRC_MISMATCH:
             if len_ == 0:
                 length = super().getPacketLength(False)
