@@ -79,34 +79,48 @@ def REQUEST_TM_HEARTBEAT():
     if packed:
         logger.info("Telemetry heartbeat packed")
 
-    # Set current TM frame
-    if TelemetryPacker.TM_AVAILABLE:
-        SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
-
     # Return TX message header
-    tx_msg_id = int.from_bytes(SATELLITE_RADIO.tm_frame[0:1], "big")
-
-    logger.info(f"Sent message with ID: {tx_msg_id}")
+    tx_msg_id = int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
     return [tx_msg_id]
 
 
 def REQUEST_TM_HAL():
     """Requests hardware-focused telemetry, including information on HAL, EPS, and errors."""
     logger.info("Executing REQUEST_TM_HAL")
-    return []
+    # Pack telemetry
+    packed = TelemetryPacker.pack_tm_hal()
+    if packed:
+        logger.info("Telemetry hal packed")
+
+    # Return TX message header
+    tx_msg_id = int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
+    return [tx_msg_id]
 
 
 def REQUEST_TM_STORAGE():
     """Requests full storage status of the mainboard, including details on onboard processes."""
     logger.info("Executing REQUEST_TM_STORAGE")
-    return []
+    # Pack telemetry
+    packed = TelemetryPacker.pack_tm_storage()
+    if packed:
+        logger.info("Telemetry storage packed")
+
+    # Return TX message header
+    tx_msg_id = int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
+    return [tx_msg_id]
 
 
 def REQUEST_TM_PAYLOAD():
     """Requests telemetry data from the payload, provided it is on."""
     logger.info("Executing REQUEST_TM_PAYLOAD")
-    return []
+    # Pack telemetry
+    packed = TelemetryPacker.pack_tm_payload()
+    if packed:
+        logger.info("Telemetry payload packed")
 
+    # Return TX message header
+    tx_msg_id = int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
+    return [tx_msg_id]
 
 def REQUEST_FILE_METADATA(file_tag, requested_time=None):
     """Requests metadata for a specific file from the spacecraft."""
