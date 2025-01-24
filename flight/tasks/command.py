@@ -104,7 +104,7 @@ class Task(TemplateTask):
             elif SM.current_state == STATES.EXPERIMENT:
                 pass
             elif SM.current_state == STATES.LOW_POWER:
-                pass
+                pass   
 
             # Update variables to stay in state for a forced switch to state command
             if COMMAND_FORCE_STATE.get_force_state():
@@ -113,7 +113,7 @@ class Task(TemplateTask):
                     self.log_info(f"FORCED STATE - Time_in_state (remaining time): {COMMAND_FORCE_STATE.get_time_in_state()}")
                 else:
                     COMMAND_FORCE_STATE.set_force_state(False)
-                    self.log_info("STATE is no longer FORCED")                    
+                    self.log_info("STATE is no longer FORCED")                 
 
             ### COMMAND PROCESSING ###
 
