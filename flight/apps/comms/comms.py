@@ -15,6 +15,7 @@ FILE_PKTSIZE = 240
 
 
 # Internal comms states for statechart
+# Internal comms states for statechart
 class COMMS_STATE:
     TX_HEARTBEAT = 0x01
 
@@ -29,7 +30,13 @@ class COMMS_STATE:
 
 
 # Message ID database for communication protocol
+# Message ID database for communication protocol
 class MSG_ID:
+    """
+    Comms message IDs that are downlinked during the mission
+    """
+
+    # SAT heartbeat, nominally downlinked in orbit
     """
     Comms message IDs that are downlinked during the mission
     """
@@ -46,8 +53,33 @@ class MSG_ID:
     SAT_ACK = 0x0F
 
     # SAT file metadata and file content messages
+    # SAT TM frames, requested by GS
+    SAT_TM_HAL = 0x02
+    SAT_TM_STORAGE = 0x03
+    SAT_TM_PAYLOAD = 0x04
+
+    # SAT ACK, in response to GS commands
+    SAT_ACK = 0x0F
+
+    # SAT file metadata and file content messages
     SAT_FILE_METADATA = 0x10
     SAT_FILE_PKT = 0x20
+
+    """
+    Comms internal state management uses ranges of GS command IDs
+    """
+
+    # GS commands SC responds to with an ACK
+    GS_CMD_ACK_L = 0x40
+    GS_CMD_ACK_H = 0x45
+
+    # GS commands SC responds to with a frame
+    GS_CMD_FRM_L = 0x46
+    GS_CMD_FRM_H = 0x49
+
+    # GS commands SC responds to with file MD or packets
+    GS_CMD_FILE_METADATA = 0x4A
+    GS_CMD_FILE_PKT = 0x4B
 
     """
     Comms internal state management uses ranges of GS command IDs
@@ -266,6 +298,7 @@ class SATELLITE_RADIO:
         # Generate file metadata and file array
         cls.file_get_metadata()
 
+        # TODO: Rework to use class file array
         # TODO: Rework to use class file array
         return cls.file_ID.to_bytes(1, "big") + cls.file_size.to_bytes(4, "big") + cls.file_message_count.to_bytes(2, "big")
 

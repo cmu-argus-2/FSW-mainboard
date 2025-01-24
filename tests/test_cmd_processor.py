@@ -4,7 +4,7 @@ from flight.apps.command.processor import COMMANDS, CommandProcessingStatus, pro
 
 
 def mock_command_success(*args):
-    return True
+    return []
 
 
 def mock_command_fail(*args):
@@ -27,28 +27,34 @@ def setup_commands(monkeypatch):
 
 def test_process_command_success(setup_commands):
     cmd_id, precond, args, f = setup_commands[0]
-    result = process_command(cmd_id, *args)
+    result, response_args = process_command(cmd_id, *args)
     assert result == CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS
+    assert response_args == [0x01]
 
 
 def test_process_command_precondition_failed(setup_commands):
     cmd_id, precond, args, f = setup_commands[1]
-    result = process_command(cmd_id, *args)
+    result, response_args = process_command(cmd_id, *args)
     assert result == CommandProcessingStatus.PRECONDITION_FAILED
+    assert response_args == [0x02]
 
 
 def test_process_command_argument_count_mismatch(setup_commands):
     cmd_id, precond, args, f = setup_commands[2]
-    result = process_command(cmd_id)  # No arguments passed, but one is expected
+    result, response_args = process_command(cmd_id)  # No arguments passed, but one is expected
     assert result == CommandProcessingStatus.ARGUMENT_COUNT_MISMATCH
+    assert response_args == [0x03]
 
 
 def test_process_command_execution_failed(setup_commands):
     cmd_id, precond, args, f = setup_commands[3]
-    result = process_command(cmd_id, *args)
+    result, response_args = process_command(cmd_id, *args)
     assert result == CommandProcessingStatus.COMMAND_EXECUTION_FAILED
+    assert response_args == [0x04]
 
 
 def test_process_command_unknown_command(setup_commands):
-    result = process_command(0xFF)  # Command ID not in COMMANDS
+    result, response_args = process_command(0xFF)  # Command ID not in COMMANDS
     assert result == CommandProcessingStatus.UNKNOWN_COMMAND_ID
+    print(response_args)
+    assert response_args == [0xFF]
