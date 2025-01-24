@@ -1,27 +1,28 @@
 # Attitude Determination and Control (ADC) task
 
 import time
-from ulab import numpy as np
-
-from core import TemplateTask
-from core.states import STATES
-from core import state_manager as SM
-from core import DataHandler as DH
-from hal.configuration import SATELLITE
 
 from apps.adcs.ad import AttitudeDetermination
-from apps.telemetry.constants import ADCS_IDX
-from apps.adcs.modes import Modes
 from apps.adcs.consts import ModeConst  # , MCMConst, PhysicalConst
+from apps.adcs.modes import Modes
+from apps.telemetry.constants import ADCS_IDX
+from core import DataHandler as DH
+from core import TemplateTask
+from core import state_manager as SM
+from core.states import STATES
+from hal.configuration import SATELLITE
+from ulab import numpy as np
+
 """
-    ASSUMPTIONS : 
-        - ADCS Task runs at 1 Hz 
+    ASSUMPTIONS :
+        - ADCS Task runs at 1 Hz
         - Magnetometer settles within 400ms
         - Task breakdown by counter
-        
         |<-gyro->|<-gyro->|<-gyro->|<-gyro->|<-Full EKF update->
         |<-gyro, MCM->|<-gyro, MCM->|<-gyro, MCM->|<-gyro, MCM->|<-gyro, MCM off->|
 """
+
+
 class Task(TemplateTask):
     """data_keys = [
         "TIME_ADCS",
@@ -59,7 +60,7 @@ class Task(TemplateTask):
     ]"""
 
     log_data = [0] * 37
-    
+
     ## ADCS Modes
     MODE = Modes.TUMBLING
 
@@ -83,41 +84,42 @@ class Task(TemplateTask):
 
             self.time = int(time.time())
             self.log_data[ADCS_IDX.TIME_ADCS] = self.time
-            
+
             if not self.AD.initialized:
                 initialized = self.AD.initialize_mekf()
-            
+                self.log_info(f"Initialization Status: {initialized}")
+
             else:
-                
+
                 for counter in range(10):
-                    
+
                     # For the first 4 and last 5 steps, update the gyro alone
                     if counter < 4 or counter > 5:
                         gyro_status, gyro_sample_time, omega_body = self.AD.read_gyro()
-                        self.AD.gyro_update(gyro_status, gyro_sample_time, omega_body) # No covariance update
-                        
+                        self.AD.gyro_update(gyro_status, gyro_sample_time, omega_body)  # No covariance update
+
                     elif counter == 5:
-                        
+
                         # Update position estimate
                         self.AD.position_update()
-                        
+
                         # Update sun sensor estimates
                         sun_status, sun_pos_body, light_sensor_lux_readings = self.AD.read_sun_position()
                         self.AD.sun_position_update(sun_status, sun_pos_body)
-                        
+
                         # Update magnetometer
                         mag_status, mag_query_time, mag_field_body = self.AD.read_magnetometer()
                         self.AD.magnetometer_update(mag_status, mag_field_body)
-                        
+
                         # Update gyro
                         gyro_status, gyro_sample_time, omega_body = self.AD.read_gyro()
                         self.AD.gyro_update(gyro_status, gyro_sample_time, omega_body, update_error_covariance=True)
-                        
+
                         # Run Controller
                         # ------------------------------------------------------------------------------------------------------------------------------------
                         """ ATTITUDE CONTROL """
                         # ------------------------------------------------------------------------------------------------------------------------------------
-                        if SM.current_state != STATES.LOW_POWER: # No attitude control in Low-power
+                        if SM.current_state != STATES.LOW_POWER:  # No attitude control in Low-power
                             # TODO : Controller Logic
                             ## Attitude Control
 
@@ -136,7 +138,7 @@ class Task(TemplateTask):
 
                             self.log_data[ADCS_IDX.MODE] = self.MODE
                             self.log_info(f"Mode: {self.MODE}")
-                        
+
                         # ------------------------------------------------------------------------------------------------------------------------------------
                         """ LOGGING """
                         # ------------------------------------------------------------------------------------------------------------------------------------
@@ -166,18 +168,11 @@ class Task(TemplateTask):
                         self.log_data[ADCS_IDX.COARSE_ATTITUDE_QX] = self.AD.state[4]
                         self.log_data[ADCS_IDX.COARSE_ATTITUDE_QY] = self.AD.state[5]
                         self.log_data[ADCS_IDX.COARSE_ATTITUDE_QZ] = self.AD.state[6]
-                        
+
                         DH.log_data("adcs", self.log_data)
                         self.log_info(f"Sun: {self.log_data[8:13]}")
-                        self.log_info(f"Coarse attitude: {self.log_data[28:32]}") 
-                        
-                    if counter == 9: # Special handling to turn MCM off
+                        self.log_info(f"Coarse attitude: {self.log_data[28:32]}")
+
+                    if counter == 9:  # Special handling to turn MCM off
                         # TODO : Turn MCM Off
                         pass
-                    
-                        
-                        
-                
-                
-                
-                    
