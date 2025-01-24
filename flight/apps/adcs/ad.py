@@ -145,6 +145,12 @@ class AttitudeDetermination:
         if not gps_valid:
             print("Failed GPS")
             return 0
+        else:
+            # Propagate from GPS measurement record
+            R_ecef2eci = ecef_to_eci(self.time)
+            gps_pos_eci = np.dot(R_ecef2eci, gps_pos_ecef)
+            gps_vel_eci = np.dot(R_ecef2eci, gps_vel_ecef)
+            true_pos_eci, true_vel_eci = propagate_orbit(self.time, gps_record_time, gps_pos_eci, gps_vel_eci)
 
         # Get a valid sun position
         sun_status, sun_pos_body = self.read_sun_position()
@@ -162,11 +168,6 @@ class AttitudeDetermination:
         gyro_status, _, omega_body = self.read_gyro()
 
         self.time = int(time.time())
-
-        # Inertial position
-        R_ecef2eci = ecef_to_eci(self.time)
-        true_pos_eci = R_ecef2eci @ gps_pos_ecef
-        true_vel_eci = R_ecef2eci @ gps_vel_ecef
 
         # Inertial sun position
         true_sun_pos_eci = approx_sun_position_ECI(self.time)
