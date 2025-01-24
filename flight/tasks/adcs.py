@@ -17,8 +17,8 @@ from ulab import numpy as np
         - ADCS Task runs at 1 Hz
         - Magnetometer settles within 400ms
         - Task breakdown by counter
-        |<-gyro->|<-gyro->|<-gyro->|<-gyro->|<-Full EKF update->
-        |<-gyro, MCM->|<-gyro, MCM->|<-gyro, MCM->|<-gyro, MCM->|<-gyro, MCM off->|
+        |<-gyro->|<-gyro->|<-gyro->|<-gyro->|<-Full EKF update, MCM->
+        |<-gyro>|<-gyro>|<-gyro>|<-gyro>|<-gyro, MCM off->|
 """
 
 
@@ -62,8 +62,6 @@ class Task(TemplateTask):
 
     ## ADCS Modes and switching logic
     MODE = Modes.TUMBLING
-    MEKF_INIT_THRESHOLD = 0.2  # rad/s ~ 11 deg/s
-    DETUMBLING_THRESHOLD = 0.052  # rad/s ~ 3 deg/s
 
     # Attitude Determination
     AD = AttitudeDetermination()
@@ -104,11 +102,11 @@ class Task(TemplateTask):
                 self.attitude_control()
 
                 # Check if the tumbling rate is slow enough to initialize the MEKF
-                if np.linalg.norm(self.AD.state[self.AD.omega_idx]) <= self.MEKF_INIT_THRESHOLD and not self.AD.initialized:
+                if np.linalg.norm(self.AD.state[self.AD.omega_idx]) <= ModeConst.EKF_INIT_TOL and not self.AD.initialized:
                     self.AD.initialize_mekf()
 
                 # Check if detumbling has been completed
-                if np.linalg.norm(self.AD.state[self.AD.omega_idx]) <= self.DETUMBLING_THRESHOLD:
+                if np.linalg.norm(self.AD.state[self.AD.omega_idx]) <= ModeConst.STABLE_TOL:
                     SM.switch_to(STATES.NOMINAL)
 
             # ------------------------------------------------------------------------------------------------------------------------------------
@@ -138,6 +136,13 @@ class Task(TemplateTask):
 
                 if not self.AD.initialized:
                     self.AD.initialize_mekf()
+
+                if (
+                    SM.current_state == STATES.NOMINAL
+                    and np.linalg.norm(self.AD.state[self.AD.omega_idx]) > ModeConst.EKF_INIT_TOL
+                ):
+                    # TODO : add an another and condition based on Detumbling failure flag
+                    SM.switch_to(STATES.DETUMBLING)
 
                 else:
                     for counter in range(self.NUM_SUBTASKS):
