@@ -112,6 +112,7 @@ class Errors:
         ADM1176_ADC_ALERT_OVERCURRENT_MAX: "ADM1176 ADC alert overcurrent max",
         ADM1176_ADC_OC_OVERCURRENT_MIN_THRESHOLD: "ADM1176 ADC OC overcurrent min threshold",
         ADM1176_ADC_ALERT_OVERCURRENT_MIN_THRESHOLD: "ADM1176 alert overcurrent min threshold",
+        MAX17205_NOT_INITIALIZED: "MAX17205 not initialized",
         BQ25883_NOT_INITIALIZED: "BQ25883 not initialized",
         BQ25883_INPUT_OVERVOLTAGE: "BQ25883 input overvoltage",
         BQ25883_THERMAL_SHUTDOWN: "BQ25883 thermal shutdown",
