@@ -6,8 +6,6 @@
 
 """CircuitPython I2C Device Address Scan"""
 import time
-import board
-import busio
 
 # List of potential I2C busses
 ALL_I2C = ("busio.I2C(board.SCL0, board.SDA0)", "busio.I2C(board.SCL1, board.SDA1)")

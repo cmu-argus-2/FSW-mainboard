@@ -1,8 +1,9 @@
+import time
+
+import board
+from busio import I2C
 from hal.drivers.max17205 import MAX17205
 from micropython import const
-import board
-from busio import I2C, SPI, UART
-import time
 
 I2C0_SDA = board.SDA0  # GPIO0
 I2C0_SCL = board.SCL0  # GPIO1
@@ -19,7 +20,7 @@ FUEL_GAUGE_I2C_ADDRESS = const(0x36)
 
 fuel_gauge = MAX17205(FUEL_GAUGE_I2C, FUEL_GAUGE_I2C_ADDRESS)
 
-while(True):
+while (True):
     print("soc: ", fuel_gauge.read_soc())
     print("capacity: ", fuel_gauge.read_capacity())
     print("current: ", fuel_gauge.read_current())
