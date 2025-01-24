@@ -1,5 +1,5 @@
 # Communication task which uses the radio to transmit and receive messages.
-from apps.command import ResponseQueue
+from apps.command import CommandQueue, ResponseQueue
 from apps.comms.comms import COMMS_STATE, SATELLITE_RADIO
 from apps.telemetry import TelemetryPacker
 from core import TemplateTask
@@ -17,7 +17,7 @@ class Task(TemplateTask):
 
         # IDs returned from application
         self.tx_msg_id = 0x00
-        self.rq_msg_id = 0x00
+        self.rq_cmd = 0x00
 
         # Setup for heartbeat frequency
         self.frequency_set = False
@@ -94,17 +94,20 @@ class Task(TemplateTask):
     def cls_receive_message(self):
         if SATELLITE_RADIO.data_available():
             # Read packet present in the RX buffer
-            self.rq_msg_id = SATELLITE_RADIO.receive_message()
+            self.rq_cmd = SATELLITE_RADIO.receive_message()
 
             # State transition based on RX'd packet
             SATELLITE_RADIO.transition_state(False)
             self.comms_state = SATELLITE_RADIO.get_state()
 
             # Check the response from the GS
-            if self.rq_msg_id != 0x00:
+            if self.rq_cmd != 0x00:
                 # GS requested valid message ID
                 self.log_info(f"RX message RSSI: {SATELLITE_RADIO.get_rssi()}")
-                self.log_info(f"GS requested message ID: {self.rq_msg_id}")
+                self.log_info(f"GS requested command: {self.rq_cmd}")
+
+                # TODO: Push rq_cmd onto CommandQueue along with all its arguments
+                # CommandQueue.push_command(0x01, [])
 
                 DH.log_data("comms", [SATELLITE_RADIO.get_rssi()])
 
@@ -113,10 +116,10 @@ class Task(TemplateTask):
 
             else:
                 # GS requested invalid message ID
-                self.log_warning(f"GS requested invalid message ID: {self.rq_msg_id}")
+                self.log_warning(f"GS requested invalid command: {self.rq_cmd}")
 
         else:
-            # No packet received from GS yet
+            # TODO: Move threshold logic into state transition fn
             self.RX_COUNTER += 1
 
             if self.RX_COUNTER >= self.RX_COUNT_THRESHOLD:
@@ -138,12 +141,12 @@ class Task(TemplateTask):
         if not self.frequency_set:
             self.cls_change_counter_frequency()
 
-        if ResponseQueue.response_available():
-            (response_id, response_args), queue_error_code = ResponseQueue.pop_response()
+        # TODO add logic for handling a response from CDH after command execution
+        # if ResponseQueue.response_available():
+        #     (response_id, response_args), queue_error_code = ResponseQueue.pop_response()
 
-            if queue_error_code == ResponseQueue.OK:
-                self.log_info(f"Response: {response_id}, with args: {response_args}")
-                # TODO add logic for handling a response from CDH after command execution
+        #     if queue_error_code == ResponseQueue.OK:
+        #         self.log_info(f"Response: {response_id}, with args: {response_args}")
 
         if SM.current_state == STATES.DETUMBLING or SM.current_state == STATES.NOMINAL or SM.current_state == STATES.LOW_POWER:
 
