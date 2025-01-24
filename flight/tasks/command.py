@@ -6,7 +6,7 @@ import gc
 import time
 
 from apps.adcs.modes import Modes
-from apps.command import CommandQueue
+from apps.command import COMMAND_FORCE_STATE, CommandQueue
 from apps.command.processor import handle_command_execution_status, process_command
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX
 from core import DataHandler as DH
@@ -83,24 +83,37 @@ class Task(TemplateTask):
             if SM.current_state == STATES.DETUMBLING:
                 # Check detumbling status from the ADCS
                 if DH.data_process_exists("adcs"):
-                    if DH.get_latest_data("adcs")[ADCS_IDX.MODE] != Modes.TUMBLING:
-                        self.log_info("Detumbling complete - Switching to NOMINAL state.")
-                        SM.switch_to(STATES.NOMINAL)
+                    if not COMMAND_FORCE_STATE.get_force_state():
+                        if DH.get_latest_data("adcs")[ADCS_IDX.MODE] != Modes.TUMBLING:
+                            self.log_info("Detumbling complete - Switching to NOMINAL state.")
+                            SM.switch_to(STATES.NOMINAL)
 
                 # Detumbling timeout in case the ADCS is not working
                 if SM.time_since_last_state_change > STATES.DETUMBLING_TIMEOUT_DURATION:
                     self.log_info("DETUMBLING timeout - Setting Detumbling Error Flag.")
                     # Set the detumbling issue flag in the NVM
                     self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1
-                    self.log_info("Switching to NOMINAL state after DETUMBLING timeout.")
-                    SM.switch_to(STATES.NOMINAL)
+                    if not COMMAND_FORCE_STATE.get_force_state():
+                        self.log_info("Switching to NOMINAL state after DETUMBLING timeout.")
+                        SM.switch_to(STATES.NOMINAL)
 
+            # TODO For the remaining states, can only switch to next state if force_state is false
+            # i.e. include "if not COMMAND_FORCE_STATE.get_force_state():"
             elif SM.current_state == STATES.NOMINAL:
                 pass
             elif SM.current_state == STATES.EXPERIMENT:
                 pass
             elif SM.current_state == STATES.LOW_POWER:
                 pass
+
+            # Update variables to stay in state for a forced switch to state command
+            if COMMAND_FORCE_STATE.get_force_state():
+                if COMMAND_FORCE_STATE.get_time_in_state() > 0:
+                    COMMAND_FORCE_STATE.set_time_in_state(COMMAND_FORCE_STATE.get_time_in_state() - 1) #  TODO modify once time format is known
+                    self.log_info(f"FORCED STATE - Time_in_state (remaining time): {COMMAND_FORCE_STATE.get_time_in_state()}")
+                else:
+                    COMMAND_FORCE_STATE.set_force_state(False)
+                    self.log_info("STATE is no longer FORCED")                    
 
             ### COMMAND PROCESSING ###
 

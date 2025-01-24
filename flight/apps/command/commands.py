@@ -20,13 +20,34 @@ Author: Ibrahima S. Sow
 
 """
 
-from apps.comms.comms import SATELLITE_RADIO
 from apps.telemetry import TelemetryPacker
 from core import logger
 from core import state_manager as SM
 from core.states import STR_STATES
 
 # import supervisor
+
+
+# Ensures that SWITCH_TO_STATE Command is enforced and maintains values to do so
+class COMMAND_FORCE_STATE:
+    force_state = False
+    time_in_state = 0
+
+    @classmethod
+    def set_force_state(cls, value):
+        cls.force_state = value
+
+    @classmethod
+    def get_force_state(cls):
+        return cls.force_state
+
+    @classmethod
+    def set_time_in_state(cls, time):
+        cls.time_in_state = time
+
+    @classmethod
+    def get_time_in_state(cls):
+        return cls.time_in_state
 
 
 def FORCE_REBOOT():
@@ -40,6 +61,8 @@ def FORCE_REBOOT():
 
 def SWITCH_TO_STATE(target_state_id, time_in_state=None):
     """Forces a switch of the spacecraft to a specific state."""
+    COMMAND_FORCE_STATE.set_force_state(True)
+    COMMAND_FORCE_STATE.set_time_in_state(time_in_state)
     SM.switch_to(target_state_id)
     logger.info(f"Executing SWITCH_TO_STATE with target_state: {STR_STATES[target_state_id]}, time_in_state: {time_in_state}")
     return []
@@ -121,6 +144,7 @@ def REQUEST_TM_PAYLOAD():
     # Return TX message header
     tx_msg_id = int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
     return [tx_msg_id]
+
 
 def REQUEST_FILE_METADATA(file_tag, requested_time=None):
     """Requests metadata for a specific file from the spacecraft."""
