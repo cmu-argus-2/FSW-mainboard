@@ -36,7 +36,6 @@ Data format (character: byte size):
 
 """
 
-
 import json
 import os
 import re

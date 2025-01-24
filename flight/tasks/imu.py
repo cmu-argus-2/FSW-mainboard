@@ -9,7 +9,6 @@ from hal.configuration import SATELLITE
 
 
 class Task(TemplateTask):
-
     """data_keys = [
         "time",
         "accel_x",

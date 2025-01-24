@@ -24,7 +24,7 @@ class COMMS_STATE:
 
     TX_FRAME = 0x04
 
-    TX_FILEPKT  = 0x05
+    TX_FILEPKT = 0x05
     TX_METADATA = 0x06
 
 
@@ -86,20 +86,21 @@ class SATELLITE_RADIO:
     file_obj = []
     file_array = []
 
-    # Last TX'd message ID
+    # Last TX'd message parameters
     tx_message_ID = 0x00
     tx_message = []
 
-    # Last RX'd message parameters
-    rx_message_ID = 0x00
-    rx_message_sequence_count = 0
-    rx_message_size = 0
-    rx_message_rssi = 0
+    # RX'd ID is the latest GS command
+    rx_gs_cmd = 0x00
 
-    # Payload for GS ACKs, used for comms state and error checking
-    gs_rx_message_ID = 0x0
-    gs_req_message_ID = 0x0
-    gs_req_seq_count = 0
+    # RX'd SQ cnt used for packetized file TX
+    rx_gs_sq_cnt = 0
+
+    # RX'd len used for argument unpacking
+    rx_gs_len = 0
+
+    # RX'd RSSI logged for error checking
+    rx_message_rssi = 0
 
     # CRC error count
     crc_count = 0
@@ -131,15 +132,15 @@ class SATELLITE_RADIO:
                 cls.state = COMMS_STATE.TX_HEARTBEAT
 
             # Transitions based on GS ACKs
-            elif cls.gs_req_message_ID == MSG_ID.SAT_HEARTBEAT:
+            elif cls.rx_gs_cmd == MSG_ID.SAT_HEARTBEAT:
                 # Send latest TM frame
                 cls.state = COMMS_STATE.TX_HEARTBEAT
 
-            elif cls.gs_req_message_ID == MSG_ID.SAT_FILE_METADATA:
+            elif cls.rx_gs_cmd == MSG_ID.SAT_FILE_METADATA:
                 # Send file metadata
                 cls.state = COMMS_STATE.TX_METADATA
 
-            elif cls.gs_req_message_ID == MSG_ID.SAT_FILE_PKT:
+            elif cls.rx_gs_cmd == MSG_ID.SAT_FILE_PKT:
                 # Send file packet with specified sequence count
                 cls.state = COMMS_STATE.TX_FILEPKT
 
@@ -278,9 +279,9 @@ class SATELLITE_RADIO:
 
         if packet is None:
             # FIFO buffer does not contain a packet
-            cls.gs_req_message_ID = 0x00
+            cls.rx_gs_cmd = 0x00
 
-            return cls.gs_req_message_ID
+            return cls.rx_gs_cmd
 
         cls.rx_message_rssi = SATELLITE.RADIO.rssi()
 
@@ -292,37 +293,11 @@ class SATELLITE_RADIO:
             cls.crc_count += 1
 
         # Unpack RX message header
-        cls.rx_message_ID = int.from_bytes(packet[0:1], "big")
-        cls.rx_message_sequence_count = int.from_bytes(packet[1:3], "big")
-        cls.rx_message_size = int.from_bytes(packet[3:4], "big")
+        cls.rx_gs_cmd = int.from_bytes(packet[0:1], "big")
+        cls.rx_gs_sq_cnt = int.from_bytes(packet[1:3], "big")
+        cls.rx_gs_len = int.from_bytes(packet[3:4], "big")
 
-        if cls.rx_message_ID == MSG_ID.GS_ACK:
-            # GS acknowledged and sent command
-            cls.gs_rx_message_ID = int.from_bytes(packet[4:5], "big")
-            cls.gs_req_message_ID = int.from_bytes(packet[5:6], "big")
-            cls.gs_req_seq_count = int.from_bytes(packet[6:8], "big")
-
-            # Verify GS RX message ID with previously transmitted message ID
-            if cls.tx_message_ID != cls.gs_rx_message_ID:
-                # RX ID mismatch, reset GS RQ'd ID
-                logger.warning(f"[COMMS ERROR] GS received {cls.gs_rx_message_ID}")
-                cls.gs_req_message_ID = 0x00
-
-                return cls.gs_req_message_ID
-
-            # Verify CRC count was 0 for last received message
-            if cls.crc_count > 0:
-                # CRC error, reset GS RQ'd ID
-                logger.warning("[COMMS ERROR] CRC error occured")
-                cls.gs_req_message_ID = 0x00
-
-                return cls.gs_req_message_ID
-
-        else:
-            # Unknown message ID, reset GS RQ' ID
-            cls.gs_req_message_ID = 0x00
-
-        return cls.gs_req_message_ID
+        return cls.rx_gs_cmd
 
     """
         Name: transmit_file_metadata
