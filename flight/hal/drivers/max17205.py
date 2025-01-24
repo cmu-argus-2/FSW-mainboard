@@ -2,11 +2,9 @@
 from adafruit_bus_device.i2c_device import I2CDevice
 from micropython import const
 
-MAX1720X_STATUS_ADDR = const(0x00)  # Contains alert status and chip status
 MAX1720X_VCELL_ADDR = const(0x09)  # Lowest cell voltage of a pack
 MAX1720X_REPSOC_ADDR = const(0x06)  # Reported state of charge
 MAX1720X_REPCAP_ADDR = const(0x05)  # Reported remaining capacity
-MAX1720X_TEMP_ADDR = const(0x08)  # Temperature
 MAX1720X_CURRENT_ADDR = const(0x0A)  # Battery current
 MAX1720X_TTE_ADDR = const(0x11)  # Time to empty
 MAX1720X_TTF_ADDR = const(0x20)  # Time to full
@@ -17,7 +15,6 @@ MAX1720X_TIMERH_ADDR = const(0xBE)  # Time since power up
 
 MAX1720X_COMMAND_ADDR = const(0x60)  # Command register
 MAX1720X_CONFIG2_ADDR = const(0xBB)  # Command register
-MAX1720X_CFGPACK_ADDR = const(0xB5)  # nPackCfg register
 
 
 def unpack_signed_short_int(byte_list):
@@ -34,6 +31,8 @@ def unpack_signed_short_int(byte_list):
 
 class MAX17205():
     def __init__(self, i2c, i2c_addr):
+        # 2 I2C addresses: read address (0x36) and write address (0x0B, shadow RAM)
+        # Only using read address
         self.i2c_device = I2CDevice(i2c, i2c_addr)
         self.rx_buffer = bytearray(2)
 
@@ -213,12 +212,6 @@ class MAX17205():
 
         :return: None
         """
-        # with self.i2c_device as i2c:
-        #     # Write to MAX1720X_COMMAND_ADDR
-        #     i2c.write(bytes([MAX1720X_COMMAND_ADDR, 0x0F, 0x00]))
-
-        # # Wait
-        # time.sleep(50/1000)
 
         with self.i2c_device as i2c:
             # Write to MAX1720X_CONFIG2_ADDR
