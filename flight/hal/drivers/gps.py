@@ -18,7 +18,7 @@ EPOCH_DAY = 5
 
 
 class GPS:
-    def __init__(self, uart: UART, enable=None, debug: bool = False) -> None:
+    def __init__(self, uart: UART, enable=None, debug: bool = False, mock: bool = True) -> None:
         self._uart = uart
         self.debug = debug
         self._msg = None
@@ -26,11 +26,37 @@ class GPS:
         self._msg_id = 0
         self._msg_cs = 0
         self._payload = bytearray([0] * 59)
-        self._nav_data = {}
+        self._nav_data_hex = {}  # Navigation data as a dictionary of hex values
+
+        if self.debug:
+            self.data_strings = {  # Navigation data as a dictionary of strings for debugging
+                "message_id": "None",
+                "fix_mode": "None",
+                "number_of_sv": "None",
+                "gps_week": "None",
+                "tow": "None",
+                "latitude": "None",
+                "longitude": "None",
+                "ellipsoid_alt": "None",
+                "mean_sea_lvl_alt": "None",
+                "gdop": "None",
+                "pdop": "None",
+                "hdop": "None",
+                "vdop": "None",
+                "tdop": "None",
+                "ecef_x": "None",
+                "ecef_y": "None",
+                "ecef_z": "None",
+                "ecef_vx": "None",
+                "ecef_vy": "None",
+                "ecef_vz": "None",
+            }
 
         # TODO: Check the formats of these values as used in the FSW
-        # Initialize null starting values for GPS attributes
+        # Initialize null starting values for all GPS data
+        # These values are used for logging and will be ints
         self.timestamp_utc = None  # UTC as a dictionary in the form {year, month, day, hour, minute, second}
+        self.unix_time = None  # Unix time in seconds
         self.message_id = None  # Message ID
         self.fix_mode = None  # Fix mode as a text string
         self.number_of_sv = None  # Number of satellites used in the solution
@@ -60,7 +86,7 @@ class GPS:
             self._enable = False
 
         # TODO : This needs to be removed for any infield testing
-        self.mock = True
+        self.mock = mock
         # From app note:
         # self.mock_message = (
         # b"\xa0\xa1\x00\x3b\xa8\x02\x07\x08\x6a\x03\x21\x7a\x1f\x1b\x1f\x16\xf1\xb6\xe1"
@@ -87,11 +113,10 @@ class GPS:
             return False
 
         if self.debug:
-            print(msg)
-
-        if self.mock:
-            msg = self.mock_message
-            print("Mock message: /n", msg)
+            if self.mock:
+                print("Mock message: \n", self.mock_message)
+            else:
+                print("Raw message: \n", msg)
 
         self._msg = [hex(i) for i in msg]
         self._payload_len = ((msg[2] & 0xFF) << 8) | msg[3]
@@ -110,7 +135,6 @@ class GPS:
             return False
 
         if self.debug:
-            print("Raw message: \n", self._msg)
             print("Payload: \n", self._payload)
 
         cs = 0
@@ -121,8 +145,8 @@ class GPS:
                 print("Checksum failed!")
             return False
 
-        # Populate _nav_data as a dictionary
-        self._nav_data = {
+        # Populate _nav_data_hex as a dictionary
+        self._nav_data_hex = {
             "message_id": self._payload[0],
             "fix_mode": self._payload[1],
             "number_of_sv": self._payload[2],
@@ -168,154 +192,202 @@ class GPS:
     def parsed_nav_data(self) -> dict:
         return self._parsed_data
 
-    def parse_fix_mode(self) -> str:
-        if self._nav_data["fix_mode"] == 0:
-            return "No fix"
-        if self._nav_data["fix_mode"] == 1:
-            return "2D fix"
-        elif self._nav_data["fix_mode"] == 2:
-            return "3D fix"
+    def parse_fix_mode(self) -> int:
+        if self._nav_data_hex["fix_mode"] == 0:
+            if self.debug:
+                self.data_strings["fix_mode"] = "No fix"
+            return 0
+        if self._nav_data_hex["fix_mode"] == 1:
+            if self.debug:
+                self.data_strings["fix_mode"] = "2D fix"
+            return 1
+        elif self._nav_data_hex["fix_mode"] == 2:
+            if self.debug:
+                self.data_strings["fix_mode"] = "3D fix"
+            return 2
         else:
-            return "3D + DGNSS fix"
+            if self.debug:
+                self.data_strings["fix_mode"] = "3D + DGNSS fix"
+            return 3
 
-    def has_fix(self):
+    def has_fix(self) -> bool:
         """True if a current fix for location information is available."""
-        return self._nav_data["fix_mode"] is not None and self._nav_data["fix_mode"] >= 1
+        return self._nav_data_hex["fix_mode"] is not None and self._nav_data_hex["fix_mode"] >= 1
 
-    def has_3d_fix(self):
+    def has_3d_fix(self) -> bool:
         """Returns true if there is a 3d fix available.
         use has_fix to determine if a 2d fix is available,
         passing it the same data"""
-        return self._nav_data["fix_mode"] is not None and self._nav_data["fix_mode"] >= 2
+        return self._nav_data_hex["fix_mode"] is not None and self._nav_data_hex["fix_mode"] >= 2
 
-    def parse_lat(self) -> str:
-        # Convert from scale 1/1e-7 to decimal degrees
-        latitude = self._nav_data["latitude"] * 1e-7
-
-        # Determine North or South
-        direction = "N" if latitude >= 0 else "S"
-        latitude = abs(latitude)
-
-        # Convert to degrees, minutes, and seconds
-        degrees = int(latitude)
-        minutes = int((latitude - degrees) * 60)
-        seconds = (latitude - degrees - minutes / 60) * 3600
-
-        # Format output
-        latitude_str = f"{degrees}° {minutes}' {seconds:.2f}\" {direction}"
-        return latitude_str
-
-    def parse_lon(self) -> str:
-        # Convert raw longitude as signed 32-bit integer
-        raw_longitude = self._nav_data["longitude"]
-        if raw_longitude > 0x7FFFFFFF:  # Handle 32-bit signed conversion
-            raw_longitude -= 0x100000000
-
+    def parse_lat(self) -> int:
+        lat = int(self._nav_data_hex["latitude"])
         if self.debug:
-            print("Raw Longitude:", raw_longitude)
+            # Convert from scale 1/1e-7 to decimal degrees
+            latitude = lat * 1e-7
 
-        # Convert to decimal degrees
-        longitude = raw_longitude / 1e7
+            # Determine North or South
+            direction = "N" if latitude >= 0 else "S"
+            latitude = abs(latitude)
 
-        # Normalize longitude to -180 to 180 range (if needed)
-        if longitude > 180:
-            longitude -= 360
+            # Convert to degrees, minutes, and seconds
+            degrees = int(latitude)
+            minutes = int((latitude - degrees) * 60)
+            seconds = (latitude - degrees - minutes / 60) * 3600
 
-        # Determine East or West
-        direction = "E" if longitude >= 0 else "W"
-        longitude = abs(longitude)
+            # Format output
+            self.data_strings["latitude"] = f"{degrees}° {minutes}' {seconds:.2f}\" {direction}"
+        return lat
 
-        # Convert to degrees, minutes, and seconds
-        degrees = int(longitude)
-        minutes = int((longitude - degrees) * 60)
-        seconds = (longitude - degrees - minutes / 60) * 3600
+    def parse_lon(self) -> int:
+        lon = int(self._nav_data_hex["longitude"])
+        if self.debug:
+            # Convert raw longitude as signed 32-bit integer
+            raw_longitude = lon
+            if raw_longitude > 0x7FFFFFFF:  # Handle 32-bit signed conversion
+                raw_longitude -= 0x100000000
 
-        # Format output
-        longitude_str = f"{degrees}° {minutes}' {seconds:.2f}\" {direction}"
-        return longitude_str
+            # Convert to decimal degrees
+            longitude = raw_longitude / 1e7
 
-    def parse_elip_alt(self) -> float:
-        # Convert from hundredths of a meter to meters
-        distance_meters = self._nav_data["ellipsoid_alt"] / 100
+            # Normalize longitude to -180 to 180 range (if needed)
+            if longitude > 180:
+                longitude -= 360
 
-        # Format output
-        distance_str = f"{distance_meters:.2f} m"
-        return distance_str
+            # Determine East or West
+            direction = "E" if longitude >= 0 else "W"
+            longitude = abs(longitude)
 
-    def parse_msl_alt(self) -> float:
-        # Convert from hundredths of a meter to meters
-        distance_meters = self._nav_data["mean_sea_lvl_alt"] / 100
+            # Convert to degrees, minutes, and seconds
+            degrees = int(longitude)
+            minutes = int((longitude - degrees) * 60)
+            seconds = (longitude - degrees - minutes / 60) * 3600
 
-        # Format output
-        distance_str = f"{distance_meters:.2f} m"
-        return distance_str
+            # Format output
+            self.data_strings["longitude"] = f"{degrees}° {minutes}' {seconds:.2f}\" {direction}"
+        return lon
 
-    def parse_gdop(self) -> float:
-        return self._nav_data["gdop"] * 0.01
+    def parse_elip_alt(self) -> int:
+        elip_alt = int(self._nav_data_hex["ellipsoid_alt"])
+        if self.debug:
+            # Convert from hundredths of a meter to meters
+            distance_meters = elip_alt / 100
 
-    def parse_pdop(self) -> float:
-        return self._nav_data["pdop"] * 0.01
+            # Format output
+            self.data_strings["ellipsoid_alt"] = f"{distance_meters:.2f} m"
+        return elip_alt
 
-    def parse_hdop(self) -> float:
-        return self._nav_data["hdop"] * 0.01
+    def parse_msl_alt(self) -> int:
+        msl_alt = int(self._nav_data_hex["mean_sea_lvl_alt"])
+        if self.debug:
+            # Convert from hundredths of a meter to meters
+            distance_meters = msl_alt / 100
 
-    def parse_vdop(self) -> float:
-        return self._nav_data["vdop"] * 0.01
+            # Format output
+            self.data_strings["mean_sea_lvl_alt"] = f"{distance_meters:.2f} m"
+        return msl_alt
 
-    def parse_tdop(self) -> float:
-        return self._nav_data["tdop"] * 0.01
+    def parse_gdop(self) -> int:
+        gdop = int(self._nav_data_hex["gdop"])
+        if self.debug:
+            # Convert from hundredths to decimal
+            gdop = gdop * 0.01
+            self.data_strings["gdop"] = gdop
+        return gdop
 
-    def parse_ecef_x(self) -> float:
-        # Convert from hundredths of a meter to meters
-        distance_meters = self._nav_data["ecef_x"] / 100
+    def parse_pdop(self) -> int:
+        pdop = int(self._nav_data_hex["pdop"])
+        if self.debug:
+            # Convert from hundredths to decimal
+            pdop = pdop * 0.01
+            self.data_strings["pdop"] = pdop
+        return pdop
 
-        # Format output
-        distance_str = f"{distance_meters:.2f} m"
-        return distance_str
+    def parse_hdop(self) -> int:
+        hdop = int(self._nav_data_hex["hdop"])
+        if self.debug:
+            # Convert from hundredths to decimal
+            hdop = hdop * 0.01
+            self.data_strings["hdop"] = hdop
+        return hdop
 
-    def parse_ecef_y(self) -> float:
-        # Convert from hundredths of a meter to meters
-        distance_meters = self._nav_data["ecef_y"] / 100
+    def parse_vdop(self) -> int:
+        vdop = int(self._nav_data_hex["vdop"])
+        if self.debug:
+            # Convert from hundredths to decimal
+            vdop = vdop * 0.01
+            self.data_strings["vdop"] = vdop
+        return vdop
 
-        # Format output
-        distance_str = f"{distance_meters:.2f} m"
-        return distance_str
+    def parse_tdop(self) -> int:
+        tdop = int(self._nav_data_hex["tdop"])
+        if self.debug:
+            # Convert from hundredths to decimal
+            tdop = tdop * 0.01
+            self.data_strings["tdop"] = tdop
+        return tdop
 
-    def parse_ecef_z(self) -> float:
-        # Convert from hundredths of a meter to meters
-        distance_meters = self._nav_data["ecef_z"] / 100
+    def parse_ecef_x(self) -> int:
+        ecef_x = int(self._nav_data_hex["ecef_x"])
+        if self.debug:
+            # Convert from hundredths of a meter to meters
+            distance_meters = self._nav_data["ecef_x"] / 100
 
-        # Format output
-        distance_str = f"{distance_meters:.2f} m"
-        return distance_str
+            # Format output
+            self.data_strings["ecef_x"] = f"{distance_meters:.2f} m"
+        return ecef_x
 
-    def parse_ecef_vx(self) -> float:
-        # Convert from hundredths of a meter to meters
-        speed_meters = self._nav_data["ecef_vx"] / 100
+    def parse_ecef_y(self) -> int:
+        ecef_y = int(self._nav_data_hex["ecef_y"])
+        if self.debug:
+            # Convert from hundredths of a meter to meters
+            distance_meters = self._nav_data["ecef_y"] / 100
 
-        # Format output
-        speed_meters = f"{speed_meters:.2f} m/s"
-        return speed_meters
+            # Format output
+            self.data_strings["ecef_y"] = f"{distance_meters:.2f} m"
+        return ecef_y
 
-    def parse_ecef_vy(self) -> float:
-        # Convert from hundredths of a meter to meters
-        speed_meters = self._nav_data["ecef_vy"] / 100
+    def parse_ecef_z(self) -> int:
+        ecef_z = int(self._nav_data_hex["ecef_z"])
+        if self.debug:
+            # Convert from hundredths of a meter to meters
+            distance_meters = self._nav_data["ecef_z"] / 100
 
-        # Format output
-        speed_meters = f"{speed_meters:.2f} m/s"
-        return speed_meters
+            # Format output
+            self.data_strings["ecef_z"] = f"{distance_meters:.2f} m"
+        return ecef_z
 
-    def parse_ecef_vz(self) -> float:
-        # Convert from hundredths of a meter to meters
-        speed_meters = self._nav_data["ecef_vz"] / 100
+    def parse_ecef_vx(self) -> int:
+        ecef_vx = int(self._nav_data_hex["ecef_vx"])
+        if self.debug:
+            # Convert from hundredths of a meter to meters
+            speed_meters = self._nav_data["ecef_vx"] / 100
 
-        # Format output
-        speed_meters = f"{speed_meters:.2f} m/s"
-        return speed_meters
+            # Format output
+            self.data_strings["ecef_vx"] = f"{speed_meters:.2f} m/s"
+        return ecef_vx
 
-    def gps_datetime(self, gps_week: int, tow: int) -> dict:
-        """Get the date and time as a dictionary from GPS week and TOW (time of week in 1/100 seconds)."""
+    def parse_ecef_vy(self) -> int:
+        ecef_vy = int(self._nav_data_hex["ecef_vy"])
+        if self.debug:
+            # Convert from hundredths of a meter to meters
+            speed_meters = self._nav_data["ecef_vy"] / 100
 
+            # Format output
+            self.data_strings["ecef_vy"] = f"{speed_meters:.2f} m/s"
+        return ecef_vy
+
+    def parse_ecef_vz(self) -> int:
+        ecef_vz = int(self._nav_data_hex["ecef_vz"])
+        if self.debug:
+            # Convert from hundredths of a meter to meters
+            speed_meters = self._nav_data["ecef_vz"] / 100
+
+            # Format output
+            self.data_strings["ecef_vz"] = f"{speed_meters:.2f} m/s"
+        return ecef_vz
+
+    def gps_datetime(self, gps_week: int, tow: int) -> int:
         # Number of days in each month (non-leap year)
         days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
@@ -357,37 +429,37 @@ class GPS:
         days_since_unix_epoch += day - 1
 
         # Convert days to seconds
-        unix_time = int(days_since_unix_epoch) * int(86400)
+        self.unix_time = int(days_since_unix_epoch) * int(86400)
 
         # Add TOW (convert from 1/100 sec to seconds)
-        print("TOW:", tow)
-        unix_time += tow / 100
+        self.unix_time += tow / 100
 
         # Calculate hours, minutes, and seconds
-        seconds_in_day = unix_time % 86400
+        seconds_in_day = self.unix_time % 86400
         hours = int(seconds_in_day // 3600)
         minutes = int((seconds_in_day % 3600) // 60)
         seconds = seconds_in_day % 60
 
-        if self.debug:
-            print("Year:    ", year)
-            print("Month:   ", month)
-            print("Day:     ", day)
-            print("Hours:   ", hours)
-            print("Minutes: ", minutes)
-            print("Seconds: ", seconds)
+        self.timestamp_utc = {
+            "year": year,
+            "month": month,
+            "day": day,
+            "hour": hours,
+            "minute": minutes,
+            "second": round(seconds, 2),
+        }
 
-        # Return the date and time as a dictionary
-        return {"year": year, "month": month, "day": day, "hour": hours, "minute": minutes, "second": round(seconds, 2)}
+        # Return the unix time
+        return self.unix_time
 
     def parse_data(self) -> dict:
-        if not self._nav_data:
+        if not self._nav_data_hex:
             return
-        self.message_id = self._nav_data["message_id"]
+        self.message_id = self._nav_data_hex["message_id"]
         self.fix_mode = self.parse_fix_mode()
-        self.number_of_sv = self._nav_data["number_of_sv"]
-        self.week = self._nav_data["gps_week"]
-        self.tow = self._nav_data["tow"]
+        self.number_of_sv = int(self._nav_data_hex["number_of_sv"])
+        self.week = int(self._nav_data_hex["gps_week"])
+        self.tow = int(self._nav_data_hex["tow"])
         self.latitude = self.parse_lat()
         self.longitude = self.parse_lon()
         self.ellipsoid_altitude = self.parse_elip_alt()
@@ -403,41 +475,45 @@ class GPS:
         self.ecef_vx = self.parse_ecef_vx()
         self.ecef_vy = self.parse_ecef_vy()
         self.ecef_vz = self.parse_ecef_vz()
-        self.timestamp_utc = self.gps_datetime(self.week, self._nav_data["tow"])
+        self.timestamp_utc = self.gps_datetime(self.week, self.tow)
 
-    def print_parsed_msg(self):
-        print("Parsed Message:")
-        print("=" * 40)
-        print(f"Message ID:                 {self.message_id}")
-        print(f"Fix Mode:                   {self.fix_mode}")
-        print(f"Number of Satellites:       {self.number_of_sv}")
-        print(f"GPS Week:                   {self.week}")
-        print(f"Time of Week:               {self.tow}")
-        print(f"Latitude:                   {self.latitude}")
-        print(f"Longitude:                  {self.longitude}")
-        print(f"Ellipsoid Altitude:         {self.ellipsoid_altitude}")
-        print(f"Mean Sea Level Altitude:    {self.mean_sea_level_altitude}")
-        print(f"GDOP:                       {self.gdop}")
-        print(f"PDOP:                       {self.pdop}")
-        print(f"HDOP:                       {self.hdop}")
-        print(f"VDOP:                       {self.vdop}")
-        print(f"TDOP:                       {self.tdop}")
-        print(f"ECEF X:                     {self.ecef_x}")
-        print(f"ECEF Y:                     {self.ecef_y}")
-        print(f"ECEF Z:                     {self.ecef_z}")
-        print(f"ECEF Vx:                    {self.ecef_vx}")
-        print(f"ECEF Vy:                    {self.ecef_vy}")
-        print(f"ECEF Vz:                    {self.ecef_vz}")
-        print(
-            f"Timestamp (UTC):            {self.timestamp_utc.get('year')}-{self.timestamp_utc.get('month')}-",
-            f"{self.timestamp_utc.get('day')} {self.timestamp_utc.get('hour')}:",
-            f"{self.timestamp_utc.get('minute')}:{self.timestamp_utc.get('second')}",
-        )
-        print("=" * 40)
+
+def print_parsed_strings(self):
+    print("Parsed Message:")
+    print("=" * 40)
+    print(f"Message ID:                 {self.data_strings.get('message_id', 'N/A')}")
+    print(f"Fix Mode:                   {self.data_strings.get('fix_mode', 'N/A')}")
+    print(f"Number of Satellites:       {self.data_strings.get('number_of_sv', 'N/A')}")
+    print(f"GPS Week:                   {self.data_strings.get('week', 'N/A')}")
+    print(f"Time of Week:               {self.data_strings.get('tow', 'N/A')}")
+    print(f"Latitude:                   {self.data_strings.get('latitude', 'N/A')}")
+    print(f"Longitude:                  {self.data_strings.get('longitude', 'N/A')}")
+    print(f"Ellipsoid Altitude:         {self.data_strings.get('ellipsoid_altitude', 'N/A')}")
+    print(f"Mean Sea Level Altitude:    {self.data_strings.get('mean_sea_level_altitude', 'N/A')}")
+    print(f"GDOP:                       {self.data_strings.get('gdop', 'N/A')}")
+    print(f"PDOP:                       {self.data_strings.get('pdop', 'N/A')}")
+    print(f"HDOP:                       {self.data_strings.get('hdop', 'N/A')}")
+    print(f"VDOP:                       {self.data_strings.get('vdop', 'N/A')}")
+    print(f"TDOP:                       {self.data_strings.get('tdop', 'N/A')}")
+    print(f"ECEF X:                     {self.data_strings.get('ecef_x', 'N/A')}")
+    print(f"ECEF Y:                     {self.data_strings.get('ecef_y', 'N/A')}")
+    print(f"ECEF Z:                     {self.data_strings.get('ecef_z', 'N/A')}")
+    print(f"ECEF Vx:                    {self.data_strings.get('ecef_vx', 'N/A')}")
+    print(f"ECEF Vy:                    {self.data_strings.get('ecef_vy', 'N/A')}")
+    print(f"ECEF Vz:                    {self.data_strings.get('ecef_vz', 'N/A')}")
+    print(
+        f"Timestamp (UTC):            {self.data_strings.get('timestamp_utc', {}).get('year', 'N/A')}-"
+        f"{self.data_strings.get('timestamp_utc', {}).get('month', 'N/A')}-"
+        f"{self.data_strings.get('timestamp_utc', {}).get('day', 'N/A')} "
+        f"{self.data_strings.get('timestamp_utc', {}).get('hour', 'N/A')}:"
+        f"{self.data_strings.get('timestamp_utc', {}).get('minute', 'N/A')}:"
+        f"{self.data_strings.get('timestamp_utc', {}).get('second', 'N/A')}"
+    )
+    print("=" * 40)
 
     def get_nav_data(self) -> dict:
         """Returns the current navigation data as a dictionary."""
-        return self._nav_data
+        return self._nav_data_hex
 
     def write(self, bytestr) -> Optional[int]:
         return self._uart.write(bytestr)
