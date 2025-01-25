@@ -98,6 +98,7 @@ class SATELLITE_RADIO:
     # Last TX'd message parameters
     tx_message_ID = 0x00
     tx_message = []
+    tx_ack = 0x04
 
     # RX'd ID is the latest GS command
     rx_gs_cmd = 0x00
@@ -179,6 +180,16 @@ class SATELLITE_RADIO:
         return cls.rx_message_rssi
 
     """
+        Name: set_tx_ack
+        Description: Set internal TX ACK for GS ACKs
+    """
+
+    @classmethod
+    def set_tx_ack(cls, tx_ack):
+        # Set internal TX ACK definition
+        cls.tx_ack = tx_ack
+
+    """
         Name: set_tm_frame
         Description: Set internal TM frame for TX
     """
@@ -195,7 +206,7 @@ class SATELLITE_RADIO:
 
     @classmethod
     def set_filepath(cls, filepath):
-        # Set internal TM frame definition
+        # Set internal filepath
         cls.filepath = filepath
 
     """
@@ -406,7 +417,7 @@ class SATELLITE_RADIO:
 
         elif cls.state == COMMS_STATE.TX_ACK:
             # Transmit SAT ACK
-            cls.tx_message = bytes([MSG_ID.SAT_ACK, 0x00, 0x00, 0x01, 0x00])
+            cls.tx_message = bytes([MSG_ID.SAT_ACK, 0x00, 0x00, 0x01, cls.tx_ack])
 
         elif cls.state == COMMS_STATE.TX_FRAME:
             # Transmit a specific TM frame

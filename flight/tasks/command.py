@@ -6,7 +6,7 @@ import gc
 import time
 
 from apps.adcs.modes import Modes
-from apps.command import CommandQueue, QUEUE_STATUS
+from apps.command import QUEUE_STATUS, CommandQueue
 from apps.command.constants import CMD_ID
 from apps.command.processor import handle_command_execution_status, process_command
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX
@@ -109,6 +109,7 @@ class Task(TemplateTask):
                 (cmd_id, cmd_arglist), queue_error_code = CommandQueue.pop_command()
                 # self.log_info(f"ID: {cmd_id} Arguments: {cmd_args}")
 
+                # TODO: Move to another function
                 # Unpack arguments based on message ID
                 if cmd_id == CMD_ID.SWITCH_TO_STATE:
                     cmd_arglist = list(cmd_arglist)

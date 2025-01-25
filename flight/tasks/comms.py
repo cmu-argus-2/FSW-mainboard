@@ -1,5 +1,5 @@
 # Communication task which uses the radio to transmit and receive messages.
-from apps.command import CommandQueue
+from apps.command import CommandQueue, ResponseQueue, QUEUE_STATUS
 from apps.comms.comms import COMMS_STATE, SATELLITE_RADIO
 from apps.telemetry import TelemetryPacker
 from core import TemplateTask
@@ -69,6 +69,20 @@ class Task(TemplateTask):
             # If heartbeat TX counter has elapsed, or currently in an active ground pass
 
             # TODO: Set frame / filepath here based on the active GS command
+            if self.comms_state != COMMS_STATE.TX_HEARTBEAT:
+                if ResponseQueue.response_available():
+                    # The response to the current GS command is ready, downlink it
+                    (response_id, response_args), queue_error_code = ResponseQueue.pop_response()
+
+                    if queue_error_code == QUEUE_STATUS.OK:
+                        self.log_info(f"Response: {response_id}, with args: {response_args}")
+                        SATELLITE_RADIO.set_tx_ack(response_id)
+                else:
+                    # The response to the current GS command not ready, return
+                    return
+            else:
+                # Do nothing
+                pass
 
             # Pack telemetry
             self.packed = TelemetryPacker.pack_tm_heartbeat()
@@ -91,7 +105,7 @@ class Task(TemplateTask):
             self.log_info(f"Sent message with ID: {self.tx_msg_id}")
         else:
             # If not, do nothing
-            pass
+            return
 
     def cls_receive_message(self):
         if SATELLITE_RADIO.data_available():
@@ -111,7 +125,7 @@ class Task(TemplateTask):
                 # Get most recent payload
                 self.rx_payload = SATELLITE_RADIO.get_rx_payload()
 
-                # TODO: Push rq_cmd onto CommandQueue along with all its arguments
+                # Push rq_cmd onto CommandQueue along with all its arguments
                 CommandQueue.overwrite_command(self.rq_cmd, self.rx_payload)
 
                 DH.log_data("comms", [SATELLITE_RADIO.get_rssi()])
@@ -145,13 +159,6 @@ class Task(TemplateTask):
 
         if not self.frequency_set:
             self.cls_change_counter_frequency()
-
-        # TODO add logic for handling a response from CDH after command execution
-        # if ResponseQueue.response_available():
-        #     (response_id, response_args), queue_error_code = ResponseQueue.pop_response()
-
-        #     if queue_error_code == ResponseQueue.OK:
-        #         self.log_info(f"Response: {response_id}, with args: {response_args}")
 
         if SM.current_state == STATES.DETUMBLING or SM.current_state == STATES.NOMINAL or SM.current_state == STATES.LOW_POWER:
             if not DH.data_process_exists("comms"):  # avoid registering in startup

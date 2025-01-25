@@ -1,6 +1,6 @@
 import pytest
 
-from flight.apps.command.fifo import CommandQueue, QUEUE_STATUS
+from flight.apps.command.fifo import QUEUE_STATUS, CommandQueue
 
 
 @pytest.fixture

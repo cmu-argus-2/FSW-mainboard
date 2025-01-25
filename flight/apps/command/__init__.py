@@ -1,1 +1,1 @@
-from apps.command.fifo import CommandQueue, ResponseQueue, QUEUE_STATUS
+from apps.command.fifo import QUEUE_STATUS, CommandQueue, ResponseQueue
