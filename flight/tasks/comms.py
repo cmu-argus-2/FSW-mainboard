@@ -98,8 +98,8 @@ class Task(TemplateTask):
             self.TX_COUNTER = 0
             self.RX_COUNTER = 0
 
-            # State transition to RX state
-            SATELLITE_RADIO.transition_state(False)
+            # State transition to RX state, values for RX counter not checked
+            SATELLITE_RADIO.transition_state(0, 0)
             self.comms_state = SATELLITE_RADIO.get_state()
 
             self.log_info(f"Sent message with ID: {self.tx_msg_id}")
@@ -111,10 +111,6 @@ class Task(TemplateTask):
         if SATELLITE_RADIO.data_available():
             # Read packet present in the RX buffer
             self.rq_cmd = SATELLITE_RADIO.receive_message()
-
-            # State transition based on RX'd packet
-            SATELLITE_RADIO.transition_state(False)
-            self.comms_state = SATELLITE_RADIO.get_state()
 
             # Check the response from the GS
             if self.rq_cmd != 0x00:
@@ -128,8 +124,10 @@ class Task(TemplateTask):
                 # Push rq_cmd onto CommandQueue along with all its arguments
                 CommandQueue.overwrite_command(self.rq_cmd, self.rx_payload)
 
+                # Log RSSI
                 DH.log_data("comms", [SATELLITE_RADIO.get_rssi()])
 
+                # Set ground pass true, reset timeout counter
                 self.ground_pass = True
                 self.RX_COUNTER = 0
 
@@ -138,21 +136,24 @@ class Task(TemplateTask):
                 self.log_warning(f"GS requested invalid command: {self.rq_cmd}")
 
         else:
-            # TODO: Move threshold logic into state transition fn
+            # Increment RX counter
             self.RX_COUNTER += 1
 
-            if self.RX_COUNTER >= self.RX_COUNT_THRESHOLD:
-                # GS response timeout
-                self.ground_pass = False
+            # Force RX message ID to be 0x00 for state machine
+            SATELLITE_RADIO.set_rx_gs_cmd(0x00)
 
-                # State transition back to TX_HEARTBEAT state
-                SATELLITE_RADIO.transition_state(True)
-                self.comms_state = SATELLITE_RADIO.get_state()
+        # State transition based on RX'd packet
+        SATELLITE_RADIO.transition_state(self.RX_COUNTER, self.RX_COUNT_THRESHOLD)
+        self.comms_state = SATELLITE_RADIO.get_state()
 
-                self.log_info("Timeout in GS communication")
-            else:
-                # No timeout yet
-                pass
+        if self.comms_state == COMMS_STATE.TX_HEARTBEAT:
+            # GS response timeout
+            self.ground_pass = False
+            self.log_info("Timeout in GS communication")
+
+        else:
+            # No timeout yet
+            pass
 
     async def main_task(self):
         # Main comms task loop

@@ -93,6 +93,7 @@ class SATELLITE_RADIO:
 
     # Data for file downlinking
     file_obj = []
+    file_md = []
     file_array = []
 
     # Last TX'd message parameters
@@ -134,17 +135,15 @@ class SATELLITE_RADIO:
     """
 
     @classmethod
-    def transition_state(cls, timeout):
+    def transition_state(cls, rx_count, rx_threshold):
         # Check current state
         if cls.state == COMMS_STATE.RX:
             # State transitions to TX states only occur from RX state
 
-            # TODO: Replace with RX threshold
-            if timeout:
+            if rx_count >= rx_threshold:
                 # Lost contact with GS, return to default state
                 cls.state = COMMS_STATE.TX_HEARTBEAT
 
-            # Transitions based on GS CMDs
             elif cls.rx_gs_cmd >= MSG_ID.GS_CMD_ACK_L and cls.rx_gs_cmd <= MSG_ID.GS_CMD_ACK_H:
                 # GS CMD requires an ACK in response
                 cls.state = COMMS_STATE.TX_ACK
@@ -160,6 +159,10 @@ class SATELLITE_RADIO:
             elif cls.rx_gs_cmd == MSG_ID.GS_CMD_FILE_PKT:
                 # GS CMD requires a file packet in response
                 cls.state = COMMS_STATE.TX_FILEPKT
+
+            elif rx_count < rx_threshold:
+                # No timeout yet, stay in RX state
+                cls.state = COMMS_STATE.RX
 
             else:
                 # Unknown message ID, return to default state
@@ -198,6 +201,16 @@ class SATELLITE_RADIO:
     def set_tm_frame(cls, tm_frame):
         # Set internal TM frame definition
         cls.tm_frame = tm_frame
+
+    """
+        Name: set_rx_gs_cmd
+        Description: Set RX message ID
+    """
+
+    @classmethod
+    def set_rx_gs_cmd(cls, rx_gs_cmd):
+        # Set internal filepath
+        cls.rx_gs_cmd = rx_gs_cmd
 
     """
         Name: set_filepath
@@ -298,7 +311,9 @@ class SATELLITE_RADIO:
         cls.file_get_metadata()
 
         # TODO: Rework to use class file array
-        return cls.file_ID.to_bytes(1, "big") + cls.file_size.to_bytes(4, "big") + cls.file_message_count.to_bytes(2, "big")
+        cls.file_md = (
+            cls.file_ID.to_bytes(1, "big") + cls.file_size.to_bytes(4, "big") + cls.file_message_count.to_bytes(2, "big")
+        )
 
     """
         Name: transmit_file_metadata
@@ -318,9 +333,10 @@ class SATELLITE_RADIO:
         )
 
         # Get file metatdata
-        tx_payload = cls.file_pack_metadata()
+        cls.file_pack_metadata()
+
         # Pack entire message
-        cls.tx_message = tx_header + tx_payload
+        cls.tx_message = tx_header + cls.file_md
 
     """
         Name: transmit_file_packet
