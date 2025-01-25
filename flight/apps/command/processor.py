@@ -36,6 +36,7 @@ from apps.command.commands import (
     UPLINK_ORBIT_REFERENCE,
     UPLINK_TIME_REFERENCE,
 )
+from apps.command.constants import CMD_ID
 from core import logger
 
 # See commands.py for function definitions (command functions and eventual preconditions)
@@ -46,19 +47,24 @@ from core import logger
 # - Execute: The function that executes the command
 
 COMMANDS = [
-    (0x40, lambda: True, [], FORCE_REBOOT),
-    (0x41, lambda: True, ["target_state_id", "time_in_state"], SWITCH_TO_STATE),
-    (0x42, lambda: True, ["time_in_state"], UPLINK_TIME_REFERENCE),
-    (0x43, lambda: True, ["time_in_state", "orbital_parameters"], UPLINK_ORBIT_REFERENCE),
-    (0x44, lambda: True, [], TURN_OFF_PAYLOAD),
-    (0x45, lambda: True, [], SCHEDULE_OD_EXPERIMENT),
-    (0x46, lambda: True, [], REQUEST_TM_HEARTBEAT),
-    (0x47, lambda: True, [], REQUEST_TM_HAL),
-    (0x48, lambda: True, [], REQUEST_TM_STORAGE),
-    (0x49, lambda: True, [], REQUEST_TM_PAYLOAD),
-    (0x4A, lambda file_tag, requested_time: True, ["file_tag", "requested_time"], REQUEST_FILE_METADATA),
-    (0x4B, lambda file_tag: True, ["file_tag"], REQUEST_FILE_PKT),
-    (0x4C, lambda: True, [], REQUEST_IMAGE),
+    (CMD_ID.FORCE_REBOOT, lambda: True, [], FORCE_REBOOT),
+    (CMD_ID.SWITCH_TO_STATE, lambda: True, ["target_state_id", "time_in_state"], SWITCH_TO_STATE),
+    (CMD_ID.UPLINK_TIME_REFERENCE, lambda: True, ["time_in_state"], UPLINK_TIME_REFERENCE),
+    (CMD_ID.UPLINK_ORBIT_REFERENCE, lambda: True, ["time_in_state", "orbital_parameters"], UPLINK_ORBIT_REFERENCE),
+    (CMD_ID.TURN_OFF_PAYLOAD, lambda: True, [], TURN_OFF_PAYLOAD),
+    (CMD_ID.SCHEDULE_OD_EXPERIMENT, lambda: True, [], SCHEDULE_OD_EXPERIMENT),
+    (CMD_ID.REQUEST_TM_HEARTBEAT, lambda: True, [], REQUEST_TM_HEARTBEAT),
+    (CMD_ID.REQUEST_TM_HAL, lambda: True, [], REQUEST_TM_HAL),
+    (CMD_ID.REQUEST_TM_STORAGE, lambda: True, [], REQUEST_TM_STORAGE),
+    (CMD_ID.REQUEST_TM_PAYLOAD, lambda: True, [], REQUEST_TM_PAYLOAD),
+    (
+        CMD_ID.REQUEST_FILE_METADATA,
+        lambda file_tag, requested_time: True,
+        ["file_tag", "requested_time"],
+        REQUEST_FILE_METADATA,
+    ),
+    (CMD_ID.REQUEST_FILE_PKT, lambda file_tag: True, ["file_tag"], REQUEST_FILE_PKT),
+    (CMD_ID.REQUEST_IMAGE, lambda: True, [], REQUEST_IMAGE),
 ]
 
 

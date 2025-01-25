@@ -15,7 +15,6 @@ FILE_PKTSIZE = 240
 
 
 # Internal comms states for statechart
-# Internal comms states for statechart
 class COMMS_STATE:
     TX_HEARTBEAT = 0x01
 
@@ -30,13 +29,7 @@ class COMMS_STATE:
 
 
 # Message ID database for communication protocol
-# Message ID database for communication protocol
 class MSG_ID:
-    """
-    Comms message IDs that are downlinked during the mission
-    """
-
-    # SAT heartbeat, nominally downlinked in orbit
     """
     Comms message IDs that are downlinked during the mission
     """
@@ -64,22 +57,6 @@ class MSG_ID:
     # SAT file metadata and file content messages
     SAT_FILE_METADATA = 0x10
     SAT_FILE_PKT = 0x20
-
-    """
-    Comms internal state management uses ranges of GS command IDs
-    """
-
-    # GS commands SC responds to with an ACK
-    GS_CMD_ACK_L = 0x40
-    GS_CMD_ACK_H = 0x45
-
-    # GS commands SC responds to with a frame
-    GS_CMD_FRM_L = 0x46
-    GS_CMD_FRM_H = 0x49
-
-    # GS commands SC responds to with file MD or packets
-    GS_CMD_FILE_METADATA = 0x4A
-    GS_CMD_FILE_PKT = 0x4B
 
     """
     Comms internal state management uses ranges of GS command IDs
@@ -130,6 +107,9 @@ class SATELLITE_RADIO:
 
     # RX'd len used for argument unpacking
     rx_gs_len = 0
+
+    # RX'd payload contains GS arguments
+    rx_payload = bytearray()
 
     # RX'd RSSI logged for error checking
     rx_message_rssi = 0
@@ -219,6 +199,16 @@ class SATELLITE_RADIO:
         cls.filepath = filepath
 
     """
+        Name: get_rx_payload
+        Description: Get most recent RX payload
+    """
+
+    @classmethod
+    def get_rx_payload(cls):
+        # Get most recent RX payload
+        return cls.rx_payload
+
+    """
         Name: data_available
         Description: Check if data is available in FIFO buffer
     """
@@ -252,8 +242,6 @@ class SATELLITE_RADIO:
             # Increment 1 to message count to account for division floor
             if (cls.file_size % FILE_PKTSIZE) > 0:
                 cls.file_message_count += 1
-
-            # cls.file_obj = open(cls.filepath, "rb")
 
     """
         Name: file_get_packet
@@ -298,7 +286,6 @@ class SATELLITE_RADIO:
         # Generate file metadata and file array
         cls.file_get_metadata()
 
-        # TODO: Rework to use class file array
         # TODO: Rework to use class file array
         return cls.file_ID.to_bytes(1, "big") + cls.file_size.to_bytes(4, "big") + cls.file_message_count.to_bytes(2, "big")
 
@@ -366,6 +353,7 @@ class SATELLITE_RADIO:
         # Check packet integrity based on header length
         if len(packet) < 4:
             # Packet does not contain valid Argus header
+            logger.warning("[COMMS ERROR] RX'd packet has invalid header")
             cls.rx_gs_cmd = 0x00
             cls.rx_gs_sq_cnt = 0
             cls.rx_gs_len = 0
@@ -381,10 +369,26 @@ class SATELLITE_RADIO:
         # Check packet integrity based on CMD_ID
         if (cls.rx_gs_cmd < MSG_ID.GS_CMD_ACK_L) and (cls.rx_gs_cmd > MSG_ID.GS_CMD_FILE_PKT):
             # Packet does not contain valid CMD_ID
+            logger.warning("[COMMS ERROR] RX'd packet has invalid CMD")
             cls.rx_gs_cmd = 0x00
             cls.rx_gs_sq_cnt = 0
             cls.rx_gs_len = 0
             return cls.rx_gs_cmd
+
+        # Check packet integrity based on message length
+        if (len(packet) - 4) != cls.rx_gs_len:
+            # Header length does not match packet length
+            logger.warning("[COMMS ERROR] RX'd packet has length mismatch with header")
+            cls.rx_gs_cmd = 0x00
+            cls.rx_gs_sq_cnt = 0
+            cls.rx_gs_len = 0
+            return cls.rx_gs_cmd
+
+        # Payload will be everything in message after header, can be empty
+        if cls.rx_gs_len != 0:
+            cls.rx_payload = packet[4:]
+        else:
+            cls.rx_payload = bytearray()
 
         return cls.rx_gs_cmd
 
@@ -405,7 +409,7 @@ class SATELLITE_RADIO:
             cls.tx_message = bytes([MSG_ID.SAT_ACK, 0x00, 0x00, 0x01, 0x00])
 
         elif cls.state == COMMS_STATE.TX_FRAME:
-            # Transmit SAT heartbeat
+            # Transmit a specific TM frame
             cls.tx_message = cls.tm_frame
 
         elif cls.state == COMMS_STATE.TX_METADATA:

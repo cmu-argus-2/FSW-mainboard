@@ -7,8 +7,10 @@ import time
 
 from apps.adcs.modes import Modes
 from apps.command import COMMAND_FORCE_STATE, CommandQueue
+from apps.command.constants import CMD_ID
 from apps.command.processor import handle_command_execution_status, process_command
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX
+from apps.telemetry.helpers import unpack_unsigned_long_int
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
@@ -109,9 +111,7 @@ class Task(TemplateTask):
             # Update variables to stay in state for a forced switch to state command
             if COMMAND_FORCE_STATE.get_force_state():
                 if COMMAND_FORCE_STATE.get_time_in_state() > 0:
-                    COMMAND_FORCE_STATE.set_time_in_state(
-                        COMMAND_FORCE_STATE.get_time_in_state() - 1
-                    )
+                    COMMAND_FORCE_STATE.set_time_in_state(COMMAND_FORCE_STATE.get_time_in_state() - 1)
                     self.log_info(f"FORCED STATE - Time_in_state (remaining time): {COMMAND_FORCE_STATE.get_time_in_state()}")
                 else:
                     COMMAND_FORCE_STATE.set_force_state(False)
@@ -120,9 +120,21 @@ class Task(TemplateTask):
             ### COMMAND PROCESSING ###
 
             if CommandQueue.command_available():
-                (cmd_id, cmd_args), queue_error_code = CommandQueue.pop_command()
+                (cmd_id, cmd_arglist), queue_error_code = CommandQueue.pop_command()
+                # self.log_info(f"ID: {cmd_id} Arguments: {cmd_args}")
 
-                if queue_error_code == CommandQueue.OK:
+                # Unpack arguments based on message ID
+                if cmd_id == CMD_ID.SWITCH_TO_STATE:
+                    cmd_arglist = list(cmd_arglist)
+                    cmd_args = [0x00, 0x00]
+                    cmd_args[0] = cmd_arglist[0]
+                    cmd_args[1] = unpack_unsigned_long_int(cmd_arglist[1:5])
+
+                    self.log_info(f"ID: {cmd_id} Argument List: {cmd_args}")
+                else:
+                    cmd_args = []
+
+                if queue_error_code == 0:
                     self.log_info(f"Processing command: {cmd_id} with args: {cmd_args}")
                     status, response_args = process_command(cmd_id, *cmd_args)
 
