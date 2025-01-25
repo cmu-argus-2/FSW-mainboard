@@ -144,11 +144,6 @@ class Task(TemplateTask):
                 self.MODE = Modes.SUN_POINTED
 
             ## Magnetorquer Attitude Control
-            """
-            scaled_ang_vel = imu_ang_vel / ControllerHandler.ang_vel_target
-            spin_err = ControllerHandler.spin_axis - scaled_ang_vel
-            pointing_err = self.sun_vector - scaled_ang_vel
-            """
             ang_momentum = PhysicalConst.INERTIA_MAT @ imu_ang_vel
             scaled_momentum = ang_momentum / ControllerHandler.momentum_target
             spin_err = ControllerHandler.spin_axis - scaled_momentum
@@ -164,6 +159,8 @@ class Task(TemplateTask):
                     imu_mag_data,
                     pointing_err,
                 )
+                print()
+                print("POINTING")
             else:
                 dipole_moment = np.zeros(3)
             MagneticCoilAllocator.set_voltages(dipole_moment)
