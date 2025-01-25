@@ -133,14 +133,10 @@ class TelemetryPacker:
                 cls._FRAME[27:29] = pack_signed_short_int(eps_data, EPS_IDX.BATTERY_PACK_VOLTAGE)
                 # Battery pack midpoint voltage
                 cls._FRAME[29:31] = pack_signed_short_int(eps_data, EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE)
-                # Battery cycles
-                cls._FRAME[31:33] = pack_signed_short_int(eps_data, EPS_IDX.BATTERY_CYCLES)
                 # Battery pack TTE
-                cls._FRAME[33:35] = pack_signed_short_int(eps_data, EPS_IDX.BATTERY_PACK_TTE)
+                cls._FRAME[31:35] = pack_unsigned_long_int(eps_data, EPS_IDX.BATTERY_PACK_TTE)
                 # Battery pack TTF
-                cls._FRAME[35:37] = pack_signed_short_int(eps_data, EPS_IDX.BATTERY_PACK_TTF)
-                # Battery time since power up
-                cls._FRAME[37:39] = pack_signed_short_int(eps_data, EPS_IDX.BATTERY_TIME_SINCE_POWER_UP)
+                cls._FRAME[35:39] = pack_unsigned_long_int(eps_data, EPS_IDX.BATTERY_PACK_TTF)
 
                 # XP coil voltage
                 cls._FRAME[39:41] = pack_signed_short_int(eps_data, EPS_IDX.XP_COIL_VOLTAGE)
