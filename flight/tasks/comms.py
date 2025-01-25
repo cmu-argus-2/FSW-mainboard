@@ -154,7 +154,6 @@ class Task(TemplateTask):
         #         self.log_info(f"Response: {response_id}, with args: {response_args}")
 
         if SM.current_state == STATES.DETUMBLING or SM.current_state == STATES.NOMINAL or SM.current_state == STATES.LOW_POWER:
-
             if not DH.data_process_exists("comms"):  # avoid registering in startup
                 DH.register_data_process("comms", "f", True, 100000)
 

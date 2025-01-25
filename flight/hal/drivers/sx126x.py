@@ -990,7 +990,6 @@ class SX126X:
         modem = self.getPacketType()
 
         if modem == SX126X_PACKET_TYPE_LORA:
-
             if len_:
                 self._crcType = SX126X_LORA_CRC_ON
             else:

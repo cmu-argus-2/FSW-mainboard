@@ -12,11 +12,13 @@ Author: Ibrahima S. Sow
 
 from micropython import const
 
-# Error codes
-OK = const(0)  # Error code indicating successful operation.
-OVERFLOW = const(1)  # Error code indicating the queue is full.
-EMPTY = const(2)  # Error code indicating the queue is empty.
-OVERWRITE = const(3)  # Error code indicating failure to overwrite a 1 element queue.
+
+class QUEUE_STATUS:
+    # Error codes
+    OK = const(0)  # Error code indicating successful operation.
+    OVERFLOW = const(1)  # Error code indicating the queue is full.
+    EMPTY = const(2)  # Error code indicating the queue is empty.
+    OVERWRITE = const(3)  # Error code indicating failure to overwrite a 1 element queue.
 
 
 class CommandQueue:
@@ -37,17 +39,17 @@ class CommandQueue:
         """Pushes a command onto the queue if not full. Returns an error code."""
         if len(cls._queue) < cls._max_size:
             cls._queue.append((cmd_id, args))
-            return OK
+            return QUEUE_STATUS.OK
         else:
-            return OVERFLOW
+            return QUEUE_STATUS.OVERFLOW
 
     @classmethod
     def pop_command(cls):
         """Pops the first command from the queue (FIFO). Returns the command or an error code."""
         if cls._queue:
-            return cls._queue.pop(0), OK  # Pops the first element (FIFO), returns (cmd_id, args), error code
+            return cls._queue.pop(0), QUEUE_STATUS.OK  # Pops the first element (FIFO), returns (cmd_id, args), error code
         else:
-            return None, EMPTY
+            return None, QUEUE_STATUS.EMPTY
 
     @classmethod
     def overwrite_command(cls, cmd_id, args):
@@ -55,9 +57,9 @@ class CommandQueue:
         cls._queue = [(cmd_id, args)]
 
         if len(cls._queue) == 1:
-            return OK
+            return QUEUE_STATUS.OK
         else:
-            return OVERWRITE
+            return QUEUE_STATUS.OVERWRITE
 
     @classmethod
     def command_available(cls):
@@ -98,17 +100,17 @@ class ResponseQueue:
         """Pushes a command onto the queue if not full. Returns an error code."""
         if len(cls._queue) < cls._max_size:
             cls._queue.append((cmd_id, args))
-            return OK
+            return QUEUE_STATUS.OK
         else:
-            return OVERFLOW
+            return QUEUE_STATUS.OVERFLOW
 
     @classmethod
     def pop_response(cls):
         """Pops the first command from the queue (FIFO). Returns the command or an error code."""
         if cls._queue:
-            return cls._queue.pop(0), OK  # Pops the first element (FIFO), returns (cmd_id, args), error code
+            return cls._queue.pop(0), QUEUE_STATUS.OK  # Pops the first element (FIFO), returns (cmd_id, args), error code
         else:
-            return None, EMPTY
+            return None, QUEUE_STATUS.EMPTY
 
     @classmethod
     def overwrite_response(cls, cmd_id, args):
@@ -116,9 +118,9 @@ class ResponseQueue:
         cls._queue = [(cmd_id, args)]
 
         if len(cls._queue) == 1:
-            return OK
+            return QUEUE_STATUS.OK
         else:
-            return OVERWRITE
+            return QUEUE_STATUS.OVERWRITE
 
     @classmethod
     def response_available(cls):

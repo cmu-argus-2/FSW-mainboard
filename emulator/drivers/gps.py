@@ -35,13 +35,11 @@ class GPS:
         return self.fix_quality is not None and self.fix_quality >= 1
 
     def update(self) -> bool:
-
         # self._msg = 0xA8
         _ = self.parse_data()
         return True
 
     def parse_data(self) -> dict:
-
         if self.__simulator:
             # Simualte all other fields
             ecef_state = self.__simulator.gps()

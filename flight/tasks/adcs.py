@@ -84,12 +84,10 @@ class Task(TemplateTask):
         self.name = "ADCS"  # Override the name
 
     async def main_task(self):
-
         if SM.current_state == STATES.STARTUP:
             pass
 
         else:
-
             ## Attitude Determination
 
             if not DH.data_process_exists("adcs"):

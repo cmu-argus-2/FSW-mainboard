@@ -175,7 +175,6 @@ class DataProcess:
         self.excluded_paths = []  # Paths that are currently being transmitted
 
         if self.persistent:
-
             self.status = _CLOSED
 
             self.dir_path = join_path(_HOME_PATH, tag_name)
@@ -407,7 +406,6 @@ class DataProcess:
         """
         files = self.get_sorted_file_list()
         if len(files) > 1:  # Ignore process configuration file
-
             if latest:
                 transmit_file = files[-1]
                 if transmit_file == _PROCESS_CONFIG_FILENAME:
@@ -559,7 +557,6 @@ class DataProcess:
 
 class ImageProcess(DataProcess):
     def __init__(self, tag_name: str):
-
         self.tag_name = tag_name
         self.file = None
 
@@ -609,7 +606,6 @@ class ImageProcess(DataProcess):
         """
         files = self.get_sorted_file_list()
         if len(files) > 1:  # Ignore process configuration file
-
             if latest:
                 transmit_file = files[-1]
                 if transmit_file == _PROCESS_CONFIG_FILENAME:

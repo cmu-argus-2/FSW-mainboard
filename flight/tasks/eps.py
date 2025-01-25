@@ -11,7 +11,6 @@ from hal.configuration import SATELLITE
 
 
 class Task(TemplateTask):
-
     name = "EPS"
     ID = 0x01
 
@@ -75,12 +74,10 @@ class Task(TemplateTask):
             self.log_data[current_idx] = int(board_current * 1000)  # mA
 
     async def main_task(self):
-
         if SM.current_state == STATES.STARTUP:
             pass
 
         else:
-
             if not DH.data_process_exists("eps"):
                 data_format = "Lhhb" + "h" * 38  # - use mV for voltage and mA for current (h = short integer 2 bytes)
                 DH.register_data_process("eps", data_format, True, data_limit=100000)
