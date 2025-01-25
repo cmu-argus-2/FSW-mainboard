@@ -6,6 +6,7 @@ controller reference handler, and magnetorquer voltage allocator.
 Author(s): Derek Fan
 """
 
+
 from typing import Tuple
 
 from apps.adcs.consts import MagnetorquerConst, MCMConst, ModeConst, PhysicalConst
@@ -65,8 +66,6 @@ class ControllerHandler:
 
     # References and targets
     ang_vel_reference = spin_axis * MCMConst.REF_FACTOR * ModeConst.STABLE_TOL
-    # ang_vel_target = np.linalg.norm(ang_vel_reference)
-    # momentum_reference = PhysicalConst.INERTIA_MAT @ ang_vel_reference
     momentum_target = np.linalg.norm(PhysicalConst.INERTIA_MAT @ ang_vel_reference)
 
     @classmethod
@@ -106,9 +105,6 @@ class MagneticCoilAllocator:
 
         Vs = MagnetorquerConst.V_CONVERT * cls.mat @ dipole_moment
         Vs_bd = np.clip(Vs, -MagnetorquerConst.V_MAX, MagnetorquerConst.V_MAX)
-        # print(Vs_bd)
-
-        # print("\n", "VOLTAGES:", Vs_bd, "\n")
 
         for axis, face_idx in MCMConst.AXIS_FACE_INDICES.items():
             cls._Vs_ctrl[axis + "P"] = Vs_bd[face_idx["P"]]

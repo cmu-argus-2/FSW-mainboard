@@ -1,5 +1,6 @@
 # Attitude Determination and Control (ADC) task
 
+
 import time
 
 from apps.adcs.ad import TRIAD
@@ -159,23 +160,11 @@ class Task(TemplateTask):
                     imu_mag_data,
                     pointing_err,
                 )
-                print()
-                print("POINTING")
             else:
                 dipole_moment = np.zeros(3)
             MagneticCoilAllocator.set_voltages(dipole_moment)
 
-            print()
-            print("MODE:", self.MODE)
-            print("SPIN ERROR:", np.linalg.norm(spin_err))
-            print("POINTING ERROR:", np.linalg.norm(pointing_err))
-            print("GYRO:", imu_ang_vel)
-            print("SUN_VECTOR:", self.sun_vector)
-            print("ECLIPSE:", self.eclipse_state)
-            print()
-
             ## Attitude Determination
-
             if DH.data_process_exists("gps"):
                 # TODO GPS flag for valid position
                 # Might need an attitude status flag
