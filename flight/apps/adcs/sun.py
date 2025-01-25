@@ -77,7 +77,7 @@ def compute_body_sun_vector_from_lux(I_vec):
 
     Args:
         I_vec: flux values on each face in the following order
-        - X+ face, X- face, Y+ face, Y- face, Z- face
+        - X+ face, X- face, Y+ face, Y- face, Z- face, ZP1 face, ZP2 face, ZP3 face, ZP4 face
 
     Returns:
         sun_body: unit vector from spacecraft to sun expressed in body frame
@@ -86,6 +86,19 @@ def compute_body_sun_vector_from_lux(I_vec):
     status = None
     sun_body = np.zeros(3)
 
+    N = np.array(
+        [
+            [1, 0, 0],
+            [-1, 0, 0],
+            [0, 1, 0],
+            [0, -1, 0],
+            [0.7071, 0, 0.7071],
+            [0, 0.7071, 0.7071],
+            [-0.7071, 0, 0.7071],
+            [0, -0.7071, 0.7071],
+        ]
+    )  # map from light sensors to body vector
+
     num_valid_readings = NUM_LIGHT_SENSORS - I_vec.count(ERROR_LUX)
 
     if num_valid_readings == 0:
@@ -93,35 +106,21 @@ def compute_body_sun_vector_from_lux(I_vec):
         return status, sun_body
     elif num_valid_readings < 3:
         status = SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS
-    elif I_vec[4] == ERROR_LUX:
-        status = SUN_VECTOR_STATUS.MISSING_ZM_READING
-    elif I_vec[0] == ERROR_LUX and I_vec[1] == ERROR_LUX:
-        status = SUN_VECTOR_STATUS.MISSING_FULL_X_AXIS_READING
-    elif I_vec[2] == ERROR_LUX and I_vec[3] == ERROR_LUX:
-        status = SUN_VECTOR_STATUS.MISSING_FULL_Y_AXIS_READING
-    elif I_vec[0] == ERROR_LUX:
-        status = SUN_VECTOR_STATUS.MISSING_XP_READING
-    elif I_vec[1] == ERROR_LUX:
-        status = SUN_VECTOR_STATUS.MISSING_XM_READING
-    elif I_vec[2] == ERROR_LUX:
-        status = SUN_VECTOR_STATUS.MISSING_YP_READING
-    elif I_vec[3] == ERROR_LUX:
-        status = SUN_VECTOR_STATUS.MISSING_YM_READING
-    elif num_valid_readings == 5:  # All readings are valid and unique determination is possible
+    elif num_valid_readings >= 3:  # All readings are valid and unique determination is possible
         status = SUN_VECTOR_STATUS.UNIQUE_DETERMINATION
 
-    i_vec = I_vec.copy()
+    valid_sensor_idxs = np.where(I_vec == ERROR_LUX)[0]
 
-    for i in range(len(I_vec)):  # if ERROR_LUX replace with 0 to cancel
-        if i_vec[i] is ERROR_LUX:
-            i_vec[i] = 0
+    # Extract body vectors and lux readings where the sensor readings are valid
+    N_valid = N[valid_sensor_idxs, :]
+    I_valid = I_vec[valid_sensor_idxs]
 
-    sun_body[0] = i_vec[0] if i_vec[0] > i_vec[1] else -i_vec[1]
-    sun_body[1] = i_vec[2] if i_vec[2] > i_vec[3] else -i_vec[3]
-    sun_body[2] = i_vec[4]
+    # Extract the sun body vector
+    # NOTE : ulab does not have a pinv operation
+    # Using the Moore-Penrose psuedo-inverse
+    sun_body = np.linalg.inv(N_valid.transpose() @ N_valid) @ N_valid.transpose() @ I_valid
 
     norm = (sun_body[0] ** 2 + sun_body[1] ** 2 + sun_body[2] ** 2) ** 0.5
-    # norm = MAX_RANGE
 
     if norm == 0:  # Avoid division by zero - not perfect
         status = SUN_VECTOR_STATUS.UNDETERMINED_VECTOR
