@@ -54,7 +54,7 @@ class TelemetryPacker:
     _FRAME = bytearray(_TM_FRAME_SIZE)  # pre-allocated buffer for packing
     _FRAME[0] = const(0x01) & 0xFF  # message ID
     _FRAME[1:3] = pack_unsigned_short_int([const(0x00)], 0)  # sequence count
-    _FRAME[3] = const(245) & 0xFF  # packet length
+    _FRAME[3] = const(229) & 0xFF  # packet length
 
     @classmethod
     def FRAME(cls):
@@ -287,38 +287,36 @@ class TelemetryPacker:
             gps_data = DH.get_latest_data("gps")
 
             if gps_data:
-                # TODO: fix indices (compress TM frame)
-
                 # message ID
-                cls._FRAME[179] = gps_data[GPS_IDX.GPS_MESSAGE_ID] & 0xFF
+                cls._FRAME[178] = gps_data[GPS_IDX.GPS_MESSAGE_ID] & 0xFF
                 # fix mode
-                cls._FRAME[180] = gps_data[GPS_IDX.GPS_FIX_MODE] & 0xFF
+                cls._FRAME[179] = gps_data[GPS_IDX.GPS_FIX_MODE] & 0xFF
                 # number of SV
-                cls._FRAME[181] = gps_data[GPS_IDX.GPS_NUMBER_OF_SV] & 0xFF
+                cls._FRAME[180] = gps_data[GPS_IDX.GPS_NUMBER_OF_SV] & 0xFF
                 # GNSS week
-                cls._FRAME[182:184] = pack_unsigned_short_int(gps_data, GPS_IDX.GPS_GNSS_WEEK)
+                cls._FRAME[181:183] = pack_unsigned_short_int(gps_data, GPS_IDX.GPS_GNSS_WEEK)
                 # GNSS TOW
-                cls._FRAME[184:188] = pack_unsigned_long_int(gps_data, GPS_IDX.GPS_GNSS_TOW)
+                cls._FRAME[183:187] = pack_unsigned_long_int(gps_data, GPS_IDX.GPS_GNSS_TOW)
                 # latitude
-                cls._FRAME[188:192] = pack_signed_long_int(gps_data, GPS_IDX.GPS_LATITUDE)
+                cls._FRAME[187:191] = pack_signed_long_int(gps_data, GPS_IDX.GPS_LATITUDE)
                 # longitude
-                cls._FRAME[192:196] = pack_signed_long_int(gps_data, GPS_IDX.GPS_LONGITUDE)
+                cls._FRAME[191:195] = pack_signed_long_int(gps_data, GPS_IDX.GPS_LONGITUDE)
                 # ellipsoid altitude
-                cls._FRAME[196:200] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ELLIPSOID_ALT)
+                cls._FRAME[195:199] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ELLIPSOID_ALT)
                 # mean sea level altitude
-                cls._FRAME[200:204] = pack_signed_long_int(gps_data, GPS_IDX.GPS_MEAN_SEA_LVL_ALT)
+                cls._FRAME[199:203] = pack_signed_long_int(gps_data, GPS_IDX.GPS_MEAN_SEA_LVL_ALT)
                 # ECEF X
-                cls._FRAME[204:208] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_X)
+                cls._FRAME[203:207] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_X)
                 # ECEF Y
-                cls._FRAME[208:212] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_Y)
+                cls._FRAME[207:211] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_Y)
                 # ECEF Z
-                cls._FRAME[212:216] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_Z)
+                cls._FRAME[211:215] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_Z)
                 # ECEF VX
-                cls._FRAME[216:220] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VX)
+                cls._FRAME[215:219] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VX)
                 # ECEF VY
-                cls._FRAME[220:224] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VY)
+                cls._FRAME[219:223] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VY)
                 # ECEF VZ
-                cls._FRAME[224:228] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VZ)
+                cls._FRAME[223:227] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VZ)
             else:
                 logger.warning("No latest GPS data available")
         else:
@@ -330,11 +328,11 @@ class TelemetryPacker:
             thermal_data = DH.get_latest_data("thermal")
             if thermal_data:
                 # IMU temperature
-                cls._FRAME[228:230] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.IMU_TEMPERATURE)
+                cls._FRAME[227:229] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.IMU_TEMPERATURE)
                 # CPU temperature
-                cls._FRAME[230:232] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.CPU_TEMPERATURE)
+                cls._FRAME[229:231] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.CPU_TEMPERATURE)
                 # Battery temperature
-                cls._FRAME[232:234] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.BATTERY_PACK_TEMPERATURE)
+                cls._FRAME[231:233] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.BATTERY_PACK_TEMPERATURE)
             else:
                 logger.warning("No latest Thermal data available")
         else:
