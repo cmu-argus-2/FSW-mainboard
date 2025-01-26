@@ -113,7 +113,7 @@ def compute_body_sun_vector_from_lux(I_vec):
 
     # Extract body vectors and lux readings where the sensor readings are valid
     N_valid = N[valid_sensor_idxs, :]
-    I_valid = I_vec[valid_sensor_idxs]
+    I_valid = [I_vec[idx] for idx in valid_sensor_idxs]
 
     # Extract the sun body vector
     # NOTE : ulab does not have a pinv operation

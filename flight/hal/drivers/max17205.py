@@ -29,7 +29,7 @@ def unpack_signed_short_int(byte_list):
     return val if val < 0x8000 else val - 0x10000
 
 
-class MAX17205():
+class MAX17205:
     def __init__(self, i2c, i2c_addr):
         # 2 I2C addresses: read address (0x36) and write address (0x0B, shadow RAM)
         # Only using read address
@@ -59,8 +59,7 @@ class MAX17205():
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to pack SoC
-        self.soc = int.from_bytes(
-            self.rx_buffer, 'little', signed=False) / 256
+        self.soc = int.from_bytes(self.rx_buffer, "little", signed=False) / 256
 
         return self.soc
 
@@ -76,8 +75,7 @@ class MAX17205():
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to pack capacity
-        self.capacity = int.from_bytes(
-            self.rx_buffer, 'little', signed=False) / 0.01
+        self.capacity = int.from_bytes(self.rx_buffer, "little", signed=False) / 0.01
 
         return self.capacity
 
@@ -112,7 +110,7 @@ class MAX17205():
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to a uint16
-        voltage_raw = int.from_bytes(self.rx_buffer, 'little', signed=False)
+        voltage_raw = int.from_bytes(self.rx_buffer, "little", signed=False)
 
         # Cast uint16 to a float and scale for mV voltage
         self.voltage = float(voltage_raw) * 1.25
@@ -131,7 +129,7 @@ class MAX17205():
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to a uint16
-        midvoltage_raw = int.from_bytes(self.rx_buffer, 'little', signed=False)
+        midvoltage_raw = int.from_bytes(self.rx_buffer, "little", signed=False)
 
         # Cast uint16 to a float and scale for mV voltage
         self.midvoltage = float(midvoltage_raw) * 0.078125
@@ -150,8 +148,7 @@ class MAX17205():
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to a uint16
-        self.cycles = int.from_bytes(
-            self.rx_buffer, 'little', signed=False)
+        self.cycles = int.from_bytes(self.rx_buffer, "little", signed=False)
 
         return self.cycles
 
@@ -167,8 +164,7 @@ class MAX17205():
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to a uint16
-        self.tte = int.from_bytes(
-            self.rx_buffer, 'little', signed=False) * 5.625
+        self.tte = int.from_bytes(self.rx_buffer, "little", signed=False) * 5.625
 
         return self.tte
 
@@ -184,8 +180,7 @@ class MAX17205():
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to a uint16
-        self.ttf = int.from_bytes(
-            self.rx_buffer, 'little', signed=False) * 5.625
+        self.ttf = int.from_bytes(self.rx_buffer, "little", signed=False) * 5.625
 
         return self.ttf
 
@@ -201,8 +196,7 @@ class MAX17205():
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to a uint16
-        self.time_pwrup = int.from_bytes(
-            self.rx_buffer, 'little', signed=False)
+        self.time_pwrup = int.from_bytes(self.rx_buffer, "little", signed=False)
 
         return self.time_pwrup
 
