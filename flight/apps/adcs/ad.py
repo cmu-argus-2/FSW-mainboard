@@ -31,7 +31,6 @@ def rotm2quat(r):
 
 
 def TRIAD(n1, n2, b1, b2):
-
     n1 = np.array(n1)
     n2 = np.array(n2)
     b1 = np.array(b1)

@@ -11,7 +11,6 @@ from hal.configuration import SATELLITE
 
 
 class Task(TemplateTask):
-
     name = "EPS"
     ID = 0x01
 
@@ -88,12 +87,10 @@ class Task(TemplateTask):
             return False
 
     async def main_task(self):
-
         if SM.current_state == STATES.STARTUP:
             pass
 
         else:
-
             if not DH.data_process_exists("eps"):
                 data_format = (
                     "Lhhb" + "h" * 4 + "L" * 2 + "h" * 30
