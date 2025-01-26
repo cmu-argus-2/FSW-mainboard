@@ -71,8 +71,7 @@ class Task(TemplateTask):
                 self.log_info("Switching to DETUMBLING state.")
 
                 # Just for testing
-                # CommandQueue.push_command(0x01, [])
-                # CommandQueue.push_command(0x02, [])
+                # CommandQueue.push_command(0x40, [])
 
                 # Testing single-element queue
                 # CommandQueue.overwrite_command(0x01,[STATES.LOW_POWER, 0x00])
