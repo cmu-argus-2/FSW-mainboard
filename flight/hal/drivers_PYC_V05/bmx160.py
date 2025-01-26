@@ -708,7 +708,6 @@ class BMX160_I2C(BMX160):
     """Driver for the BMX160 connect over I2C."""
 
     def __init__(self, i2c):
-
         try:
             self.i2c_device = I2CDevice(i2c, BMX160_I2C_ADDR, probe=False)
         except Exception:

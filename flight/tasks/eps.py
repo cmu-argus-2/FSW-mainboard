@@ -11,7 +11,6 @@ from hal.configuration import SATELLITE
 
 
 class Task(TemplateTask):
-
     name = "EPS"
     ID = 0x01
 
@@ -75,7 +74,7 @@ class Task(TemplateTask):
     def read_fuel_gauge(self):
         # read values from MAX17205
         fuel_gauge = SATELLITE.FUEL_GAUGE
-        if (fuel_gauge is not None):
+        if fuel_gauge is not None:
             self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] = int(fuel_gauge.read_soc())
             self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY] = int(fuel_gauge.read_capacity())
             self.log_data[EPS_IDX.BATTERY_PACK_CURRENT] = int(fuel_gauge.read_current())
@@ -88,14 +87,14 @@ class Task(TemplateTask):
             return False
 
     async def main_task(self):
-
         if SM.current_state == STATES.STARTUP:
             pass
 
         else:
-
             if not DH.data_process_exists("eps"):
-                data_format = "Lhhb" + "h" * 4 + "L" * 2 + "h" * 30  # - use mV for voltage and mA for current (h = short integer 2 bytes, L = 4 bytes)
+                data_format = (
+                    "Lhhb" + "h" * 4 + "L" * 2 + "h" * 30
+                )  # - use mV for voltage and mA for current (h = short integer 2 bytes, L = 4 bytes)
                 DH.register_data_process("eps", data_format, True, data_limit=100000)
 
             # Get power system readings
@@ -122,7 +121,7 @@ class Task(TemplateTask):
                         + f"Radio Current: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_CURRENT]} mA"
                     )
 
-            if (self.read_fuel_gauge()):
+            if self.read_fuel_gauge():
                 self.log_info(f"Battery Pack Reported SOC: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]}% ")
                 self.log_info(f"Battery Pack Reported Capacity: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY]} mAh ")
                 self.log_info(f"Battery Pack Current: {self.log_data[EPS_IDX.BATTERY_PACK_CURRENT]} mA ")

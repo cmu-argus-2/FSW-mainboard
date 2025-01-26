@@ -13,7 +13,7 @@ def print_memory_stats(call_gc=True):
     print(f"Memory stats after gc: {call_gc}")
     print(f"Total memory: {str(gc.mem_alloc() + gc.mem_free())} bytes")
     print(f"Memory free: {str(gc.mem_free())} bytes")
-    print(f"Memory free: {int((gc.mem_alloc() / (gc.mem_alloc() + gc.mem_free())) * 100)}%")
+    print(f"Memory used: {int((gc.mem_alloc() / (gc.mem_alloc() + gc.mem_free())) * 100)}%")
 
 
 for path in ["/hal", "/apps", "/core"]:

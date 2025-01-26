@@ -149,7 +149,6 @@ class ADM1176:
         return self._overcurrent_level
 
     def set_overcurrent_level(self, value: int = 0xFF) -> None:
-
         # enable over current alert
         _extcmd[0] = ALERT_EN_EXT_REG_ADDR
         _extcmd[1] |= ALERT_EN_EN_ADC_OC4

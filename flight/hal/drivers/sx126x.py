@@ -416,6 +416,7 @@ def ASSERT(state):
     assert state == ERR_NONE, ERROR[state]
 
 
+# TODO: Characterize latency and potentially tweak sleep time
 def yield_():
     sleep_ms(1)
 
@@ -582,6 +583,8 @@ class SX126X:
             sleep_ms(10)
 
     def transmit(self, data, len_, addr=0):
+        # This is the transmit fn used in FSW
+
         # Enable TX and disable RX
         self.tx_en.value = True
         self.rx_en.value = False
@@ -603,6 +606,7 @@ class SX126X:
         state = self.startTransmit(data, len_, addr)
         ASSERT(state)
 
+        # TODO: Characterize latency and potentially tweak sleep time
         start = ticks_us()
         while not self.irq.value:
             yield_()
@@ -635,6 +639,8 @@ class SX126X:
         return self.irq.value
 
     def receive(self, data, len_, timeout_en, timeout_ms):
+        # This is the receive fn used in FSW
+
         # state = self.standby()
         # ASSERT(state)
 
@@ -657,6 +663,7 @@ class SX126X:
         else:
             timeoutValue = SX126X_RX_TIMEOUT_NONE  # noqa F841
 
+        # Check if a packet is currently available in the RX buffer
         if self.RX_available():
             if self._headerType == SX126X_LORA_HEADER_IMPLICIT and self.getPacketType() == SX126X_PACKET_TYPE_LORA:
                 state = self.fixImplicitTimeout()
@@ -983,7 +990,6 @@ class SX126X:
         modem = self.getPacketType()
 
         if modem == SX126X_PACKET_TYPE_LORA:
-
             if len_:
                 self._crcType = SX126X_LORA_CRC_ON
             else:
@@ -1599,6 +1605,7 @@ class SX1262(SX126X):
         except AssertionError as e:
             state = list(ERROR.keys())[list(ERROR.values()).index(str(e))]
 
+        # TODO: CRC checks
         if state == ERR_NONE or state == ERR_CRC_MISMATCH:
             if len_ == 0:
                 length = super().getPacketLength(False)

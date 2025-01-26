@@ -52,7 +52,6 @@ class Simulator:  # will be passed by reference to the emulated HAL
     """
 
     def __init__(self):
-
         # TODO self.read_configuration("nothing_for_now")
 
         config = {
@@ -195,7 +194,6 @@ class Simulator:  # will be passed by reference to the emulated HAL
 
 
 if __name__ == "__main__":
-
     sim = Simulator()
 
     tt = datetime.now()

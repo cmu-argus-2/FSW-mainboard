@@ -213,7 +213,6 @@ class OPT4001:
         int_pol: bool = False,
         fault_count: int = 0b00,
     ) -> "OPT4001":
-
         self.i2c_device = I2CDevice(i2c_bus, address)
         """
         i2c_device: and I2CDevice initialized using the input i2c_bus and address

@@ -9,7 +9,6 @@ from hal.configuration import SATELLITE
 
 
 class Task(TemplateTask):
-
     """data_keys = [
         "time",
         "accel_x",
@@ -32,12 +31,10 @@ class Task(TemplateTask):
         self.name = "IMU"
 
     async def main_task(self):
-
         if SM.current_state == STATES.STARTUP:
             pass
 
         else:
-
             if not DH.data_process_exists("imu"):
                 DH.register_data_process("imu", "Lfffffffff", True, data_limit=100000, write_interval=5)
 

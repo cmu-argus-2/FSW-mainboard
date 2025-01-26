@@ -78,17 +78,14 @@ class TelemetryPacker:
 
     @classmethod
     def pack_tm_heartbeat(cls):
-
         if not cls._TM_AVAILABLE:
             cls._TM_AVAILABLE = True
 
         ############ CDH fields ############
         if DH.data_process_exists("cdh"):
-
             cdh_data = DH.get_latest_data("cdh")
 
             if cdh_data:
-
                 # Time
                 cls._FRAME[4:8] = pack_unsigned_long_int(cdh_data, CDH_IDX.TIME)
                 # SC State
@@ -107,7 +104,6 @@ class TelemetryPacker:
                 cls._FRAME[17] = cdh_data[CDH_IDX.DETUMBLING_ERROR_FLAG] & 0xFF
 
             else:
-
                 logger.warning("No latest CDH data available")
 
         else:
@@ -210,7 +206,6 @@ class TelemetryPacker:
 
         ############ ADCS fields ############
         if DH.data_process_exists("adcs"):
-
             adcs_data = DH.get_latest_data("adcs")
 
             if adcs_data:
@@ -289,7 +284,6 @@ class TelemetryPacker:
 
         ############ GPS fields ############
         if DH.data_process_exists("gps"):
-
             gps_data = DH.get_latest_data("gps")
 
             if gps_data:
