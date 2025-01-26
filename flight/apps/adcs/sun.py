@@ -21,7 +21,7 @@ from ulab import numpy as np
 
 MAX_RANGE = const(117000)  # OPT4001
 THRESHOLD_ILLUMINATION_LUX = const(3000)
-NUM_LIGHT_SENSORS = const(5)
+NUM_LIGHT_SENSORS = const(9)
 ERROR_LUX = const(-1)
 
 
@@ -55,7 +55,7 @@ def read_light_sensors():
         lux_readings: list of lux readings on each face. A "ERROR_LUX" reading comes from a dysfunctional sensor.
     """
 
-    faces = ["XP", "XM", "YP", "YM", "ZM"]
+    faces = ["XP", "XM", "YP", "YM", "ZM", "ZP1", "ZP2", "ZP3", "ZP4"]
     lux_readings = []
 
     for face in faces:
@@ -92,6 +92,7 @@ def compute_body_sun_vector_from_lux(I_vec):
             [-1, 0, 0],
             [0, 1, 0],
             [0, -1, 0],
+            [0, 0, -1],
             [0.7071, 0, 0.7071],
             [0, 0.7071, 0.7071],
             [-0.7071, 0, 0.7071],
@@ -109,7 +110,7 @@ def compute_body_sun_vector_from_lux(I_vec):
     elif num_valid_readings >= 3:  # All readings are valid and unique determination is possible
         status = SUN_VECTOR_STATUS.UNIQUE_DETERMINATION
 
-    valid_sensor_idxs = np.where(I_vec == ERROR_LUX)[0]
+    valid_sensor_idxs = [idx for idx in range(len(I_vec)) if I_vec[idx] != ERROR_LUX]
 
     # Extract body vectors and lux readings where the sensor readings are valid
     N_valid = N[valid_sensor_idxs, :]
