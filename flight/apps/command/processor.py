@@ -20,6 +20,7 @@ See documentation for a full description of each commands.
 Author: Ibrahima S. Sow
 """
 
+import apps.telemetry.helpers as tm_helper
 from apps.command import ResponseQueue
 from apps.command.commands import (
     FORCE_REBOOT,
@@ -95,8 +96,6 @@ def process_command(cmd_id, *args):
 
             # Execute the command function with arguments
             try:
-                # TODO when format of args is decided on, unpack byte string:
-                # command_arguments = unpack_command_arguments(cmd_id, *args)
                 response_args = execute(*args)
                 return CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS, [cmd_id] + response_args
             except Exception as e:
@@ -109,9 +108,8 @@ def process_command(cmd_id, *args):
 
 
 def handle_command_execution_status(status, response_args):
-    # TODO: Implement response handling based on the command execution status
-    # If the command execution was successful, send a success response
-    # If the command execution failed, send an error response with the error code
+    # If the command execution was successful, send a success response to Comms via Response Queue
+    # If the command execution failed, send an error response with the error code to Comms via Response Queue
 
     ResponseQueue.overwrite_response(status, response_args)
 
@@ -123,3 +121,32 @@ def handle_command_execution_status(status, response_args):
         # TODO build error response - Error messages
         logger.info(f"Command execution not successful due to error: {status}")
         pass
+
+
+def unpack_command_arguments(cmd_id, cmd_arglist):
+    """This will unpack the command arguments received from Command Queue"""
+    cmd_arglist = list(cmd_arglist)
+    cmd_args = []
+    # TODO Fill out for commands with file requests
+    if cmd_id == CMD_ID.SWITCH_TO_STATE:
+        cmd_args.append(cmd_arglist[0])  # target_state_id (uint8)
+        cmd_args.append(tm_helper.unpack_unsigned_long_int(cmd_arglist[1:5]))  # time_in_state (uint32)
+
+    elif cmd_id == CMD_ID.UPLINK_TIME_REFERENCE:
+        cmd_args.append(tm_helper.unpack_unsigned_long_int(cmd_arglist[0:4]))  # time_in_state (uint32)
+
+    elif cmd_id == CMD_ID.UPLINK_ORBIT_REFERENCE:
+        cmd_args.append(tm_helper.unpack_unsigned_long_int(cmd_arglist[0:4]))  # time_in_state (uint32)
+        cmd_args.append(tm_helper.unpack_signed_long_int(cmd_arglist[4:8]))  # pos_x (int32)
+        cmd_args.append(tm_helper.unpack_signed_long_int(cmd_arglist[8:12]))  # pos_y (int32)
+        cmd_args.append(tm_helper.unpack_signed_long_int(cmd_arglist[12:16]))  # pos_z (int32)
+        cmd_args.append(tm_helper.unpack_signed_long_int(cmd_arglist[16:20]))  # vel_x (int32)
+        cmd_args.append(tm_helper.unpack_signed_long_int(cmd_arglist[20:24]))  # vel_y (int32)
+        cmd_args.append(tm_helper.unpack_signed_long_int(cmd_arglist[24:28]))  # vel_z (int32)
+
+    else:
+        # For all other commands with no arguments
+        cmd_args = []
+
+    logger.info(f"CMD_ID: {cmd_id} Argument List: {cmd_args}")
+    return cmd_args
