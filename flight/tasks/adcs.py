@@ -154,8 +154,7 @@ class Task(TemplateTask):
             self.log_info(f"Sun: {self.log_data[8:13]}")
             self.log_info(f"Coarse attitude: {self.log_data[28:32]}")
 
-            ## Attitude Control
-
+            ## Mode "Diagnosis"
             # need to account for if gyro / sun vector unavailable
             if self.eclipse_state:
                 sun_vector_err = ModeConst.SUN_POINTED_TOL
@@ -168,6 +167,9 @@ class Task(TemplateTask):
                 self.MODE = Modes.STABLE
             else:
                 self.MODE = Modes.SUN_POINTED
+
+            self.log_data[ADCS_IDX.MODE] = self.MODE
+            self.log_info(f"Mode: {self.MODE}")
 
             ## Magnetorquer Attitude Control
             ang_momentum = PhysicalConst.INERTIA_MAT @ imu_ang_vel
@@ -188,7 +190,7 @@ class Task(TemplateTask):
             else:
                 dipole_moment = np.zeros(3)
             MagneticCoilAllocator.set_voltages(dipole_moment)
-
+            """
             ## Attitude Determination
             if DH.data_process_exists("gps"):
                 # TODO GPS flag for valid position
@@ -220,6 +222,7 @@ class Task(TemplateTask):
             DH.log_data("adcs", self.log_data)
             self.log_info(f"Sun: {self.log_data[8:13]}")
             self.log_info(f"Coarse attitude: {self.log_data[28:32]}")
+            """
 
 
 def is_nan(x):
