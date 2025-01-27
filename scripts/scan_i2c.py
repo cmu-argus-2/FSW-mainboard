@@ -6,6 +6,7 @@
 
 """CircuitPython I2C Device Address Scan"""
 import time
+
 import board
 import busio
 
