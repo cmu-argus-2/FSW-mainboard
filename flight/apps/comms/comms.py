@@ -4,8 +4,6 @@ Message packing/unpacking for telemetry/file TX
 and acknowledgement RX.
 
 Authors: Akshat Sahay, Ibrahima S. Sow
-
-By default, the RF module is in RX mode, and returns to it after TX.
 """
 
 import os
@@ -16,24 +14,65 @@ from hal.configuration import SATELLITE
 FILE_PKTSIZE = 240
 
 
+# Internal comms states for statechart
 class COMMS_STATE:
-    TX_HEARTBEAT = 0x00
+    TX_HEARTBEAT = 0x01
 
-    RX = 0x01
+    RX = 0x02
 
-    TX_METADATA = 0x02
-    TX_FILEPKT = 0x03
+    TX_ACK = 0x03
+
+    TX_FRAME = 0x04
+
+    TX_FILEPKT = 0x05
+    TX_METADATA = 0x06
 
 
+# Message ID database for communication protocol
 class MSG_ID:
+    """
+    Comms message IDs that are downlinked during the mission
+    """
+
+    # SAT heartbeat, nominally downlinked in orbit
     SAT_HEARTBEAT = 0x01
 
-    GS_ACK = 0x08
-    SAT_ACK = 0x09
+    # SAT TM frames, requested by GS
+    SAT_TM_HAL = 0x02
+    SAT_TM_STORAGE = 0x03
+    SAT_TM_PAYLOAD = 0x04
 
+    # SAT ACK, in response to GS commands
+    SAT_ACK = 0x0F
+
+    # SAT file metadata and file content messages
+    # SAT TM frames, requested by GS
+    SAT_TM_HAL = 0x02
+    SAT_TM_STORAGE = 0x03
+    SAT_TM_PAYLOAD = 0x04
+
+    # SAT ACK, in response to GS commands
+    SAT_ACK = 0x0F
+
+    # SAT file metadata and file content messages
     SAT_FILE_METADATA = 0x10
-
     SAT_FILE_PKT = 0x20
+
+    """
+    Comms internal state management uses ranges of GS command IDs
+    """
+
+    # GS commands SC responds to with an ACK
+    GS_CMD_ACK_L = 0x40
+    GS_CMD_ACK_H = 0x45
+
+    # GS commands SC responds to with a frame
+    GS_CMD_FRM_L = 0x46
+    GS_CMD_FRM_H = 0x49
+
+    # GS commands SC responds to with file MD or packets
+    GS_CMD_FILE_METADATA = 0x4A
+    GS_CMD_FILE_PKT = 0x4B
 
 
 class SATELLITE_RADIO:
@@ -54,22 +93,28 @@ class SATELLITE_RADIO:
 
     # Data for file downlinking
     file_obj = []
+    file_md = []
     file_array = []
 
-    # Last TX'd message ID
+    # Last TX'd message parameters
     tx_message_ID = 0x00
     tx_message = []
+    tx_ack = 0x04
 
-    # Last RX'd message parameters
-    rx_message_ID = 0x00
-    rx_message_sequence_count = 0
-    rx_message_size = 0
+    # RX'd ID is the latest GS command
+    rx_gs_cmd = 0x00
+
+    # RX'd SQ cnt used for packetized file TX
+    rx_gs_sq_cnt = 0
+
+    # RX'd len used for argument unpacking
+    rx_gs_len = 0
+
+    # RX'd payload contains GS arguments
+    rx_payload = bytearray()
+
+    # RX'd RSSI logged for error checking
     rx_message_rssi = 0
-
-    # Payload for GS ACKs, used for comms state and error checking
-    gs_rx_message_ID = 0x0
-    gs_req_message_ID = 0x0
-    gs_req_seq_count = 0
 
     # CRC error count
     crc_count = 0
@@ -90,28 +135,34 @@ class SATELLITE_RADIO:
     """
 
     @classmethod
-    def transition_state(cls, timeout):
+    def transition_state(cls, rx_count, rx_threshold):
         # Check current state
         if cls.state == COMMS_STATE.RX:
             # State transitions to TX states only occur from RX state
 
-            # Error handling transition
-            if timeout:
+            if rx_count >= rx_threshold:
                 # Lost contact with GS, return to default state
                 cls.state = COMMS_STATE.TX_HEARTBEAT
 
-            # Transitions based on GS ACKs
-            elif cls.gs_req_message_ID == MSG_ID.SAT_HEARTBEAT:
-                # Send latest TM frame
-                cls.state = COMMS_STATE.TX_HEARTBEAT
+            elif cls.rx_gs_cmd >= MSG_ID.GS_CMD_ACK_L and cls.rx_gs_cmd <= MSG_ID.GS_CMD_ACK_H:
+                # GS CMD requires an ACK in response
+                cls.state = COMMS_STATE.TX_ACK
 
-            elif cls.gs_req_message_ID == MSG_ID.SAT_FILE_METADATA:
-                # Send file metadata
+            elif cls.rx_gs_cmd >= MSG_ID.GS_CMD_FRM_L and cls.rx_gs_cmd <= MSG_ID.GS_CMD_FRM_H:
+                # GS CMD requires a frame in response
+                cls.state = COMMS_STATE.TX_FRAME
+
+            elif cls.rx_gs_cmd == MSG_ID.GS_CMD_FILE_METADATA:
+                # GS CMD requires file metadata in response
                 cls.state = COMMS_STATE.TX_METADATA
 
-            elif cls.gs_req_message_ID == MSG_ID.SAT_FILE_PKT:
-                # Send file packet with specified sequence count
+            elif cls.rx_gs_cmd == MSG_ID.GS_CMD_FILE_PKT:
+                # GS CMD requires a file packet in response
                 cls.state = COMMS_STATE.TX_FILEPKT
+
+            elif rx_count < rx_threshold:
+                # No timeout yet, stay in RX state
+                cls.state = COMMS_STATE.RX
 
             else:
                 # Unknown message ID, return to default state
@@ -120,6 +171,26 @@ class SATELLITE_RADIO:
         else:
             # Unconditional branch to RX state
             cls.state = COMMS_STATE.RX
+
+    """
+        Name: get_rssi
+        Description: Get RSSI of received packet
+    """
+
+    @classmethod
+    def get_rssi(cls):
+        # Get state
+        return cls.rx_message_rssi
+
+    """
+        Name: set_tx_ack
+        Description: Set internal TX ACK for GS ACKs
+    """
+
+    @classmethod
+    def set_tx_ack(cls, tx_ack):
+        # Set internal TX ACK definition
+        cls.tx_ack = tx_ack
 
     """
         Name: set_tm_frame
@@ -132,14 +203,43 @@ class SATELLITE_RADIO:
         cls.tm_frame = tm_frame
 
     """
+        Name: set_rx_gs_cmd
+        Description: Set RX message ID
+    """
+
+    @classmethod
+    def set_rx_gs_cmd(cls, rx_gs_cmd):
+        # Set internal filepath
+        cls.rx_gs_cmd = rx_gs_cmd
+
+    """
         Name: set_filepath
         Description: Set filepath for comms TX file
     """
 
     @classmethod
     def set_filepath(cls, filepath):
-        # Set internal TM frame definition
+        # Set internal filepath
         cls.filepath = filepath
+
+    """
+        Name: get_rx_payload
+        Description: Get most recent RX payload
+    """
+
+    @classmethod
+    def get_rx_payload(cls):
+        # Get most recent RX payload
+        return cls.rx_payload
+
+    """
+        Name: data_available
+        Description: Check if data is available in FIFO buffer
+    """
+
+    @classmethod
+    def data_available(cls):
+        return SATELLITE.RADIO.RX_available()
 
     """
         Name: file_get_metadata
@@ -166,8 +266,6 @@ class SATELLITE_RADIO:
             # Increment 1 to message count to account for division floor
             if (cls.file_size % FILE_PKTSIZE) > 0:
                 cls.file_message_count += 1
-
-            # cls.file_obj = open(cls.filepath, "rb")
 
     """
         Name: file_get_packet
@@ -212,87 +310,10 @@ class SATELLITE_RADIO:
         # Generate file metadata and file array
         cls.file_get_metadata()
 
-        # Return file metadata payload message
-        return cls.file_ID.to_bytes(1, "big") + cls.file_size.to_bytes(4, "big") + cls.file_message_count.to_bytes(2, "big")
-
-    """
-        Name: listen
-        Description: Switch radio to RX mode
-    """
-
-    @classmethod
-    def listen(cls):
-        SATELLITE.RADIO.listen()
-
-    """
-        Name: data_available
-        Description: Check if data is available in FIFO buffer
-    """
-
-    @classmethod
-    def data_available(cls):
-        return SATELLITE.RADIO.RX_available()
-
-    """
-        Name: receive_message
-        Description: Receive and unpack message from GS
-    """
-
-    @classmethod
-    def receive_message(cls):
-        # Get packet from radio over SPI
-        # Assumes packet is in FIFO buffer
-
-        packet = SATELLITE.RADIO.read_fifo_buffer()
-
-        if packet is None:
-            # FIFO buffer does not contain a packet
-            cls.gs_req_message_ID = 0x00
-
-            return cls.gs_req_message_ID
-
-        # Check CRC error on received packet
-        crc_check = SATELLITE.RADIO.crc_error()
-
-        # Increment internal CRC count
-        if crc_check > 0:
-            cls.crc_count += 1
-
-        # Get RX message RSSI
-        cls.rx_message_rssi = SATELLITE.RADIO.rssi(raw=True)
-
-        # Unpack RX message header
-        cls.rx_message_ID = int.from_bytes(packet[0:1], "big")
-        cls.rx_message_sequence_count = int.from_bytes(packet[1:3], "big")
-        cls.rx_message_size = int.from_bytes(packet[3:4], "big")
-
-        if cls.rx_message_ID == MSG_ID.GS_ACK:
-            # GS acknowledged and sent command
-            cls.gs_rx_message_ID = int.from_bytes(packet[4:5], "big")
-            cls.gs_req_message_ID = int.from_bytes(packet[5:6], "big")
-            cls.gs_req_seq_count = int.from_bytes(packet[6:8], "big")
-
-            # Verify GS RX message ID with previously transmitted message ID
-            if cls.tx_message_ID != cls.gs_rx_message_ID:
-                # RX ID mismatch, reset GS RQ'd ID
-                logger.warning(f"[COMMS ERROR] GS received {cls.gs_rx_message_ID}")
-                cls.gs_req_message_ID = 0x00
-
-                return cls.gs_req_message_ID
-
-            # Verify CRC count was 0 for last received message
-            if cls.crc_count > 0:
-                # CRC error, reset GS RQ'd ID
-                logger.warning("[COMMS ERROR] CRC error occured")
-                cls.gs_req_message_ID = 0x00
-
-                return cls.gs_req_message_ID
-
-        else:
-            # Unknown message ID, reset GS RQ' ID
-            cls.gs_req_message_ID = 0x00
-
-        return cls.gs_req_message_ID
+        # TODO: Rework to use class file array
+        cls.file_md = (
+            cls.file_ID.to_bytes(1, "big") + cls.file_size.to_bytes(4, "big") + cls.file_message_count.to_bytes(2, "big")
+        )
 
     """
         Name: transmit_file_metadata
@@ -312,9 +333,10 @@ class SATELLITE_RADIO:
         )
 
         # Get file metatdata
-        tx_payload = cls.file_pack_metadata()
+        cls.file_pack_metadata()
+
         # Pack entire message
-        cls.tx_message = tx_header + tx_payload
+        cls.tx_message = tx_header + cls.file_md
 
     """
         Name: transmit_file_packet
@@ -336,6 +358,68 @@ class SATELLITE_RADIO:
         cls.tx_message = tx_header + cls.file_array
 
     """
+        Name: receive_message
+        Description: Receive and unpack message from GS
+    """
+
+    @classmethod
+    def receive_message(cls):
+        # Get packet from radio over SPI
+        # Assumes packet is in FIFO buffer
+
+        packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
+
+        # Check if packet exists
+        if packet is None:
+            # FIFO buffer does not contain a packet
+            cls.rx_gs_cmd = 0x00
+            cls.rx_gs_sq_cnt = 0
+            cls.rx_gs_len = 0
+            return cls.rx_gs_cmd
+
+        # Check packet integrity based on header length
+        if len(packet) < 4:
+            # Packet does not contain valid Argus header
+            logger.warning("[COMMS ERROR] RX'd packet has invalid header")
+            cls.rx_gs_cmd = 0x00
+            cls.rx_gs_sq_cnt = 0
+            cls.rx_gs_len = 0
+            return cls.rx_gs_cmd
+
+        cls.rx_message_rssi = SATELLITE.RADIO.rssi()
+
+        # Unpack RX message header
+        cls.rx_gs_cmd = int.from_bytes(packet[0:1], "big")
+        cls.rx_gs_sq_cnt = int.from_bytes(packet[1:3], "big")
+        cls.rx_gs_len = int.from_bytes(packet[3:4], "big")
+
+        # Check packet integrity based on CMD_ID
+        if (cls.rx_gs_cmd < MSG_ID.GS_CMD_ACK_L) and (cls.rx_gs_cmd > MSG_ID.GS_CMD_FILE_PKT):
+            # Packet does not contain valid CMD_ID
+            logger.warning("[COMMS ERROR] RX'd packet has invalid CMD")
+            cls.rx_gs_cmd = 0x00
+            cls.rx_gs_sq_cnt = 0
+            cls.rx_gs_len = 0
+            return cls.rx_gs_cmd
+
+        # Check packet integrity based on message length
+        if (len(packet) - 4) != cls.rx_gs_len:
+            # Header length does not match packet length
+            logger.warning("[COMMS ERROR] RX'd packet has length mismatch with header")
+            cls.rx_gs_cmd = 0x00
+            cls.rx_gs_sq_cnt = 0
+            cls.rx_gs_len = 0
+            return cls.rx_gs_cmd
+
+        # Payload will be everything in message after header, can be empty
+        if cls.rx_gs_len != 0:
+            cls.rx_payload = packet[4:]
+        else:
+            cls.rx_payload = bytearray()
+
+        return cls.rx_gs_cmd
+
+    """
         Name: transmit_message
         Description: Transmit message via the LoRa module
     """
@@ -345,6 +429,14 @@ class SATELLITE_RADIO:
         # Check comms state and TX message accordingly
         if cls.state == COMMS_STATE.TX_HEARTBEAT:
             # Transmit SAT heartbeat
+            cls.tx_message = cls.tm_frame
+
+        elif cls.state == COMMS_STATE.TX_ACK:
+            # Transmit SAT ACK
+            cls.tx_message = bytes([MSG_ID.SAT_ACK, 0x00, 0x00, 0x01, cls.tx_ack])
+
+        elif cls.state == COMMS_STATE.TX_FRAME:
+            # Transmit a specific TM frame
             cls.tx_message = cls.tm_frame
 
         elif cls.state == COMMS_STATE.TX_METADATA:

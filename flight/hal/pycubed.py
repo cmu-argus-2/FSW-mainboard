@@ -66,7 +66,6 @@ class device:
 
 
 class PyCubed:
-
     # General NVM counters
     c_boot = multiBitFlag(register=_BOOTCNT, lowest_bit=0, num_bits=8)
     c_vbusrst = multiBitFlag(register=_VBUSRST, lowest_bit=0, num_bits=8)

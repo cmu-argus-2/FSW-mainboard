@@ -12,7 +12,16 @@ The flight software currently supports:
 - Argus v1 (ATSAMD51J20)
 - Argus v1.1
 - Argus v2 (RP2040, in testing)
-- Argus v3 (STM32 variant, board in dev) 
+
+## Installation
+```bash
+git submodule init
+git submodule update
+pip install .
+cd simulation/
+pip install .
+cd ..
+```
 
 ## Build and Execution
 
@@ -65,5 +74,5 @@ If the board ever gets stuck in read-only mode, access the REPL and type
 >>> import storage
 >>> storage.erase_filesystem()
 ```
-THis will erase and reformat the filesystem.
+This will erase and reformat the filesystem.
 

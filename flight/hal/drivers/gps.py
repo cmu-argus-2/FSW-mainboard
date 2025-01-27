@@ -4,11 +4,10 @@ from typing import Optional
 from busio import UART
 from digitalio import DigitalInOut
 from hal.drivers.middleware.errors import Errors
-from hal.drivers.middleware.generic_driver import Driver
 from micropython import const
 
 
-class GPS(Driver):
+class GPS:
     def __init__(self, uart: UART, enable=None, debug: bool = False) -> None:
         self._uart = uart
         self.debug = debug
@@ -168,7 +167,7 @@ class GPS(Driver):
             "ecef_z": ecef_z,
             "ecef_vx": ecef_vx,
             "ecef_vy": ecef_vy,
-            "ecef_vz": ecef_vz
+            "ecef_vz": ecef_vz,
             # , "datetime": dt
         }
         return self.parsed_data

@@ -1,13 +1,11 @@
 import numpy as np
-from hal.drivers.middleware.generic_driver import Driver
 
 
-class CoilDriver(Driver):
+class CoilDriver:
     def __init__(self, id, simulator=None) -> None:
         self.__simulator = simulator
         self.__id = id
         self.current_throttle = 0
-        super().__init__(None)
 
     def set_throttle_volts(self, new_throttle_volts):
         self.current_throttle = new_throttle_volts

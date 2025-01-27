@@ -31,10 +31,9 @@ from ulab import numpy as np
 
 
 class Task(TemplateTask):
-
     """data_keys = [
         "TIME_ADCS",
-        "ADCS_STATE",
+        "MODE",
         "GYRO_X",
         "GYRO_Y",
         "GYRO_Z",
@@ -61,25 +60,18 @@ class Task(TemplateTask):
         "YM_COIL_STATUS",
         "ZP_COIL_STATUS",
         "ZM_COIL_STATUS",
-        "COARSE_ATTITUDE_QW",  # Will see later if ok to reduce to short int (fixed point 2 bytes)
+        "COARSE_ATTITUDE_QW",
         "COARSE_ATTITUDE_QX",
         "COARSE_ATTITUDE_QY",
         "COARSE_ATTITUDE_QZ",
-        "STAR_TRACKER_STATUS",
-        "STAR_TRACKER_ATTITUDE_QW",  # will keep the 4 bytes precision
-        "STAR_TRACKER_ATTITUDE_QX",
-        "STAR_TRACKER_ATTITUDE_QY",
-        "STAR_TRACKER_ATTITUDE_QZ",
     ]"""
 
     ## ADCS Modes
     MODE = Modes.TUMBLING
 
     log_data = [0] * 37
-    # For now - keep the floats, will optimize the telemetry packet afterwards
 
     # Sun Acquisition
-    THRESHOLD_ILLUMINATION_LUX = 3000
     sun_status = SUN_VECTOR_STATUS.NO_READINGS
     sun_vector = np.zeros(3)
     eclipse_state = False
@@ -92,8 +84,11 @@ class Task(TemplateTask):
         self.name = "ADCS"  # Override the name
 
     async def main_task(self):
+        if SM.current_state == STATES.STARTUP:
+            pass
 
-        if SM.current_state == STATES.NOMINAL:
+        else:
+            ## Attitude Determination
 
             if not DH.data_process_exists("adcs"):
                 data_format = "LB" + 6 * "f" + "B" + 3 * "f" + "B" + 9 * "H" + 6 * "B" + 4 * "f" + "B" + 4 * "f"
@@ -110,13 +105,10 @@ class Task(TemplateTask):
                 self.log_data[ADCS_IDX.GYRO_X : ADCS_IDX.GYRO_Z + 1] = imu_ang_vel
 
             ## Sun Acquisition
-            #  Must return the array directly
             lux_readings = read_light_sensors()  # lux
             self.sun_status, self.sun_vector = compute_body_sun_vector_from_lux(lux_readings)  # use full lux for sun vector
-            self.eclipse_state = in_eclipse(
-                lux_readings,
-                threshold_lux_illumination=self.THRESHOLD_ILLUMINATION_LUX,
-            )
+            self.eclipse_state = in_eclipse(lux_readings)
+
             self.log_data[ADCS_IDX.SUN_STATUS] = self.sun_status
             self.log_data[ADCS_IDX.SUN_VEC_X] = self.sun_vector[0]
             self.log_data[ADCS_IDX.SUN_VEC_Y] = self.sun_vector[1]
@@ -130,7 +122,40 @@ class Task(TemplateTask):
             self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(lux_readings[4] * 0.1)
             # Pyramid TBD
 
-            # ADCS mode management
+            if DH.data_process_exists("gps") and SATELLITE.GPS_AVAILABLE:  # Must be replaced by orbit processor module
+                # TODO GPS flag for valid position
+
+                R_ecef_to_eci = ecef_to_eci(self.time)
+                gps_pos_ecef_meters = (
+                    np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,)) * 0.01
+                )
+                gps_pos_eci_meters = np.dot(R_ecef_to_eci, gps_pos_ecef_meters)
+                mag_eci = igrf_eci(self.time, gps_pos_eci_meters / 1000)
+                sun_eci = approx_sun_position_ECI(self.time)
+
+                # TRIAD
+                if SATELLITE.IMU_AVAILABLE:
+                    self.coarse_attitude = TRIAD(sun_eci, mag_eci, self.sun_vector, imu_mag_data)
+                    self.log_data[ADCS_IDX.COARSE_ATTITUDE_QW] = (
+                        self.coarse_attitude[0] if not is_nan(self.coarse_attitude[0]) else 0
+                    )
+                    self.log_data[ADCS_IDX.COARSE_ATTITUDE_QX] = (
+                        self.coarse_attitude[1] if not is_nan(self.coarse_attitude[1]) else 0
+                    )
+                    self.log_data[ADCS_IDX.COARSE_ATTITUDE_QY] = (
+                        self.coarse_attitude[2] if not is_nan(self.coarse_attitude[2]) else 0
+                    )
+                    self.log_data[ADCS_IDX.COARSE_ATTITUDE_QZ] = (
+                        self.coarse_attitude[3] if not is_nan(self.coarse_attitude[3]) else 0
+                    )
+
+            # Data logging
+            DH.log_data("adcs", self.log_data)
+            self.log_info(f"Sun: {self.log_data[8:13]}")
+            self.log_info(f"Coarse attitude: {self.log_data[28:32]}")
+
+            ## Attitude Control
+
             # need to account for if gyro / sun vector unavailable
             if self.eclipse_state:
                 sun_vector_err = ModeConst.SUN_POINTED_TOL

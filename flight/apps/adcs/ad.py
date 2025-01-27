@@ -5,8 +5,7 @@ Attitude Determination Module for the Attitude Determination and Control Subsyst
 This module is responsible for processing GNC sensor data to determine the satellite's attitude.
 
 Argus possesses a 3-axis IMU (Inertial Measurement Unit) providing angular rate, acceleration, and
-magnetic field data on the mainboard. A Star Tracker is also present on the Z- face if the spacecraft,
-providing attitude quaternion at X Hz for fine attitude determination.
+magnetic field data on the mainboard.
 
 """
 
@@ -32,7 +31,6 @@ def rotm2quat(r):
 
 
 def TRIAD(n1, n2, b1, b2):
-
     n1 = np.array(n1)
     n2 = np.array(n2)
     b1 = np.array(b1)

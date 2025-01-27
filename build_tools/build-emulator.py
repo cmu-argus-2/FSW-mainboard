@@ -11,8 +11,9 @@ def check_directory_location(source_folder):
 
 def create_build(source_folder, emulator_folder):
     build_folder = "build/"
-    if os.path.exists(build_folder):
-        shutil.rmtree(build_folder)
+    # avoid deleting the whole sd so we can simulate a proper reboot
+    if os.path.exists(os.path.join(build_folder, "lib/")):
+        shutil.rmtree(os.path.join(build_folder, "lib/"))
 
     build_folder = os.path.join(build_folder, "lib/")
 
@@ -114,7 +115,6 @@ def copy_folder(build_folder, destination_folder, show_identical_files=True):
 
 
 if __name__ == "__main__":
-
     # Parses command line arguments.
     parser = argparse.ArgumentParser()
 

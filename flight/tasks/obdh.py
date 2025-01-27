@@ -7,9 +7,8 @@ from core.states import STATES
 
 
 class Task(TemplateTask):
-
     frequency_set = False
-    cleanup_frequency = 0.2  # 5 seconds
+    cleanup_frequency = 0.1  # 10 seconds
 
     def __init__(self, id):
         super().__init__(id)
@@ -18,14 +17,12 @@ class Task(TemplateTask):
         self.CLEANUP_COUNTER = 0
 
     async def main_task(self):
-
         if SM.current_state == STATES.STARTUP:
-            if not DH.SD_scanned:
+            if not DH.SD_SCANNED():
                 DH.scan_SD_card()
                 # DH.update_SD_usage()
 
         else:  # Run for all other states
-
             if not self.frequency_set:
                 self.CLEANUP_COUNTER = 0
                 if self.cleanup_frequency > self.frequency:
