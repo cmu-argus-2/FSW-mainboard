@@ -12,7 +12,6 @@ from hal.configuration import SATELLITE
 
 
 class Task(TemplateTask):
-
     # data_keys = ["TIME", "IMU_TEMPERATURE", "CPU_TEMPERATURE", "BATTERY_PACK_TEMPERATURE"]
 
     log_data = [0] * 4  # pre-allocation
@@ -22,9 +21,10 @@ class Task(TemplateTask):
         self.name = "THERMAL"
 
     async def main_task(self):
+        if SM.current_state == STATES.STARTUP:
+            pass
 
-        if SM.current_state == STATES.NOMINAL:
-
+        else:
             if not DH.data_process_exists("thermal"):
                 DH.register_data_process("thermal", "LHHH", True, data_limit=100000, write_interval=10)
 
@@ -40,7 +40,7 @@ class Task(TemplateTask):
 
             DH.log_data("thermal", self.log_data)
 
-        self.log_info(
-            f" CPU: {self.log_data[THERMAL_IDX.CPU_TEMPERATURE] / 100}°, \
-            IMU: {self.log_data[THERMAL_IDX.IMU_TEMPERATURE] / 100}°"
-        )
+            self.log_info(
+                f" CPU: {self.log_data[THERMAL_IDX.CPU_TEMPERATURE] / 100}°, \
+                IMU: {self.log_data[THERMAL_IDX.IMU_TEMPERATURE] / 100}°"
+            )

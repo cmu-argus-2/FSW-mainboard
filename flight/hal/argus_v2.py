@@ -82,7 +82,7 @@ class ArgusV2Components:
 
     # BATTERY BOARD FUEL GAUGE
     FUEL_GAUGE_I2C = ArgusV2Interfaces.I2C0
-    FUEL_GAUGE_I2C_ADDRESS = const(0x6C)
+    FUEL_GAUGE_I2C_ADDRESS = const(0x36)
 
     # JETSON POWER MONITOR
     JETSON_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
@@ -296,7 +296,7 @@ class ArgusV2(CubeSat):
         # error_list.append(self.__gps_boot())
         # error_list.append(self.__radio_boot())
         error_list.append(self.__power_monitor_boot())
-        # error_list.append(self.__fuel_gauge_boot)
+        error_list.append(self.__fuel_gauge_boot())
         error_list.append(self.__charger_boot())
         # error_list.append(self.__torque_drivers_boot())
         # error_list.append(self.__light_sensors_boot())  # light + sun sensors
@@ -698,7 +698,6 @@ class ArgusV2(CubeSat):
         except Exception as e:
             if self.__debug:
                 raise e
-
             return Errors.MAX17205_NOT_INITIALIZED
 
         return Errors.NOERROR

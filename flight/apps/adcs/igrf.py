@@ -23,7 +23,6 @@ def unix_time_to_years_since_2020(unix_time):
 
 
 def _igrf13_5(gh, unix_time, latitude_degrees, elongitude_degrees, r_norm_km, cl, sl, p, q):
-
     # reset the lists that are passed by reference
     reset_array(cl)
     reset_array(sl)

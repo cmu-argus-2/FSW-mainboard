@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from hal.cubesat import CubeSat
 from hal.drivers.burnwire import BurnWires
+from hal.drivers.fuel_gauge import FuelGauge
 from hal.drivers.gps import GPS
 from hal.drivers.imu import IMU
 from hal.drivers.payload import Payload
@@ -65,6 +66,10 @@ class EmulatedSatellite(CubeSat):
 
         self._jetson_power_monitor = self.init_device(PowerMonitor(4, 0.05))
         self._board_power_monitor = self.init_device(PowerMonitor(7.6, 0.1))
+        self._power_monitors["BOARD"] = self._board_power_monitor
+        self._power_monitors["JETSON"] = self._jetson_power_monitor
+
+        self._fuel_gauge = self.init_device(FuelGauge())
 
         self._rtc = self.init_device(RTC(time.gmtime()))
 
