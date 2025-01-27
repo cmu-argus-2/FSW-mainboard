@@ -10,17 +10,25 @@ import time
 import board
 import busio
 
+
+class i2c_device:
+    def __init__(self, name, scl, sda):
+        self.name = name
+        self.i2c = busio.I2C(scl, sda)
+
+
 # List of potential I2C busses
-ALL_I2C = ("busio.I2C(board.SCL0, board.SDA0)", "busio.I2C(board.SCL1, board.SDA1)")
+I2C0 = i2c_device("I2C0", board.SCL0, board.SDA0)
+I2C1 = i2c_device("I2C1", board.SCL1, board.SDA1)
+ALL_I2C = [I2C0, I2C1]
 
 # Determine which busses are valid
 found_i2c = []
-for name in ALL_I2C:
+for bus in ALL_I2C:
     try:
-        print("Checking {}...".format(name), end="")
-        bus = eval(name)
-        bus.unlock()
-        found_i2c.append((name, bus))
+        print("Checking {}...".format(bus.name), end="")
+        bus.i2c.unlock()
+        found_i2c.append((bus.name, bus.i2c))
         print("ADDED.")
     except Exception as e:
         print("SKIPPED:", e)
