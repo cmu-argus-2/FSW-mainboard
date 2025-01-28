@@ -7,8 +7,6 @@ Author(s): Derek Fan
 """
 
 
-from typing import Tuple
-
 from apps.adcs.consts import MagnetorquerConst, MCMConst, ModeConst, PhysicalConst
 from apps.adcs.math import is_near
 from hal.configuration import SATELLITE
