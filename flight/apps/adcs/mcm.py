@@ -59,9 +59,8 @@ class ControllerHandler:
     _eigvals, _eigvecs = np.linalg.eig(PhysicalConst.INERTIA_MAT)
     _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
     spin_axis = _unscaled_axis / np.linalg.norm(_unscaled_axis)
-    # TODO: Fix for Circuitpython
-    # if spin_axis[np.argmax(np.abs(spin_axis))] < 0:
-    #    spin_axis = -spin_axis
+    if spin_axis[np.argmax(np.abs(spin_axis))] < 0:
+        spin_axis = -spin_axis
 
     # References and targets
     ang_vel_reference = spin_axis * MCMConst.REF_FACTOR * ModeConst.STABLE_TOL
