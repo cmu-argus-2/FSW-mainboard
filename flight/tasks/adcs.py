@@ -1,18 +1,18 @@
 # Attitude Determination and Control (ADC) task
 
+
 import time
 
 from apps.adcs.ad import TRIAD
-from apps.adcs.consts import ModeConst  # , MCMConst, PhysicalConst
+from apps.adcs.consts import MCMConst, ModeConst, PhysicalConst
 from apps.adcs.frames import ecef_to_eci
 from apps.adcs.igrf import igrf_eci
-
-"""from apps.adcs.mcm import (
+from apps.adcs.mcm import (
     ControllerHandler,
     MagneticCoilAllocator,
     get_spin_stabilizing_dipole_moment,
     get_sun_pointing_dipole_moment,
-)"""
+)
 from apps.adcs.modes import Modes
 from apps.adcs.sun import (
     SUN_VECTOR_STATUS,
@@ -154,8 +154,7 @@ class Task(TemplateTask):
             self.log_info(f"Sun: {self.log_data[8:13]}")
             self.log_info(f"Coarse attitude: {self.log_data[28:32]}")
 
-            ## Attitude Control
-
+            ## Mode "Diagnosis"
             # need to account for if gyro / sun vector unavailable
             if self.eclipse_state:
                 sun_vector_err = ModeConst.SUN_POINTED_TOL
@@ -172,14 +171,8 @@ class Task(TemplateTask):
             self.log_data[ADCS_IDX.MODE] = self.MODE
             self.log_info(f"Mode: {self.MODE}")
 
-            # TODO: Fix attitude control stack for Circuitpython + hardware testing
-            """
-            scaled_ang_vel = imu_ang_vel / ControllerHandler.ang_vel_target
-            spin_err = ControllerHandler.spin_axis - scaled_ang_vel
-            pointing_err = self.sun_vector - scaled_ang_vel
-            """
-
-            """ang_momentum = PhysicalConst.INERTIA_MAT @ imu_ang_vel
+            ## Magnetorquer Attitude Control
+            ang_momentum = PhysicalConst.INERTIA_MAT @ imu_ang_vel
             scaled_momentum = ang_momentum / ControllerHandler.momentum_target
             spin_err = ControllerHandler.spin_axis - scaled_momentum
             pointing_err = self.sun_vector - scaled_momentum
@@ -196,7 +189,40 @@ class Task(TemplateTask):
                 )
             else:
                 dipole_moment = np.zeros(3)
-            MagneticCoilAllocator.set_voltages(dipole_moment)"""
+            MagneticCoilAllocator.set_voltages(dipole_moment)
+            """
+            ## Attitude Determination
+            if DH.data_process_exists("gps"):
+                # TODO GPS flag for valid position
+                # Might need an attitude status flag
+                R_ecef_to_eci = ecef_to_eci(self.time)
+                gps_pos_ecef_meters = (
+                    np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,)) * 0.01
+                )
+                gps_pos_eci_meters = np.dot(R_ecef_to_eci, gps_pos_ecef_meters)
+                mag_eci = igrf_eci(self.time, gps_pos_eci_meters / 1000)
+                sun_eci = approx_sun_position_ECI(self.time)
+
+                # TRIAD
+                self.coarse_attitude = TRIAD(sun_eci, mag_eci, self.sun_vector, imu_mag_data)
+                self.log_data[ADCS_IDX.COARSE_ATTITUDE_QW] = (
+                    self.coarse_attitude[0] if not is_nan(self.coarse_attitude[0]) else 0
+                )
+                self.log_data[ADCS_IDX.COARSE_ATTITUDE_QX] = (
+                    self.coarse_attitude[1] if not is_nan(self.coarse_attitude[1]) else 0
+                )
+                self.log_data[ADCS_IDX.COARSE_ATTITUDE_QY] = (
+                    self.coarse_attitude[2] if not is_nan(self.coarse_attitude[2]) else 0
+                )
+                self.log_data[ADCS_IDX.COARSE_ATTITUDE_QZ] = (
+                    self.coarse_attitude[3] if not is_nan(self.coarse_attitude[3]) else 0
+                )
+
+            # Data logging
+            DH.log_data("adcs", self.log_data)
+            self.log_info(f"Sun: {self.log_data[8:13]}")
+            self.log_info(f"Coarse attitude: {self.log_data[28:32]}")
+            """
 
 
 def is_nan(x):
