@@ -42,13 +42,6 @@ class CubeSat:
         # State flags
         self.__state_flags = None
 
-        # # # Interfaces
-        # self.__uart1 = None
-        # self.__uart2 = None
-        # self.__spi = None
-        # self.__i2c1 = None
-        # self.__i2c2 = None
-
         # Devices
         self.__charger = None
         self.__imu = None
@@ -97,33 +90,6 @@ class CubeSat:
         :return: object or None
         """
         return self._state_flags
-
-    # ######################### INTERFACES #########################
-
-    # @property
-    # def UART1(self):
-    #     """UART: Returns the UART interface"""
-    #     return self.__uart1
-
-    # @property
-    # def UART2(self):
-    #     """UART2: Returns the UART2 interface"""
-    #     return self.__uart2
-
-    # @property
-    # def SPI(self):
-    #     """SPI: Returns the SPI interface"""
-    #     return self.__spi
-
-    # @property
-    # def I2C1(self):
-    #     """I2C: Returns the I2C interface"""
-    #     return self.__i2c1
-
-    # @property
-    # def I2C2(self):
-    #     """I2C2: Returns the I2C2 interface"""
-    #     return self.__i2c2
 
     ######################### DEVICES #########################
 
@@ -339,3 +305,7 @@ class CubeSat:
         :return: object or None
         """
         return self._time_ref_boot
+    
+    def REBOOT_PERIPHERAL(self) -> None:
+        """REBOOT_PERIPHERAL: Reboot the peripheral"""
+        raise NotImplementedError("CubeSats must implement reboot peripheral method")

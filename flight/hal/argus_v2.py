@@ -701,3 +701,15 @@ class ArgusV2(CubeSat):
             return Errors.MAX17205_NOT_INITIALIZED
 
         return Errors.NOERROR
+
+
+    def __reboot_peripheral(self, peripheral: object) -> int:
+        """__reboot_peripheral: Reboot a peripheral
+
+        :param peripheral: The peripheral to reboot
+        :return: Error code if the reboot failed
+        """
+        if peripheral in self.__device_list:
+            self.__device_list.remove(peripheral)
+        
+        try:
