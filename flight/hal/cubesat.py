@@ -305,7 +305,7 @@ class CubeSat:
         :return: object or None
         """
         return self._time_ref_boot
-    
-    def REBOOT_PERIPHERAL(self) -> None:
+
+    def reboot_peripheral(self, peripheral: object) -> int:
         """REBOOT_PERIPHERAL: Reboot the peripheral"""
         raise NotImplementedError("CubeSats must implement reboot peripheral method")

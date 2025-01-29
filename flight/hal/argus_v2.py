@@ -273,19 +273,30 @@ class ArgusV2(CubeSat):
         self.__debug = debug
 
         super().__init__()
+        self.__boot_list = {
+            self.__sd_card: self.__sd_card_boot,
+            self.__vfs: self.__vfs_boot,
+            self.__imu: self.__imu_boot,
+            self.__rtc: self.__rtc_boot,
+            self.__gps: self.__gps_boot,
+            self.__radio: self.__radio_boot,
+            self.__power_monitor["BOARD"]: self.__power_monitor_boot(["BOARD", ArgusV2Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.BOARD_POWER_MONITOR_I2C]),
+            # self.__power_monitor["XP"]: self.__power_monitor_boot("XP"),
+            # self.__power_monitor["XM"]: self.__power_monitor_boot("XM"),
+            # self.__power_monitor["YP"]: self.__power_monitor_boot("YP"),
+            # self.__power_monitor["YM"]: self.__power_monitor_boot("YM"),
+            # self.__power_monitor["ZP"]: self.__power_monitor_boot("ZP"),
+            # self.__power_monitor["ZM"]: self.__power_monitor_boot("ZM"),
+            self.__charger: self.__charger_boot,
+
+
+        }
 
     ######################## BOOT SEQUENCE ########################
 
     def boot_sequence(self) -> list[int]:
         """boot_sequence: Boot sequence for the CubeSat."""
         error_list: list[int] = []
-
-        # Create individual torque coil driver instances
-        self.__torque_xp_driver = None
-        self.__torque_xm_driver = None
-        self.__torque_yp_driver = None
-        self.__torque_ym_driver = None
-        self.__torque_z_driver = None
 
         self.__state_flags_boot()  # Does not require error checking
 
@@ -341,7 +352,7 @@ class ArgusV2(CubeSat):
 
         return Errors.NOERROR
 
-    def __power_monitor_boot(self) -> list[int]:
+    def __power_monitor_boot(self, location) -> list[int]:
         """power_monitor_boot: Boot sequence for the power monitor
 
         :return: Error code if the power monitor failed to initialize
@@ -427,7 +438,6 @@ class ArgusV2(CubeSat):
         """
         try:
             # from hal.drivers.bno08x_i2c import BNO08X_I2C
-            # TODO: Modify HAL for getting raw values from the IMU
             from hal.drivers.bno085 import BNO085, BNO_REPORT_UNCAL_GYROSCOPE, BNO_REPORT_UNCAL_MAGNETOMETER
 
             imu = BNO085(ArgusV2Components.IMU_I2C, ArgusV2Components.IMU_I2C_ADDRESS)
@@ -703,7 +713,7 @@ class ArgusV2(CubeSat):
         return Errors.NOERROR
 
 
-    def __reboot_peripheral(self, peripheral: object) -> int:
+    def reboot_peripheral(self, peripheral: object) -> int:
         """__reboot_peripheral: Reboot a peripheral
 
         :param peripheral: The peripheral to reboot
