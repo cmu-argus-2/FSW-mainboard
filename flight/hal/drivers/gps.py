@@ -102,8 +102,6 @@ class GPS:
             b"\xff\xfe\x00\x00\x00\x00\xfd\x0d\x0a"
         )
 
-        print("GPS Initialized")
-
         super().__init__()
 
     def update(self) -> bool:
