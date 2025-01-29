@@ -304,7 +304,7 @@ class GPS:
             # Convert from hundredths to decimal
             gdop = gdop * 0.01
             self.data_strings["gdop"] = gdop
-        return gdop
+        return int(gdop)
 
     def parse_pdop(self) -> int:
         pdop = int(self._nav_data_hex["pdop"])
@@ -312,7 +312,7 @@ class GPS:
             # Convert from hundredths to decimal
             pdop = pdop * 0.01
             self.data_strings["pdop"] = pdop
-        return pdop
+        return int(pdop)
 
     def parse_hdop(self) -> int:
         hdop = int(self._nav_data_hex["hdop"])
@@ -320,7 +320,7 @@ class GPS:
             # Convert from hundredths to decimal
             hdop = hdop * 0.01
             self.data_strings["hdop"] = hdop
-        return hdop
+        return int(hdop)
 
     def parse_vdop(self) -> int:
         vdop = int(self._nav_data_hex["vdop"])
@@ -328,7 +328,7 @@ class GPS:
             # Convert from hundredths to decimal
             vdop = vdop * 0.01
             self.data_strings["vdop"] = vdop
-        return vdop
+        return int(vdop)
 
     def parse_tdop(self) -> int:
         tdop = int(self._nav_data_hex["tdop"])
@@ -336,7 +336,7 @@ class GPS:
             # Convert from hundredths to decimal
             tdop = tdop * 0.01
             self.data_strings["tdop"] = tdop
-        return tdop
+        return int(tdop)
 
     def parse_ecef_x(self) -> int:
         ecef_x_hex = self._nav_data_hex["ecef_x"]
