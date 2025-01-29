@@ -491,7 +491,6 @@ class GPS:
         self.ecef_vz = self.parse_ecef_vz()
         self.timestamp_utc = self.gps_datetime(self.week, self.tow)
 
-
     def print_parsed_strings(self):
         print("Parsed Message:")
         print("=" * 40)
