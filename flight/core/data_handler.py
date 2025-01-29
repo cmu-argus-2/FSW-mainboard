@@ -795,6 +795,7 @@ class DataHandler:
         """
         try:
             if tag_name in cls.data_process_registry:
+                print("Trying to log data in data_handler...")
                 cls.data_process_registry[tag_name].log(data)
             else:
                 raise KeyError("Data process not registered!")

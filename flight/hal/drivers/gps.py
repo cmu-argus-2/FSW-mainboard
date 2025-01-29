@@ -18,7 +18,7 @@ EPOCH_DAY = 5
 
 
 class GPS:
-    def __init__(self, uart: UART, enable=None, debug: bool = False, mock: bool = True) -> None:
+    def __init__(self, uart: UART, enable=None, debug: bool = True, mock: bool = True) -> None:
         self._uart = uart
         self.debug = debug
         self._msg = None
@@ -102,15 +102,22 @@ class GPS:
             b"\xff\xfe\x00\x00\x00\x00\xfd\x0d\x0a"
         )
 
+        print("GPS Initialized")
+
         super().__init__()
 
     def update(self) -> bool:
+        print("Updating GPS")
+        # self.debug = True
         try:
             msg = self._parse_sentence()
         except UnicodeError:
             return False
         if msg is None or len(msg) < 11:
             return False
+
+        if self.mock:
+            msg = self.mock_message
 
         if self.debug:
             if self.mock:
@@ -180,7 +187,7 @@ class GPS:
             print("~~~~DEBUG~~~~")
             print("Navigation Data:")
             print("=" * 40)
-            for key, value in self._nav_data.items():
+            for key, value in self._nav_data_hex.items():
                 print(f"{str(key)}: {value}")
             print("=" * 40)
 
@@ -331,7 +338,7 @@ class GPS:
         ecef_x = int(self._nav_data_hex["ecef_x"])
         if self.debug:
             # Convert from hundredths of a meter to meters
-            distance_meters = self._nav_data["ecef_x"] / 100
+            distance_meters = self._nav_data_hex["ecef_x"] / 100
 
             # Format output
             self.data_strings["ecef_x"] = f"{distance_meters:.2f} m"
@@ -341,7 +348,7 @@ class GPS:
         ecef_y = int(self._nav_data_hex["ecef_y"])
         if self.debug:
             # Convert from hundredths of a meter to meters
-            distance_meters = self._nav_data["ecef_y"] / 100
+            distance_meters = self._nav_data_hex["ecef_y"] / 100
 
             # Format output
             self.data_strings["ecef_y"] = f"{distance_meters:.2f} m"
@@ -351,7 +358,7 @@ class GPS:
         ecef_z = int(self._nav_data_hex["ecef_z"])
         if self.debug:
             # Convert from hundredths of a meter to meters
-            distance_meters = self._nav_data["ecef_z"] / 100
+            distance_meters = self._nav_data_hex["ecef_z"] / 100
 
             # Format output
             self.data_strings["ecef_z"] = f"{distance_meters:.2f} m"
@@ -361,7 +368,7 @@ class GPS:
         ecef_vx = int(self._nav_data_hex["ecef_vx"])
         if self.debug:
             # Convert from hundredths of a meter to meters
-            speed_meters = self._nav_data["ecef_vx"] / 100
+            speed_meters = self._nav_data_hex["ecef_vx"] / 100
 
             # Format output
             self.data_strings["ecef_vx"] = f"{speed_meters:.2f} m/s"
@@ -371,7 +378,7 @@ class GPS:
         ecef_vy = int(self._nav_data_hex["ecef_vy"])
         if self.debug:
             # Convert from hundredths of a meter to meters
-            speed_meters = self._nav_data["ecef_vy"] / 100
+            speed_meters = self._nav_data_hex["ecef_vy"] / 100
 
             # Format output
             self.data_strings["ecef_vy"] = f"{speed_meters:.2f} m/s"
@@ -381,7 +388,7 @@ class GPS:
         ecef_vz = int(self._nav_data_hex["ecef_vz"])
         if self.debug:
             # Convert from hundredths of a meter to meters
-            speed_meters = self._nav_data["ecef_vz"] / 100
+            speed_meters = self._nav_data_hex["ecef_vz"] / 100
 
             # Format output
             self.data_strings["ecef_vz"] = f"{speed_meters:.2f} m/s"
@@ -501,15 +508,15 @@ class GPS:
         print(f"ECEF Vx:                    {self.data_strings.get('ecef_vx', 'N/A')}")
         print(f"ECEF Vy:                    {self.data_strings.get('ecef_vy', 'N/A')}")
         print(f"ECEF Vz:                    {self.data_strings.get('ecef_vz', 'N/A')}")
-        print(
-            f"Timestamp (UTC):            {self.data_strings.get('timestamp_utc', {}).get('year', 'N/A')}-"
-            f"{self.data_strings.get('timestamp_utc', {}).get('month', 'N/A')}-"
-            f"{self.data_strings.get('timestamp_utc', {}).get('day', 'N/A')} "
-            f"{self.data_strings.get('timestamp_utc', {}).get('hour', 'N/A')}:"
-            f"{self.data_strings.get('timestamp_utc', {}).get('minute', 'N/A')}:"
-            f"{self.data_strings.get('timestamp_utc', {}).get('second', 'N/A')}"
-        )
-        print("=" * 40)
+        # print(
+        #     f"Timestamp (UTC):            {self.data_strings.get('timestamp_utc', {}).get('year', 'N/A')}-"
+        #     f"{self.data_strings.get('timestamp_utc', {}).get('month', 'N/A')}-"
+        #     f"{self.data_strings.get('timestamp_utc', {}).get('day', 'N/A')} "
+        #     f"{self.data_strings.get('timestamp_utc', {}).get('hour', 'N/A')}:"
+        #     f"{self.data_strings.get('timestamp_utc', {}).get('minute', 'N/A')}:"
+        #     f"{self.data_strings.get('timestamp_utc', {}).get('second', 'N/A')}"
+        # )
+        # print("=" * 40)
 
     def get_nav_data(self) -> dict:
         """Returns the current navigation data as a dictionary."""

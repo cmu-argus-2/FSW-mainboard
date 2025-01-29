@@ -326,6 +326,7 @@ class ArgusV2(CubeSat):
 
         :return: Error code if the GPS failed to initialize
         """
+        print("Trying to boot GPS")
         try:
             from hal.drivers.gps import GPS
 
