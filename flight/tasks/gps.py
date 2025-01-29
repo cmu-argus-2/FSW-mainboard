@@ -52,36 +52,39 @@ class Task(TemplateTask):
                     data_format = "LBBBHIiiiiHHHHHiiiiii"
                     DH.register_data_process("gps", data_format, True, data_limit=100000, write_interval=10)
 
-                SATELLITE.GPS.update()
+                if SATELLITE.GPS.update():
 
-                # Assuming we have a fix for now
-                if SATELLITE.GPS.has_fix():
-                    # TODO GPS frame parsing - get ECEF in (cm) and ECEF velocity in cm/s
-                    # TODO : Change the time to get the GPS time rather than the system time here
+                    # Assuming we have a fix for now
+                    print("", SATELLITE.GPS.has_fix())
+                    if SATELLITE.GPS.has_fix():
+                        # TODO GPS frame parsing - get ECEF in (cm) and ECEF velocity in cm/s
+                        # TODO : Change the time to get the GPS time rather than the system time here
+                        self.log_info("GPS module got a fix!")
+                        self.log_data[GPS_IDX.TIME_GPS] = int(time.time())
+                        self.log_data[GPS_IDX.GPS_MESSAGE_ID] = SATELLITE.GPS.message_id
+                        self.log_data[GPS_IDX.GPS_FIX_MODE] = SATELLITE.GPS.fix_mode
+                        self.log_data[GPS_IDX.GPS_NUMBER_OF_SV] = SATELLITE.GPS.number_of_sv
+                        self.log_data[GPS_IDX.GPS_GNSS_WEEK] = SATELLITE.GPS.week
+                        self.log_data[GPS_IDX.GPS_GNSS_TOW] = SATELLITE.GPS.tow
+                        self.log_data[GPS_IDX.GPS_LATITUDE] = SATELLITE.GPS.latitude
+                        self.log_data[GPS_IDX.GPS_LONGITUDE] = SATELLITE.GPS.longitude
+                        self.log_data[GPS_IDX.GPS_ELLIPSOID_ALT] = SATELLITE.GPS.ellipsoid_altitude
+                        self.log_data[GPS_IDX.GPS_MEAN_SEA_LVL_ALT] = SATELLITE.GPS.mean_sea_level_altitude
+                        self.log_data[GPS_IDX.GPS_GDOP] = SATELLITE.GPS.gdop
+                        self.log_data[GPS_IDX.GPS_PDOP] = SATELLITE.GPS.pdop
+                        self.log_data[GPS_IDX.GPS_HDOP] = SATELLITE.GPS.hdop
+                        self.log_data[GPS_IDX.GPS_VDOP] = SATELLITE.GPS.vdop
+                        self.log_data[GPS_IDX.GPS_TDOP] = SATELLITE.GPS.tdop
+                        self.log_data[GPS_IDX.GPS_ECEF_X] = SATELLITE.GPS.ecef_x  # cm
+                        self.log_data[GPS_IDX.GPS_ECEF_Y] = SATELLITE.GPS.ecef_y
+                        self.log_data[GPS_IDX.GPS_ECEF_Z] = SATELLITE.GPS.ecef_z
+                        self.log_data[GPS_IDX.GPS_ECEF_VX] = SATELLITE.GPS.ecef_vx  # cm/s
+                        self.log_data[GPS_IDX.GPS_ECEF_VY] = SATELLITE.GPS.ecef_vy
+                        self.log_data[GPS_IDX.GPS_ECEF_VZ] = SATELLITE.GPS.ecef_vz
 
-                    self.log_data[GPS_IDX.TIME_GPS] = int(time.time())
-                    self.log_data[GPS_IDX.GPS_MESSAGE_ID] = SATELLITE.GPS.message_id
-                    self.log_data[GPS_IDX.GPS_FIX_MODE] = SATELLITE.GPS.fix_mode
-                    self.log_data[GPS_IDX.GPS_NUMBER_OF_SV] = SATELLITE.GPS.number_of_sv
-                    self.log_data[GPS_IDX.GPS_GNSS_WEEK] = SATELLITE.GPS.week
-                    self.log_data[GPS_IDX.GPS_GNSS_TOW] = SATELLITE.GPS.tow
-                    self.log_data[GPS_IDX.GPS_LATITUDE] = SATELLITE.GPS.latitude
-                    self.log_data[GPS_IDX.GPS_LONGITUDE] = SATELLITE.GPS.longitude
-                    self.log_data[GPS_IDX.GPS_ELLIPSOID_ALT] = SATELLITE.GPS.ellipsoid_altitude
-                    self.log_data[GPS_IDX.GPS_MEAN_SEA_LVL_ALT] = SATELLITE.GPS.mean_sea_level_altitude
-                    self.log_data[GPS_IDX.GPS_GDOP] = SATELLITE.GPS.gdop
-                    self.log_data[GPS_IDX.GPS_PDOP] = SATELLITE.GPS.pdop
-                    self.log_data[GPS_IDX.GPS_HDOP] = SATELLITE.GPS.hdop
-                    self.log_data[GPS_IDX.GPS_VDOP] = SATELLITE.GPS.vdop
-                    self.log_data[GPS_IDX.GPS_TDOP] = SATELLITE.GPS.tdop
-                    self.log_data[GPS_IDX.GPS_ECEF_X] = SATELLITE.GPS.ecef_x  # cm
-                    self.log_data[GPS_IDX.GPS_ECEF_Y] = SATELLITE.GPS.ecef_y
-                    self.log_data[GPS_IDX.GPS_ECEF_Z] = SATELLITE.GPS.ecef_z
-                    self.log_data[GPS_IDX.GPS_ECEF_VX] = SATELLITE.GPS.ecef_vx  # cm/s
-                    self.log_data[GPS_IDX.GPS_ECEF_VY] = SATELLITE.GPS.ecef_vy
-                    self.log_data[GPS_IDX.GPS_ECEF_VZ] = SATELLITE.GPS.ecef_vz
-
-                    DH.log_data("gps", self.log_data)
+                        DH.log_data("gps", self.log_data)
+                else:
+                    print("No update!")
 
             # self.log_info(f"{dict(zip(self.data_keys[-6:], self.log_data[-6:]))}")
             self.log_info(f"GPS ECEF: {self.log_data[GPS_IDX.GPS_ECEF_X:]}")

@@ -331,7 +331,7 @@ class ArgusV2(CubeSat):
 
             # For v2 mainboards, GPS_EN is used for RADIO_IRQ
             # Boards should be modified to have GPS always on
-            gps1 = GPS(ArgusV2Components.GPS_UART, None)
+            gps1 = GPS(ArgusV2Components.GPS_UART, None, False, True)
 
             self.__gps = gps1
             self.__device_list.append(gps1)

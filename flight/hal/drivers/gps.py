@@ -216,7 +216,10 @@ class GPS:
 
     def has_fix(self) -> bool:
         """True if a current fix for location information is available."""
-        return self._nav_data_hex["fix_mode"] is not None and self._nav_data_hex["fix_mode"] >= 1
+        if self._nav_data_hex["fix_mode"] is not None and self._nav_data_hex["fix_mode"] >= 1:
+            return True
+        else:
+            return False
 
     def has_3d_fix(self) -> bool:
         """Returns true if there is a 3d fix available.
