@@ -194,6 +194,7 @@ class GPS:
 
         return True
 
+    # TODO : Remove this method if it is not used anywhere
     @property
     def parsed_nav_data(self) -> dict:
         return self._parsed_data
@@ -342,7 +343,7 @@ class GPS:
         ecef_x = ecef_x_hex if ecef_x_hex < 0x80000000 else ecef_x_hex - 0x100000000
         if self.debug:
             # Convert from hundredths of a meter to meters
-            distance_meters = self._nav_data_hex["ecef_x"] / 100
+            distance_meters = ecef_x / 100
 
             # Format output
             self.data_strings["ecef_x"] = f"{distance_meters:.2f} m"
@@ -353,7 +354,7 @@ class GPS:
         ecef_y = ecef_y_hex if ecef_y_hex < 0x80000000 else ecef_y_hex - 0x100000000
         if self.debug:
             # Convert from hundredths of a meter to meters
-            distance_meters = self._nav_data_hex["ecef_y"] / 100
+            distance_meters = ecef_y / 100
 
             # Format output
             self.data_strings["ecef_y"] = f"{distance_meters:.2f} m"
@@ -364,7 +365,7 @@ class GPS:
         ecef_z = ecef_z_hex if ecef_z_hex < 0x80000000 else ecef_z_hex - 0x100000000
         if self.debug:
             # Convert from hundredths of a meter to meters
-            distance_meters = self._nav_data_hex["ecef_z"] / 100
+            distance_meters = ecef_z / 100
 
             # Format output
             self.data_strings["ecef_z"] = f"{distance_meters:.2f} m"
@@ -375,7 +376,7 @@ class GPS:
         ecef_vx = ecef_vx_hex if ecef_vx_hex < 0x80000000 else ecef_vx_hex - 0x100000000
         if self.debug:
             # Convert from hundredths of a meter to meters
-            speed_meters = self._nav_data_hex["ecef_vx"] / 100
+            speed_meters = ecef_vx / 100
 
             # Format output
             self.data_strings["ecef_vx"] = f"{speed_meters:.2f} m/s"
@@ -386,7 +387,7 @@ class GPS:
         ecef_vy = ecef_vy_hex if ecef_vy_hex < 0x80000000 else ecef_vy_hex - 0x100000000
         if self.debug:
             # Convert from hundredths of a meter to meters
-            speed_meters = self._nav_data_hex["ecef_vy"] / 100
+            speed_meters = ecef_vy / 100
 
             # Format output
             self.data_strings["ecef_vy"] = f"{speed_meters:.2f} m/s"
@@ -397,7 +398,7 @@ class GPS:
         ecef_vz = ecef_vz_hex if ecef_vz_hex < 0x80000000 else ecef_vz_hex - 0x100000000
         if self.debug:
             # Convert from hundredths of a meter to meters
-            speed_meters = self._nav_data_hex["ecef_vz"] / 100
+            speed_meters = ecef_vz / 100
 
             # Format output
             self.data_strings["ecef_vz"] = f"{speed_meters:.2f} m/s"
@@ -497,11 +498,11 @@ class GPS:
     def print_parsed_strings(self):
         print("Parsed Message:")
         print("=" * 40)
-        print(f"Message ID:                 {self.data_strings.get('message_id', 'N/A')}")
+        print(f"Message ID:                 {self.message_id}")
         print(f"Fix Mode:                   {self.data_strings.get('fix_mode', 'N/A')}")
-        print(f"Number of Satellites:       {self.data_strings.get('number_of_sv', 'N/A')}")
-        print(f"GPS Week:                   {self.data_strings.get('week', 'N/A')}")
-        print(f"Time of Week:               {self.data_strings.get('tow', 'N/A')}")
+        print(f"Number of Satellites:       {self.number_of_sv}")
+        print(f"GPS Week:                   {self.week}")
+        print(f"Time of Week:               {self.tow}")
         print(f"Latitude:                   {self.data_strings.get('latitude', 'N/A')}")
         print(f"Longitude:                  {self.data_strings.get('longitude', 'N/A')}")
         print(f"Ellipsoid Altitude:         {self.data_strings.get('ellipsoid_altitude', 'N/A')}")
