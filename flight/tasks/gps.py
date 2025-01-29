@@ -66,47 +66,47 @@ class Task(TemplateTask):
                     # TODO : Change the time to get the GPS time rather than the system time here
 
                     self.log_data[GPS_IDX.TIME_GPS] = int(time.time())
-                    print("1")
+                    print("Time type: ", type(self.log_data[GPS_IDX.TIME_GPS]))
                     self.log_data[GPS_IDX.GPS_MESSAGE_ID] = SATELLITE.GPS.message_id
-                    print("2")
+                    print("Message ID type: ", type(self.log_data[GPS_IDX.GPS_MESSAGE_ID]))
                     self.log_data[GPS_IDX.GPS_FIX_MODE] = SATELLITE.GPS.fix_mode
-                    print("3")
+                    print("Fix Mode type: ", type(self.log_data[GPS_IDX.GPS_FIX_MODE]))
                     self.log_data[GPS_IDX.GPS_NUMBER_OF_SV] = SATELLITE.GPS.number_of_sv
-                    print("4")
+                    print("Number of SV type: ", type(self.log_data[GPS_IDX.GPS_NUMBER_OF_SV]))
                     self.log_data[GPS_IDX.GPS_GNSS_WEEK] = SATELLITE.GPS.week
-                    print("5")
+                    print("GPS Week type: ", type(self.log_data[GPS_IDX.GPS_GNSS_WEEK]))
                     self.log_data[GPS_IDX.GPS_GNSS_TOW] = SATELLITE.GPS.tow
-                    print("6")
+                    print("GPS TOW type: ", type(self.log_data[GPS_IDX.GPS_GNSS_TOW]))
                     self.log_data[GPS_IDX.GPS_LATITUDE] = SATELLITE.GPS.latitude
-                    print("7")
+                    print("GPS Latitude type: ", type(self.log_data[GPS_IDX.GPS_LATITUDE]))
                     self.log_data[GPS_IDX.GPS_LONGITUDE] = SATELLITE.GPS.longitude
-                    print("8")
+                    print("GPS Longitude type: ", type(self.log_data[GPS_IDX.GPS_LONGITUDE]))
                     self.log_data[GPS_IDX.GPS_ELLIPSOID_ALT] = SATELLITE.GPS.ellipsoid_altitude
-                    print("9")
+                    print("GPS Ellipsoid type: ", type(self.log_data[GPS_IDX.GPS_ELLIPSOID_ALT]))
                     self.log_data[GPS_IDX.GPS_MEAN_SEA_LVL_ALT] = SATELLITE.GPS.mean_sea_level_altitude
-                    print("10")
+                    print("GPS MSL type: ", type(self.log_data[GPS_IDX.GPS_MEAN_SEA_LVL_ALT]))
                     self.log_data[GPS_IDX.GPS_GDOP] = SATELLITE.GPS.gdop
-                    print("11")
+                    print("GDOP type: ", type(self.log_data[GPS_IDX.GPS_GDOP]))
                     self.log_data[GPS_IDX.GPS_PDOP] = SATELLITE.GPS.pdop
-                    print("12")
+                    print("PDOP type: ", type(self.log_data[GPS_IDX.GPS_PDOP]))
                     self.log_data[GPS_IDX.GPS_HDOP] = SATELLITE.GPS.hdop
-                    print("13")
+                    print("HDOP type: ", type(self.log_data[GPS_IDX.GPS_HDOP]))
                     self.log_data[GPS_IDX.GPS_VDOP] = SATELLITE.GPS.vdop
-                    print("14")
+                    print("VDOP type: ", type(self.log_data[GPS_IDX.GPS_VDOP]))
                     self.log_data[GPS_IDX.GPS_TDOP] = SATELLITE.GPS.tdop
-                    print("15   ")
+                    print("TDOP type: ", type(self.log_data[GPS_IDX.GPS_TDOP]))
                     self.log_data[GPS_IDX.GPS_ECEF_X] = SATELLITE.GPS.ecef_x  # cm
-                    print("16")
+                    print("GPS ECEF X type: ", type(self.log_data[GPS_IDX.GPS_ECEF_X]))
                     self.log_data[GPS_IDX.GPS_ECEF_Y] = SATELLITE.GPS.ecef_y
-                    print("17")
+                    print("GPS ECEF Y type: ", type(self.log_data[GPS_IDX.GPS_ECEF_Y]))
                     self.log_data[GPS_IDX.GPS_ECEF_Z] = SATELLITE.GPS.ecef_z
-                    print("18")
+                    print("GPS ECEF Z type: ", type(self.log_data[GPS_IDX.GPS_ECEF_Z]))
                     self.log_data[GPS_IDX.GPS_ECEF_VX] = SATELLITE.GPS.ecef_vx  # cm/s
-                    print("19")
+                    print("GPS ECEF VX type: ", type(self.log_data[GPS_IDX.GPS_ECEF_VX]))
                     self.log_data[GPS_IDX.GPS_ECEF_VY] = SATELLITE.GPS.ecef_vy
-                    print("20")
+                    print("GPS ECEF VY type: ", type(self.log_data[GPS_IDX.GPS_ECEF_VY]))
                     self.log_data[GPS_IDX.GPS_ECEF_VZ] = SATELLITE.GPS.ecef_vz
-                    print("21")
+                    print("GPS ECEF VZ type: ", type(self.log_data[GPS_IDX.GPS_ECEF_VZ]))
 
                     DH.log_data("gps", self.log_data)
 
