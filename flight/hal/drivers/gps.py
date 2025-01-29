@@ -58,25 +58,25 @@ class GPS:
         self.timestamp_utc = None  # UTC as a dictionary in the form {year, month, day, hour, minute, second}
         self.unix_time = None  # Unix time in seconds
         self.message_id = None  # Message ID
-        self.fix_mode = None  # Fix mode as a text string
+        self.fix_mode = None  # Fix mode as an int
         self.number_of_sv = None  # Number of satellites used in the solution
         self.week = None  # The number of weeks since the GPS epoch
-        self.tow = None  # Time of week in 1/100 seconds [TODO: Check this]
-        self.latitude = None  # Latitude as a text string
-        self.longitude = None  # Longitude as a text string
-        self.ellipsoid_altitude = None  # Ellipsoid altitude in meters
-        self.mean_sea_level_altitude = None  # Mean sea level altitude in meters
-        self.gdop = None  # Geometric dilution of precision
-        self.pdop = None  # Position dilution of precision
-        self.hdop = None  # Horizontal dilution of precision
-        self.vdop = None  # Vertical dilution of precision
-        self.tdop = None  # Time dilution of precision
-        self.ecef_x = None  # ECEF X coordinate in meters
-        self.ecef_y = None  # ECEF Y coordinate in meters
-        self.ecef_z = None  # ECEF Z coordinate in meters
-        self.ecef_vx = None  # ECEF X velocity in meters per second
-        self.ecef_vy = None  # ECEF Y velocity in meters per second
-        self.ecef_vz = None  # ECEF Z velocity in meters per second
+        self.tow = None  # Time of week in 1/100 seconds
+        self.latitude = None  # Latitude as a signed int
+        self.longitude = None  # Longitude as a signed int
+        self.ellipsoid_altitude = None  # Ellipsoid altitude in 1/100 meters
+        self.mean_sea_level_altitude = None  # Mean sea level altitude in 1/100 meters
+        self.gdop = None  # Geometric dilution of precision in 1/100
+        self.pdop = None  # Position dilution of precision in 1/100
+        self.hdop = None  # Horizontal dilution of precision in 1/100
+        self.vdop = None  # Vertical dilution of precision in 1/100
+        self.tdop = None  # Time dilution of precision in 1/100
+        self.ecef_x = None  # ECEF X coordinate in 1/100 meters
+        self.ecef_y = None  # ECEF Y coordinate in 1/100 meters
+        self.ecef_z = None  # ECEF Z coordinate in 1/100 meters
+        self.ecef_vx = None  # ECEF X velocity in 1/100 meters per second
+        self.ecef_vy = None  # ECEF Y velocity in 1/100 meters per second
+        self.ecef_vz = None  # ECEF Z velocity in 1/100 meters per second
 
         # Don't care to enable the GPS module during initialization
         self._enable = enable
@@ -108,16 +108,15 @@ class GPS:
 
     def update(self) -> bool:
         print("Updating GPS")
-        # self.debug = True
-        try:
-            msg = self._parse_sentence()
-        except UnicodeError:
-            return False
-        if msg is None or len(msg) < 11:
-            return False
-
         if self.mock:
             msg = self.mock_message
+        else:
+            try:
+                msg = self._parse_sentence()
+            except UnicodeError:
+                return False
+            if msg is None or len(msg) < 11:
+                return False
 
         if self.debug:
             if self.mock:
@@ -228,7 +227,8 @@ class GPS:
         return self._nav_data_hex["fix_mode"] is not None and self._nav_data_hex["fix_mode"] >= 2
 
     def parse_lat(self) -> int:
-        lat = int(self._nav_data_hex["latitude"])
+        lat_hex = self._nav_data_hex["latitude"]
+        lat = lat_hex if lat_hex < 0x80000000 else lat_hex - 0x100000000
         if self.debug:
             # Convert from scale 1/1e-7 to decimal degrees
             latitude = lat * 1e-7
@@ -247,7 +247,8 @@ class GPS:
         return lat
 
     def parse_lon(self) -> int:
-        lon = int(self._nav_data_hex["longitude"])
+        lon_hex = self._nav_data_hex["longitude"]
+        lon = lon_hex if lon_hex < 0x80000000 else lon_hex - 0x100000000
         if self.debug:
             # Convert raw longitude as signed 32-bit integer
             raw_longitude = lon
@@ -275,7 +276,8 @@ class GPS:
         return lon
 
     def parse_elip_alt(self) -> int:
-        elip_alt = int(self._nav_data_hex["ellipsoid_alt"])
+        elip_alt_hex = self._nav_data_hex["ellipsoid_alt"]
+        elip_alt = elip_alt_hex if elip_alt_hex < 0x80000000 else elip_alt_hex - 0x100000000
         if self.debug:
             # Convert from hundredths of a meter to meters
             distance_meters = elip_alt / 100
@@ -285,7 +287,8 @@ class GPS:
         return elip_alt
 
     def parse_msl_alt(self) -> int:
-        msl_alt = int(self._nav_data_hex["mean_sea_lvl_alt"])
+        msl_alt_hex = self._nav_data_hex["mean_sea_lvl_alt"]
+        msl_alt = msl_alt_hex if msl_alt_hex < 0x80000000 else msl_alt_hex - 0x100000000
         if self.debug:
             # Convert from hundredths of a meter to meters
             distance_meters = msl_alt / 100
@@ -335,7 +338,8 @@ class GPS:
         return tdop
 
     def parse_ecef_x(self) -> int:
-        ecef_x = int(self._nav_data_hex["ecef_x"])
+        ecef_x_hex = self._nav_data_hex["ecef_x"]
+        ecef_x = ecef_x_hex if ecef_x_hex < 0x80000000 else ecef_x_hex - 0x100000000
         if self.debug:
             # Convert from hundredths of a meter to meters
             distance_meters = self._nav_data_hex["ecef_x"] / 100
@@ -345,7 +349,8 @@ class GPS:
         return ecef_x
 
     def parse_ecef_y(self) -> int:
-        ecef_y = int(self._nav_data_hex["ecef_y"])
+        ecef_y_hex = self._nav_data_hex["ecef_y"]
+        ecef_y = ecef_y_hex if ecef_y_hex < 0x80000000 else ecef_y_hex - 0x100000000
         if self.debug:
             # Convert from hundredths of a meter to meters
             distance_meters = self._nav_data_hex["ecef_y"] / 100
@@ -355,7 +360,8 @@ class GPS:
         return ecef_y
 
     def parse_ecef_z(self) -> int:
-        ecef_z = int(self._nav_data_hex["ecef_z"])
+        ecef_z_hex = self._nav_data_hex["ecef_z"]
+        ecef_z = ecef_z_hex if ecef_z_hex < 0x80000000 else ecef_z_hex - 0x100000000
         if self.debug:
             # Convert from hundredths of a meter to meters
             distance_meters = self._nav_data_hex["ecef_z"] / 100
@@ -365,7 +371,8 @@ class GPS:
         return ecef_z
 
     def parse_ecef_vx(self) -> int:
-        ecef_vx = int(self._nav_data_hex["ecef_vx"])
+        ecef_vx_hex = self._nav_data_hex["ecef_vx"]
+        ecef_vx = ecef_vx_hex if ecef_vx_hex < 0x80000000 else ecef_vx_hex - 0x100000000
         if self.debug:
             # Convert from hundredths of a meter to meters
             speed_meters = self._nav_data_hex["ecef_vx"] / 100
@@ -375,7 +382,8 @@ class GPS:
         return ecef_vx
 
     def parse_ecef_vy(self) -> int:
-        ecef_vy = int(self._nav_data_hex["ecef_vy"])
+        ecef_vy_hex = self._nav_data_hex["ecef_vy"]
+        ecef_vy = ecef_vy_hex if ecef_vy_hex < 0x80000000 else ecef_vy_hex - 0x100000000
         if self.debug:
             # Convert from hundredths of a meter to meters
             speed_meters = self._nav_data_hex["ecef_vy"] / 100
@@ -385,7 +393,8 @@ class GPS:
         return ecef_vy
 
     def parse_ecef_vz(self) -> int:
-        ecef_vz = int(self._nav_data_hex["ecef_vz"])
+        ecef_vz_hex = self._nav_data_hex["ecef_vz"]
+        ecef_vz = ecef_vz_hex if ecef_vz_hex < 0x80000000 else ecef_vz_hex - 0x100000000
         if self.debug:
             # Convert from hundredths of a meter to meters
             speed_meters = self._nav_data_hex["ecef_vz"] / 100
@@ -516,7 +525,7 @@ class GPS:
         #     f"{self.data_strings.get('timestamp_utc', {}).get('minute', 'N/A')}:"
         #     f"{self.data_strings.get('timestamp_utc', {}).get('second', 'N/A')}"
         # )
-        # print("=" * 40)
+        print("=" * 40)
 
     def get_nav_data(self) -> dict:
         """Returns the current navigation data as a dictionary."""
