@@ -13,6 +13,16 @@ The flight software currently supports:
 - Argus v1.1
 - Argus v2 (RP2040, in testing)
 
+## Installation
+```bash
+git submodule init
+git submodule update
+pip install .
+cd simulation/
+pip install .
+cd ..
+```
+
 ## Build and Execution
 
 ### With mainboard

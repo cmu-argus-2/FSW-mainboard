@@ -42,9 +42,7 @@ class Task(TemplateTask):
         self.name = "GPS"
 
     async def main_task(self):
-
         if SATELLITE.GPS_AVAILABLE:
-
             if SM.current_state == STATES.STARTUP:
                 pass
 
@@ -58,7 +56,6 @@ class Task(TemplateTask):
 
                 # Assuming we have a fix for now
                 if SATELLITE.GPS.has_fix():
-
                     # TODO GPS frame parsing - get ECEF in (cm) and ECEF velocity in cm/s
                     # TODO : Change the time to get the GPS time rather than the system time here
 

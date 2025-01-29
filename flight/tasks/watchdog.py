@@ -13,7 +13,6 @@ class Task(TemplateTask):
         self.name = "WATCHDOG"
 
     async def main_task(self):
-
         # TODO: toggle HW watchdog pin (do it first, irrespective of state logic)
 
         if SM.current_state == STATES.STARTUP:

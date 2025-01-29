@@ -115,7 +115,6 @@ def copy_folder(build_folder, destination_folder, show_identical_files=True):
 
 
 if __name__ == "__main__":
-
     # Parses command line arguments.
     parser = argparse.ArgumentParser()
 

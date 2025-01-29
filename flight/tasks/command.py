@@ -6,9 +6,11 @@ import gc
 import time
 
 from apps.adcs.modes import Modes
-from apps.command import CommandQueue
+from apps.command import QUEUE_STATUS, CommandQueue
+from apps.command.constants import CMD_ID
 from apps.command.processor import handle_command_execution_status, process_command
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX
+from apps.telemetry.helpers import unpack_unsigned_long_int
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
@@ -17,7 +19,6 @@ from hal.configuration import SATELLITE
 
 
 class Task(TemplateTask):
-
     # To be removed
     # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "REBOOT_COUNT",
     # "WATCHDOG_TIMER", "HAL_BITFLAGS", "DETUMBLING_ERROR_FLAG"]
@@ -39,7 +40,6 @@ class Task(TemplateTask):
         return int(gc.mem_alloc() / self.total_memory * 100)
 
     async def main_task(self):
-
         if SM.current_state == STATES.STARTUP:
             # Must perform / check all startup tasks here (rtc, sd, etc.)
 
@@ -60,7 +60,6 @@ class Task(TemplateTask):
             # HAL_DIAGNOSTICS
             time_since_boot = int(time.time()) - SATELLITE.BOOTTIME
             if DH.SD_SCANNED() and time_since_boot > 5:  # seconds into start-up
-
                 if not DH.data_process_exists("cdh"):
                     data_format = "LbLbbbbb"
                     DH.register_data_process("cdh", data_format, True, data_limit=100000)
@@ -72,14 +71,14 @@ class Task(TemplateTask):
                 self.log_info("Switching to DETUMBLING state.")
 
                 # Just for testing
-                # CommandQueue.push_command(0x01, [])
-                # CommandQueue.push_command(0x02, [])
+                # CommandQueue.push_command(0x40, [])
 
+                # Testing single-element queue
+                # CommandQueue.overwrite_command(0x01,[STATES.LOW_POWER, 0x00])
+                # CommandQueue.overwrite_command(0x41,[STATES.DETUMBLING, 0x00])  #should only execute this with overwrite
         else:  # Run for all other states
-
             ### STATE MACHINE ###
             if SM.current_state == STATES.DETUMBLING:
-
                 # Check detumbling status from the ADCS
                 if DH.data_process_exists("adcs"):
                     if DH.get_latest_data("adcs")[ADCS_IDX.MODE] != Modes.TUMBLING:
@@ -101,18 +100,31 @@ class Task(TemplateTask):
             elif SM.current_state == STATES.LOW_POWER:
                 pass
 
+            SM.update_time_in_state()
+
             ### COMMAND PROCESSING ###
 
             if CommandQueue.command_available():
+                (cmd_id, cmd_arglist), queue_error_code = CommandQueue.pop_command()
+                # self.log_info(f"ID: {cmd_id} Arguments: {cmd_args}")
 
-                (cmd_id, cmd_args), queue_error_code = CommandQueue.pop_command()
+                # TODO: Move to another function
+                # Unpack arguments based on message ID
+                if cmd_id == CMD_ID.SWITCH_TO_STATE:
+                    cmd_arglist = list(cmd_arglist)
+                    cmd_args = [0x00, 0x00]
+                    cmd_args[0] = cmd_arglist[0]
+                    cmd_args[1] = unpack_unsigned_long_int(cmd_arglist[1:5])
 
-                if queue_error_code == CommandQueue.OK:
+                    self.log_info(f"ID: {cmd_id} Argument List: {cmd_args}")
+                else:
+                    cmd_args = []
 
+                if queue_error_code == QUEUE_STATUS.OK:
                     self.log_info(f"Processing command: {cmd_id} with args: {cmd_args}")
-                    status = process_command(cmd_id, *cmd_args)
+                    status, response_args = process_command(cmd_id, *cmd_args)
 
-                    handle_command_execution_status(status)
+                    handle_command_execution_status(status, response_args)
 
                     # Log the command execution history
                     self.log_commands[0] = int(time.time())
