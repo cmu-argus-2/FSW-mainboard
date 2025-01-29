@@ -478,38 +478,38 @@ class GPS:
         self.timestamp_utc = self.gps_datetime(self.week, self.tow)
 
 
-def print_parsed_strings(self):
-    print("Parsed Message:")
-    print("=" * 40)
-    print(f"Message ID:                 {self.data_strings.get('message_id', 'N/A')}")
-    print(f"Fix Mode:                   {self.data_strings.get('fix_mode', 'N/A')}")
-    print(f"Number of Satellites:       {self.data_strings.get('number_of_sv', 'N/A')}")
-    print(f"GPS Week:                   {self.data_strings.get('week', 'N/A')}")
-    print(f"Time of Week:               {self.data_strings.get('tow', 'N/A')}")
-    print(f"Latitude:                   {self.data_strings.get('latitude', 'N/A')}")
-    print(f"Longitude:                  {self.data_strings.get('longitude', 'N/A')}")
-    print(f"Ellipsoid Altitude:         {self.data_strings.get('ellipsoid_altitude', 'N/A')}")
-    print(f"Mean Sea Level Altitude:    {self.data_strings.get('mean_sea_level_altitude', 'N/A')}")
-    print(f"GDOP:                       {self.data_strings.get('gdop', 'N/A')}")
-    print(f"PDOP:                       {self.data_strings.get('pdop', 'N/A')}")
-    print(f"HDOP:                       {self.data_strings.get('hdop', 'N/A')}")
-    print(f"VDOP:                       {self.data_strings.get('vdop', 'N/A')}")
-    print(f"TDOP:                       {self.data_strings.get('tdop', 'N/A')}")
-    print(f"ECEF X:                     {self.data_strings.get('ecef_x', 'N/A')}")
-    print(f"ECEF Y:                     {self.data_strings.get('ecef_y', 'N/A')}")
-    print(f"ECEF Z:                     {self.data_strings.get('ecef_z', 'N/A')}")
-    print(f"ECEF Vx:                    {self.data_strings.get('ecef_vx', 'N/A')}")
-    print(f"ECEF Vy:                    {self.data_strings.get('ecef_vy', 'N/A')}")
-    print(f"ECEF Vz:                    {self.data_strings.get('ecef_vz', 'N/A')}")
-    print(
-        f"Timestamp (UTC):            {self.data_strings.get('timestamp_utc', {}).get('year', 'N/A')}-"
-        f"{self.data_strings.get('timestamp_utc', {}).get('month', 'N/A')}-"
-        f"{self.data_strings.get('timestamp_utc', {}).get('day', 'N/A')} "
-        f"{self.data_strings.get('timestamp_utc', {}).get('hour', 'N/A')}:"
-        f"{self.data_strings.get('timestamp_utc', {}).get('minute', 'N/A')}:"
-        f"{self.data_strings.get('timestamp_utc', {}).get('second', 'N/A')}"
-    )
-    print("=" * 40)
+    def print_parsed_strings(self):
+        print("Parsed Message:")
+        print("=" * 40)
+        print(f"Message ID:                 {self.data_strings.get('message_id', 'N/A')}")
+        print(f"Fix Mode:                   {self.data_strings.get('fix_mode', 'N/A')}")
+        print(f"Number of Satellites:       {self.data_strings.get('number_of_sv', 'N/A')}")
+        print(f"GPS Week:                   {self.data_strings.get('week', 'N/A')}")
+        print(f"Time of Week:               {self.data_strings.get('tow', 'N/A')}")
+        print(f"Latitude:                   {self.data_strings.get('latitude', 'N/A')}")
+        print(f"Longitude:                  {self.data_strings.get('longitude', 'N/A')}")
+        print(f"Ellipsoid Altitude:         {self.data_strings.get('ellipsoid_altitude', 'N/A')}")
+        print(f"Mean Sea Level Altitude:    {self.data_strings.get('mean_sea_level_altitude', 'N/A')}")
+        print(f"GDOP:                       {self.data_strings.get('gdop', 'N/A')}")
+        print(f"PDOP:                       {self.data_strings.get('pdop', 'N/A')}")
+        print(f"HDOP:                       {self.data_strings.get('hdop', 'N/A')}")
+        print(f"VDOP:                       {self.data_strings.get('vdop', 'N/A')}")
+        print(f"TDOP:                       {self.data_strings.get('tdop', 'N/A')}")
+        print(f"ECEF X:                     {self.data_strings.get('ecef_x', 'N/A')}")
+        print(f"ECEF Y:                     {self.data_strings.get('ecef_y', 'N/A')}")
+        print(f"ECEF Z:                     {self.data_strings.get('ecef_z', 'N/A')}")
+        print(f"ECEF Vx:                    {self.data_strings.get('ecef_vx', 'N/A')}")
+        print(f"ECEF Vy:                    {self.data_strings.get('ecef_vy', 'N/A')}")
+        print(f"ECEF Vz:                    {self.data_strings.get('ecef_vz', 'N/A')}")
+        print(
+            f"Timestamp (UTC):            {self.data_strings.get('timestamp_utc', {}).get('year', 'N/A')}-"
+            f"{self.data_strings.get('timestamp_utc', {}).get('month', 'N/A')}-"
+            f"{self.data_strings.get('timestamp_utc', {}).get('day', 'N/A')} "
+            f"{self.data_strings.get('timestamp_utc', {}).get('hour', 'N/A')}:"
+            f"{self.data_strings.get('timestamp_utc', {}).get('minute', 'N/A')}:"
+            f"{self.data_strings.get('timestamp_utc', {}).get('second', 'N/A')}"
+        )
+        print("=" * 40)
 
     def get_nav_data(self) -> dict:
         """Returns the current navigation data as a dictionary."""
