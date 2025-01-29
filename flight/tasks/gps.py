@@ -66,7 +66,7 @@ class Task(TemplateTask):
                     # TODO : Change the time to get the GPS time rather than the system time here
 
                     self.log_data[GPS_IDX.TIME_GPS] = int(time.time())
-                    print("Time type: ", type(self.log_data[GPS_IDX.TIME_GPS]))
+                    print("Time time type: ", type(self.log_data[GPS_IDX.TIME_GPS]))
                     self.log_data[GPS_IDX.GPS_MESSAGE_ID] = SATELLITE.GPS.message_id
                     print("Message ID type: ", type(self.log_data[GPS_IDX.GPS_MESSAGE_ID]))
                     self.log_data[GPS_IDX.GPS_FIX_MODE] = SATELLITE.GPS.fix_mode
