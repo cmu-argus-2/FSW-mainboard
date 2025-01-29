@@ -18,7 +18,7 @@ EPOCH_DAY = 5
 
 
 class GPS:
-    def __init__(self, uart: UART, enable=None, debug: bool = True, mock: bool = True) -> None:
+    def __init__(self, uart: UART, enable=None, debug: bool = False, mock: bool = True) -> None:
         self._uart = uart
         self.debug = debug
         self._msg = None
@@ -107,7 +107,6 @@ class GPS:
         super().__init__()
 
     def update(self) -> bool:
-        print("Updating GPS")
         if self.mock:
             msg = self.mock_message
         else:
@@ -302,41 +301,41 @@ class GPS:
         gdop = int(self._nav_data_hex["gdop"])
         if self.debug:
             # Convert from hundredths to decimal
-            gdop = gdop * 0.01
-            self.data_strings["gdop"] = gdop
-        return int(gdop)
+            temp_gdop = gdop * 0.01
+            self.data_strings["gdop"] = temp_gdop
+        return gdop
 
     def parse_pdop(self) -> int:
         pdop = int(self._nav_data_hex["pdop"])
         if self.debug:
             # Convert from hundredths to decimal
-            pdop = pdop * 0.01
-            self.data_strings["pdop"] = pdop
-        return int(pdop)
+            temp_pdop = pdop * 0.01
+            self.data_strings["pdop"] = temp_pdop
+        return pdop
 
     def parse_hdop(self) -> int:
         hdop = int(self._nav_data_hex["hdop"])
         if self.debug:
             # Convert from hundredths to decimal
-            hdop = hdop * 0.01
-            self.data_strings["hdop"] = hdop
-        return int(hdop)
+            temp_hdop = hdop * 0.01
+            self.data_strings["hdop"] = temp_hdop
+        return hdop
 
     def parse_vdop(self) -> int:
         vdop = int(self._nav_data_hex["vdop"])
         if self.debug:
             # Convert from hundredths to decimal
-            vdop = vdop * 0.01
-            self.data_strings["vdop"] = vdop
-        return int(vdop)
+            temp_vdop = vdop * 0.01
+            self.data_strings["vdop"] = temp_vdop
+        return vdop
 
     def parse_tdop(self) -> int:
         tdop = int(self._nav_data_hex["tdop"])
         if self.debug:
             # Convert from hundredths to decimal
-            tdop = tdop * 0.01
-            self.data_strings["tdop"] = tdop
-        return int(tdop)
+            temp_tdop = tdop * 0.01
+            self.data_strings["tdop"] = temp_tdop
+        return tdop
 
     def parse_ecef_x(self) -> int:
         ecef_x_hex = self._nav_data_hex["ecef_x"]
@@ -518,14 +517,6 @@ class GPS:
         print(f"ECEF Vx:                    {self.data_strings.get('ecef_vx', 'N/A')}")
         print(f"ECEF Vy:                    {self.data_strings.get('ecef_vy', 'N/A')}")
         print(f"ECEF Vz:                    {self.data_strings.get('ecef_vz', 'N/A')}")
-        # print(
-        #     f"Timestamp (UTC):            {self.data_strings.get('timestamp_utc', {}).get('year', 'N/A')}-"
-        #     f"{self.data_strings.get('timestamp_utc', {}).get('month', 'N/A')}-"
-        #     f"{self.data_strings.get('timestamp_utc', {}).get('day', 'N/A')} "
-        #     f"{self.data_strings.get('timestamp_utc', {}).get('hour', 'N/A')}:"
-        #     f"{self.data_strings.get('timestamp_utc', {}).get('minute', 'N/A')}:"
-        #     f"{self.data_strings.get('timestamp_utc', {}).get('second', 'N/A')}"
-        # )
         print("=" * 40)
 
     def get_nav_data(self) -> dict:
