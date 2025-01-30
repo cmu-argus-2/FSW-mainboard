@@ -8,6 +8,11 @@ from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
 from hal.configuration import SATELLITE
+from micropython import const
+
+EPS_STATE_NOMINAL = const(0x0)
+EPS_STATE_LOW_POWER = const(0x1)
+EPS_STATE_PAYLOAD = const(0x2)
 
 
 class Task(TemplateTask):
@@ -56,9 +61,21 @@ class Task(TemplateTask):
         "ZP_SOLAR_CHARGE_CURRENT",
         "ZM_SOLAR_CHARGE_VOLTAGE",
         "ZM_SOLAR_CHARGE_CURRENT",
+        "EPS_STATE",
     ]"""
 
-    log_data = [0] * 40  # - use mV for voltage and mA for current (h = short integer 2 bytes)
+    log_data = [0] * 41  # - use mV for voltage and mA for current (h = short integer 2 bytes)
+
+    LOW_POWER_ENTRY_SOC_THRESHOLD = 30.0
+    LOW_POWER_EXIT_SOC_THRESHOLD = 40.0
+    PAYLOAD_ENTRY_SOC_THRESHOLD = 80.0
+    PAYLOAD_EXIT_SOC_THRESHOLD = 60.0
+
+    eps_state = {
+        EPS_STATE_LOW_POWER : "LOW POWER",
+        EPS_STATE_NOMINAL : "NOMINAL",
+        EPS_STATE_PAYLOAD : "PAYLOAD",
+    }
 
     def __init__(self, id):
         super().__init__(id)
@@ -93,7 +110,7 @@ class Task(TemplateTask):
         else:
             if not DH.data_process_exists("eps"):
                 data_format = (
-                    "Lhhb" + "h" * 4 + "L" * 2 + "h" * 30
+                    "Lhhb" + "h" * 4 + "L" * 2 + "h" * 30 + "b"
                 )  # - use mV for voltage and mA for current (h = short integer 2 bytes, L = 4 bytes)
                 DH.register_data_process("eps", data_format, True, data_limit=100000)
 
@@ -129,4 +146,33 @@ class Task(TemplateTask):
                 self.log_info(f"Battery Pack Midpoint Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE]} mV ")
                 self.log_info(f"Battery Pack Time-to-Empty: {self.log_data[EPS_IDX.BATTERY_PACK_TTE]} seconds ")
                 self.log_info(f"Battery Pack Time-to-Full {self.log_data[EPS_IDX.BATTERY_PACK_TTF]} seconds ")
+
+                if (self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] <= self.LOW_POWER_ENTRY_SOC_THRESHOLD):
+                    self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_LOW_POWER
+
+                elif ((self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] > self.LOW_POWER_ENTRY_SOC_THRESHOLD)
+                      and (self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] < self.LOW_POWER_EXIT_SOC_THRESHOLD)):
+
+                    if (self.current_state == STATES.LOW_POWER):
+                        self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_LOW_POWER
+                    else:
+                        self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_NOMINAL
+
+                elif ((self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] >= self.LOW_POWER_EXIT_SOC_THRESHOLD)
+                      and (self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] < self.PAYLOAD_EXIT_SOC_THRESHOLD)):
+                    self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_NOMINAL
+
+                elif ((self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] >= self.PAYLOAD_EXIT_SOC_THRESHOLD)
+                      and (self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] <= self.PAYLOAD_ENTRY_SOC_THRESHOLD)):
+
+                    if (self.current_state == STATES.EXPERIMENT):
+                        self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_PAYLOAD
+                    else:
+                        self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_NOMINAL
+
+                else:  # greater than payload entry threshold
+                    self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_PAYLOAD
+
+                self.log_info(f"EPS state: {self.eps_state[self.log_data[EPS_IDX.EPS_STATE]]} ")
+
             DH.log_data("eps", self.log_data)

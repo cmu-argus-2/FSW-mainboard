@@ -55,6 +55,7 @@ class EPS_IDX:
     ZP_SOLAR_CHARGE_CURRENT = const(37)
     ZM_SOLAR_CHARGE_VOLTAGE = const(38)
     ZM_SOLAR_CHARGE_CURRENT = const(39)
+    EPS_STATE = const(40)
 
 
 class ADCS_IDX:

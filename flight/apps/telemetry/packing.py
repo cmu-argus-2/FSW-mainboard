@@ -198,6 +198,9 @@ class TelemetryPacker:
                 cls._FRAME[95:97] = pack_signed_short_int(eps_data, EPS_IDX.ZM_SOLAR_CHARGE_VOLTAGE)
                 # ZM solar charge current
                 cls._FRAME[97:99] = pack_signed_short_int(eps_data, EPS_IDX.ZM_SOLAR_CHARGE_CURRENT)
+                # Low power flag
+                # TODO: uncomment and adjust indices
+                # cls._FRAME[99] = eps_data[EPS_IDX.EPS_STATE] & 0xFF
 
             else:
                 logger.warning("No latest EPS data available")
