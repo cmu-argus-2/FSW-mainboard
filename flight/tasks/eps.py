@@ -154,7 +154,7 @@ class Task(TemplateTask):
                 elif ((soc > self.LOW_POWER_ENTRY_SOC_THRESHOLD)
                       and (soc < self.LOW_POWER_EXIT_SOC_THRESHOLD)):
 
-                    if (self.current_state == STATES.LOW_POWER):
+                    if (SM.current_state == STATES.LOW_POWER):
                         self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_LOW_POWER
                     else:
                         self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_NOMINAL
@@ -166,7 +166,7 @@ class Task(TemplateTask):
                 elif ((soc >= self.PAYLOAD_EXIT_SOC_THRESHOLD)
                       and (soc <= self.PAYLOAD_ENTRY_SOC_THRESHOLD)):
 
-                    if (self.current_state == STATES.EXPERIMENT):
+                    if (SM.current_state == STATES.EXPERIMENT):
                         self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_PAYLOAD
                     else:
                         self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_NOMINAL
