@@ -199,8 +199,7 @@ class TelemetryPacker:
                 # ZM solar charge current
                 cls._FRAME[97:99] = pack_signed_short_int(eps_data, EPS_IDX.ZM_SOLAR_CHARGE_CURRENT)
                 # Low power flag
-                # TODO: uncomment and adjust indices
-                # cls._FRAME[99] = eps_data[EPS_IDX.EPS_STATE] & 0xFF
+                cls._FRAME[99] = eps_data[EPS_IDX.EPS_STATE] & 0xFF
 
             else:
                 logger.warning("No latest EPS data available")
@@ -213,72 +212,72 @@ class TelemetryPacker:
 
             if adcs_data:
                 # ADCS state
-                cls._FRAME[99] = adcs_data[ADCS_IDX.MODE] & 0xFF
+                cls._FRAME[100] = adcs_data[ADCS_IDX.MODE] & 0xFF
 
                 # Gyro X
-                cls._FRAME[100:104] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.GYRO_X])
+                cls._FRAME[101:105] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.GYRO_X])
                 # Gyro Y
-                cls._FRAME[104:108] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.GYRO_Y])
+                cls._FRAME[105:109] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.GYRO_Y])
                 # Gyro Z
-                cls._FRAME[108:112] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.GYRO_Z])
+                cls._FRAME[109:113] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.GYRO_Z])
 
                 # Magnetometer X
-                cls._FRAME[112:116] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.MAG_X])
+                cls._FRAME[113:117] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.MAG_X])
                 # Magnetometer Y
-                cls._FRAME[116:120] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.MAG_Y])
+                cls._FRAME[117:121] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.MAG_Y])
                 # Magnetometer Z
-                cls._FRAME[120:124] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.MAG_Z])
+                cls._FRAME[121:125] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.MAG_Z])
 
                 # Sun status
-                cls._FRAME[124] = adcs_data[ADCS_IDX.SUN_STATUS] & 0xFF
+                cls._FRAME[125] = adcs_data[ADCS_IDX.SUN_STATUS] & 0xFF
                 # Sun vector X
-                cls._FRAME[125:129] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.SUN_VEC_X])
+                cls._FRAME[126:130] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.SUN_VEC_X])
                 # Sun vector Y
-                cls._FRAME[129:133] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.SUN_VEC_Y])
+                cls._FRAME[130:134] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.SUN_VEC_Y])
                 # Sun vector Z
-                cls._FRAME[133:137] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.SUN_VEC_Z])
+                cls._FRAME[134:138] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.SUN_VEC_Z])
                 # Eclipse bool
-                cls._FRAME[137] = adcs_data[ADCS_IDX.ECLIPSE] & 0xFF
+                cls._FRAME[138] = adcs_data[ADCS_IDX.ECLIPSE] & 0xFF
                 # Light sensor X+
-                cls._FRAME[138:140] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_XP)
+                cls._FRAME[139:141] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_XP)
                 # Light sensor X-
-                cls._FRAME[140:142] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_XM)
+                cls._FRAME[141:143] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_XM)
                 # Light sensor Y+
-                cls._FRAME[142:144] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_YP)
+                cls._FRAME[143:145] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_YP)
                 # Light sensor Y-
-                cls._FRAME[144:146] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_YM)
+                cls._FRAME[145:147] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_YM)
                 # Light sensor Z+ 1
-                cls._FRAME[146:148] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP1)
+                cls._FRAME[147:149] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP1)
                 # Light sensor Z+ 2
-                cls._FRAME[148:150] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP2)
+                cls._FRAME[149:151] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP2)
                 # Light sensor Z+ 3
-                cls._FRAME[150:152] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP3)
+                cls._FRAME[151:153] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP3)
                 # Light sensor Z+ 4
-                cls._FRAME[152:154] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP4)
+                cls._FRAME[153:155] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP4)
                 # Light sensor Z-
-                cls._FRAME[154:156] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZM)
+                cls._FRAME[155:157] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZM)
 
                 # XP coil status
-                cls._FRAME[156] = adcs_data[ADCS_IDX.XP_COIL_STATUS] & 0xFF
+                cls._FRAME[157] = adcs_data[ADCS_IDX.XP_COIL_STATUS] & 0xFF
                 # XM coil status
-                cls._FRAME[157] = adcs_data[ADCS_IDX.XM_COIL_STATUS] & 0xFF
+                cls._FRAME[158] = adcs_data[ADCS_IDX.XM_COIL_STATUS] & 0xFF
                 # YP coil status
-                cls._FRAME[158] = adcs_data[ADCS_IDX.YP_COIL_STATUS] & 0xFF
+                cls._FRAME[159] = adcs_data[ADCS_IDX.YP_COIL_STATUS] & 0xFF
                 # YM coil status
-                cls._FRAME[159] = adcs_data[ADCS_IDX.YM_COIL_STATUS] & 0xFF
+                cls._FRAME[160] = adcs_data[ADCS_IDX.YM_COIL_STATUS] & 0xFF
                 # ZP coil status
-                cls._FRAME[160] = adcs_data[ADCS_IDX.ZP_COIL_STATUS] & 0xFF
+                cls._FRAME[161] = adcs_data[ADCS_IDX.ZP_COIL_STATUS] & 0xFF
                 # ZM coil status
-                cls._FRAME[161] = adcs_data[ADCS_IDX.ZM_COIL_STATUS] & 0xFF
+                cls._FRAME[162] = adcs_data[ADCS_IDX.ZM_COIL_STATUS] & 0xFF
 
                 # Coarse attitude QW
-                cls._FRAME[162:166] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.COARSE_ATTITUDE_QW])
+                cls._FRAME[163:167] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.COARSE_ATTITUDE_QW])
                 # Coarse attitude QX
-                cls._FRAME[166:170] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.COARSE_ATTITUDE_QX])
+                cls._FRAME[167:171] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.COARSE_ATTITUDE_QX])
                 # Coarse attitude QY
-                cls._FRAME[170:174] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.COARSE_ATTITUDE_QY])
+                cls._FRAME[171:175] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.COARSE_ATTITUDE_QY])
                 # Coarse attitude QZ
-                cls._FRAME[174:178] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.COARSE_ATTITUDE_QZ])
+                cls._FRAME[175:179] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.COARSE_ATTITUDE_QZ])
 
             else:
                 logger.warning("No latest ADCS data available")
@@ -291,35 +290,35 @@ class TelemetryPacker:
 
             if gps_data:
                 # message ID
-                cls._FRAME[178] = gps_data[GPS_IDX.GPS_MESSAGE_ID] & 0xFF
+                cls._FRAME[179] = gps_data[GPS_IDX.GPS_MESSAGE_ID] & 0xFF
                 # fix mode
-                cls._FRAME[179] = gps_data[GPS_IDX.GPS_FIX_MODE] & 0xFF
+                cls._FRAME[180] = gps_data[GPS_IDX.GPS_FIX_MODE] & 0xFF
                 # number of SV
-                cls._FRAME[180] = gps_data[GPS_IDX.GPS_NUMBER_OF_SV] & 0xFF
+                cls._FRAME[181] = gps_data[GPS_IDX.GPS_NUMBER_OF_SV] & 0xFF
                 # GNSS week
-                cls._FRAME[181:183] = pack_unsigned_short_int(gps_data, GPS_IDX.GPS_GNSS_WEEK)
+                cls._FRAME[182:184] = pack_unsigned_short_int(gps_data, GPS_IDX.GPS_GNSS_WEEK)
                 # GNSS TOW
-                cls._FRAME[183:187] = pack_unsigned_long_int(gps_data, GPS_IDX.GPS_GNSS_TOW)
+                cls._FRAME[184:188] = pack_unsigned_long_int(gps_data, GPS_IDX.GPS_GNSS_TOW)
                 # latitude
-                cls._FRAME[187:191] = pack_signed_long_int(gps_data, GPS_IDX.GPS_LATITUDE)
+                cls._FRAME[188:192] = pack_signed_long_int(gps_data, GPS_IDX.GPS_LATITUDE)
                 # longitude
-                cls._FRAME[191:195] = pack_signed_long_int(gps_data, GPS_IDX.GPS_LONGITUDE)
+                cls._FRAME[192:196] = pack_signed_long_int(gps_data, GPS_IDX.GPS_LONGITUDE)
                 # ellipsoid altitude
-                cls._FRAME[195:199] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ELLIPSOID_ALT)
+                cls._FRAME[196:200] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ELLIPSOID_ALT)
                 # mean sea level altitude
-                cls._FRAME[199:203] = pack_signed_long_int(gps_data, GPS_IDX.GPS_MEAN_SEA_LVL_ALT)
+                cls._FRAME[200:204] = pack_signed_long_int(gps_data, GPS_IDX.GPS_MEAN_SEA_LVL_ALT)
                 # ECEF X
-                cls._FRAME[203:207] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_X)
+                cls._FRAME[204:208] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_X)
                 # ECEF Y
-                cls._FRAME[207:211] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_Y)
+                cls._FRAME[208:212] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_Y)
                 # ECEF Z
-                cls._FRAME[211:215] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_Z)
+                cls._FRAME[212:216] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_Z)
                 # ECEF VX
-                cls._FRAME[215:219] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VX)
+                cls._FRAME[216:220] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VX)
                 # ECEF VY
-                cls._FRAME[219:223] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VY)
+                cls._FRAME[220:224] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VY)
                 # ECEF VZ
-                cls._FRAME[223:227] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VZ)
+                cls._FRAME[224:228] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VZ)
             else:
                 logger.warning("No latest GPS data available")
         else:
@@ -331,11 +330,11 @@ class TelemetryPacker:
             thermal_data = DH.get_latest_data("thermal")
             if thermal_data:
                 # IMU temperature
-                cls._FRAME[227:229] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.IMU_TEMPERATURE)
+                cls._FRAME[228:230] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.IMU_TEMPERATURE)
                 # CPU temperature
-                cls._FRAME[229:231] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.CPU_TEMPERATURE)
+                cls._FRAME[230:232] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.CPU_TEMPERATURE)
                 # Battery temperature
-                cls._FRAME[231:233] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.BATTERY_PACK_TEMPERATURE)
+                cls._FRAME[232:234] = pack_unsigned_short_int(thermal_data, THERMAL_IDX.BATTERY_PACK_TEMPERATURE)
             else:
                 logger.warning("No latest Thermal data available")
         else:

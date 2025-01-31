@@ -66,10 +66,10 @@ class Task(TemplateTask):
 
     log_data = [0] * 41  # - use mV for voltage and mA for current (h = short integer 2 bytes)
 
-    LOW_POWER_ENTRY_SOC_THRESHOLD = 30.0
-    LOW_POWER_EXIT_SOC_THRESHOLD = 40.0
-    PAYLOAD_ENTRY_SOC_THRESHOLD = 80.0
-    PAYLOAD_EXIT_SOC_THRESHOLD = 60.0
+    LOW_POWER_ENTRY_SOC_THRESHOLD = 30
+    LOW_POWER_EXIT_SOC_THRESHOLD = 40
+    PAYLOAD_ENTRY_SOC_THRESHOLD = 80
+    PAYLOAD_EXIT_SOC_THRESHOLD = 60
 
     eps_state = {
         EPS_STATE_LOW_POWER : "LOW POWER",
@@ -147,23 +147,24 @@ class Task(TemplateTask):
                 self.log_info(f"Battery Pack Time-to-Empty: {self.log_data[EPS_IDX.BATTERY_PACK_TTE]} seconds ")
                 self.log_info(f"Battery Pack Time-to-Full {self.log_data[EPS_IDX.BATTERY_PACK_TTF]} seconds ")
 
-                if (self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] <= self.LOW_POWER_ENTRY_SOC_THRESHOLD):
+                soc = self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]
+                if (soc <= self.LOW_POWER_ENTRY_SOC_THRESHOLD):
                     self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_LOW_POWER
 
-                elif ((self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] > self.LOW_POWER_ENTRY_SOC_THRESHOLD)
-                      and (self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] < self.LOW_POWER_EXIT_SOC_THRESHOLD)):
+                elif ((soc > self.LOW_POWER_ENTRY_SOC_THRESHOLD)
+                      and (soc < self.LOW_POWER_EXIT_SOC_THRESHOLD)):
 
                     if (self.current_state == STATES.LOW_POWER):
                         self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_LOW_POWER
                     else:
                         self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_NOMINAL
 
-                elif ((self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] >= self.LOW_POWER_EXIT_SOC_THRESHOLD)
-                      and (self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] < self.PAYLOAD_EXIT_SOC_THRESHOLD)):
+                elif ((soc >= self.LOW_POWER_EXIT_SOC_THRESHOLD)
+                      and (soc < self.PAYLOAD_EXIT_SOC_THRESHOLD)):
                     self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_NOMINAL
 
-                elif ((self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] >= self.PAYLOAD_EXIT_SOC_THRESHOLD)
-                      and (self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] <= self.PAYLOAD_ENTRY_SOC_THRESHOLD)):
+                elif ((soc >= self.PAYLOAD_EXIT_SOC_THRESHOLD)
+                      and (soc <= self.PAYLOAD_ENTRY_SOC_THRESHOLD)):
 
                     if (self.current_state == STATES.EXPERIMENT):
                         self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_PAYLOAD
