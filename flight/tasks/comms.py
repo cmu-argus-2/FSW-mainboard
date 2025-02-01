@@ -160,24 +160,34 @@ class Task(TemplateTask):
     async def main_task(self):
         # Main comms task loop
 
-        if not self.frequency_set:
-            self.cls_change_counter_frequency()
-
-        if not self.filepath_flag:
-            if not DH.data_process_exists("img"):
-                # TODO: Move image process to another task
-                DH.register_data_process("img", "b", True)
-
-            # Set filepath for comms TX file
-            filepath = DH.request_TM_path_image()
-            SATELLITE_RADIO.set_filepath(filepath)
-            
-            self.log_info(f"Initializing TX file filepath: {filepath}")
-
-            self.filepath_flag = True
+        if SM.current_state == STATES.STARTUP:
+            # No comms in STARTUP
+            pass
 
         else:
-            if not DH.data_process_exists("comms"):  # avoid registering in startup
+            # Check if TX and RX frequencies are set
+            if not self.frequency_set:
+                self.cls_change_counter_frequency()
+
+            # TODO: Only set filepath on response from ResponseQueue
+            if not self.filepath_flag:
+                # Check if image process exists
+                if DH.image_process_exists():
+                    # Set filepath for comms TX file
+                    filepath = DH.request_TM_path_image()
+                    SATELLITE_RADIO.set_filepath(filepath)
+
+                    self.log_info(f"Initializing TX file filepath: {filepath}")
+                    self.filepath_flag = True
+                else:
+                    # Process does not exist, filepath remains None
+                    SATELLITE_RADIO.set_filepath(None)
+                    self.filepath_flag = False
+            else:
+                pass
+
+            # Register comms process for logging RX RSSI
+            if not DH.data_process_exists("comms"):
                 DH.register_data_process("comms", "f", True, 100000)
 
             # Increment counter
