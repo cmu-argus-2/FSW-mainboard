@@ -262,7 +262,6 @@ class SATELLITE_RADIO:
         else:
             # Valid filepath from DH, set size and message count
             file_stat = os.stat(cls.filepath)
-            print(file_stat)
 
             # TODO: Associate file IDs with subsystems
             cls.file_ID = 0x01
@@ -271,7 +270,6 @@ class SATELLITE_RADIO:
             cls.file_time = 1738351687
 
             cls.file_size = int(file_stat[6])
-            print(cls.file_size)
             cls.file_message_count = int(cls.file_size / FILE_PKTSIZE)
 
             # Increment 1 to message count to account for division floor
@@ -503,10 +501,7 @@ class SATELLITE_RADIO:
                 # Filepath matches, move forward with request
 
                 # Get sq_cnt for the PKT
-                cls.rq_sq_cnt = packet[9:11]
-                print(f"Requested ID {cls.rx_gs_cmd} with SQ {cls.rq_sq_cnt}")
-
-                pass
+                cls.rq_sq_cnt = int.from_bytes(packet[9:11], "big")
 
         else:
             # Not a file request, do nothing
