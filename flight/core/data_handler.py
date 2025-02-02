@@ -570,6 +570,7 @@ class ImageProcess(DataProcess):
         self.current_path = self.create_new_path()
         self.delete_paths = []  # Paths that are flagged for deletion
         self.excluded_paths = []  # Paths that are currently being transmitted
+        self.circular_buffer_size = 20  # Default size of the circular buffer for the files in the directory
 
         config_file_path = join_path(self.dir_path, _PROCESS_CONFIG_FILENAME)
         if not path_exist(config_file_path):
