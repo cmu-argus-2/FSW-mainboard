@@ -165,10 +165,8 @@ class Task(TemplateTask):
             if not DH.data_process_exists("comms"):  # avoid registering in startup
                 DH.register_data_process("comms", "f", True, 100000)
 
-            if not DH.data_process_exists("img"):
-                # TODO: Move image process to another task
-                DH.register_data_process("img", "b", True)
-
+            if DH.image_process_exists():
+                # registration is done on the payload task
                 # Set filepath for comms TX file
                 filepath = DH.request_TM_path_image()
                 SATELLITE_RADIO.set_filepath(filepath)

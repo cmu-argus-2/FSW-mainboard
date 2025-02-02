@@ -577,6 +577,30 @@ class ImageProcess(DataProcess):
             with open(config_file_path, "w") as config_file:
                 json.dump(config_data, config_file)
 
+    def resolve_current_file(self) -> None:
+        """
+        Resolve the current image to write to.
+        """
+        if self.status == _CLOSED:
+            self.current_path = self.create_new_path()
+            self.open()
+        elif self.status == _OPEN:
+            current_file_size = self.get_current_file_size()
+            if current_file_size >= self.size_limit:
+                self.close()
+                self.current_path = self.create_new_path()
+                self.open()
+
+    def create_new_path(self) -> str:
+        """
+        Create a new filename for the image process.
+
+        Returns:
+            str: The new filename.
+        """
+        # Keeping the tag name in the filename for identification
+        return join_path(self.dir_path, self.tag_name) + "_" + str(int(time.time())) + ".jpg"
+
     def log(self, data: bytearray) -> None:
         """
         Logs the given image data.
@@ -987,6 +1011,16 @@ class DataHandler:
             bool: True if the data process exists, False otherwise.
         """
         return tag_name in cls.data_process_registry
+
+    @classmethod
+    def image_process_exists(cls) -> bool:
+        """
+        Check if the image process exists.
+
+        Returns:
+            bool: True if the image process exists, False otherwise.
+        """
+        return _IMG_TAG_NAME in cls.data_process_registry
 
     @classmethod
     def request_TM_path(cls, tag_name, latest=False):
