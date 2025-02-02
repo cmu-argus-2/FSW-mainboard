@@ -115,91 +115,91 @@ class TelemetryPacker:
             eps_data = DH.get_latest_data("eps")
 
             if eps_data:
+                # Low power flag
+                cls._FRAME[18] = eps_data[EPS_IDX.EPS_POWER_FLAG] & 0xFF
                 # Mainboard voltage
-                cls._FRAME[18:20] = pack_signed_short_int(eps_data, EPS_IDX.MAINBOARD_VOLTAGE)
+                cls._FRAME[19:21] = pack_signed_short_int(eps_data, EPS_IDX.MAINBOARD_VOLTAGE)
                 # Mainboard current
-                cls._FRAME[20:22] = pack_signed_short_int(eps_data, EPS_IDX.MAINBOARD_CURRENT)
+                cls._FRAME[21:23] = pack_signed_short_int(eps_data, EPS_IDX.MAINBOARD_CURRENT)
                 # Battery pack SOC
-                cls._FRAME[22] = eps_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] & 0xFF
+                cls._FRAME[23] = eps_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] & 0xFF
                 # Battery pack capacity
-                cls._FRAME[23:25] = pack_signed_short_int(eps_data, EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY)
+                cls._FRAME[24:26] = pack_signed_short_int(eps_data, EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY)
                 # Battery pack current
-                cls._FRAME[25:27] = pack_signed_short_int(eps_data, EPS_IDX.BATTERY_PACK_CURRENT)
+                cls._FRAME[26:28] = pack_signed_short_int(eps_data, EPS_IDX.BATTERY_PACK_CURRENT)
                 # Battery pack voltage
-                cls._FRAME[27:29] = pack_signed_short_int(eps_data, EPS_IDX.BATTERY_PACK_VOLTAGE)
+                cls._FRAME[28:30] = pack_signed_short_int(eps_data, EPS_IDX.BATTERY_PACK_VOLTAGE)
                 # Battery pack midpoint voltage
-                cls._FRAME[29:31] = pack_signed_short_int(eps_data, EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE)
+                cls._FRAME[30:32] = pack_signed_short_int(eps_data, EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE)
                 # Battery pack TTE
-                cls._FRAME[31:35] = pack_unsigned_long_int(eps_data, EPS_IDX.BATTERY_PACK_TTE)
+                cls._FRAME[32:36] = pack_unsigned_long_int(eps_data, EPS_IDX.BATTERY_PACK_TTE)
                 # Battery pack TTF
-                cls._FRAME[35:39] = pack_unsigned_long_int(eps_data, EPS_IDX.BATTERY_PACK_TTF)
+                cls._FRAME[36:40] = pack_unsigned_long_int(eps_data, EPS_IDX.BATTERY_PACK_TTF)
 
                 # XP coil voltage
-                cls._FRAME[39:41] = pack_signed_short_int(eps_data, EPS_IDX.XP_COIL_VOLTAGE)
+                cls._FRAME[40:42] = pack_signed_short_int(eps_data, EPS_IDX.XP_COIL_VOLTAGE)
                 # XP coil current
-                cls._FRAME[41:43] = pack_signed_short_int(eps_data, EPS_IDX.XP_COIL_CURRENT)
+                cls._FRAME[42:44] = pack_signed_short_int(eps_data, EPS_IDX.XP_COIL_CURRENT)
                 # XM coil voltage
-                cls._FRAME[43:45] = pack_signed_short_int(eps_data, EPS_IDX.XM_COIL_VOLTAGE)
+                cls._FRAME[44:46] = pack_signed_short_int(eps_data, EPS_IDX.XM_COIL_VOLTAGE)
                 # XM coil current
-                cls._FRAME[45:47] = pack_signed_short_int(eps_data, EPS_IDX.XM_COIL_CURRENT)
+                cls._FRAME[46:48] = pack_signed_short_int(eps_data, EPS_IDX.XM_COIL_CURRENT)
                 # YP coil voltage
-                cls._FRAME[47:49] = pack_signed_short_int(eps_data, EPS_IDX.YP_COIL_VOLTAGE)
+                cls._FRAME[48:50] = pack_signed_short_int(eps_data, EPS_IDX.YP_COIL_VOLTAGE)
                 # YP coil current
-                cls._FRAME[49:51] = pack_signed_short_int(eps_data, EPS_IDX.YP_COIL_CURRENT)
+                cls._FRAME[50:52] = pack_signed_short_int(eps_data, EPS_IDX.YP_COIL_CURRENT)
                 # YM coil voltage
-                cls._FRAME[51:53] = pack_signed_short_int(eps_data, EPS_IDX.YM_COIL_VOLTAGE)
+                cls._FRAME[52:54] = pack_signed_short_int(eps_data, EPS_IDX.YM_COIL_VOLTAGE)
                 # YM coil current
-                cls._FRAME[53:55] = pack_signed_short_int(eps_data, EPS_IDX.YM_COIL_CURRENT)
+                cls._FRAME[54:56] = pack_signed_short_int(eps_data, EPS_IDX.YM_COIL_CURRENT)
                 # ZP coil voltage
-                cls._FRAME[55:57] = pack_signed_short_int(eps_data, EPS_IDX.ZP_COIL_VOLTAGE)
+                cls._FRAME[56:58] = pack_signed_short_int(eps_data, EPS_IDX.ZP_COIL_VOLTAGE)
                 # ZP coil current
-                cls._FRAME[57:59] = pack_signed_short_int(eps_data, EPS_IDX.ZP_COIL_CURRENT)
+                cls._FRAME[58:60] = pack_signed_short_int(eps_data, EPS_IDX.ZP_COIL_CURRENT)
                 # ZM coil voltage
-                cls._FRAME[59:61] = pack_signed_short_int(eps_data, EPS_IDX.ZM_COIL_VOLTAGE)
+                cls._FRAME[60:62] = pack_signed_short_int(eps_data, EPS_IDX.ZM_COIL_VOLTAGE)
                 # ZM coil current
-                cls._FRAME[61:63] = pack_signed_short_int(eps_data, EPS_IDX.ZM_COIL_CURRENT)
+                cls._FRAME[62:64] = pack_signed_short_int(eps_data, EPS_IDX.ZM_COIL_CURRENT)
 
                 # Jetson input voltage
-                cls._FRAME[63:65] = pack_signed_short_int(eps_data, EPS_IDX.JETSON_INPUT_VOLTAGE)
+                cls._FRAME[64:66] = pack_signed_short_int(eps_data, EPS_IDX.JETSON_INPUT_VOLTAGE)
                 # Jetson input current
-                cls._FRAME[65:67] = pack_signed_short_int(eps_data, EPS_IDX.JETSON_INPUT_CURRENT)
+                cls._FRAME[66:68] = pack_signed_short_int(eps_data, EPS_IDX.JETSON_INPUT_CURRENT)
 
                 # RF LDO output voltage
-                cls._FRAME[67:69] = pack_signed_short_int(eps_data, EPS_IDX.RF_LDO_OUTPUT_VOLTAGE)
+                cls._FRAME[68:70] = pack_signed_short_int(eps_data, EPS_IDX.RF_LDO_OUTPUT_VOLTAGE)
                 # RF LDO output current
-                cls._FRAME[69:71] = pack_signed_short_int(eps_data, EPS_IDX.RF_LDO_OUTPUT_CURRENT)
+                cls._FRAME[70:72] = pack_signed_short_int(eps_data, EPS_IDX.RF_LDO_OUTPUT_CURRENT)
 
                 # GPS voltage
-                cls._FRAME[71:73] = pack_signed_short_int(eps_data, EPS_IDX.GPS_VOLTAGE)
+                cls._FRAME[72:74] = pack_signed_short_int(eps_data, EPS_IDX.GPS_VOLTAGE)
                 # GPS current
-                cls._FRAME[73:75] = pack_signed_short_int(eps_data, EPS_IDX.GPS_CURRENT)
+                cls._FRAME[74:76] = pack_signed_short_int(eps_data, EPS_IDX.GPS_CURRENT)
 
                 # XP solar charge voltage
-                cls._FRAME[75:77] = pack_signed_short_int(eps_data, EPS_IDX.XP_SOLAR_CHARGE_VOLTAGE)
+                cls._FRAME[76:78] = pack_signed_short_int(eps_data, EPS_IDX.XP_SOLAR_CHARGE_VOLTAGE)
                 # XP solar charge current
-                cls._FRAME[77:79] = pack_signed_short_int(eps_data, EPS_IDX.XP_SOLAR_CHARGE_CURRENT)
+                cls._FRAME[78:80] = pack_signed_short_int(eps_data, EPS_IDX.XP_SOLAR_CHARGE_CURRENT)
                 # XM solar charge voltage
-                cls._FRAME[79:81] = pack_signed_short_int(eps_data, EPS_IDX.XM_SOLAR_CHARGE_VOLTAGE)
+                cls._FRAME[80:82] = pack_signed_short_int(eps_data, EPS_IDX.XM_SOLAR_CHARGE_VOLTAGE)
                 # XM solar charge current
-                cls._FRAME[81:83] = pack_signed_short_int(eps_data, EPS_IDX.XM_SOLAR_CHARGE_CURRENT)
+                cls._FRAME[82:84] = pack_signed_short_int(eps_data, EPS_IDX.XM_SOLAR_CHARGE_CURRENT)
                 # YP solar charge voltage
-                cls._FRAME[83:85] = pack_signed_short_int(eps_data, EPS_IDX.YP_SOLAR_CHARGE_VOLTAGE)
+                cls._FRAME[84:86] = pack_signed_short_int(eps_data, EPS_IDX.YP_SOLAR_CHARGE_VOLTAGE)
                 # YP solar charge current
-                cls._FRAME[85:87] = pack_signed_short_int(eps_data, EPS_IDX.YP_SOLAR_CHARGE_CURRENT)
+                cls._FRAME[86:88] = pack_signed_short_int(eps_data, EPS_IDX.YP_SOLAR_CHARGE_CURRENT)
                 # YM solar charge voltage
-                cls._FRAME[87:89] = pack_signed_short_int(eps_data, EPS_IDX.YM_SOLAR_CHARGE_VOLTAGE)
+                cls._FRAME[88:90] = pack_signed_short_int(eps_data, EPS_IDX.YM_SOLAR_CHARGE_VOLTAGE)
                 # YM solar charge current
-                cls._FRAME[89:91] = pack_signed_short_int(eps_data, EPS_IDX.YM_SOLAR_CHARGE_CURRENT)
+                cls._FRAME[90:92] = pack_signed_short_int(eps_data, EPS_IDX.YM_SOLAR_CHARGE_CURRENT)
                 # ZP solar charge voltage
-                cls._FRAME[91:93] = pack_signed_short_int(eps_data, EPS_IDX.ZP_SOLAR_CHARGE_VOLTAGE)
+                cls._FRAME[92:94] = pack_signed_short_int(eps_data, EPS_IDX.ZP_SOLAR_CHARGE_VOLTAGE)
                 # ZP solar charge current
-                cls._FRAME[93:95] = pack_signed_short_int(eps_data, EPS_IDX.ZP_SOLAR_CHARGE_CURRENT)
+                cls._FRAME[94:96] = pack_signed_short_int(eps_data, EPS_IDX.ZP_SOLAR_CHARGE_CURRENT)
                 # ZM solar charge voltage
-                cls._FRAME[95:97] = pack_signed_short_int(eps_data, EPS_IDX.ZM_SOLAR_CHARGE_VOLTAGE)
+                cls._FRAME[96:98] = pack_signed_short_int(eps_data, EPS_IDX.ZM_SOLAR_CHARGE_VOLTAGE)
                 # ZM solar charge current
-                cls._FRAME[97:99] = pack_signed_short_int(eps_data, EPS_IDX.ZM_SOLAR_CHARGE_CURRENT)
-                # Low power flag
-                cls._FRAME[99] = eps_data[EPS_IDX.EPS_STATE] & 0xFF
+                cls._FRAME[98:100] = pack_signed_short_int(eps_data, EPS_IDX.ZM_SOLAR_CHARGE_CURRENT)
 
             else:
                 logger.warning("No latest EPS data available")

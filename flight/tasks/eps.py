@@ -8,11 +8,9 @@ from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
 from hal.configuration import SATELLITE
-from micropython import const
-
-EPS_STATE_NOMINAL = const(0x0)
-EPS_STATE_LOW_POWER = const(0x1)
-EPS_STATE_PAYLOAD = const(0x2)
+from apps.eps.eps import (
+    GET_EPS_POWER_FLAG,
+)
 
 
 class Task(TemplateTask):
@@ -22,6 +20,7 @@ class Task(TemplateTask):
     # To be removed - kept until proper logging is implemented
     """data_keys = [
         "TIME",
+        "EPS_POWER_FLAG",
         "MAINBOARD_VOLTAGE",
         "MAINBOARD_CURRENT",
         "BATTERY_PACK_REPORTED_SOC",
@@ -61,21 +60,9 @@ class Task(TemplateTask):
         "ZP_SOLAR_CHARGE_CURRENT",
         "ZM_SOLAR_CHARGE_VOLTAGE",
         "ZM_SOLAR_CHARGE_CURRENT",
-        "EPS_STATE",
     ]"""
 
     log_data = [0] * 41  # - use mV for voltage and mA for current (h = short integer 2 bytes)
-
-    LOW_POWER_ENTRY_SOC_THRESHOLD = 30
-    LOW_POWER_EXIT_SOC_THRESHOLD = 40
-    PAYLOAD_ENTRY_SOC_THRESHOLD = 80
-    PAYLOAD_EXIT_SOC_THRESHOLD = 60
-
-    eps_state = {
-        EPS_STATE_LOW_POWER : "LOW POWER",
-        EPS_STATE_NOMINAL : "NOMINAL",
-        EPS_STATE_PAYLOAD : "PAYLOAD",
-    }
 
     def __init__(self, id):
         super().__init__(id)
@@ -148,32 +135,8 @@ class Task(TemplateTask):
                 self.log_info(f"Battery Pack Time-to-Full {self.log_data[EPS_IDX.BATTERY_PACK_TTF]} seconds ")
 
                 soc = self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]
-                if (soc <= self.LOW_POWER_ENTRY_SOC_THRESHOLD):
-                    self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_LOW_POWER
-
-                elif ((soc > self.LOW_POWER_ENTRY_SOC_THRESHOLD)
-                      and (soc < self.LOW_POWER_EXIT_SOC_THRESHOLD)):
-
-                    if (SM.current_state == STATES.LOW_POWER):
-                        self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_LOW_POWER
-                    else:
-                        self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_NOMINAL
-
-                elif ((soc >= self.LOW_POWER_EXIT_SOC_THRESHOLD)
-                      and (soc < self.PAYLOAD_EXIT_SOC_THRESHOLD)):
-                    self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_NOMINAL
-
-                elif ((soc >= self.PAYLOAD_EXIT_SOC_THRESHOLD)
-                      and (soc <= self.PAYLOAD_ENTRY_SOC_THRESHOLD)):
-
-                    if (SM.current_state == STATES.EXPERIMENT):
-                        self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_PAYLOAD
-                    else:
-                        self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_NOMINAL
-
-                else:  # greater than payload entry threshold
-                    self.log_data[EPS_IDX.EPS_STATE] = EPS_STATE_PAYLOAD
-
-                self.log_info(f"EPS state: {self.eps_state[self.log_data[EPS_IDX.EPS_STATE]]} ")
+                curr_flag = self.log_data[EPS_IDX.EPS_POWER_FLAG]
+                self.log_data[EPS_IDX.EPS_POWER_FLAG] = GET_EPS_POWER_FLAG(curr_flag, soc)
+                self.log_info(f"EPS state: {self.log_data[EPS_IDX.EPS_POWER_FLAG]} ")
 
             DH.log_data("eps", self.log_data)
