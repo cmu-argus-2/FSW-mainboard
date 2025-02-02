@@ -2,7 +2,7 @@
 
 import time
 
-from apps.eps.eps import GET_EPS_POWER_FLAG
+from apps.eps.eps import EPS_POWER_FLAG, GET_EPS_POWER_FLAG
 from apps.telemetry.constants import EPS_IDX
 from core import DataHandler as DH
 from core import TemplateTask
@@ -134,7 +134,11 @@ class Task(TemplateTask):
 
                 soc = self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]
                 curr_flag = self.log_data[EPS_IDX.EPS_POWER_FLAG]
-                self.log_data[EPS_IDX.EPS_POWER_FLAG] = GET_EPS_POWER_FLAG(curr_flag, soc)
-                self.log_info(f"EPS state: {self.log_data[EPS_IDX.EPS_POWER_FLAG]} ")
+                flag = GET_EPS_POWER_FLAG(curr_flag, soc)
+                if (flag != EPS_POWER_FLAG.NONE):
+                    self.log_data[EPS_IDX.EPS_POWER_FLAG] = flag
+                    self.log_info(f"EPS state: {self.log_data[EPS_IDX.EPS_POWER_FLAG]} ")
+                else:
+                    self.log_error("EPS state invalid; SOC or power flag may be corrupted")
 
             DH.log_data("eps", self.log_data)
