@@ -1,7 +1,6 @@
 # Constants and eps-related functions
-from core import state_manager as SM
-from core.states import STATES
 from micropython import const
+
 
 class EPS_POWER_FLAG:
     NONE = const(0x0)
@@ -9,16 +8,18 @@ class EPS_POWER_FLAG:
     NOMINAL = const(0x2)
     EXPERIMENT = const(0x3)
 
+
 class EPS_SOC_THRESHOLD:
     LOW_POWER_ENTRY = const(30)
     LOW_POWER_EXIT = const(40)
     EXPERIMENT_ENTRY = const(80)
     EXPERIMENT_EXIT = const(60)
 
+
 def GET_EPS_POWER_FLAG(curr_flag, soc):
     """ returns current EPS state based on SOC"""
     flag = EPS_POWER_FLAG.NONE
-    if (soc <= EPS_SOC_THRESHOLD.LOW_POWER_ENTRY): # below low power threshold
+    if (soc <= EPS_SOC_THRESHOLD.LOW_POWER_ENTRY):  # below low power threshold
         flag = EPS_POWER_FLAG.LOW_POWER
 
     elif ((soc > EPS_SOC_THRESHOLD.LOW_POWER_ENTRY)

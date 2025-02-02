@@ -2,15 +2,13 @@
 
 import time
 
+from apps.eps.eps import GET_EPS_POWER_FLAG
 from apps.telemetry.constants import EPS_IDX
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
 from hal.configuration import SATELLITE
-from apps.eps.eps import (
-    GET_EPS_POWER_FLAG,
-)
 
 
 class Task(TemplateTask):
