@@ -274,22 +274,23 @@ class ArgusV2(CubeSat):
 
         super().__init__()
         self.__boot_list = {
-            self.__sd_card: self.__sd_card_boot,
-            self.__vfs: self.__vfs_boot,
-            self.__imu: self.__imu_boot,
-            self.__rtc: self.__rtc_boot,
-            self.__gps: self.__gps_boot,
-            self.__radio: self.__radio_boot,
-            self.__power_monitor["BOARD"]: self.__power_monitor_boot(["BOARD", ArgusV2Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.BOARD_POWER_MONITOR_I2C]),
+            "SDCARD": [self.__sd_card_boot],
+            "VFS": [self.__vfs_boot],
+            "IMU": [self.__imu_boot],
+            "RTC": [self.__rtc_boot],
+            # self.__gps: self.__gps_boot,
+            # self.__radio: self.__radio_boot,
+            "BOARD_PWR": [
+                self.__power_monitor_boot,
+                ["BOARD", ArgusV2Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.BOARD_POWER_MONITOR_I2C],
+            ],
             # self.__power_monitor["XP"]: self.__power_monitor_boot("XP"),
             # self.__power_monitor["XM"]: self.__power_monitor_boot("XM"),
             # self.__power_monitor["YP"]: self.__power_monitor_boot("YP"),
             # self.__power_monitor["YM"]: self.__power_monitor_boot("YM"),
             # self.__power_monitor["ZP"]: self.__power_monitor_boot("ZP"),
             # self.__power_monitor["ZM"]: self.__power_monitor_boot("ZM"),
-            self.__charger: self.__charger_boot,
-
-
+            "CHARGER": [self.__charger_boot],
         }
 
     ######################## BOOT SEQUENCE ########################
@@ -298,22 +299,14 @@ class ArgusV2(CubeSat):
         """boot_sequence: Boot sequence for the CubeSat."""
         error_list: list[int] = []
 
-        self.__state_flags_boot()  # Does not require error checking
-
-        error_list.append(self.__sd_card_boot())
-        error_list.append(self.__vfs_boot())
-        error_list.append(self.__imu_boot())
-        error_list.append(self.__rtc_boot())
-        # error_list.append(self.__gps_boot())
-        # error_list.append(self.__radio_boot())
-        error_list.append(self.__power_monitor_boot())
-        error_list.append(self.__fuel_gauge_boot())
-        error_list.append(self.__charger_boot())
-        # error_list.append(self.__torque_drivers_boot())
-        # error_list.append(self.__light_sensors_boot())  # light + sun sensors
-        # error_list.append(self.__burn_wire_boot())
-
-        error_list = [error for error in error_list if error != Errors.NOERROR]
+        self.__state_flags_boot()
+        for boot_func in self.__boot_list.values():
+            func = boot_func[0]
+            args = boot_func[1] if len(boot_func) > 1 else []
+            if args:
+                error_list.append(func(args))
+            else:
+                error_list.append(func())
 
         if self.__debug:
             print("Boot Errors:")
@@ -352,82 +345,82 @@ class ArgusV2(CubeSat):
 
         return Errors.NOERROR
 
-    def __power_monitor_boot(self, location) -> list[int]:
+    def __power_monitor_boot(self, data) -> list[int]:
         """power_monitor_boot: Boot sequence for the power monitor
 
         :return: Error code if the power monitor failed to initialize
         """
 
-        locations = {
-            "BOARD": [ArgusV2Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.BOARD_POWER_MONITOR_I2C],
-            "RADIO": [ArgusV2Components.RADIO_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.RADIO_POWER_MONITOR_I2C],
-            # "GPS": [ArgusV2Components.GPS_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.GPS_POWER_MONITOR_I2C],
-            # "JETSON": [ArgusV2Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.JETSON_POWER_MONITOR_I2C],
-            # "TORQUE_XP": [
-            #     ArgusV2Components.TORQUE_XP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.TORQUE_XP_POWER_MONITOR_I2C,
-            # ],
-            # "TORQUE_XM": [
-            #     ArgusV2Components.TORQUE_XM_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.TORQUE_XM_POWER_MONITOR_I2C,
-            # ],
-            # "TORQUE_YP": [
-            #     ArgusV2Components.TORQUE_YP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.TORQUE_YP_POWER_MONITOR_I2C,
-            # ],
-            # "TORQUE_YM": [
-            #     ArgusV2Components.TORQUE_YM_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.TORQUE_YM_POWER_MONITOR_I2C,
-            # ],
-            # "TORQUE_ZP": [
-            #     ArgusV2Components.TORQUE_ZP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.TORQUE_ZP_POWER_MONITOR_I2C,
-            # ],
-            # "TORQUE_ZM": [
-            #     ArgusV2Components.TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.TORQUE_ZM_POWER_MONITOR_I2C,
-            # ],
-            # "SOLAR_XP": [
-            #     ArgusV2Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C,
-            # ],
-            # "SOLAR_XM": [
-            #     ArgusV2Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C,
-            # ],
-            # "SOLAR_YP": [
-            #     ArgusV2Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C,
-            # ],
-            # "SOLAR_YM": [
-            #     ArgusV2Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C,
-            # ],
-            # "SOLAR_ZP": [
-            #     ArgusV2Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C,
-            # ],
-        }
+        # locations = {
+        #     "BOARD": [ArgusV2Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.BOARD_POWER_MONITOR_I2C],
+        #     "RADIO": [ArgusV2Components.RADIO_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.RADIO_POWER_MONITOR_I2C],
+        #     "GPS": [ArgusV2Components.GPS_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.GPS_POWER_MONITOR_I2C],
+        #     "JETSON": [ArgusV2Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.JETSON_POWER_MONITOR_I2C],
+        #     "TORQUE_XP": [
+        #         ArgusV2Components.TORQUE_XP_POWER_MONITOR_I2C_ADDRESS,
+        #         ArgusV2Components.TORQUE_XP_POWER_MONITOR_I2C,
+        #     ],
+        #     "TORQUE_XM": [
+        #         ArgusV2Components.TORQUE_XM_POWER_MONITOR_I2C_ADDRESS,
+        #         ArgusV2Components.TORQUE_XM_POWER_MONITOR_I2C,
+        #     ],
+        #     "TORQUE_YP": [
+        #         ArgusV2Components.TORQUE_YP_POWER_MONITOR_I2C_ADDRESS,
+        #         ArgusV2Components.TORQUE_YP_POWER_MONITOR_I2C,
+        #     ],
+        #     "TORQUE_YM": [
+        #         ArgusV2Components.TORQUE_YM_POWER_MONITOR_I2C_ADDRESS,
+        #         ArgusV2Components.TORQUE_YM_POWER_MONITOR_I2C,
+        #     ],
+        #     "TORQUE_ZP": [
+        #         ArgusV2Components.TORQUE_ZP_POWER_MONITOR_I2C_ADDRESS,
+        #         ArgusV2Components.TORQUE_ZP_POWER_MONITOR_I2C,
+        #     ],
+        #     "TORQUE_ZM": [
+        #         ArgusV2Components.TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS,
+        #         ArgusV2Components.TORQUE_ZM_POWER_MONITOR_I2C,
+        #     ],
+        #     "SOLAR_XP": [
+        #         ArgusV2Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
+        #         ArgusV2Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C,
+        #     ],
+        #     "SOLAR_XM": [
+        #         ArgusV2Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS,
+        #         ArgusV2Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C,
+        #     ],
+        #     "SOLAR_YP": [
+        #         ArgusV2Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS,
+        #         ArgusV2Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C,
+        #     ],
+        #     "SOLAR_YM": [
+        #         ArgusV2Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS,
+        #         ArgusV2Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C,
+        #     ],
+        #     "SOLAR_ZP": [
+        #         ArgusV2Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS,
+        #         ArgusV2Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C,
+        #     ],
+        # }
 
         from hal.drivers.adm1176 import ADM1176
 
         error_codes = []
 
-        for location, busAndAddress in locations.items():
-            try:
-                address = busAndAddress[0]
-                bus = busAndAddress[1]
-                power_monitor = ADM1176(bus, address)
+        # for location, bus, address in data.items():
+        try:
+            address = data[1]
+            bus = data[2]
+            power_monitor = ADM1176(bus, address)
 
-                self.__power_monitors[location] = power_monitor
-                self.__device_list.append(power_monitor)
-                error_codes.append(Errors.NOERROR)  # Append success code if no error
-            except Exception as e:
-                self.__power_monitors[location] = None
-                if self.__debug:
-                    print(f"Failed to initialize {location} power monitor: {e}")
-                    raise e
-                return Errors.ADM1176_NOT_INITIALIZED
+            self.__power_monitors[data[0]] = power_monitor
+            self.__device_list.append(power_monitor)
+            error_codes.append(Errors.NOERROR)  # Append success code if no error
+        except Exception as e:
+            self.__power_monitors[data[0]] = None
+            if self.__debug:
+                print(f"Failed to initialize {data[0]} power monitor: {e}")
+                raise e
+            return Errors.ADM1176_NOT_INITIALIZED
 
         return error_codes
 
@@ -634,6 +627,7 @@ class ArgusV2(CubeSat):
 
     def __sd_card_boot(self) -> list[int]:
         """sd_card_boot: Boot sequence for the SD card"""
+        print("SD Card Boot")
         try:
             sd_card = SDCard(
                 ArgusV2Components.SD_CARD_SPI,
@@ -712,14 +706,13 @@ class ArgusV2(CubeSat):
 
         return Errors.NOERROR
 
+    # def reboot_peripheral(self, peripheral: object) -> int:
+    #     """__reboot_peripheral: Reboot a peripheral
 
-    def reboot_peripheral(self, peripheral: object) -> int:
-        """__reboot_peripheral: Reboot a peripheral
+    #     :param peripheral: The peripheral to reboot
+    #     :return: Error code if the reboot failed
+    #     """
+    #     if peripheral in self.__device_list:
+    #         self.__device_list.remove(peripheral)
 
-        :param peripheral: The peripheral to reboot
-        :return: Error code if the reboot failed
-        """
-        if peripheral in self.__device_list:
-            self.__device_list.remove(peripheral)
-        
-        try:
+    #     try:

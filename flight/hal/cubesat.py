@@ -47,7 +47,16 @@ class CubeSat:
         self.__imu = None
         self.__light_sensors = {}
         self.__torque_drivers = {}
-        self.__power_monitors = {}
+        self.__power_monitors = {
+            "BOARD": None,
+            "RADIO": None,
+            "XP": None,
+            "XM": None,
+            "YP": None,
+            "YM": None,
+            "ZP": None,
+            "ZM": None,
+        }
         self.__fuel_gauge = None
         self.__rtc = None
         self.__gps = None
