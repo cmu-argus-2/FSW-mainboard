@@ -287,7 +287,6 @@ class Scheduler:
 
         self._loopnum = 0
         while self._tasks or self._sleeping:
-
             if self._debug:
                 print("[{}] ---- sleeping: {}, active: {}\n".format(self._loopnum, len(self._sleeping), len(self._tasks)))
 
@@ -342,7 +341,6 @@ class Scheduler:
 
         # If there are no more active tasks but there are tasks in the sleeping list, determine sleep duration
         if len(self._tasks) == 0 and len(self._sleeping) > 0:
-
             # Sort sleeping tasks by their resume time, so we can find the earliest time any task needs to run
             self._sleeping.sort(key=Sleeper.resume_nanos)
             next_sleeper = self._sleeping[0]

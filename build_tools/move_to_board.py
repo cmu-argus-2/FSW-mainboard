@@ -16,7 +16,6 @@ if platform.node() == "raspberrypi":
 
 
 def copy_folder(source_folder, destination_folder, show_identical_files=True):
-
     for root, dirs, files in os.walk(source_folder):
         for file in files:
             source_path = os.path.join(root, file)

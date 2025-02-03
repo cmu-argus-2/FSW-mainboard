@@ -16,13 +16,11 @@ DEBUG_MODE = False
 SATELLITE: CubeSat = None
 
 if HARDWARE_VERSION == PYCUBED_V05:
-
     from hal.pycubed import PyCubed
 
     SATELLITE = PyCubed()
 
 elif HARDWARE_VERSION == ARGUS_V1:
-
     from hal.argus_v1 import ArgusV1
 
     SATELLITE = ArgusV1(debug=DEBUG_MODE)
@@ -38,5 +36,4 @@ elif HARDWARE_VERSION == ARGUS_V2:
     SATELLITE = ArgusV2(debug=DEBUG_MODE)
 
 else:
-
     raise ValueError(f"Invalid hardware version {HARDWARE_VERSION}")
