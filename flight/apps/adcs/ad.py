@@ -259,15 +259,17 @@ class AttitudeDetermination:
         # Update last update time
         self.last_position_update_time = self.time
 
-    def sun_position_update(self, sun_status: bool, sun_pos_body: np.ndarray):
+    def sun_position_update(self, update_covariance=True):
         """
         Performs an MEKF update step for Sun position
         """
 
-        self.state[self.sun_status_idx] = sun_status
+        status, sun_pos_body = self.read_sun_position()
+
+        self.state[self.sun_status_idx] = status
         self.state[self.sun_pos_idx] = sun_pos_body
 
-        if sun_status:
+        if self.initialized and status and update_covariance:
             true_sun_pos_eci = approx_sun_position_ECI(self.time)
             true_sun_pos_eci = true_sun_pos_eci / np.linalg.norm(true_sun_pos_eci)
 
@@ -284,28 +286,29 @@ class AttitudeDetermination:
 
             self.EKF_update(H, innovation, Cov_sunsensor)
 
-    def gyro_update(self, status: bool, update_time: int, omega_body: np.ndarray, update_error_covariance=False):
+    def gyro_update(self, update_covariance=True):
         """
         Performs an MEKF update step for Gyro
         If update_error_covariance is False, the gyro measurements just update the attitude
         but do not reduce uncertainity in error measurements
         """
+        status, update_time, omega_body = self.read_gyro()
+
         if status:
             self.state[self.omega_idx] = omega_body
-            bias = self.state[self.bias_idx]
-            dt = update_time - self.last_gyro_update_time
 
-            unbiased_omega = omega_body - bias
-            rotvec = unbiased_omega * dt
+            if self.initialized and update_covariance:
+                bias = self.state[self.bias_idx]
+                dt = update_time - self.last_gyro_update_time
 
-            delta_rotation = rotvec_to_R(rotvec)
-            R_q_prev = quat_to_R(self.state[self.attitude_idx])
-            R_q_next = R_q_prev * delta_rotation
-            self.state[self.attitude_idx] = R_to_quat(R_q_next)
+                unbiased_omega = omega_body - bias
+                rotvec = unbiased_omega * dt
 
-            # If update_error_covariance, update covariance matrices
-            if update_error_covariance:
-                dt = update_time - self.last_gyro_cov_update_time
+                delta_rotation = rotvec_to_R(rotvec)
+                R_q_prev = quat_to_R(self.state[self.attitude_idx])
+                R_q_next = R_q_prev * delta_rotation
+                self.state[self.attitude_idx] = R_to_quat(R_q_next)
+
                 F = np.zeros((6, 6))
                 F[0:3, 3:6] = -R_q_next
 
@@ -325,16 +328,16 @@ class AttitudeDetermination:
                 Qdk = Phi @ self.P @ Phi.T + Qdk
                 self.P = Phi @ self.P @ Phi.T + Qdk
 
-                self.last_gyro_cov_update_time = update_time
+                self.last_gyro_update_time = update_time
 
-            self.last_gyro_update_time = update_time
-
-    def magnetometer_update(self, status: bool, mag_field_body: np.ndarray):
+    def magnetometer_update(self, status: bool, mag_field_body: np.ndarray, update_covariance=True):
         """
         Performs an MEKF update step for magnetometer
         """
 
-        if status:  # Update EKF
+        status, _, mag_field_body = self.read_magnetometer()
+
+        if self.initialized and status and update_covariance:  # Update EKF
 
             true_mag_field_eci = igrf_eci(self.time, self.state[self.position_idx] / 1000)
             true_mag_field_eci = true_mag_field_eci / np.linalg.norm(true_mag_field_eci)
@@ -352,9 +355,9 @@ class AttitudeDetermination:
 
             self.EKF_update(H, innovation, Cov_mag_field)
 
+        if status:
             self.state[self.mag_field_idx] = mag_field_body  # store magnetic field reading
-
-        else:  # We still need magnetic field for ACS
+        else:
             # TODO : decide if we want to continue using the previous B-field or update based on position, igrf and attitude
             pass
 

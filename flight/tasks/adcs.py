@@ -93,20 +93,17 @@ class Task(TemplateTask):
             if SM.current_state == STATES.DETUMBLING:
 
                 # Query the Gyro
-                if self.AD.initialized:
-                    self.gyro_update(update_attitude=True)
-                else:
-                    self.gyro_update(update_attitude=False)
+                self.AD.gyro_update(update_covariance=False)
+
+                # Query Magnetometer
+                self.AD.magnetometer_update(update_covariance=False)
 
                 # Run Attitude Control
                 self.attitude_control()
 
-                # Check if the tumbling rate is slow enough to initialize the MEKF
-                if np.linalg.norm(self.AD.state[self.AD.omega_idx]) <= ModeConst.EKF_INIT_TOL and not self.AD.initialized:
-                    self.AD.initialize_mekf()
-
                 # Check if detumbling has been completed
                 if np.linalg.norm(self.AD.state[self.AD.omega_idx]) <= ModeConst.STABLE_TOL:
+                    self.AD.initialize_mekf()
                     SM.switch_to(STATES.NOMINAL)
 
             # ------------------------------------------------------------------------------------------------------------------------------------
@@ -114,20 +111,12 @@ class Task(TemplateTask):
             # ------------------------------------------------------------------------------------------------------------------------------------
             elif SM.current_state == STATES.LOW_POWER:
 
-                if not self.AD.initialized:
-                    self.AD.initialize_mekf()
+                # In Low power, it is assumed that the satellite is about to die.
+                # In that case, the satellite will have to re-initialize the MEKF again
 
-                else:
-                    for counter in range(self.NUM_SUBTASKS):
-
-                        # Midway through the task, run the full update
-                        if counter == self.NUM_SUBTASKS // 2:
-                            self.EKF_update()
-                            # No ACS in Low-power mode
-
-                        # Otherwise, just update the attitude
-                        else:
-                            self.gyro_update(update_attitude=True)
+                # No AD or ACS runs in LOW-POWER
+                if self.AD.initialized:
+                    self.AD.initialized = False
 
             # ------------------------------------------------------------------------------------------------------------------------------------
             # NOMINAL & EXPERIMENT
@@ -136,6 +125,7 @@ class Task(TemplateTask):
 
                 if not self.AD.initialized:
                     self.AD.initialize_mekf()
+                    return
 
                 if (
                     SM.current_state == STATES.NOMINAL
@@ -145,62 +135,16 @@ class Task(TemplateTask):
                     SM.switch_to(STATES.DETUMBLING)
 
                 else:
-                    for counter in range(self.NUM_SUBTASKS):
+                    # TODO : Turn coils off before measurements to allow time for coils to settle
 
-                        # Midway through the task, run the full update
-                        if counter == self.NUM_SUBTASKS // 2:
-                            self.EKF_update()
-                            self.attitude_control()
+                    # Update Each sensor with covariances
+                    self.AD.position_update()
+                    self.AD.sun_position_update(update_covariance=True)
+                    self.AD.gyro_update(update_covariance=True)
+                    self.AD.magnetometer_update(update_covariance=True)
 
-                        # Otherwise, just update the attitude
-                        else:
-                            self.gyro_update(update_attitude=True)
-
-                            if counter == self.NUM_SUBTASKS - 1:
-                                # TODO : Turn MCM off
-                                pass
-
-    # ------------------------------------------------------------------------------------------------------------------------------------
-    """ Attitude Determination Auxiliary Functions """
-    # ------------------------------------------------------------------------------------------------------------------------------------
-    def gyro_update(self, update_attitude=False):
-        """
-        Queries the gyro for angular velocity reading
-        If update_attitude flag is True, the AD updates the attitude estimate
-        """
-        gyro_status, gyro_sample_time, omega_body = self.AD.read_gyro()
-
-        if update_attitude and self.AD.initialized:
-            self.AD.gyro_update(gyro_status, gyro_sample_time, omega_body)  # No covariance update
-
-        else:
-            self.AD.state[self.AD.omega_idx] = omega_body
-
-    def EKF_update(self):
-        """
-        Performs a Full update on the EKF:
-        - position update using GPS and orbit propagation
-        - sun position update
-        - magnetometer update
-        - Gyro query with covariance update
-        """
-        # Update position estimate
-        self.AD.position_update()
-
-        # Update sun sensor estimates
-        sun_status, sun_pos_body, light_sensor_lux_readings = self.AD.read_sun_position()
-        self.AD.sun_position_update(sun_status, sun_pos_body)
-
-        # Update magnetometer
-        mag_status, _, mag_field_body = self.AD.read_magnetometer()
-        self.AD.magnetometer_update(mag_status, mag_field_body)
-
-        # Update gyro
-        gyro_status, gyro_sample_time, omega_body = self.AD.read_gyro()
-        self.AD.gyro_update(gyro_status, gyro_sample_time, omega_body, update_error_covariance=True)
-
-        # Log the full EKF step
-        self.log(gyro_sample_time, light_sensor_lux_readings)
+                    # Run attitude control
+                    self.attitude_control()
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ Attitude Control Auxiliary Functions """
