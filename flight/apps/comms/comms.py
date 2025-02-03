@@ -9,6 +9,7 @@ Authors: Akshat Sahay, Ibrahima S. Sow
 import os
 
 from core import logger
+from core.data_handler import extract_time_from_filename
 from hal.configuration import SATELLITE
 
 FILE_PKTSIZE = 240
@@ -266,8 +267,8 @@ class SATELLITE_RADIO:
             # TODO: Associate file IDs with subsystems
             cls.file_ID = 0x01
 
-            # TODO: Extract file_time from filepath
-            cls.file_time = 1738351687
+            # Extract file_time from filepath
+            cls.file_time = extract_time_from_filename(cls.filepath)
 
             cls.file_size = int(file_stat[6])
             cls.file_message_count = int(cls.file_size / FILE_PKTSIZE)
