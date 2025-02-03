@@ -274,13 +274,13 @@ class ArgusV2(CubeSat):
 
         super().__init__()
         self.__boot_list = {
-            "SDCARD": [self.__sd_card_boot],
-            "VFS": [self.__vfs_boot],
-            "IMU": [self.__imu_boot],
-            "RTC": [self.__rtc_boot],
+            "SDCARD": [self.__sd_card, self.__sd_card_boot],
+            "VFS": [self.__vfs, self.__vfs_boot],
+            "IMU": [self.__imu, self.__imu_boot],
+            "RTC": [self.__rtc, self.__rtc_boot],
             # self.__gps: self.__gps_boot,
             # self.__radio: self.__radio_boot,
-            "BOARD_PWR": [
+            "BOARD_PWR": [self.__power_monitors["BOARD"],
                 self.__power_monitor_boot,
                 ["BOARD", ArgusV2Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.BOARD_POWER_MONITOR_I2C],
             ],
@@ -290,7 +290,7 @@ class ArgusV2(CubeSat):
             # self.__power_monitor["YM"]: self.__power_monitor_boot("YM"),
             # self.__power_monitor["ZP"]: self.__power_monitor_boot("ZP"),
             # self.__power_monitor["ZM"]: self.__power_monitor_boot("ZM"),
-            "CHARGER": [self.__charger_boot],
+            "CHARGER": [self.__charger, self.__charger_boot],
         }
 
     ######################## BOOT SEQUENCE ########################
@@ -301,8 +301,8 @@ class ArgusV2(CubeSat):
 
         self.__state_flags_boot()
         for boot_func in self.__boot_list.values():
-            func = boot_func[0]
-            args = boot_func[1] if len(boot_func) > 1 else []
+            func = boot_func[1]
+            args = boot_func[2] if len(boot_func) > 2 else []
             if args:
                 error_list.append(func(args))
             else:
