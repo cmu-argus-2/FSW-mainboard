@@ -136,7 +136,7 @@ class Task(TemplateTask):
                 curr_flag = self.log_data[EPS_IDX.EPS_POWER_FLAG]
                 flag = GET_EPS_POWER_FLAG(curr_flag, soc)
                 if (flag != EPS_POWER_FLAG.NONE):
-                    self.log_data[EPS_IDX.EPS_POWER_FLAG] = flag
+                    self.log_data[EPS_IDX.EPS_POWER_FLAG] = int(flag)
                     self.log_info(f"EPS state: {self.log_data[EPS_IDX.EPS_POWER_FLAG]} ")
                 else:
                     self.log_error("EPS state invalid; SOC or power flag may be corrupted")
