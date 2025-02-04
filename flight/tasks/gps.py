@@ -53,7 +53,6 @@ class Task(TemplateTask):
                     DH.register_data_process("gps", data_format, True, data_limit=100000, write_interval=10)
 
                 if SATELLITE.GPS.update():
-
                     # Assuming we have a fix for now
                     print("", SATELLITE.GPS.has_fix())
                     if SATELLITE.GPS.has_fix():

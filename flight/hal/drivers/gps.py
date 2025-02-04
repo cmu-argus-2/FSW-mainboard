@@ -198,7 +198,6 @@ class GPS:
         else:
             return False
 
-
     def parse_data(self) -> bool:
         # if not self._nav_data_hex:
         #     return
@@ -230,9 +229,15 @@ class GPS:
             self.week = (self._payload[3] << 8) | self._payload[4]
             self.tow = (self._payload[5] << 24) | (self._payload[6] << 16) | (self._payload[7] << 8) | self._payload[8]
             self.latitude = (self._payload[9] << 24) | (self._payload[10] << 16) | (self._payload[11] << 8) | self._payload[12]
-            self.longitude = (self._payload[13] << 24) | (self._payload[14] << 16) | (self._payload[15] << 8) | self._payload[16]
-            self.ellipsoid_altitude = (self._payload[17] << 24) | (self._payload[18] << 16) | (self._payload[19] << 8) | self._payload[20]
-            self.mean_sea_level_altitude = (self._payload[21] << 24) | (self._payload[22] << 16) | (self._payload[23] << 8) | self._payload[24]
+            self.longitude = (
+                (self._payload[13] << 24) | (self._payload[14] << 16) | (self._payload[15] << 8) | self._payload[16]
+            )
+            self.ellipsoid_altitude = (
+                (self._payload[17] << 24) | (self._payload[18] << 16) | (self._payload[19] << 8) | self._payload[20]
+            )
+            self.mean_sea_level_altitude = (
+                (self._payload[21] << 24) | (self._payload[22] << 16) | (self._payload[23] << 8) | self._payload[24]
+            )
             self.gdop = (self._payload[25] << 8) | self._payload[26]
             self.pdop = (self._payload[27] << 8) | self._payload[28]
             self.hdop = (self._payload[29] << 8) | self._payload[30]
@@ -534,10 +539,6 @@ class GPS:
     #         # Format output
     #         self.data_strings["ecef_vz"] = f"{speed_meters:.2f} m/s"
     #     return ecef_vz
-
-
-
-
 
     # def print_parsed_strings(self):
     #     print("Parsed Message:")
