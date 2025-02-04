@@ -59,7 +59,7 @@ class Task(TemplateTask):
                         # TODO GPS frame parsing - get ECEF in (cm) and ECEF velocity in cm/s
                         # TODO : Change the time to get the GPS time rather than the system time here
                         self.log_info("GPS module got a fix!")
-                        self.log_data[GPS_IDX.TIME_GPS] = int(time.time())
+                        self.log_data[GPS_IDX.TIME_GPS] = SATELLITE.GPS.unix_time
                         self.log_data[GPS_IDX.GPS_MESSAGE_ID] = SATELLITE.GPS.message_id
                         self.log_data[GPS_IDX.GPS_FIX_MODE] = SATELLITE.GPS.fix_mode
                         self.log_data[GPS_IDX.GPS_NUMBER_OF_SV] = SATELLITE.GPS.number_of_sv
