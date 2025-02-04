@@ -86,7 +86,7 @@ class SATELLITE_RADIO:
     # Init TM frame for preallocating memory
     tm_frame = bytearray(250)
 
-    # Parameters for file downlinking (TEMPORARY HARDCODE)
+    # Parameters for file downlinking (Message ID temporarily hardcoded)
     filepath = None
     file_ID = 0x01
     file_size = 0
