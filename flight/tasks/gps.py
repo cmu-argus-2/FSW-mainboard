@@ -1,6 +1,6 @@
 # GPS Task
 
-import time
+# import time
 
 from apps.telemetry.constants import GPS_IDX
 from core import DataHandler as DH
