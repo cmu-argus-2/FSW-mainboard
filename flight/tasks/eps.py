@@ -135,7 +135,7 @@ class Task(TemplateTask):
                 soc = self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]
                 curr_flag = self.log_data[EPS_IDX.EPS_POWER_FLAG]
                 flag = GET_EPS_POWER_FLAG(curr_flag, soc)
-                if (flag != EPS_POWER_FLAG.NONE):
+                if flag != EPS_POWER_FLAG.NONE:
                     self.log_data[EPS_IDX.EPS_POWER_FLAG] = int(flag)
                     self.log_info(f"EPS state: {self.log_data[EPS_IDX.EPS_POWER_FLAG]} ")
                 else:
