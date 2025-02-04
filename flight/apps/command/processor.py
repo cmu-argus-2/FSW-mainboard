@@ -23,6 +23,7 @@ Author: Ibrahima S. Sow
 import apps.telemetry.helpers as tm_helper
 from apps.command import ResponseQueue
 from apps.command.commands import (
+    DOWNLINK_ALL,
     FORCE_REBOOT,
     REQUEST_FILE_METADATA,
     REQUEST_FILE_PKT,
@@ -38,7 +39,9 @@ from apps.command.commands import (
     UPLINK_TIME_REFERENCE,
 )
 from apps.command.constants import CMD_ID
+from apps.command.preconditions import file_id_exists, valid_time_format
 from core import logger
+from micropython import const
 
 # See commands.py for function definitions (command functions and eventual preconditions)
 # A command is defined as a tuple with the following elements:
@@ -50,8 +53,13 @@ from core import logger
 COMMANDS = [
     (CMD_ID.FORCE_REBOOT, lambda: True, [], FORCE_REBOOT),
     (CMD_ID.SWITCH_TO_STATE, lambda: True, ["target_state_id", "time_in_state"], SWITCH_TO_STATE),
-    (CMD_ID.UPLINK_TIME_REFERENCE, lambda: True, ["time_in_state"], UPLINK_TIME_REFERENCE),
-    (CMD_ID.UPLINK_ORBIT_REFERENCE, lambda: True, ["time_in_state", "orbital_parameters"], UPLINK_ORBIT_REFERENCE),
+    (CMD_ID.UPLINK_TIME_REFERENCE, valid_time_format, ["time_reference"], UPLINK_TIME_REFERENCE),
+    (
+        CMD_ID.UPLINK_ORBIT_REFERENCE,
+        valid_time_format,
+        ["time_reference", "orbital_parameters"],
+        UPLINK_ORBIT_REFERENCE,
+    ),
     (CMD_ID.TURN_OFF_PAYLOAD, lambda: True, [], TURN_OFF_PAYLOAD),
     (CMD_ID.SCHEDULE_OD_EXPERIMENT, lambda: True, [], SCHEDULE_OD_EXPERIMENT),
     (CMD_ID.REQUEST_TM_HEARTBEAT, lambda: True, [], REQUEST_TM_HEARTBEAT),
@@ -60,21 +68,23 @@ COMMANDS = [
     (CMD_ID.REQUEST_TM_PAYLOAD, lambda: True, [], REQUEST_TM_PAYLOAD),
     (
         CMD_ID.REQUEST_FILE_METADATA,
-        lambda file_tag, requested_time: True,
-        ["file_tag", "requested_time"],
+        file_id_exists,
+        ["file_id", "file_time"],
         REQUEST_FILE_METADATA,
     ),
-    (CMD_ID.REQUEST_FILE_PKT, lambda file_tag: True, ["file_tag"], REQUEST_FILE_PKT),
+    (CMD_ID.REQUEST_FILE_PKT, lambda: True, ["file_id", "file_time", "rq_sq_cnt"], REQUEST_FILE_PKT),
     (CMD_ID.REQUEST_IMAGE, lambda: True, [], REQUEST_IMAGE),
+    (CMD_ID.DOWNLINK_ALL, lambda: True, [], DOWNLINK_ALL),
 ]
 
 
 class CommandProcessingStatus:
-    COMMAND_EXECUTION_SUCCESS = 0x00
-    UNKNOWN_COMMAND_ID = 0x01
-    PRECONDITION_FAILED = 0x02
-    ARGUMENT_COUNT_MISMATCH = 0x03
-    COMMAND_EXECUTION_FAILED = 0x04  # Maybe write error stack to a file/log ?
+    COMMAND_EXECUTION_SUCCESS = const(0x00)
+    UNKNOWN_COMMAND_ID = const(0x01)
+    PRECONDITION_FAILED = const(0x02)
+    ARGUMENT_COUNT_MISMATCH = const(0x03)
+    COMMAND_EXECUTION_FAILED = const(0x04)
+    ARGUMENT_UNPACKING_FAILED = const(0x05)
 
 
 def process_command(cmd_id, *args):
@@ -84,7 +94,7 @@ def process_command(cmd_id, *args):
             precondition, arg_list, execute = command[1:]
 
             # Verify precondition
-            if not precondition():
+            if not precondition(*args):
                 logger.error("Cmd: Precondition failed")
                 return CommandProcessingStatus.PRECONDITION_FAILED, [cmd_id]
 
@@ -115,38 +125,49 @@ def handle_command_execution_status(status, response_args):
 
     if status == CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS:
         logger.info("Command execution successful")
-        # TODO build success response - ACK
 
     else:  # All other cases are errors
-        # TODO build error response - Error messages
+        # TODO build more detailed error response - Error messages
         logger.info(f"Command execution not successful due to error: {status}")
         pass
 
 
 def unpack_command_arguments(cmd_id, cmd_arglist):
     """This will unpack the command arguments received from Command Queue"""
+    # TODO: need to do error handling for unpacking
     cmd_arglist = list(cmd_arglist)
     cmd_args = []
-    # TODO Fill out for commands with file requests
-    if cmd_id == CMD_ID.SWITCH_TO_STATE:
-        cmd_args.append(cmd_arglist[0])  # target_state_id (uint8)
-        cmd_args.append(tm_helper.unpack_unsigned_long_int(cmd_arglist[1:5]))  # time_in_state (uint32)
+
+    if cmd_id == CMD_ID.SWITCH_TO_STATE or cmd_id == CMD_ID.REQUEST_FILE_METADATA:
+        cmd_args.append(cmd_arglist[0])  # target_state_id / file_id (uint8)
+        cmd_args.append(tm_helper.unpack_unsigned_long_int(cmd_arglist[1:5]))  # time_in_state / file_time (uint32)
 
     elif cmd_id == CMD_ID.UPLINK_TIME_REFERENCE:
-        cmd_args.append(tm_helper.unpack_unsigned_long_int(cmd_arglist[0:4]))  # time_in_state (uint32)
+        cmd_args.append(tm_helper.unpack_unsigned_long_int(cmd_arglist[0:4]))  # time_reference (uint32)
 
     elif cmd_id == CMD_ID.UPLINK_ORBIT_REFERENCE:
-        cmd_args.append(tm_helper.unpack_unsigned_long_int(cmd_arglist[0:4]))  # time_in_state (uint32)
-        cmd_args.append(tm_helper.unpack_signed_long_int(cmd_arglist[4:8]))  # pos_x (int32)
-        cmd_args.append(tm_helper.unpack_signed_long_int(cmd_arglist[8:12]))  # pos_y (int32)
-        cmd_args.append(tm_helper.unpack_signed_long_int(cmd_arglist[12:16]))  # pos_z (int32)
-        cmd_args.append(tm_helper.unpack_signed_long_int(cmd_arglist[16:20]))  # vel_x (int32)
-        cmd_args.append(tm_helper.unpack_signed_long_int(cmd_arglist[20:24]))  # vel_y (int32)
-        cmd_args.append(tm_helper.unpack_signed_long_int(cmd_arglist[24:28]))  # vel_z (int32)
+        cmd_args.append(tm_helper.unpack_unsigned_long_int(cmd_arglist[0:4]))  # time_reference (uint32)
+        orbital_parameters = []
+        orbital_parameters.append(tm_helper.unpack_signed_long_int(cmd_arglist[4:8]))  # pos_x (int32)
+        orbital_parameters.append(tm_helper.unpack_signed_long_int(cmd_arglist[8:12]))  # pos_y (int32)
+        orbital_parameters.append(tm_helper.unpack_signed_long_int(cmd_arglist[12:16]))  # pos_z (int32)
+        orbital_parameters.append(tm_helper.unpack_signed_long_int(cmd_arglist[16:20]))  # vel_x (int32)
+        orbital_parameters.append(tm_helper.unpack_signed_long_int(cmd_arglist[20:24]))  # vel_y (int32)
+        orbital_parameters.append(tm_helper.unpack_signed_long_int(cmd_arglist[24:28]))  # vel_z (int32)
+        cmd_args.append(orbital_parameters)
+
+    elif cmd_id == CMD_ID.REQUEST_FILE_PKT:
+        cmd_args.append(cmd_arglist[0])  # file_id (uint8)
+        cmd_args.append(tm_helper.unpack_unsigned_long_int(cmd_arglist[1:5]))  # file_time (uint32)
+        cmd_args.append(tm_helper.unpack_unsigned_short_int(cmd_arglist[5:7]))  # rq_sq_cnt (uint16)
 
     else:
         # For all other commands with no arguments
         cmd_args = []
 
-    logger.info(f"CMD_ID: {cmd_id} Argument List: {cmd_args}")
+    if False in cmd_args:
+        logger.error("Cmd: Command argument unpacking failed")
+        return CommandProcessingStatus.ARGUMENT_UNPACKING_FAILED
+
+    logger.info(f"Unpacked arguments - CMD_ID: {cmd_id}, Argument List: {cmd_args}")
     return cmd_args

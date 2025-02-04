@@ -104,11 +104,14 @@ class Task(TemplateTask):
 
             if CommandQueue.command_available():
                 (cmd_id, cmd_arglist), queue_error_code = CommandQueue.pop_command()
+                # self.log_info(f"ID: {cmd_id} Arguments: {cmd_args}")
 
-                # Unpack arguments based on command ID
                 cmd_args = processor.unpack_command_arguments(cmd_id, cmd_arglist)
 
-                if queue_error_code == QUEUE_STATUS.OK:
+                if (
+                    queue_error_code == QUEUE_STATUS.OK
+                    and cmd_args != processor.CommandProcessingStatus.ARGUMENT_UNPACKING_FAILED
+                ):
                     self.log_info(f"Processing command: {cmd_id} with args: {cmd_args}")
                     status, response_args = processor.process_command(cmd_id, *cmd_args)
                     processor.handle_command_execution_status(status, response_args)

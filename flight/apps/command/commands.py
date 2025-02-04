@@ -24,7 +24,10 @@ import supervisor
 from apps.telemetry import TelemetryPacker
 from core import logger
 from core import state_manager as SM
+from core.data_handler import DataHandler
 from core.states import STR_STATES
+
+FILE_PKTSIZE = 240
 
 
 def FORCE_REBOOT():
@@ -42,16 +45,16 @@ def SWITCH_TO_STATE(target_state_id, time_in_state=None):
     return []
 
 
-def UPLINK_TIME_REFERENCE(time_in_state):
+def UPLINK_TIME_REFERENCE(time_reference):
     """Sends a time reference to the spacecraft to update the time processing module."""
-    logger.info(f"Executing UPLINK_TIME_REFERENCE with current_time: {time_in_state}")
+    logger.info(f"Executing UPLINK_TIME_REFERENCE with current_time: {time_reference}")
     return []
 
 
-def UPLINK_ORBIT_REFERENCE(time_in_state, orbital_parameters):
+def UPLINK_ORBIT_REFERENCE(time_reference, orbital_parameters):
     """Sends time-referenced orbital information to update the orbit reference."""
     logger.info(
-        f"Executing UPLINK_ORBIT_REFERENCE with orbital_parameters: {orbital_parameters}, time_in_state: {time_in_state}"
+        f"Executing UPLINK_ORBIT_REFERENCE with orbital_parameters: pos({orbital_parameters.pos_x},{orbital_parameters.pos_y},{orbital_parameters.pos_z}), vel({orbital_parameters.vel_x,orbital_parameters.vel_y,orbital_parameters.vel_z}), time_reference: {time_reference}"
     )
     return []
 
@@ -77,8 +80,7 @@ def REQUEST_TM_HEARTBEAT():
         logger.info("Telemetry heartbeat packed")
 
     # Return TX message header
-    tx_msg_id = int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
-    return [tx_msg_id]
+    return [get_tx_message_header()]
 
 
 def REQUEST_TM_HAL():
@@ -90,8 +92,7 @@ def REQUEST_TM_HAL():
         logger.info("Telemetry hal packed")
 
     # Return TX message header
-    tx_msg_id = int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
-    return [tx_msg_id]
+    return [get_tx_message_header()]
 
 
 def REQUEST_TM_STORAGE():
@@ -103,8 +104,7 @@ def REQUEST_TM_STORAGE():
         logger.info("Telemetry storage packed")
 
     # Return TX message header
-    tx_msg_id = int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
-    return [tx_msg_id]
+    return [get_tx_message_header()]
 
 
 def REQUEST_TM_PAYLOAD():
@@ -116,23 +116,47 @@ def REQUEST_TM_PAYLOAD():
         logger.info("Telemetry payload packed")
 
     # Return TX message header
-    tx_msg_id = int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
-    return [tx_msg_id]
+    return [get_tx_message_header()]
 
 
-def REQUEST_FILE_METADATA(file_tag, requested_time=None):
+def REQUEST_FILE_METADATA(file_id, file_time=None):
     """Requests metadata for a specific file from the spacecraft."""
-    logger.info(f"Executing REQUEST_FILE_METADATA with file_tag: {file_tag} and requested_time: {requested_time}")
+    logger.info(f"Executing REQUEST_FILE_METADATA with file_tag: {file_id} and file_time: {file_time}")
+    # TODO: Currently this is handled by Comms, eventually move here
+    # file_size = DataHandler.get_current_file_size(file_id)
+    # file_message_count = int(file_size / FILE_PKTSIZE)
+    # return [file_id, file_time, file_size, file_message_count]
     return []
 
 
-def REQUEST_FILE_PKT(file_tag):
+def REQUEST_FILE_PKT(file_id, file_time, rq_sq_cnt):
     """Requests a specific file packet from the spacecraft."""
-    logger.info(f"Executing REQUEST_FILE_PKT with file_tag: {file_tag}")
+    logger.info(
+        f"Executing REQUEST_FILE_PKT with file_tag: {file_id}, file_tim: {file_time}, requested sequence count: {rq_sq_cnt}"
+    )
+    # TODO: Currently this is handled by Comms, eventually move here
+    # file_pkt = []
+    # # Getting the latest data in the file
+    # if DataHandler.data_available(file_id):
+    #     file_pkt = DataHandler.get_latest_data(file_id)
+    # return [file_id, file_time, file_pkt]
     return []
 
 
 def REQUEST_IMAGE():
     """Requests an image from the spacecraft's internal storage."""
     logger.info("Executing REQUEST_IMAGE")
-    return []
+    # TODO: finish implementation, if we are keeping this command
+    path = DataHandler.request_TM_path_image()
+    return [path]
+
+
+def DOWNLINK_ALL():
+    """Requests all files, images, and mission data be downlinked immediately in the event mission is compromised"""
+    logger.info("Executing DOWNLINK_ALL")
+    return [DataHandler.get_all_data_processes_name()]
+
+
+def get_tx_message_header():
+    """ " Helper function to obtain the tx message header to send back"""
+    return int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")

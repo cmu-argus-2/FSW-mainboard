@@ -1,6 +1,10 @@
+import time
+from datetime import datetime, timedelta
+
 import pytest
 
 from flight.apps.command.constants import CMD_ID
+from flight.apps.command.preconditions import valid_time_format
 from flight.apps.command.processor import process_command  # noqa F401
 from flight.apps.command.processor import CommandProcessingStatus, unpack_command_arguments
 from flight.core.state_machine import STATES
@@ -8,6 +12,7 @@ from flight.core.state_machine import STATES
 
 class MOCK_ARGUMENTS:
     time_in_state = 20
+    time_reference = int(time.time())
     pos = 150
     vel = 50
 
@@ -24,9 +29,9 @@ def mock_command_fail(*args):
 def setup_commands(monkeypatch):
     """Fixture to set up the COMMANDS list with mock commands."""
     switch_to_state_args = (STATES.DETUMBLING).to_bytes(1, "big") + (MOCK_ARGUMENTS.time_in_state).to_bytes(4, "big")
-    uplink_time_ref_args = (MOCK_ARGUMENTS.time_in_state).to_bytes(4, "big")
+    uplink_time_ref_args = (MOCK_ARGUMENTS.time_reference).to_bytes(4, "big")
     uplink_orbit_ref_args = (
-        (MOCK_ARGUMENTS.time_in_state).to_bytes(4, "big")
+        (MOCK_ARGUMENTS.time_reference).to_bytes(4, "big")
         + (MOCK_ARGUMENTS.pos).to_bytes(4, "big")
         + (MOCK_ARGUMENTS.pos * 2).to_bytes(4, "big")
         + (MOCK_ARGUMENTS.pos * 3).to_bytes(4, "big")
@@ -100,7 +105,7 @@ def test_process_command_unknown_command(setup_commands):
 
 def test_unpack_one_argument(setup_commands):
     one_arg = unpack_command_arguments(setup_commands[5][0], setup_commands[5][2])
-    assert one_arg == [MOCK_ARGUMENTS.time_in_state]
+    assert one_arg == [MOCK_ARGUMENTS.time_reference]
 
 
 def test_unpack_two_arguments(setup_commands):
@@ -111,11 +116,28 @@ def test_unpack_two_arguments(setup_commands):
 def test_unpack_several_arguments(setup_commands):
     several_args = unpack_command_arguments(setup_commands[6][0], setup_commands[6][2])
     assert several_args == [
-        MOCK_ARGUMENTS.time_in_state,
-        MOCK_ARGUMENTS.pos,
-        MOCK_ARGUMENTS.pos * 2,
-        MOCK_ARGUMENTS.pos * 3,
-        MOCK_ARGUMENTS.vel,
-        MOCK_ARGUMENTS.vel * 2,
-        MOCK_ARGUMENTS.vel * 3,
+        MOCK_ARGUMENTS.time_reference,
+        [
+            MOCK_ARGUMENTS.pos,
+            MOCK_ARGUMENTS.pos * 2,
+            MOCK_ARGUMENTS.pos * 3,
+            MOCK_ARGUMENTS.vel,
+            MOCK_ARGUMENTS.vel * 2,
+            MOCK_ARGUMENTS.vel * 3,
+        ],
     ]
+
+
+def test_valid_time_format():
+    current_time = datetime.now()
+
+    # Checking invalid time in the future
+    future_time = current_time + timedelta(days=15)
+    assert not valid_time_format(future_time.timestamp())
+
+    # Checking invalid time in past
+    past_time = current_time - timedelta(days=15)
+    assert not valid_time_format(past_time.timestamp())
+
+    # Checking a valid time
+    assert valid_time_format(current_time.timestamp())
