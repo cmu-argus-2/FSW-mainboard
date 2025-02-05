@@ -115,11 +115,11 @@ def compute_body_sun_vector_from_lux(I_vec):
     # Extract body vectors and lux readings where the sensor readings are valid
     N_valid = N[valid_sensor_idxs, :]
     I_valid = [I_vec[idx] for idx in valid_sensor_idxs]
-
+    
     # twice faster than linalg inv
     oprod_sun_inv = invert_3x3_psd(N_valid.transpose() @ N_valid)
     # Confirm unique determination. If not invertible, not unique
-    if not oprod_sun_inv:
+    if oprod_sun_inv is None:
         status = SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS
         return status, sun_body
 
@@ -127,8 +127,9 @@ def compute_body_sun_vector_from_lux(I_vec):
     # NOTE : ulab does not have a pinv operation
     # Using the Moore-Penrose psuedo-inverse
     sun_body = oprod_sun_inv @ N_valid.transpose() @ I_valid
-    # sun_body = np.linalg.inv(N_valid.transpose() @ N_valid) @ N_valid.transpose() @ I_valid
-
+    """
+    sun_body = np.linalg.inv(N_valid.transpose() @ N_valid) @ N_valid.transpose() @ I_valid
+    """
     norm = (sun_body[0] ** 2 + sun_body[1] ** 2 + sun_body[2] ** 2) ** 0.5
 
     if norm == 0:  # Avoid division by zero - not perfect
