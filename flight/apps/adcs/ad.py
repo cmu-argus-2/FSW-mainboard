@@ -381,3 +381,7 @@ class AttitudeDetermination:
         # Symmetric Joseph update
         Identity = np.eye(6)
         self.P = (Identity - K @ H) @ self.P @ (Identity - K @ H).T + K @ R_noise @ K.T
+
+def is_nan(x):
+    # np.nan is not equal to itself
+    return x != x
