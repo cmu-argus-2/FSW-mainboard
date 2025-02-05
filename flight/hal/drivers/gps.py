@@ -127,11 +127,11 @@ class GPS:
             else:
                 print("Raw message: \n", self._msg)
 
-        self._msg = [hex(i) for i in self._msg]
-        self._payload_len = ((self._msg[2] & 0xFF) << 8) | self._msg[3]
-        self._msg_id = self._msg[4]
-        self._msg_cs = self._msg[-3]
-        self._payload = bytearray(int(i, 16) for i in self._msg[4:-3])
+        # self._msg = [hex(i) for i in self._msg]
+        self._payload_len = int(((self._msg[2] & 0xFF) << 8) | self._msg[3])
+        self._msg_id = int(self._msg[4])
+        self._msg_cs = int(self._msg[-3])
+        self._payload = bytearray(self._msg[4:-3])
 
         if self._msg_id != 0xA8:
             if self.debug:
@@ -148,6 +148,7 @@ class GPS:
 
         cs = 0
         for i in self._payload:
+            i = int(i)
             cs ^= i
         if cs != self._msg_cs:
             if self.debug:
@@ -162,7 +163,8 @@ class GPS:
         #     "gps_week": (self._payload[3] << 8) | self._payload[4],
         #     "tow": (self._payload[5] << 24) | (self._payload[6] << 16) | (self._payload[7] << 8) | self._payload[8],
         #     "latitude": (self._payload[9] << 24) | (self._payload[10] << 16) | (self._payload[11] << 8) | self._payload[12],
-        #     "longitude": (self._payload[13] << 24) | (self._payload[14] << 16) | (self._payload[15] << 8) | self._payload[16],
+        #     "longitude": (self._payload[13] << 24) |
+        #     (self._payload[14] << 16) | (self._payload[15] << 8) | self._payload[16],
         #     "ellipsoid_alt": (self._payload[17] << 24)
         #     | (self._payload[18] << 16)
         #     | (self._payload[19] << 8)
@@ -224,26 +226,46 @@ class GPS:
         # self.timestamp_utc = self.gps_datetime(self.week, self.tow)
         try:
             self.message_id = self._payload[0]
-            self.fix_mode = (self._payload[1])
-            self.number_of_sv = (self._payload[2])
+            self.fix_mode = self._payload[1]
+            self.number_of_sv = self._payload[2]
             self.week = (self._payload[3] << 8) | self._payload[4]
             self.tow = (self._payload[5] << 24) | (self._payload[6] << 16) | (self._payload[7] << 8) | self._payload[8]
-            self.latitude = self._signed_32bit((self._payload[9] << 24) | (self._payload[10] << 16) | (self._payload[11] << 8) | self._payload[12])
-            self.longitude = self._signed_32bit(((self._payload[13] << 24) | (self._payload[14] << 16) | (self._payload[15] << 8) | self._payload[16]))
-            self.ellipsoid_altitude = self._signed_32bit(((self._payload[17] << 24) | (self._payload[18] << 16) | (self._payload[19] << 8) | self._payload[20]))
-            self.mean_sea_level_altitude = self._signed_32bit(((self._payload[21] << 24) | (self._payload[22] << 16) | (self._payload[23] << 8) | self._payload[24]))
+            self.latitude = self._signed_32bit(
+                (self._payload[9] << 24) | (self._payload[10] << 16) | (self._payload[11] << 8) | self._payload[12]
+            )
+            self.longitude = self._signed_32bit(
+                ((self._payload[13] << 24) | (self._payload[14] << 16) | (self._payload[15] << 8) | self._payload[16])
+            )
+            self.ellipsoid_altitude = self._signed_32bit(
+                ((self._payload[17] << 24) | (self._payload[18] << 16) | (self._payload[19] << 8) | self._payload[20])
+            )
+            self.mean_sea_level_altitude = self._signed_32bit(
+                ((self._payload[21] << 24) | (self._payload[22] << 16) | (self._payload[23] << 8) | self._payload[24])
+            )
             self.gdop = (self._payload[25] << 8) | self._payload[26]
             self.pdop = (self._payload[27] << 8) | self._payload[28]
             self.hdop = (self._payload[29] << 8) | self._payload[30]
             self.vdop = (self._payload[31] << 8) | self._payload[32]
             self.tdop = (self._payload[33] << 8) | self._payload[34]
-            self.ecef_x = self._signed_32bit((self._payload[35] << 24) | (self._payload[36] << 16) | (self._payload[37] << 8) | self._payload[38])
-            self.ecef_y = self._signed_32bit((self._payload[39] << 24) | (self._payload[40] << 16) | (self._payload[41] << 8) | self._payload[42])
-            self.ecef_z = self._signed_32bit((self._payload[43] << 24) | (self._payload[44] << 16) | (self._payload[45] << 8) | self._payload[46])
-            self.ecef_vx = self._signed_32bit((self._payload[47] << 24) | (self._payload[48] << 16) | (self._payload[49] << 8) | self._payload[50])
-            self.ecef_vy = self._signed_32bit((self._payload[51] << 24) | (self._payload[52] << 16) | (self._payload[53] << 8) | self._payload[54])
-            self.ecef_vz = self._signed_32bit((self._payload[55] << 24) | (self._payload[56] << 16) | (self._payload[57] << 8) | self._payload[58])
-            self.time = self.gps_time_2_unix_time(self.week, self.tow)
+            self.ecef_x = self._signed_32bit(
+                (self._payload[35] << 24) | (self._payload[36] << 16) | (self._payload[37] << 8) | self._payload[38]
+            )
+            self.ecef_y = self._signed_32bit(
+                (self._payload[39] << 24) | (self._payload[40] << 16) | (self._payload[41] << 8) | self._payload[42]
+            )
+            self.ecef_z = self._signed_32bit(
+                (self._payload[43] << 24) | (self._payload[44] << 16) | (self._payload[45] << 8) | self._payload[46]
+            )
+            self.ecef_vx = self._signed_32bit(
+                (self._payload[47] << 24) | (self._payload[48] << 16) | (self._payload[49] << 8) | self._payload[50]
+            )
+            self.ecef_vy = self._signed_32bit(
+                (self._payload[51] << 24) | (self._payload[52] << 16) | (self._payload[53] << 8) | self._payload[54]
+            )
+            self.ecef_vz = self._signed_32bit(
+                (self._payload[55] << 24) | (self._payload[56] << 16) | (self._payload[57] << 8) | self._payload[58]
+            )
+            self.unix_time = self.gps_time_2_unix_time(self.week, self.tow)
             return True
         except Exception as e:
             print(f"Error parsing data: {e}")
