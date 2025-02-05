@@ -9,6 +9,7 @@ Authors: Akshat Sahay, Ibrahima S. Sow
 import os
 
 from core import logger
+from core.data_handler import extract_time_from_filename
 from hal.configuration import SATELLITE
 
 FILE_PKTSIZE = 240
@@ -85,10 +86,11 @@ class SATELLITE_RADIO:
     # Init TM frame for preallocating memory
     tm_frame = bytearray(250)
 
-    # Parameters for file downlinking (TEMPORARY HARDCODE)
+    # Parameters for file downlinking (Message ID temporarily hardcoded)
     filepath = None
-    file_ID = 0x00
+    file_ID = 0x01
     file_size = 0
+    file_time = 1738351687
     file_message_count = 0
 
     # Data for file downlinking
@@ -105,7 +107,8 @@ class SATELLITE_RADIO:
     rx_gs_cmd = 0x00
 
     # RX'd SQ cnt used for packetized file TX
-    rx_gs_sq_cnt = 0
+    rx_sq_cnt = 0
+    rq_sq_cnt = 0
 
     # RX'd len used for argument unpacking
     rx_gs_len = 0
@@ -253,13 +256,20 @@ class SATELLITE_RADIO:
             logger.warning("[COMMS ERROR] Undefined TX filepath")
 
             cls.file_ID = 0x00
+            cls.file_time = 0
             cls.file_size = 0
             cls.file_message_count = 0
 
         else:
             # Valid filepath from DH, set size and message count
             file_stat = os.stat(cls.filepath)
+
+            # TODO: Associate file IDs with subsystems
             cls.file_ID = 0x01
+
+            # Extract file_time from filepath
+            cls.file_time = extract_time_from_filename(cls.filepath)
+
             cls.file_size = int(file_stat[6])
             cls.file_message_count = int(cls.file_size / FILE_PKTSIZE)
 
@@ -281,7 +291,7 @@ class SATELLITE_RADIO:
             logger.warning("[COMMS ERROR] Undefined TX filepath")
             cls.file_array = bytes([0x00, 0x00, 0x00, 0x00])
 
-            return 0x00
+            return 4
 
         # Seek to the correct sq_cnt
         if sq_cnt != cls.file_message_count - 1:
@@ -310,9 +320,12 @@ class SATELLITE_RADIO:
         # Generate file metadata and file array
         cls.file_get_metadata()
 
-        # TODO: Rework to use class file array
+        # Write the file metadata to class array for metadata
         cls.file_md = (
-            cls.file_ID.to_bytes(1, "big") + cls.file_size.to_bytes(4, "big") + cls.file_message_count.to_bytes(2, "big")
+            cls.file_ID.to_bytes(1, "big")
+            + cls.file_time.to_bytes(4, "big")
+            + cls.file_size.to_bytes(4, "big")
+            + cls.file_message_count.to_bytes(2, "big")
         )
 
     """
@@ -322,13 +335,13 @@ class SATELLITE_RADIO:
 
     @classmethod
     def transmit_file_metadata(cls):
-        # Transmit stored file info
+        # Pack header
         tx_header = bytes(
             [
                 (MSG_ID.SAT_FILE_METADATA),
                 0x0,
                 0x0,
-                0x7,
+                0xB,
             ]
         )
 
@@ -346,16 +359,55 @@ class SATELLITE_RADIO:
     @classmethod
     def transmit_file_packet(cls):
         # Get bytes from file (stored in file_array)
-        pkt_size = cls.file_get_packet(cls.gs_req_seq_count)
+        pkt_size = cls.file_get_packet(cls.rq_sq_cnt)
 
+        # Pack header
         tx_header = (
-            (MSG_ID.SAT_FILE_PKT).to_bytes(1, "big")
-            + (cls.gs_req_seq_count).to_bytes(2, "big")
-            + (pkt_size).to_bytes(1, "big")
+            (MSG_ID.SAT_FILE_PKT).to_bytes(1, "big") + (cls.rq_sq_cnt).to_bytes(2, "big") + (pkt_size + 5).to_bytes(1, "big")
         )
 
         # Pack entire message
-        cls.tx_message = tx_header + cls.file_array
+        cls.tx_message = tx_header + cls.file_ID.to_bytes(1, "big") + cls.file_time.to_bytes(4, "big") + cls.file_array
+
+    """
+        Name: check_rq_file_params
+        Description: Compare stored file params to
+        the requested GS file params
+    """
+
+    @classmethod
+    def check_rq_file_params(cls, packet):
+        """
+        If file MD requested, use this to see if
+        new filepath is needed, and RQ CDH for one.
+
+        If file PKT requested and params do not match,
+        this is used for error detection to default to HB state.
+
+        For now, assume that hardcoded filepath
+        matches the file the GS requested
+        """
+
+        if not (cls.filepath):
+            # File does not match
+            logger.warning("[COMMS ERROR] Undefined TX filepath")
+            return False
+        else:
+            # Check if request matches stored filepath
+            if cls.file_ID != int.from_bytes(packet[0:1], "big"):
+                # File does not match
+                logger.warning("[COMMS ERROR] File ID does not match")
+                return False
+
+            # Check if request matches stored file time
+            elif cls.file_time != int.from_bytes(packet[1:5], "big"):
+                # File does not match
+                logger.warning("[COMMS ERROR] File time does not match")
+                return False
+
+            else:
+                # File matches
+                return True
 
     """
         Name: receive_message
@@ -373,7 +425,7 @@ class SATELLITE_RADIO:
         if packet is None:
             # FIFO buffer does not contain a packet
             cls.rx_gs_cmd = 0x00
-            cls.rx_gs_sq_cnt = 0
+            cls.rx_sq_cnt = 0
             cls.rx_gs_len = 0
             return cls.rx_gs_cmd
 
@@ -382,7 +434,7 @@ class SATELLITE_RADIO:
             # Packet does not contain valid Argus header
             logger.warning("[COMMS ERROR] RX'd packet has invalid header")
             cls.rx_gs_cmd = 0x00
-            cls.rx_gs_sq_cnt = 0
+            cls.rx_sq_cnt = 0
             cls.rx_gs_len = 0
             return cls.rx_gs_cmd
 
@@ -390,15 +442,15 @@ class SATELLITE_RADIO:
 
         # Unpack RX message header
         cls.rx_gs_cmd = int.from_bytes(packet[0:1], "big")
-        cls.rx_gs_sq_cnt = int.from_bytes(packet[1:3], "big")
+        cls.rx_sq_cnt = int.from_bytes(packet[1:3], "big")
         cls.rx_gs_len = int.from_bytes(packet[3:4], "big")
 
         # Check packet integrity based on CMD_ID
-        if (cls.rx_gs_cmd < MSG_ID.GS_CMD_ACK_L) and (cls.rx_gs_cmd > MSG_ID.GS_CMD_FILE_PKT):
+        if (cls.rx_gs_cmd < MSG_ID.GS_CMD_ACK_L) or (cls.rx_gs_cmd > MSG_ID.GS_CMD_FILE_PKT):
             # Packet does not contain valid CMD_ID
             logger.warning("[COMMS ERROR] RX'd packet has invalid CMD")
             cls.rx_gs_cmd = 0x00
-            cls.rx_gs_sq_cnt = 0
+            cls.rx_sq_cnt = 0
             cls.rx_gs_len = 0
             return cls.rx_gs_cmd
 
@@ -407,7 +459,7 @@ class SATELLITE_RADIO:
             # Header length does not match packet length
             logger.warning("[COMMS ERROR] RX'd packet has length mismatch with header")
             cls.rx_gs_cmd = 0x00
-            cls.rx_gs_sq_cnt = 0
+            cls.rx_sq_cnt = 0
             cls.rx_gs_len = 0
             return cls.rx_gs_cmd
 
@@ -416,6 +468,45 @@ class SATELLITE_RADIO:
             cls.rx_payload = packet[4:]
         else:
             cls.rx_payload = bytearray()
+
+        # Internal handling for file requests
+        if cls.rx_gs_cmd == MSG_ID.GS_CMD_FILE_METADATA:
+            if cls.check_rq_file_params(packet[4:]) is False:
+                # Filepath does not match
+
+                # TODO: Replace error with a filepath request from the CDH
+                logger.warning("[COMMS ERROR] Filepath requested from the GS does not exist")
+                cls.rx_gs_cmd = 0x00
+                cls.rx_sq_cnt = 0
+                cls.rx_gs_len = 0
+                return cls.rx_gs_cmd
+
+            else:
+                # Filepath matches, move forward with request
+                pass
+
+        elif cls.rx_gs_cmd == MSG_ID.GS_CMD_FILE_PKT:
+            if cls.check_rq_file_params(packet[4:]) is False:
+                # Filepath does not match
+
+                # Error, currently just go back to heartbeat state
+                logger.warning("[COMMS ERROR] Filepath requested from the GS does not exist")
+                cls.rx_gs_cmd = 0x00
+                cls.rx_sq_cnt = 0
+                cls.rx_gs_len = 0
+
+                cls.rq_sq_cnt = 0
+                return cls.rx_gs_cmd
+
+            else:
+                # Filepath matches, move forward with request
+
+                # Get sq_cnt for the PKT
+                cls.rq_sq_cnt = int.from_bytes(packet[9:11], "big")
+
+        else:
+            # Not a file request, do nothing
+            pass
 
         return cls.rx_gs_cmd
 

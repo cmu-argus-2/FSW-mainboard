@@ -1,6 +1,6 @@
 # Communication task which uses the radio to transmit and receive messages.
 from apps.command import QUEUE_STATUS, CommandQueue, ResponseQueue
-from apps.comms.comms import COMMS_STATE, SATELLITE_RADIO
+from apps.comms.comms import COMMS_STATE, MSG_ID, SATELLITE_RADIO
 from apps.telemetry import TelemetryPacker
 from core import TemplateTask
 from core import state_manager as SM
@@ -14,6 +14,7 @@ class Task(TemplateTask):
 
         self.name = "COMMS"
         self.comms_state = COMMS_STATE.TX_HEARTBEAT
+        self.filepath_flag = False
 
         # IDs returned from application
         self.tx_msg_id = 0x00
@@ -69,7 +70,7 @@ class Task(TemplateTask):
             # If heartbeat TX counter has elapsed, or currently in an active ground pass
 
             # TODO: Set frame / filepath here based on the active GS command
-            if self.comms_state != COMMS_STATE.TX_HEARTBEAT:
+            if self.comms_state == COMMS_STATE.TX_ACK:
                 if ResponseQueue.response_available():
                     # The response to the current GS command is ready, downlink it
                     (response_id, response_args), queue_error_code = ResponseQueue.pop_response()
@@ -121,8 +122,9 @@ class Task(TemplateTask):
                 # Get most recent payload
                 self.rx_payload = SATELLITE_RADIO.get_rx_payload()
 
-                # Push rq_cmd onto CommandQueue along with all its arguments
-                CommandQueue.overwrite_command(self.rq_cmd, self.rx_payload)
+                if self.rq_cmd != MSG_ID.GS_CMD_FILE_METADATA and self.rq_cmd != MSG_ID.GS_CMD_FILE_PKT:
+                    # Push rq_cmd onto CommandQueue along with all its arguments
+                    CommandQueue.overwrite_command(self.rq_cmd, self.rx_payload)
 
                 # Log RSSI
                 DH.log_data("comms", [SATELLITE_RADIO.get_rssi()])
@@ -158,19 +160,35 @@ class Task(TemplateTask):
     async def main_task(self):
         # Main comms task loop
 
-        if not self.frequency_set:
-            self.cls_change_counter_frequency()
+        if SM.current_state == STATES.STARTUP:
+            # No comms in STARTUP
+            pass
 
-        if SM.current_state == STATES.DETUMBLING or SM.current_state == STATES.NOMINAL or SM.current_state == STATES.LOW_POWER:
-            if not DH.data_process_exists("comms"):  # avoid registering in startup
+        else:
+            # Check if TX and RX frequencies are set
+            if not self.frequency_set:
+                self.cls_change_counter_frequency()
+
+            # TODO: Only set filepath on response from ResponseQueue
+            if not self.filepath_flag:
+                # Check if image process exists
+                if DH.image_process_exists():
+                    # Set filepath for comms TX file
+                    filepath = DH.request_TM_path_image()
+                    SATELLITE_RADIO.set_filepath(filepath)
+
+                    self.log_info(f"Initializing TX file filepath: {filepath}")
+                    self.filepath_flag = True
+                else:
+                    # Process does not exist, filepath remains None
+                    SATELLITE_RADIO.set_filepath(None)
+                    self.filepath_flag = False
+            else:
+                pass
+
+            # Register comms process for logging RX RSSI
+            if not DH.data_process_exists("comms"):
                 DH.register_data_process("comms", "f", True, 100000)
-
-            if DH.image_process_exists():
-                # registration is done on the payload task
-                # Set filepath for comms TX file
-                filepath = DH.request_TM_path_image()
-                SATELLITE_RADIO.set_filepath(filepath)
-                self.log_info(f"Initializing TX file filepath: {filepath}")
 
             # Increment counter
             self.TX_COUNTER += 1
