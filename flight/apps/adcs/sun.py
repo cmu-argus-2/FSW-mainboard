@@ -116,10 +116,18 @@ def compute_body_sun_vector_from_lux(I_vec):
     N_valid = N[valid_sensor_idxs, :]
     I_valid = [I_vec[idx] for idx in valid_sensor_idxs]
 
+    # twice faster than linalg inv
+    oprod_sun_inv = invert_3x3_psd(N_valid.transpose() @ N_valid)
+    # Confirm unique determination. If not invertible, not unique
+    if not oprod_sun_inv:
+        status = SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS
+        return status, sun_body
+
     # Extract the sun body vector
     # NOTE : ulab does not have a pinv operation
     # Using the Moore-Penrose psuedo-inverse
-    sun_body = np.linalg.inv(N_valid.transpose() @ N_valid) @ N_valid.transpose() @ I_valid
+    sun_body = oprod_sun_inv @ N_valid.transpose() @ I_valid
+    # sun_body = np.linalg.inv(N_valid.transpose() @ N_valid) @ N_valid.transpose() @ I_valid
 
     norm = (sun_body[0] ** 2 + sun_body[1] ** 2 + sun_body[2] ** 2) ** 0.5
 
@@ -191,3 +199,37 @@ def approx_sun_position_ECI(utime):
     r_vec = np.array([r_mag * np.cos(long), r_mag * np.sin(long) * np.cos(epsilon), r_mag * np.sin(long) * np.sin(epsilon)])
 
     return r_vec
+
+def invert_3x3_psd(matrix):
+    """
+    Inverts a 3x3 symmetric matrix using the classical adjoint (cofactor) method.
+    Returns a new 3x3 matrix that is the inverse of 'matrix' or none if it is not invertible.
+    About twice faster than np.linalg.inv
+    """
+    if matrix.shape != (3, 3):
+        raise ValueError("Matrix must be 3x3.")
+
+    # Helper aliases for clarity
+    a, b, c = matrix[0]
+    _, e, f = matrix[1]
+    _, _, i = matrix[2]
+
+    # Calculate the determinant
+    det = (a * (e*i - f*f)
+           - b * (b*i - 2*f*c)
+           - e*c*c)
+
+    if abs(det) < 1e-12:  # If determinant is (near) zero, it's not invertible
+        return None
+
+    # Calculate cofactors (matrix of minors with alternating signs)
+    # Cofactor matrix (not yet transposed):
+    adjugate = np.array([
+        [(e*i - f*f),        -(b*i - f*c),        (b*f - e*c)],
+        [-(b*i - c*f),       (a*i - c*c),         -(a*f - b*c)],
+        [(b*f - c*e),        -(a*f - c*b),        (a*e - b*b)]
+    ])
+
+    # Multiply adjugate by 1/det to get the inverse
+    inv = adjugate / det
+    return inv
