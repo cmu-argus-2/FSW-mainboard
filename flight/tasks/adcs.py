@@ -14,11 +14,9 @@ from ulab import numpy as np
 
 """
     ASSUMPTIONS :
-        - ADCS Task runs at 1 Hz
-        - Magnetometer settles within 400ms
-        - Task breakdown by counter
-        |<-gyro->|<-gyro->|<-gyro->|<-gyro->|<-Full EKF update, MCM->
-        |<-gyro>|<-gyro>|<-gyro>|<-gyro>|<-gyro, MCM off->|
+        - ADCS Task runs at 5 Hz (TBD if we can't handle this)
+        - In detumbling, control loop executes every 200ms
+        - In nominal/experiment, for 4 executions, we do nothing. On the fifth, we run full MEKF + control
 """
 
 
@@ -65,6 +63,7 @@ class Task(TemplateTask):
 
     # Attitude Determination
     AD = AttitudeDetermination()
+    execution_counter = 0
 
     # Sub-task architecture
     NUM_SUBTASKS = 10
@@ -78,7 +77,6 @@ class Task(TemplateTask):
             pass
 
         else:
-            ## Attitude Determination
 
             if not DH.data_process_exists("adcs"):
                 data_format = "LB" + 6 * "f" + "B" + 3 * "f" + "B" + 9 * "H" + 6 * "B" + 4 * "f" + "B" + 4 * "f"
@@ -100,6 +98,10 @@ class Task(TemplateTask):
 
                 # Run Attitude Control
                 self.attitude_control()
+
+                # Log Data
+                # NOTE : Most of these values will be 0 since MEKF is not initialized
+                self.log()
 
                 # Check if detumbling has been completed
                 if np.linalg.norm(self.AD.state[self.AD.omega_idx]) <= ModeConst.STABLE_TOL:
@@ -135,16 +137,30 @@ class Task(TemplateTask):
                     SM.switch_to(STATES.DETUMBLING)
 
                 else:
-                    # TODO : Turn coils off before measurements to allow time for coils to settle
+                    if self.execution_counter == 0:
+                        # TODO : Turn coils off before measurements to allow time for coils to settle
+                        self.execution_counter += 1
+                        return
 
-                    # Update Each sensor with covariances
-                    self.AD.position_update()
-                    self.AD.sun_position_update(update_covariance=True)
-                    self.AD.gyro_update(update_covariance=True)
-                    self.AD.magnetometer_update(update_covariance=True)
+                    elif self.execution_counter < 4:
+                        self.execution_counter += 1
+                        return  # do nothing
 
-                    # Run attitude control
-                    self.attitude_control()
+                    else:
+                        # Update Each sensor with covariances
+                        self.AD.position_update()
+                        self.AD.sun_position_update(update_covariance=True)
+                        self.AD.gyro_update(update_covariance=True)
+                        self.AD.magnetometer_update(update_covariance=True)
+
+                        # Run attitude control
+                        self.attitude_control()
+
+                        # Log data
+                        self.log()
+
+                        # Reset Execution counter
+                        self.execution_counter = 0
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ Attitude Control Auxiliary Functions """
@@ -173,7 +189,7 @@ class Task(TemplateTask):
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ LOGGING """
     # ------------------------------------------------------------------------------------------------------------------------------------
-    def log(self, light_sensor_lux_readings: np.ndarray):
+    def log(self):
         """
         Logs data to Data Handler
         Takes light sensor readings as input since they are not stored in AD
@@ -190,15 +206,15 @@ class Task(TemplateTask):
         self.log_data[ADCS_IDX.SUN_VEC_X] = self.AD.state[16]
         self.log_data[ADCS_IDX.SUN_VEC_Y] = self.AD.state[17]
         self.log_data[ADCS_IDX.SUN_VEC_Z] = self.AD.state[18]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = light_sensor_lux_readings[0]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = light_sensor_lux_readings[1]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = light_sensor_lux_readings[2]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = light_sensor_lux_readings[3]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = light_sensor_lux_readings[4]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP1] = light_sensor_lux_readings[5]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP2] = light_sensor_lux_readings[6]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP3] = light_sensor_lux_readings[7]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP4] = light_sensor_lux_readings[8]
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = self.AD.state[23]
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = self.AD.state[24]
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = self.AD.state[25]
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = self.AD.state[26]
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = self.AD.state[27]
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP1] = self.AD.state[28]
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP2] = self.AD.state[29]
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP3] = self.AD.state[30]
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP4] = self.AD.state[31]
         # TODO : extract and add coil status
         self.log_data[ADCS_IDX.COARSE_ATTITUDE_QW] = self.AD.state[3]
         self.log_data[ADCS_IDX.COARSE_ATTITUDE_QX] = self.AD.state[4]
