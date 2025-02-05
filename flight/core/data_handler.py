@@ -570,12 +570,37 @@ class ImageProcess(DataProcess):
         self.current_path = self.create_new_path()
         self.delete_paths = []  # Paths that are flagged for deletion
         self.excluded_paths = []  # Paths that are currently being transmitted
+        self.circular_buffer_size = 20  # Default size of the circular buffer for the files in the directory
 
         config_file_path = join_path(self.dir_path, _PROCESS_CONFIG_FILENAME)
         if not path_exist(config_file_path):
             config_data = {_IMG_TAG_NAME: True}
             with open(config_file_path, "w") as config_file:
                 json.dump(config_data, config_file)
+
+    def resolve_current_file(self) -> None:
+        """
+        Resolve the current image to write to.
+        """
+        if self.status == _CLOSED:
+            self.current_path = self.create_new_path()
+            self.open()
+        elif self.status == _OPEN:
+            current_file_size = self.get_current_file_size()
+            if current_file_size >= self.size_limit:
+                self.close()
+                self.current_path = self.create_new_path()
+                self.open()
+
+    def create_new_path(self) -> str:
+        """
+        Create a new filename for the image process.
+
+        Returns:
+            str: The new filename.
+        """
+        # Keeping the tag name in the filename for identification
+        return join_path(self.dir_path, self.tag_name) + "_" + str(int(time.time())) + ".jpg"
 
     def log(self, data: bytearray) -> None:
         """
@@ -989,6 +1014,16 @@ class DataHandler:
         return tag_name in cls.data_process_registry
 
     @classmethod
+    def image_process_exists(cls) -> bool:
+        """
+        Check if the image process exists.
+
+        Returns:
+            bool: True if the image process exists, False otherwise.
+        """
+        return _IMG_TAG_NAME in cls.data_process_registry
+
+    @classmethod
     def request_TM_path(cls, tag_name, latest=False):
         """
         Returns the path of a designated file available for transmission.
@@ -1197,3 +1232,30 @@ def join_path(*paths: str) -> str:
     if not paths[0].startswith("/"):
         normalized_path = normalized_path.lstrip("/")
     return normalized_path
+
+
+def extract_time_from_filename(filename: str) -> int:
+    """
+    Extracts the timestamp from a filename formatted as 'TAGNAME_TIME.bin' or 'img_TIME.jpg'.
+
+    Args:
+        filename (str): The filename to extract the timestamp from.
+
+    Returns:
+        int: The timestamp extracted from the filename.
+    """
+    if not filename:
+        return None
+
+    if filename[-4:] == ".bin" or filename[-4:] == ".jpg":
+        filename = filename[:-4]
+    else:
+        logger.warning(f"Invalid filename format for {filename}")
+        return None
+
+    match = re.search(r"_(\d+)", filename)
+    if match:
+        return int(match.group(1))
+    else:
+        logger.warning(f"Invalid filename format for {filename}")
+        return None
