@@ -25,10 +25,10 @@ class GPS:
         # Payload Buffer:
         self._payload = bytearray([0] * 59)
 
-        # self._msg = None
-        # self._payload_len = 0
-        # self._msg_id = 0
-        # self._msg_cs = 0
+        self._msg = None
+        self._payload_len = 0
+        self._msg_id = 0
+        self._msg_cs = 0
 
         # self._nav_data_hex = {}  # Navigation data as a dictionary of hex values
 
@@ -61,27 +61,27 @@ class GPS:
         # Initialize null starting values for all GPS data
         # These values are used for logging and will be ints
         # self.timestamp_utc = None  # UTC as a dictionary in the form {year, month, day, hour, minute, second}
-        self.unix_time = None  # Unix time in seconds
-        self.message_id = None  # Message ID
-        self.fix_mode = None  # Fix mode as an int
-        self.number_of_sv = None  # Number of satellites used in the solution
-        self.week = None  # The number of weeks since the GPS epoch
-        self.tow = None  # Time of week in 1/100 seconds
-        self.latitude = None  # Latitude as a signed int
-        self.longitude = None  # Longitude as a signed int
-        self.ellipsoid_altitude = None  # Ellipsoid altitude in 1/100 meters
-        self.mean_sea_level_altitude = None  # Mean sea level altitude in 1/100 meters
-        self.gdop = None  # Geometric dilution of precision in 1/100
-        self.pdop = None  # Position dilution of precision in 1/100
-        self.hdop = None  # Horizontal dilution of precision in 1/100
-        self.vdop = None  # Vertical dilution of precision in 1/100
-        self.tdop = None  # Time dilution of precision in 1/100
-        self.ecef_x = None  # ECEF X coordinate in 1/100 meters
-        self.ecef_y = None  # ECEF Y coordinate in 1/100 meters
-        self.ecef_z = None  # ECEF Z coordinate in 1/100 meters
-        self.ecef_vx = None  # ECEF X velocity in 1/100 meters per second
-        self.ecef_vy = None  # ECEF Y velocity in 1/100 meters per second
-        self.ecef_vz = None  # ECEF Z velocity in 1/100 meters per second
+        self.unix_time = None  # Unix time in seconds, type: float = float (f), unit: seconds
+        self.message_id = None  # Field 1, type: uint8 = unsigned byte (B), unit: N/A
+        self.fix_mode = None  # Field 2, type: uint8 = unsigned byte (B), unit: N/A
+        self.number_of_sv = None  # Field 3, type: uint8 = unsigned byte (B), unit: N/A
+        self.week = None  # Field 4-5, type: uint16 = unsigned short (H), unit: N/A
+        self.tow = None  # Field 6-9, type: uint32 = unsigned long (L), unit: N/A
+        self.latitude = None  # Field 10-13, type: sint32 = signed long (l), unit: 1/1e-7 degrees
+        self.longitude = None  # Field 14-17, type: sint32 = signed long (l), unit: 1/1e-7 degrees
+        self.ellipsoid_altitude = None  # Field 18-21, type: sint32 = signed long (l), unit: 1/100 meters
+        self.mean_sea_level_altitude = None  # Field 22-25, type: sint32 = signed long (l), unit: 1/100 meters
+        self.gdop = None  # Field 26-27, type: uint16 = unsigned short (H), unit: 1/100
+        self.pdop = None  # Field 28-29, type: uint16 = unsigned short (H), unit: 1/100
+        self.hdop = None  # Field 30-31, type: uint16 = unsigned short (H), unit: 1/100
+        self.vdop = None  # Field 32-33, type: uint16 = unsigned short (H), unit: 1/100
+        self.tdop = None  # Field 34-35, type: uint16 = unsigned short (H), unit: 1/100
+        self.ecef_x = None  # Field 36-39, type: sint32 = signed long (l), unit: 1/100 meters
+        self.ecef_y = None  # Field 40-43, type: sint32 = signed long (l), unit: 1/100 meters
+        self.ecef_z = None  # Field 44-47, type: sint32 = signed long (l), unit: 1/100 meters
+        self.ecef_vx = None  # Field 48-51, type: sint32 = signed long (l), unit: 1/100 meters per second
+        self.ecef_vy = None  # Field 52-55, type: sint32 = signed long (l), unit: 1/100 meters per second
+        self.ecef_vz = None  # Field 56-59, type: sint32 = signed long (l), unit: 1/100 meters per second
 
         # Don't care to enable the GPS module during initialization
         self._enable = enable
@@ -112,33 +112,33 @@ class GPS:
 
     def update(self) -> bool:
         if self.mock:
-            msg = self.mock_message
+            self._msg = self.mock_message
         else:
             try:
-                msg = self._parse_sentence()
+                self._msg = self._parse_sentence()
             except UnicodeError:
                 return False
-            if msg is None or len(msg) < 11:
+            if self._msg is None or len(self._msg) < 11:
                 return False
 
         if self.debug:
             if self.mock:
-                print("Mock message: \n", self.mock_message)
+                print("Mock message: \n", self._msg)
             else:
-                print("Raw message: \n", msg)
+                print("Raw message: \n", self._msg)
 
-        # self._msg = [hex(i) for i in msg]
-        _payload_len = ((msg[2] & 0xFF) << 8) | msg[3]
-        _msg_id = msg[4]
-        _msg_cs = msg[-3]
+        self._msg = [hex(i) for i in self._msg]
+        self._payload_len = ((self._msg[2] & 0xFF) << 8) | self._msg[3]
+        self._msg_id = self._msg[4]
+        self._msg_cs = self._msg[-3]
         self._payload = bytearray(int(i, 16) for i in self._msg[4:-3])
 
-        if _msg_id != 0xA8:
+        if self._msg_id != 0xA8:
             if self.debug:
                 print("Invalid message ID, expected 0xA8, got: ", hex(self._msg_id))
             return False
 
-        if _payload_len != 59:
+        if self._payload_len != 59:
             if self.debug:
                 print("Invalid payload length, expected 59, got: ", self._payload_len)
             return False
@@ -149,7 +149,7 @@ class GPS:
         cs = 0
         for i in self._payload:
             cs ^= i
-        if cs != _msg_cs:
+        if cs != self._msg_cs:
             if self.debug:
                 print("Checksum failed!")
             return False
@@ -224,39 +224,33 @@ class GPS:
         # self.timestamp_utc = self.gps_datetime(self.week, self.tow)
         try:
             self.message_id = self._payload[0]
-            self.fix_mode = int(self._payload[1])
-            self.number_of_sv = int(self._payload[2])
+            self.fix_mode = (self._payload[1])
+            self.number_of_sv = (self._payload[2])
             self.week = (self._payload[3] << 8) | self._payload[4]
             self.tow = (self._payload[5] << 24) | (self._payload[6] << 16) | (self._payload[7] << 8) | self._payload[8]
-            self.latitude = (self._payload[9] << 24) | (self._payload[10] << 16) | (self._payload[11] << 8) | self._payload[12]
-            self.longitude = (
-                (self._payload[13] << 24) | (self._payload[14] << 16) | (self._payload[15] << 8) | self._payload[16]
-            )
-            self.ellipsoid_altitude = (
-                (self._payload[17] << 24) | (self._payload[18] << 16) | (self._payload[19] << 8) | self._payload[20]
-            )
-            self.mean_sea_level_altitude = (
-                (self._payload[21] << 24) | (self._payload[22] << 16) | (self._payload[23] << 8) | self._payload[24]
-            )
+            self.latitude = self._signed_32bit((self._payload[9] << 24) | (self._payload[10] << 16) | (self._payload[11] << 8) | self._payload[12])
+            self.longitude = self._signed_32bit(((self._payload[13] << 24) | (self._payload[14] << 16) | (self._payload[15] << 8) | self._payload[16]))
+            self.ellipsoid_altitude = self._signed_32bit(((self._payload[17] << 24) | (self._payload[18] << 16) | (self._payload[19] << 8) | self._payload[20]))
+            self.mean_sea_level_altitude = self._signed_32bit(((self._payload[21] << 24) | (self._payload[22] << 16) | (self._payload[23] << 8) | self._payload[24]))
             self.gdop = (self._payload[25] << 8) | self._payload[26]
             self.pdop = (self._payload[27] << 8) | self._payload[28]
             self.hdop = (self._payload[29] << 8) | self._payload[30]
             self.vdop = (self._payload[31] << 8) | self._payload[32]
             self.tdop = (self._payload[33] << 8) | self._payload[34]
-            self.ecef_x = (self._payload[35] << 24) | (self._payload[36] << 16) | (self._payload[37] << 8) | self._payload[38]
-            self.ecef_y = (self._payload[39] << 24) | (self._payload[40] << 16) | (self._payload[41] << 8) | self._payload[42]
-            self.ecef_z = (self._payload[43] << 24) | (self._payload[44] << 16) | (self._payload[45] << 8) | self._payload[46]
-            self.ecef_vx = (self._payload[47] << 24) | (self._payload[48] << 16) | (self._payload[49] << 8) | self._payload[50]
-            self.ecef_vy = (self._payload[51] << 24) | (self._payload[52] << 16) | (self._payload[53] << 8) | self._payload[54]
-            self.ecef_vz = (self._payload[55] << 24) | (self._payload[56] << 16) | (self._payload[57] << 8) | self._payload[58]
+            self.ecef_x = self._signed_32bit((self._payload[35] << 24) | (self._payload[36] << 16) | (self._payload[37] << 8) | self._payload[38])
+            self.ecef_y = self._signed_32bit((self._payload[39] << 24) | (self._payload[40] << 16) | (self._payload[41] << 8) | self._payload[42])
+            self.ecef_z = self._signed_32bit((self._payload[43] << 24) | (self._payload[44] << 16) | (self._payload[45] << 8) | self._payload[46])
+            self.ecef_vx = self._signed_32bit((self._payload[47] << 24) | (self._payload[48] << 16) | (self._payload[49] << 8) | self._payload[50])
+            self.ecef_vy = self._signed_32bit((self._payload[51] << 24) | (self._payload[52] << 16) | (self._payload[53] << 8) | self._payload[54])
+            self.ecef_vz = self._signed_32bit((self._payload[55] << 24) | (self._payload[56] << 16) | (self._payload[57] << 8) | self._payload[58])
             self.time = self.gps_time_2_unix_time(self.week, self.tow)
             return True
         except Exception as e:
             print(f"Error parsing data: {e}")
             return False
 
-    # def _signed_32bit(self, value: int) -> int:
-    #     return value if value < 0x80000000 else value - 0x100000000
+    def _signed_32bit(self, value: int) -> int:
+        return value if value < 0x80000000 else value - 0x100000000
 
     def has_fix(self) -> bool:
         """True if a current fix for location information is available."""

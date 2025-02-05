@@ -49,7 +49,8 @@ class Task(TemplateTask):
             else:
                 if not DH.data_process_exists("gps"):
                     # TODO : This format is no longer correct
-                    data_format = "LBBBHIiiiiHHHHHiiiiii"
+                    # data_format = "LBBBHIiiiiHHHHHiiiiii"
+                    data_format = "fBBHLllllHHHHHllllll"
                     DH.register_data_process("gps", data_format, True, data_limit=100000, write_interval=10)
 
                 if SATELLITE.GPS.update():
