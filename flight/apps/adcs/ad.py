@@ -15,7 +15,7 @@ from apps.adcs.frames import ecef_to_eci
 from apps.adcs.igrf import igrf_eci
 from apps.adcs.math import R_to_quat, quat_to_R, rotvec_to_R, skew
 from apps.adcs.orbit_propagation import propagate_orbit
-from apps.adcs.sun import approx_sun_position_ECI, compute_body_sun_vector_from_lux, read_light_sensors
+from apps.adcs.sun import SUN_VECTOR_STATUS, approx_sun_position_ECI, compute_body_sun_vector_from_lux, read_light_sensors
 from apps.telemetry.constants import GPS_IDX
 from core import DataHandler as DH
 from hal.configuration import SATELLITE
@@ -49,9 +49,6 @@ class AttitudeDetermination:
     sun_pos_idx = slice(19, 22)
     sun_status_idx = slice(22, 23)
     sun_lux_idx = slice(23, 28)
-
-    # Initial State Data
-    state[omega_idx] = 100 * np.ones((3,))
 
     # Time storage
     position_update_frequency = 1  # Hz ~8km
@@ -96,7 +93,7 @@ class AttitudeDetermination:
 
             return 1, query_time, gyro
         else:
-            return 0, 0, 100 * np.ones((3,))
+            return 0, 0, np.zeros((3,))
 
     def read_magnetometer(self):
         """
@@ -146,10 +143,13 @@ class AttitudeDetermination:
         """
         # Get a valid GPS position
         gps_valid, gps_record_time, gps_pos_ecef, gps_vel_ecef = self.read_gps()
+
+        # Spoofing GPS
         gps_pos_ecef = np.array([-1325.226552563400, 4849.749546663410, -4575.122922351300]) * 1000
         gps_vel_ecef = np.array([-5.48091694803860, -4.38278368616351, -3.05761643533641]) * 1000
         gps_valid = 1
         gps_record_time = int(time.time())
+
         if not gps_valid:
             print("Failed GPS")
             return 0
@@ -160,21 +160,30 @@ class AttitudeDetermination:
             gps_pos_eci = np.dot(R_ecef2eci, gps_pos_ecef)
             gps_vel_eci = np.dot(R_ecef2eci, gps_vel_ecef)
             true_pos_eci, true_vel_eci = propagate_orbit(current_time, gps_record_time, gps_pos_eci, gps_vel_eci)
-            print(true_pos_eci, true_vel_eci)
 
         # Get a valid sun position
         sun_status, sun_pos_body, lux_readings = self.read_sun_position()
-        if not sun_status:
+
+        # Spoofing Sun Status
+        sun_status = SUN_VECTOR_STATUS.UNIQUE_DETERMINATION
+        sun_pos_body = np.array([0.93632918, 0.35112344, 0.0])
+
+        if sun_status == SUN_VECTOR_STATUS.NO_READINGS or sun_status == SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS:
             print("Failed Sun Status")
             return 0
 
         # Get a valid magnetometer reading
         magnetometer_status, _, mag_field_body = self.read_magnetometer()
+
+        # Spoofing Magnetometer
+        magnetometer_status = 1
+        mag_field_body = np.array([-2190, 15457, 35389])
+
         if not magnetometer_status:
             print("Failed Magnetometer")
             return 0
 
-        # Get a gyro reading (just to store state in)
+        # Get a gyro reading (just to store in state)
         gyro_status, _, omega_body = self.read_gyro()
 
         self.time = int(time.time())
@@ -188,14 +197,14 @@ class AttitudeDetermination:
         self.state[self.position_idx] = true_pos_eci
         self.state[self.velocity_idx] = true_vel_eci
         self.state[self.attitude_idx] = self.TRIAD(true_sun_pos_eci, true_mag_field_eci, sun_pos_body, mag_field_body)
-        self.state[self.omega_idx] = (
-            omega_body if gyro_status else 100 * np.ones((3,))
-        )  # Set some high omega so ADCS doesn't think its done detumbling
+        self.state[self.omega_idx] = omega_body
         self.state[self.bias_idx] = np.zeros((3,))
         self.state[self.mag_field_idx] = mag_field_body
         self.state[self.sun_pos_idx] = sun_pos_body
         self.state[self.sun_status_idx] = 1
         self.state[self.sun_lux_idx] = lux_readings
+
+        print(self.state[self.attitude_idx])
 
         self.initialized = True
 

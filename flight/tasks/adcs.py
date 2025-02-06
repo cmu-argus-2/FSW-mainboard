@@ -100,7 +100,7 @@ class Task(TemplateTask):
                 # Run Attitude Control
                 self.attitude_control()
 
-                self.AD.state[self.AD.omega_idx] = np.zeros((3,))
+                print(self.AD.state[self.AD.omega_idx])
 
                 # Log Data
                 # NOTE : Most of these values will be 0 since MEKF is not initialized
@@ -137,7 +137,7 @@ class Task(TemplateTask):
                     and np.linalg.norm(self.AD.state[self.AD.omega_idx]) > ModeConst.EKF_INIT_TOL
                     and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
                 ):
-
+                    print(self.AD.state[self.AD.omega_idx])
                     SM.switch_to(STATES.DETUMBLING)
 
                 else:
