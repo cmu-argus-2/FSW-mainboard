@@ -169,21 +169,6 @@ class Task(TemplateTask):
         """
         Performs attitude control on the spacecraft
         """
-        # need to account for if gyro / sun vector unavailable
-        if self.eclipse_state:
-            sun_vector_err = ModeConst.SUN_POINTED_TOL
-        else:
-            sun_vector_err = ModeConst.SUN_VECTOR_REF - self.sun_vector
-
-        if np.linalg.norm(self.AD.state[7:10]) >= ModeConst.STABLE_TOL:
-            self.MODE = Modes.TUMBLING
-        elif np.linalg.norm(sun_vector_err) >= ModeConst.SUN_POINTED_TOL:
-            self.MODE = Modes.STABLE
-        else:
-            self.MODE = Modes.SUN_POINTED
-
-        self.log_data[ADCS_IDX.MODE] = self.MODE
-        self.log_info(f"Mode: {self.MODE}")
         pass
 
     # ------------------------------------------------------------------------------------------------------------------------------------
@@ -194,27 +179,26 @@ class Task(TemplateTask):
         Logs data to Data Handler
         Takes light sensor readings as input since they are not stored in AD
         """
-        self.log_data[ADCS_IDX.TIME_ADCS] = self.AD.time
-        self.log_data[ADCS_IDX.MODE] = self.MODE
+        self.log_data[ADCS_IDX.MODE] = int(self.MODE)
         self.log_data[ADCS_IDX.GYRO_X] = self.AD.state[7]
         self.log_data[ADCS_IDX.GYRO_Y] = self.AD.state[8]
         self.log_data[ADCS_IDX.GYRO_Z] = self.AD.state[9]
         self.log_data[ADCS_IDX.MAG_X] = self.AD.state[13]
         self.log_data[ADCS_IDX.MAG_Y] = self.AD.state[14]
         self.log_data[ADCS_IDX.MAG_Z] = self.AD.state[15]
-        self.log_data[ADCS_IDX.SUN_STATUS] = self.AD.state[19]
+        self.log_data[ADCS_IDX.SUN_STATUS] = int(self.AD.state[19])
         self.log_data[ADCS_IDX.SUN_VEC_X] = self.AD.state[16]
         self.log_data[ADCS_IDX.SUN_VEC_Y] = self.AD.state[17]
         self.log_data[ADCS_IDX.SUN_VEC_Z] = self.AD.state[18]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = self.AD.state[23]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = self.AD.state[24]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = self.AD.state[25]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = self.AD.state[26]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = self.AD.state[27]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP1] = self.AD.state[28]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP2] = self.AD.state[29]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP3] = self.AD.state[30]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP4] = self.AD.state[31]
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = int(self.AD.state[23])
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = int(self.AD.state[24])
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = int(self.AD.state[25])
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = int(self.AD.state[26])
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(self.AD.state[27])
+        # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP1] = self.AD.state[28]
+        # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP2] = self.AD.state[29]
+        # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP3] = self.AD.state[30]
+        # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP4] = self.AD.state[31]
         # TODO : extract and add coil status
         self.log_data[ADCS_IDX.COARSE_ATTITUDE_QW] = self.AD.state[3]
         self.log_data[ADCS_IDX.COARSE_ATTITUDE_QX] = self.AD.state[4]
