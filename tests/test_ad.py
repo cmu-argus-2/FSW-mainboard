@@ -1,7 +1,7 @@
 import pytest
 
 import tests.cp_mock  # noqa: F401
-from flight.apps.adcs.ad import TRIAD
+from flight.apps.adcs.ad import AttitudeDetermination
 
 
 @pytest.mark.parametrize(
@@ -31,5 +31,6 @@ from flight.apps.adcs.ad import TRIAD
     ],
 )
 def test_TRIAD(n1, n2, b1, b2, expected):
-    result = TRIAD(n1, n2, b1, b2)
+    AD = AttitudeDetermination()
+    status, result = AD.TRIAD(n1, n2, b1, b2)
     assert result == pytest.approx(expected, rel=1e-6)
