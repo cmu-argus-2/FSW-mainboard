@@ -301,12 +301,13 @@ class ArgusV2(CubeSat):
 
         self.__state_flags_boot()
         for boot_func in self.__boot_list.values():
+            device = boot_func[0]
             func = boot_func[1]
             args = boot_func[2] if len(boot_func) > 2 else []
             if args:
-                error_list.append(func(args))
+                error_list.append(func(device, args))
             else:
-                error_list.append(func())
+                error_list.append(func(device))
 
         if self.__debug:
             print("Boot Errors:")
@@ -345,7 +346,7 @@ class ArgusV2(CubeSat):
 
         return Errors.NOERROR
 
-    def __power_monitor_boot(self, data) -> list[int]:
+    def __power_monitor_boot(self, device, data) -> list[int]:
         """power_monitor_boot: Boot sequence for the power monitor
 
         :return: Error code if the power monitor failed to initialize
@@ -412,11 +413,11 @@ class ArgusV2(CubeSat):
             bus = data[2]
             power_monitor = ADM1176(bus, address)
 
-            self.__power_monitors[data[0]] = power_monitor
+            device = power_monitor
             self.__device_list.append(power_monitor)
             error_codes.append(Errors.NOERROR)  # Append success code if no error
         except Exception as e:
-            self.__power_monitors[data[0]] = None
+            device = None
             if self.__debug:
                 print(f"Failed to initialize {data[0]} power monitor: {e}")
                 raise e
@@ -424,7 +425,7 @@ class ArgusV2(CubeSat):
 
         return error_codes
 
-    def __imu_boot(self) -> list[int]:
+    def __imu_boot(self, device) -> list[int]:
         """imu_boot: Boot sequence for the IMU
 
         :return: Error code if the IMU failed to initialize
@@ -437,7 +438,7 @@ class ArgusV2(CubeSat):
             imu.enable_feature(BNO_REPORT_UNCAL_MAGNETOMETER)
             imu.enable_feature(BNO_REPORT_UNCAL_GYROSCOPE)
 
-            self.__imu = imu
+            device = imu
             self.__imu_temp_flag = False
             self.__device_list.append(imu)
         except Exception as e:
@@ -448,7 +449,7 @@ class ArgusV2(CubeSat):
 
         return Errors.NOERROR
 
-    def __charger_boot(self) -> list[int]:
+    def __charger_boot(self, device) -> list[int]:
         """charger_boot: Boot sequence for the charger
 
         :return: Error code if the charger failed to initialize
@@ -461,7 +462,7 @@ class ArgusV2(CubeSat):
                 ArgusV2Components.CHARGER_I2C_ADDRESS,
             )
 
-            self.__charger = charger
+            device = charger
             self.__device_list.append(charger)
         except Exception as e:
             if self.__debug:
@@ -605,7 +606,7 @@ class ArgusV2(CubeSat):
 
         return Errors.NOERROR
 
-    def __rtc_boot(self) -> list[int]:
+    def __rtc_boot(self, device) -> list[int]:
         """rtc_boot: Boot sequence for the RTC
 
         :return: Error code if the RTC failed to initialize
@@ -615,7 +616,7 @@ class ArgusV2(CubeSat):
 
             rtc = DS3231(ArgusV2Components.RTC_I2C, ArgusV2Components.RTC_I2C_ADDRESS)
 
-            self.__rtc = rtc
+            device = rtc
             self.__device_list.append(rtc)
         except Exception as e:
             if self.__debug:
@@ -625,7 +626,7 @@ class ArgusV2(CubeSat):
 
         return Errors.NOERROR
 
-    def __sd_card_boot(self) -> list[int]:
+    def __sd_card_boot(self, device) -> list[int]:
         """sd_card_boot: Boot sequence for the SD card"""
         print("SD Card Boot")
         try:
@@ -634,7 +635,7 @@ class ArgusV2(CubeSat):
                 ArgusV2Components.SD_CARD_CS,
                 ArgusV2Components.SD_BAUD,
             )
-            self.__sd_card = sd_card
+            device = sd_card
             self.append_device(sd_card)
         except Exception as e:
             if self.__debug:
@@ -644,7 +645,7 @@ class ArgusV2(CubeSat):
 
         return Errors.NOERROR
 
-    def __vfs_boot(self) -> list[int]:
+    def __vfs_boot(self, device) -> list[int]:
         """vfs_boot: Boot sequence for the VFS"""
         if self.__sd_card is None:
             return Errors.SDCARD_NOT_INITIALIZED
@@ -656,7 +657,7 @@ class ArgusV2(CubeSat):
             path.append(ArgusV2Components.VFS_MOUNT_POINT)
 
             path.append(ArgusV2Components.VFS_MOUNT_POINT)
-            self.__vfs = vfs
+            device = vfs
         except Exception as e:
             if self.__debug:
                 raise e
