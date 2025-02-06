@@ -160,6 +160,7 @@ class AttitudeDetermination:
             gps_pos_eci = np.dot(R_ecef2eci, gps_pos_ecef)
             gps_vel_eci = np.dot(R_ecef2eci, gps_vel_ecef)
             true_pos_eci, true_vel_eci = propagate_orbit(current_time, gps_record_time, gps_pos_eci, gps_vel_eci)
+            print(true_pos_eci, true_vel_eci)
 
         # Get a valid sun position
         sun_status, sun_pos_body, lux_readings = self.read_sun_position()
