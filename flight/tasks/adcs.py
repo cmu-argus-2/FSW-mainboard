@@ -5,7 +5,7 @@ import time
 from apps.adcs.ad import AttitudeDetermination
 from apps.adcs.consts import ModeConst  # , MCMConst, PhysicalConst
 from apps.adcs.modes import Modes
-from apps.telemetry.constants import ADCS_IDX
+from apps.telemetry.constants import ADCS_IDX, CDH_IDX
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
@@ -73,6 +73,7 @@ class Task(TemplateTask):
         self.name = "ADCS"  # Override the name
 
     async def main_task(self):
+        self.log_info(f"STATE : {SM.current_state}")
         if SM.current_state == STATES.STARTUP:
             pass
 
@@ -98,6 +99,8 @@ class Task(TemplateTask):
 
                 # Run Attitude Control
                 self.attitude_control()
+
+                self.AD.state[self.AD.omega_idx] = np.zeros((3,))
 
                 # Log Data
                 # NOTE : Most of these values will be 0 since MEKF is not initialized
@@ -132,8 +135,9 @@ class Task(TemplateTask):
                 if (
                     SM.current_state == STATES.NOMINAL
                     and np.linalg.norm(self.AD.state[self.AD.omega_idx]) > ModeConst.EKF_INIT_TOL
+                    and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
                 ):
-                    # TODO : add an another and condition based on Detumbling failure flag
+
                     SM.switch_to(STATES.DETUMBLING)
 
                 else:
@@ -180,16 +184,16 @@ class Task(TemplateTask):
         Takes light sensor readings as input since they are not stored in AD
         """
         self.log_data[ADCS_IDX.MODE] = int(self.MODE)
-        self.log_data[ADCS_IDX.GYRO_X] = self.AD.state[7]
-        self.log_data[ADCS_IDX.GYRO_Y] = self.AD.state[8]
-        self.log_data[ADCS_IDX.GYRO_Z] = self.AD.state[9]
-        self.log_data[ADCS_IDX.MAG_X] = self.AD.state[13]
-        self.log_data[ADCS_IDX.MAG_Y] = self.AD.state[14]
-        self.log_data[ADCS_IDX.MAG_Z] = self.AD.state[15]
-        self.log_data[ADCS_IDX.SUN_STATUS] = int(self.AD.state[19])
-        self.log_data[ADCS_IDX.SUN_VEC_X] = self.AD.state[16]
-        self.log_data[ADCS_IDX.SUN_VEC_Y] = self.AD.state[17]
-        self.log_data[ADCS_IDX.SUN_VEC_Z] = self.AD.state[18]
+        self.log_data[ADCS_IDX.GYRO_X] = self.AD.state[10]
+        self.log_data[ADCS_IDX.GYRO_Y] = self.AD.state[11]
+        self.log_data[ADCS_IDX.GYRO_Z] = self.AD.state[12]
+        self.log_data[ADCS_IDX.MAG_X] = self.AD.state[16]
+        self.log_data[ADCS_IDX.MAG_Y] = self.AD.state[17]
+        self.log_data[ADCS_IDX.MAG_Z] = self.AD.state[18]
+        self.log_data[ADCS_IDX.SUN_STATUS] = int(self.AD.state[22])
+        self.log_data[ADCS_IDX.SUN_VEC_X] = self.AD.state[19]
+        self.log_data[ADCS_IDX.SUN_VEC_Y] = self.AD.state[20]
+        self.log_data[ADCS_IDX.SUN_VEC_Z] = self.AD.state[21]
         self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = int(self.AD.state[23])
         self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = int(self.AD.state[24])
         self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = int(self.AD.state[25])
@@ -200,11 +204,12 @@ class Task(TemplateTask):
         # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP3] = self.AD.state[30]
         # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP4] = self.AD.state[31]
         # TODO : extract and add coil status
-        self.log_data[ADCS_IDX.COARSE_ATTITUDE_QW] = self.AD.state[3]
-        self.log_data[ADCS_IDX.COARSE_ATTITUDE_QX] = self.AD.state[4]
-        self.log_data[ADCS_IDX.COARSE_ATTITUDE_QY] = self.AD.state[5]
-        self.log_data[ADCS_IDX.COARSE_ATTITUDE_QZ] = self.AD.state[6]
+        self.log_data[ADCS_IDX.COARSE_ATTITUDE_QW] = self.AD.state[6]
+        self.log_data[ADCS_IDX.COARSE_ATTITUDE_QX] = self.AD.state[7]
+        self.log_data[ADCS_IDX.COARSE_ATTITUDE_QY] = self.AD.state[8]
+        self.log_data[ADCS_IDX.COARSE_ATTITUDE_QZ] = self.AD.state[9]
 
         DH.log_data("adcs", self.log_data)
         self.log_info(f"Sun: {self.log_data[8:13]}")
         self.log_info(f"Coarse attitude: {self.log_data[28:32]}")
+        self.log_info(f"Gyro Ang Vel : {self.log_data[2:5]}")

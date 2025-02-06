@@ -50,6 +50,9 @@ class AttitudeDetermination:
     sun_status_idx = slice(22, 23)
     sun_lux_idx = slice(23, 28)
 
+    # Initial State Data
+    state[omega_idx] = 100 * np.ones((3,))
+
     # Time storage
     position_update_frequency = 1  # Hz ~8km
     last_position_update_time = 0
@@ -143,15 +146,20 @@ class AttitudeDetermination:
         """
         # Get a valid GPS position
         gps_valid, gps_record_time, gps_pos_ecef, gps_vel_ecef = self.read_gps()
+        gps_pos_ecef = np.array([-1325.226552563400, 4849.749546663410, -4575.122922351300]) * 1000
+        gps_vel_ecef = np.array([-5.48091694803860, -4.38278368616351, -3.05761643533641]) * 1000
+        gps_valid = 1
+        gps_record_time = int(time.time())
         if not gps_valid:
             print("Failed GPS")
             return 0
         else:
             # Propagate from GPS measurement record
-            R_ecef2eci = ecef_to_eci(self.time)
+            current_time = int(time.time())
+            R_ecef2eci = ecef_to_eci(current_time)
             gps_pos_eci = np.dot(R_ecef2eci, gps_pos_ecef)
             gps_vel_eci = np.dot(R_ecef2eci, gps_vel_ecef)
-            true_pos_eci, true_vel_eci = propagate_orbit(self.time, gps_record_time, gps_pos_eci, gps_vel_eci)
+            true_pos_eci, true_vel_eci = propagate_orbit(current_time, gps_record_time, gps_pos_eci, gps_vel_eci)
 
         # Get a valid sun position
         sun_status, sun_pos_body, lux_readings = self.read_sun_position()
@@ -297,8 +305,9 @@ class AttitudeDetermination:
         """
         status, update_time, omega_body = self.read_gyro()
 
+        self.state[self.omega_idx] = omega_body  # save omega to state
+
         if status:
-            self.state[self.omega_idx] = omega_body
 
             if self.initialized and update_covariance:
                 bias = self.state[self.bias_idx]
