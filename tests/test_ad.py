@@ -32,5 +32,5 @@ from flight.apps.adcs.ad import AttitudeDetermination
 )
 def test_TRIAD(n1, n2, b1, b2, expected):
     AD = AttitudeDetermination()
-    result = AD.TRIAD(n1, n2, b1, b2)
+    status, result = AD.TRIAD(n1, n2, b1, b2)
     assert result == pytest.approx(expected, rel=1e-6)
