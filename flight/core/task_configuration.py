@@ -1,10 +1,12 @@
 from core.states import TASK
 from tasks.adcs import Task as adcs
 from tasks.command import Task as command
-from tasks.comms import Task as comms
+
+# from tasks.comms import Task as comms
 from tasks.eps import Task as eps
 from tasks.gps import Task as gps
-from tasks.imu import Task as imu
+
+# from tasks.imu import Task as imu
 from tasks.obdh import Task as obdh
 from tasks.payload import Task as payload
 from tasks.thermal import Task as thermal
