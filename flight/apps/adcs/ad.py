@@ -63,7 +63,7 @@ class AttitudeDetermination:
     magnetometer_sigma = 0.01  # TODO : characetrize sensor and update
 
     # EKF Covariances
-    P = np.zeros((6, 6))
+    P = 10 * np.ones((6, 6))  # TODO : characterize process noise
     Q = np.eye(6)
     Q[0:3, 0:3] *= gyro_white_noise_sigma**2
     Q[3:6, 3:6] *= gyro_bias_sigma**2
@@ -115,7 +115,6 @@ class AttitudeDetermination:
         - Get the current position from GPS
         - NOTE: Since GPS is a task, this function will read values from C&DH
         """
-        self.time = int(time.time())
         if DH.data_process_exists("gps") and SATELLITE.GPS_AVAILABLE:
 
             # Get last GPS update time and position at that time
@@ -186,17 +185,21 @@ class AttitudeDetermination:
         # Get a gyro reading (just to store in state)
         gyro_status, _, omega_body = self.read_gyro()
 
-        self.time = int(time.time())
-
         # Inertial sun position
-        true_sun_pos_eci = approx_sun_position_ECI(self.time)
+        true_sun_pos_eci = approx_sun_position_ECI(current_time)
 
         # Inertial magnetic field vector
-        true_mag_field_eci = igrf_eci(self.time, true_pos_eci)
+        true_mag_field_eci = igrf_eci(current_time, true_pos_eci)
+
+        # Run TRIAD
+        triad_status, attitude = self.TRIAD(true_sun_pos_eci, true_mag_field_eci, sun_pos_body, mag_field_body)
+
+        if triad_status:  # If TRIAD fails, do not initialize
+            return 0
 
         self.state[self.position_idx] = true_pos_eci
         self.state[self.velocity_idx] = true_vel_eci
-        self.state[self.attitude_idx] = self.TRIAD(true_sun_pos_eci, true_mag_field_eci, sun_pos_body, mag_field_body)
+        self.state[self.attitude_idx] = attitude
         self.state[self.omega_idx] = omega_body
         self.state[self.bias_idx] = np.zeros((3,))
         self.state[self.mag_field_idx] = mag_field_body
@@ -204,21 +207,22 @@ class AttitudeDetermination:
         self.state[self.sun_status_idx] = 1
         self.state[self.sun_lux_idx] = lux_readings
 
-        print(self.state[self.attitude_idx])
-
         self.initialized = True
 
         return 1
 
     def TRIAD(self, n1, n2, b1, b2):
         """
-        Computes the attitude of the sdapcecraft based on two independent vectors provided in the body and inertial frames
+        Computes the attitude of the spacecraft based on two independent vectors provided in the body and inertial frames
         """
 
         n1 = np.array(n1)
         n2 = np.array(n2)
         b1 = np.array(b1)
         b2 = np.array(b2)
+
+        if np.linalg.norm(n1) == 0 or np.linalg.norm(n2) == 0 or np.linalg.norm(b1) == 0 or np.linalg.norm(b2) == 0:
+            return 0, np.zeros((4,))
 
         # Normalize the input vectors
         n1 /= np.linalg.norm(n1)
@@ -241,12 +245,12 @@ class AttitudeDetermination:
         # Determine attitude
         Q = np.dot(T, W.transpose())
 
-        return R_to_quat(Q)
+        return 1, R_to_quat(Q)
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ MEKF PROPAGATION """
     # ------------------------------------------------------------------------------------------------------------------------------------
-    def position_update(self):
+    def position_update(self, current_time):
         """
         - Performs a position update
         - Accesses functions from orbit_propagation.py
@@ -258,62 +262,77 @@ class AttitudeDetermination:
         if not gps_valid:
             # Update GPS based on past estimate of state
             self.state[self.position_idx], self.state[self.velocity_idx] = propagate_orbit(
-                self.time, self.last_position_update_time, self.state[self.position_idx], self.state[self.velocity_idx]
+                current_time, self.last_position_update_time, self.state[self.position_idx], self.state[self.velocity_idx]
             )
         else:
-            if abs(self.time - gps_record_time) < (1 / self.position_update_frequency):
+            if abs(current_time - gps_record_time) < (1 / self.position_update_frequency):
                 # Use current GPS measurement without propagation
-                R_ecef2eci = ecef_to_eci(self.time)
+                R_ecef2eci = ecef_to_eci(current_time)
                 self.state[self.position_idx] = np.dot(R_ecef2eci, gps_pos_ecef)
                 self.state[self.velocity_idx] = np.dot(R_ecef2eci, gps_vel_ecef)
 
             else:
                 # Propagate from GPS measurement record
-                R_ecef2eci = ecef_to_eci(self.time)
+                R_ecef2eci = ecef_to_eci(current_time)
                 gps_pos_eci = np.dot(R_ecef2eci, gps_pos_ecef)
                 gps_vel_eci = np.dot(R_ecef2eci, gps_vel_ecef)
                 self.state[self.position_idx], self.state[self.velocity_idx] = propagate_orbit(
-                    self.time, gps_record_time, gps_pos_eci, gps_vel_eci
+                    current_time, gps_record_time, gps_pos_eci, gps_vel_eci
                 )
 
         # Update last update time
-        self.last_position_update_time = self.time
+        self.last_position_update_time = current_time
 
-    def sun_position_update(self, update_covariance=True):
+    def sun_position_update(self, current_time, update_covariance=True):
         """
         Performs an MEKF update step for Sun position
         """
 
         status, sun_pos_body, lux_readings = self.read_sun_position()
 
+        # Spoofing sun vector
+        status = SUN_VECTOR_STATUS.UNIQUE_DETERMINATION
+        sun_pos_body = np.array([1, 0, 0])
+
         self.state[self.sun_status_idx] = status
         self.state[self.sun_pos_idx] = sun_pos_body
         self.state[self.sun_lux_idx] = lux_readings
 
-        if self.initialized and status and update_covariance:
-            true_sun_pos_eci = approx_sun_position_ECI(self.time)
-            true_sun_pos_eci = true_sun_pos_eci / np.linalg.norm(true_sun_pos_eci)
+        if (
+            self.initialized
+            and update_covariance
+            and status not in [SUN_VECTOR_STATUS.NO_READINGS, SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS]
+        ):
+            true_sun_pos_eci = approx_sun_position_ECI(current_time)
+            true_sun_pos_eci_norm = np.linalg.norm(true_sun_pos_eci)
+            if true_sun_pos_eci_norm == 0:
+                return  # End update if true position is absent
+            else:
+                true_sun_pos_eci = true_sun_pos_eci / true_sun_pos_eci_norm
 
             measured_sun_pos_eci = np.dot(quat_to_R(self.state[self.attitude_idx]), sun_pos_body)
-            measured_sun_pos_eci = measured_sun_pos_eci / np.linalg.norm(measured_sun_pos_eci)
+            measured_sun_pos_eci_norm = np.linalg.norm(measured_sun_pos_eci)
+            if measured_sun_pos_eci_norm == 0:
+                return  # End update if measured position is absent
+            else:
+                measured_sun_pos_eci = measured_sun_pos_eci / measured_sun_pos_eci_norm
 
             # EKF update
             innovation = true_sun_pos_eci - measured_sun_pos_eci
             s_cross = skew(true_sun_pos_eci)
-            Cov_sunsensor = self.sun_sensor_sigma**2 * s_cross @ np.eye(3) @ s_cross.T
-
-            H = np.zeros((6, 6))
+            Cov_sunsensor = self.sun_sensor_sigma**2 * np.dot(np.dot(s_cross, np.eye(3)), s_cross.transpose())
+            H = np.zeros((3, 6))
             H[0:3, 0:3] = -s_cross
 
             self.EKF_update(H, innovation, Cov_sunsensor)
 
-    def gyro_update(self, update_covariance=True):
+    def gyro_update(self, current_time, update_covariance=True):
         """
         Performs an MEKF update step for Gyro
         If update_error_covariance is False, the gyro measurements just update the attitude
         but do not reduce uncertainity in error measurements
         """
-        status, update_time, omega_body = self.read_gyro()
+        status, _, omega_body = self.read_gyro()
 
         self.state[self.omega_idx] = omega_body  # save omega to state
 
@@ -321,7 +340,7 @@ class AttitudeDetermination:
 
             if self.initialized and update_covariance:
                 bias = self.state[self.bias_idx]
-                dt = update_time - self.last_gyro_update_time
+                dt = current_time - self.last_gyro_update_time
 
                 unbiased_omega = omega_body - bias
                 rotvec = unbiased_omega * dt
@@ -340,19 +359,19 @@ class AttitudeDetermination:
 
                 A = np.zeros((12, 12))
                 A[0:6, 0:6] = F
-                A[0:6, 6:12] = G @ self.Q @ G.transpose()
+                A[0:6, 6:12] = np.dot(np.dot(G, self.Q), G.transpose())
                 A[6:12, 6:12] = F.transpose()
                 A = A * dt
 
                 Aexp = np.eye(12) + A
                 Phi = Aexp[6:12, 6:12].transpose()
-                Qdk = Phi @ Aexp[0:6, 6:12]
-                Qdk = Phi @ self.P @ Phi.T + Qdk
-                self.P = Phi @ self.P @ Phi.T + Qdk
+                Qdk = np.dot(Phi, Aexp[0:6, 6:12])
+                Qdk = np.dot(np.dot(Phi, self.P), Phi.transpose()) + Qdk
+                self.P = (np.dot(Phi, self.P), Phi.transpose()) + Qdk
 
-                self.last_gyro_update_time = update_time
+                self.last_gyro_update_time = current_time
 
-    def magnetometer_update(self, update_covariance=True):
+    def magnetometer_update(self, current_time, update_covariance=True):
         """
         Performs an MEKF update step for magnetometer
         """
@@ -361,18 +380,26 @@ class AttitudeDetermination:
 
         if self.initialized and status and update_covariance:  # Update EKF
 
-            true_mag_field_eci = igrf_eci(self.time, self.state[self.position_idx] / 1000)
-            true_mag_field_eci = true_mag_field_eci / np.linalg.norm(true_mag_field_eci)
+            true_mag_field_eci = igrf_eci(current_time, self.state[self.position_idx] / 1000)
+            true_mag_field_eci_norm = np.linalg.norm(true_mag_field_eci)
+            if true_mag_field_eci_norm == 0:
+                return  # End update if true mag field is zeros
+            else:
+                true_mag_field_eci = true_mag_field_eci / true_mag_field_eci_norm
 
             measured_mag_field_eci = np.dot(quat_to_R(self.state[self.attitude_idx]), mag_field_body)
-            measured_mag_field_eci = measured_mag_field_eci / np.linalg.norm(measured_mag_field_eci)
+            measured_mag_field_eci_norm = np.linalg.norm(measured_mag_field_eci)
+            if measured_mag_field_eci_norm == 0:
+                return  # End update if measured mag field is zeros
+            else:
+                measured_mag_field_eci = measured_mag_field_eci / measured_mag_field_eci_norm
 
             # EKF update
             innovation = true_mag_field_eci - measured_mag_field_eci
             s_cross = skew(true_mag_field_eci)
-            Cov_mag_field = self.magnetometer_sigma**2 * s_cross @ np.eye(3) @ s_cross.T
+            Cov_mag_field = self.magnetometer_sigma**2 * np.dot(np.dot(s_cross, np.eye(3)), s_cross.transpose())
 
-            H = H = np.zeros((6, 6))
+            H = np.zeros((3, 6))
             H[0:3, 0:3] = -s_cross
 
             self.EKF_update(H, innovation, Cov_mag_field)
@@ -387,9 +414,9 @@ class AttitudeDetermination:
         """
         - Updates the state estimate based on available information
         """
-        S = H @ self.P @ H.T + R_noise
-        K = self.P @ H.T @ np.linalg.pinv(S, 1e-4)
-        dx = K @ innovation
+        S = np.dot(np.dot(H, self.P), H.transpose()) + R_noise
+        K = np.dot(np.dot(self.P, H.transpose()), np.linalg.inv(S))  # TODO : can do moore-penrose pinv if necessary
+        dx = np.dot(K, innovation)
 
         attitude_correction = rotvec_to_R(dx[:3])
         self.state[self.attitude_idx] = R_to_quat(attitude_correction * quat_to_R(self.state[self.attitude_idx]))
@@ -399,9 +426,6 @@ class AttitudeDetermination:
 
         # Symmetric Joseph update
         Identity = np.eye(6)
-        self.P = (Identity - K @ H) @ self.P @ (Identity - K @ H).T + K @ R_noise @ K.T
-
-
-def is_nan(x):
-    # np.nan is not equal to itself
-    return x != x
+        self.P = np.dot(np.dot((Identity - np.dot(K, H)), self.P), (Identity - np.dot(K, H)).transpose()) + np.dot(
+            np.dot(K, R_noise), K.transpose()
+        )

@@ -92,15 +92,13 @@ class Task(TemplateTask):
             if SM.current_state == STATES.DETUMBLING:
 
                 # Query the Gyro
-                self.AD.gyro_update(update_covariance=False)
+                self.AD.gyro_update(self.time, update_covariance=False)
 
                 # Query Magnetometer
-                self.AD.magnetometer_update(update_covariance=False)
+                self.AD.magnetometer_update(self.time, update_covariance=False)
 
                 # Run Attitude Control
                 self.attitude_control()
-
-                print(self.AD.state[self.AD.omega_idx])
 
                 # Log Data
                 # NOTE : Most of these values will be 0 since MEKF is not initialized
@@ -137,7 +135,6 @@ class Task(TemplateTask):
                     and np.linalg.norm(self.AD.state[self.AD.omega_idx]) > ModeConst.EKF_INIT_TOL
                     and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
                 ):
-                    print(self.AD.state[self.AD.omega_idx])
                     SM.switch_to(STATES.DETUMBLING)
 
                 else:
@@ -152,10 +149,10 @@ class Task(TemplateTask):
 
                     else:
                         # Update Each sensor with covariances
-                        self.AD.position_update()
-                        self.AD.sun_position_update(update_covariance=True)
-                        self.AD.gyro_update(update_covariance=True)
-                        self.AD.magnetometer_update(update_covariance=True)
+                        self.AD.position_update(self.time)
+                        self.AD.sun_position_update(self.time, update_covariance=True)
+                        self.AD.gyro_update(self.time, update_covariance=True)
+                        self.AD.magnetometer_update(self.time, update_covariance=True)
 
                         # Run attitude control
                         self.attitude_control()
@@ -194,11 +191,11 @@ class Task(TemplateTask):
         self.log_data[ADCS_IDX.SUN_VEC_X] = self.AD.state[19]
         self.log_data[ADCS_IDX.SUN_VEC_Y] = self.AD.state[20]
         self.log_data[ADCS_IDX.SUN_VEC_Z] = self.AD.state[21]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = int(self.AD.state[23])
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = int(self.AD.state[24])
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = int(self.AD.state[25])
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = int(self.AD.state[26])
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(self.AD.state[27])
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = int(self.AD.state[23]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = int(self.AD.state[24]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = int(self.AD.state[25]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = int(self.AD.state[26]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(self.AD.state[27]) & 0xFFFF
         # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP1] = self.AD.state[28]
         # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP2] = self.AD.state[29]
         # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP3] = self.AD.state[30]
