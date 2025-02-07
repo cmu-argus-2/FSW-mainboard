@@ -13,7 +13,7 @@ import time
 
 from apps.adcs.frames import ecef_to_eci
 from apps.adcs.igrf import igrf_eci
-from apps.adcs.math import R_to_quat, quat_to_R, rotvec_to_R, skew
+from apps.adcs.math import R_to_quat, quat_to_R, quaternion_multiply, skew
 from apps.adcs.orbit_propagation import propagate_orbit
 from apps.adcs.sun import SUN_VECTOR_STATUS, approx_sun_position_ECI, compute_body_sun_vector_from_lux, read_light_sensors
 from apps.telemetry.constants import GPS_IDX
@@ -151,12 +151,6 @@ class AttitudeDetermination:
         # Get a valid GPS position
         gps_status, gps_record_time, gps_pos_ecef, gps_vel_ecef = self.read_gps()
 
-        # Spoofing GPS
-        gps_pos_ecef = np.array([-1325.226552563400, 4849.749546663410, -4575.122922351300]) * 1000
-        gps_vel_ecef = np.array([-5.48091694803860, -4.38278368616351, -3.05761643533641]) * 1000
-        gps_status = STATUS_OK
-        gps_record_time = int(time.time())
-
         if gps_status == STATUS_FAIL:
             msg = "Failed MEKF init - GPS"
             logger.info(f"[{self.ID}][{self.task_name}] {msg}")
@@ -172,10 +166,6 @@ class AttitudeDetermination:
         # Get a valid sun position
         sun_status, sun_pos_body, lux_readings = self.read_sun_position()
 
-        # Spoofing Sun Status
-        sun_status = SUN_VECTOR_STATUS.UNIQUE_DETERMINATION
-        sun_pos_body = np.array([0.93632918, 0.35112344, 0.0])
-
         if sun_status == SUN_VECTOR_STATUS.NO_READINGS or sun_status == SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS:
             msg = "Failed MEKF init - light sensor"
             logger.info(f"[{self.ID}][{self.task_name}] {msg}")
@@ -183,10 +173,6 @@ class AttitudeDetermination:
 
         # Get a valid magnetometer reading
         magnetometer_status, _, mag_field_body = self.read_magnetometer()
-
-        # Spoofing Magnetometer
-        magnetometer_status = STATUS_OK
-        mag_field_body = np.array([-2190, 15457, 35389])
 
         if magnetometer_status == STATUS_FAIL:
             msg = "Failed MEKF init - Magnetometer"
@@ -301,10 +287,6 @@ class AttitudeDetermination:
 
         status, sun_pos_body, lux_readings = self.read_sun_position()
 
-        # Spoofing sun vector
-        status = SUN_VECTOR_STATUS.UNIQUE_DETERMINATION
-        sun_pos_body = np.array([1, 0, 0])
-
         self.state[self.sun_status_idx] = status
         self.state[self.sun_pos_idx] = sun_pos_body
         self.state[self.sun_lux_idx] = lux_readings
@@ -355,11 +337,16 @@ class AttitudeDetermination:
 
                 unbiased_omega = omega_body - bias
                 rotvec = unbiased_omega * dt
+                rotvec_norm = np.linalg.norm(rotvec)
+                if rotvec_norm == 0:
+                    delta_quat = np.array([1, 0, 0, 0])  # Unit quaternion
+                else:
+                    delta_quat = np.zeros((4,))
+                    delta_quat[0] = np.cos(rotvec_norm / 2)
+                    delta_quat[1:4] = np.sin(rotvec_norm / 2) * rotvec / rotvec_norm
 
-                delta_rotation = rotvec_to_R(rotvec)
-                R_q_prev = quat_to_R(self.state[self.attitude_idx])
-                R_q_next = R_q_prev * delta_rotation
-                self.state[self.attitude_idx] = R_to_quat(R_q_next)
+                self.state[self.attitude_idx] = quaternion_multiply(self.state[self.attitude_idx], delta_quat)
+                R_q_next = quat_to_R(self.state[self.attitude_idx])
 
                 self.last_gyro_update_time = current_time
 
@@ -382,7 +369,7 @@ class AttitudeDetermination:
                     Phi = Aexp[6:12, 6:12].transpose()
                     Qdk = np.dot(Phi, Aexp[0:6, 6:12])
                     Qdk = np.dot(np.dot(Phi, self.P), Phi.transpose()) + Qdk
-                    self.P = (np.dot(Phi, self.P), Phi.transpose()) + Qdk
+                    self.P = np.dot(np.dot(Phi, self.P), Phi.transpose()) + Qdk
 
     def magnetometer_update(self, current_time=int, update_covariance: bool = True) -> None:
         """
@@ -411,7 +398,6 @@ class AttitudeDetermination:
             innovation = true_mag_field_eci - measured_mag_field_eci
             s_cross = skew(true_mag_field_eci)
             Cov_mag_field = self.magnetometer_sigma**2 * np.dot(np.dot(s_cross, np.eye(3)), s_cross.transpose())
-
             H = np.zeros((3, 6))
             H[0:3, 0:3] = -s_cross
 
@@ -419,20 +405,34 @@ class AttitudeDetermination:
 
         if status == STATUS_OK:
             self.state[self.mag_field_idx] = mag_field_body  # store magnetic field reading
-        else:
-            # TODO : decide if we want to continue using the previous B-field or update based on position, igrf and attitude
-            pass
 
     def EKF_update(self, H: np.ndarray, innovation: np.ndarray, R_noise: np.ndarray) -> None:
         """
         - Updates the state estimate based on available information
         """
         S = np.dot(np.dot(H, self.P), H.transpose()) + R_noise
-        K = np.dot(np.dot(self.P, H.transpose()), np.linalg.inv(S))  # TODO : can do moore-penrose pinv if necessary
+
+        # ulab inv declares a matrix singular if det < 5E-2
+        # S is scaled up by 1000 and then down to remove this error
+        # If the singularity persists, we stop the covariance update
+        try:
+            S_inv = 1000 * np.linalg.inv(1000 * S)
+        except ValueError:
+            msg = "Singular Matrix : Stopping covariance update"
+            logger.info(f"[{self.ID}][{self.task_name}] {msg}")
+            return
+        K = np.dot(np.dot(self.P, H.transpose()), S_inv)
         dx = np.dot(K, innovation)
 
-        attitude_correction = rotvec_to_R(dx[:3])
-        self.state[self.attitude_idx] = R_to_quat(attitude_correction * quat_to_R(self.state[self.attitude_idx]))
+        dq_norm = np.linalg.norm(dx[0:3])
+        if dq_norm == 0:
+            attitude_correction = np.array([1, 0, 0, 0])  # Unit quaternion
+        else:
+            attitude_correction = np.zeros((4,))
+            attitude_correction[0] = np.cos(dq_norm / 2)
+            attitude_correction[1:4] = np.sin(dq_norm / 2) * dx[0:3] / dq_norm
+
+        self.state[self.attitude_idx] = quaternion_multiply(self.state[self.attitude_idx], attitude_correction)
 
         gyro_bias_correction = dx[3:]
         self.state[self.bias_idx] = self.state[self.bias_idx] + gyro_bias_correction

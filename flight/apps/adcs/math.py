@@ -67,25 +67,12 @@ def R_to_quat(R: np.ndarray) -> np.ndarray:
     return np.array([w, x, y, z])
 
 
-def rotvec_to_R(vec: np.ndarray) -> np.ndarray:
-    """
-    Converts an axis-angle vector into its 3x3 rotation matrix
-    """
-    theta = np.linalg.norm(vec)
-    ct = np.cos(theta)
-    st = np.sin(theta)
+def quaternion_multiply(q1: np.ndarray, q2: np.ndarray) -> np.ndarray:
+    q = np.zeros((4,))
 
-    unit_vec = vec / theta
-    vx = unit_vec[0]
-    vy = unit_vec[1]
-    vz = unit_vec[2]
+    q[0] = q1[0] * q2[0] - q1[1] * q2[1] - q1[2] * q2[2] - q1[3] * q2[3]
+    q[1] = q1[0] * q2[1] + q1[1] * q2[0] + q1[2] * q2[3] - q1[3] * q2[2]
+    q[2] = q1[0] * q2[2] - q1[1] * q2[3] + q1[2] * q2[0] + q1[3] * q2[1]
+    q[3] = q1[0] * q2[3] + q1[1] * q2[2] - q1[2] * q2[1] + q1[3] * q2[0]
 
-    R = np.array(
-        [
-            [ct + vx**2 * (1 - ct), vx * vy * (1 - ct) - vz * st, vx * vz * (1 - ct) + vy * st],
-            [vx * vy * (1 - ct) + vz * st, ct + vy**2 * (1 - ct), vy * vz * (1 - ct) - vz * st],
-            [vz * vx * (1 - ct) - vy * st, vz * vy * (1 - ct) + vx * st, ct + vz**2 * (1 - ct)],
-        ]
-    )
-
-    return R
+    return q

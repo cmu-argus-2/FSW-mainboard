@@ -101,6 +101,7 @@ class Task(TemplateTask):
 
                 # Check if detumbling has been completed
                 if np.linalg.norm(self.AD.state[self.AD.omega_idx]) <= ModeConst.STABLE_TOL:
+                    print("Initializing MEKF")
                     self.AD.initialize_mekf()
                     SM.switch_to(STATES.NOMINAL)
 
