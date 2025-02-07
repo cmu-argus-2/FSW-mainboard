@@ -108,6 +108,10 @@ class GPS:
                 b"\xff\xfe\x00\x00\x00\x00\xfd\x0d\x0a"
             )
 
+        else:
+            # Module expected to actually exist, send nav_data request to module
+            self.set_to_binary()
+
         super().__init__()
 
     def update(self) -> bool:
