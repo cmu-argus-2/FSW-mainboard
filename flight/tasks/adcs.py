@@ -109,12 +109,27 @@ class Task(TemplateTask):
             # ------------------------------------------------------------------------------------------------------------------------------------
             elif SM.current_state == STATES.LOW_POWER:
 
-                # In Low power, it is assumed that the satellite is about to die.
-                # In that case, the satellite will have to re-initialize the MEKF again
+                if not self.AD.initialized:
+                    self.AD.initialize_mekf()
 
-                # No AD or ACS runs in LOW-POWER
-                if self.AD.initialized:
-                    self.AD.initialized = False
+                else:
+
+                    if self.execution_counter < 4:
+                        # Update Gyro and attitude estimate via propagation
+                        self.AD.gyro_update(self.time, update_covariance=False)
+                        self.execution_counter += 1
+
+                    else:
+                        # Update Each sensor with covariances
+                        self.AD.position_update(self.time)
+                        self.AD.sun_position_update(self.time, update_covariance=True)
+                        self.AD.gyro_update(self.time, update_covariance=True)
+                        self.AD.magnetometer_update(self.time, update_covariance=True)
+
+                        # No Attitude Control in Low-power mode
+
+                        # Reset Execution counter
+                        self.execution_counter = 0
 
             # ------------------------------------------------------------------------------------------------------------------------------------
             # NOMINAL & EXPERIMENT
