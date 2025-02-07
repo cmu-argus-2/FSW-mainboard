@@ -100,10 +100,6 @@ class Task(TemplateTask):
                 # Run Attitude Control
                 self.attitude_control()
 
-                # Log Data
-                # NOTE : Most of these values will be 0 since MEKF is not initialized
-                self.log()
-
                 # Check if detumbling has been completed
                 if np.linalg.norm(self.AD.state[self.AD.omega_idx]) <= ModeConst.STABLE_TOL:
                     self.AD.initialize_mekf()
@@ -128,9 +124,8 @@ class Task(TemplateTask):
 
                 if not self.AD.initialized:
                     self.AD.initialize_mekf()
-                    return
 
-                if (
+                elif (
                     SM.current_state == STATES.NOMINAL
                     and np.linalg.norm(self.AD.state[self.AD.omega_idx]) > ModeConst.EKF_INIT_TOL
                     and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
@@ -141,11 +136,9 @@ class Task(TemplateTask):
                     if self.execution_counter == 0:
                         # TODO : Turn coils off before measurements to allow time for coils to settle
                         self.execution_counter += 1
-                        return
 
                     elif self.execution_counter < 4:
                         self.execution_counter += 1
-                        return  # do nothing
 
                     else:
                         # Update Each sensor with covariances
@@ -157,11 +150,12 @@ class Task(TemplateTask):
                         # Run attitude control
                         self.attitude_control()
 
-                        # Log data
-                        self.log()
-
                         # Reset Execution counter
                         self.execution_counter = 0
+
+            # Log data
+            # NOTE: In detumbling, most of the log will be zeros since very few sensors are queried
+            self.log()
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ Attitude Control Auxiliary Functions """
