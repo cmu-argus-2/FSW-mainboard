@@ -61,16 +61,15 @@ class Task(TemplateTask):
     ## ADCS Modes and switching logic
     MODE = Modes.TUMBLING
 
-    # Attitude Determination
-    AD = AttitudeDetermination()
-    execution_counter = 0
-
     # Sub-task architecture
-    NUM_SUBTASKS = 10
+    execution_counter = 0
 
     def __init__(self, id):
         super().__init__(id)
         self.name = "ADCS"  # Override the name
+
+        # Attitude Determination
+        self.AD = AttitudeDetermination(id, self.name)  # Logs everything from AD within ADCS Task ID
 
     async def main_task(self):
         self.log_info(f"STATE : {SM.current_state}")

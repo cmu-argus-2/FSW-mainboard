@@ -18,6 +18,7 @@ from apps.adcs.orbit_propagation import propagate_orbit
 from apps.adcs.sun import SUN_VECTOR_STATUS, approx_sun_position_ECI, compute_body_sun_vector_from_lux, read_light_sensors
 from apps.telemetry.constants import GPS_IDX
 from core import DataHandler as DH
+from core import logger
 from hal.configuration import SATELLITE
 from ulab import numpy as np
 
@@ -70,6 +71,10 @@ class AttitudeDetermination:
     Q = np.eye(6)
     Q[0:3, 0:3] *= gyro_white_noise_sigma**2
     Q[3:6, 3:6] *= gyro_bias_sigma**2
+
+    def __init__(self, id, task_name):
+        self.ID = id
+        self.task_name = task_name
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ SENSOR READ FUNCTIONS """
@@ -153,7 +158,8 @@ class AttitudeDetermination:
         gps_record_time = int(time.time())
 
         if gps_status == STATUS_FAIL:
-            print("Failed GPS")
+            msg = "Failed MEKF init - GPS"
+            logger.info(f"[{self.ID}][{self.task_name}] {msg}")
             return STATUS_FAIL
         else:
             # Propagate from GPS measurement record
@@ -171,7 +177,8 @@ class AttitudeDetermination:
         sun_pos_body = np.array([0.93632918, 0.35112344, 0.0])
 
         if sun_status == SUN_VECTOR_STATUS.NO_READINGS or sun_status == SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS:
-            print("Failed Sun Status")
+            msg = "Failed MEKF init - light sensor"
+            logger.info(f"[{self.ID}][{self.task_name}] {msg}")
             return STATUS_FAIL
 
         # Get a valid magnetometer reading
@@ -182,7 +189,8 @@ class AttitudeDetermination:
         mag_field_body = np.array([-2190, 15457, 35389])
 
         if magnetometer_status == STATUS_FAIL:
-            print("Failed Magnetometer")
+            msg = "Failed MEKF init - Magnetometer"
+            logger.info(f"[{self.ID}][{self.task_name}] {msg}")
             return STATUS_FAIL
 
         # Get a gyro reading (just to store in state)
