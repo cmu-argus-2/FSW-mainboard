@@ -349,7 +349,7 @@ class AttitudeDetermination:
 
         if status == STATUS_OK:
 
-            if self.initialized and update_covariance:
+            if self.initialized:  # If initialized, also update attitude via propagation
                 bias = self.state[self.bias_idx]
                 dt = current_time - self.last_gyro_update_time
 
@@ -361,26 +361,28 @@ class AttitudeDetermination:
                 R_q_next = R_q_prev * delta_rotation
                 self.state[self.attitude_idx] = R_to_quat(R_q_next)
 
-                F = np.zeros((6, 6))
-                F[0:3, 3:6] = -R_q_next
-
-                G = np.zeros((6, 6))
-                G[0:3, 0:3] = -R_q_next
-                G[3:6, 3:6] = np.eye(3)
-
-                A = np.zeros((12, 12))
-                A[0:6, 0:6] = F
-                A[0:6, 6:12] = np.dot(np.dot(G, self.Q), G.transpose())
-                A[6:12, 6:12] = F.transpose()
-                A = A * dt
-
-                Aexp = np.eye(12) + A
-                Phi = Aexp[6:12, 6:12].transpose()
-                Qdk = np.dot(Phi, Aexp[0:6, 6:12])
-                Qdk = np.dot(np.dot(Phi, self.P), Phi.transpose()) + Qdk
-                self.P = (np.dot(Phi, self.P), Phi.transpose()) + Qdk
-
                 self.last_gyro_update_time = current_time
+
+                if update_covariance:  # if update covariance, update covariance matrices
+
+                    F = np.zeros((6, 6))
+                    F[0:3, 3:6] = -R_q_next
+
+                    G = np.zeros((6, 6))
+                    G[0:3, 0:3] = -R_q_next
+                    G[3:6, 3:6] = np.eye(3)
+
+                    A = np.zeros((12, 12))
+                    A[0:6, 0:6] = F
+                    A[0:6, 6:12] = np.dot(np.dot(G, self.Q), G.transpose())
+                    A[6:12, 6:12] = F.transpose()
+                    A = A * dt
+
+                    Aexp = np.eye(12) + A
+                    Phi = Aexp[6:12, 6:12].transpose()
+                    Qdk = np.dot(Phi, Aexp[0:6, 6:12])
+                    Qdk = np.dot(np.dot(Phi, self.P), Phi.transpose()) + Qdk
+                    self.P = (np.dot(Phi, self.P), Phi.transpose()) + Qdk
 
     def magnetometer_update(self, current_time=int, update_covariance: bool = True) -> None:
         """

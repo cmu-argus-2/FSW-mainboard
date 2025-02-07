@@ -134,9 +134,11 @@ class Task(TemplateTask):
                 else:
                     if self.execution_counter == 0:
                         # TODO : Turn coils off before measurements to allow time for coils to settle
-                        self.execution_counter += 1
+                        pass
 
-                    elif self.execution_counter < 4:
+                    if self.execution_counter < 4:
+                        # Update Gyro and attitude estimate via propagation
+                        self.AD.gyro_update(self.time, update_covariance=False)
                         self.execution_counter += 1
 
                     else:
