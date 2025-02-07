@@ -74,7 +74,7 @@ class AttitudeDetermination:
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ SENSOR READ FUNCTIONS """
     # ------------------------------------------------------------------------------------------------------------------------------------
-    def read_sun_position(self):
+    def read_sun_position(self) -> tuple[int, np.ndarray, np.ndarray]:
         """
         - Gets the measured sun vector from light sensor measurements
         - Accesses functions inside sun.py which in turn call HAL
@@ -84,7 +84,7 @@ class AttitudeDetermination:
 
         return status, sun_pos_body, light_sensor_lux_readings
 
-    def read_gyro(self):
+    def read_gyro(self) -> tuple[int, int, np.ndarray]:
         """
         - Reads the angular velocity from the gyro
         - NOTE : This replaces the data querying portion of the IMU task. Data logging still happens within the ADCS task
@@ -98,7 +98,7 @@ class AttitudeDetermination:
         else:
             return STATUS_FAIL, 0, np.zeros((3,))
 
-    def read_magnetometer(self):
+    def read_magnetometer(self) -> tuple[int, int, np.ndarray]:
         """
         - Reads the magnetic field reading from the IMU
         - This is separate from the gyro measurement to allow gyro to be read faster than magnetometer
@@ -113,7 +113,7 @@ class AttitudeDetermination:
         else:
             return STATUS_FAIL, 0, np.zeros((3,))
 
-    def read_gps(self):
+    def read_gps(self) -> tuple[int, int, np.ndarray, np.ndarray]:
         """
         - Get the current position from GPS
         - NOTE: Since GPS is a task, this function will read values from C&DH
@@ -137,7 +137,7 @@ class AttitudeDetermination:
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ MEKF INITIALIZATION """
     # ------------------------------------------------------------------------------------------------------------------------------------
-    def initialize_mekf(self):
+    def initialize_mekf(self) -> int:
         """
         - Initializes the MEKF using TRIAD and position from GPS
         - This function is not directly written into init to allow multiple retires of initialization
@@ -151,7 +151,7 @@ class AttitudeDetermination:
         gps_vel_ecef = np.array([-5.48091694803860, -4.38278368616351, -3.05761643533641]) * 1000
         gps_status = STATUS_OK
         gps_record_time = int(time.time())
-        print(gps_status)
+
         if gps_status == STATUS_FAIL:
             print("Failed GPS")
             return STATUS_FAIL
@@ -214,7 +214,7 @@ class AttitudeDetermination:
 
         return STATUS_OK
 
-    def TRIAD(self, n1, n2, b1, b2):
+    def TRIAD(self, n1, n2, b1, b2) -> tuple[int, np.ndarray]:
         """
         Computes the attitude of the spacecraft based on two independent vectors provided in the body and inertial frames
         """
@@ -253,7 +253,7 @@ class AttitudeDetermination:
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ MEKF PROPAGATION """
     # ------------------------------------------------------------------------------------------------------------------------------------
-    def position_update(self, current_time):
+    def position_update(self, current_time: int) -> None:
         """
         - Performs a position update
         - Accesses functions from orbit_propagation.py
@@ -286,7 +286,7 @@ class AttitudeDetermination:
         # Update last update time
         self.last_position_update_time = current_time
 
-    def sun_position_update(self, current_time, update_covariance=True):
+    def sun_position_update(self, current_time: int, update_covariance: bool = True) -> None:
         """
         Performs an MEKF update step for Sun position
         """
@@ -329,7 +329,7 @@ class AttitudeDetermination:
 
             self.EKF_update(H, innovation, Cov_sunsensor)
 
-    def gyro_update(self, current_time, update_covariance=True):
+    def gyro_update(self, current_time: int, update_covariance: bool = True) -> None:
         """
         Performs an MEKF update step for Gyro
         If update_error_covariance is False, the gyro measurements just update the attitude
@@ -374,7 +374,7 @@ class AttitudeDetermination:
 
                 self.last_gyro_update_time = current_time
 
-    def magnetometer_update(self, current_time, update_covariance=True):
+    def magnetometer_update(self, current_time=int, update_covariance: bool = True) -> None:
         """
         Performs an MEKF update step for magnetometer
         """
@@ -413,7 +413,7 @@ class AttitudeDetermination:
             # TODO : decide if we want to continue using the previous B-field or update based on position, igrf and attitude
             pass
 
-    def EKF_update(self, H: np.ndarray, innovation: np.ndarray, R_noise: np.ndarray):
+    def EKF_update(self, H: np.ndarray, innovation: np.ndarray, R_noise: np.ndarray) -> None:
         """
         - Updates the state estimate based on available information
         """
