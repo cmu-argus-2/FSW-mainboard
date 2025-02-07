@@ -29,6 +29,9 @@ from ulab import numpy as np
         - Propagating MEKF
 """
 
+STATUS_OK = 1
+STATUS_FAIL = 0
+
 
 class AttitudeDetermination:
 
@@ -39,7 +42,7 @@ class AttitudeDetermination:
         STATE DEFINITION : [position_eci (3x1), velocity_eci (3x1), attitude_body2eci (4x1), angular_rate_body (3x1),
                             gyro_bias (3x1), magnetic_field_body (3x1), sun_pos_body (3x1), sun_status (1x1)]
     """
-    state = np.zeros((28,))  # TODO : only coded for first non-pyramid light sensors
+    state = np.zeros((28,))  # TODO : only coded for non-pyramid light sensors
     position_idx = slice(0, 3)
     velocity_idx = slice(3, 6)
     attitude_idx = slice(6, 10)
@@ -91,9 +94,9 @@ class AttitudeDetermination:
             gyro = SATELLITE.IMU.gyro()
             query_time = int(time.time())
 
-            return 1, query_time, gyro
+            return STATUS_OK, query_time, gyro
         else:
-            return 0, 0, np.zeros((3,))
+            return STATUS_FAIL, 0, np.zeros((3,))
 
     def read_magnetometer(self):
         """
@@ -105,10 +108,10 @@ class AttitudeDetermination:
             mag = SATELLITE.IMU.mag()
             query_time = int(time.time())
 
-            return 1, query_time, mag
+            return STATUS_OK, query_time, mag
 
         else:
-            return 0, 0, np.zeros((3,))
+            return STATUS_FAIL, 0, np.zeros((3,))
 
     def read_gps(self):
         """
@@ -127,9 +130,9 @@ class AttitudeDetermination:
             )
             # TODO : define validity of gps signal
 
-            return 1, gps_record_time, gps_pos_ecef, gps_vel_ecef
+            return STATUS_OK, gps_record_time, gps_pos_ecef, gps_vel_ecef
         else:
-            return 0, 0, np.zeros((3,)), np.zeros((3,))
+            return STATUS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ MEKF INITIALIZATION """
@@ -141,17 +144,17 @@ class AttitudeDetermination:
         - Sets the initialized attribute of the class once done
         """
         # Get a valid GPS position
-        gps_valid, gps_record_time, gps_pos_ecef, gps_vel_ecef = self.read_gps()
+        gps_status, gps_record_time, gps_pos_ecef, gps_vel_ecef = self.read_gps()
 
         # Spoofing GPS
         gps_pos_ecef = np.array([-1325.226552563400, 4849.749546663410, -4575.122922351300]) * 1000
         gps_vel_ecef = np.array([-5.48091694803860, -4.38278368616351, -3.05761643533641]) * 1000
-        gps_valid = 1
+        gps_status = STATUS_OK
         gps_record_time = int(time.time())
-
-        if not gps_valid:
+        print(gps_status)
+        if gps_status == STATUS_FAIL:
             print("Failed GPS")
-            return 0
+            return STATUS_FAIL
         else:
             # Propagate from GPS measurement record
             current_time = int(time.time())
@@ -169,18 +172,18 @@ class AttitudeDetermination:
 
         if sun_status == SUN_VECTOR_STATUS.NO_READINGS or sun_status == SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS:
             print("Failed Sun Status")
-            return 0
+            return STATUS_FAIL
 
         # Get a valid magnetometer reading
         magnetometer_status, _, mag_field_body = self.read_magnetometer()
 
         # Spoofing Magnetometer
-        magnetometer_status = 1
+        magnetometer_status = STATUS_OK
         mag_field_body = np.array([-2190, 15457, 35389])
 
-        if not magnetometer_status:
+        if magnetometer_status == STATUS_FAIL:
             print("Failed Magnetometer")
-            return 0
+            return STATUS_FAIL
 
         # Get a gyro reading (just to store in state)
         gyro_status, _, omega_body = self.read_gyro()
@@ -194,8 +197,8 @@ class AttitudeDetermination:
         # Run TRIAD
         triad_status, attitude = self.TRIAD(true_sun_pos_eci, true_mag_field_eci, sun_pos_body, mag_field_body)
 
-        if triad_status:  # If TRIAD fails, do not initialize
-            return 0
+        if triad_status == STATUS_FAIL:  # If TRIAD fails, do not initialize
+            return STATUS_FAIL
 
         self.state[self.position_idx] = true_pos_eci
         self.state[self.velocity_idx] = true_vel_eci
@@ -209,7 +212,7 @@ class AttitudeDetermination:
 
         self.initialized = True
 
-        return 1
+        return STATUS_OK
 
     def TRIAD(self, n1, n2, b1, b2):
         """
@@ -222,7 +225,7 @@ class AttitudeDetermination:
         b2 = np.array(b2)
 
         if np.linalg.norm(n1) == 0 or np.linalg.norm(n2) == 0 or np.linalg.norm(b1) == 0 or np.linalg.norm(b2) == 0:
-            return 0, np.zeros((4,))
+            return STATUS_FAIL, np.zeros((4,))
 
         # Normalize the input vectors
         n1 /= np.linalg.norm(n1)
@@ -245,7 +248,7 @@ class AttitudeDetermination:
         # Determine attitude
         Q = np.dot(T, W.transpose())
 
-        return 1, R_to_quat(Q)
+        return STATUS_OK, R_to_quat(Q)
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ MEKF PROPAGATION """
@@ -257,9 +260,9 @@ class AttitudeDetermination:
         - Updates the last_position_update time attribute
         - NOTE: This is not an MEKF update. We assume that the estimated position is true
         """
-        gps_valid, gps_record_time, gps_pos_ecef, gps_vel_ecef = self.read_gps()
+        gps_status, gps_record_time, gps_pos_ecef, gps_vel_ecef = self.read_gps()
 
-        if not gps_valid:
+        if gps_status == STATUS_FAIL:
             # Update GPS based on past estimate of state
             self.state[self.position_idx], self.state[self.velocity_idx] = propagate_orbit(
                 current_time, self.last_position_update_time, self.state[self.position_idx], self.state[self.velocity_idx]
@@ -336,7 +339,7 @@ class AttitudeDetermination:
 
         self.state[self.omega_idx] = omega_body  # save omega to state
 
-        if status:
+        if status == STATUS_OK:
 
             if self.initialized and update_covariance:
                 bias = self.state[self.bias_idx]
@@ -378,7 +381,7 @@ class AttitudeDetermination:
 
         status, _, mag_field_body = self.read_magnetometer()
 
-        if self.initialized and status and update_covariance:  # Update EKF
+        if self.initialized and update_covariance and status == STATUS_OK:  # Update EKF
 
             true_mag_field_eci = igrf_eci(current_time, self.state[self.position_idx] / 1000)
             true_mag_field_eci_norm = np.linalg.norm(true_mag_field_eci)
@@ -404,7 +407,7 @@ class AttitudeDetermination:
 
             self.EKF_update(H, innovation, Cov_mag_field)
 
-        if status:
+        if status == STATUS_OK:
             self.state[self.mag_field_idx] = mag_field_body  # store magnetic field reading
         else:
             # TODO : decide if we want to continue using the previous B-field or update based on position, igrf and attitude
