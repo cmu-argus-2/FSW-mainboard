@@ -72,7 +72,7 @@ class AttitudeDetermination:
     Q[0:3, 0:3] *= gyro_white_noise_sigma**2
     Q[3:6, 3:6] *= gyro_bias_sigma**2
 
-    def __init__(self, id, task_name):
+    def __init__(self, id=6, task_name="ADCS"):
         self.ID = id
         self.task_name = task_name
 
