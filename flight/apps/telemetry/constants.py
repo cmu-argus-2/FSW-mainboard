@@ -71,7 +71,6 @@ class ADCS_IDX:
     SUN_VEC_X = const(9)
     SUN_VEC_Y = const(10)
     SUN_VEC_Z = const(11)
-    ECLIPSE = const(12)
     LIGHT_SENSOR_XP = const(13)
     LIGHT_SENSOR_XM = const(14)
     LIGHT_SENSOR_YP = const(15)

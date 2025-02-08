@@ -34,7 +34,6 @@ class Task(TemplateTask):
         "SUN_VEC_X",
         "SUN_VEC_Y",
         "SUN_VEC_Z",
-        "ECLIPSE",
         "LIGHT_SENSOR_XP",
         "LIGHT_SENSOR_XM",
         "LIGHT_SENSOR_YP",
@@ -79,7 +78,7 @@ class Task(TemplateTask):
         else:
 
             if not DH.data_process_exists("adcs"):
-                data_format = "LB" + 6 * "f" + "B" + 3 * "f" + "B" + 9 * "H" + 6 * "B" + 4 * "f" + "B" + 4 * "f"
+                data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f" + "B" + 4 * "f"
                 DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
 
             self.time = int(time.time())
