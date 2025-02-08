@@ -215,6 +215,7 @@ class Task(TemplateTask):
         self.log_data[ADCS_IDX.COARSE_ATTITUDE_QZ] = self.AD.state[9]
 
         DH.log_data("adcs", self.log_data)
-        self.log_info(f"Sun: {self.log_data[8:13]}")
-        self.log_info(f"Coarse attitude: {self.log_data[28:32]}")
-        self.log_info(f"Gyro Ang Vel : {self.log_data[2:5]}")
+        if self.execution_counter == 4:
+            self.log_info(f"Sun: {self.log_data[8:13]}")
+            self.log_info(f"Coarse attitude: {self.log_data[28:32]}")
+            self.log_info(f"Gyro Ang Vel : {self.log_data[2:5]}")
