@@ -78,7 +78,7 @@ class Task(TemplateTask):
         else:
 
             if not DH.data_process_exists("adcs"):
-                data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f" + "B" + 4 * "f"
+                data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f"
                 DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
 
             self.time = int(time.time())
@@ -209,13 +209,11 @@ class Task(TemplateTask):
         # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP3] = self.AD.state[30]
         # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP4] = self.AD.state[31]
         # TODO : extract and add coil status
-        self.log_data[ADCS_IDX.COARSE_ATTITUDE_QW] = self.AD.state[6]
-        self.log_data[ADCS_IDX.COARSE_ATTITUDE_QX] = self.AD.state[7]
-        self.log_data[ADCS_IDX.COARSE_ATTITUDE_QY] = self.AD.state[8]
-        self.log_data[ADCS_IDX.COARSE_ATTITUDE_QZ] = self.AD.state[9]
-
+        self.log_data[ADCS_IDX.ATTITUDE_QW] = self.AD.state[6]
+        self.log_data[ADCS_IDX.ATTITUDE_QX] = self.AD.state[7]
+        self.log_data[ADCS_IDX.ATTITUDE_QY] = self.AD.state[8]
+        self.log_data[ADCS_IDX.ATTITUDE_QZ] = self.AD.state[9]
         DH.log_data("adcs", self.log_data)
-        if self.execution_counter == 4:
-            self.log_info(f"Sun: {self.log_data[8:13]}")
-            self.log_info(f"Coarse attitude: {self.log_data[28:32]}")
+        if self.execution_counter == 0:
+            self.log_info(f"Attitude: {self.log_data[27:31]}")
             self.log_info(f"Gyro Ang Vel : {self.log_data[2:5]}")

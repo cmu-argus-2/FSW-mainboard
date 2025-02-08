@@ -269,13 +269,13 @@ class TelemetryPacker:
                 cls._FRAME[161] = adcs_data[ADCS_IDX.ZM_COIL_STATUS] & 0xFF
 
                 # Coarse attitude QW
-                cls._FRAME[162:166] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.COARSE_ATTITUDE_QW])
+                cls._FRAME[162:166] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.ATTITUDE_QW])
                 # Coarse attitude QX
-                cls._FRAME[166:170] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.COARSE_ATTITUDE_QX])
+                cls._FRAME[166:170] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.ATTITUDE_QX])
                 # Coarse attitude QY
-                cls._FRAME[170:174] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.COARSE_ATTITUDE_QY])
+                cls._FRAME[170:174] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.ATTITUDE_QY])
                 # Coarse attitude QZ
-                cls._FRAME[174:178] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.COARSE_ATTITUDE_QZ])
+                cls._FRAME[174:178] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.ATTITUDE_QZ])
 
             else:
                 logger.warning("No latest ADCS data available")
