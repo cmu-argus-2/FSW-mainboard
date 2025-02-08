@@ -166,7 +166,11 @@ class AttitudeDetermination:
         # Get a valid sun position
         sun_status, sun_pos_body, lux_readings = self.read_sun_position()
 
-        if sun_status == SUN_VECTOR_STATUS.NO_READINGS or sun_status == SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS:
+        if (
+            sun_status == SUN_VECTOR_STATUS.NO_READINGS
+            or sun_status == SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS
+            or SUN_VECTOR_STATUS.ECLIPSE
+        ):
             msg = "Failed MEKF init - light sensor"
             logger.info(f"[{self.ID}][{self.task_name}] {msg}")
             return STATUS_FAIL
@@ -294,7 +298,7 @@ class AttitudeDetermination:
         if (
             self.initialized
             and update_covariance
-            and status not in [SUN_VECTOR_STATUS.NO_READINGS, SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS]
+            and status not in [SUN_VECTOR_STATUS.NO_READINGS, SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS, SUN_VECTOR_STATUS.ECLIPSE]
         ):
             true_sun_pos_eci = approx_sun_position_ECI(current_time)
             true_sun_pos_eci_norm = np.linalg.norm(true_sun_pos_eci)

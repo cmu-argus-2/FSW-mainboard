@@ -101,9 +101,7 @@ class Task(TemplateTask):
 
                 # Check if detumbling has been completed
                 if np.linalg.norm(self.AD.state[self.AD.omega_idx]) <= ModeConst.STABLE_TOL:
-                    print("Initializing MEKF")
-                    self.AD.initialize_mekf()
-                    SM.switch_to(STATES.NOMINAL)
+                    self.MODE = Modes.STABLE
 
             # ------------------------------------------------------------------------------------------------------------------------------------
             # LOW POWER
@@ -145,7 +143,7 @@ class Task(TemplateTask):
                     and np.linalg.norm(self.AD.state[self.AD.omega_idx]) > ModeConst.EKF_INIT_TOL
                     and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
                 ):
-                    SM.switch_to(STATES.DETUMBLING)
+                    self.MODE = Modes.TUMBLING
 
                 else:
                     if self.execution_counter == 0:
