@@ -55,7 +55,7 @@ class Task(TemplateTask):
         "COARSE_ATTITUDE_QZ",
     ]"""
 
-    log_data = [0] * 37
+    log_data = [0] * 31
 
     ## ADCS Modes and switching logic
     MODE = Modes.TUMBLING
@@ -71,7 +71,6 @@ class Task(TemplateTask):
         self.AD = AttitudeDetermination(id, self.name)  # Logs everything from AD within ADCS Task ID
 
     async def main_task(self):
-        self.log_info(f"STATE : {SM.current_state}")
         if SM.current_state == STATES.STARTUP:
             pass
 
@@ -215,5 +214,4 @@ class Task(TemplateTask):
         self.log_data[ADCS_IDX.ATTITUDE_QZ] = self.AD.state[9]
         DH.log_data("adcs", self.log_data)
         if self.execution_counter == 0:
-            self.log_info(f"Attitude: {self.log_data[27:31]}")
-            self.log_info(f"Gyro Ang Vel : {self.log_data[2:5]}")
+            self.log_info(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z+1]}")
