@@ -38,6 +38,7 @@ class SUN_VECTOR_STATUS:
     MISSING_FULL_X_AXIS_READING = 0x9
     MISSING_FULL_Y_AXIS_READING = 0xA
     MISSING_FULL_Z_AXIS_READING = 0xB
+    ECLIPSE = 0xC
 
 
 def _read_light_sensor(face):
@@ -109,6 +110,10 @@ def compute_body_sun_vector_from_lux(I_vec):
         status = SUN_VECTOR_STATUS.MISSING_YM_READING
     elif num_valid_readings == 5:  # All readings are valid and unique determination is possible
         status = SUN_VECTOR_STATUS.UNIQUE_DETERMINATION
+
+    if in_eclipse(I_vec, THRESHOLD_ILLUMINATION_LUX):
+        status = SUN_VECTOR_STATUS.ECLIPSE
+        return status, sun_body
 
     i_vec = I_vec.copy()
 
