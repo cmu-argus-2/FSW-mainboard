@@ -1,18 +1,17 @@
 # Attitude Determination and Control (ADC) task
 
 import time
-from ulab import numpy as np
 
+from apps.adcs.acs import mcm_coil_allocator, spin_stabilizing_controller, sun_pointed_controller
 from apps.adcs.ad import AttitudeDetermination
-from apps.adcs.acs import spin_stabilizing_controller, sun_pointed_controller
 from apps.adcs.consts import ModeConst  # , MCMConst, PhysicalConst
-from apps.telemetry.constants import ADCS_IDX, CDH_IDX
 from apps.adcs.modes import Modes
-
+from apps.telemetry.constants import ADCS_IDX, CDH_IDX
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
+from ulab import numpy as np
 
 """
     ASSUMPTIONS :
@@ -179,34 +178,36 @@ class Task(TemplateTask):
         """
         Performs attitude control on the spacecraft
         """
-        
+
         # Decide which controller to choose
-        if self.MODE in [Modes.TUMBLING , Modes.STABLE]:  # B-cross controller
-            
+        if self.MODE in [Modes.TUMBLING, Modes.STABLE]:  # B-cross controller
+
             # Get sensor measurements
             omega_unbiased = self.AD.state[self.AD.omega_idx] - self.AD.state[self.AD.omega_idx]
             mag_field_body = self.AD.state[self.AD.mag_field_idx]
 
             if np.linalg.norm(mag_field_body) == 0:  # Stop ACS if the field value is invalid
-                return 
-            
-            # Get MCM voltage allocations
-            mcm_allocations = spin_stabilizing_controller(omega_unbiased, mag_field_body)
+                return
 
-        else: # Sun-pointed controller
-            
+            # Get MCM voltage allocations
+            control_dipole_moment = spin_stabilizing_controller(omega_unbiased, mag_field_body)
+
+        else:  # Sun-pointed controller
+
             # Get measurements
             sun_pos_body = self.AD.state[self.AD.sun_pos_idx]
+            omega_unbiased = self.AD.state[self.AD.omega_idx] - self.AD.state[self.AD.omega_idx]
             mag_field_body = self.AD.state[self.AD.mag_field_idx]
 
-            if np.linalg.norm(mag_field_body) == 0 or np.linlag.norm(sun_pos_body) == 0: # Stop ACS if either field is invalid
+            if np.linalg.norm(mag_field_body) == 0 or np.linlag.norm(sun_pos_body) == 0:  # Stop ACS if either field is invalid
                 return
-            
+
             # Get MCM voltage allocations
-            mcm_allocations = sun_pointed_controller(sun_pos_body, mag_field_body)
+            control_dipole_moment = sun_pointed_controller(sun_pos_body, omega_unbiased, mag_field_body)
 
         # Energize coils
         # TODO : get coil status for logging
+        self.coil_status = mcm_coil_allocator(control_dipole_moment)
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ LOGGING """

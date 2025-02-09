@@ -31,6 +31,27 @@ class PhysicalConst:
         ]
     )
 
+    # Compute Major axis of inertia
+    _eigvals, _eigvecs = np.linalg.eig(INERTIA_MAT)
+    _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
+
+    INERTIA_MAJOR_DIR = _unscaled_axis / np.linalg.norm(_unscaled_axis)
+    if INERTIA_MAJOR_DIR[np.argmax(np.abs(INERTIA_MAJOR_DIR))] < 0:
+        INERTIA_MAJOR_DIR = -INERTIA_MAJOR_DIR
+
+
+class ControllerConst:
+    """
+    Constants associated with Controller Behavior
+    """
+
+    # Spin-stabilized Constants
+    OMEGA_MAG_TARGET = 0.1125  # Target angular velocity along major axis
+    MOMENTUM_TARGET = np.linalg.norm(np.dot(PhysicalConst.INERTIA_MAT, PhysicalConst.INERTIA_MAJOR_DIR * OMEGA_MAG_TARGET))
+    SPIN_STABILIZING_GAIN = 1.0e06
+
+    # Sun Pointing Constants
+
 
 class MagnetorquerConst:
     """
@@ -68,11 +89,16 @@ class MCMConst:
     SPIN_STABILIZING_GAIN = 1.0e06
     # SUN_POINTING_GAIN = 5.0e05
 
-    AXIS_FACE_INDICES = {
+    """ AXIS_FACE_INDICES = {
         "X": {"P": 0, "M": 1},
         "Y": {"P": 2, "M": 3},
         "Z": {"P": 4, "M": 5},
-    }
+    } """
+
+    N_MCM = 6
+    MCM_FACES = ["XP", "XM", "YP", "YM", "ZP", "ZM"]
+    MCM_INDICES = [0, 1, 2, 3, 4, 5]
+    AXIS_FACE_INDEX_MAP = {"XP": 0, "XM": 1, "YP": 2, "YM": 3, "ZP": 4, "ZM": 5}
 
     ALLOC_MAT = np.array(
         [
