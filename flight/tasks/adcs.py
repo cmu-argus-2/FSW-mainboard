@@ -1,16 +1,18 @@
 # Attitude Determination and Control (ADC) task
 
 import time
+from ulab import numpy as np
 
 from apps.adcs.ad import AttitudeDetermination
+from apps.adcs.acs import spin_stabilizing_controller, sun_pointed_controller
 from apps.adcs.consts import ModeConst  # , MCMConst, PhysicalConst
-from apps.adcs.modes import Modes
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX
+from apps.adcs.modes import Modes
+
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
-from ulab import numpy as np
 
 """
     ASSUMPTIONS :
@@ -178,7 +180,34 @@ class Task(TemplateTask):
         """
         Performs attitude control on the spacecraft
         """
-        pass
+        
+        # Decide which controller to choose
+        if self.MODE in [Modes.TUMBLING , Modes.STABLE]:  # B-cross controller
+            
+            # Get sensor measurements
+            omega_unbiased = self.AD.state[self.AD.omega_idx] - self.AD.state[self.AD.omega_idx]
+            mag_field_body = self.AD.state[self.AD.mag_field_idx]
+
+            if np.linalg.norm(mag_field_body) == 0:  # Stop ACS if the field value is invalid
+                return 
+            
+            # Get MCM voltage allocations
+            mcm_allocations = spin_stabilizing_controller(omega_unbiased, mag_field_body)
+
+        else: # Sun-pointed controller
+            
+            # Get measurements
+            sun_pos_body = self.AD.state[self.AD.sun_pos_idx]
+            mag_field_body = self.AD.state[self.AD.mag_field_idx]
+
+            if np.linalg.norm(mag_field_body) == 0 or np.linlag.norm(sun_pos_body) == 0: # Stop ACS if either field is invalid
+                return
+            
+            # Get MCM voltage allocations
+            mcm_allocations = sun_pointed_controller(sun_pos_body, mag_field_body)
+
+        # Energize coils
+        # TODO : get coil status for logging
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ LOGGING """
