@@ -57,6 +57,7 @@ class Task(TemplateTask):
     ]"""
 
     log_data = [0] * 31
+    coil_status = [0] * 6
 
     ## ADCS Modes and switching logic
     MODE = Modes.TUMBLING
@@ -237,7 +238,12 @@ class Task(TemplateTask):
         # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP2] = self.AD.state[29]
         # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP3] = self.AD.state[30]
         # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP4] = self.AD.state[31]
-        # TODO : extract and add coil status
+        self.log_data[ADCS_IDX.XP_COIL_STATUS] = self.coil_status[0]
+        self.log_data[ADCS_IDX.XM_COIL_STATUS] = self.coil_status[1]
+        self.log_data[ADCS_IDX.YP_COIL_STATUS] = self.coil_status[2]
+        self.log_data[ADCS_IDX.YM_COIL_STATUS] = self.coil_status[3]
+        self.log_data[ADCS_IDX.ZP_COIL_STATUS] = self.coil_status[4]
+        self.log_data[ADCS_IDX.ZM_COIL_STATUS] = self.coil_status[5]
         self.log_data[ADCS_IDX.ATTITUDE_QW] = self.AD.state[6]
         self.log_data[ADCS_IDX.ATTITUDE_QX] = self.AD.state[7]
         self.log_data[ADCS_IDX.ATTITUDE_QY] = self.AD.state[8]

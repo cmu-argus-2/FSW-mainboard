@@ -68,8 +68,9 @@ def mcm_coil_allocator(u: np.ndarray) -> np.ndarray:
         coil_status = coil_status + [EP_status, EM_status]
 
     # Compute Coil Voltages based on Allocation matrix and target input
-    u_volt = np.dot(mcm_alloc, u)
+    u_throttle = np.dot(mcm_alloc, u)
+    u_throttle = np.clip(u_throttle, -1, 1)
 
-    SATELLITE.APPLY_MAGNETIC_CONTROL(u_volt)
+    SATELLITE.APPLY_MAGNETIC_CONTROL(u_throttle)
 
     return coil_status
