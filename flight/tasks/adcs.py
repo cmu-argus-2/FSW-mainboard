@@ -95,7 +95,6 @@ class Task(TemplateTask):
                 self.AD.magnetometer_update(self.time, update_covariance=False)
 
                 # Run Attitude Control
-                print("Running ACS")
                 self.attitude_control()
 
                 # Check if detumbling has been completed
