@@ -16,7 +16,6 @@ if platform.node() == "raspberrypi":
 
 
 def copy_folder(source_folder, destination_folder, show_identical_files=True):
-
     for root, dirs, files in os.walk(source_folder):
         for file in files:
             source_path = os.path.join(root, file)
@@ -87,5 +86,8 @@ if __name__ == "__main__":
 
     print("SOURCE FOLDER: ", source_folder)
     print("DESTINATION FOLDER: ", destination_folder)
+    if not os.path.exists(destination_folder):
+        print(f"Error: Destination folder '{destination_folder}' does not exist. Is the board connected?")
+        exit(1)
 
     copy_folder(source_folder, destination_folder, show_identical_files=True)

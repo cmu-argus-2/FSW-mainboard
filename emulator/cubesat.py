@@ -29,9 +29,12 @@ class CubeSat:
         self._board_power_monitor = None
         self._jetson_power_monitor = None
         self._imu = None
+        self._imu_temp_flag = False
         self._charger = None
+        self._power_monitors = {}
         self._torque_drivers = {}
         self._light_sensors = {}
+        self._fuel_gauge = None
         self._rtc = None
         self._radio = None
         self._sd_card = None
@@ -89,6 +92,13 @@ class CubeSat:
         return self._gps is not None
 
     @property
+    def POWER_MONITORS(self):
+        """POWER_MONITORS: Returns the power monitor object
+        :return: object or None
+        """
+        return self._power_monitors
+
+    @property
     def BOARD_POWER_MONITOR(self):
         """BOARD_POWER_MONITOR: Returns the board power monitor object
         :return: object or None
@@ -131,6 +141,13 @@ class CubeSat:
         return self._imu is not None
 
     @property
+    def IMU_TEMPERATURE_AVAILABLE(self) -> bool:
+        """IMU_AVAILABLE: Returns True if the IMU is available
+        :return: bool
+        """
+        return self._imu_temp_flag
+
+    @property
     def CHARGER(self):
         """CHARGER: Returns the charger object
         :return: object or None
@@ -159,6 +176,13 @@ class CubeSat:
         return self._torque_xp_power_monitor is not None
 
     @property
+    def FUEL_GAUGE(self):
+        """FUEL_GAUGE: Returns the fuel gauge object
+        :return: object or None
+        """
+        return self._fuel_gauge
+
+    @property
     def TORQUE_DRIVERS(self):
         """Returns a dictionary of torque drivers with the direction as the key (e.g. 'XP', 'XM', 'YP', 'YM', 'ZM')"""
         return self._torque_drivers
@@ -169,7 +193,7 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'XM', etc.)
         :return: bool - True if the driver exists and is not None, False otherwise.
         """
-        return dir in self._torque_drivers and self._torque_drivers[dir] is not None
+        return self._torque_drivers.exist(dir) and self._torque_drivers[dir] is not None
 
     @property
     def LIGHT_SENSORS(self):

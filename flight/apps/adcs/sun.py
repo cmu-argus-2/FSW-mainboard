@@ -9,15 +9,20 @@ is in an eclipse based on the sensor readings.
 Argus posseses 5 light sensors, 1 on each of the x+, x-, y+, y-, and z- faces of the
 satellite, and a pyramid of 4 light sensors angled at 45 degrees on the z+ face.
 
+The accuracy of the computed sun vector directly affects the performance of the ADCS system,
+both for the mode transitions, sun pointing controller accuracy, and attitude determination.
+
 """
 
 from core import logger
 from hal.configuration import SATELLITE
+from micropython import const
 from ulab import numpy as np
 
-MAX_RANGE = 117000  # OPT4001
-NUM_LIGHT_SENSORS = 5
-ERROR_LUX = -1
+MAX_RANGE = const(117000)  # OPT4001
+THRESHOLD_ILLUMINATION_LUX = const(3000)
+NUM_LIGHT_SENSORS = const(5)
+ERROR_LUX = const(-1)
 
 
 class SUN_VECTOR_STATUS:
@@ -33,6 +38,7 @@ class SUN_VECTOR_STATUS:
     MISSING_FULL_X_AXIS_READING = 0x9
     MISSING_FULL_Y_AXIS_READING = 0xA
     MISSING_FULL_Z_AXIS_READING = 0xB
+    ECLIPSE = 0xC
 
 
 def _read_light_sensor(face):
@@ -105,6 +111,10 @@ def compute_body_sun_vector_from_lux(I_vec):
     elif num_valid_readings == 5:  # All readings are valid and unique determination is possible
         status = SUN_VECTOR_STATUS.UNIQUE_DETERMINATION
 
+    if in_eclipse(I_vec, THRESHOLD_ILLUMINATION_LUX):
+        status = SUN_VECTOR_STATUS.ECLIPSE
+        return status, sun_body
+
     i_vec = I_vec.copy()
 
     for i in range(len(I_vec)):  # if ERROR_LUX replace with 0 to cancel
@@ -127,7 +137,7 @@ def compute_body_sun_vector_from_lux(I_vec):
     return status, sun_body
 
 
-def in_eclipse(raw_readings, threshold_lux_illumination=1000):
+def in_eclipse(raw_readings, threshold_lux_illumination=THRESHOLD_ILLUMINATION_LUX):
     """
     Check the eclipse conditions based on the lux readings
 

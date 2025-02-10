@@ -1,12 +1,9 @@
 from time import struct_time
 
-from hal.drivers.middleware.generic_driver import Driver
 
-
-class RTC(Driver):
+class RTC:
     def __init__(self, date_input: struct_time) -> None:
         self.datetime = date_input
-        super().__init__(None)
 
     def datetime(self):
         return self.datetime

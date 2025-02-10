@@ -20,139 +20,51 @@ See documentation for a full description of each commands.
 Author: Ibrahima S. Sow
 """
 
+from apps.command import ResponseQueue
 from apps.command.commands import (
-    DISABLE_TASK,
-    DOWNLINK_MISSION_DATA,
-    ENABLE_TASK,
-    REQUEST_FILE,
+    FORCE_REBOOT,
+    REQUEST_FILE_METADATA,
+    REQUEST_FILE_PKT,
     REQUEST_IMAGE,
-    REQUEST_STORAGE_STATUS_MAINBOARD,
-    REQUEST_STORAGE_STATUS_PAYLOAD,
-    REQUEST_TELEMETRY,
+    REQUEST_TM_HAL,
+    REQUEST_TM_HEARTBEAT,
+    REQUEST_TM_PAYLOAD,
+    REQUEST_TM_STORAGE,
     SCHEDULE_OD_EXPERIMENT,
-    STOP_STREAM_TELEMETRY,
-    STREAM_TELEMETRY,
-    SWITCH_TO_AUTONOMOUS_MODE,
-    SWITCH_TO_OVERRIDE_MODE,
-    TURN_OFF_DEVICE,
-    TURN_ON_DEVICE,
+    SWITCH_TO_STATE,
+    TURN_OFF_PAYLOAD,
+    UPLINK_ORBIT_REFERENCE,
+    UPLINK_TIME_REFERENCE,
 )
+from apps.command.constants import CMD_ID
 from core import logger
 
+# See commands.py for function definitions (command functions and eventual preconditions)
 # A command is defined as a tuple with the following elements:
 # - ID: A unique identifier for the command
 # - Precondition: A function that checks if the command can be executed
 # - Arguments: A list of parameters that the command accepts
 # - Execute: The function that executes the command
 
-# See commands.py for function definitions (command functions and eventual preconditions)
-
 COMMANDS = [
-    # REQUEST_TELEMETRY (no precondition needed)
+    (CMD_ID.FORCE_REBOOT, lambda: True, [], FORCE_REBOOT),
+    (CMD_ID.SWITCH_TO_STATE, lambda: True, ["target_state_id", "time_in_state"], SWITCH_TO_STATE),
+    (CMD_ID.UPLINK_TIME_REFERENCE, lambda: True, ["time_in_state"], UPLINK_TIME_REFERENCE),
+    (CMD_ID.UPLINK_ORBIT_REFERENCE, lambda: True, ["time_in_state", "orbital_parameters"], UPLINK_ORBIT_REFERENCE),
+    (CMD_ID.TURN_OFF_PAYLOAD, lambda: True, [], TURN_OFF_PAYLOAD),
+    (CMD_ID.SCHEDULE_OD_EXPERIMENT, lambda: True, [], SCHEDULE_OD_EXPERIMENT),
+    (CMD_ID.REQUEST_TM_HEARTBEAT, lambda: True, [], REQUEST_TM_HEARTBEAT),
+    (CMD_ID.REQUEST_TM_HAL, lambda: True, [], REQUEST_TM_HAL),
+    (CMD_ID.REQUEST_TM_STORAGE, lambda: True, [], REQUEST_TM_STORAGE),
+    (CMD_ID.REQUEST_TM_PAYLOAD, lambda: True, [], REQUEST_TM_PAYLOAD),
     (
-        0x01,
-        lambda: True,
-        [],
-        REQUEST_TELEMETRY,
+        CMD_ID.REQUEST_FILE_METADATA,
+        lambda file_tag, requested_time: True,
+        ["file_tag", "requested_time"],
+        REQUEST_FILE_METADATA,
     ),
-    # STREAM_TELEMETRY (requires NOMINAL, DOWNLINK, SAFE state)
-    (
-        0x02,
-        lambda: True,  # TODO: Add a state precondition
-        ["time_duration", "tm_type"],
-        STREAM_TELEMETRY,
-    ),
-    # STOP_STREAM_TELEMETRY (requires TM streaming mode)
-    (
-        0x03,
-        lambda: True,  # TODO: Add a condition to check if telemetry is being streamed
-        [],
-        STOP_STREAM_TELEMETRY,
-    ),
-    # SWITCH_TO_OVERRIDE_MODE (requires autonomous mode)
-    (
-        0x04,
-        lambda: True,  # TODO: Add a condition to check if the state is in autonomous mode
-        ["target_state"],
-        SWITCH_TO_OVERRIDE_MODE,
-    ),
-    # SWITCH_TO_AUTONOMOUS_MODE (requires override mode)
-    (
-        0x05,
-        lambda: True,  # TODO: Add a condition to check if the state is in override mode
-        ["initial_state"],
-        SWITCH_TO_AUTONOMOUS_MODE,
-    ),
-    # TURN_OFF_DEVICE (requires device to be ON)
-    (
-        0x06,
-        lambda device_id: True,  # TODO Add a condition to check if the device is ON
-        ["device_id"],
-        TURN_OFF_DEVICE,
-    ),
-    # TURN_ON_DEVICE (requires device to be OFF)
-    (
-        0x07,
-        lambda device_id: True,  # TODO Add a condition to check if the device is OFF
-        ["device_id"],
-        TURN_ON_DEVICE,
-    ),
-    # REQUEST_FILE (requires file process to exist)
-    (
-        0x08,
-        lambda tag: True,  # TODO Add a condition to check if the file process exists
-        ["file_tag", "time_window"],
-        REQUEST_FILE,
-    ),
-    # REQUEST_IMAGE (requires presence of images)
-    (
-        0x09,
-        lambda: True,  # TODO Add a condition to check if images are available
-        ["time_window"],
-        REQUEST_IMAGE,
-    ),
-    # REQUEST_STORAGE_STATUS_MAINBOARD (no precondition needed)
-    (
-        0x0A,
-        lambda: True,
-        [],
-        REQUEST_STORAGE_STATUS_MAINBOARD,
-    ),
-    # REQUEST_STORAGE_STATUS_PAYLOAD (turn on payload if needed)
-    (
-        0x0B,
-        lambda: True,  # TODO Add a condition to check if the payload is ON OR
-        ["turn_on_payload"],
-        REQUEST_STORAGE_STATUS_PAYLOAD,
-    ),
-    # ENABLE_TASK (requires Task ID to exist)
-    (
-        0x0C,
-        lambda task_id: True,  # TODO Add a condition to check if the task exists
-        ["task_id", "state_flags"],
-        ENABLE_TASK,
-    ),
-    # DISABLE_TASK (requires Task ID to exist)
-    (
-        0x0D,
-        lambda task_id: True,  # TODO Add a condition to check if the task exists
-        ["task_id", "state_flags"],
-        DISABLE_TASK,
-    ),
-    # SCHEDULE_OD_EXPERIMENT (requires power available)
-    (
-        0x0E,
-        lambda: True,  # TODO Add a condition to check if enough power is available from EPS or add it to the task list
-        ["after_ground_pass"],
-        SCHEDULE_OD_EXPERIMENT,
-    ),
-    # DOWNLINK_MISSION_DATA (no precondition needed)
-    (
-        0x0F,
-        lambda: True,
-        [],
-        DOWNLINK_MISSION_DATA,
-    ),
+    (CMD_ID.REQUEST_FILE_PKT, lambda file_tag: True, ["file_tag"], REQUEST_FILE_PKT),
+    (CMD_ID.REQUEST_IMAGE, lambda: True, [], REQUEST_IMAGE),
 ]
 
 
@@ -173,35 +85,41 @@ def process_command(cmd_id, *args):
             # Verify precondition
             if not precondition():
                 logger.error("Cmd: Precondition failed")
-                return CommandProcessingStatus.PRECONDITION_FAILED
+                return CommandProcessingStatus.PRECONDITION_FAILED, [cmd_id]
 
             # Verify the argument count
             if len(args) != len(arg_list):
                 print(arg_list)
                 logger.error(f"Cmd: Argument count mismatch for command ID {cmd_id}")
-                return CommandProcessingStatus.ARGUMENT_COUNT_MISMATCH
+                return CommandProcessingStatus.ARGUMENT_COUNT_MISMATCH, [cmd_id]
 
             # Execute the command function with arguments
             try:
-                execute(*args)
-                return CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS
+                # TODO when format of args is decided on, unpack byte string:
+                # command_arguments = unpack_command_arguments(cmd_id, *args)
+                response_args = execute(*args)
+                return CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS, [cmd_id] + response_args
             except Exception as e:
                 logger.error(f"Cmd: Command execution failed: {e}")
                 # Optionally log stack trace to a file for deeper diagnostics
-                return CommandProcessingStatus.COMMAND_EXECUTION_FAILED
+                return CommandProcessingStatus.COMMAND_EXECUTION_FAILED, [cmd_id]
 
     logger.warning("Cmd: Unknown command ID")
-    return CommandProcessingStatus.UNKNOWN_COMMAND_ID
+    return CommandProcessingStatus.UNKNOWN_COMMAND_ID, [cmd_id]
 
 
-def handle_command_execution_status(status):
+def handle_command_execution_status(status, response_args):
     # TODO: Implement response handling based on the command execution status
     # If the command execution was successful, send a success response
     # If the command execution failed, send an error response with the error code
 
+    ResponseQueue.overwrite_response(status, response_args)
+
     if status == CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS:
         logger.info("Command execution successful")
-        # TODO build success response
+        # TODO build success response - ACK
+
     else:  # All other cases are errors
-        # TODO build error response
+        # TODO build error response - Error messages
+        logger.info(f"Command execution not successful due to error: {status}")
         pass

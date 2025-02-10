@@ -3,6 +3,7 @@ import filecmp
 import os
 import platform
 import shutil
+import sys
 
 ROOT_PATH = os.getcwd()
 
@@ -12,6 +13,14 @@ if platform.system() == "Darwin":
 if platform.node() == "raspberrypi":
     MPY_CROSS_NAME = "mpy-cross-rpi"
 MPY_CROSS_PATH = f"{os.getcwd()}/build_tools/{MPY_CROSS_NAME}"
+
+if platform.system() == "Windows":
+    MPY_CROSS_PATH = shutil.which("mpy-cross")
+    if MPY_CROSS_PATH:
+        print(f"mpy-cross found at {MPY_CROSS_PATH}")
+    else:
+        print("mpy-cross not found, please install with 'pip install mpy_cross'")
+        sys.exit(-1)
 
 
 def check_directory_location(source_folder):
@@ -37,7 +46,7 @@ def create_build(source_folder):
             if os.path.relpath(root, source_folder).startswith("build/"):
                 continue
 
-            if file.endswith(".py"):
+            if file.endswith(".py") or file.endswith(".mpy"):
                 source_path = os.path.join(root, file)
 
                 build_path = os.path.join(build_folder, os.path.relpath(source_path, source_folder))
@@ -59,13 +68,14 @@ def create_build(source_folder):
                     # Extract file name
                     file_name = os.path.basename(file)
 
-                try:
-                    os.system(f"{MPY_CROSS_PATH} {file_name} -O3")
-                except Exception as e:
-                    print(f"Error occurred while compiling {file_name}: {str(e)}")
+                if file_name.endswith(".py"):
+                    try:
+                        os.system(f"{MPY_CROSS_PATH} {file_name} -O3")
+                    except Exception as e:
+                        print(f"Error occurred while compiling {file_name}: {str(e)}")
 
-                # Delete file python file once it has been compiled
-                os.remove(file_name)
+                    # Delete file python file once it has been compiled
+                    os.remove(file_name)
 
                 os.chdir(current_dir)
 
@@ -113,7 +123,6 @@ def copy_folder(build_folder, destination_folder, show_identical_files=True):
 
 
 if __name__ == "__main__":
-
     # Parses command line arguments.
     parser = argparse.ArgumentParser()
 

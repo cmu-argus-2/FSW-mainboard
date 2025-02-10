@@ -1,7 +1,4 @@
-from hal.drivers.middleware.generic_driver import Driver
-
-
-class GPS(Driver):
+class GPS:
     def __init__(self, simulator=None) -> None:
         self._nav_data = {}
 
@@ -33,20 +30,16 @@ class GPS(Driver):
             "ecef_vz": -73684928,
         }
 
-        super().__init__(None)
-
     def has_fix(self):
         """True if a current fix for location information is available."""
         return self.fix_quality is not None and self.fix_quality >= 1
 
     def update(self) -> bool:
-
         # self._msg = 0xA8
         _ = self.parse_data()
         return True
 
     def parse_data(self) -> dict:
-
         if self.__simulator:
             # Simualte all other fields
             ecef_state = self.__simulator.gps()

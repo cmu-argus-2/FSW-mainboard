@@ -1,9 +1,6 @@
-from hal.drivers.middleware.generic_driver import Driver
-
-
-class Payload(Driver):
+class Payload:
     def __init__(self) -> None:
-        super().__init__(None)
+        return
 
     def run_diagnostics(self):
         return []

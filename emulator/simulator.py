@@ -1,3 +1,15 @@
+"""
+Interface to connect the simulation backend of choice with the emulated hardware abstraction layer (HAL).
+
+======================
+
+This module provides the Simulator class passed to the emulated HAL to interact with the simulation backend.
+The Simulator class initializes various simulated hardware components and provides methods to interact with them.
+It automatically manages the simulation time and advances the simulation to the current real-world time.
+Author(s): Karthik Karumanchi, Ibrahima S. Sow
+
+"""
+
 import os
 import random
 import time
@@ -74,14 +86,13 @@ class Simulator:  # will be passed by reference to the emulated HAL
 
 
 if __name__ == "__main__":
-
     sim = Simulator()
 
     tt = datetime.now()
     base_dt = 0.01
 
-    print(tt)
-    print(datetime.fromtimestamp(time.time()))
+    # print(tt)
+    # print(datetime.fromtimestamp(time.time()))
 
     for _ in range(1000):
         sim.set_control_input(np.random.random((7,)))
@@ -89,4 +100,4 @@ if __name__ == "__main__":
         time.sleep(0.08)
 
     # sim.advance_to_time()
-    print(sim.sim_time)
+    # print(sim.sim_time)

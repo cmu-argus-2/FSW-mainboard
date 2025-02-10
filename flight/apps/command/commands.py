@@ -1,128 +1,138 @@
 """
 
-Command Functions
+Command Definitions
 
 ======================
 
 This modules contains the definition of the command functions for the satellite.
 
 
-Each command is defined as follow:
-- ID: A unique identifier for the command
-- Name: A string representation of the command for debugging
-- Description: A brief description of the command
-- Arguments: A list of parameters that the command accepts
-- Precondition: A list of conditions that must be met before executing the command
+Each command is defined as follows:
+- ID: A unique identifier for the command.
+- Name: A string representation of the command for debugging.
+- Description: A brief description of the command.
+- Arguments: A list of parameters that the command accepts.
+- Precondition: A list of conditions that must be met before executing the command.
 
-See documentation for a full description of each commands.
+See the documentation for a full description of each command.
 
 Author: Ibrahima S. Sow
 
 """
 
+import supervisor
+from apps.telemetry import TelemetryPacker
 from core import logger
+from core import state_manager as SM
+from core.states import STR_STATES
 
 
-def REQUEST_TELEMETRY():
-    """Requests telemetry data from the satellite."""
-    logger.info("Executing REQUEST_TELEMETRY")
-    pass
-    # return True
+def FORCE_REBOOT():
+    """Forces a power cycle of the spacecraft."""
+    logger.info("Executing FORCE_REBOOT")
+    supervisor.reload()
+    # https://learn.adafruit.com/circuitpython-essentials/circuitpython-resetting
+    return []
 
 
-def STREAM_TELEMETRY(time_duration, tm_type):
-    """Streams telemetry data from the satellite."""
-    logger.info("Executing STREAM_TELEMETRY")
-    pass
-    # return True
+def SWITCH_TO_STATE(target_state_id, time_in_state=None):
+    """Forces a switch of the spacecraft to a specific state."""
+    logger.info(f"Executing SWITCH_TO_STATE with target_state: {STR_STATES[target_state_id]}, time_in_state: {time_in_state}")
+    SM.start_forced_state(target_state_id, time_in_state)
+    return []
 
 
-def STOP_STREAM_TELEMETRY():
-    """Stops the telemetry data streaming."""
-    logger.info("Executing STOP_STREAM_TELEMETRY")
-    pass
-    # return True
+def UPLINK_TIME_REFERENCE(time_in_state):
+    """Sends a time reference to the spacecraft to update the time processing module."""
+    logger.info(f"Executing UPLINK_TIME_REFERENCE with current_time: {time_in_state}")
+    return []
 
 
-def SWITCH_TO_OVERRIDE_MODE(target_state):
-    """Switches the satellite to override mode."""
-    logger.info(f"Executing SWITCH_TO_OVERRIDE_MODE with target_state: {target_state}")
-    pass
-    # return True
+def UPLINK_ORBIT_REFERENCE(time_in_state, orbital_parameters):
+    """Sends time-referenced orbital information to update the orbit reference."""
+    logger.info(
+        f"Executing UPLINK_ORBIT_REFERENCE with orbital_parameters: {orbital_parameters}, time_in_state: {time_in_state}"
+    )
+    return []
 
 
-def SWITCH_TO_AUTONOMOUS_MODE(initial_state):
-    """Switches the satellite to autonomous mode."""
-    logger.info(f"Executing SWITCH_TO_AUTONOMOUS_MODE with initial_state: {initial_state}")
-    pass
-    # return True
+def TURN_OFF_PAYLOAD():
+    """Sends a shutdown command to the payload and turns off its power line."""
+    logger.info("Executing TURN_OFF_PAYLOAD")
+    return []
 
 
-def TURN_OFF_DEVICE(device_id):
-    """Turns off a specified device."""
-    logger.info(f"Executing TURN_OFF_DEVICE with device_id: {device_id}")
-    pass
-    # return True
+def SCHEDULE_OD_EXPERIMENT():
+    """Schedules an orbit determination experiment at the next available opportunity."""
+    logger.info("Executing SCHEDULE_OD_EXPERIMENT")
+    return []
 
 
-def TURN_ON_DEVICE(device_id):
-    """Turns on a specified device."""
-    logger.info(f"Executing TURN_ON_DEVICE with device_id: {device_id}")
-    pass
-    # return True
+def REQUEST_TM_HEARTBEAT():
+    """Requests a nominal snapshot of all subsystems."""
+    logger.info("Executing REQUEST_TM_HEARTBEAT")
+    # Pack telemetry
+    packed = TelemetryPacker.pack_tm_heartbeat()
+    if packed:
+        logger.info("Telemetry heartbeat packed")
+
+    # Return TX message header
+    tx_msg_id = int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
+    return [tx_msg_id]
 
 
-def REQUEST_FILE(file_tag, time_window):
-    """Requests a file from the satellite."""
-    logger.info(f"Executing REQUEST_FILE with file_tag: {file_tag} and time_window: {time_window}")
-    pass
-    # return True
+def REQUEST_TM_HAL():
+    """Requests hardware-focused telemetry, including information on HAL, EPS, and errors."""
+    logger.info("Executing REQUEST_TM_HAL")
+    # Pack telemetry
+    packed = TelemetryPacker.pack_tm_hal()
+    if packed:
+        logger.info("Telemetry hal packed")
+
+    # Return TX message header
+    tx_msg_id = int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
+    return [tx_msg_id]
 
 
-def REQUEST_IMAGE(time_window):
-    """Requests an image from the satellite."""
-    logger.info(f"Executing REQUEST_IMAGE with time_window: {time_window}")
-    pass
-    # return True
+def REQUEST_TM_STORAGE():
+    """Requests full storage status of the mainboard, including details on onboard processes."""
+    logger.info("Executing REQUEST_TM_STORAGE")
+    # Pack telemetry
+    packed = TelemetryPacker.pack_tm_storage()
+    if packed:
+        logger.info("Telemetry storage packed")
+
+    # Return TX message header
+    tx_msg_id = int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
+    return [tx_msg_id]
 
 
-def REQUEST_STORAGE_STATUS_MAINBOARD():
-    """Requests the storage status of the mainboard."""
-    logger.info("Executing REQUEST_STORAGE_STATUS_MAINBOARD")
-    pass
-    # return True
+def REQUEST_TM_PAYLOAD():
+    """Requests telemetry data from the payload, provided it is on."""
+    logger.info("Executing REQUEST_TM_PAYLOAD")
+    # Pack telemetry
+    packed = TelemetryPacker.pack_tm_payload()
+    if packed:
+        logger.info("Telemetry payload packed")
+
+    # Return TX message header
+    tx_msg_id = int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
+    return [tx_msg_id]
 
 
-def REQUEST_STORAGE_STATUS_PAYLOAD():
-    """Requests the storage status of the payload."""
-    logger.info("Executing REQUEST_STORAGE_STATUS_PAYLOAD")
-    pass
-    # return True
+def REQUEST_FILE_METADATA(file_tag, requested_time=None):
+    """Requests metadata for a specific file from the spacecraft."""
+    logger.info(f"Executing REQUEST_FILE_METADATA with file_tag: {file_tag} and requested_time: {requested_time}")
+    return []
 
 
-def ENABLE_TASK(task_id, state_flags):
-    """Enables a specified task."""
-    logger.info(f"Executing ENABLE_TASK with task_id: {task_id} and state_flags: {state_flags}")
-    pass
-    # return True
+def REQUEST_FILE_PKT(file_tag):
+    """Requests a specific file packet from the spacecraft."""
+    logger.info(f"Executing REQUEST_FILE_PKT with file_tag: {file_tag}")
+    return []
 
 
-def DISABLE_TASK(task_id, state_flags):
-    """Disables a specified task."""
-    logger.info(f"Executing DISABLE_TASK with task_id: {task_id} and state_flags: {state_flags}")
-    pass
-    # return True
-
-
-def SCHEDULE_OD_EXPERIMENT(after_ground_pass):
-    """Schedules an OD experiment."""
-    logger.info(f"Executing SCHEDULE_OD_EXPERIMENT with after_ground_pass: {after_ground_pass}")
-    pass
-    # return True
-
-
-def DOWNLINK_MISSION_DATA():
-    """Downlinks mission data from the satellite."""
-    logger.info("Executing DOWNLINK_MISSION_DATA")
-    pass
-    # return True
+def REQUEST_IMAGE():
+    """Requests an image from the spacecraft's internal storage."""
+    logger.info("Executing REQUEST_IMAGE")
+    return []

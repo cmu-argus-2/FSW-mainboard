@@ -1,9 +1,27 @@
-# Flight Software for the PyCubed Board (Argus-1)
+# Flight Software for the Argus Board
 
-The repository contains the current flight software stack for the **Mainboard** of Argus-1. Argus-1 is a technology demonstration mission with the goal of:
-- Demonstrating Vision-based Orbit Determination (A&OD) on a low-cost satellite (devoid of any GPS or ground involvement)
-- Collecting a dataset of images of the Earth to further efforts in CubeSat visual applications.
-- Demonstrating efficient on-orbit ML/GPU Payload processing 
+The repository contains the current flight software for the **Mainboard** of Argus. Argus is a technology demonstration mission with the goal of demonstrating vision-based Orbit Determination on a low-cost satellite (devoid of any GPS or ground involvement). We also aim to collect a decent dataset of images of the Earth to further efforts in CubeSat visual applications and demonstrate efficient on-orbit ML/GPU processing.
+
+## Architecture 
+
+See [High-Level Architecture](docs/architecture.md)
+
+## Hardware 
+
+The flight software currently supports:
+- Argus v1 (ATSAMD51J20)
+- Argus v1.1
+- Argus v2 (RP2040, in testing)
+
+## Installation
+```bash
+git submodule init
+git submodule update
+pip install .
+cd simulation/
+pip install .
+cd ..
+```
 
 ## Build and Execution
 
@@ -13,7 +31,7 @@ Building current files and moving them to the board can be handled by the run.sh
 ```bash
 ./run.sh
 ```
-The script first builds and compiles the flight software files to .mpy files and transfers them to the mainboard you are connected to.
+The script first builds and compiles the flight software files to .mpy files and transfers them to the mainboard you are connected to. The compilation is supported on Linux, MacOS, Windows, and RPi.
 
 ### Without mainboard
 
@@ -23,6 +41,8 @@ To run the emulator:
 ```bash
 ./run.sh emulate
 ```
+
+To install the simulator, follow the main README [here](https://github.com/cmu-argus-1/argusloop). The software-in-the-loop is currently transitioning to a newly developed C++ simulator.
 
 To run the simulator:
 ```bash
@@ -54,5 +74,5 @@ If the board ever gets stuck in read-only mode, access the REPL and type
 >>> import storage
 >>> storage.erase_filesystem()
 ```
-THis will erase and reformat the filesystem.
+This will erase and reformat the filesystem.
 

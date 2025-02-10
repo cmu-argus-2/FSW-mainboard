@@ -1,12 +1,8 @@
-from hal.drivers.middleware.generic_driver import Driver
-
-
-class LightSensor(Driver):
+class LightSensor:
     def __init__(self, lux, id, simulator=None) -> None:
         self.__simulator = simulator
         self.__lux = lux
         self.__id = id
-        super().__init__(None)
 
     def lux(self):
         if self.__simulator is not None:

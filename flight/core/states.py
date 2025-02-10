@@ -7,17 +7,17 @@ This module defines the operational states for the satellite, represented as con
 string representations. Each state indicates a distinct operational mode, with entry and exit criteria.
 
 States:
-    STARTUP: Initial state where hardware diagnostics are conducted, and state recovery is performed.
-    NOMINAL: Regular operation state following successful diagnostics, or recovery from other states.
-    DOWNLINK: Communication state entered upon receiving a ground station signal; telemetry, files, and payload data
-                are downlinked according to the ground station requests.
-    LOW_POWER: Power-conservation state triggered when battery levels fall below a threshold; resumes nominal upon
-                recharge above a recovery threshold.
-    SAFE: Emergency state triggered by critical hardware or software failures, allowing for fault handling and
-            eventual ground intervention.
-
-Transition functions should be defined based on entry and exit criteria for each state, as outlined in the satellite
-state management plan.
+    STARTUP: The initial state where hardware boot, diagnostics, and state recovery are performed.
+    Burnwires are activated at the end of this phase.
+    DETUMBLING: A state where the satellite reduces its angular momentum below a defined threshold.
+    This state is active until stability is achieved or a timeout occurs.
+    NOMINAL: The primary operational state where all systems, excluding payload, are fully functional,
+    provided sufficient power levels are maintained.
+    EXPERIMENT: This state is similar to NOMINAL with the activation of the Payload (OD). Given the high
+    power draw, this state requires a high state of charge for opportunistic transitions.
+    LOW_POWER: A power-conservation state entered when battery levels drop below a critical threshold.
+    Non-essential systems are turned off, and the satellite resumes nominal operations upon recharging above a
+    recovery threshold.
 
 Author: Ibrahima S. Sow
 """
@@ -25,39 +25,35 @@ Author: Ibrahima S. Sow
 from micropython import const
 
 
+class TASK:
+    COMMAND = const(0x00)
+    WATCHDOG = const(0x01)
+    EPS = const(0x02)
+    OBDH = const(0x03)
+    COMMS = const(0x04)
+    IMU = const(0x05)
+    ADCS = const(0x06)
+    THERMAL = const(0x07)
+    GPS = const(0x08)
+    PAYLOAD = const(0x09)
+
+
 class STATES:
     STARTUP = const(0x00)
-    NOMINAL = const(0x01)
-    DOWNLINK = const(0x02)
-    LOW_POWER = const(0x03)
-    SAFE = const(0x04)
+    DETUMBLING = const(0x01)
+    NOMINAL = const(0x02)
+    EXPERIMENT = const(0x03)
+    LOW_POWER = const(0x04)
+
+    TRANSITIONS = {
+        STARTUP: [DETUMBLING],
+        DETUMBLING: [NOMINAL, LOW_POWER],
+        NOMINAL: [LOW_POWER, DETUMBLING, EXPERIMENT],
+        EXPERIMENT: [NOMINAL],
+        LOW_POWER: [NOMINAL, LOW_POWER],
+    }
+
+    DETUMBLING_TIMEOUT_DURATION = 300  # seconds - TODO: Update with actual value
 
 
-STR_STATES = ["STARTUP", "NOMINAL", "DOWNLINK", "LOW_POWER", "SAFE"]
-
-
-def transition_to_nominal():
-    """Transition logic for entering NOMINAL state from various states."""
-    # Evaluate conditions to proceed to NOMINAL state
-    # Enable necessary devices
-    pass
-
-
-def transition_to_downlink():
-    """Transition logic for entering DOWNLINK state."""
-    pass
-
-
-def transition_to_low_power():
-    """Transition logic for entering LOW_POWER state."""
-    # Initiate power-saving protocols
-    # Turn devices to low-power mode configuration
-    pass
-
-
-def transition_to_safe():
-    """Transition logic for entering SAFE state."""
-    # Handle critical failures and prepare for fault resolution or intervention
-    # Run diagnostics
-    # Attempt to ecover for critical HW failures if possible --> NVM turn-off (done in appropriate task)
-    pass
+STR_STATES = ["STARTUP", "DETUMBLING", "NOMINAL", "EXPERIMENT", "LOW_POWER"]

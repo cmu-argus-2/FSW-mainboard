@@ -41,12 +41,12 @@ class Errors:
     PCF8523_BATTERY_LOW = const(21)
     PCF8523_LOST_POWER = const(22)
 
-    # BMX160 errors
-    BMX160_NOT_INITIALIZED = const(23)
-    BMX160_FATAL_ERROR = const(24)
-    BMX160_NON_FATAL_ERROR = const(25)
-    BMX160_DROP_COMMAND_ERROR = const(26)
-    BMX160_UNSPECIFIED_ERROR = const(27)
+    # IMU errors
+    IMU_NOT_INITIALIZED = const(23)
+    IMU_FATAL_ERROR = const(24)
+    IMU_NON_FATAL_ERROR = const(25)
+    IMU_DROP_COMMAND_ERROR = const(26)
+    IMU_UNSPECIFIED_ERROR = const(27)
 
     # DRV8830 errors
     DRV8830_NOT_INITIALIZED = const(28)
@@ -112,6 +112,7 @@ class Errors:
         ADM1176_ADC_ALERT_OVERCURRENT_MAX: "ADM1176 ADC alert overcurrent max",
         ADM1176_ADC_OC_OVERCURRENT_MIN_THRESHOLD: "ADM1176 ADC OC overcurrent min threshold",
         ADM1176_ADC_ALERT_OVERCURRENT_MIN_THRESHOLD: "ADM1176 alert overcurrent min threshold",
+        MAX17205_NOT_INITIALIZED: "MAX17205 not initialized",
         BQ25883_NOT_INITIALIZED: "BQ25883 not initialized",
         BQ25883_INPUT_OVERVOLTAGE: "BQ25883 input overvoltage",
         BQ25883_THERMAL_SHUTDOWN: "BQ25883 thermal shutdown",
@@ -125,11 +126,11 @@ class Errors:
         PCF8523_NOT_INITIALIZED: "PCF8523 not initialized",
         PCF8523_BATTERY_LOW: "PCF8523 battery low",
         PCF8523_LOST_POWER: "PCF8523 lost power",
-        BMX160_NOT_INITIALIZED: "BMX160 not initialized",
-        BMX160_FATAL_ERROR: "BMX160 fatal error",
-        BMX160_NON_FATAL_ERROR: "BMX160 non fatal error",
-        BMX160_DROP_COMMAND_ERROR: "BMX160 drop command error",
-        BMX160_UNSPECIFIED_ERROR: "BMX160 unspecified error",
+        IMU_NOT_INITIALIZED: "IMU not initialized",
+        IMU_FATAL_ERROR: "IMU fatal error",
+        IMU_NON_FATAL_ERROR: "IMU non fatal error",
+        IMU_DROP_COMMAND_ERROR: "IMU drop command error",
+        IMU_UNSPECIFIED_ERROR: "IMU unspecified error",
         DRV8830_NOT_INITIALIZED: "DRV8830 not initialized",
         DRV8830_OVERCURRENT_EVENT: "DRV8830 overcurrent event",
         DRV8830_UNDERVOLTAGE_LOCKOUT: "DRV8830 undervoltage lockout",
