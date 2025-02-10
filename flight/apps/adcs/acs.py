@@ -16,31 +16,45 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
     All sensor estimates are in the body-fixed reference frame.
     """
 
-    # Compute Angular Momentum error
-    error = PhysicalConst.INERTIA_MAJOR_DIR - np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET
+    if np.linalg.norm(mag_field) == 0:  # Stop ACS if the field value is invalid
+        u_dir = np.zeros((3,))
 
-    # Compute controller using B-cross
-    u_dir = ControllerConst.SPIN_STABILIZING_GAIN * np.cross(mag_field, error)
+    else:
 
-    # Smooth controller using tanh
-    u_dir = np.tanh(u_dir)
+        # Compute Angular Momentum error
+        error = PhysicalConst.INERTIA_MAJOR_DIR - np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET
 
-    return u_dir
+        # Compute controller using B-cross
+        u_dir = ControllerConst.SPIN_STABILIZING_GAIN * np.cross(mag_field, error)
+
+        # Smooth controller using tanh
+        u_dir = np.tanh(u_dir)
+
+    coil_status = mcm_coil_allocator(u_dir)
+
+    return coil_status
 
 
 def sun_pointed_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field: np.ndarray) -> np.ndarray:
 
-    # Compute Pointing Error
-    error = sun_vector - np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET
-
-    # Compute controller using bang-bang control law
-    u_dir = np.cross(mag_field, error)
-    u_dir_norm = np.linalg.norm(u_dir)
-
-    if u_dir_norm < 1e-6:
-        return np.zeros((3,))
+    if np.linalg.norm(mag_field) == 0 or np.linlag.norm(sun_vector) == 0:  # Stop ACS if either field is invalid
+        u_dir = np.zeros((3,))
     else:
-        return u_dir / u_dir_norm
+        # Compute Pointing Error
+        error = sun_vector - np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET
+
+        # Compute controller using bang-bang control law
+        u_dir = np.cross(mag_field, error)
+        u_dir_norm = np.linalg.norm(u_dir)
+
+        if u_dir_norm < 1e-6:
+            u_dir = np.zeros((3,))
+        else:
+            u_dir = u_dir / u_dir_norm
+
+    coil_status = mcm_coil_allocator(u_dir)
+
+    return coil_status
 
 
 def mcm_coil_allocator(u: np.ndarray) -> np.ndarray:
