@@ -65,6 +65,19 @@ class CubeSat:
         self.__burn_wires = None
         self.__payload_spi = None
         self.__vfs = None
+        self.__imu_error = -1
+        self.__charger_error = -1
+        self.__power_monitors_errors = {
+            "BOARD": -1,
+            "RADIO": -1,
+            "XP": -1,
+            "XM": -1,
+            "YP": -1,
+            "YM": -1,
+            "ZP": -1,
+            "ZM": -1,
+        }
+        
 
         # Debugging
         self._time_ref_boot = int(time.time())
