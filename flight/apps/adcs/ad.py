@@ -43,7 +43,7 @@ class AttitudeDetermination:
         STATE DEFINITION : [position_eci (3x1), velocity_eci (3x1), attitude_body2eci (4x1), angular_rate_body (3x1),
                             gyro_bias (3x1), magnetic_field_body (3x1), sun_pos_body (3x1), sun_status (1x1)]
     """
-    state = np.zeros((28,))  # TODO : only coded for non-pyramid light sensors
+    state = np.zeros((32,))
     position_idx = slice(0, 3)
     velocity_idx = slice(3, 6)
     attitude_idx = slice(6, 10)
@@ -52,7 +52,7 @@ class AttitudeDetermination:
     mag_field_idx = slice(16, 19)
     sun_pos_idx = slice(19, 22)
     sun_status_idx = slice(22, 23)
-    sun_lux_idx = slice(23, 28)
+    sun_lux_idx = slice(23, 32)
 
     # Time storage
     position_update_frequency = 1  # Hz ~8km
