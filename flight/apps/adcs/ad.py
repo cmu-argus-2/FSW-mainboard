@@ -11,6 +11,7 @@ magnetic field data on the mainboard.
 
 import time
 
+from apps.adcs.consts import Modes
 from apps.adcs.frames import ecef_to_eci
 from apps.adcs.igrf import igrf_eci
 from apps.adcs.math import R_to_quat, quat_to_R, quaternion_multiply, skew
@@ -446,3 +447,20 @@ class AttitudeDetermination:
         self.P = np.dot(np.dot((Identity - np.dot(K, H)), self.P), (Identity - np.dot(K, H)).transpose()) + np.dot(
             np.dot(K, R_noise), K.transpose()
         )
+
+    def current_mode(self) -> int:
+        """
+        - Returns the current mode of the ADCS
+        """
+        if np.linalg.norm(self.state[self.omega_idx]) >= Modes.STABLE_TOL:
+            return Modes.TUMBLING
+        else:
+            if self.state[self.sun_status_idx] == SUN_VECTOR_STATUS.ECLIPSE:
+                return Modes.STABLE
+            else:
+                sun_vector_error = Modes.SUN_VECTOR_REF - self.state[self.sun_pos_idx]
+
+                if np.linalg.norm(sun_vector_error) >= Modes.SUN_POINTED_TOL:
+                    return Modes.STABLE
+                else:
+                    return Modes.SUN_POINTED

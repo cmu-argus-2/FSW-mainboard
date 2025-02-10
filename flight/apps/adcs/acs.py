@@ -71,6 +71,9 @@ def mcm_coil_allocator(u: np.ndarray) -> np.ndarray:
     u_throttle = np.dot(mcm_alloc, u)
     u_throttle = np.clip(u_throttle, -1, 1)
 
-    SATELLITE.APPLY_MAGNETIC_CONTROL(u_throttle)
+    # Apply Coil Voltages
+    for n in range(MCMConst.N_MCM):
+        if coil_status[n]:
+            SATELLITE.APPLY_MAGNETIC_CONTROL(MCMConst.MCM_FACES[n], u_throttle[n])
 
     return coil_status
