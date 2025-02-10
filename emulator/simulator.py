@@ -83,21 +83,3 @@ class Simulator:  # will be passed by reference to the emulated HAL
         for _ in range(iters):
             self.measurement = self.cppsim.step(self.sim_time, self.base_dt)
         self.sim_time += iters * self.base_dt
-
-
-if __name__ == "__main__":
-    sim = Simulator()
-
-    tt = datetime.now()
-    base_dt = 0.01
-
-    # print(tt)
-    # print(datetime.fromtimestamp(time.time()))
-
-    for _ in range(1000):
-        sim.set_control_input(np.random.random((7,)))
-        sim.advance_to_time()
-        time.sleep(0.08)
-
-    # sim.advance_to_time()
-    # print(sim.sim_time)
