@@ -38,6 +38,7 @@ class SUN_VECTOR_STATUS:
     MISSING_FULL_X_AXIS_READING = 0x9
     MISSING_FULL_Y_AXIS_READING = 0xA
     MISSING_FULL_Z_AXIS_READING = 0xB
+    ECLIPSE = 0xC
 
 
 def _read_light_sensor(face):
