@@ -4,6 +4,8 @@ Constants used in ADCS apps.
 Author(s): Derek Fan
 """
 
+import math
+
 from ulab import numpy as np
 
 
@@ -39,7 +41,8 @@ class PhysicalConst:
     _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
 
     INERTIA_MAJOR_DIR = _unscaled_axis / np.linalg.norm(_unscaled_axis)
-    if INERTIA_MAJOR_DIR[np.argmax(np.abs(INERTIA_MAJOR_DIR))] < 0:
+    inertia_major_dir_abs = np.array([math.fabs(dir_x) for dir_x in INERTIA_MAJOR_DIR])
+    if INERTIA_MAJOR_DIR[np.argmax(inertia_major_dir_abs)] < 0:
         INERTIA_MAJOR_DIR = -INERTIA_MAJOR_DIR
 
 

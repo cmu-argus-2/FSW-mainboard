@@ -17,6 +17,7 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
     """
 
     if np.linalg.norm(mag_field) == 0:  # Stop ACS if the field value is invalid
+        print("Invalid mag field")
         u_dir = np.zeros((3,))
 
     else:
