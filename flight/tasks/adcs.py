@@ -2,7 +2,7 @@
 
 import time
 
-from apps.adcs.acs import spin_stabilizing_controller, sun_pointed_controller
+from apps.adcs.acs import spin_stabilizing_controller, sun_pointed_controller, zero_all_coils
 from apps.adcs.ad import AttitudeDetermination
 from apps.adcs.consts import Modes
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX
@@ -106,6 +106,9 @@ class Task(TemplateTask):
             # ------------------------------------------------------------------------------------------------------------------------------------
             elif SM.current_state == STATES.LOW_POWER:
 
+                # Turn coils off to conserve power
+                zero_all_coils()
+
                 if self.execution_counter < 4:
                     # Update Gyro and attitude estimate via propagation
                     self.AD.gyro_update(self.time, update_covariance=False)
@@ -140,8 +143,8 @@ class Task(TemplateTask):
 
                 else:
                     if self.execution_counter == 0:
-                        # TODO : Turn coils off before measurements to allow time for coils to settle
-                        pass
+                        # Turn coils off before measurements to allow time for coils to settle
+                        zero_all_coils()
 
                     if self.execution_counter < 4:
                         # Update Gyro and attitude estimate via propagation

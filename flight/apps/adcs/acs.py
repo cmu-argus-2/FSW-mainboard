@@ -91,3 +91,9 @@ def mcm_coil_allocator(u: np.ndarray) -> np.ndarray:
             SATELLITE.APPLY_MAGNETIC_CONTROL(MCMConst.MCM_FACES[n], u_throttle[n])
 
     return coil_status
+
+
+def zero_all_coils():
+    for face in MCMConst.MCM_FACES:
+        if SATELLITE.TORQUE_DRIVERS_AVAILABLE(face):
+            SATELLITE.APPLY_MAGNETIC_CONTROL(face, 0)
