@@ -48,12 +48,12 @@ class ArgusV2Interfaces:
     SPI_MISO = board.MISO0  # GPIO16
     SPI = SPI(SPI_SCK, MOSI=SPI_MOSI, MISO=SPI_MISO)
 
-    UART0_BAUD = const(9600)
+    UART0_BAUD = const(115200)
     UART0_TX = board.TX0  # GPIO12
     UART0_RX = board.RX0  # GPIO13
     UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD)
 
-    UART1_BAUD = const(9600)
+    UART1_BAUD = const(115200)
     UART1_TX = board.TX1  # GPIO4
     UART1_RX = board.RX1  # GPIO5
     UART1 = UART(UART1_TX, UART1_RX, baudrate=UART1_BAUD)
@@ -332,7 +332,7 @@ class ArgusV2(CubeSat):
             # For v2 mainboards, GPS_EN is used for RADIO_IRQ
             # Boards should be modified to have GPS always on
             # GPS enabled with UART obj, EN, flags for debug and mock outputs
-            gps1 = GPS(ArgusV2Components.GPS_UART, None, True, False)
+            gps1 = GPS(ArgusV2Components.GPS_UART, None, False, False)
 
             self.__gps = gps1
             self.__device_list.append(gps1)
