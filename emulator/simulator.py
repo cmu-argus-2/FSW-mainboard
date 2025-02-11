@@ -56,7 +56,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
 
         config = {
             "mass": 1.5,
-            "inertia": [10, 20, 10, 0.0, 0.0, 0.0],
+            "inertia": [0.0033, 0.0033, 0.0066, 0.0, 0.0, 0.0],
             "epoch": datetime(2024, 6, 1, 12, 0, 0, 0),
             "dt": 0.01,
             "initial_attitude": [1.0, 0, 0, 0, 5.1, -9.2, 0.3],

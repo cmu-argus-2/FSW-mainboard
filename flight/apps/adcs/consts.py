@@ -4,6 +4,7 @@ Constants used in ADCS apps.
 Author(s): Derek Fan
 """
 
+
 from ulab import numpy as np
 
 
@@ -62,9 +63,9 @@ class MCMConst:
     Constants used for magnetorquer control and allocation.
     """
 
-    REF_FACTOR = 0.75
-    SPIN_ERROR_TOL = 0.15
-    POINTING_ERROR_TOL = 0.01
+    REF_FACTOR = 1.0
+    SPIN_ERROR_TOL = 0.262
+    POINTING_ERROR_TOL = 0.175
     SPIN_STABILIZING_GAIN = 1.0e06
     # SUN_POINTING_GAIN = 5.0e05
 
