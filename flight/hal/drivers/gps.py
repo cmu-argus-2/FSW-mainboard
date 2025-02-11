@@ -110,11 +110,16 @@ class GPS:
 
         else:
             # Module expected to actually exist, send nav_data request to module
-            self.set_to_binary()
+            # self.set_to_binary()
+
+            self.send_command(b"PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0")
+            self.send_command(b"PMTK220,1000")
 
         super().__init__()
 
     def update(self) -> bool:
+        self.send_command(b"PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0")
+        self.send_command(b"PMTK220,1000")
         if self.mock:
             self._msg = self.mock_message
         else:
@@ -123,7 +128,12 @@ class GPS:
             except UnicodeError:
                 return False
             if self._msg is None or len(self._msg) < 11:
+                print("Msg is none orrrrrr less than 11 bytes long")
                 return False
+
+        print("RAW IMAGE BYTESSSSSSSS")
+        for i in range(0, len(self._msg)):
+            print(hex(self._msg[i]))
 
         if self.debug:
             if self.mock:
@@ -137,6 +147,12 @@ class GPS:
         self._msg_cs = int(self._msg[-3])
         self._payload = bytearray(self._msg[4:-3])
 
+        if self.debug:
+            print("Payload: \n", self._payload)
+
+            # for i in range(0, self._payload_len):
+            #     print(hex(self._payload[i]))
+
         if self._msg_id != 0xA8:
             if self.debug:
                 print("Invalid message ID, expected 0xA8, got: ", hex(self._msg_id))
@@ -146,9 +162,6 @@ class GPS:
             if self.debug:
                 print("Invalid payload length, expected 59, got: ", self._payload_len)
             return False
-
-        if self.debug:
-            print("Payload: \n", self._payload)
 
         cs = 0
         for i in self._payload:
@@ -594,6 +607,22 @@ class GPS:
 
     def send_binary(self, bytestr) -> None:
         self.write(bytestr)
+
+    def send_command(self, command: bytes, add_checksum: bool = True) -> None:
+        """Send a command string to the GPS.  If add_checksum is True (the
+        default) a NMEA checksum will automatically be computed and added.
+        Note you should NOT add the leading $ and trailing * to the command
+        as they will automatically be added!
+        """
+        self.write(b"$")
+        self.write(command)
+        if add_checksum:
+            checksum = 0
+            for char in command:
+                checksum ^= char
+            self.write(b"*")
+            self.write(bytes("{:02x}".format(checksum).upper(), "ascii"))
+        self.write(b"\r\n")
 
     # TODO : Change this so that it always sends the binary message rather than needing set on each run
     def set_to_binary(self) -> None:

@@ -293,7 +293,7 @@ class ArgusV2(CubeSat):
         error_list.append(self.__vfs_boot())
         error_list.append(self.__imu_boot())
         error_list.append(self.__rtc_boot())
-        # error_list.append(self.__gps_boot())
+        error_list.append(self.__gps_boot())
         error_list.append(self.__radio_boot())
         error_list.append(self.__power_monitor_boot())
         error_list.append(self.__fuel_gauge_boot())
@@ -332,7 +332,7 @@ class ArgusV2(CubeSat):
             # For v2 mainboards, GPS_EN is used for RADIO_IRQ
             # Boards should be modified to have GPS always on
             # GPS enabled with UART obj, EN, flags for debug and mock outputs
-            gps1 = GPS(ArgusV2Components.GPS_UART, None, False, False)
+            gps1 = GPS(ArgusV2Components.GPS_UART, None, True, False)
 
             self.__gps = gps1
             self.__device_list.append(gps1)
