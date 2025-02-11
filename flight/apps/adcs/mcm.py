@@ -64,7 +64,7 @@ class ControllerHandler:
 
     # References and targets
     ang_vel_reference = spin_axis * MCMConst.REF_FACTOR * ModeConst.STABLE_TOL
-    momentum_target = np.linalg.norm(PhysicalConst.INERTIA_MAT @ ang_vel_reference)
+    momentum_target = np.linalg.norm(np.dot(PhysicalConst.INERTIA_MAT, ang_vel_reference))
 
     @classmethod
     def update_max_dipole_moment(cls) -> None:
@@ -101,7 +101,7 @@ class MagneticCoilAllocator:
         cls._update_matrix()
         ControllerHandler.update_max_dipole_moment()
 
-        Vs = MagnetorquerConst.V_CONVERT * cls.mat @ dipole_moment
+        Vs = MagnetorquerConst.V_CONVERT * np.dot(cls.mat, dipole_moment)
         Vs_bd = np.clip(Vs, -MagnetorquerConst.V_MAX, MagnetorquerConst.V_MAX)
 
         for axis, face_idx in MCMConst.AXIS_FACE_INDICES.items():
