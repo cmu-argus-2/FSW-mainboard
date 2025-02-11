@@ -1,5 +1,6 @@
 from core.states import TASK
-from tasks.adcs import Task as adcs
+
+# from tasks.adcs import Task as adcs
 from tasks.command import Task as command
 from tasks.comms import Task as comms
 from tasks.eps import Task as eps
