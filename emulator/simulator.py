@@ -58,12 +58,12 @@ class Simulator:  # will be passed by reference to the emulated HAL
         self.advance_to_time()
         return self.measurement[0:6]
 
-    def set_control_input(self, input):  # TODO : ADCS does not set a control input yet
+    def set_control_input(self, dir, input):  # TODO : ADCS does not set a control input yet
         """
         Sets the control input to the simulation
         """
-        print(input)
-        self.cppsim.set_control_input(input)
+        dir_2_idx_map = {"XM": 0, "YM": 1, "ZM": 2, "XP": 3, "YP": 4, "ZP": 5}
+        self.cppsim.control_input[dir_2_idx_map[dir]] = input * 5
 
     def get_time_diff_since_last(self):
         """
