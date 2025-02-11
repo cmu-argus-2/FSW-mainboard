@@ -56,7 +56,8 @@ class ControllerHandler:
     _u_max_convert = MagnetorquerConst.V_MAX / MagnetorquerConst.V_CONVERT
 
     # Init spin direction
-    _eigvals, _eigvecs = np.linalg.eig(PhysicalConst.INERTIA_MAT)
+    # IMPORTANT: ulab's eig returns (eigenvectors, eigenvalues)
+    _eigvecs, _eigvals = np.linalg.eig(PhysicalConst.INERTIA_MAT)
     _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
     spin_axis = _unscaled_axis / np.linalg.norm(_unscaled_axis)
     if spin_axis[np.argmax(np.abs(spin_axis))] < 0:
