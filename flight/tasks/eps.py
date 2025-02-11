@@ -2,6 +2,7 @@
 
 import time
 
+from apps.eps.eps import EPS_POWER_FLAG, GET_EPS_POWER_FLAG
 from apps.telemetry.constants import EPS_IDX
 from core import DataHandler as DH
 from core import TemplateTask
@@ -17,6 +18,7 @@ class Task(TemplateTask):
     # To be removed - kept until proper logging is implemented
     """data_keys = [
         "TIME",
+        "EPS_POWER_FLAG",
         "MAINBOARD_VOLTAGE",
         "MAINBOARD_CURRENT",
         "BATTERY_PACK_REPORTED_SOC",
@@ -58,7 +60,7 @@ class Task(TemplateTask):
         "ZM_SOLAR_CHARGE_CURRENT",
     ]"""
 
-    log_data = [0] * 40  # - use mV for voltage and mA for current (h = short integer 2 bytes)
+    log_data = [0] * 41  # - use mV for voltage and mA for current (h = short integer 2 bytes)
 
     def __init__(self, id):
         super().__init__(id)
@@ -93,7 +95,7 @@ class Task(TemplateTask):
         else:
             if not DH.data_process_exists("eps"):
                 data_format = (
-                    "Lhhb" + "h" * 4 + "L" * 2 + "h" * 30
+                    "Lhhb" + "h" * 4 + "L" * 2 + "h" * 30 + "b"
                 )  # - use mV for voltage and mA for current (h = short integer 2 bytes, L = 4 bytes)
                 DH.register_data_process("eps", data_format, True, data_limit=100000)
 
@@ -129,4 +131,14 @@ class Task(TemplateTask):
                 self.log_info(f"Battery Pack Midpoint Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE]} mV ")
                 self.log_info(f"Battery Pack Time-to-Empty: {self.log_data[EPS_IDX.BATTERY_PACK_TTE]} seconds ")
                 self.log_info(f"Battery Pack Time-to-Full {self.log_data[EPS_IDX.BATTERY_PACK_TTF]} seconds ")
+
+                soc = self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]
+                curr_flag = self.log_data[EPS_IDX.EPS_POWER_FLAG]
+                flag = GET_EPS_POWER_FLAG(curr_flag, soc)
+                if flag != EPS_POWER_FLAG.NONE:
+                    self.log_data[EPS_IDX.EPS_POWER_FLAG] = int(flag)
+                    self.log_info(f"EPS state: {self.log_data[EPS_IDX.EPS_POWER_FLAG]} ")
+                else:
+                    self.log_error("EPS state invalid; SOC or power flag may be corrupted")
+
             DH.log_data("eps", self.log_data)

@@ -14,8 +14,9 @@ class ModeConst:
     """
 
     SUN_VECTOR_REF = np.array([0.0, 0.0, 1.0])
-    STABLE_TOL = 0.05  # 0.05  # "stable" if ang vel < 0.05 rad/s = 2.86 deg/s.
-    SUN_POINTED_TOL = 0.09  # "sun-pointed" if att err < 0.09 rad = 5 deg.
+    EKF_INIT_TOL = 0.3  # MEKF can be initialized if ang vel < 0.2 rad/s = 11 deg/s
+    STABLE_TOL = 0.14  # 0.05  # "stable" if ang vel < 0.05 rad/s = 2.86 deg/s.
+    SUN_POINTED_TOL = 0.1  # "sun-pointed" if att err < 0.09 rad = 5 deg.
 
 
 class PhysicalConst:

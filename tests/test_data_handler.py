@@ -6,6 +6,7 @@ import pytest
 import tests.cp_mock  # noqa: F401
 import flight.core.data_handler as dh
 from flight.core.data_handler import DataProcess as DP
+from flight.core.data_handler import extract_time_from_filename
 
 
 @pytest.mark.parametrize(
@@ -52,6 +53,19 @@ def test_compute_bytesize_invalid_format(invalid_format):
 )
 def test_join_path(input_paths, expected_output):
     assert dh.join_path(*input_paths) == expected_output
+
+
+@pytest.mark.parametrize(
+    "input_filename, expected_output",
+    [
+        ("imu_1700001234.bin", 1700001234),
+        ("img_1699999999.bin", 1699999999),
+        ("gps_.bin", None),
+        ("not_correct_format", None),
+    ],
+)
+def test_extract_time_from_filename(input_filename, expected_output):
+    assert extract_time_from_filename(input_filename) == expected_output
 
 
 # TODO - mock filesystem
