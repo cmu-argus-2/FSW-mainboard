@@ -62,6 +62,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
         """
         Sets the control input to the simulation
         """
+        print(input)
         self.cppsim.set_control_input(input)
 
     def get_time_diff_since_last(self):

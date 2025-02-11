@@ -86,4 +86,5 @@ class EmulatedSatellite(CubeSat):
     def APPLY_MAGNETIC_CONTROL(self, ctrl) -> None:
         """CONTROL_COILS: Control the coils on the CubeSat, depending on the control mode (identical for all coils)."""
         # TODO error handlling
+        print(ctrl)
         self._torque_drivers.apply_control(ctrl)
