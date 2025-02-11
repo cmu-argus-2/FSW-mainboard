@@ -1,5 +1,8 @@
 from hal.cubesat import CubeSat
 from micropython import const
+import supervisor
+
+supervisor.runtime.autoreload = False
 
 PYCUBED_V05 = const(0)
 ARGUS_V1 = const(1)

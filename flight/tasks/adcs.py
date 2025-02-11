@@ -75,100 +75,100 @@ class Task(TemplateTask):
             pass
 
         else:
+            pass
+            # if not DH.data_process_exists("adcs"):
+            #     data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f"
+            #     DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
 
-            if not DH.data_process_exists("adcs"):
-                data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f"
-                DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
+            # self.time = int(time.time())
+            # self.log_data[ADCS_IDX.TIME_ADCS] = self.time
 
-            self.time = int(time.time())
-            self.log_data[ADCS_IDX.TIME_ADCS] = self.time
+            # # ------------------------------------------------------------------------------------------------------------------------------------
+            # # DETUMBLING
+            # # ------------------------------------------------------------------------------------------------------------------------------------
+            # if SM.current_state == STATES.DETUMBLING:
 
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            # DETUMBLING
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            if SM.current_state == STATES.DETUMBLING:
+            #     # Query the Gyro
+            #     self.AD.gyro_update(self.time, update_covariance=False)
 
-                # Query the Gyro
-                self.AD.gyro_update(self.time, update_covariance=False)
+            #     # Query Magnetometer
+            #     self.AD.magnetometer_update(self.time, update_covariance=False)
 
-                # Query Magnetometer
-                self.AD.magnetometer_update(self.time, update_covariance=False)
+            #     # Run Attitude Control
+            #     self.attitude_control()
 
-                # Run Attitude Control
-                self.attitude_control()
+            #     # Check if detumbling has been completed
+            #     if np.linalg.norm(self.AD.state[self.AD.omega_idx]) <= ModeConst.STABLE_TOL:
+            #         self.MODE = Modes.STABLE
 
-                # Check if detumbling has been completed
-                if np.linalg.norm(self.AD.state[self.AD.omega_idx]) <= ModeConst.STABLE_TOL:
-                    self.MODE = Modes.STABLE
+            # # ------------------------------------------------------------------------------------------------------------------------------------
+            # # LOW POWER
+            # # ------------------------------------------------------------------------------------------------------------------------------------
+            # elif SM.current_state == STATES.LOW_POWER:
 
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            # LOW POWER
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            elif SM.current_state == STATES.LOW_POWER:
+            #     if not self.AD.initialized:
+            #         self.AD.initialize_mekf()
 
-                if not self.AD.initialized:
-                    self.AD.initialize_mekf()
+            #     else:
 
-                else:
+            #         if self.execution_counter < 4:
+            #             # Update Gyro and attitude estimate via propagation
+            #             self.AD.gyro_update(self.time, update_covariance=False)
+            #             self.execution_counter += 1
 
-                    if self.execution_counter < 4:
-                        # Update Gyro and attitude estimate via propagation
-                        self.AD.gyro_update(self.time, update_covariance=False)
-                        self.execution_counter += 1
+            #         else:
+            #             # Update Each sensor with covariances
+            #             self.AD.position_update(self.time)
+            #             self.AD.sun_position_update(self.time, update_covariance=True)
+            #             self.AD.gyro_update(self.time, update_covariance=True)
+            #             self.AD.magnetometer_update(self.time, update_covariance=True)
 
-                    else:
-                        # Update Each sensor with covariances
-                        self.AD.position_update(self.time)
-                        self.AD.sun_position_update(self.time, update_covariance=True)
-                        self.AD.gyro_update(self.time, update_covariance=True)
-                        self.AD.magnetometer_update(self.time, update_covariance=True)
+            #             # No Attitude Control in Low-power mode
 
-                        # No Attitude Control in Low-power mode
+            #             # Reset Execution counter
+            #             self.execution_counter = 0
 
-                        # Reset Execution counter
-                        self.execution_counter = 0
+            # # ------------------------------------------------------------------------------------------------------------------------------------
+            # # NOMINAL & EXPERIMENT
+            # # ------------------------------------------------------------------------------------------------------------------------------------
+            # else:
 
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            # NOMINAL & EXPERIMENT
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            else:
+            #     if not self.AD.initialized:
+            #         self.AD.initialize_mekf()
 
-                if not self.AD.initialized:
-                    self.AD.initialize_mekf()
+            #     elif (
+            #         SM.current_state == STATES.NOMINAL
+            #         and np.linalg.norm(self.AD.state[self.AD.omega_idx]) > ModeConst.EKF_INIT_TOL
+            #         and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
+            #     ):
+            #         self.MODE = Modes.TUMBLING
 
-                elif (
-                    SM.current_state == STATES.NOMINAL
-                    and np.linalg.norm(self.AD.state[self.AD.omega_idx]) > ModeConst.EKF_INIT_TOL
-                    and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
-                ):
-                    self.MODE = Modes.TUMBLING
+            #     else:
+            #         if self.execution_counter == 0:
+            #             # TODO : Turn coils off before measurements to allow time for coils to settle
+            #             pass
 
-                else:
-                    if self.execution_counter == 0:
-                        # TODO : Turn coils off before measurements to allow time for coils to settle
-                        pass
+            #         if self.execution_counter < 4:
+            #             # Update Gyro and attitude estimate via propagation
+            #             self.AD.gyro_update(self.time, update_covariance=False)
+            #             self.execution_counter += 1
 
-                    if self.execution_counter < 4:
-                        # Update Gyro and attitude estimate via propagation
-                        self.AD.gyro_update(self.time, update_covariance=False)
-                        self.execution_counter += 1
+            #         else:
+            #             # Update Each sensor with covariances
+            #             self.AD.position_update(self.time)
+            #             self.AD.sun_position_update(self.time, update_covariance=True)
+            #             self.AD.gyro_update(self.time, update_covariance=True)
+            #             self.AD.magnetometer_update(self.time, update_covariance=True)
 
-                    else:
-                        # Update Each sensor with covariances
-                        self.AD.position_update(self.time)
-                        self.AD.sun_position_update(self.time, update_covariance=True)
-                        self.AD.gyro_update(self.time, update_covariance=True)
-                        self.AD.magnetometer_update(self.time, update_covariance=True)
+            #             # Run attitude control
+            #             self.attitude_control()
 
-                        # Run attitude control
-                        self.attitude_control()
+            #             # Reset Execution counter
+            #             self.execution_counter = 0
 
-                        # Reset Execution counter
-                        self.execution_counter = 0
-
-            # Log data
-            # NOTE: In detumbling, most of the log will be zeros since very few sensors are queried
-            self.log()
+            # # Log data
+            # # NOTE: In detumbling, most of the log will be zeros since very few sensors are queried
+            # self.log()
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ Attitude Control Auxiliary Functions """

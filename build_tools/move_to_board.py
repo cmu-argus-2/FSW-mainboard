@@ -17,6 +17,15 @@ if platform.node() == "raspberrypi":
 
 def copy_folder(source_folder, destination_folder, show_identical_files=True):
     for root, dirs, files in os.walk(source_folder):
+        for dir in dirs:
+            source_dir_path = os.path.join(root, dir)
+            relative_dir_path = os.path.relpath(source_dir_path, source_folder)
+            destination_dir_path = os.path.join(destination_folder, relative_dir_path)
+
+            if not os.path.exists(destination_dir_path):
+                os.makedirs(destination_dir_path)
+                print(f"Created directory {destination_dir_path}")
+        
         for file in files:
             source_path = os.path.join(root, file)
             relative_path = os.path.relpath(source_path, source_folder)

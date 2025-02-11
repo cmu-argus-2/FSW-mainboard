@@ -294,9 +294,9 @@ class ArgusV2(CubeSat):
         error_list.append(self.__imu_boot())
         error_list.append(self.__rtc_boot())
         # error_list.append(self.__gps_boot())
-        error_list.append(self.__radio_boot())
+        # error_list.append(self.__radio_boot())
         error_list.append(self.__power_monitor_boot())
-        error_list.append(self.__fuel_gauge_boot())
+        # error_list.append(self.__fuel_gauge_boot())
         error_list.append(self.__charger_boot())
         # error_list.append(self.__torque_drivers_boot())
         # error_list.append(self.__light_sensors_boot())  # light + sun sensors
@@ -413,8 +413,9 @@ class ArgusV2(CubeSat):
                 error_codes.append(Errors.NOERROR)  # Append success code if no error
             except Exception as e:
                 self.__power_monitors[location] = None
+                print(f"Failed to initialize {location} power driver: {e}")
                 if self.__debug:
-                    print(f"Failed to initialize {location} power driver: {e}")
+                    
                     raise e
                 return Errors.ADM1176_NOT_INITIALIZED
 
