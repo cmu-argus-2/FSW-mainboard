@@ -106,16 +106,14 @@ class Task(TemplateTask):
             # ------------------------------------------------------------------------------------------------------------------------------------
             elif SM.current_state == STATES.LOW_POWER:
 
-                if not self.AD.initialized:
-                    self.AD.initialize_mekf()
+                if self.execution_counter < 4:
+                    # Update Gyro and attitude estimate via propagation
+                    self.AD.gyro_update(self.time, update_covariance=False)
+                    self.execution_counter += 1
 
                 else:
-
-                    if self.execution_counter < 4:
-                        # Update Gyro and attitude estimate via propagation
-                        self.AD.gyro_update(self.time, update_covariance=False)
-                        self.execution_counter += 1
-
+                    if not self.AD.initialized:
+                        self.AD.initialize_mekf()
                     else:
                         # Update Each sensor with covariances
                         self.AD.position_update(self.time)
@@ -123,20 +121,17 @@ class Task(TemplateTask):
                         self.AD.gyro_update(self.time, update_covariance=True)
                         self.AD.magnetometer_update(self.time, update_covariance=True)
 
-                        # No Attitude Control in Low-power mode
+                    # No Attitude Control in Low-power mode
 
-                        # Reset Execution counter
-                        self.execution_counter = 0
+                    # Reset Execution counter
+                    self.execution_counter = 0
 
             # ------------------------------------------------------------------------------------------------------------------------------------
             # NOMINAL & EXPERIMENT
             # ------------------------------------------------------------------------------------------------------------------------------------
             else:
 
-                if not self.AD.initialized:
-                    self.AD.initialize_mekf()
-
-                elif (
+                if (
                     SM.current_state == STATES.NOMINAL
                     and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
                     and self.AD.current_mode() == Modes.TUMBLING
@@ -154,11 +149,14 @@ class Task(TemplateTask):
                         self.execution_counter += 1
 
                     else:
-                        # Update Each sensor with covariances
-                        self.AD.position_update(self.time)
-                        self.AD.sun_position_update(self.time, update_covariance=True)
-                        self.AD.gyro_update(self.time, update_covariance=True)
-                        self.AD.magnetometer_update(self.time, update_covariance=True)
+                        if not self.AD.initialized:
+                            self.AD.initialize_mekf()
+                        else:
+                            # Update Each sensor with covariances
+                            self.AD.position_update(self.time)
+                            self.AD.sun_position_update(self.time, update_covariance=True)
+                            self.AD.gyro_update(self.time, update_covariance=True)
+                            self.AD.magnetometer_update(self.time, update_covariance=True)
 
                         # identify Mode based on current sensor readings
                         self.MODE = self.AD.current_mode()
@@ -241,4 +239,4 @@ class Task(TemplateTask):
         self.log_data[ADCS_IDX.ATTITUDE_QZ] = self.AD.state[9]
         DH.log_data("adcs", self.log_data)
         if self.execution_counter == 0:
-            self.log_info(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z+1]}")
+            self.log_info(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z + 1]}")
