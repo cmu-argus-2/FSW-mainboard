@@ -1232,3 +1232,30 @@ def join_path(*paths: str) -> str:
     if not paths[0].startswith("/"):
         normalized_path = normalized_path.lstrip("/")
     return normalized_path
+
+
+def extract_time_from_filename(filename: str) -> int:
+    """
+    Extracts the timestamp from a filename formatted as 'TAGNAME_TIME.bin' or 'img_TIME.jpg'.
+
+    Args:
+        filename (str): The filename to extract the timestamp from.
+
+    Returns:
+        int: The timestamp extracted from the filename.
+    """
+    if not filename:
+        return None
+
+    if filename[-4:] == ".bin" or filename[-4:] == ".jpg":
+        filename = filename[:-4]
+    else:
+        logger.warning(f"Invalid filename format for {filename}")
+        return None
+
+    match = re.search(r"_(\d+)", filename)
+    if match:
+        return int(match.group(1))
+    else:
+        logger.warning(f"Invalid filename format for {filename}")
+        return None

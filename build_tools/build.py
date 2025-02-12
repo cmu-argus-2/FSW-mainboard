@@ -7,7 +7,7 @@ import sys
 
 ROOT_PATH = os.getcwd()
 
-MPY_CROSS_NAME = "mpy-cross"
+MPY_CROSS_NAME = "mpy-cross-cpy9"
 if platform.system() == "Darwin":
     MPY_CROSS_NAME = "mpy-cross-macos"
 if platform.node() == "raspberrypi":
