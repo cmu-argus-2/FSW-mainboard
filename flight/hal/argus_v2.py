@@ -294,7 +294,7 @@ class ArgusV2(CubeSat):
         error_list.append(self.__imu_boot())
         error_list.append(self.__rtc_boot())
         # error_list.append(self.__gps_boot())
-        # error_list.append(self.__radio_boot())
+        error_list.append(self.__radio_boot())
         error_list.append(self.__power_monitor_boot())
         # error_list.append(self.__fuel_gauge_boot())
         error_list.append(self.__charger_boot())
