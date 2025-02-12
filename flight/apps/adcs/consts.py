@@ -9,6 +9,42 @@ import math
 from ulab import numpy as np
 
 
+class StatusConst:
+    """
+    Status codes used in ADCS apps.
+    """
+
+    # Failure Status Constants
+    # Sensor Failures
+    GYRO_FAIL = -1
+    MAG_FAIL = -2
+    GPS_FAIL = -3
+
+    # Algorithm Failures
+    MEKF_INIT_FAIL = -4
+    OPROP_INIT_FAIL = -5
+    TRIAD_FAIL = -6
+    POS_UPDATE_FAIL = -7
+
+    # Success Status Constants
+    OK = 1
+
+    # Failure Messages
+    _FAIL_MESSAGES = {
+        GYRO_FAIL: "Gyro failure",
+        MAG_FAIL: "Magnetometer failure",
+        GPS_FAIL: "GPS failure",
+        MEKF_INIT_FAIL: "MEKF init failure",
+        OPROP_INIT_FAIL: "Orbit Prop Init failure",
+        TRIAD_FAIL: "TRIAD failure",
+        POS_UPDATE_FAIL: "Position update failure",
+    }
+
+    @classmethod
+    def get_fail_message(cls, status):
+        return cls._FAIL_MESSAGES.get(status, "Unknown error code")
+
+
 class Modes:
     """
     Modes and their corresponding thresholds

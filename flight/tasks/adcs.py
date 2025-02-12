@@ -4,7 +4,7 @@ import time
 
 from apps.adcs.acs import spin_stabilizing_controller, sun_pointed_controller, zero_all_coils
 from apps.adcs.ad import AttitudeDetermination
-from apps.adcs.consts import Modes
+from apps.adcs.consts import Modes, StatusConst
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX
 from core import DataHandler as DH
 from core import TemplateTask
@@ -57,18 +57,21 @@ class Task(TemplateTask):
     log_data = [0] * 31
     coil_status = [0] * 6
 
+    # Attitude Determination
+    AD = AttitudeDetermination()
+
     ## ADCS Modes and switching logic
     MODE = Modes.TUMBLING
 
     # Sub-task architecture
     execution_counter = 0
 
+    # Failure message storage
+    failure_messages = []
+
     def __init__(self, id):
         super().__init__(id)
         self.name = "ADCS"  # Override the name
-
-        # Attitude Determination
-        self.AD = AttitudeDetermination(id, self.name)  # Logs everything from AD within ADCS Task ID
 
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:
@@ -116,13 +119,20 @@ class Task(TemplateTask):
 
                 else:
                     if not self.AD.initialized:
-                        self.AD.initialize_mekf()
+                        status_1, status_2 = self.AD.initialize_mekf()
+                        if status_1 != StatusConst.OK:
+                            self.failure_messages.append(
+                                StatusConst.get_fail_message(status_1) + ":" + StatusConst.get_fail_message(status_2)
+                            )
                     else:
                         # Update Each sensor with covariances
-                        self.AD.position_update(self.time)
-                        self.AD.sun_position_update(self.time, update_covariance=True)
-                        self.AD.gyro_update(self.time, update_covariance=True)
-                        self.AD.magnetometer_update(self.time, update_covariance=True)
+                        status_1, status_2 = self.AD.position_update(self.time)
+                        if status_1 != StatusConst.OK:
+                            self.failure_messages.append(status_1 + ":" + StatusConst.get_fail_message(status_2))
+                        else:
+                            self.AD.sun_position_update(self.time, update_covariance=True)
+                            self.AD.gyro_update(self.time, update_covariance=True)
+                            self.AD.magnetometer_update(self.time, update_covariance=True)
 
                     # No Attitude Control in Low-power mode
 
@@ -153,13 +163,22 @@ class Task(TemplateTask):
 
                     else:
                         if not self.AD.initialized:
-                            self.AD.initialize_mekf()
+                            status_1, status_2 = self.AD.initialize_mekf()
+                            if status_1 != StatusConst.OK:
+                                self.failure_messages.append(
+                                    StatusConst.get_fail_message(status_1) + ":" + StatusConst.get_fail_message(status_2)
+                                )
                         else:
                             # Update Each sensor with covariances
-                            self.AD.position_update(self.time)
-                            self.AD.sun_position_update(self.time, update_covariance=True)
-                            self.AD.gyro_update(self.time, update_covariance=True)
-                            self.AD.magnetometer_update(self.time, update_covariance=True)
+                            status_1, status_2 = self.AD.position_update(self.time)
+                            if status_1 != StatusConst.OK:
+                                self.failure_messages.append(
+                                    StatusConst.get_fail_message(status_1) + ":" + StatusConst.get_fail_message(status_2)
+                                )
+                            else:
+                                self.AD.sun_position_update(self.time, update_covariance=True)
+                                self.AD.gyro_update(self.time, update_covariance=True)
+                                self.AD.magnetometer_update(self.time, update_covariance=True)
 
                         # identify Mode based on current sensor readings
                         self.MODE = self.AD.current_mode()
@@ -241,5 +260,13 @@ class Task(TemplateTask):
         self.log_data[ADCS_IDX.ATTITUDE_QY] = self.AD.state[8]
         self.log_data[ADCS_IDX.ATTITUDE_QZ] = self.AD.state[9]
         DH.log_data("adcs", self.log_data)
+
         if self.execution_counter == 0:
+
+            # Empty failure message buffers
+            for msg in self.failure_messages:
+                self.log_warning(msg)
+            self.failure_messages = []
+
+            # Log Gyro Angular Velocities
             self.log_info(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z + 1]}")
