@@ -284,14 +284,14 @@ class ArgusV2(CubeSat):
                 self.__power_monitor_boot,
                 ["BOARD", ArgusV2Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.BOARD_POWER_MONITOR_I2C],
             ],
-            "XP_PWR": [self.__power_monitors["XP"],
-                self.__power_monitor_boot,
-                ["XP", ArgusV2Components.XP_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.XP_POWER_MONITOR_I2C],
-            ],
-            "XM_PWR": [self.__power_monitors["XM"],
-                self.__power_monitor_boot,
-                ["XM", ArgusV2Components.XM_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.XM_POWER_MONITOR_I2C],
-            ],
+            # "XP_PWR": [self.__power_monitors["XP"],
+            #     self.__power_monitor_boot,
+            #     ["XP", ArgusV2Components.XP_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.XP_POWER_MONITOR_I2C],
+            # ],
+            # "XM_PWR": [self.__power_monitors["XM"],
+            #     self.__power_monitor_boot,
+            #     ["XM", ArgusV2Components.XM_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.XM_POWER_MONITOR_I2C],
+            # ],
             # self.__power_monitor["XP"]: self.__power_monitor_boot("XP"),
             # self.__power_monitor["XM"]: self.__power_monit2or_boot("XM"),
             # self.__power_monitor["YP"]: self.__power_monitor_boot("YP"),
@@ -426,8 +426,8 @@ class ArgusV2(CubeSat):
             error_codes.append(Errors.NOERROR)  # Append success code if no error
         except Exception as e:
             device = None
+            print(f"Failed to initialize {data[0]} power monitor: {e}")
             if self.__debug:
-                print(f"Failed to initialize {data[0]} power monitor: {e}")
                 raise e
             return Errors.ADM1176_NOT_INITIALIZED
 
