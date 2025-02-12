@@ -127,7 +127,13 @@ class AttitudeDetermination:
             gps_vel_ecef = (
                 np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_VX : GPS_IDX.GPS_ECEF_VZ + 1]).reshape((3,)) * 0.01
             )
-            # TODO : define validity of gps signal
+
+            # Sensor validity check
+            # Verify size and presence of data
+            if gps_pos_ecef is None or gps_vel_ecef is None or len(gps_pos_ecef) != 3 or len(gps_vel_ecef) != 3:
+                return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
+            elif not (6.0e8 <= np.linalg.norm(gps_pos_ecef) <= 7.5e8) or not (3.0e5 <= np.linalg.norm(gps_vel_ecef) <= 1.0e6):
+                return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
 
             return StatusConst.OK, gps_record_time, gps_pos_ecef, gps_vel_ecef
         else:

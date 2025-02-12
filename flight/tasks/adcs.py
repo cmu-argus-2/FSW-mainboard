@@ -122,13 +122,13 @@ class Task(TemplateTask):
                         status_1, status_2 = self.AD.initialize_mekf()
                         if status_1 != StatusConst.OK:
                             self.failure_messages.append(
-                                StatusConst.get_fail_message(status_1) + ":" + StatusConst.get_fail_message(status_2)
+                                StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
                             )
                     else:
                         # Update Each sensor with covariances
                         status_1, status_2 = self.AD.position_update(self.time)
                         if status_1 != StatusConst.OK:
-                            self.failure_messages.append(status_1 + ":" + StatusConst.get_fail_message(status_2))
+                            self.failure_messages.append(status_1 + " : " + StatusConst.get_fail_message(status_2))
                         else:
                             self.AD.sun_position_update(self.time, update_covariance=True)
                             self.AD.gyro_update(self.time, update_covariance=True)
@@ -152,7 +152,7 @@ class Task(TemplateTask):
                     self.MODE = Modes.TUMBLING
 
                 else:
-                    if self.execution_counter == 0:
+                    if self.execution_counter == 2:
                         # Turn coils off before measurements to allow time for coils to settle
                         zero_all_coils()
 
@@ -166,14 +166,14 @@ class Task(TemplateTask):
                             status_1, status_2 = self.AD.initialize_mekf()
                             if status_1 != StatusConst.OK:
                                 self.failure_messages.append(
-                                    StatusConst.get_fail_message(status_1) + ":" + StatusConst.get_fail_message(status_2)
+                                    StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
                                 )
                         else:
                             # Update Each sensor with covariances
                             status_1, status_2 = self.AD.position_update(self.time)
                             if status_1 != StatusConst.OK:
                                 self.failure_messages.append(
-                                    StatusConst.get_fail_message(status_1) + ":" + StatusConst.get_fail_message(status_2)
+                                    StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
                                 )
                             else:
                                 self.AD.sun_position_update(self.time, update_covariance=True)
