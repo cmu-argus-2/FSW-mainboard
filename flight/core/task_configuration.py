@@ -18,6 +18,6 @@ TASK_CONFIG = {
     TASK.COMMS: {"Task": comms, "Frequency": 1, "Priority": 2, "ScheduleLater": True},
     # TASK.ADCS: {"Task": adcs, "Frequency": 5, "Priority": 2, "ScheduleLater": True},
     TASK.THERMAL: {"Task": thermal, "Frequency": 0.1, "Priority": 5, "ScheduleLater": True},
-    TASK.GPS: {"Task": gps, "Frequency": 2, "Priority": 2, "ScheduleLater": True},
+    TASK.GPS: {"Task": gps, "Frequency": 0.1, "Priority": 2, "ScheduleLater": True},
     TASK.PAYLOAD: {"Task": payload, "Frequency": 0.01, "Priority": 4, "ScheduleLater": True},
 }
