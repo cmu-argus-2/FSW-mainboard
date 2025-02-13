@@ -39,7 +39,7 @@ from apps.command.commands import (
     UPLINK_TIME_REFERENCE,
 )
 from apps.command.constants import CMD_ID
-from apps.command.preconditions import file_id_exists, valid_time_format, valid_state
+from apps.command.preconditions import file_id_exists, valid_state, valid_time_format
 from core import logger
 from micropython import const
 
