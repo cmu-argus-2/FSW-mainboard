@@ -26,7 +26,7 @@ For struct module format strings:
 
 import gc
 
-from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, THERMAL_IDX
+from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, STORAGE_IDX, THERMAL_IDX
 from apps.telemetry.helpers import (
     convert_float_to_fixed_point_hp,
     pack_signed_long_int,
@@ -348,13 +348,141 @@ class TelemetryPacker:
 
     @classmethod
     def pack_tm_hal(cls):
-        # TODO: CDH, HAL status, error codes, EPS
+        # TODO: HAL status, error codes, EPS
+        if not cls._TM_AVAILABLE:
+            cls._TM_AVAILABLE = True
+
+        ############ CDH fields ############
+        if DH.data_process_exists("cdh"):
+            cdh_data = DH.get_latest_data("cdh")
+
+            if cdh_data:
+                # Time
+                cls._FRAME[4:8] = pack_unsigned_long_int(cdh_data, CDH_IDX.TIME)
+                # SC State
+                cls._FRAME[8] = cdh_data[CDH_IDX.SC_STATE] & 0xFF
+                # SD Usage
+                cls._FRAME[9:13] = pack_unsigned_long_int(cdh_data, CDH_IDX.SD_USAGE)
+                # Current RAM Usage
+                cls._FRAME[13] = cdh_data[CDH_IDX.CURRENT_RAM_USAGE] & 0xFF
+                # Reboot count
+                cls._FRAME[14] = cdh_data[CDH_IDX.REBOOT_COUNT] & 0xFF
+                # Watchdog Timer
+                cls._FRAME[15] = cdh_data[CDH_IDX.WATCHDOG_TIMER] & 0xFF
+                # HAL Bitflags
+                cls._FRAME[16] = cdh_data[CDH_IDX.HAL_BITFLAGS] & 0xFF
+                # Detumbling Error Flag
+                cls._FRAME[17] = cdh_data[CDH_IDX.DETUMBLING_ERROR_FLAG] & 0xFF
+
+            else:
+                logger.warning("No latest CDH data available")
+
+        else:
+            logger.warning("No CDH data available")
         pass
 
     @classmethod
     def pack_tm_storage(cls):
-        # TODO: CDH, DH snapshot
-        pass
+
+        if not cls._TM_AVAILABLE:
+            cls._TM_AVAILABLE = True
+
+        ############ CDH fields ############
+        if DH.data_process_exists("cdh"):
+            cdh_data = DH.get_latest_data("cdh")
+
+            if cdh_data:
+                # Time
+                cls._FRAME[4:8] = pack_unsigned_long_int(cdh_data, CDH_IDX.TIME)
+                # SC State
+                cls._FRAME[8] = cdh_data[CDH_IDX.SC_STATE] & 0xFF
+                # SD Usage
+                cls._FRAME[9:13] = pack_unsigned_long_int(cdh_data, CDH_IDX.SD_USAGE)
+                # Current RAM Usage
+                cls._FRAME[13] = cdh_data[CDH_IDX.CURRENT_RAM_USAGE] & 0xFF
+                # Reboot count
+                cls._FRAME[14] = cdh_data[CDH_IDX.REBOOT_COUNT] & 0xFF
+                # Watchdog Timer
+                cls._FRAME[15] = cdh_data[CDH_IDX.WATCHDOG_TIMER] & 0xFF
+                # HAL Bitflags
+                cls._FRAME[16] = cdh_data[CDH_IDX.HAL_BITFLAGS] & 0xFF
+                # Detumbling Error Flag
+                cls._FRAME[17] = cdh_data[CDH_IDX.DETUMBLING_ERROR_FLAG] & 0xFF
+
+            else:
+                logger.warning("No latest CDH data available")
+
+        else:
+            logger.warning("No CDH data available")
+
+        # Total SD card usage
+        cls._FRAME[18:22] = pack_signed_long_int([DH.SD_usage()], 0)
+
+        ############ CDH fields ###########
+        if DH.data_process_exists("cdh"):
+            cdh_storage_info = DH.get_storage_info("cdh")
+            # CDH number of files
+            cls._FRAME[22:26] = pack_signed_long_int(cdh_storage_info, STORAGE_IDX.NUM_FILES)
+            # CDH directory size
+            cls._FRAME[26:30] = pack_signed_long_int(cdh_storage_info, STORAGE_IDX.DIR_SIZE)
+        else:
+            logger.warning("CDH Data process Does")
+
+        ############ EPS fields ###########
+        if DH.data_process_exists("eps"):
+            eps_storage_info = DH.get_storage_info("eps")
+            # EPS number of files
+            cls._FRAME[30:34] = pack_signed_long_int(eps_storage_info, STORAGE_IDX.NUM_FILES)
+            # EPS directory size
+            cls._FRAME[34:38] = pack_signed_long_int(eps_storage_info, STORAGE_IDX.DIR_SIZE)
+
+        ############ ADCS fields ###########
+        if DH.data_process_exists("adcs"):
+            adcs_storage_info = DH.get_storage_info("adcs")
+            # ADCS number of files
+            cls._FRAME[38:42] = pack_signed_long_int(adcs_storage_info, STORAGE_IDX.NUM_FILES)
+            # ADCS directory size
+            cls._FRAME[42:46] = pack_signed_long_int(adcs_storage_info, STORAGE_IDX.DIR_SIZE)
+
+        ############ COMMS fields ###########
+        if DH.data_process_exists("comms"):
+            comms_storage_info = DH.get_storage_info("comms")
+            # COMMS number of files
+            cls._FRAME[46:50] = pack_signed_long_int(comms_storage_info, STORAGE_IDX.NUM_FILES)
+            # COMMS directory size
+            cls._FRAME[50:54] = pack_signed_long_int(comms_storage_info, STORAGE_IDX.DIR_SIZE)
+
+        ############ GPS fields ###########
+        if DH.data_process_exists("gps"):
+            gps_storage_info = DH.get_storage_info("gps")
+            # GPS number of files
+            cls._FRAME[54:58] = pack_signed_long_int(gps_storage_info, STORAGE_IDX.NUM_FILES)
+            # GPS directory size
+            cls._FRAME[58:62] = pack_signed_long_int(gps_storage_info, STORAGE_IDX.DIR_SIZE)
+
+        ############ Payload fields ###########
+        if DH.data_process_exists("payload"):
+            payload_storage_info = DH.get_storage_info("payload")
+            # PAYLOAD number of files
+            cls._FRAME[62:66] = pack_signed_long_int(payload_storage_info, STORAGE_IDX.NUM_FILES)
+            # PAYLOAD directory size
+            cls._FRAME[66:70] = pack_signed_long_int(payload_storage_info, STORAGE_IDX.DIR_SIZE)
+
+        ############ Thermal fields ###########
+        if DH.data_process_exists("thermal"):
+            thermal_storage_info = DH.get_storage_info("thermal")
+            # THERMAL number of files
+            cls._FRAME[70:74] = pack_signed_long_int(thermal_storage_info, STORAGE_IDX.NUM_FILES)
+            # THERMAL directory size
+            cls._FRAME[74:78] = pack_signed_long_int(thermal_storage_info, STORAGE_IDX.DIR_SIZE)
+
+        ############ Command fields ###########
+        if DH.data_process_exists("cmd_logs"):
+            cmd_logs_storage_info = DH.get_storage_info("cmd_logs")
+            # Command logs number of files
+            cls._FRAME[78:82] = pack_signed_long_int(cmd_logs_storage_info, STORAGE_IDX.NUM_FILES)
+            # Command logs directory size
+            cls._FRAME[82:86] = pack_signed_long_int(cmd_logs_storage_info, STORAGE_IDX.DIR_SIZE)
 
     @classmethod
     def pack_tm_payload(cls):

@@ -20,12 +20,17 @@ Author: Ibrahima S. Sow
 
 """
 
+import time
+
 import supervisor
+from apps.adcs.orbit_propagation import propagate_orbit
 from apps.telemetry import TelemetryPacker
 from core import logger
 from core import state_manager as SM
-from core.data_handler import DataHandler
+from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
+from hal.configuration import SATELLITE
+from ulab import numpy as np
 
 FILE_PKTSIZE = 240
 
@@ -48,14 +53,16 @@ def SWITCH_TO_STATE(target_state_id, time_in_state=None):
 def UPLINK_TIME_REFERENCE(time_reference):
     """Sends a time reference to the spacecraft to update the time processing module."""
     logger.info(f"Executing UPLINK_TIME_REFERENCE with current_time: {time_reference}")
+    SATELLITE.set_datetime(time.gmtime(time_reference))
     return []
 
 
 def UPLINK_ORBIT_REFERENCE(time_reference, orbital_parameters):
     """Sends time-referenced orbital information to update the orbit reference."""
     logger.info(
-        f"Executing UPLINK_ORBIT_REFERENCE with orbital_parameters: pos({orbital_parameters.pos_x},{orbital_parameters.pos_y},{orbital_parameters.pos_z}), vel({orbital_parameters.vel_x,orbital_parameters.vel_y,orbital_parameters.vel_z}), time_reference: {time_reference}"
+        f"Executing UPLINK_ORBIT_REFERENCE with orbital_parameters: pos({orbital_parameters[0]},{orbital_parameters[1]},{orbital_parameters[2]}), vel({orbital_parameters[3],orbital_parameters[4],orbital_parameters[5]}), time_reference: {time_reference}"
     )
+    propagate_orbit(time.time(), time_reference, np.array(orbital_parameters[0:3]), np.array(orbital_parameters[3:]))
     return []
 
 
@@ -122,11 +129,14 @@ def REQUEST_TM_PAYLOAD():
 def REQUEST_FILE_METADATA(file_id, file_time=None):
     """Requests metadata for a specific file from the spacecraft."""
     logger.info(f"Executing REQUEST_FILE_METADATA with file_tag: {file_id} and file_time: {file_time}")
-    # TODO: Currently this is handled by Comms, eventually move here
-    # file_size = DataHandler.get_current_file_size(file_id)
-    # file_message_count = int(file_size / FILE_PKTSIZE)
-    # return [file_id, file_time, file_size, file_message_count]
-    return []
+    file_path = None
+
+    if file_time is None:
+        file_path = DH.request_TM_path(file_id)
+    else:
+        file_path = DH.request_TM_path(file_id, file_time)
+
+    return [file_path]
 
 
 def REQUEST_FILE_PKT(file_id, file_time, rq_sq_cnt):
@@ -134,27 +144,29 @@ def REQUEST_FILE_PKT(file_id, file_time, rq_sq_cnt):
     logger.info(
         f"Executing REQUEST_FILE_PKT with file_tag: {file_id}, file_tim: {file_time}, requested sequence count: {rq_sq_cnt}"
     )
-    # TODO: Currently this is handled by Comms, eventually move here
-    # file_pkt = []
-    # # Getting the latest data in the file
-    # if DataHandler.data_available(file_id):
-    #     file_pkt = DataHandler.get_latest_data(file_id)
-    # return [file_id, file_time, file_pkt]
-    return []
+    # TODO: potentially change if we want to handle file packets here instead of Comms
+    file_path = None
+
+    if file_time is None:
+        file_path = DH.request_TM_path(file_id)
+    else:
+        file_path = DH.request_TM_path(file_id, file_time)
+
+    return [file_path]
 
 
 def REQUEST_IMAGE():
     """Requests an image from the spacecraft's internal storage."""
     logger.info("Executing REQUEST_IMAGE")
     # TODO: finish implementation, if we are keeping this command
-    path = DataHandler.request_TM_path_image()
+    path = DH.request_TM_path_image()
     return [path]
 
 
 def DOWNLINK_ALL():
     """Requests all files, images, and mission data be downlinked immediately in the event mission is compromised"""
     logger.info("Executing DOWNLINK_ALL")
-    return [DataHandler.get_all_data_processes_name()]
+    return [DH.get_all_data_processes_name()]
 
 
 def get_tx_message_header():

@@ -395,7 +395,7 @@ class DataProcess:
         else:
             return None
 
-    def request_TM_path(self, latest: bool = False) -> Optional[str]:
+    def request_TM_path(self, latest: bool = False, file_time=None) -> Optional[str]:
         """
         Returns the path of a designated file available for transmission.
         If no file is available, the function returns None.
@@ -414,6 +414,17 @@ class DataProcess:
                 transmit_file = files[0]
                 if transmit_file == _PROCESS_CONFIG_FILENAME:
                     transmit_file = files[1]
+
+                if time is not None:
+                    # Search for the specific file with time
+                    for filename in files:
+                        if filename == _PROCESS_CONFIG_FILENAME:
+                            pass
+                        if extract_time_from_filename(filename) == file_time:
+                            transmit_file = filename
+
+                    # Could not find the file with the specified time
+                    logger.warning("Could not find filename with requested time, returning earliest")
 
             tm_path = join_path(self.dir_path, transmit_file)
 
@@ -618,7 +629,7 @@ class ImageProcess(DataProcess):
         self.file.write(data)
         self.file.flush()
 
-    def request_TM_path(self, latest: bool = False) -> Optional[str]:
+    def request_TM_path(self, latest: bool = False, file_time=None) -> Optional[str]:
         """
         MODIFIED FOR IMAGES as we need complete images to be transmitted.
 
@@ -639,6 +650,17 @@ class ImageProcess(DataProcess):
                 transmit_file = files[0]
                 if transmit_file == _PROCESS_CONFIG_FILENAME:
                     transmit_file = files[1]
+
+                if time is not None:
+                    # Search for the specific file with time
+                    for filename in files:
+                        if filename == _PROCESS_CONFIG_FILENAME:
+                            pass
+                        if extract_time_from_filename(filename) == file_time:
+                            transmit_file = filename
+
+                    # Could not find the file with the specified time
+                    logger.warning("Could not find filename with requested time, returning earliest")
 
             tm_path = join_path(self.dir_path, transmit_file)
 
@@ -976,7 +998,7 @@ class DataHandler:
         return list(cls.data_process_registry.values())
 
     @classmethod
-    def get_storage_info(cls, tag_name: str) -> None:
+    def get_storage_info(cls, tag_name: str):
         """
         Prints the storage information for the specified data process.
 
@@ -987,14 +1009,14 @@ class DataHandler:
             KeyError: If the provided tag name is not registered in the data process registry.
 
         Returns:
-            None
+            Tuple containing storage information for the tag name if it exists
 
         Example:
             DataHandler.get_storage_info('tag_name')
         """
         try:
             if tag_name in cls.data_process_registry:
-                cls.data_process_registry[tag_name].get_storage_info()
+                return cls.data_process_registry[tag_name].get_storage_info()
             else:
                 raise KeyError("File process not registered.")
         except KeyError as e:
@@ -1024,7 +1046,7 @@ class DataHandler:
         return _IMG_TAG_NAME in cls.data_process_registry
 
     @classmethod
-    def request_TM_path(cls, tag_name, latest=False):
+    def request_TM_path(cls, tag_name, latest=False, file_time=None):
         """
         Returns the path of a designated file available for transmission.
         If no file is available, the function returns None.
@@ -1035,14 +1057,14 @@ class DataHandler:
         """
         try:
             if tag_name in cls.data_process_registry:
-                return cls.data_process_registry[tag_name].request_TM_path(latest=latest)
+                return cls.data_process_registry[tag_name].request_TM_path(latest=latest, file_time=file_time)
             else:
                 raise KeyError("Data  process not registered!")
         except KeyError as e:
             logger.critical(f"Error: {e}")
 
     @classmethod
-    def request_TM_path_image(cls, latest=False):
+    def request_TM_path_image(cls, latest=False, file_time=None):
         """
         Returns the path of a designated image available for transmission.
         If no file is available, the function returns None.
@@ -1053,7 +1075,7 @@ class DataHandler:
         """
         try:
             if "img" in cls.data_process_registry:
-                return cls.data_process_registry["img"].request_TM_path(latest=latest)
+                return cls.data_process_registry["img"].request_TM_path(latest=latest, file_time=file_time)
             else:
                 raise KeyError("Image process not registered!")
         except KeyError as e:

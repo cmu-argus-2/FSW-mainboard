@@ -138,3 +138,8 @@ class THERMAL_IDX:
 
 class PAYLOAD_IDX:
     pass
+
+
+class STORAGE_IDX:
+    NUM_FILES = const(0)
+    DIR_SIZE = const(1)
