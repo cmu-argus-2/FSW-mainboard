@@ -78,7 +78,6 @@ class Task(TemplateTask):
             pass
 
         else:
-
             if not DH.data_process_exists("adcs"):
                 data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f"
                 DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
@@ -90,7 +89,6 @@ class Task(TemplateTask):
             # DETUMBLING
             # ------------------------------------------------------------------------------------------------------------------------------------
             if SM.current_state == STATES.DETUMBLING:
-
                 # Query the Gyro
                 self.AD.gyro_update(self.time, update_covariance=False)
 
@@ -195,6 +193,7 @@ class Task(TemplateTask):
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ Attitude Control Auxiliary Functions """
+
     # ------------------------------------------------------------------------------------------------------------------------------------
     def attitude_control(self):
         """
@@ -223,6 +222,7 @@ class Task(TemplateTask):
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ LOGGING """
+
     # ------------------------------------------------------------------------------------------------------------------------------------
     def log(self):
         """

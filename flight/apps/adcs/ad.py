@@ -33,7 +33,6 @@ from ulab import numpy as np
 
 
 class AttitudeDetermination:
-
     # Initialized Flag to retry initialization
     initialized = False
 
@@ -72,6 +71,7 @@ class AttitudeDetermination:
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ SENSOR READ FUNCTIONS """
+
     # ------------------------------------------------------------------------------------------------------------------------------------
     def read_sun_position(self) -> tuple[int, np.ndarray, np.ndarray]:
         """
@@ -130,7 +130,6 @@ class AttitudeDetermination:
         - NOTE: Since GPS is a task, this function will read values from C&DH
         """
         if DH.data_process_exists("gps") and SATELLITE.GPS_AVAILABLE:
-
             # Get last GPS update time and position at that time
             gps_record_time = DH.get_latest_data("gps")[GPS_IDX.TIME_GPS]
             gps_pos_ecef = 1e-2 * (
@@ -152,6 +151,7 @@ class AttitudeDetermination:
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ MEKF INITIALIZATION """
+
     # ------------------------------------------------------------------------------------------------------------------------------------
     def initialize_mekf(self) -> int:
         """
@@ -259,6 +259,7 @@ class AttitudeDetermination:
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ MEKF PROPAGATION """
+
     # ------------------------------------------------------------------------------------------------------------------------------------
     def position_update(self, current_time: int) -> None:
         """
@@ -372,7 +373,6 @@ class AttitudeDetermination:
                 self.last_gyro_update_time = current_time
 
                 if update_covariance:  # if update covariance, update covariance matrices
-
                     F = np.zeros((6, 6))
                     F[0:3, 3:6] = -R_q_next
 

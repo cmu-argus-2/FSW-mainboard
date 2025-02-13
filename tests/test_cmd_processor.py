@@ -2,9 +2,10 @@ import time
 from datetime import datetime, timedelta
 
 import pytest
+from micropython import const
 
 from flight.apps.command.constants import CMD_ID
-from flight.apps.command.preconditions import valid_time_format
+from flight.apps.command.preconditions import valid_state, valid_time_format
 from flight.apps.command.processor import process_command  # noqa F401
 from flight.apps.command.processor import CommandProcessingStatus, unpack_command_arguments
 from flight.core.state_machine import STATES
@@ -141,3 +142,17 @@ def test_valid_time_format():
 
     # Checking a valid time
     assert valid_time_format(current_time.timestamp())
+
+
+def test_valid_state():
+    invalid_state = const(0x0A)
+
+    # Checking that it detects invalid state
+    assert not valid_state(invalid_state)
+
+    # Checking that it detects all the valid states
+    assert valid_state(STATES.STARTUP)
+    assert valid_state(STATES.DETUMBLING)
+    assert valid_state(STATES.NOMINAL)
+    assert valid_state(STATES.EXPERIMENT)
+    assert valid_state(STATES.LOW_POWER)

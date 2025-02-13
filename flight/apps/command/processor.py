@@ -39,7 +39,7 @@ from apps.command.commands import (
     UPLINK_TIME_REFERENCE,
 )
 from apps.command.constants import CMD_ID
-from apps.command.preconditions import file_id_exists, valid_time_format
+from apps.command.preconditions import file_id_exists, valid_time_format, valid_state
 from core import logger
 from micropython import const
 
@@ -52,7 +52,7 @@ from micropython import const
 
 COMMANDS = [
     (CMD_ID.FORCE_REBOOT, lambda: True, [], FORCE_REBOOT),
-    (CMD_ID.SWITCH_TO_STATE, lambda: True, ["target_state_id", "time_in_state"], SWITCH_TO_STATE),
+    (CMD_ID.SWITCH_TO_STATE, valid_state, ["target_state_id", "time_in_state"], SWITCH_TO_STATE),
     (CMD_ID.UPLINK_TIME_REFERENCE, valid_time_format, ["time_reference"], UPLINK_TIME_REFERENCE),
     (
         CMD_ID.UPLINK_ORBIT_REFERENCE,
