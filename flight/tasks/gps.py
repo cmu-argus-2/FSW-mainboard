@@ -51,7 +51,7 @@ class Task(TemplateTask):
                     # TODO : This format is no longer correct
                     # data_format = "LBBBHIiiiiHHHHHiiiiii"
                     data_format = "fBBBHLllllHHHHHllllll"
-                    DH.register_data_process("gps", data_format, True, data_limit=100000, write_interval=10)
+                    DH.register_data_process("gps", data_format, True, data_limit=100000, write_interval=1)
 
                 if SATELLITE.GPS.update():
                     # Assuming we have a fix for now
