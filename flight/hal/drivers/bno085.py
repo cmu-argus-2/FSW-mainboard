@@ -106,8 +106,8 @@ except ImportError:
 
 # TODO: shorten names
 # Channel 0: the SHTP command channel
-BNO_CHANNEL_SHTP_COMMAND = const(0)
-BNO_CHANNEL_EXE = const(1)
+_BNO_CHANNEL_SHTP_COMMAND = const(0)
+_BNO_CHANNEL_EXE = const(1)
 _BNO_CHANNEL_CONTROL = const(2)
 # _BNO_CHANNEL_INPUT_SENSOR_REPORTS = const(3)
 # _BNO_CHANNEL_WAKE_INPUT_SENSOR_REPORTS = const(4)
@@ -253,7 +253,7 @@ _AVAIL_SENSOR_REPORTS = {
 
 # _ENABLED_ACTIVITIES = 0x1FF  # All activities; 1 bit set for each of 8 activities, + Unknown
 
-DATA_BUFFER_SIZE = const(512)  # data buffer size. obviously eats ram
+_DATA_BUFFER_SIZE = const(512)  # data buffer size. obviously eats ram
 PacketHeader = namedtuple(
     "PacketHeader",
     [
@@ -543,7 +543,7 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         self._debug: bool = debug
         self._reset: Optional[DigitalInOut] = reset
         self._dbg("********** __init__ *************")
-        self._data_buffer: bytearray = bytearray(DATA_BUFFER_SIZE)
+        self._data_buffer: bytearray = bytearray(_DATA_BUFFER_SIZE)
         self._command_buffer: bytearray = bytearray(12)
         self._packet_slices: List[Any] = []
 
@@ -883,8 +883,8 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
                 else:
                     return new_packet
             if new_packet.channel_number not in (
-                BNO_CHANNEL_EXE,
-                BNO_CHANNEL_SHTP_COMMAND,
+                _BNO_CHANNEL_EXE,
+                _BNO_CHANNEL_SHTP_COMMAND,
             ):
                 self._dbg("passing packet to handler for de-slicing")
                 self._handle_packet(new_packet)
@@ -1138,9 +1138,9 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         self._dbg("Soft resetting...", end="")
         data = bytearray(1)
         data[0] = 1
-        self._send_packet(BNO_CHANNEL_EXE, data)
+        self._send_packet(_BNO_CHANNEL_EXE, data)
         time.sleep(0.5)
-        self._send_packet(BNO_CHANNEL_EXE, data)
+        self._send_packet(_BNO_CHANNEL_EXE, data)
         time.sleep(0.5)
 
         for _i in range(3):
@@ -1183,7 +1183,7 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         self._dbg("trying to read", requested_read_length, "bytes")
         # +4 for the header
         total_read_length = requested_read_length + 4
-        if total_read_length > DATA_BUFFER_SIZE:
+        if total_read_length > _DATA_BUFFER_SIZE:
             self._data_buffer = bytearray(total_read_length)
             self._dbg("!!!!!!!!!!!! ALLOCATION: increased _data_buffer to bytearray(%d) !!!!!!!!!!!!! " % total_read_length)
         with self.bus_device_obj as i2c:

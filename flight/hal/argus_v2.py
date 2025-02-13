@@ -297,7 +297,7 @@ class ArgusV2(CubeSat):
         error_list.append(self.__radio_boot())
         error_list.append(self.__power_monitor_boot())
         # error_list.append(self.__fuel_gauge_boot())
-        error_list.append(self.__charger_boot())
+        # error_list.append(self.__charger_boot())
         # error_list.append(self.__torque_drivers_boot())
         # error_list.append(self.__light_sensors_boot())  # light + sun sensors
         # error_list.append(self.__burn_wire_boot())
@@ -439,6 +439,7 @@ class ArgusV2(CubeSat):
             self.__imu_temp_flag = False
             self.__device_list.append(imu)
         except Exception as e:
+            print(e)
             if self.__debug:
                 raise e
 
