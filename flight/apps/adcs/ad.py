@@ -90,7 +90,7 @@ class AttitudeDetermination:
         """
 
         if SATELLITE.IMU_AVAILABLE:
-            gyro = SATELLITE.IMU.gyro()
+            gyro = np.array(SATELLITE.IMU.gyro())
             query_time = int(time.time())
 
             # Sensor validity check
@@ -110,7 +110,7 @@ class AttitudeDetermination:
         """
 
         if SATELLITE.IMU_AVAILABLE:
-            mag = SATELLITE.IMU.mag()
+            mag = np.array(SATELLITE.IMU.mag())
             query_time = int(time.time())
 
             # Sensor validity check
@@ -133,11 +133,11 @@ class AttitudeDetermination:
 
             # Get last GPS update time and position at that time
             gps_record_time = DH.get_latest_data("gps")[GPS_IDX.TIME_GPS]
-            gps_pos_ecef = (
-                np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,)) * 0.01
+            gps_pos_ecef = 1e-2 * (
+                np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,))
             )
-            gps_vel_ecef = (
-                np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_VX : GPS_IDX.GPS_ECEF_VZ + 1]).reshape((3,)) * 0.01
+            gps_vel_ecef = 1e-2 * (
+                np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_VX : GPS_IDX.GPS_ECEF_VZ + 1]).reshape((3,))
             )
 
             # Sensor validity check
@@ -146,7 +146,7 @@ class AttitudeDetermination:
             elif not (6.0e8 <= np.linalg.norm(gps_pos_ecef) <= 7.5e8) or not (3.0e5 <= np.linalg.norm(gps_vel_ecef) <= 1.0e6):
                 return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
 
-            return StatusConst.OK, gps_record_time, gps_pos_ecef * 1e-3, gps_vel_ecef * 1e-3
+            return StatusConst.OK, gps_record_time, gps_pos_ecef, gps_vel_ecef
         else:
             return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
 
