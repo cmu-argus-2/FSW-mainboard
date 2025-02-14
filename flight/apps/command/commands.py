@@ -23,7 +23,7 @@ Author: Ibrahima S. Sow
 import time
 
 import supervisor
-from apps.adcs.orbit_propagation import propagate_orbit
+from apps.adcs.orbit_propagation import OrbitPropagator
 from apps.telemetry import TelemetryPacker
 from core import logger
 from core import state_manager as SM
@@ -62,7 +62,9 @@ def UPLINK_ORBIT_REFERENCE(time_reference, orbital_parameters):
     logger.info(
         f"Executing UPLINK_ORBIT_REFERENCE with orbital_parameters: pos({orbital_parameters[0]},{orbital_parameters[1]},{orbital_parameters[2]}), vel({orbital_parameters[3],orbital_parameters[4],orbital_parameters[5]}), time_reference: {time_reference}"
     )
-    propagate_orbit(time.time(), time_reference, np.array(orbital_parameters[0:3]), np.array(orbital_parameters[3:]))
+    OrbitPropagator.propagate_orbit(
+        time.time(), time_reference, np.array(orbital_parameters[0:3]), np.array(orbital_parameters[3:])
+    )
     return []
 
 

@@ -106,7 +106,6 @@ class Task(TemplateTask):
             # LOW POWER
             # ------------------------------------------------------------------------------------------------------------------------------------
             elif SM.current_state == STATES.LOW_POWER:
-
                 # Turn coils off to conserve power
                 zero_all_coils()
 
@@ -141,7 +140,6 @@ class Task(TemplateTask):
             # NOMINAL & EXPERIMENT
             # ------------------------------------------------------------------------------------------------------------------------------------
             else:
-
                 if (
                     SM.current_state == STATES.NOMINAL
                     and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
@@ -202,7 +200,6 @@ class Task(TemplateTask):
 
         # Decide which controller to choose
         if self.MODE in [Modes.TUMBLING, Modes.STABLE]:  # B-cross controller
-
             # Get sensor measurements
             omega_unbiased = self.AD.state[self.AD.omega_idx] - self.AD.state[self.AD.omega_idx]
             mag_field_body = self.AD.state[self.AD.mag_field_idx]
@@ -211,7 +208,6 @@ class Task(TemplateTask):
             self.coil_status = spin_stabilizing_controller(omega_unbiased, mag_field_body)
 
         else:  # Sun-pointed controller
-
             # Get measurements
             sun_pos_body = self.AD.state[self.AD.sun_pos_idx]
             omega_unbiased = self.AD.state[self.AD.omega_idx] - self.AD.state[self.AD.omega_idx]
@@ -262,7 +258,6 @@ class Task(TemplateTask):
         DH.log_data("adcs", self.log_data)
 
         if self.execution_counter == 0:
-
             # Empty failure message buffers
             for msg in self.failure_messages:
                 self.log_warning(msg)

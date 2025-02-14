@@ -352,7 +352,6 @@ class AttitudeDetermination:
         self.state[self.omega_idx] = omega_body  # save omega to state
 
         if status == StatusConst.OK:
-
             if self.initialized:  # If initialized, also update attitude via propagation
                 bias = self.state[self.bias_idx]
                 dt = current_time - self.last_gyro_update_time
@@ -400,7 +399,6 @@ class AttitudeDetermination:
         status, _, mag_field_body = self.read_magnetometer()
 
         if self.initialized and update_covariance and status == StatusConst.OK:  # Update EKF
-
             true_mag_field_eci = igrf_eci(current_time, self.state[self.position_idx] / 1000)
             true_mag_field_eci_norm = np.linalg.norm(true_mag_field_eci)
             if true_mag_field_eci_norm == 0:

@@ -383,7 +383,6 @@ class TelemetryPacker:
 
     @classmethod
     def pack_tm_storage(cls):
-
         if not cls._TM_AVAILABLE:
             cls._TM_AVAILABLE = True
 
