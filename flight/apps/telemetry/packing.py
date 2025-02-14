@@ -81,13 +81,6 @@ class TelemetryPacker:
         if not cls._TM_AVAILABLE:
             cls._TM_AVAILABLE = True
 
-        ############    Header  ############
-
-        # Header for heartbeat, size 229
-        cls._FRAME[0] = const(0x01) & 0xFF  # message ID
-        cls._FRAME[1:3] = pack_unsigned_short_int([const(0x00)], 0)  # sequence count
-        cls._FRAME[3] = const(229) & 0xFF  # packet length
-
         ############ CDH fields ############
         if DH.data_process_exists("cdh"):
             cdh_data = DH.get_latest_data("cdh")
@@ -360,45 +353,8 @@ class TelemetryPacker:
 
     @classmethod
     def pack_tm_storage(cls):
-        if not cls._TM_AVAILABLE:
-            cls._TM_AVAILABLE = True
-
-        ############    Header  ############
-
-        # Header for heartbeat, size 229
-        cls._FRAME[0] = const(0x01) & 0xFF  # message ID
-        cls._FRAME[1:3] = pack_unsigned_short_int([const(0x00)], 0)  # sequence count
-        cls._FRAME[3] = const(229) & 0xFF  # packet length
-
-        ############ CDH fields ############
-        if DH.data_process_exists("cdh"):
-            cdh_data = DH.get_latest_data("cdh")
-
-            if cdh_data:
-                # Time
-                cls._FRAME[4:8] = pack_unsigned_long_int(cdh_data, CDH_IDX.TIME)
-                # SC State
-                cls._FRAME[8] = cdh_data[CDH_IDX.SC_STATE] & 0xFF
-                # SD Usage
-                cls._FRAME[9:13] = pack_unsigned_long_int(cdh_data, CDH_IDX.SD_USAGE)
-                # Current RAM Usage
-                cls._FRAME[13] = cdh_data[CDH_IDX.CURRENT_RAM_USAGE] & 0xFF
-                # Reboot count
-                cls._FRAME[14] = cdh_data[CDH_IDX.REBOOT_COUNT] & 0xFF
-                # Watchdog Timer
-                cls._FRAME[15] = cdh_data[CDH_IDX.WATCHDOG_TIMER] & 0xFF
-                # HAL Bitflags
-                cls._FRAME[16] = cdh_data[CDH_IDX.HAL_BITFLAGS] & 0xFF
-                # Detumbling Error Flag
-                cls._FRAME[17] = cdh_data[CDH_IDX.DETUMBLING_ERROR_FLAG] & 0xFF
-
-            else:
-                logger.warning("No latest CDH data available")
-
-        else:
-            logger.warning("No CDH data available")
-
-        ############ DH information ############
+        # TODO: CDH, DH snapshot
+        pass
 
     @classmethod
     def pack_tm_payload(cls):
