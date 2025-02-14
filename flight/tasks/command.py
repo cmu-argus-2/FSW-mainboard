@@ -5,7 +5,7 @@
 import gc
 import time
 
-from apps.adcs.modes import Modes
+from apps.adcs.consts import Modes
 from apps.command import QUEUE_STATUS, CommandQueue
 from apps.command.constants import CMD_ID
 from apps.command.processor import handle_command_execution_status, process_command
