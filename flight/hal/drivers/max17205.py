@@ -12,6 +12,7 @@ MAX1720X_CAPACITY_ADDR = const(0x10)  # Full capacity estimation
 MAX1720X_VBAT_ADDR = const(0xDA)  # Battery pack voltage
 MAX1720X_AVCELL_ADDR = const(0x17)  # Battery cycles
 MAX1720X_TIMERH_ADDR = const(0xBE)  # Time since power up
+MAX1720X_TEMP_ADDR = const(0x08)  # Temp register
 
 MAX1720X_COMMAND_ADDR = const(0x60)  # Command register
 MAX1720X_CONFIG2_ADDR = const(0xBB)  # Command register
@@ -46,6 +47,7 @@ class MAX17205:
         self.tte = 0
         self.ttf = 0
         self.time_pwrup = 0
+        self.temperature = 0.0
 
     def read_soc(self):
         """
@@ -199,6 +201,20 @@ class MAX17205:
         self.time_pwrup = int.from_bytes(self.rx_buffer, "little", signed=False)
 
         return self.time_pwrup
+
+    def read_temperature(self):
+        """
+        Reads the temperature of the battery pack.
+
+        :return: Temperature of the battery pack in Celsius
+        """
+        with self.i2c_device as i2c:
+            i2c.write(bytes([MAX1720X_TEMP_ADDR]))
+            i2c.read_into(self.rx_buffer)
+
+        temp_raw = int.from_bytes(self.rx_buffer, "little", signed=False)
+        self.temperature = float(temp_raw) / 256 - 128.0
+        return self.temperature
 
     def reset(self):
         """

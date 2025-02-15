@@ -2,6 +2,7 @@
 
 import time
 
+import microcontroller
 from apps.eps.eps import EPS_POWER_FLAG, GET_EPS_POWER_FLAG
 from apps.telemetry.constants import EPS_IDX
 from core import DataHandler as DH
@@ -19,6 +20,9 @@ class Task(TemplateTask):
     """data_keys = [
         "TIME",
         "EPS_POWER_FLAG",
+        "IMU_TEMPERATURE",
+        "CPU_TEMPERATURE",
+        "BATTERY_PACK_TEMPERATURE",
         "MAINBOARD_VOLTAGE",
         "MAINBOARD_CURRENT",
         "BATTERY_PACK_REPORTED_SOC",
@@ -60,7 +64,7 @@ class Task(TemplateTask):
         "ZM_SOLAR_CHARGE_CURRENT",
     ]"""
 
-    log_data = [0] * 41  # - use mV for voltage and mA for current (h = short integer 2 bytes)
+    log_data = [0] * 44  # - use mV for voltage and mA for current (h = short integer 2 bytes)
 
     def __init__(self, id):
         super().__init__(id)
@@ -84,6 +88,7 @@ class Task(TemplateTask):
             self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE] = int(fuel_gauge.read_midvoltage())
             self.log_data[EPS_IDX.BATTERY_PACK_TTE] = int(fuel_gauge.read_tte())
             self.log_data[EPS_IDX.BATTERY_PACK_TTF] = int(fuel_gauge.read_ttf())
+            self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE] = int(fuel_gauge.read_temperature())
             return True
         else:
             return False
@@ -95,7 +100,7 @@ class Task(TemplateTask):
         else:
             if not DH.data_process_exists("eps"):
                 data_format = (
-                    "Lbhhb" + "h" * 4 + "L" * 2 + "h" * 30
+                    "LbHHHhhb" + "h" * 4 + "L" * 2 + "h" * 30
                 )  # - use mV for voltage and mA for current (h = short integer 2 bytes, L = 4 bytes)
                 DH.register_data_process("eps", data_format, True, data_limit=100000)
 
@@ -130,7 +135,8 @@ class Task(TemplateTask):
                 self.log_info(f"Battery Pack Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_VOLTAGE]} mV ")
                 self.log_info(f"Battery Pack Midpoint Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE]} mV ")
                 self.log_info(f"Battery Pack Time-to-Empty: {self.log_data[EPS_IDX.BATTERY_PACK_TTE]} seconds ")
-                self.log_info(f"Battery Pack Time-to-Full {self.log_data[EPS_IDX.BATTERY_PACK_TTF]} seconds ")
+                self.log_info(f"Battery Pack Time-to-Full: {self.log_data[EPS_IDX.BATTERY_PACK_TTF]} seconds ")
+                self.log_info(f"Battery Pack Temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]} degrees C")
 
                 soc = self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]
                 curr_flag = self.log_data[EPS_IDX.EPS_POWER_FLAG]
@@ -140,5 +146,15 @@ class Task(TemplateTask):
                     self.log_info(f"EPS state: {self.log_data[EPS_IDX.EPS_POWER_FLAG]} ")
                 else:
                     self.log_error("EPS state invalid; SOC or power flag may be corrupted")
+
+            self.log_data[EPS_IDX.CPU_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
+            self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE] = 0  # Placeholder
+
+            self.log_info(f"CPU temperature: {self.log_data[EPS_IDX.CPU_TEMPERATURE] / 100}° ")
+            if (SATELLITE.IMU_AVAILABLE and SATELLITE.IMU_TEMPERATURE_AVAILABLE):
+                self.log_data[EPS_IDX.IMU_TEMPERATURE] = int(SATELLITE.IMU.temperature() * 100)
+                self.log_info(f"IMU temperature: {self.log_data[EPS_IDX.IMU_TEMPERATURE] / 100}° ")
+            else:
+                self.log_data[EPS_IDX.IMU_TEMPERATURE] = 0
 
             DH.log_data("eps", self.log_data)
