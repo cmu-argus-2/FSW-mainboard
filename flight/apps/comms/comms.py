@@ -35,10 +35,28 @@ class MSG_ID:
     Comms message IDs that are downlinked during the mission
     """
 
-    # Source header ID for Argus - THIS MUST BE UNIQUE FOR EACH SPACECRAFT
+    """
+    Source Header IDs
+    -----------------
+    These IDs are used in the source header [src, dst]. They are
+    used to determine which spacecraft a message originates from
+    or is meant for.
+
+    ARGUS_ID is the ID associated with the SC. It must be unique
+    for Argus-1 and Argus-2. This is the unique TM identifier
+    for each spacecraft. This helps in distinguishing the Sc, and
+    is also a requirement for FCC licensing.
+
+    GS_ID is a genericized ID specifying that the packet either
+    came from [src] or is going to [dst] a ground station. This
+    does not specify a particular GS, only that the packet is
+    associated with a downlink / uplink.
+    """
+
+    # Header ID for Argus - THIS MUST BE UNIQUE FOR EACH SPACECRAFT
     ARGUS_ID = 0x01
 
-    # Source header ID for GS
+    # Header ID for all ground stations (genericized)
     GS_ID = 0x04
 
     # SAT heartbeat, nominally downlinked in orbit
@@ -91,7 +109,7 @@ class SATELLITE_RADIO:
     state = COMMS_STATE.TX_HEARTBEAT
 
     # Init TM frame for preallocating memory
-    tm_frame = bytearray(240)
+    tm_frame = bytearray(248)
 
     # Parameters for file downlinking (Message ID temporarily hardcoded)
     filepath = None

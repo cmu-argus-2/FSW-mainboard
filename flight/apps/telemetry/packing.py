@@ -49,7 +49,7 @@ class TelemetryPacker:
 
     _TM_AVAILABLE = False
 
-    _TM_FRAME_SIZE = const(240)  # size of the telemetry frame
+    _TM_FRAME_SIZE = const(248)  # size of the telemetry frame
 
     _FRAME = bytearray(_TM_FRAME_SIZE)  # pre-allocated buffer for packing
     _FRAME[0] = const(0x01) & 0xFF  # message ID
