@@ -415,16 +415,8 @@ class DataProcess:
                 if transmit_file == _PROCESS_CONFIG_FILENAME:
                     transmit_file = files[1]
 
-                if time is not None:
-                    # Search for the specific file with time
-                    for filename in files:
-                        if filename == _PROCESS_CONFIG_FILENAME:
-                            pass
-                        if extract_time_from_filename(filename) == file_time:
-                            transmit_file = filename
-
-                    # Could not find the file with the specified time
-                    logger.warning("Could not find filename with requested time, returning earliest")
+                if file_time is not None:
+                    transmit_file = get_closest_file_time(file_time, files)
 
             tm_path = join_path(self.dir_path, transmit_file)
 
@@ -651,16 +643,8 @@ class ImageProcess(DataProcess):
                 if transmit_file == _PROCESS_CONFIG_FILENAME:
                     transmit_file = files[1]
 
-                if time is not None:
-                    # Search for the specific file with time
-                    for filename in files:
-                        if filename == _PROCESS_CONFIG_FILENAME:
-                            pass
-                        if extract_time_from_filename(filename) == file_time:
-                            transmit_file = filename
-
-                    # Could not find the file with the specified time
-                    logger.warning("Could not find filename with requested time, returning earliest")
+                if file_time is not None:
+                    transmit_file = get_closest_file_time(file_time, files)
 
             tm_path = join_path(self.dir_path, transmit_file)
 
@@ -1281,3 +1265,20 @@ def extract_time_from_filename(filename: str) -> int:
     else:
         logger.warning(f"Invalid filename format for {filename}")
         return None
+
+
+def get_closest_file_time(file_time: int, files: List[str]):
+    """
+    Search through all the files to find the file name with the closest file time requested.
+    Used for requesting file paths
+
+    Args:
+        file_time(int): The requested file time
+        files(List[str]): A List of all the files for that data process
+
+    Returns:
+        str: file path with the closest file time to the one requested
+    """
+    # Search for the specific file with closest time to requested file time
+    extracted_times = {filename: extract_time_from_filename(filename) for filename in files}
+    return min(extracted_times, key=lambda f: abs(int(extracted_times[f]) - int(file_time)))
