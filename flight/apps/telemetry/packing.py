@@ -497,6 +497,16 @@ class TelemetryPacker:
         else:
             logger.warning("Command logs Data process does not exist")
 
+        ############ Image fields ###########
+        if DH.data_process_exists("img"):
+            img_logs_storage_info = DH.get_storage_info("img")
+            # Image number of files
+            cls._FRAME[86:90] = pack_signed_long_int(img_logs_storage_info, STORAGE_IDX.NUM_FILES)
+            # Image directory size
+            cls._FRAME[90:94] = pack_signed_long_int(img_logs_storage_info, STORAGE_IDX.DIR_SIZE)
+        else:
+            logger.warning("IMG Data process does not exist")
+
     @classmethod
     def pack_tm_payload(cls):
         pass
