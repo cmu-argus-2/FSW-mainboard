@@ -48,12 +48,12 @@ class ArgusV2Interfaces:
     SPI_MISO = board.MISO0  # GPIO16
     SPI = SPI(SPI_SCK, MOSI=SPI_MOSI, MISO=SPI_MISO)
 
-    UART0_BAUD = const(9600)
+    UART0_BAUD = const(115200)
     UART0_TX = board.TX0  # GPIO12
     UART0_RX = board.RX0  # GPIO13
     UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD)
 
-    UART1_BAUD = const(9600)
+    UART1_BAUD = const(115200)
     UART1_TX = board.TX1  # GPIO4
     UART1_RX = board.RX1  # GPIO5
     UART1 = UART(UART1_TX, UART1_RX, baudrate=UART1_BAUD)
@@ -240,7 +240,7 @@ class ArgusV2Components:
 
     # GPS
     GPS_UART = ArgusV2Interfaces.UART0
-    GPS_ENABLE = board.GPS_EN  # GPIO27_ADC1
+    # GPS_ENABLE = board.GPS_EN  # GPIO27_ADC1
 
     #########
     # UART1 #
@@ -293,11 +293,11 @@ class ArgusV2(CubeSat):
         error_list.append(self.__vfs_boot())
         error_list.append(self.__imu_boot())
         error_list.append(self.__rtc_boot())
-        # error_list.append(self.__gps_boot())
+        error_list.append(self.__gps_boot())
         error_list.append(self.__radio_boot())
         error_list.append(self.__power_monitor_boot())
         error_list.append(self.__fuel_gauge_boot())
-        error_list.append(self.__charger_boot())
+        # error_list.append(self.__charger_boot())  # DO NOT boot this device, not used
         # error_list.append(self.__torque_drivers_boot())
         # error_list.append(self.__light_sensors_boot())  # light + sun sensors
         # error_list.append(self.__burn_wire_boot())
@@ -326,10 +326,14 @@ class ArgusV2(CubeSat):
 
         :return: Error code if the GPS failed to initialize
         """
-        try:
-            from hal.drivers.gps import GPS
 
-            gps1 = GPS(ArgusV2Components.GPS_UART, ArgusV2Components.GPS_ENABLE)
+        from hal.drivers.gps import GPS
+
+        try:
+            # For v2 mainboards, GPS_EN is used for RADIO_IRQ
+            # Boards should be modified to have GPS always on
+            # GPS enabled with UART obj, EN, flags for debug and mock outputs
+            gps1 = GPS(ArgusV2Components.GPS_UART, None, False, False)
 
             self.__gps = gps1
             self.__device_list.append(gps1)
@@ -425,10 +429,12 @@ class ArgusV2(CubeSat):
 
         :return: Error code if the IMU failed to initialize
         """
+
+        from hal.drivers.bno085 import BNO085, BNO_REPORT_UNCAL_GYROSCOPE, BNO_REPORT_UNCAL_MAGNETOMETER
+
         try:
             # from hal.drivers.bno08x_i2c import BNO08X_I2C
-            # TODO: Modify HAL for getting raw values from the IMU
-            from hal.drivers.bno085 import BNO085, BNO_REPORT_UNCAL_GYROSCOPE, BNO_REPORT_UNCAL_MAGNETOMETER
+            # Modified HAL for getting raw values from the IMU
 
             imu = BNO085(ArgusV2Components.IMU_I2C, ArgusV2Components.IMU_I2C_ADDRESS)
             imu.enable_feature(BNO_REPORT_UNCAL_MAGNETOMETER)
@@ -450,8 +456,10 @@ class ArgusV2(CubeSat):
 
         :return: Error code if the charger failed to initialize
         """
+
+        from hal.drivers.bq25883 import BQ25883
+
         try:
-            from hal.drivers.bq25883 import BQ25883
 
             charger = BQ25883(
                 ArgusV2Components.CHARGER_I2C,
@@ -554,8 +562,10 @@ class ArgusV2(CubeSat):
 
         :return: Error code if the radio failed to initialize
         """
+
+        from hal.drivers.sx126x import SX1262
+
         try:
-            from hal.drivers.sx126x import SX1262
 
             # Enable power to the radio
             radioEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_ENABLE)
@@ -607,9 +617,10 @@ class ArgusV2(CubeSat):
 
         :return: Error code if the RTC failed to initialize
         """
-        try:
-            from hal.drivers.ds3231 import DS3231
 
+        from hal.drivers.ds3231 import DS3231
+
+        try:
             rtc = DS3231(ArgusV2Components.RTC_I2C, ArgusV2Components.RTC_I2C_ADDRESS)
 
             self.__rtc = rtc
@@ -663,6 +674,7 @@ class ArgusV2(CubeSat):
     def __burn_wire_boot(self) -> list[int]:
         """burn_wire_boot: Boot sequence for the burn wires"""
         try:
+            # TODO: Burnwire software module
             from hal.drivers.burnwire import BurnWires
 
             burn_wires = BurnWires(
@@ -685,8 +697,10 @@ class ArgusV2(CubeSat):
 
     def __fuel_gauge_boot(self) -> list[int]:
         """fuel_gauge_boot: Boot sequence for the fuel gauge"""
+
+        from hal.drivers.max17205 import MAX17205
+
         try:
-            from hal.drivers.max17205 import MAX17205
 
             fuel_gauge = MAX17205(
                 ArgusV2Components.FUEL_GAUGE_I2C,
