@@ -1,5 +1,5 @@
-import time
-from datetime import datetime, timedelta
+# import time
+# from datetime import datetime, timedelta
 
 from core.data_handler import DataHandler
 from core.state_machine import STATES
@@ -17,18 +17,18 @@ def valid_state(*args) -> bool:
 
 
 def valid_time_format(*args) -> bool:
-    """Precondition for UPLINK_TIME_REFERENCE / UPLINK_ORBIT_TIME_REFERENCE commands.
-    Will check that time is not in the future or in the far past
-    """
-    time_reference = args[0]
-    #  Check that time is not in the future
-    if time_reference > time.time():
-        return False
+    # """Precondition for UPLINK_TIME_REFERENCE / UPLINK_ORBIT_TIME_REFERENCE commands.
+    # Will check that time is not in the future or in the far past
+    # """
+    # time_reference = args[0]
+    # #  Check that time is not in the future
+    # if time_reference > time.time():
+    #     return False
 
-    #  Check that time is not from before the past week
-    past_week = datetime.now() - timedelta(days=7)
-    if datetime.fromtimestamp(time_reference) < past_week:
-        return False
+    # #  Check that time is not from before the past week
+    # past_week = datetime.now() - timedelta(days=7)
+    # if datetime.fromtimestamp(time_reference) < past_week:
+    #     return False
 
     return True
 

@@ -53,14 +53,15 @@ def SWITCH_TO_STATE(target_state_id, time_in_state=None):
 def UPLINK_TIME_REFERENCE(time_reference):
     """Sends a time reference to the spacecraft to update the time processing module."""
     logger.info(f"Executing UPLINK_TIME_REFERENCE with current_time: {time_reference}")
-    SATELLITE.set_datetime(time.gmtime(time_reference))
+    # TODO: Time module interfacing
+    # SATELLITE.set_datetime(time.gmtime(time_reference))
     return []
 
 
 def UPLINK_ORBIT_REFERENCE(time_reference, orbital_parameters):
     """Sends time-referenced orbital information to update the orbit reference."""
     logger.info(
-        f"Executing UPLINK_ORBIT_REFERENCE with orbital_parameters: pos({orbital_parameters[0]},{orbital_parameters[1]},{orbital_parameters[2]}), vel({orbital_parameters[3],orbital_parameters[4],orbital_parameters[5]}), time_reference: {time_reference}"
+        f"Executing UPLINK_ORBIT_REFERENCE with orbital_parameters: pos({orbital_parameters}, time_reference: {time_reference}"
     )
     OrbitPropagator.propagate_orbit(
         time.time(), time_reference, np.array(orbital_parameters[0:3]), np.array(orbital_parameters[3:])

@@ -70,7 +70,7 @@ class Task(TemplateTask):
             # If heartbeat TX counter has elapsed, or currently in an active ground pass
 
             # TODO: Set frame / filepath here based on the active GS command
-            if self.comms_state == COMMS_STATE.TX_ACK:
+            if self.comms_state == COMMS_STATE.TX_ACK or self.comms_state == COMMS_STATE.TX_METADATA:
                 if ResponseQueue.response_available():
                     # The response to the current GS command is ready, downlink it
                     (response_id, response_args), queue_error_code = ResponseQueue.pop_response()
@@ -86,12 +86,13 @@ class Task(TemplateTask):
                 pass
 
             # Pack telemetry
-            self.packed = TelemetryPacker.pack_tm_heartbeat()
-            if self.packed:
-                self.log_info("Telemetry heartbeat packed")
+            if not self.ground_pass:
+                self.packed = TelemetryPacker.pack_tm_heartbeat()
+                if self.packed:
+                    self.log_info("Telemetry heartbeat packed")
 
             # Set current TM frame
-            if TelemetryPacker.TM_AVAILABLE and self.comms_state == COMMS_STATE.TX_HEARTBEAT:
+            if TelemetryPacker.TM_AVAILABLE:
                 SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
 
             # Transmit a message from the satellite
