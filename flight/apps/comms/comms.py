@@ -521,34 +521,14 @@ class SATELLITE_RADIO:
         else:
             cls.rx_payload = bytearray()
 
-        # Internal handling for file requests
-        if cls.rx_gs_cmd == MSG_ID.GS_CMD_FILE_METADATA:
+        if cls.rx_gs_cmd == MSG_ID.GS_CMD_FILE_PKT:
             if cls.check_rq_file_params(packet[4:]) is False:
                 # Filepath does not match
 
-                # TODO: Replace error with a filepath request from the CDH
+                # Error, send down empty file array to signal the error
                 logger.warning("[COMMS ERROR] Filepath requested from the GS does not exist")
-                cls.rx_gs_cmd = 0x00
-                cls.rx_sq_cnt = 0
-                cls.rx_gs_len = 0
-                return cls.rx_gs_cmd
-
-            else:
-                # Filepath matches, move forward with request
-                pass
-
-        elif cls.rx_gs_cmd == MSG_ID.GS_CMD_FILE_PKT:
-            if cls.check_rq_file_params(packet[4:]) is False:
-                # Filepath does not match
-
-                # Error, currently just go back to heartbeat state
-                logger.warning("[COMMS ERROR] Filepath requested from the GS does not exist")
-                cls.rx_gs_cmd = 0x00
-                cls.rx_sq_cnt = 0
-                cls.rx_gs_len = 0
-
+                cls.filepath = None
                 cls.rq_sq_cnt = 0
-                return cls.rx_gs_cmd
 
             else:
                 # Filepath matches, move forward with request

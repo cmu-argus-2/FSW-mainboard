@@ -97,6 +97,7 @@ class Task(TemplateTask):
                             self.log_info(f"Response: {response_id}, with args: {response_args}")
 
                             # Filepath present in response_args
+                            SATELLITE_RADIO.set_filepath(response_args[0])
 
                     else:
                         # Do nothing
@@ -106,7 +107,7 @@ class Task(TemplateTask):
                     # The response to the current GS command not ready, return
                     return
             else:
-                # Do nothing
+                # Heartbeat or file packet TX, do nothing
                 pass
 
             # Pack telemetry
@@ -147,7 +148,7 @@ class Task(TemplateTask):
                 # Get most recent payload
                 self.rx_payload = SATELLITE_RADIO.get_rx_payload()
 
-                if self.rq_cmd != MSG_ID.GS_CMD_FILE_METADATA and self.rq_cmd != MSG_ID.GS_CMD_FILE_PKT:
+                if self.rq_cmd != MSG_ID.GS_CMD_FILE_PKT:
                     # Push rq_cmd onto CommandQueue along with all its arguments
                     CommandQueue.overwrite_command(self.rq_cmd, self.rx_payload)
 
@@ -193,23 +194,6 @@ class Task(TemplateTask):
             # Check if TX and RX frequencies are set
             if not self.frequency_set:
                 self.cls_change_counter_frequency()
-
-            # TODO: Only set filepath on response from ResponseQueue
-            if not self.filepath_flag:
-                # Check if image process exists
-                if DH.image_process_exists():
-                    # Set filepath for comms TX file
-                    filepath = DH.request_TM_path_image()
-                    SATELLITE_RADIO.set_filepath(filepath)
-
-                    self.log_info(f"Initializing TX file filepath: {filepath}")
-                    self.filepath_flag = True
-                else:
-                    # Process does not exist, filepath remains None
-                    SATELLITE_RADIO.set_filepath(None)
-                    self.filepath_flag = False
-            else:
-                pass
 
             # Register comms process for logging RX RSSI
             if not DH.data_process_exists("comms"):
