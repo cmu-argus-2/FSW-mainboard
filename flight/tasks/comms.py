@@ -69,15 +69,39 @@ class Task(TemplateTask):
         if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD or self.ground_pass:
             # If heartbeat TX counter has elapsed, or currently in an active ground pass
 
-            # TODO: Set frame / filepath here based on the active GS command
-            if self.comms_state == COMMS_STATE.TX_ACK or self.comms_state == COMMS_STATE.TX_METADATA:
+            # Set frame / filepath here based on the active GS command
+            if not (self.comms_state == COMMS_STATE.TX_HEARTBEAT or self.comms_state == COMMS_STATE.TX_FILEPKT):
                 if ResponseQueue.response_available():
                     # The response to the current GS command is ready, downlink it
                     (response_id, response_args), queue_error_code = ResponseQueue.pop_response()
 
-                    if queue_error_code == QUEUE_STATUS.OK:
-                        self.log_info(f"Response: {response_id}, with args: {response_args}")
-                        SATELLITE_RADIO.set_tx_ack(response_id)
+                    # TODO: Receive response based on comms state
+                    if self.comms_state == COMMS_STATE.TX_ACK:
+                        # Downlinking an ACK to the GS
+                        if queue_error_code == QUEUE_STATUS.OK:
+                            self.log_info(f"Response: {response_id}, with args: {response_args}")
+                            SATELLITE_RADIO.set_tx_ack(response_id)
+
+                    elif self.comms_state == COMMS_STATE.TX_FRAME:
+                        # Downlinking telemetry to the GS
+                        if queue_error_code == QUEUE_STATUS.OK:
+                            self.log_info(f"Response: {response_id}, with args: {response_args}")
+
+                            # Assume we have telemetry packed
+                            if TelemetryPacker.TM_AVAILABLE:
+                                SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
+
+                    elif self.comms_state == COMMS_STATE.TX_METADATA:
+                        # Starting a file transfer to the GS
+                        if queue_error_code == QUEUE_STATUS.OK:
+                            self.log_info(f"Response: {response_id}, with args: {response_args}")
+
+                            # Filepath present in response_args
+
+                    else:
+                        # Do nothing
+                        pass
+
                 else:
                     # The response to the current GS command not ready, return
                     return
