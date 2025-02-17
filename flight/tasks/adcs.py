@@ -125,11 +125,23 @@ class Task(TemplateTask):
                         # Update Each sensor with covariances
                         status_1, status_2 = self.AD.position_update(self.time)
                         if status_1 != StatusConst.OK:
-                            self.failure_messages.append(status_1 + " : " + StatusConst.get_fail_message(status_2))
+                            self.failure_messages.append(
+                                StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
+                            )
                         else:
-                            self.AD.sun_position_update(self.time, update_covariance=True)
+                            status_1, status_2 = self.AD.sun_position_update(self.time, update_covariance=True)
+                            if status_1 != StatusConst.OK:
+                                self.failure_messages.append(
+                                    StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
+                                )
+
                             self.AD.gyro_update(self.time, update_covariance=True)
-                            self.AD.magnetometer_update(self.time, update_covariance=True)
+
+                            status_1, status_2 = self.AD.magnetometer_update(self.time, update_covariance=True)
+                            if status_1 != StatusConst.OK:
+                                self.failure_messages.append(
+                                    StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
+                                )
 
                     # No Attitude Control in Low-power mode
 
@@ -172,9 +184,19 @@ class Task(TemplateTask):
                                     StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
                                 )
                             else:
-                                self.AD.sun_position_update(self.time, update_covariance=True)
+                                status_1, status_2 = self.AD.sun_position_update(self.time, update_covariance=True)
+                                if status_1 != StatusConst.OK:
+                                    self.failure_messages.append(
+                                        StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
+                                    )
+
                                 self.AD.gyro_update(self.time, update_covariance=True)
-                                self.AD.magnetometer_update(self.time, update_covariance=True)
+
+                                status_1, status_2 = self.AD.magnetometer_update(self.time, update_covariance=True)
+                                if status_1 != StatusConst.OK:
+                                    self.failure_messages.append(
+                                        StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
+                                    )
 
                         # identify Mode based on current sensor readings
                         self.MODE = self.AD.current_mode()
@@ -201,7 +223,7 @@ class Task(TemplateTask):
         # Decide which controller to choose
         if self.MODE in [Modes.TUMBLING, Modes.STABLE]:  # B-cross controller
             # Get sensor measurements
-            omega_unbiased = self.AD.state[self.AD.omega_idx] - self.AD.state[self.AD.omega_idx]
+            omega_unbiased = self.AD.state[self.AD.omega_idx] - self.AD.state[self.AD.bias_idx]
             mag_field_body = self.AD.state[self.AD.mag_field_idx]
 
             # Control MCMs and obtain coil statuses

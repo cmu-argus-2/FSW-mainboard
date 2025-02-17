@@ -19,7 +19,6 @@ from apps.adcs.orbit_propagation import OrbitPropagator
 from apps.adcs.sun import SUN_VECTOR_STATUS, approx_sun_position_ECI, compute_body_sun_vector_from_lux, read_light_sensors
 from apps.telemetry.constants import GPS_IDX
 from core import DataHandler as DH
-from core import logger
 from hal.configuration import SATELLITE
 from ulab import numpy as np
 
@@ -142,7 +141,7 @@ class AttitudeDetermination:
             # Sensor validity check
             if gps_pos_ecef is None or gps_vel_ecef is None or len(gps_pos_ecef) != 3 or len(gps_vel_ecef) != 3:
                 return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
-            elif not (6.0e8 <= np.linalg.norm(gps_pos_ecef) <= 7.5e8) or not (3.0e5 <= np.linalg.norm(gps_vel_ecef) <= 1.0e6):
+            elif not (6.0e6 <= np.linalg.norm(gps_pos_ecef) <= 7.5e6) or not (3.0e3 <= np.linalg.norm(gps_vel_ecef) <= 1.0e4):
                 return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
 
             return StatusConst.OK, gps_record_time, gps_pos_ecef, gps_vel_ecef
@@ -182,7 +181,7 @@ class AttitudeDetermination:
         if (
             sun_status == SUN_VECTOR_STATUS.NO_READINGS
             or sun_status == SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS
-            or SUN_VECTOR_STATUS.ECLIPSE
+            or sun_status == SUN_VECTOR_STATUS.ECLIPSE
         ):
             return StatusConst.MEKF_INIT_FAIL, sun_status
 
@@ -339,7 +338,11 @@ class AttitudeDetermination:
             H = np.zeros((3, 6))
             H[0:3, 0:3] = -s_cross
 
-            self.EKF_update(H, innovation, Cov_sunsensor)
+            update_status = self.EKF_update(H, innovation, Cov_sunsensor)
+            if update_status != StatusConst.OK:
+                return StatusConst.SUN_UPDATE_FAIL, update_status
+            else:
+                return StatusConst.OK, StatusConst.OK
 
     def gyro_update(self, current_time: int, update_covariance: bool = True) -> None:
         """
@@ -420,7 +423,11 @@ class AttitudeDetermination:
             H = np.zeros((3, 6))
             H[0:3, 0:3] = -s_cross
 
-            self.EKF_update(H, innovation, Cov_mag_field)
+            update_status = self.EKF_update(H, innovation, Cov_mag_field)
+            if update_status != StatusConst.OK:
+                return StatusConst.MAG_UPDATE_FAIL, update_status
+            else:
+                return StatusConst.OK, StatusConst.OK
 
         if status == StatusConst.OK:
             self.state[self.mag_field_idx] = mag_field_body  # store magnetic field reading
@@ -437,9 +444,7 @@ class AttitudeDetermination:
         try:
             S_inv = 1000 * np.linalg.inv(1000 * S)
         except ValueError:
-            msg = "Singular Matrix : Stopping covariance update"
-            logger.info(f"[{self.ID}][{self.task_name}] {msg}")
-            return
+            return StatusConst.EKF_UPDATE_FAIL
         K = np.dot(np.dot(self.P, H.transpose()), S_inv)
         dx = np.dot(K, innovation)
 
