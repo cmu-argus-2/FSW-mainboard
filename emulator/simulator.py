@@ -44,11 +44,11 @@ class Simulator:  # will be passed by reference to the emulated HAL
 
     def gyro(self):
         self.advance_to_time()
-        return self.measurement[6:9]
+        return self.measurement[6:9] * 0
 
     def mag(self):
         self.advance_to_time()
-        return self.measurement[9:12]
+        return self.measurement[9:12] * 1e6  # IMU obtains magnetic field readings in uT
 
     def sun_lux(self):
         self.advance_to_time()
@@ -56,9 +56,10 @@ class Simulator:  # will be passed by reference to the emulated HAL
 
     def gps(self):
         self.advance_to_time()
-        return self.measurement[0:6]
+        gps_state = np.array([time.time()] + list(self.measurement[0:6] * 1e2))
+        return gps_state  # GPS returns data in cm
 
-    def set_control_input(self, dir, input):  # TODO : ADCS does not set a control input yet
+    def set_control_input(self, dir, input):
         """
         Sets the control input to the simulation
         """

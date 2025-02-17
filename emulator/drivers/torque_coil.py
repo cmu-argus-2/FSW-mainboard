@@ -1,6 +1,3 @@
-import numpy as np
-
-
 class CoilDriver:
     def __init__(self, id, simulator=None) -> None:
         self.__simulator = simulator
