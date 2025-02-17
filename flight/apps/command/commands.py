@@ -29,7 +29,8 @@ from core import logger
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
-from hal.configuration import SATELLITE
+
+# from hal.configuration import SATELLITE
 from ulab import numpy as np
 
 FILE_PKTSIZE = 240

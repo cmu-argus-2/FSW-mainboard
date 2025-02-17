@@ -17,6 +17,7 @@ def valid_state(*args) -> bool:
 
 
 def valid_time_format(*args) -> bool:
+    # TODO: Update this for CircuitPython
     # """Precondition for UPLINK_TIME_REFERENCE / UPLINK_ORBIT_TIME_REFERENCE commands.
     # Will check that time is not in the future or in the far past
     # """
