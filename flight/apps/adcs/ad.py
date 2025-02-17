@@ -19,7 +19,6 @@ from apps.adcs.orbit_propagation import OrbitPropagator
 from apps.adcs.sun import SUN_VECTOR_STATUS, approx_sun_position_ECI, compute_body_sun_vector_from_lux, read_light_sensors
 from apps.telemetry.constants import GPS_IDX
 from core import DataHandler as DH
-from core import logger
 from hal.configuration import SATELLITE
 from ulab import numpy as np
 
