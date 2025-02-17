@@ -44,7 +44,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
 
     def gyro(self):
         self.advance_to_time()
-        return self.measurement[6:9] * 0
+        return self.measurement[6:9]
 
     def mag(self):
         self.advance_to_time()
