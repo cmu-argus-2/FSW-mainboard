@@ -210,10 +210,9 @@ class MAX17205:
         """
         with self.i2c_device as i2c:
             i2c.write(bytes([_MAX1720X_TEMP_ADDR]))
-            i2c.read_into(self.rx_buffer)
+            i2c.readinto(self.rx_buffer)
 
-        temp_raw = int.from_bytes(self.rx_buffer, "little", signed=False)
-        self.temperature = float(temp_raw) / 256 - 128.0
+        self.temperature = int.from_bytes(self.rx_buffer, "little", signed=False) / 256.0
         return self.temperature
 
     def reset(self):

@@ -131,12 +131,5 @@ class GPS_IDX:
     GPS_ECEF_VZ = const(20)
 
 
-class THERMAL_IDX:
-    TIME_THERMAL = const(0)
-    IMU_TEMPERATURE = const(1)
-    CPU_TEMPERATURE = const(2)
-    BATTERY_PACK_TEMPERATURE = const(3)
-
-
 class PAYLOAD_IDX:
     pass
