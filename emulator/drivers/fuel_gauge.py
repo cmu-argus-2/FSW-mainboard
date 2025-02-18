@@ -83,7 +83,7 @@ class FuelGauge:
         :return: Time since power up in seconds
         """
         return self.time_pwrup
-    
+
     def read_temperature(self):
         """
         Reads the temperature of the battery pack.
