@@ -2,20 +2,20 @@
 from adafruit_bus_device.i2c_device import I2CDevice
 from micropython import const
 
-MAX1720X_VCELL_ADDR = const(0x09)  # Lowest cell voltage of a pack
-MAX1720X_REPSOC_ADDR = const(0x06)  # Reported state of charge
-MAX1720X_REPCAP_ADDR = const(0x05)  # Reported remaining capacity
-MAX1720X_CURRENT_ADDR = const(0x0A)  # Battery current
-MAX1720X_TTE_ADDR = const(0x11)  # Time to empty
-MAX1720X_TTF_ADDR = const(0x20)  # Time to full
-MAX1720X_CAPACITY_ADDR = const(0x10)  # Full capacity estimation
-MAX1720X_VBAT_ADDR = const(0xDA)  # Battery pack voltage
-MAX1720X_AVCELL_ADDR = const(0x17)  # Battery cycles
-MAX1720X_TIMERH_ADDR = const(0xBE)  # Time since power up
-MAX1720X_TEMP_ADDR = const(0x08)  # Temp register
+_MAX1720X_VCELL_ADDR = const(0x09)  # Lowest cell voltage of a pack
+_MAX1720X_REPSOC_ADDR = const(0x06)  # Reported state of charge
+_MAX1720X_REPCAP_ADDR = const(0x05)  # Reported remaining capacity
+_MAX1720X_CURRENT_ADDR = const(0x0A)  # Battery current
+_MAX1720X_TTE_ADDR = const(0x11)  # Time to empty
+_MAX1720X_TTF_ADDR = const(0x20)  # Time to full
+_MAX1720X_CAPACITY_ADDR = const(0x10)  # Full capacity estimation
+_MAX1720X_VBAT_ADDR = const(0xDA)  # Battery pack voltage
+_MAX1720X_AVCELL_ADDR = const(0x17)  # Battery cycles
+_MAX1720X_TIMERH_ADDR = const(0xBE)  # Time since power up
+_MAX1720X_TEMP_ADDR = const(0x08)  # Temp register
 
-MAX1720X_COMMAND_ADDR = const(0x60)  # Command register
-MAX1720X_CONFIG2_ADDR = const(0xBB)  # Command register
+_MAX1720X_COMMAND_ADDR = const(0x60)  # Command register
+_MAX1720X_CONFIG2_ADDR = const(0xBB)  # Command register
 
 
 def unpack_signed_short_int(byte_list):
@@ -57,7 +57,7 @@ class MAX17205:
         """
         with self.i2c_device as i2c:
             # Read 2 bytes from MAX1720X_REPSOC_ADDR
-            i2c.write(bytes([MAX1720X_REPSOC_ADDR]))
+            i2c.write(bytes([_MAX1720X_REPSOC_ADDR]))
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to pack SoC
@@ -72,8 +72,8 @@ class MAX17205:
         :return: Capacity in mAh.
         """
         with self.i2c_device as i2c:
-            # Read 2 bytes from MAX1720X_REPCAP_ADDR
-            i2c.write(bytes([MAX1720X_REPCAP_ADDR]))
+            # Read 2 bytes from _MAX1720X_REPCAP_ADDR
+            i2c.write(bytes([_MAX1720X_REPCAP_ADDR]))
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to pack capacity
@@ -88,8 +88,8 @@ class MAX17205:
         :return: Current in mA as a float.
         """
         with self.i2c_device as i2c:
-            # Read 2 bytes from MAX1720X_CURRENT_ADDR
-            i2c.write(bytes([MAX1720X_CURRENT_ADDR]))
+            # Read 2 bytes from _MAX1720X_CURRENT_ADDR
+            i2c.write(bytes([_MAX1720X_CURRENT_ADDR]))
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to an int16
@@ -107,8 +107,8 @@ class MAX17205:
         :return: Voltage in mV as a float.
         """
         with self.i2c_device as i2c:
-            # Read 2 bytes from MAX1720X_VBAT_ADDR
-            i2c.write(bytes([MAX1720X_VBAT_ADDR]))
+            # Read 2 bytes from _MAX1720X_VBAT_ADDR
+            i2c.write(bytes([_MAX1720X_VBAT_ADDR]))
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to a uint16
@@ -126,8 +126,8 @@ class MAX17205:
         :return: Voltage in mV as a float.
         """
         with self.i2c_device as i2c:
-            # Read 2 bytes from MAX1720X_VCELL_ADDR
-            i2c.write(bytes([MAX1720X_VCELL_ADDR]))
+            # Read 2 bytes from _MAX1720X_VCELL_ADDR
+            i2c.write(bytes([_MAX1720X_VCELL_ADDR]))
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to a uint16
@@ -145,8 +145,8 @@ class MAX17205:
         :return: Number of cycles.
         """
         with self.i2c_device as i2c:
-            # Read 2 bytes from MAX1720X_AVCELL_ADDR
-            i2c.write(bytes([MAX1720X_AVCELL_ADDR]))
+            # Read 2 bytes from _MAX1720X_AVCELL_ADDR
+            i2c.write(bytes([_MAX1720X_AVCELL_ADDR]))
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to a uint16
@@ -161,8 +161,8 @@ class MAX17205:
         :return: Time-to-empty in seconds
         """
         with self.i2c_device as i2c:
-            # Read 2 bytes from MAX1720X_TTE_ADDR
-            i2c.write(bytes([MAX1720X_TTE_ADDR]))
+            # Read 2 bytes from _MAX1720X_TTE_ADDR
+            i2c.write(bytes([_MAX1720X_TTE_ADDR]))
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to a uint16
@@ -177,8 +177,8 @@ class MAX17205:
         :return: Time-to-full in seconds
         """
         with self.i2c_device as i2c:
-            # Read 2 bytes from MAX1720X_TTF_ADDR
-            i2c.write(bytes([MAX1720X_TTF_ADDR]))
+            # Read 2 bytes from _MAX1720X_TTF_ADDR
+            i2c.write(bytes([_MAX1720X_TTF_ADDR]))
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to a uint16
@@ -193,8 +193,8 @@ class MAX17205:
         :return: Time since power up in seconds
         """
         with self.i2c_device as i2c:
-            # Read 2 bytes from MAX1720X_TIMERH_ADDR
-            i2c.write(bytes([MAX1720X_TIMERH_ADDR]))
+            # Read 2 bytes from _MAX1720X_TIMERH_ADDR
+            i2c.write(bytes([_MAX1720X_TIMERH_ADDR]))
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to a uint16
@@ -209,7 +209,7 @@ class MAX17205:
         :return: Temperature of the battery pack in Celsius
         """
         with self.i2c_device as i2c:
-            i2c.write(bytes([MAX1720X_TEMP_ADDR]))
+            i2c.write(bytes([_MAX1720X_TEMP_ADDR]))
             i2c.read_into(self.rx_buffer)
 
         temp_raw = int.from_bytes(self.rx_buffer, "little", signed=False)
@@ -224,5 +224,5 @@ class MAX17205:
         """
 
         with self.i2c_device as i2c:
-            # Write to MAX1720X_CONFIG2_ADDR
-            i2c.write(bytes([MAX1720X_CONFIG2_ADDR, 0x01, 0x00]))
+            # Write to _MAX1720X_CONFIG2_ADDR
+            i2c.write(bytes([_MAX1720X_CONFIG2_ADDR, 0x01, 0x00]))
