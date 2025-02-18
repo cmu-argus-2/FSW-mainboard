@@ -127,6 +127,9 @@ class Task(TemplateTask):
                         + f"Radio Current: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_CURRENT]} mA"
                     )
 
+            self.log_data[EPS_IDX.CPU_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
+            self.log_info(f"CPU temperature: {self.log_data[EPS_IDX.CPU_TEMPERATURE] / 100}° ")
+
             if self.read_fuel_gauge():
                 self.log_info(f"Battery Pack Temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE] / 100}° C")
                 self.log_info(f"Battery Pack Reported SOC: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]}% ")
@@ -145,9 +148,5 @@ class Task(TemplateTask):
                     self.log_info(f"EPS state: {self.log_data[EPS_IDX.EPS_POWER_FLAG]} ")
                 else:
                     self.log_error("EPS state invalid; SOC or power flag may be corrupted")
-
-            self.log_data[EPS_IDX.CPU_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
-
-            self.log_info(f"CPU temperature: {self.log_data[EPS_IDX.CPU_TEMPERATURE] / 100}° ")
 
             DH.log_data("eps", self.log_data)
