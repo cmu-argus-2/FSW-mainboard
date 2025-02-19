@@ -24,6 +24,7 @@ import time
 
 import supervisor
 from apps.adcs.orbit_propagation import OrbitPropagator
+from apps.command.constants import file_tags_str
 from apps.telemetry import TelemetryPacker
 from core import logger
 from core import state_manager as SM
@@ -134,11 +135,12 @@ def REQUEST_FILE_METADATA(file_id, file_time=None):
     """Requests metadata for a specific file from the spacecraft."""
     logger.info(f"Executing REQUEST_FILE_METADATA with file_tag: {file_id} and file_time: {file_time}")
     file_path = None
+    file_tag = file_tags_str[file_id]
 
     if file_time is None:
-        file_path = DH.request_TM_path(file_id)
+        file_path = DH.request_TM_path(file_tag)
     else:
-        file_path = DH.request_TM_path(file_id, file_time)
+        file_path = DH.request_TM_path(file_tag, file_time)
 
     return [file_path]
 
@@ -150,11 +152,12 @@ def REQUEST_FILE_PKT(file_id, file_time, rq_sq_cnt):
     )
     # TODO: potentially change if we want to handle file packets here instead of Comms
     file_path = None
+    file_tag = file_tags_str[file_id]
 
     if file_time is None:
-        file_path = DH.request_TM_path(file_id)
+        file_path = DH.request_TM_path(file_tag)
     else:
-        file_path = DH.request_TM_path(file_id, file_time)
+        file_path = DH.request_TM_path(file_tag, file_time)
 
     return [file_path]
 

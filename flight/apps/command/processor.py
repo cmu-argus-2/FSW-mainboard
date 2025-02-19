@@ -72,7 +72,7 @@ COMMANDS = [
         ["file_id", "file_time"],
         REQUEST_FILE_METADATA,
     ),
-    (CMD_ID.REQUEST_FILE_PKT, lambda: True, ["file_id", "file_time", "rq_sq_cnt"], REQUEST_FILE_PKT),
+    (CMD_ID.REQUEST_FILE_PKT, file_id_exists, ["file_id", "file_time", "rq_sq_cnt"], REQUEST_FILE_PKT),
     (CMD_ID.REQUEST_IMAGE, lambda: True, [], REQUEST_IMAGE),
     (CMD_ID.DOWNLINK_ALL, lambda: True, [], DOWNLINK_ALL),
 ]
