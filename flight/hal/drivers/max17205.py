@@ -212,6 +212,7 @@ class MAX17205:
             i2c.write(bytes([_MAX1720X_TEMP_ADDR]))
             i2c.readinto(self.rx_buffer)
 
+        # Scale temperature down by 256, multiply by 100 to get centi-Celsius (0.39 = 100/256)
         self.temperature = int.from_bytes(self.rx_buffer, "little", signed=False) * 0.390625
         return self.temperature
 
