@@ -206,13 +206,13 @@ class MAX17205:
         """
         Reads the temperature of the battery pack.
 
-        :return: Temperature of the battery pack in Celsius
+        :return: Temperature of the battery pack in centi-Celsius
         """
         with self.i2c_device as i2c:
             i2c.write(bytes([_MAX1720X_TEMP_ADDR]))
             i2c.readinto(self.rx_buffer)
 
-        self.temperature = int.from_bytes(self.rx_buffer, "little", signed=False) / 256.0
+        self.temperature = int.from_bytes(self.rx_buffer, "little", signed=False) * 0.390625
         return self.temperature
 
     def reset(self):
