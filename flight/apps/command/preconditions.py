@@ -1,11 +1,13 @@
-# import time
-# from datetime import datetime, timedelta
+import time
 
 from apps.command.constants import file_tags_str
 from core.data_handler import DataHandler
 from core.state_machine import STATES
+from micropython import const
 
 """ Contains functions to check the preconditions of Commands """
+
+SECONDS_IN_WEEK = const(604800)
 
 
 def valid_state(*args) -> bool:
@@ -18,19 +20,22 @@ def valid_state(*args) -> bool:
 
 
 def valid_time_format(*args) -> bool:
-    # TODO: Update this for CircuitPython
-    # """Precondition for UPLINK_TIME_REFERENCE / UPLINK_ORBIT_TIME_REFERENCE commands.
-    # Will check that time is not in the future or in the far past
-    # """
-    # time_reference = args[0]
-    # #  Check that time is not in the future
-    # if time_reference > time.time():
-    #     return False
+    """
+    Precondition for UPLINK_TIME_REFERENCE / UPLINK_ORBIT_TIME_REFERENCE commands.
+    Will check that time is not in the future or in the far past.
+    """
+    time_reference = args[0]
 
-    # #  Check that time is not from before the past week
-    # past_week = datetime.now() - timedelta(days=7)
-    # if datetime.fromtimestamp(time_reference) < past_week:
-    #     return False
+    # Check that time is not in the future
+    if time_reference > time.time():
+        return False
+
+    # Get the timestamp for 7 days ago
+    past_week = time.time() - (SECONDS_IN_WEEK)
+
+    # Check that time is not from before the past week
+    if time_reference < past_week:
+        return False
 
     return True
 

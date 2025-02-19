@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, timedelta
 
 import pytest
 from micropython import const
@@ -8,8 +9,6 @@ from flight.apps.command.preconditions import valid_state, valid_time_format
 from flight.apps.command.processor import process_command  # noqa F401
 from flight.apps.command.processor import CommandProcessingStatus, unpack_command_arguments
 from flight.core.state_machine import STATES
-
-# from datetime import datetime, timedelta
 
 
 class MOCK_ARGUMENTS:
@@ -131,18 +130,18 @@ def test_unpack_several_arguments(setup_commands):
 
 
 # TODO: fix test without datetime
-# def test_valid_time_format():
-# current_time = datetime.now()
-# Checking invalid time in the future
-# future_time = current_time + timedelta(days=15)
-# assert not valid_time_format(future_time.timestamp())
+def test_valid_time_format():
+    current_time = datetime.now()
+    # Checking invalid time in the future
+    future_time = current_time + timedelta(days=15)
+    assert not valid_time_format(future_time.timestamp())
 
-# Checking invalid time in past
-# past_time = current_time - timedelta(days=15)
-# assert not valid_time_format(past_time.timestamp())
+    # Checking invalid time in past
+    past_time = current_time - timedelta(days=15)
+    assert not valid_time_format(past_time.timestamp())
 
-# Checking a valid time
-# assert valid_time_format(current_time.timestamp())
+    # Checking a valid time
+    assert valid_time_format(current_time.timestamp())
 
 
 def test_valid_state():
