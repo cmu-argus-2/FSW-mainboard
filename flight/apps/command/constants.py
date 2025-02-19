@@ -32,5 +32,5 @@ file_tags_str = {
     7: "adcs",
     8: "thermal",
     9: "gps",
-    10: "payload",
+    10: "img",
 }
