@@ -81,7 +81,7 @@ class TelemetryPacker:
         if not cls._TM_AVAILABLE:
             cls._TM_AVAILABLE = True
 
-        cls._FRAME = bytearray(233)  # pre-allocated buffer for packing
+        cls._FRAME = bytearray(229 + 4)  # pre-allocated buffer for packing
         cls._FRAME[0] = const(0x01) & 0xFF  # message ID
         cls._FRAME[1:3] = pack_unsigned_short_int([const(0x00)], 0)  # sequence count
         cls._FRAME[3] = const(229) & 0xFF  # packet length
@@ -358,7 +358,7 @@ class TelemetryPacker:
             cls._TM_AVAILABLE = True
 
         # TODO: Frame definition for TM_HAL
-        cls._FRAME = bytearray(13)  # pre-allocated buffer for packing
+        cls._FRAME = bytearray(13 + 4)  # pre-allocated buffer for packing
         cls._FRAME[0] = const(0x02) & 0xFF  # message ID
         cls._FRAME[1:3] = pack_unsigned_short_int([const(0x00)], 0)  # sequence count
         cls._FRAME[3] = const(13) & 0xFF  # packet length
@@ -397,7 +397,7 @@ class TelemetryPacker:
         if not cls._TM_AVAILABLE:
             cls._TM_AVAILABLE = True
 
-        cls._FRAME = bytearray(72)  # pre-allocated buffer for packing
+        cls._FRAME = bytearray(72 + 4)  # pre-allocated buffer for packing
         cls._FRAME[0] = const(0x03) & 0xFF  # message ID
         cls._FRAME[1:3] = pack_unsigned_short_int([const(0x00)], 0)  # sequence count
         cls._FRAME[3] = const(72) & 0xFF  # packet length

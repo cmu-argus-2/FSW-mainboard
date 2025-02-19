@@ -97,7 +97,7 @@ class Task(TemplateTask):
                             self.log_info(f"Response: {response_id}, with args: {response_args}")
 
                             # Filepath present in response_args
-                            SATELLITE_RADIO.set_filepath(response_args[0])
+                            SATELLITE_RADIO.set_filepath(response_args[1])
 
                     else:
                         # Do nothing
