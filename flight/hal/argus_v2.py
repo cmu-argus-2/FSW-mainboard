@@ -294,7 +294,7 @@ class ArgusV2(CubeSat):
             #     ["XM", ArgusV2Components.XM_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.XM_POWER_MONITOR_I2C],
             # ],
             # self.__power_monitor["XP"]: self.__power_monitor_boot("XP"),
-            # self.__power_monitor["XM"]: self.__power_monit2or_boot("XM"),
+            # self.__power_monitor["XM"]: self.__power_monitor_boot("XM"),
             # self.__power_monitor["YP"]: self.__power_monitor_boot("YP"),
             # self.__power_monitor["YM"]: self.__power_monitor_boot("YM"),
             # self.__power_monitor["ZP"]: self.__power_monitor_boot("ZP"),
@@ -308,7 +308,7 @@ class ArgusV2(CubeSat):
         """boot_sequence: Boot sequence for the CubeSat."""
         error_list: list[int] = []
 
-        self.__state_flags_boot()
+        # self.__state_flags_boot()
         for boot_func in self.__boot_list.values():
             device = boot_func[0]
             func = boot_func[1]
@@ -361,57 +361,6 @@ class ArgusV2(CubeSat):
         :return: Error code if the power monitor failed to initialize
         """
 
-        # locations = {
-        #     "BOARD": [ArgusV2Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.BOARD_POWER_MONITOR_I2C],
-        #     "RADIO": [ArgusV2Components.RADIO_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.RADIO_POWER_MONITOR_I2C],
-        #     "GPS": [ArgusV2Components.GPS_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.GPS_POWER_MONITOR_I2C],
-        #     "JETSON": [ArgusV2Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.JETSON_POWER_MONITOR_I2C],
-        #     "TORQUE_XP": [
-        #         ArgusV2Components.TORQUE_XP_POWER_MONITOR_I2C_ADDRESS,
-        #         ArgusV2Components.TORQUE_XP_POWER_MONITOR_I2C,
-        #     ],
-        #     "TORQUE_XM": [
-        #         ArgusV2Components.TORQUE_XM_POWER_MONITOR_I2C_ADDRESS,
-        #         ArgusV2Components.TORQUE_XM_POWER_MONITOR_I2C,
-        #     ],
-        #     "TORQUE_YP": [
-        #         ArgusV2Components.TORQUE_YP_POWER_MONITOR_I2C_ADDRESS,
-        #         ArgusV2Components.TORQUE_YP_POWER_MONITOR_I2C,
-        #     ],
-        #     "TORQUE_YM": [
-        #         ArgusV2Components.TORQUE_YM_POWER_MONITOR_I2C_ADDRESS,
-        #         ArgusV2Components.TORQUE_YM_POWER_MONITOR_I2C,
-        #     ],
-        #     "TORQUE_ZP": [
-        #         ArgusV2Components.TORQUE_ZP_POWER_MONITOR_I2C_ADDRESS,
-        #         ArgusV2Components.TORQUE_ZP_POWER_MONITOR_I2C,
-        #     ],
-        #     "TORQUE_ZM": [
-        #         ArgusV2Components.TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS,
-        #         ArgusV2Components.TORQUE_ZM_POWER_MONITOR_I2C,
-        #     ],
-        #     "SOLAR_XP": [
-        #         ArgusV2Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
-        #         ArgusV2Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C,
-        #     ],
-        #     "SOLAR_XM": [
-        #         ArgusV2Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS,
-        #         ArgusV2Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C,
-        #     ],
-        #     "SOLAR_YP": [
-        #         ArgusV2Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS,
-        #         ArgusV2Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C,
-        #     ],
-        #     "SOLAR_YM": [
-        #         ArgusV2Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS,
-        #         ArgusV2Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C,
-        #     ],
-        #     "SOLAR_ZP": [
-        #         ArgusV2Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS,
-        #         ArgusV2Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C,
-        #     ],
-        # }
-
         from hal.drivers.adm1176 import ADM1176
 
         error_codes = []
@@ -428,9 +377,7 @@ class ArgusV2(CubeSat):
         except Exception as e:
             device = None
             print(f"Failed to initialize {data[0]} power monitor: {e}")
-            if self.__debug:
-                raise e
-            return Errors.ADM1176_NOT_INITIALIZED
+            self.__power_monitors_errors[data[0]] = Errors.ADM1176_NOT_INITIALIZED
 
         return error_codes
 
@@ -451,35 +398,10 @@ class ArgusV2(CubeSat):
             self.__imu_temp_flag = False
             self.__device_list.append(imu)
         except Exception as e:
-            if self.__debug:
-                raise e
+            device = None
+            self.__imu_error =  Errors.IMU_NOT_INITIALIZED
 
-            return Errors.IMU_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __charger_boot(self, device) -> list[int]:
-        """charger_boot: Boot sequence for the charger
-
-        :return: Error code if the charger failed to initialize
-        """
-        try:
-            from hal.drivers.bq25883 import BQ25883
-
-            charger = BQ25883(
-                ArgusV2Components.CHARGER_I2C,
-                ArgusV2Components.CHARGER_I2C_ADDRESS,
-            )
-
-            device = charger
-            self.__device_list.append(charger)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.BQ25883_NOT_INITIALIZED
-
-        return Errors.NOERROR
+        self.__imu_error = Errors.NOERROR
 
     def __torque_drivers_boot(self) -> list[int]:
         """Boot sequence for all torque drivers in predefined directions.
