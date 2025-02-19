@@ -280,7 +280,8 @@ class ArgusV2(CubeSat):
             "RTC": [self.__rtc, self.__rtc_boot],
             # self.__gps: self.__gps_boot,
             # self.__radio: self.__radio_boot,
-            "BOARD_PWR": [self.__power_monitors["BOARD"],
+            "BOARD_PWR": [
+                self.__power_monitors["BOARD"],
                 self.__power_monitor_boot,
                 ["BOARD", ArgusV2Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.BOARD_POWER_MONITOR_I2C],
             ],
@@ -298,7 +299,7 @@ class ArgusV2(CubeSat):
             # self.__power_monitor["YM"]: self.__power_monitor_boot("YM"),
             # self.__power_monitor["ZP"]: self.__power_monitor_boot("ZP"),
             # self.__power_monitor["ZM"]: self.__power_monitor_boot("ZM"),
-            "CHARGER": [self.__charger, self.__charger_boot],
+            # "CHARGER": [self.__charger, self.__charger_boot],
         }
 
     ######################## BOOT SEQUENCE ########################
@@ -715,13 +716,20 @@ class ArgusV2(CubeSat):
 
         return Errors.NOERROR
 
-    # def reboot_peripheral(self, peripheral: object) -> int:
-    #     """__reboot_peripheral: Reboot a peripheral
+    def reboot_peripheral(self, device_name: str) -> int:
+        """__reboot_peripheral: Reboot a peripheral
 
-    #     :param peripheral: The peripheral to reboot
-    #     :return: Error code if the reboot failed
-    #     """
-    #     if peripheral in self.__device_list:
-    #         self.__device_list.remove(peripheral)
-
-    #     try:
+        :param peripheral: The peripheral to reboot
+        :return: Error code if the reboot failed
+        """
+        if device_name not in self.__boot_list:
+            return Errors.PERIPHERAL_NOT_FOUND
+        device = self.__boot_list[device_name][0]
+        func = self.__boot_list[device_name][1]
+        args = self.__boot_list[device_name][2] if len(self.__boot_list[device_name]) > 2 else []
+        if device in self.__device_list:
+            self.__device_list.remove(device)
+        if args:
+            func(device, args)
+        else:
+            func(device)

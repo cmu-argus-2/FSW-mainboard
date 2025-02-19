@@ -77,7 +77,11 @@ class CubeSat:
             "ZP": -1,
             "ZM": -1,
         }
-        
+        self.__fuel_gauge_error = -1
+        self.__rtc_error = -1
+        self.__gps_error = -1
+        self.__radio_error = -1
+        self.__sd_card_error = -1
 
         # Debugging
         self._time_ref_boot = int(time.time())
