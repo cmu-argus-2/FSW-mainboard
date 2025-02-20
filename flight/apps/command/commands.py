@@ -56,7 +56,8 @@ def UPLINK_TIME_REFERENCE(time_reference):
     """Sends a time reference to the spacecraft to update the time processing module."""
     logger.info(f"Executing UPLINK_TIME_REFERENCE with current_time: {time_reference}")
     # TODO: Time module interfacing
-    # SATELLITE.set_datetime(time.gmtime(time_reference))
+    # if SATELLITE.RTC_AVAILABLE:
+    #     SATELLITE.set_datetime(time.gmtime(time_reference))
     return []
 
 
