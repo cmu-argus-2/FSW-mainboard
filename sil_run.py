@@ -2,10 +2,8 @@ import subprocess
 import time
 import signal
 import os
-import datetime
 
-timestamp = datetime.datetime.now().strftime("%m-%d_%H-%M-%S")
-log_filename = f"{timestamp}_sim.log"
+log_filename = f"sil_sim.log"
 # error_log_filename = f"{timestamp}_err.log"
 
 try:
