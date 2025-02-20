@@ -52,7 +52,6 @@ jobs:
           ./install.sh
           echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV  # Add current directory to PYTHONPATH 
           cd ..  # Go back to the root directory
-          python -c "import brahe; print('brahe is installed')"
           python -c "import argusim; print('argusim is installed')"
 
       - name: Verify installation
