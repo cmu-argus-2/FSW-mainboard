@@ -6,207 +6,82 @@ Interface to connect the simulation backend of choice with the emulated hardware
 This module provides the Simulator class passed to the emulated HAL to interact with the simulation backend.
 The Simulator class initializes various simulated hardware components and provides methods to interact with them.
 It automatically manages the simulation time and advances the simulation to the current real-world time.
-Author(s): Ibrahima S. Sow
+Author(s): Karthik Karumanchi, Ibrahima S. Sow
 
 """
 
+import os
+import random
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import numpy as np
-from argusloop.magnetorquer import Magnetorquer
-from argusloop.sensors import GPS, Gyroscope, Magnetometer, SunVector
-from argusloop.spacecraft import Spacecraft
+from argusim.simulation_manager.sim import Simulator as cppSim
+
+ARGUS_ROOT = os.getenv("ARGUS_ROOT", os.path.join(os.getcwd(), "../"))
+RESULTS_ROOT_FOLDER = os.path.join(ARGUS_ROOT, "results")
+CONFIG_FILE = os.path.join(ARGUS_ROOT, "params.yaml")
 
 
 class Simulator:  # will be passed by reference to the emulated HAL
-    """
-    The Simulator class emulates the hardware abstraction layer (HAL) for a satellite simulation. It initializes
-    various simulated hardware components and provides methods to interact with them.
-
-    Attributes:
-        starting_sim_epoch (datetime): The starting epoch of the simulation.
-        starting_real_epoch (datetime): The real-world starting epoch of the simulation.
-        latest_real_epoch (datetime): The latest real-world epoch recorded.
-        sim_time (datetime): The current simulation time.
-        base_dt (float): The base time step for the simulation.
-        spacecraft (Spacecraft): The spacecraft being simulated.
-        _last_sim_ctrl (numpy.ndarray): The last control input applied to the simulation.
-        _magnetometer (Magnetometer): The simulated magnetometer.
-        _gyroscope (Gyroscope): The simulated gyroscope.
-        _sun_vec (SunVector): The simulated sun vector sensor.
-        _gps (GPS): The simulated GPS sensor.
-        _torquers (dict): A dictionary of simulated magnetorquers.
-
-    Methods:
-        gyro(): Measures the gyroscope data.
-        mag(): Measures the magnetometer data.
-        sun_vec(): Measures the sun vector data.
-        sun_lux(): Measures the sun lux data.
-        gps(): Measures the GPS data.
-        set_coil_throttle(direction, throttle_volts): Sets the dipole moment voltage for a specified direction.
-        set_torque_to_spacecraft(dipole_moment): Computes and applies torque to the spacecraft.
-        _get_time_diff_since_last(): Calculates the time difference since the last recorded epoch.
-        advance_to_time(): Advances the simulation to the current real-world time.
-        read_configuration(config_file): Method for reading configuration from a file.
-    """
-
     def __init__(self):
-        # TODO self.read_configuration("nothing_for_now")
+        # Initialize the CPP sim
+        trial = random.randint(0, 100)
+        RESULTS_FOLDER = os.path.join(RESULTS_ROOT_FOLDER, datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+        os.mkdir(RESULTS_FOLDER)
+        self.cppsim = cppSim(trial, RESULTS_FOLDER, CONFIG_FILE)
 
-        config = {
-            "mass": 1.5,
-            "inertia": [10, 20, 10, 0.0, 0.0, 0.0],
-            "epoch": datetime(2024, 6, 1, 12, 0, 0, 0),
-            "dt": 0.01,
-            "initial_attitude": [1.0, 0, 0, 0, 5.1, -9.2, 0.3],
-            "initial_orbit_oe": [6.92e6, 0, 0, 0, 0, 0],
-            "gravity_order": 5,
-            "gravity_degree": 5,
-            "drag": True,
-            "third_body": True,
-        }
-        print(f"Here is the current satellite configuration:\n{config}")
-
-        self.starting_sim_epoch = config["epoch"]
+        self.measurement = np.zeros((18,))
         self.starting_real_epoch = datetime.fromtimestamp(time.time())
-        self.latest_real_epoch = self.starting_real_epoch
-        self.sim_time = config["epoch"]
-        self.base_dt = config["dt"]
+        self.base_dt = self.cppsim.params.dt
+        self.sim_time = 0
 
-        self.spacecraft = Spacecraft(config)
-        self._last_sim_ctrl = np.zeros(3)
+    """
+        SENSOR CALLBACKS
+        Populate each sensor with the appropriate readings
+        They also advance the c++ simulation before reading
+    """
 
-        # Initialize all simulated hardware from backend
-
-        self._magnetometer = Magnetometer(2.0)
-        self._gyroscope = Gyroscope(0.01, 0.2, 0.5)
-        self._sun_vec = SunVector(0.1, 0.0)
-        self._gps = GPS(10, 0.1)  # TODO rest of frame in argusloop
-        self._torquers = {
-            "XP": Magnetorquer(),
-            "XM": Magnetorquer(),
-            "YP": Magnetorquer(),
-            "YM": Magnetorquer(),
-            "ZM": Magnetorquer(),
-            "ZP": Magnetorquer(),
-        }
-
-    def gyro(self) -> np.ndarray:
-        """
-        Measures the gyroscope data.
-
-        Returns:
-            np.ndarray: The measured gyroscope data.
-        """
+    def gyro(self):
         self.advance_to_time()
-        return self._gyroscope.measure(self.spacecraft)
+        return self.measurement[6:9]
 
-    def mag(self) -> np.ndarray:
-        """
-        Measures the magnetometer data.
-
-        Returns:
-            np.ndarray: The measured magnetometer data.
-        """
+    def mag(self):
         self.advance_to_time()
-        return self._magnetometer.measure(self.spacecraft)
+        return self.measurement[9:12] * 1e6  # IMU obtains magnetic field readings in uT
 
-    def sun_vec(self) -> np.ndarray:
-        """
-        Measures the sun vector data.
-
-        Returns:
-            np.ndarray: The measured sun vector data.
-        """
+    def sun_lux(self):
         self.advance_to_time()
-        return self._sun_vec.measure(self.spacecraft)
+        return self.measurement[12:]
 
-    def sun_lux(self) -> float:
-        """
-        Measures the sun lux data.
-
-        Returns:
-            float: The measured sun lux data.
-        """
+    def gps(self):
         self.advance_to_time()
-        return self._sun_vec.measure_lux(self.spacecraft)
+        gps_state = np.array([time.time()] + list(self.measurement[0:6] * 1e2))
+        return gps_state  # GPS returns data in cm
 
-    def gps(self) -> dict:
+    def set_control_input(self, dir, input):
         """
-        Measures the GPS data.
-
-        Returns:
-            dict: The measured GPS data.
+        Sets the control input to the simulation
         """
-        self.advance_to_time()
-        return self._gps.measure(self.spacecraft)
+        dir_2_idx_map = {"XM": 0, "YM": 1, "ZM": 2, "XP": 3, "YP": 4, "ZP": 5}
+        self.cppsim.control_input[dir_2_idx_map[dir]] = input * 5
 
-    def set_coil_throttle(self, direction: str, throttle_volts: float) -> None:
+    def get_time_diff_since_last(self):
         """
-        Sets the dipole moment voltage for a specified direction.
-
-        Args:
-            direction (str): The direction of the magnetorquer.
-            throttle_volts (float): The voltage to set for the dipole moment.
-        """
-        return self._torquers[direction].set_dipole_moment_voltage(throttle_volts)
-
-    def set_torque_to_spacecraft(self, dipole_moment: np.ndarray) -> None:
-        """
-        Computes and applies torque to the spacecraft.
-
-        Args:
-            dipole_moment (np.ndarray): The dipole moment to apply.
-        """
-        self.advance_to_time()
-        self._last_sim_ctrl = self.spacecraft.compute_torque(dipole_moment)
-
-    def _get_time_diff_since_last(self) -> timedelta:
-        """
-        Calculates the time difference since the last recorded epoch.
-
-        Returns:
-            timedelta: The time difference since the last recorded epoch.
+        Time since last simulation advance
         """
         self.latest_real_epoch = self.starting_real_epoch
         self.starting_real_epoch = datetime.fromtimestamp(time.time())
         return self.starting_real_epoch - self.latest_real_epoch
 
-    def advance_to_time(self) -> None:
+    def advance_to_time(self):
         """
-        Advances the simulation to the current real-world time.
+        Advance in steps of 'dt' to rech the current FSW time
         """
-        time_diff = self._get_time_diff_since_last()
+        time_diff = self.get_time_diff_since_last()
+        # TODO Handle granularity
         iters = int(time_diff.total_seconds() / self.base_dt)
+        # print(f"Advancing {iters} iterations")
         for _ in range(iters):
-            self.spacecraft.advance(self._last_sim_ctrl)
-        self.sim_time += timedelta(seconds=(iters * self.base_dt))
-
-    def read_configuration(self, config_file: str) -> None:
-        """
-        Reads configuration from a file.
-
-        Args:
-            config_file (str): The path to the configuration file.
-        """
-        pass
-
-
-if __name__ == "__main__":
-    sim = Simulator()
-
-    tt = datetime.now()
-    base_dt = 0.01
-
-    print(tt)
-    print(datetime.fromtimestamp(time.time()))
-
-    for _ in range(1000):
-        sim.advance_to_time()
-        time.sleep(0.08)
-        print(sim.sun_lux())
-        print(sim.sim_time)
-
-    # sim.advance_to_time()
-    print(sim.sim_time)
+            self.measurement = self.cppsim.step(self.sim_time, self.base_dt)
+        self.sim_time += iters * self.base_dt
