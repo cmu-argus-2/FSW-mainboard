@@ -36,11 +36,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
+      - name: Setup virtual environment
+        run: |
+          python3 -m venv .venv --system-site-packages
+          source .venv/bin/activate
       - name: Install main repository dependencies
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-
       - name: Update submodules to latest commit
         run: |
           git submodule init
@@ -56,19 +59,20 @@ jobs:
 
       - name: Verify installation
         run: pip list  # Confirm that brahe and argusim are installed
-
+      - name: Set timestamp
+        run: echo "TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_ENV
       - name: Run flight software 30 sec
         run: python3 sil_run.py 
       - name: Upload log file
         uses: actions/upload-artifact@v4
         with:
-          name: sil-logs
+          name: ${{ env.TIMESTAMP }}-sil-logs
           path: sil_sim.log
       - name: Parse logs for errors
         run: python3 parse_sillogs.py
       - name: Upload error log file
         uses: actions/upload-artifact@v4
         with:
-          name: sil-errs
+          name: ${{ env.TIMESTAMP }}-sil-errs
           path: sil_sim.log
       

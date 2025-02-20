@@ -3,7 +3,7 @@ import signal
 import subprocess
 import time
 
-log_filename = f"sil_sim.log"
+log_filename = "sil_sim.log"
 # error_log_filename = f"{timestamp}_err.log"
 
 try:
