@@ -1,0 +1,63 @@
+name: SIL CI
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  sil-simulation:
+    name: SIL simulation
+
+    strategy:
+      fail-fast: false
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install main repository dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Update submodules to latest commit
+        run: |
+          git submodule init
+          git submodule update
+
+      - name: Install submodule dependencies
+        run: |
+          cd simulation  # Move into the submodule directory
+          ./install.sh
+          echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV  # Add current directory to PYTHONPATH 
+          cd ..  # Go back to the root directory
+          python -c "import brahe; print('brahe is installed')"
+          python -c "import argusim; print('argusim is installed')"
+
+      - name: Verify installation
+        run: pip list  # Confirm that brahe and argusim are installed
+
+      - name: Run flight software 30 sec
+        run: python3 sil_run.py 
+      
