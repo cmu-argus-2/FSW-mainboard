@@ -26,7 +26,7 @@ For struct module format strings:
 
 import gc
 
-from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, STORAGE_IDX, THERMAL_IDX
+from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, STORAGE_IDX
 from apps.telemetry.helpers import (
     convert_float_to_fixed_point_hp,
     pack_signed_long_int,
