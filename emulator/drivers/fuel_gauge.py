@@ -10,6 +10,7 @@ class FuelGauge:
         self.tte = 10000
         self.ttf = 2500
         self.time_pwrup = 0
+        self.temperature = 35.0
 
     def read_soc(self):
         """
@@ -82,6 +83,14 @@ class FuelGauge:
         :return: Time since power up in seconds
         """
         return self.time_pwrup
+
+    def read_temperature(self):
+        """
+        Reads the temperature of the battery pack.
+
+        :return: Temperature of the battery pack in Celsius
+        """
+        return self.temperature
 
     def reset(self):
         pass
