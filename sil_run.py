@@ -1,7 +1,7 @@
+import os
+import signal
 import subprocess
 import time
-import signal
-import os
 
 log_filename = f"sil_sim.log"
 # error_log_filename = f"{timestamp}_err.log"

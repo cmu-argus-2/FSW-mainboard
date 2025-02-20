@@ -27,6 +27,8 @@ class Simulator:  # will be passed by reference to the emulated HAL
     def __init__(self):
         # Initialize the CPP sim
         trial = random.randint(0, 100)
+        if not os.path.exists(RESULTS_ROOT_FOLDER):
+            os.mkdir(RESULTS_ROOT_FOLDER)
         RESULTS_FOLDER = os.path.join(RESULTS_ROOT_FOLDER, datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         os.mkdir(RESULTS_FOLDER)
         self.cppsim = cppSim(trial, RESULTS_FOLDER, CONFIG_FILE)

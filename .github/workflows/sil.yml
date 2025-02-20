@@ -59,10 +59,16 @@ jobs:
 
       - name: Run flight software 30 sec
         run: python3 sil_run.py 
-        
       - name: Upload log file
         uses: actions/upload-artifact@v4
         with:
           name: sil-logs
+          path: sil_sim.log
+      - name: Parse logs for errors
+        run: python3 parse_sillogs.py
+      - name: Upload error log file
+        uses: actions/upload-artifact@v4
+        with:
+          name: sil-errs
           path: sil_sim.log
       
