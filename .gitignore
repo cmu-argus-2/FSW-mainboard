@@ -169,6 +169,8 @@ assets/*
 
 
 flight/build/
+params.yaml
+results/
 
 
 temp_test.py
