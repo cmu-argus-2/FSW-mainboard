@@ -437,7 +437,7 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
 
     """
 
-    def __init__(self, i2c_bus, address, reset: Optional[DigitalInOut] = None, debug: bool = False) -> None:
+    def __init__(self, i2c_bus, address, reset: Optional[DigitalInOut], debug: bool = False) -> None:
         self.bus_device_obj = i2c_device.I2CDevice(i2c_bus, address)
         self._debug: bool = debug
         self._reset: Optional[DigitalInOut] = reset
@@ -458,13 +458,12 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         self._id_read = False
         # for saving the most recent reading when decoding several packets
         self._readings: Dict[int, Any] = {}
-        super().__init__()
         self.initialize()
 
     def initialize(self) -> None:
         """Initialize the sensor"""
         for _ in range(3):
-            self.hard_reset()
+            # self.hard_reset()
             self.soft_reset()
             try:
                 if self._check_id():
@@ -773,19 +772,22 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         # self._dbg("\tdata ready", ready)
         return ready
 
-    def hard_reset(self) -> None:
-        """Hardware reset the sensor to an initial unconfigured state"""
-        if not self._reset:
-            return
-        import digitalio  # pylint:disable=import-outside-toplevel
+    # def hard_reset(self) -> None:
+    #     """Hardware reset the sensor to an initial unconfigured state"""
+    #     if not self._reset:
+    #         return
+    #     import digitalio  # pylint:disable=import-outside-toplevel
 
-        self._reset.direction = digitalio.Direction.OUTPUT
-        self._reset.value = True
-        time.sleep(0.01)
-        self._reset.value = False
-        time.sleep(0.01)
-        self._reset.value = True
-        time.sleep(0.01)
+    #     self._reset.direction = digitalio.Direction.OUTPUT
+    #     self._reset.value = True
+    #     time.sleep(0.01)
+    #     self._reset.value = False
+    #     time.sleep(0.01)
+    #     self._reset.value = True
+    #     time.sleep(0.01)
+
+    def reset(self) -> None:
+        self.soft_reset()
 
     def soft_reset(self) -> None:
         """Reset the sensor to an initial unconfigured state"""

@@ -14,6 +14,13 @@ Implementation Notes
 from adafruit_bus_device.i2c_device import I2CDevice
 from hal.drivers.middleware.errors import Errors
 from micropython import const
+import time
+try:
+    from typing import Any, Dict, List, Optional, Tuple
+
+    from digitalio import DigitalInOut
+except ImportError:
+    pass
 
 
 def _to_signed(num):
@@ -53,7 +60,8 @@ CONTROL_SWOFF = const(0x1 << 0)
 
 
 class ADM1176:
-    def __init__(self, i2c_bus, addr=0x4A):
+    # def __init__(self, i2c_bus, addr=0x4A):
+    def __init__(self, i2c_bus, addr):
         self.i2c_device = I2CDevice(i2c_bus, addr, probe=False)
         self.i2c_addr = addr
         self.sense_resistor = 1
@@ -69,6 +77,15 @@ class ADM1176:
 
         self.v_fs_over_res = 26.35 / 4096
         self.i_fs_over_res = 0.10584 / 4096
+    
+    def reset(self) -> None:
+        """reset: Resets the device and clears all registers.
+
+        :return: None
+        """
+        self.__turn_off()
+        time.sleep(0.1)
+        self.__turn_on()
 
     def config(self, value: str) -> None:
         """config: sets voltage current readout configuration.
