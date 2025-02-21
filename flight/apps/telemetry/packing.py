@@ -81,10 +81,10 @@ class TelemetryPacker:
         if not cls._TM_AVAILABLE:
             cls._TM_AVAILABLE = True
 
-        cls._FRAME = bytearray(229 + 4)  # pre-allocated buffer for packing
+        cls._FRAME = bytearray(227 + 4)  # pre-allocated buffer for packing
         cls._FRAME[0] = const(0x01) & 0xFF  # message ID
         cls._FRAME[1:3] = pack_unsigned_short_int([const(0x00)], 0)  # sequence count
-        cls._FRAME[3] = const(229) & 0xFF  # packet length
+        cls._FRAME[3] = const(227) & 0xFF  # packet length
 
         ############ CDH fields ############
         if DH.data_process_exists("cdh"):
