@@ -17,7 +17,7 @@ class CDH_IDX:
 class EPS_IDX:
     TIME_EPS = const(0)
     EPS_POWER_FLAG = const(1)
-    CPU_TEMPERATURE = const(2)
+    MAINBOARD_TEMPERATURE = const(2)
     MAINBOARD_VOLTAGE = const(3)
     MAINBOARD_CURRENT = const(4)
     BATTERY_PACK_TEMPERATURE = const(5)

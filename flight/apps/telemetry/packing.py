@@ -123,7 +123,7 @@ class TelemetryPacker:
                 # Low power flag
                 cls._FRAME[18] = eps_data[EPS_IDX.EPS_POWER_FLAG] & 0xFF
                 # CPU temperature
-                cls._FRAME[19:21] = pack_signed_short_int(eps_data, EPS_IDX.CPU_TEMPERATURE)
+                cls._FRAME[19:21] = pack_signed_short_int(eps_data, EPS_IDX.MAINBOARD_TEMPERATURE)
                 # Mainboard voltage
                 cls._FRAME[21:23] = pack_signed_short_int(eps_data, EPS_IDX.MAINBOARD_VOLTAGE)
                 # Mainboard current
