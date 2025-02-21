@@ -9,7 +9,7 @@ ROOT_PATH = os.getcwd()
 
 MPY_CROSS_NAME = "mpy-cross-cpy9"
 if platform.system() == "Darwin":
-    MPY_CROSS_NAME = "mpy-cross-macos"
+    MPY_CROSS_NAME = "mpy-cross-macos-cpy9"
 if platform.node() == "raspberrypi":
     MPY_CROSS_NAME = "mpy-cross-rpi"
 MPY_CROSS_PATH = f"{os.getcwd()}/build_tools/{MPY_CROSS_NAME}"

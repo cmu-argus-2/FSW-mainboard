@@ -145,7 +145,7 @@ class ArgusV2Components:
 
     # LORA POWER MONITOR
     RADIO_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    RADIO_POWER_MONITOR_I2C_ADDRESS = const(0x42)
+    RADIO_POWER_MONITOR_I2C_ADDRESS = const(0x41)
 
     # USB CHARGER
     CHARGER_I2C = ArgusV2Interfaces.I2C1
@@ -153,11 +153,11 @@ class ArgusV2Components:
 
     # GPS POWER MONITOR
     GPS_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    GPS_POWER_MONITOR_I2C_ADDRESS = const(0x40)
+    GPS_POWER_MONITOR_I2C_ADDRESS = const(0x42)
 
     # BOARD POWER MONITOR
     BOARD_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x48)
+    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x40)
 
     # CAMERA
 
@@ -349,7 +349,7 @@ class ArgusV2(CubeSat):
 
         locations = {
             "BOARD": [ArgusV2Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.BOARD_POWER_MONITOR_I2C],
-            "RADIO": [ArgusV2Components.RADIO_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.RADIO_POWER_MONITOR_I2C],
+            # "RADIO": [ArgusV2Components.RADIO_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.RADIO_POWER_MONITOR_I2C],
             # "GPS": [ArgusV2Components.GPS_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.GPS_POWER_MONITOR_I2C],
             # "JETSON": [ArgusV2Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.JETSON_POWER_MONITOR_I2C],
             # "TORQUE_XP": [
@@ -415,7 +415,7 @@ class ArgusV2(CubeSat):
                 self.__power_monitors[location] = None
                 print(f"Failed to initialize {location} power driver: {e}")
                 if self.__debug:
-                    
+
                     raise e
                 return Errors.ADM1176_NOT_INITIALIZED
 
