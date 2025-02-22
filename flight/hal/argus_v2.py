@@ -275,7 +275,7 @@ class ArgusV2(CubeSat):
         super().__init__()
         self.__boot_list = {
             "SDCARD": [self.__sd_card, self.__sd_card_boot],
-            "VFS": [self.__vfs, self.__vfs_boot],
+            # "VFS": [self.__vfs, self.__vfs_boot],
             "IMU": [self.__imu, self.__imu_boot],
             "RTC": [self.__rtc, self.__rtc_boot],
             # self.__gps: self.__gps_boot,
@@ -566,7 +566,11 @@ class ArgusV2(CubeSat):
                 ArgusV2Components.SD_CARD_CS,
                 ArgusV2Components.SD_BAUD,
             )
-            device = sd_card
+
+            vfs = VfsFat(sd_card)
+            device = vfs
+            mount(vfs, ArgusV2Components.VFS_MOUNT_POINT)
+            path.append(ArgusV2Components.VFS_MOUNT_POINT)
             self.append_device(sd_card)
         except Exception as e:
             if self.__debug:

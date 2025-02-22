@@ -15,6 +15,7 @@ from adafruit_bus_device.i2c_device import I2CDevice
 from hal.drivers.middleware.errors import Errors
 from micropython import const
 import time
+
 try:
     from typing import Any, Dict, List, Optional, Tuple
 
@@ -77,7 +78,7 @@ class ADM1176:
 
         self.v_fs_over_res = 26.35 / 4096
         self.i_fs_over_res = 0.10584 / 4096
-    
+
     def reset(self) -> None:
         """reset: Resets the device and clears all registers.
 
@@ -86,6 +87,7 @@ class ADM1176:
         self.__turn_off()
         time.sleep(0.1)
         self.__turn_on()
+        time.sleep(0.1)
 
     def config(self, value: str) -> None:
         """config: sets voltage current readout configuration.
