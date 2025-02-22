@@ -145,7 +145,7 @@ class ArgusV2Components:
 
     # LORA POWER MONITOR
     RADIO_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    RADIO_POWER_MONITOR_I2C_ADDRESS = const(0x42)
+    RADIO_POWER_MONITOR_I2C_ADDRESS = const(0x41)
 
     # USB CHARGER
     CHARGER_I2C = ArgusV2Interfaces.I2C1
@@ -153,11 +153,11 @@ class ArgusV2Components:
 
     # GPS POWER MONITOR
     GPS_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    GPS_POWER_MONITOR_I2C_ADDRESS = const(0x40)
+    GPS_POWER_MONITOR_I2C_ADDRESS = const(0x42)
 
     # BOARD POWER MONITOR
     BOARD_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x48)
+    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x40)
 
     # CAMERA
 
@@ -399,7 +399,7 @@ class ArgusV2(CubeSat):
             self.__device_list.append(imu)
         except Exception as e:
             device = None
-            self.__imu_error =  Errors.IMU_NOT_INITIALIZED
+            self.__imu_error = Errors.IMU_NOT_INITIALIZED
 
         self.__imu_error = Errors.NOERROR
 
