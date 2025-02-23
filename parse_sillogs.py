@@ -16,4 +16,3 @@ if python_err:
     raise Exception("Python errors found, see error log.")
 if sim_err:
     raise Exception("Sim errors found, see error log.")
-
