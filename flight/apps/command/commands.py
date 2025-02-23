@@ -87,6 +87,7 @@ def SCHEDULE_OD_EXPERIMENT():
 def REQUEST_TM_HEARTBEAT():
     """Requests a nominal snapshot of all subsystems."""
     logger.info("Executing REQUEST_TM_HEARTBEAT")
+    # TODO: change message ID to nominal to differentiate between heart beat (0x05)
     # Pack telemetry
     packed = TelemetryPacker.pack_tm_heartbeat()
     if packed:

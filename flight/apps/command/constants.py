@@ -20,17 +20,3 @@ class CMD_ID:
     REQUEST_IMAGE = const(0x4C)
 
     DOWNLINK_ALL = const(0x4D)
-
-
-file_tags_str = {
-    1: "cmd_logs",
-    2: "watchdog",
-    3: "eps",
-    4: "cdh",
-    5: "comms",
-    6: "imu",
-    7: "adcs",
-    8: "thermal",
-    9: "gps",
-    10: "img",
-}

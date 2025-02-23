@@ -406,7 +406,9 @@ class DataProcess:
         """
         files = self.get_sorted_file_list()
         if len(files) > 1:  # Ignore process configuration file
-            if latest:
+            if latest or (
+                file_time is not None and file_time == 0
+            ):  # Edge case for when time = 0 we want to return the latest
                 transmit_file = files[-1]
                 if transmit_file == _PROCESS_CONFIG_FILENAME:
                     transmit_file = files[-2]
