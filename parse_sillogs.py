@@ -7,8 +7,13 @@ with open(log_filename, "r") as log_file, open(error_filename, "w") as error_log
         # errors running the SIL
         if "Traceback" in line:
             python_err = True
-        if python_err:
+        if "[ERROR]" in line:
+            sim_err = True
+        if python_err or sim_err:
             error_log.write(line)
 
 if python_err:
     raise Exception("Python errors found, see error log.")
+if sim_err:
+    raise Exception("Sim errors found, see error log.")
+
