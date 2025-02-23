@@ -2,6 +2,11 @@ import time
 
 from hal.drivers.middleware.errors import Errors
 
+DEVICE = 0
+DEVICE_ERROR = 1
+DEVICE_BOOT = 2
+DEVICE_ARGS = 3
+
 
 class CubeSat:
     """CubeSat: Base class for all CubeSat implementations"""
@@ -34,7 +39,33 @@ class CubeSat:
 
     def __init__(self):
         # List of successfully initialized devices
-        self.__device_list = []
+        self.__device_list = {
+            "SDCARD": [None, 0, self.__sd_card_boot],
+            "IMU": [None, 0, self.__imu_boot],
+            "RTC": [None, 0, self.__rtc_boot],
+            # "GPS": [None, 0, self.__gps_boot],
+            "RADIO": [None, 0, self.__radio_boot],
+            "BOARD_PWR": [
+                None,
+                0,
+                self.__power_monitor_boot,
+                "BOARD",
+            ],
+            # "XP_PWR": [self.__power_monitors["XP"],
+            #     self.__power_monitor_boot,
+            #     ["XP", ArgusV2Components.XP_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.XP_POWER_MONITOR_I2C],
+            # ],
+            # "XM_PWR": [self.__power_monitors["XM"],
+            #     self.__power_monitor_boot,
+            #     ["XM", ArgusV2Components.XM_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.XM_POWER_MONITOR_I2C],
+            # ],
+            # self.__power_monitor["XP"]: self.__power_monitor_boot("XP"),
+            # self.__power_monitor["XM"]: self.__power_monitor_boot("XM"),
+            # self.__power_monitor["YP"]: self.__power_monitor_boot("YP"),
+            # self.__power_monitor["YM"]: self.__power_monitor_boot("YM"),
+            # self.__power_monitor["ZP"]: self.__power_monitor_boot("ZP"),
+            # self.__power_monitor["ZM"]: self.__power_monitor_boot("ZM"),
+        }
 
         # List of errors from most recent system diagnostic test
         self.__recent_errors: list[int] = [Errors.NOERROR]
@@ -43,46 +74,45 @@ class CubeSat:
         self.__state_flags = None
 
         # Devices
-        self.__charger = None
-        self.__imu = None
-        self.__light_sensors = {}
-        self.__torque_drivers = {}
-        self.__power_monitors = {
-            "BOARD": None,
-            "RADIO": None,
-            "XP": None,
-            "XM": None,
-            "YP": None,
-            "YM": None,
-            "ZP": None,
-            "ZM": None,
-        }
-        self.__fuel_gauge = None
-        self.__rtc = None
-        self.__gps = None
-        self.__radio = None
-        self.__sd_card = None
-        self.__burn_wires = None
-        self.__payload_spi = None
-        self.__vfs = None
-        self.__imu_error = -1
-        self.__charger_error = -1
-        self.__power_monitors_errors = {
-            "BOARD": -1,
-            "RADIO": -1,
-            "XP": -1,
-            "XM": -1,
-            "YP": -1,
-            "YM": -1,
-            "ZP": -1,
-            "ZM": -1,
-        }
-        self.__fuel_gauge_error = -1
-        self.__rtc_error = -1
-        self.__gps_error = -1
-        self.__radio_error = -1
-        self.__sd_card_error = -1
-        
+        # self.__charger = None
+        # self.__imu = None
+        # self.__light_sensors = {}
+        # self.__torque_drivers = {}
+        # self.__power_monitors = {
+        #     "BOARD": None,
+        #     "RADIO": None,
+        #     "XP": None,
+        #     "XM": None,
+        #     "YP": None,
+        #     "YM": None,
+        #     "ZP": None,
+        #     "ZM": None,
+        # }
+        # self.__fuel_gauge = None
+        # self.__rtc = None
+        # self.__gps = None
+        # self.__radio = None
+        # self.__sd_card = None
+        # self.__burn_wires = None
+        # self.__payload_spi = None
+        # self.__vfs = None
+        # self.__imu_error = -1
+        # self.__charger_error = -1
+        # self.__power_monitors_errors = {
+        #     "BOARD": -1,
+        #     "RADIO": -1,
+        #     "XP": -1,
+        #     "XM": -1,
+        #     "YP": -1,
+        #     "YM": -1,
+        #     "ZP": -1,
+        #     "ZM": -1,
+        # }
+        # self.__fuel_gauge_error = -1
+        # self.__rtc_error = -1
+        # self.__gps_error = -1
+        # self.__radio_error = -1
+        # self.__sd_card_error = -1
 
         # Debugging
         self._time_ref_boot = int(time.time())
@@ -125,21 +155,22 @@ class CubeSat:
         """GPS: Returns the gps object
         :return: object or None
         """
-        return self.__gps
+        return self.__device_list["GPS"][DEVICE]
 
     @property
     def GPS_AVAILABLE(self) -> bool:
         """GPS_AVAILABLE: Returns True if the GPS is available
         :return: bool
         """
-        return self.__gps is not None
+        return self.__device_list["GPS"][DEVICE] is not None
 
     @property
     def POWER_MONITORS(self):
         """POWER_MONITORS: Returns the power monitor object
         :return: object or None
         """
-        return self.__power_monitors
+        power_monitors = {"BOARD": self.__device_list["BOARD_PWR"][DEVICE]}
+        return power_monitors
 
     @property
     def BOARD_POWER_MONITOR_AVAILABLE(self) -> bool:
@@ -160,14 +191,14 @@ class CubeSat:
         """IMU: Returns the IMU object
         :return: object or None
         """
-        return self.__imu
+        return self.__device_list["IMU"][DEVICE]
 
     @property
     def IMU_AVAILABLE(self) -> bool:
         """IMU_AVAILABLE: Returns True if the IMU is available
         :return: bool
         """
-        return self.__imu is not None
+        return self.__device_list["IMU"][DEVICE] is not None
 
     @property
     def IMU_TEMPERATURE_AVAILABLE(self) -> bool:
@@ -214,7 +245,7 @@ class CubeSat:
         """FUEL_GAUGE: Returns the fuel gauge object
         :return: object or None
         """
-        return self.__fuel_gauge
+        return self.__device_list["FUEL_GAUGE"][DEVICE]
 
     # ABSTRACT METHOD #
     def APPLY_MAGNETIC_CONTROL(self) -> None:
@@ -247,28 +278,28 @@ class CubeSat:
         """RTC: Returns the RTC object
         :return: object or None
         """
-        return self.__rtc
+        return self.__device_list["RTC"][DEVICE]
 
     @property
     def RTC_AVAILABLE(self) -> bool:
         """RTC_AVAILABLE: Returns True if the RTC is available
         :return: bool
         """
-        return self.__rtc is not None
+        return self.__device_list["RTC"][DEVICE] is not None
 
     @property
     def RADIO(self):
         """RADIO: Returns the radio object
         :return: object or None
         """
-        return self.__radio
+        return self.__device_list["RADIO"][DEVICE]
 
     @property
     def RADIO_AVAILABLE(self) -> bool:
         """RADIO_AVAILABLE: Returns True if the radio is available
         :return: bool
         """
-        return self.__radio is not None
+        return self.__device_list["RADIO"][DEVICE] is not None
 
     @property
     def BURN_WIRES(self):
@@ -289,14 +320,14 @@ class CubeSat:
         """SD_CARD: Returns the SD card object
         :return: object or None
         """
-        return self.__sd_card
+        return self.__device_list["SDCARD"][DEVICE]
 
     @property
     def SD_CARD_AVAILABLE(self) -> bool:
         """SD_CARD_AVAILABLE: Returns True if the SD card is available
         :return: bool
         """
-        return self.__sd_card is not None
+        return self.__device_list["SDCARD"][DEVICE] is not None
 
     @property
     def VFS(self):

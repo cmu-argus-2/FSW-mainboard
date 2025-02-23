@@ -302,6 +302,7 @@ def _parse_sensor_report_data(report_bytes: bytearray) -> Tuple[Tuple, int]:
 
     return (results_tuple, accuracy)
 
+
 # report_id
 # feature_report_id
 # feature_flags
@@ -437,7 +438,7 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
 
     """
 
-    def __init__(self, i2c_bus, address, reset: Optional[DigitalInOut], debug: bool = False) -> None:
+    def __init__(self, i2c_bus, address, reset: Optional[DigitalInOut] = None, debug: bool = False) -> None:
         self.bus_device_obj = i2c_device.I2CDevice(i2c_bus, address)
         self._debug: bool = debug
         self._reset: Optional[DigitalInOut] = reset
@@ -693,7 +694,6 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         #     set_feature_report = self._get_feature_enable_report(feature_id, sensor_specific_config=_ENABLED_ACTIVITIES)
         # else:
         set_feature_report = self._get_feature_enable_report(feature_id)
-
 
         self._dbg("Enabling", feature_id)
         self._send_packet(_BNO_CHANNEL_CONTROL, set_feature_report)
