@@ -21,6 +21,7 @@ class CMD_ID:
 
     DOWNLINK_ALL = const(0x4D)
 
+
 file_tags_str = {
     1: "cmd_logs",
     2: "watchdog",
