@@ -35,13 +35,38 @@ class MSG_ID:
     Comms message IDs that are downlinked during the mission
     """
 
+    """
+    Source Header IDs
+    -----------------
+    These IDs are used in the source header [src, dst]. They are
+    used to determine which spacecraft a message originates from
+    or is meant for.
+
+    ARGUS_ID is the ID associated with the SC. It must be unique
+    for Argus-1 and Argus-2. This is the unique TM identifier
+    for each spacecraft. This helps in distinguishing the Sc, and
+    is also a requirement for FCC licensing.
+
+    GS_ID is a genericized ID specifying that the packet either
+    came from [src] or is going to [dst] a ground station. This
+    does not specify a particular GS, only that the packet is
+    associated with a downlink / uplink.
+    """
+
+    # Header ID for Argus - THIS MUST BE UNIQUE FOR EACH SPACECRAFT
+    ARGUS_ID = 0x01
+
+    # Header ID for all ground stations (genericized)
+    GS_ID = 0x04
+
     # SAT heartbeat, nominally downlinked in orbit
     SAT_HEARTBEAT = 0x01
 
     # SAT TM frames, requested by GS
-    SAT_TM_HAL = 0x02
-    SAT_TM_STORAGE = 0x03
-    SAT_TM_PAYLOAD = 0x04
+    SAT_TM_NOMINAL = 0x02
+    SAT_TM_HAL = 0x03
+    SAT_TM_STORAGE = 0x04
+    SAT_TM_PAYLOAD = 0x05
 
     # SAT ACK, in response to GS commands
     SAT_ACK = 0x0F
@@ -84,7 +109,7 @@ class SATELLITE_RADIO:
     state = COMMS_STATE.TX_HEARTBEAT
 
     # Init TM frame for preallocating memory
-    tm_frame = bytearray(250)
+    tm_frame = bytearray(248)
 
     # Parameters for file downlinking (Message ID temporarily hardcoded)
     filepath = None
@@ -102,6 +127,10 @@ class SATELLITE_RADIO:
     tx_message_ID = 0x00
     tx_message = []
     tx_ack = 0x04
+
+    # Source header parameters
+    rx_src_id = 0x00
+    rx_dst_id = 0x00
 
     # RX'd ID is the latest GS command
     rx_gs_cmd = 0x00
@@ -430,7 +459,7 @@ class SATELLITE_RADIO:
             return cls.rx_gs_cmd
 
         # Check packet integrity based on header length
-        if len(packet) < 4:
+        if len(packet) < 6:
             # Packet does not contain valid Argus header
             logger.warning("[COMMS ERROR] RX'd packet has invalid header")
             cls.rx_gs_cmd = 0x00
@@ -439,6 +468,29 @@ class SATELLITE_RADIO:
             return cls.rx_gs_cmd
 
         cls.rx_message_rssi = SATELLITE.RADIO.rssi()
+
+        # Unpack source header
+        cls.rx_src_id = int.from_bytes(packet[0:1], "big")
+        cls.rx_dst_id = int.from_bytes(packet[1:2], "big")
+        packet = packet[2:]
+
+        # Check packet integrity based on rx_src_id
+        if cls.rx_src_id != MSG_ID.GS_ID:
+            # Packet does not contain valid CMD_ID
+            logger.warning("[COMMS ERROR] RX'd packet has invalid source")
+            cls.rx_gs_cmd = 0x00
+            cls.rx_sq_cnt = 0
+            cls.rx_gs_len = 0
+            return cls.rx_gs_cmd
+
+        # Check packet integrity based on rx_dst_id
+        if cls.rx_dst_id != MSG_ID.ARGUS_ID:
+            # Packet does not contain valid CMD_ID
+            logger.warning("[COMMS ERROR] RX'd packet has invalid destination")
+            cls.rx_gs_cmd = 0x00
+            cls.rx_sq_cnt = 0
+            cls.rx_gs_len = 0
+            return cls.rx_gs_cmd
 
         # Unpack RX message header
         cls.rx_gs_cmd = int.from_bytes(packet[0:1], "big")
@@ -543,10 +595,13 @@ class SATELLITE_RADIO:
             logger.warning(f"[COMMS ERROR] SAT received {cls.gs_rq_message_ID}")
             cls.tx_message = cls.tm_frame
 
+        # Add source header (source and destination) to distinguish between spacecraft
+        cls.tx_message = bytes([MSG_ID.ARGUS_ID, MSG_ID.GS_ID]) + cls.tx_message
+
         # Send a message to GS
         cls.sat.RADIO.send(cls.tx_message)
         cls.crc_count = 0
 
         # Return TX message header
-        cls.tx_message_ID = int.from_bytes(cls.tx_message[0:1], "big")
+        cls.tx_message_ID = int.from_bytes(cls.tx_message[2:3], "big")
         return cls.tx_message_ID

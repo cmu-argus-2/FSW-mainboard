@@ -25,6 +25,9 @@ class StatusConst:
     OPROP_INIT_FAIL = -5
     TRIAD_FAIL = -6
     POS_UPDATE_FAIL = -7
+    SUN_UPDATE_FAIL = -8
+    MAG_UPDATE_FAIL = -9
+    EKF_UPDATE_FAIL = -10
 
     # Success Status Constants
     OK = 1
@@ -38,6 +41,9 @@ class StatusConst:
         OPROP_INIT_FAIL: "Orbit Prop Init failure",
         TRIAD_FAIL: "TRIAD failure",
         POS_UPDATE_FAIL: "Position update failure",
+        SUN_UPDATE_FAIL: "Sun update failure",
+        MAG_UPDATE_FAIL: "Magneto update failure",
+        EKF_UPDATE_FAIL: "Singular Matrix",
     }
 
     @classmethod

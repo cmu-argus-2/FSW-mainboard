@@ -14,49 +14,49 @@ _SX126X_PA_CONFIG_SX1262 = const(0x00)
 
 
 # SX126X_FREQUENCY_STEP_SIZE = 0.9536743164
-SX126X_MAX_PACKET_LENGTH = const(255)
-SX126X_CRYSTAL_FREQ = 32.0
-SX126X_DIV_EXPONENT = const(25)
-SX126X_CMD_NOP = const(0x00)
-SX126X_CMD_SET_SLEEP = const(0x84)
-SX126X_CMD_SET_STANDBY = const(0x80)
+_SX126X_MAX_PACKET_LENGTH = const(255)
+_SX126X_CRYSTAL_FREQ = 32.0
+_SX126X_DIV_EXPONENT = const(25)
+_SX126X_CMD_NOP = const(0x00)
+_SX126X_CMD_SET_SLEEP = const(0x84)
+_SX126X_CMD_SET_STANDBY = const(0x80)
 # SX126X_CMD_SET_FS = const(0xC1)
-SX126X_CMD_SET_TX = const(0x83)
-SX126X_CMD_SET_RX = const(0x82)
-SX126X_CMD_STOP_TIMER_ON_PREAMBLE = const(0x9F)
-SX126X_CMD_SET_RX_DUTY_CYCLE = const(0x94)
-SX126X_CMD_SET_CAD = const(0xC5)
-SX126X_CMD_SET_TX_CONTINUOUS_WAVE = const(0xD1)
+_SX126X_CMD_SET_TX = const(0x83)
+_SX126X_CMD_SET_RX = const(0x82)
+_SX126X_CMD_STOP_TIMER_ON_PREAMBLE = const(0x9F)
+_SX126X_CMD_SET_RX_DUTY_CYCLE = const(0x94)
+_SX126X_CMD_SET_CAD = const(0xC5)
+_SX126X_CMD_SET_TX_CONTINUOUS_WAVE = const(0xD1)
 # SX126X_CMD_SET_TX_INFINITE_PREAMBLE = const(0xD2)
-SX126X_CMD_SET_REGULATOR_MODE = const(0x96)
-SX126X_CMD_CALIBRATE = const(0x89)
-SX126X_CMD_CALIBRATE_IMAGE = const(0x98)
-SX126X_CMD_SET_PA_CONFIG = const(0x95)
-SX126X_CMD_SET_RX_TX_FALLBACK_MODE = const(0x93)
-SX126X_CMD_WRITE_REGISTER = const(0x0D)
-SX126X_CMD_READ_REGISTER = const(0x1D)
-SX126X_CMD_WRITE_BUFFER = const(0x0E)
-SX126X_CMD_READ_BUFFER = const(0x1E)
-SX126X_CMD_SET_DIO_IRQ_PARAMS = const(0x08)
-SX126X_CMD_GET_IRQ_STATUS = const(0x12)
-SX126X_CMD_CLEAR_IRQ_STATUS = const(0x02)
-SX126X_CMD_SET_DIO2_AS_RF_SWITCH_CTRL = const(0x9D)
-SX126X_CMD_SET_DIO3_AS_TCXO_CTRL = const(0x97)
-SX126X_CMD_SET_RF_FREQUENCY = const(0x86)
-SX126X_CMD_SET_PACKET_TYPE = const(0x8A)
-SX126X_CMD_GET_PACKET_TYPE = const(0x11)
-SX126X_CMD_SET_TX_PARAMS = const(0x8E)
-SX126X_CMD_SET_MODULATION_PARAMS = const(0x8B)
-SX126X_CMD_SET_PACKET_PARAMS = const(0x8C)
-SX126X_CMD_SET_CAD_PARAMS = const(0x88)
-SX126X_CMD_SET_BUFFER_BASE_ADDRESS = const(0x8F)
+_SX126X_CMD_SET_REGULATOR_MODE = const(0x96)
+_SX126X_CMD_CALIBRATE = const(0x89)
+_SX126X_CMD_CALIBRATE_IMAGE = const(0x98)
+_SX126X_CMD_SET_PA_CONFIG = const(0x95)
+_SX126X_CMD_SET_RX_TX_FALLBACK_MODE = const(0x93)
+_SX126X_CMD_WRITE_REGISTER = const(0x0D)
+_SX126X_CMD_READ_REGISTER = const(0x1D)
+_SX126X_CMD_WRITE_BUFFER = const(0x0E)
+_SX126X_CMD_READ_BUFFER = const(0x1E)
+_SX126X_CMD_SET_DIO_IRQ_PARAMS = const(0x08)
+_SX126X_CMD_GET_IRQ_STATUS = const(0x12)
+_SX126X_CMD_CLEAR_IRQ_STATUS = const(0x02)
+_SX126X_CMD_SET_DIO2_AS_RF_SWITCH_CTRL = const(0x9D)
+_SX126X_CMD_SET_DIO3_AS_TCXO_CTRL = const(0x97)
+_SX126X_CMD_SET_RF_FREQUENCY = const(0x86)
+_SX126X_CMD_SET_PACKET_TYPE = const(0x8A)
+_SX126X_CMD_GET_PACKET_TYPE = const(0x11)
+_SX126X_CMD_SET_TX_PARAMS = const(0x8E)
+_SX126X_CMD_SET_MODULATION_PARAMS = const(0x8B)
+_SX126X_CMD_SET_PACKET_PARAMS = const(0x8C)
+_SX126X_CMD_SET_CAD_PARAMS = const(0x88)
+_SX126X_CMD_SET_BUFFER_BASE_ADDRESS = const(0x8F)
 # SX126X_CMD_SET_LORA_SYMB_NUM_TIMEOUT = const(0x0A)
-SX126X_CMD_GET_STATUS = const(0xC0)
+_SX126X_CMD_GET_STATUS = const(0xC0)
 # SX126X_CMD_GET_RSSI_INST = const(0x15)
-SX126X_CMD_GET_RX_BUFFER_STATUS = const(0x13)
-SX126X_CMD_GET_PACKET_STATUS = const(0x14)
-SX126X_CMD_GET_DEVICE_ERRORS = const(0x17)
-SX126X_CMD_CLEAR_DEVICE_ERRORS = const(0x07)
+_SX126X_CMD_GET_RX_BUFFER_STATUS = const(0x13)
+_SX126X_CMD_GET_PACKET_STATUS = const(0x14)
+_SX126X_CMD_GET_DEVICE_ERRORS = const(0x17)
+_SX126X_CMD_CLEAR_DEVICE_ERRORS = const(0x07)
 # SX126X_CMD_GET_STATS = const(0x10)
 # SX126X_CMD_RESET_STATS = const(0x00)
 # SX126X_REG_WHITENING_INITIAL_MSB = const(0x06B8)
@@ -75,37 +75,37 @@ SX126X_CMD_CLEAR_DEVICE_ERRORS = const(0x07)
 # SX126X_REG_SYNC_WORD_7 = const(0x06C7)
 # SX126X_REG_NODE_ADDRESS = const(0x06CD)
 # SX126X_REG_BROADCAST_ADDRESS = const(0x06CE)
-SX126X_REG_LORA_SYNC_WORD_MSB = const(0x0740)
+_SX126X_REG_LORA_SYNC_WORD_MSB = const(0x0740)
 # SX126X_REG_LORA_SYNC_WORD_LSB = const(0x0741)
 # SX126X_REG_RANDOM_NUMBER_0 = const(0x0819)
 # SX126X_REG_RANDOM_NUMBER_1 = const(0x081A)
 # SX126X_REG_RANDOM_NUMBER_2 = const(0x081B)
 # SX126X_REG_RANDOM_NUMBER_3 = const(0x081C)
 # SX126X_REG_RX_GAIN = const(0x08AC)
-SX126X_REG_OCP_CONFIGURATION = const(0x08E7)
+_SX126X_REG_OCP_CONFIGURATION = const(0x08E7)
 # SX126X_REG_XTA_TRIM = const(0x0911)
 # SX126X_REG_XTB_TRIM = const(0x0912)
-SX126X_REG_SENSITIVITY_CONFIG = const(0x0889)
-SX126X_REG_TX_CLAMP_CONFIG = const(0x08D8)
-SX126X_REG_RTC_STOP = const(0x0920)
-SX126X_REG_RTC_EVENT = const(0x0944)
-SX126X_REG_IQ_CONFIG = const(0x0736)
+_SX126X_REG_SENSITIVITY_CONFIG = const(0x0889)
+_SX126X_REG_TX_CLAMP_CONFIG = const(0x08D8)
+_SX126X_REG_RTC_STOP = const(0x0920)
+_SX126X_REG_RTC_EVENT = const(0x0944)
+_SX126X_REG_IQ_CONFIG = const(0x0736)
 # SX126X_REG_RX_GAIN_RETENTION_0 = const(0x029F)
 # SX126X_REG_RX_GAIN_RETENTION_1 = const(0x02A0)
 # SX126X_REG_RX_GAIN_RETENTION_2 = const(0x02A1)
-SX126X_SLEEP_START_COLD = const(0b00000000)
-SX126X_SLEEP_START_WARM = const(0b00000100)
-SX126X_SLEEP_RTC_OFF = const(0b00000000)
+_SX126X_SLEEP_START_COLD = const(0b00000000)
+_SX126X_SLEEP_START_WARM = const(0b00000100)
+_SX126X_SLEEP_RTC_OFF = const(0b00000000)
 # SX126X_SLEEP_RTC_ON = const(0b00000001)
-SX126X_STANDBY_RC = const(0x00)
+_SX126X_STANDBY_RC = const(0x00)
 # SX126X_STANDBY_XOSC = const(0x01)
-SX126X_RX_TIMEOUT_NONE = const(0x000000)
-SX126X_RX_TIMEOUT_INF = const(0xFFFFFF)
-SX126X_TX_TIMEOUT_NONE = const(0x000000)
+_SX126X_RX_TIMEOUT_NONE = const(0x000000)
+_SX126X_RX_TIMEOUT_INF = const(0xFFFFFF)
+_SX126X_TX_TIMEOUT_NONE = const(0x000000)
 # SX126X_STOP_ON_PREAMBLE_OFF = const(0x00)
 # SX126X_STOP_ON_PREAMBLE_ON = const(0x01)
-SX126X_REGULATOR_LDO = const(0x00)
-SX126X_REGULATOR_DC_DC = const(0x01)
+_SX126X_REGULATOR_LDO = const(0x00)
+_SX126X_REGULATOR_DC_DC = const(0x01)
 # SX126X_CALIBRATE_IMAGE_OFF = const(0b00000000)
 # SX126X_CALIBRATE_IMAGE_ON = const(0b01000000)
 # SX126X_CALIBRATE_ADC_BULK_P_OFF = const(0b00000000)
@@ -120,52 +120,52 @@ SX126X_REGULATOR_DC_DC = const(0x01)
 # SX126X_CALIBRATE_RC13M_ON = const(0b00000010)
 # SX126X_CALIBRATE_RC64K_OFF = const(0b00000000)
 # SX126X_CALIBRATE_RC64K_ON = const(0b00000001)
-SX126X_CALIBRATE_ALL = const(0b01111111)
-SX126X_CAL_IMG_430_MHZ_1 = const(0x6B)
-SX126X_CAL_IMG_430_MHZ_2 = const(0x6F)
-SX126X_CAL_IMG_470_MHZ_1 = const(0x75)
-SX126X_CAL_IMG_470_MHZ_2 = const(0x81)
-SX126X_CAL_IMG_779_MHZ_1 = const(0xC1)
-SX126X_CAL_IMG_779_MHZ_2 = const(0xC5)
-SX126X_CAL_IMG_863_MHZ_1 = const(0xD7)
-SX126X_CAL_IMG_863_MHZ_2 = const(0xDB)
-SX126X_CAL_IMG_902_MHZ_1 = const(0xE1)
-SX126X_CAL_IMG_902_MHZ_2 = const(0xE9)
-SX126X_PA_CONFIG_HP_MAX = const(0x07)
-SX126X_PA_CONFIG_PA_LUT = const(0x01)
+_SX126X_CALIBRATE_ALL = const(0b01111111)
+_SX126X_CAL_IMG_430_MHZ_1 = const(0x6B)
+_SX126X_CAL_IMG_430_MHZ_2 = const(0x6F)
+_SX126X_CAL_IMG_470_MHZ_1 = const(0x75)
+_SX126X_CAL_IMG_470_MHZ_2 = const(0x81)
+_SX126X_CAL_IMG_779_MHZ_1 = const(0xC1)
+_SX126X_CAL_IMG_779_MHZ_2 = const(0xC5)
+_SX126X_CAL_IMG_863_MHZ_1 = const(0xD7)
+_SX126X_CAL_IMG_863_MHZ_2 = const(0xDB)
+_SX126X_CAL_IMG_902_MHZ_1 = const(0xE1)
+_SX126X_CAL_IMG_902_MHZ_2 = const(0xE9)
+_SX126X_PA_CONFIG_HP_MAX = const(0x07)
+_SX126X_PA_CONFIG_PA_LUT = const(0x01)
 # SX126X_PA_CONFIG_SX1262_8 = const(0x00)
 # SX126X_RX_TX_FALLBACK_MODE_FS = const(0x40)
 # SX126X_RX_TX_FALLBACK_MODE_STDBY_XOSC = const(0x30)
-SX126X_RX_TX_FALLBACK_MODE_STDBY_RC = const(0x20)
-SX126X_IRQ_TIMEOUT = const(0b1000000000)
-SX126X_IRQ_CAD_DETECTED = const(0b0100000000)
-SX126X_IRQ_CAD_DONE = const(0b0010000000)
-SX126X_IRQ_CRC_ERR = const(0b0001000000)
-SX126X_IRQ_HEADER_ERR = const(0b0000100000)
+_SX126X_RX_TX_FALLBACK_MODE_STDBY_RC = const(0x20)
+_SX126X_IRQ_TIMEOUT = const(0b1000000000)
+_SX126X_IRQ_CAD_DETECTED = const(0b0100000000)
+_SX126X_IRQ_CAD_DONE = const(0b0010000000)
+_SX126X_IRQ_CRC_ERR = const(0b0001000000)
+_SX126X_IRQ_HEADER_ERR = const(0b0000100000)
 # SX126X_IRQ_HEADER_VALID = const(0b0000010000)
 # SX126X_IRQ_SYNC_WORD_VALID = const(0b0000001000)
 # SX126X_IRQ_PREAMBLE_DETECTED = const(0b0000000100)
-SX126X_IRQ_RX_DONE = const(0b0000000010)
-SX126X_IRQ_TX_DONE = const(0b0000000001)
-SX126X_IRQ_ALL = const(0b1111111111)
-SX126X_IRQ_NONE = const(0b0000000000)
-SX126X_DIO2_AS_IRQ = const(0x00)
-SX126X_DIO2_AS_RF_SWITCH = const(0x01)
-SX126X_DIO3_OUTPUT_1_6 = const(0x00)
-SX126X_DIO3_OUTPUT_1_7 = const(0x01)
-SX126X_DIO3_OUTPUT_1_8 = const(0x02)
-SX126X_DIO3_OUTPUT_2_2 = const(0x03)
-SX126X_DIO3_OUTPUT_2_4 = const(0x04)
-SX126X_DIO3_OUTPUT_2_7 = const(0x05)
-SX126X_DIO3_OUTPUT_3_0 = const(0x06)
-SX126X_DIO3_OUTPUT_3_3 = const(0x07)
+_SX126X_IRQ_RX_DONE = const(0b0000000010)
+_SX126X_IRQ_TX_DONE = const(0b0000000001)
+_SX126X_IRQ_ALL = const(0b1111111111)
+_SX126X_IRQ_NONE = const(0b0000000000)
+_SX126X_DIO2_AS_IRQ = const(0x00)
+_SX126X_DIO2_AS_RF_SWITCH = const(0x01)
+_SX126X_DIO3_OUTPUT_1_6 = const(0x00)
+_SX126X_DIO3_OUTPUT_1_7 = const(0x01)
+_SX126X_DIO3_OUTPUT_1_8 = const(0x02)
+_SX126X_DIO3_OUTPUT_2_2 = const(0x03)
+_SX126X_DIO3_OUTPUT_2_4 = const(0x04)
+_SX126X_DIO3_OUTPUT_2_7 = const(0x05)
+_SX126X_DIO3_OUTPUT_3_0 = const(0x06)
+_SX126X_DIO3_OUTPUT_3_3 = const(0x07)
 # SX126X_PACKET_TYPE_GFSK = const(0x00)
-SX126X_PACKET_TYPE_LORA = const(0x01)
+_SX126X_PACKET_TYPE_LORA = const(0x01)
 # SX126X_PA_RAMP_10U = const(0x00)
 # SX126X_PA_RAMP_20U = const(0x01)
 # SX126X_PA_RAMP_40U = const(0x02)
 # SX126X_PA_RAMP_80U = const(0x03)
-SX126X_PA_RAMP_200U = const(0x04)
+_SX126X_PA_RAMP_200U = const(0x04)
 # SX126X_PA_RAMP_800U = const(0x05)
 # SX126X_PA_RAMP_1700U = const(0x06)
 # SX126X_PA_RAMP_3400U = const(0x07)
@@ -195,28 +195,28 @@ SX126X_PA_RAMP_200U = const(0x04)
 # SX126X_GFSK_RX_BW_312_0 = const(0x19)
 # SX126X_GFSK_RX_BW_373_6 = const(0x11)
 # SX126X_GFSK_RX_BW_467_0 = const(0x09)
-SX126X_LORA_BW_7_8 = const(0x00)
-SX126X_LORA_BW_10_4 = const(0x08)
-SX126X_LORA_BW_15_6 = const(0x01)
-SX126X_LORA_BW_20_8 = const(0x09)
-SX126X_LORA_BW_31_25 = const(0x02)
-SX126X_LORA_BW_41_7 = const(0x0A)
-SX126X_LORA_BW_62_5 = const(0x03)
-SX126X_LORA_BW_125_0 = const(0x04)
-SX126X_LORA_BW_250_0 = const(0x05)
-SX126X_LORA_BW_500_0 = const(0x06)
-SX126X_LORA_CR_4_5 = const(0x01)
-SX126X_LORA_CR_4_6 = const(0x02)
-SX126X_LORA_CR_4_7 = const(0x03)
-SX126X_LORA_CR_4_8 = const(0x04)
-SX126X_LORA_LOW_DATA_RATE_OPTIMIZE_OFF = const(0x00)
-SX126X_LORA_LOW_DATA_RATE_OPTIMIZE_ON = const(0x01)
+_SX126X_LORA_BW_7_8 = const(0x00)
+_SX126X_LORA_BW_10_4 = const(0x08)
+_SX126X_LORA_BW_15_6 = const(0x01)
+_SX126X_LORA_BW_20_8 = const(0x09)
+_SX126X_LORA_BW_31_25 = const(0x02)
+_SX126X_LORA_BW_41_7 = const(0x0A)
+_SX126X_LORA_BW_62_5 = const(0x03)
+_SX126X_LORA_BW_125_0 = const(0x04)
+_SX126X_LORA_BW_250_0 = const(0x05)
+_SX126X_LORA_BW_500_0 = const(0x06)
+_SX126X_LORA_CR_4_5 = const(0x01)
+_SX126X_LORA_CR_4_6 = const(0x02)
+_SX126X_LORA_CR_4_7 = const(0x03)
+_SX126X_LORA_CR_4_8 = const(0x04)
+_SX126X_LORA_LOW_DATA_RATE_OPTIMIZE_OFF = const(0x00)
+_SX126X_LORA_LOW_DATA_RATE_OPTIMIZE_ON = const(0x01)
 # SX126X_GFSK_PREAMBLE_DETECT_OFF = const(0x00)
 # SX126X_GFSK_PREAMBLE_DETECT_8 = const(0x04)
 # SX126X_GFSK_PREAMBLE_DETECT_16 = const(0x05)
 # SX126X_GFSK_PREAMBLE_DETECT_24 = const(0x06)
 # SX126X_GFSK_PREAMBLE_DETECT_32 = const(0x07)
-SX126X_GFSK_ADDRESS_FILT_OFF = const(0x00)
+_SX126X_GFSK_ADDRESS_FILT_OFF = const(0x00)
 # SX126X_GFSK_ADDRESS_FILT_NODE = const(0x01)
 # SX126X_GFSK_ADDRESS_FILT_NODE_BROADCAST = const(0x02)
 # SX126X_GFSK_PACKET_FIXED = const(0x00)
@@ -228,18 +228,18 @@ SX126X_GFSK_ADDRESS_FILT_OFF = const(0x00)
 # SX126X_GFSK_CRC_2_BYTE_INV = const(0x06)
 # SX126X_GFSK_WHITENING_OFF = const(0x00)
 # SX126X_GFSK_WHITENING_ON = const(0x01)
-SX126X_LORA_HEADER_EXPLICIT = const(0x00)
-SX126X_LORA_HEADER_IMPLICIT = const(0x01)
-SX126X_LORA_CRC_OFF = const(0x00)
-SX126X_LORA_CRC_ON = const(0x01)
-SX126X_LORA_IQ_STANDARD = const(0x00)
-SX126X_LORA_IQ_INVERTED = const(0x01)
+_SX126X_LORA_HEADER_EXPLICIT = const(0x00)
+_SX126X_LORA_HEADER_IMPLICIT = const(0x01)
+_SX126X_LORA_CRC_OFF = const(0x00)
+_SX126X_LORA_CRC_ON = const(0x01)
+_SX126X_LORA_IQ_STANDARD = const(0x00)
+_SX126X_LORA_IQ_INVERTED = const(0x01)
 # SX126X_CAD_ON_1_SYMB = const(0x00)
 # SX126X_CAD_ON_2_SYMB = const(0x01)
 # SX126X_CAD_ON_4_SYMB = const(0x02)
-SX126X_CAD_ON_8_SYMB = const(0x03)
+_SX126X_CAD_ON_8_SYMB = const(0x03)
 # SX126X_CAD_ON_16_SYMB = const(0x04)
-SX126X_CAD_GOTO_STDBY = const(0x00)
+_SX126X_CAD_GOTO_STDBY = const(0x00)
 # SX126X_CAD_GOTO_RX = const(0x01)
 # SX126X_STATUS_MODE_STDBY_RC = const(0b00100000)
 # SX126X_STATUS_MODE_STDBY_XOSC = const(0b00110000)
@@ -247,11 +247,11 @@ SX126X_CAD_GOTO_STDBY = const(0x00)
 # SX126X_STATUS_MODE_RX = const(0b01010000)
 # SX126X_STATUS_MODE_TX = const(0b01100000)
 # SX126X_STATUS_DATA_AVAILABLE = const(0b00000100)
-SX126X_STATUS_CMD_TIMEOUT = const(0b00000110)
-SX126X_STATUS_CMD_INVALID = const(0b00001000)
-SX126X_STATUS_CMD_FAILED = const(0b00001010)
+_SX126X_STATUS_CMD_TIMEOUT = const(0b00000110)
+_SX126X_STATUS_CMD_INVALID = const(0b00001000)
+_SX126X_STATUS_CMD_FAILED = const(0b00001010)
 # SX126X_STATUS_TX_DONE = const(0b00001100)
-SX126X_STATUS_SPI_FAILED = const(0b11111111)
+_SX126X_STATUS_SPI_FAILED = const(0b11111111)
 # SX126X_GFSK_RX_STATUS_PREAMBLE_ERR = const(0b10000000)
 # SX126X_GFSK_RX_STATUS_SYNC_ERR = const(0b01000000)
 # SX126X_GFSK_RX_STATUS_ADRS_ERR = const(0b00100000)
@@ -262,36 +262,36 @@ SX126X_STATUS_SPI_FAILED = const(0b11111111)
 # SX126X_GFSK_RX_STATUS_PACKET_SENT = const(0b00000001)
 # SX126X_PA_RAMP_ERR = const(0b100000000)
 # SX126X_PLL_LOCK_ERR = const(0b001000000)
-SX126X_XOSC_START_ERR = const(0b000100000)
+_SX126X_XOSC_START_ERR = const(0b000100000)
 # SX126X_IMG_CALIB_ERR = const(0b000010000)
 # SX126X_ADC_CALIB_ERR = const(0b000001000)
 # SX126X_PLL_CALIB_ERR = const(0b000000100)
 # SX126X_RC13M_CALIB_ERR = const(0b000000010)
 # SX126X_RC64K_CALIB_ERR = const(0b000000001)
 # SX126X_SYNC_WORD_PUBLIC = const(0x34)
-SX126X_SYNC_WORD_PRIVATE = const(0x12)
+_SX126X_SYNC_WORD_PRIVATE = const(0x12)
 
-ERR_NONE = const(0)
-ERR_UNKNOWN = const(-1)
-ERR_CHIP_NOT_FOUND = const(-2)
+_ERR_NONE = const(0)
+_ERR_UNKNOWN = const(-1)
+_ERR_CHIP_NOT_FOUND = const(-2)
 # ERR_MEMORY_ALLOCATION_FAILED = const(-3)
-ERR_PACKET_TOO_LONG = const(-4)
-ERR_TX_TIMEOUT = const(-5)
-ERR_RX_TIMEOUT = const(-6)
-ERR_CRC_MISMATCH = const(-7)
-ERR_INVALID_BANDWIDTH = const(-8)
-ERR_INVALID_SPREADING_FACTOR = const(-9)
-ERR_INVALID_CODING_RATE = const(-10)
+_ERR_PACKET_TOO_LONG = const(-4)
+_ERR_TX_TIMEOUT = const(-5)
+_ERR_RX_TIMEOUT = const(-6)
+_ERR_CRC_MISMATCH = const(-7)
+_ERR_INVALID_BANDWIDTH = const(-8)
+_ERR_INVALID_SPREADING_FACTOR = const(-9)
+_ERR_INVALID_CODING_RATE = const(-10)
 # ERR_INVALID_BIT_RANGE = const(-11)
-ERR_INVALID_FREQUENCY = const(-12)
-ERR_INVALID_OUTPUT_POWER = const(-13)
+_ERR_INVALID_FREQUENCY = const(-12)
+_ERR_INVALID_OUTPUT_POWER = const(-13)
 # PREAMBLE_DETECTED = const(-14)
-CHANNEL_FREE = const(-15)
+_CHANNEL_FREE = const(-15)
 # ERR_SPI_WRITE_FAILED = const(-16)
-ERR_INVALID_CURRENT_LIMIT = const(-17)
+_ERR_INVALID_CURRENT_LIMIT = const(-17)
 # ERR_INVALID_PREAMBLE_LENGTH = const(-18)
 # ERR_INVALID_GAIN = const(-19)
-ERR_WRONG_MODEM = const(-20)
+_ERR_WRONG_MODEM = const(-20)
 # ERR_INVALID_NUM_SAMPLES = const(-21)
 # ERR_INVALID_RSSI_OFFSET = const(-22)
 # ERR_INVALID_ENCODING = const(-23)
@@ -326,42 +326,42 @@ ERR_WRONG_MODEM = const(-20)
 # ERR_ACK_NOT_RECEIVED = const(-504)
 # ERR_INVALID_NUM_BROAD_ADDRS = const(-601)
 # ERR_INVALID_CRC_CONFIGURATION = const(-701)
-LORA_DETECTED = const(-702)
-ERR_INVALID_TCXO_VOLTAGE = const(-703)
+_LORA_DETECTED = const(-702)
+_ERR_INVALID_TCXO_VOLTAGE = const(-703)
 # ERR_INVALID_MODULATION_PARAMETERS = const(-704)
-ERR_SPI_CMD_TIMEOUT = const(-705)
-ERR_SPI_CMD_INVALID = const(-706)
-ERR_SPI_CMD_FAILED = const(-707)
-ERR_INVALID_SLEEP_PERIOD = const(-708)
-ERR_INVALID_RX_PERIOD = const(-709)
+_ERR_SPI_CMD_TIMEOUT = const(-705)
+_ERR_SPI_CMD_INVALID = const(-706)
+_ERR_SPI_CMD_FAILED = const(-707)
+_ERR_INVALID_SLEEP_PERIOD = const(-708)
+_ERR_INVALID_RX_PERIOD = const(-709)
 # ERR_INVALID_CALLSIGN = const(-801)
 # ERR_INVALID_NUM_REPEATERS = const(-802)
 # ERR_INVALID_REPEATER_CALLSIGN = const(-803)
-ERR_INVALID_PACKET_TYPE = const(-804)
-ERR_INVALID_PACKET_LENGTH = const(-805)
+_ERR_INVALID_PACKET_TYPE = const(-804)
+_ERR_INVALID_PACKET_LENGTH = const(-805)
 
 ERROR = {
-    0: "ERR_NONE",
-    -1: "ERR_UNKNOWN",
-    -2: "ERR_CHIP_NOT_FOUND",
+    0: "_ERR_NONE",
+    -1: "_ERR_UNKNOWN",
+    -2: "_ERR_CHIP_NOT_FOUND",
     # -3: 'ERR_MEMORY_ALLOCATION_FAILED',
-    -4: "ERR_PACKET_TOO_LONG",
-    -5: "ERR_TX_TIMEOUT",
-    -6: "ERR_RX_TIMEOUT",
-    -7: "ERR_CRC_MISMATCH",
-    -8: "ERR_INVALID_BANDWIDTH",
-    -9: "ERR_INVALID_SPREADING_FACTOR",
-    -10: "ERR_INVALID_CODING_RATE",
+    -4: "_ERR_PACKET_TOO_LONG",
+    -5: "_ERR_TX_TIMEOUT",
+    -6: "_ERR_RX_TIMEOUT",
+    -7: "_ERR_CRC_MISMATCH",
+    -8: "_ERR_INVALID_BANDWIDTH",
+    -9: "_ERR_INVALID_SPREADING_FACTOR",
+    -10: "_ERR_INVALID_CODING_RATE",
     # -11: 'ERR_INVALID_BIT_RANGE',
-    -12: "ERR_INVALID_FREQUENCY",
-    -13: "ERR_INVALID_OUTPUT_POWER",
+    -12: "_ERR_INVALID_FREQUENCY",
+    -13: "_ERR_INVALID_OUTPUT_POWER",
     # -14: 'PREAMBLE_DETECTED',
-    -15: "CHANNEL_FREE",
+    -15: "_CHANNEL_FREE",
     # -16: 'ERR_SPI_WRITE_FAILED',
-    -17: "ERR_INVALID_CURRENT_LIMIT",
+    -17: "_ERR_INVALID_CURRENT_LIMIT",
     # -18: 'ERR_INVALID_PREAMBLE_LENGTH',
     # -19: 'ERR_INVALID_GAIN',
-    -20: "ERR_WRONG_MODEM",
+    -20: "_ERR_WRONG_MODEM",
     # -21: 'ERR_INVALID_NUM_SAMPLES',
     # -22: 'ERR_INVALID_RSSI_OFFSET',
     # -23: 'ERR_INVALID_ENCODING',
@@ -396,24 +396,24 @@ ERROR = {
     # -504: 'ERR_ACK_NOT_RECEIVED',
     # -601: 'ERR_INVALID_NUM_BROAD_ADDRS',
     # -701: 'ERR_INVALID_CRC_CONFIGURATION',
-    -702: "LORA_DETECTED",
-    -703: "ERR_INVALID_TCXO_VOLTAGE",
+    -702: "_LORA_DETECTED",
+    -703: "_ERR_INVALID_TCXO_VOLTAGE",
     # -704: 'ERR_INVALID_MODULATION_PARAMETERS',
-    -705: "ERR_SPI_CMD_TIMEOUT",
-    -706: "ERR_SPI_CMD_INVALID",
-    -707: "ERR_SPI_CMD_FAILED",
-    -708: "ERR_INVALID_SLEEP_PERIOD",
-    -709: "ERR_INVALID_RX_PERIOD",
+    -705: "_ERR_SPI_CMD_TIMEOUT",
+    -706: "_ERR_SPI_CMD_INVALID",
+    -707: "_ERR_SPI_CMD_FAILED",
+    -708: "_ERR_INVALID_SLEEP_PERIOD",
+    -709: "_ERR_INVALID_RX_PERIOD",
     # -801: 'ERR_INVALID_CALLSIGN',
     # -802: 'ERR_INVALID_NUM_REPEATERS',
     # -803: 'ERR_INVALID_REPEATER_CALLSIGN',
-    -804: "ERR_INVALID_PACKET_TYPE",
-    -805: "ERR_INVALID_PACKET_LENGTH",
+    -804: "_ERR_INVALID_PACKET_TYPE",
+    -805: "_ERR_INVALID_PACKET_LENGTH",
 }
 
 
 def ASSERT(state):
-    assert state == ERR_NONE, ERROR[state]
+    assert state == _ERR_NONE, ERROR[state]
 
 
 # TODO: Characterize latency and potentially tweak sleep time
@@ -508,18 +508,18 @@ class SX126X:
         self._bwKhz = bw
         self._sf = sf
 
-        self._bw = SX126X_LORA_BW_125_0
-        self._cr = SX126X_LORA_CR_4_7
+        self._bw = _SX126X_LORA_BW_125_0
+        self._cr = _SX126X_LORA_CR_4_7
         self._ldro = 0x00
-        self._crcType = SX126X_LORA_CRC_ON
+        self._crcType = _SX126X_LORA_CRC_ON
         self._preambleLength = preambleLength
         self._tcxoDelay = 0
-        self._headerType = SX126X_LORA_HEADER_EXPLICIT
+        self._headerType = _SX126X_LORA_HEADER_EXPLICIT
         self._implicitLen = 0xFF
 
         self._txIq = txIq
         self._rxIq = rxIq
-        self._invertIQ = SX126X_LORA_IQ_STANDARD
+        self._invertIQ = _SX126X_LORA_IQ_STANDARD
 
         state = self.reset()
         ASSERT(state)
@@ -527,7 +527,7 @@ class SX126X:
         state = self.standby()
         ASSERT(state)
 
-        state = self.config(SX126X_PACKET_TYPE_LORA)
+        state = self.config(_SX126X_PACKET_TYPE_LORA)
         ASSERT(state)
 
         if tcxoVoltage > 0.0:
@@ -571,13 +571,13 @@ class SX126X:
         sleep_us(150)
 
         if not verify:
-            return ERR_NONE
+            return _ERR_NONE
 
         start = ticks_ms()
         while True:
             state = self.standby()
-            if state == ERR_NONE:
-                return ERR_NONE
+            if state == _ERR_NONE:
+                return _ERR_NONE
             if abs(ticks_diff(start, ticks_ms())) >= 3000:
                 return state
             sleep_ms(10)
@@ -592,16 +592,16 @@ class SX126X:
         state = self.standby()
         ASSERT(state)
 
-        if len_ > SX126X_MAX_PACKET_LENGTH:
-            return ERR_PACKET_TOO_LONG
+        if len_ > _SX126X_MAX_PACKET_LENGTH:
+            return _ERR_PACKET_TOO_LONG
 
         timeout = 0
 
         modem = self.getPacketType()
-        if modem == SX126X_PACKET_TYPE_LORA:
+        if modem == _SX126X_PACKET_TYPE_LORA:
             timeout = int((self.getTimeOnAir(len_) * 3) / 2)
         else:
-            return ERR_UNKNOWN
+            return _ERR_UNKNOWN
 
         state = self.startTransmit(data, len_, addr)
         ASSERT(state)
@@ -613,7 +613,7 @@ class SX126X:
             if abs(ticks_diff(start, ticks_us())) > timeout:
                 self.clearIrqStatus()
                 self.standby()
-                return ERR_TX_TIMEOUT
+                return _ERR_TX_TIMEOUT
 
         elapsed = abs(ticks_diff(start, ticks_us()))
 
@@ -625,7 +625,7 @@ class SX126X:
         state = self.standby()
 
         # Switch to receive mode instanly after transmitting
-        state = self.startReceive(SX126X_RX_TIMEOUT_INF)
+        state = self.startReceive(_SX126X_RX_TIMEOUT_INF)
         ASSERT(state)
 
         # Enable RX and disable TX
@@ -647,11 +647,11 @@ class SX126X:
         timeout = 0
 
         modem = self.getPacketType()
-        if modem == SX126X_PACKET_TYPE_LORA:
+        if modem == _SX126X_PACKET_TYPE_LORA:
             symbolLength = float(1 << self._sf) / float(self._bwKhz)
             timeout = int(symbolLength * 100.0 * 1000.0)
         else:
-            return ERR_UNKNOWN
+            return _ERR_UNKNOWN
 
         if timeout_ms == 0:
             pass
@@ -661,40 +661,40 @@ class SX126X:
         if timeout_en:
             timeoutValue = int(float(timeout) / 15.625)  # noqa F841
         else:
-            timeoutValue = SX126X_RX_TIMEOUT_NONE  # noqa F841
+            timeoutValue = _SX126X_RX_TIMEOUT_NONE  # noqa F841
 
         # Check if a packet is currently available in the RX buffer
         if self.RX_available():
-            if self._headerType == SX126X_LORA_HEADER_IMPLICIT and self.getPacketType() == SX126X_PACKET_TYPE_LORA:
+            if self._headerType == _SX126X_LORA_HEADER_IMPLICIT and self.getPacketType() == _SX126X_PACKET_TYPE_LORA:
                 state = self.fixImplicitTimeout()
                 ASSERT(state)
 
             return self.readData(data, len_)
 
         else:
-            return ERR_RX_TIMEOUT
+            return _ERR_RX_TIMEOUT
 
     def transmitDirect(self, frf=0):
-        state = ERR_NONE
+        state = _ERR_NONE
         if frf != 0:
             state = self.setRfFrequency(frf)
         ASSERT(state)
 
-        data = [SX126X_CMD_NOP]
-        return self.SPIwriteCommand([SX126X_CMD_SET_TX_CONTINUOUS_WAVE], 1, data, 1)
+        data = [_SX126X_CMD_NOP]
+        return self.SPIwriteCommand([_SX126X_CMD_SET_TX_CONTINUOUS_WAVE], 1, data, 1)
 
     def receiveDirect(self):
-        return ERR_UNKNOWN
+        return _ERR_UNKNOWN
 
     def scanChannel(self):
-        if self.getPacketType() != SX126X_PACKET_TYPE_LORA:
-            return ERR_WRONG_MODEM
+        if self.getPacketType() != _SX126X_PACKET_TYPE_LORA:
+            return _ERR_WRONG_MODEM
 
         state = self.standby()
         ASSERT(state)
 
         state = self.setDioIrqParams(
-            SX126X_IRQ_CAD_DETECTED | SX126X_IRQ_CAD_DONE, SX126X_IRQ_CAD_DETECTED | SX126X_IRQ_CAD_DONE
+            _SX126X_IRQ_CAD_DETECTED | _SX126X_IRQ_CAD_DONE, _SX126X_IRQ_CAD_DETECTED | _SX126X_IRQ_CAD_DONE
         )
         ASSERT(state)
 
@@ -708,28 +708,28 @@ class SX126X:
             yield_()
 
         cadResult = self.getIrqStatus()
-        if cadResult & SX126X_IRQ_CAD_DETECTED:
+        if cadResult & _SX126X_IRQ_CAD_DETECTED:
             self.clearIrqStatus()
-            return LORA_DETECTED
-        elif cadResult & SX126X_IRQ_CAD_DONE:
+            return _LORA_DETECTED
+        elif cadResult & _SX126X_IRQ_CAD_DONE:
             self.clearIrqStatus()
-            return CHANNEL_FREE
+            return _CHANNEL_FREE
 
-        return ERR_UNKNOWN
+        return _ERR_UNKNOWN
 
     def sleep(self, retainConfig=True):
-        sleepMode = [SX126X_SLEEP_START_WARM | SX126X_SLEEP_RTC_OFF]
+        sleepMode = [_SX126X_SLEEP_START_WARM | _SX126X_SLEEP_RTC_OFF]
         if not retainConfig:
-            sleepMode = [SX126X_SLEEP_START_COLD | SX126X_SLEEP_RTC_OFF]
-        state = self.SPIwriteCommand([SX126X_CMD_SET_SLEEP], 1, sleepMode, 1, False)
+            sleepMode = [_SX126X_SLEEP_START_COLD | _SX126X_SLEEP_RTC_OFF]
+        state = self.SPIwriteCommand([_SX126X_CMD_SET_SLEEP], 1, sleepMode, 1, False)
 
         sleep_us(500)
 
         return state
 
-    def standby(self, mode=SX126X_STANDBY_RC):
+    def standby(self, mode=_SX126X_STANDBY_RC):
         data = [mode]
-        return self.SPIwriteCommand([SX126X_CMD_SET_STANDBY], 1, data, 1)
+        return self.SPIwriteCommand([_SX126X_CMD_SET_STANDBY], 1, data, 1)
 
     def setDio1Action(self, func):
         try:
@@ -743,30 +743,30 @@ class SX126X:
         self.irq.switch_to_input()
 
     def startTransmit(self, data, len_, addr=0):
-        if len_ > SX126X_MAX_PACKET_LENGTH:
-            return ERR_PACKET_TOO_LONG
+        if len_ > _SX126X_MAX_PACKET_LENGTH:
+            return _ERR_PACKET_TOO_LONG
 
-        if self._addrComp != SX126X_GFSK_ADDRESS_FILT_OFF and len_ > (SX126X_MAX_PACKET_LENGTH - 1):
-            return ERR_PACKET_TOO_LONG
+        if self._addrComp != _SX126X_GFSK_ADDRESS_FILT_OFF and len_ > (_SX126X_MAX_PACKET_LENGTH - 1):
+            return _ERR_PACKET_TOO_LONG
 
-        state = ERR_NONE
+        state = _ERR_NONE
         modem = self.getPacketType()
-        if modem == SX126X_PACKET_TYPE_LORA:
+        if modem == _SX126X_PACKET_TYPE_LORA:
             if self._txIq:
-                self._invertIQ = SX126X_LORA_IQ_INVERTED
+                self._invertIQ = _SX126X_LORA_IQ_INVERTED
             else:
-                self._invertIQ = SX126X_LORA_IQ_STANDARD
+                self._invertIQ = _SX126X_LORA_IQ_STANDARD
 
-            if self._headerType == SX126X_LORA_HEADER_IMPLICIT:
+            if self._headerType == _SX126X_LORA_HEADER_IMPLICIT:
                 if len_ != self._implicitLen:
-                    return ERR_INVALID_PACKET_LENGTH
+                    return _ERR_INVALID_PACKET_LENGTH
 
             state = self.setPacketParams(self._preambleLength, self._crcType, len_, self._headerType, self._invertIQ)
         else:
-            return ERR_UNKNOWN
+            return _ERR_UNKNOWN
         ASSERT(state)
 
-        state = self.setDioIrqParams(SX126X_IRQ_TX_DONE | SX126X_IRQ_TIMEOUT, SX126X_IRQ_TX_DONE)
+        state = self.setDioIrqParams(_SX126X_IRQ_TX_DONE | _SX126X_IRQ_TIMEOUT, _SX126X_IRQ_TX_DONE)
         ASSERT(state)
 
         state = self.setBufferBaseAddress()
@@ -781,7 +781,7 @@ class SX126X:
         state = self.fixSensitivity()
         ASSERT(state)
 
-        state = self.setTx(SX126X_TX_TIMEOUT_NONE)
+        state = self.setTx(_SX126X_TX_TIMEOUT_NONE)
         ASSERT(state)
 
         while self.gpio.value:
@@ -789,20 +789,20 @@ class SX126X:
 
         return state
 
-    def startReceive(self, timeout=SX126X_RX_TIMEOUT_INF):
-        state = ERR_NONE
+    def startReceive(self, timeout=_SX126X_RX_TIMEOUT_INF):
+        state = _ERR_NONE
         modem = self.getPacketType()
-        if modem == SX126X_PACKET_TYPE_LORA:
+        if modem == _SX126X_PACKET_TYPE_LORA:
             if self._rxIq:
-                self._invertIQ = SX126X_LORA_IQ_INVERTED
+                self._invertIQ = _SX126X_LORA_IQ_INVERTED
             else:
-                self._invertIQ = SX126X_LORA_IQ_STANDARD
+                self._invertIQ = _SX126X_LORA_IQ_STANDARD
 
             state = self.setPacketParams(
                 self._preambleLength, self._crcType, self._implicitLen, self._headerType, self._invertIQ
             )
         else:
-            return ERR_UNKNOWN
+            return _ERR_UNKNOWN
         ASSERT(state)
 
         state = self.startReceiveCommon()
@@ -820,10 +820,10 @@ class SX126X:
         sleepPeriodRaw = int((sleepPeriod * 8) / 125)
 
         if rxPeriodRaw & 0xFF000000 or rxPeriodRaw == 0:
-            return ERR_INVALID_RX_PERIOD
+            return _ERR_INVALID_RX_PERIOD
 
         if sleepPeriodRaw & 0xFF000000 or sleepPeriodRaw == 0:
-            return ERR_INVALID_SLEEP_PERIOD
+            return _ERR_INVALID_SLEEP_PERIOD
 
         state = self.startReceiveCommon()
         ASSERT(state)
@@ -861,7 +861,7 @@ class SX126X:
 
     def startReceiveCommon(self):
         state = self.setDioIrqParams(
-            SX126X_IRQ_RX_DONE | SX126X_IRQ_TIMEOUT | SX126X_IRQ_CRC_ERR | SX126X_IRQ_HEADER_ERR, SX126X_IRQ_RX_DONE
+            _SX126X_IRQ_RX_DONE | _SX126X_IRQ_TIMEOUT | _SX126X_IRQ_CRC_ERR | _SX126X_IRQ_HEADER_ERR, _SX126X_IRQ_RX_DONE
         )
         ASSERT(state)
 
@@ -871,12 +871,12 @@ class SX126X:
         state = self.clearIrqStatus()
 
         modem = self.getPacketType()
-        if modem == SX126X_PACKET_TYPE_LORA:
+        if modem == _SX126X_PACKET_TYPE_LORA:
             state = self.setPacketParams(
                 self._preambleLength, self._crcType, self._implicitLen, self._headerType, self._invertIQ
             )
         else:
-            return ERR_UNKNOWN
+            return _ERR_UNKNOWN
 
         return state
 
@@ -886,12 +886,12 @@ class SX126X:
         # ASSERT(state)
 
         irq = self.getIrqStatus()
-        crcState = ERR_NONE
-        if irq & SX126X_IRQ_CRC_ERR or irq & SX126X_IRQ_HEADER_ERR:
-            crcState = ERR_CRC_MISMATCH
+        crcState = _ERR_NONE
+        if irq & _SX126X_IRQ_CRC_ERR or irq & _SX126X_IRQ_HEADER_ERR:
+            crcState = _ERR_CRC_MISMATCH
 
         length = len_
-        if len_ == SX126X_MAX_PACKET_LENGTH:
+        if len_ == _SX126X_MAX_PACKET_LENGTH:
             length = self.getPacketLength()
 
         state = self.readBuffer(data, length)
@@ -904,102 +904,102 @@ class SX126X:
         return state
 
     def setBandwidth(self, bw):
-        if self.getPacketType() != SX126X_PACKET_TYPE_LORA:
-            return ERR_WRONG_MODEM
+        if self.getPacketType() != _SX126X_PACKET_TYPE_LORA:
+            return _ERR_WRONG_MODEM
 
         if not ((bw > 0) and (bw < 510)):
-            return ERR_INVALID_BANDWIDTH
+            return _ERR_INVALID_BANDWIDTH
 
         bw_div2 = int(bw / 2 + 0.01)
         switch = {
-            3: SX126X_LORA_BW_7_8,
-            5: SX126X_LORA_BW_10_4,
-            7: SX126X_LORA_BW_15_6,
-            10: SX126X_LORA_BW_20_8,
-            15: SX126X_LORA_BW_31_25,
-            20: SX126X_LORA_BW_41_7,
-            31: SX126X_LORA_BW_62_5,
-            62: SX126X_LORA_BW_125_0,
-            125: SX126X_LORA_BW_250_0,
-            250: SX126X_LORA_BW_500_0,
+            3: _SX126X_LORA_BW_7_8,
+            5: _SX126X_LORA_BW_10_4,
+            7: _SX126X_LORA_BW_15_6,
+            10: _SX126X_LORA_BW_20_8,
+            15: _SX126X_LORA_BW_31_25,
+            20: _SX126X_LORA_BW_41_7,
+            31: _SX126X_LORA_BW_62_5,
+            62: _SX126X_LORA_BW_125_0,
+            125: _SX126X_LORA_BW_250_0,
+            250: _SX126X_LORA_BW_500_0,
         }
         try:
             self._bw = switch[bw_div2]
         except:  # noqa E722
-            return ERR_INVALID_BANDWIDTH
+            return _ERR_INVALID_BANDWIDTH
 
         self._bwKhz = bw
         return self.setModulationParams(self._sf, self._bw, self._cr, self._ldro)
 
     def setSpreadingFactor(self, sf):
-        if self.getPacketType() != SX126X_PACKET_TYPE_LORA:
-            return ERR_WRONG_MODEM
+        if self.getPacketType() != _SX126X_PACKET_TYPE_LORA:
+            return _ERR_WRONG_MODEM
 
         if not ((sf >= 5) and (sf <= 12)):
-            return ERR_INVALID_SPREADING_FACTOR
+            return _ERR_INVALID_SPREADING_FACTOR
 
         self._sf = sf
         return self.setModulationParams(self._sf, self._bw, self._cr, self._ldro)
 
     def setCodingRate(self, cr):
-        if self.getPacketType() != SX126X_PACKET_TYPE_LORA:
-            return ERR_WRONG_MODEM
+        if self.getPacketType() != _SX126X_PACKET_TYPE_LORA:
+            return _ERR_WRONG_MODEM
 
         if not ((cr >= 5) and (cr <= 8)):
-            return ERR_INVALID_CODING_RATE
+            return _ERR_INVALID_CODING_RATE
 
         self._cr = cr - 4
         return self.setModulationParams(self._sf, self._bw, self._cr, self._ldro)
 
     def setSyncWord(self, syncWord, *args):
-        if self.getPacketType() == SX126X_PACKET_TYPE_LORA:
+        if self.getPacketType() == _SX126X_PACKET_TYPE_LORA:
             if len(args) > 0:
                 controlBits = args[0]
             else:
                 controlBits = 0x44
             data = [int((syncWord & 0xF0) | ((controlBits & 0xF0) >> 4)), int(((syncWord & 0x0F) << 4) | (controlBits & 0x0F))]
-            return self.writeRegister(SX126X_REG_LORA_SYNC_WORD_MSB, data, 2)
+            return self.writeRegister(_SX126X_REG_LORA_SYNC_WORD_MSB, data, 2)
         else:
-            return ERR_WRONG_MODEM
+            return _ERR_WRONG_MODEM
 
     def setCurrentLimit(self, currentLimit):
         if not ((currentLimit >= 0) and (currentLimit <= 140)):
-            return ERR_INVALID_CURRENT_LIMIT
+            return _ERR_INVALID_CURRENT_LIMIT
 
         rawLimit = [int(currentLimit / 2.5)]
 
-        return self.writeRegister(SX126X_REG_OCP_CONFIGURATION, rawLimit, 1)
+        return self.writeRegister(_SX126X_REG_OCP_CONFIGURATION, rawLimit, 1)
 
     def getCurrentLimit(self):
         ocp = bytearray(1)
         ocp_mv = memoryview(ocp)
-        self.readRegister(SX126X_REG_OCP_CONFIGURATION, ocp_mv, 1)
+        self.readRegister(_SX126X_REG_OCP_CONFIGURATION, ocp_mv, 1)
 
         return float(ocp[0]) * 2.5
 
     def setPreambleLength(self, preambleLength):
         modem = self.getPacketType()
-        if modem == SX126X_PACKET_TYPE_LORA:
+        if modem == _SX126X_PACKET_TYPE_LORA:
             self._preambleLength = preambleLength
             return self.setPacketParams(
                 self._preambleLength, self._crcType, self._implicitLen, self._headerType, self._invertIQ
             )
-        return ERR_UNKNOWN
+        return _ERR_UNKNOWN
 
     def setCRC(self, len_, initial=0x1D0F, polynomial=0x1021, inverted=True):
         modem = self.getPacketType()
 
-        if modem == SX126X_PACKET_TYPE_LORA:
+        if modem == _SX126X_PACKET_TYPE_LORA:
             if len_:
-                self._crcType = SX126X_LORA_CRC_ON
+                self._crcType = _SX126X_LORA_CRC_ON
             else:
-                self._crcType = SX126X_LORA_CRC_OFF
+                self._crcType = _SX126X_LORA_CRC_OFF
 
             return self.setPacketParams(
                 self._preambleLength, self._crcType, self._implicitLen, self._headerType, self._invertIQ
             )
 
-        return ERR_UNKNOWN
+        return _ERR_UNKNOWN
 
     def getDataRate(self):
         return self._dataRate
@@ -1010,8 +1010,8 @@ class SX126X:
         return -1.0 * rssiPkt / 2.0
 
     def getSNR(self):
-        if self.getPacketType() != SX126X_PACKET_TYPE_LORA:
-            return ERR_WRONG_MODEM
+        if self.getPacketType() != _SX126X_PACKET_TYPE_LORA:
+            return _ERR_WRONG_MODEM
 
         packetStatus = self.getPacketStatus()
         snrPkt = int((packetStatus >> 8) & 0xFF)
@@ -1023,11 +1023,11 @@ class SX126X:
     def getPacketLength(self, update=True):
         rxBufStatus = bytearray(2)
         rxBufStatus_mv = memoryview(rxBufStatus)
-        self.SPIreadCommand([SX126X_CMD_GET_RX_BUFFER_STATUS], 1, rxBufStatus_mv, 2)
+        self.SPIreadCommand([_SX126X_CMD_GET_RX_BUFFER_STATUS], 1, rxBufStatus_mv, 2)
         return rxBufStatus[0]
 
     def getTimeOnAir(self, len_):
-        if self.getPacketType() == SX126X_PACKET_TYPE_LORA:
+        if self.getPacketType() == _SX126X_PACKET_TYPE_LORA:
             symbolLength_us = int(((1000 * 10) << self._sf) / (self._bwKhz * 10))
             sfCoeff1_x4 = 17
             sfCoeff2 = 8
@@ -1038,7 +1038,7 @@ class SX126X:
             if symbolLength_us >= 16000:
                 sfDivisor = 4 * (self._sf - 2)
             bitsPerCrc = 16
-            N_symbol_header = 20 if self._headerType == SX126X_LORA_HEADER_EXPLICIT else 0
+            N_symbol_header = 20 if self._headerType == _SX126X_LORA_HEADER_EXPLICIT else 0
 
             bitCount = int(8 * len_ + self._crcType * bitsPerCrc - 4 * self._sf + sfCoeff2 + N_symbol_header)
             if bitCount < 0:
@@ -1050,31 +1050,31 @@ class SX126X:
 
             return int((symbolLength_us * nSymbol_x4) / 4)
         else:
-            return int((len_ * 8 * self._br) / (SX126X_CRYSTAL_FREQ * 32))
+            return int((len_ * 8 * self._br) / (_SX126X_CRYSTAL_FREQ * 32))
 
     def implicitHeader(self, len_):
-        return self.setHeaderType(SX126X_LORA_HEADER_IMPLICIT, len_)
+        return self.setHeaderType(_SX126X_LORA_HEADER_IMPLICIT, len_)
 
     def explicitHeader(self):
-        return self.setHeaderType(SX126X_LORA_HEADER_EXPLICIT)
+        return self.setHeaderType(_SX126X_LORA_HEADER_EXPLICIT)
 
     def setRegulatorLDO(self):
-        return self.setRegulatorMode(SX126X_REGULATOR_LDO)
+        return self.setRegulatorMode(_SX126X_REGULATOR_LDO)
 
     def setRegulatorDCDC(self):
-        return self.setRegulatorMode(SX126X_REGULATOR_DC_DC)
+        return self.setRegulatorMode(_SX126X_REGULATOR_DC_DC)
 
     def forceLDRO(self, enable):
-        if self.getPacketType() != SX126X_PACKET_TYPE_LORA:
-            return ERR_WRONG_MODEM
+        if self.getPacketType() != _SX126X_PACKET_TYPE_LORA:
+            return _ERR_WRONG_MODEM
 
         self._ldroAuto = False
         self._ldro = enable
         return self.setModulationParams(self._sf, self._bw, self._cr, self._ldro)
 
     def autoLDRO(self):
-        if self.getPacketType() != SX126X_PACKET_TYPE_LORA:
-            return ERR_WRONG_MODEM
+        if self.getPacketType() != _SX126X_PACKET_TYPE_LORA:
+            return _ERR_WRONG_MODEM
 
         self._ldroAuto = True
         return self.setModulationParams(self._sf, self._bw, self._cr, self._ldro)
@@ -1082,7 +1082,7 @@ class SX126X:
     def setTCXO(self, voltage, delay=5000):
         self.standby()
 
-        if self.getDeviceErrors() & SX126X_XOSC_START_ERR:
+        if self.getDeviceErrors() & _SX126X_XOSC_START_ERR:
             self.clearDeviceErrors()
 
         if abs(voltage - 0.0) <= 0.001:
@@ -1090,23 +1090,23 @@ class SX126X:
 
         data = [0, 0, 0, 0]
         if abs(voltage - 1.6) <= 0.001:
-            data[0] = SX126X_DIO3_OUTPUT_1_6
+            data[0] = _SX126X_DIO3_OUTPUT_1_6
         elif abs(voltage - 1.7) <= 0.001:
-            data[0] = SX126X_DIO3_OUTPUT_1_7
+            data[0] = _SX126X_DIO3_OUTPUT_1_7
         elif abs(voltage - 1.8) <= 0.001:
-            data[0] = SX126X_DIO3_OUTPUT_1_8
+            data[0] = _SX126X_DIO3_OUTPUT_1_8
         elif abs(voltage - 2.2) <= 0.001:
-            data[0] = SX126X_DIO3_OUTPUT_2_2
+            data[0] = _SX126X_DIO3_OUTPUT_2_2
         elif abs(voltage - 2.4) <= 0.001:
-            data[0] = SX126X_DIO3_OUTPUT_2_4
+            data[0] = _SX126X_DIO3_OUTPUT_2_4
         elif abs(voltage - 2.7) <= 0.001:
-            data[0] = SX126X_DIO3_OUTPUT_2_7
+            data[0] = _SX126X_DIO3_OUTPUT_2_7
         elif abs(voltage - 3.0) <= 0.001:
-            data[0] = SX126X_DIO3_OUTPUT_3_0
+            data[0] = _SX126X_DIO3_OUTPUT_3_0
         elif abs(voltage - 3.3) <= 0.001:
-            data[0] = SX126X_DIO3_OUTPUT_3_3
+            data[0] = _SX126X_DIO3_OUTPUT_3_3
         else:
-            return ERR_INVALID_TCXO_VOLTAGE
+            return _ERR_INVALID_TCXO_VOLTAGE
 
         delayValue = int(float(delay) / 15.625)
         data[1] = int((delayValue >> 16) & 0xFF)
@@ -1115,53 +1115,53 @@ class SX126X:
 
         self._tcxoDelay = delay
 
-        return self.SPIwriteCommand([SX126X_CMD_SET_DIO3_AS_TCXO_CTRL], 1, data, 4)
+        return self.SPIwriteCommand([_SX126X_CMD_SET_DIO3_AS_TCXO_CTRL], 1, data, 4)
 
     def setDio2AsRfSwitch(self, enable=True):
         data = [0]
         if enable:
-            data = [SX126X_DIO2_AS_RF_SWITCH]
+            data = [_SX126X_DIO2_AS_RF_SWITCH]
         else:
-            data = [SX126X_DIO2_AS_IRQ]
-        return self.SPIwriteCommand([SX126X_CMD_SET_DIO2_AS_RF_SWITCH_CTRL], 1, data, 1)
+            data = [_SX126X_DIO2_AS_IRQ]
+        return self.SPIwriteCommand([_SX126X_CMD_SET_DIO2_AS_RF_SWITCH_CTRL], 1, data, 1)
 
     def setTx(self, timeout=0):
         data = [int((timeout >> 16) & 0xFF), int((timeout >> 8) & 0xFF), int(timeout & 0xFF)]
-        return self.SPIwriteCommand([SX126X_CMD_SET_TX], 1, data, 3)
+        return self.SPIwriteCommand([_SX126X_CMD_SET_TX], 1, data, 3)
 
     def setRx(self, timeout):
         data = [int((timeout >> 16) & 0xFF), int((timeout >> 8) & 0xFF), int(timeout & 0xFF)]
-        return self.SPIwriteCommand([SX126X_CMD_SET_RX], 1, data, 3)
+        return self.SPIwriteCommand([_SX126X_CMD_SET_RX], 1, data, 3)
 
     def setCad(self):
-        return self.SPIwriteCommand([SX126X_CMD_SET_CAD], 1, [], 0)
+        return self.SPIwriteCommand([_SX126X_CMD_SET_CAD], 1, [], 0)
 
-    def setPaConfig(self, paDutyCycle, deviceSel, hpMax=SX126X_PA_CONFIG_HP_MAX, paLut=SX126X_PA_CONFIG_PA_LUT):
+    def setPaConfig(self, paDutyCycle, deviceSel, hpMax=_SX126X_PA_CONFIG_HP_MAX, paLut=_SX126X_PA_CONFIG_PA_LUT):
         data = [paDutyCycle, hpMax, deviceSel, paLut]
-        return self.SPIwriteCommand([SX126X_CMD_SET_PA_CONFIG], 1, data, 4)
+        return self.SPIwriteCommand([_SX126X_CMD_SET_PA_CONFIG], 1, data, 4)
 
     def writeRegister(self, addr, data, numBytes):
-        cmd = [SX126X_CMD_WRITE_REGISTER, int((addr >> 8) & 0xFF), int(addr & 0xFF)]
+        cmd = [_SX126X_CMD_WRITE_REGISTER, int((addr >> 8) & 0xFF), int(addr & 0xFF)]
         state = self.SPIwriteCommand(cmd, 3, data, numBytes)
         return state
 
     def readRegister(self, addr, data, numBytes):
-        cmd = [SX126X_CMD_READ_REGISTER, int((addr >> 8) & 0xFF), int(addr & 0xFF)]
+        cmd = [_SX126X_CMD_READ_REGISTER, int((addr >> 8) & 0xFF), int(addr & 0xFF)]
         return self.SPItransfer(cmd, 3, False, [], data, numBytes, True)
 
     def writeBuffer(self, data, numBytes, offset=0x00):
-        cmd = [SX126X_CMD_WRITE_BUFFER, offset]
+        cmd = [_SX126X_CMD_WRITE_BUFFER, offset]
         state = self.SPIwriteCommand(cmd, 2, data, numBytes)
 
         return state
 
     def readBuffer(self, data, numBytes):
-        cmd = [SX126X_CMD_READ_BUFFER, SX126X_CMD_NOP]
+        cmd = [_SX126X_CMD_READ_BUFFER, _SX126X_CMD_NOP]
         state = self.SPIreadCommand(cmd, 2, data, numBytes)
 
         return state
 
-    def setDioIrqParams(self, irqMask, dio1Mask, dio2Mask=SX126X_IRQ_NONE, dio3Mask=SX126X_IRQ_NONE):
+    def setDioIrqParams(self, irqMask, dio1Mask, dio2Mask=_SX126X_IRQ_NONE, dio3Mask=_SX126X_IRQ_NONE):
         data = [
             int((irqMask >> 8) & 0xFF),
             int(irqMask & 0xFF),
@@ -1172,40 +1172,40 @@ class SX126X:
             int((dio3Mask >> 8) & 0xFF),
             int(dio3Mask & 0xFF),
         ]
-        return self.SPIwriteCommand([SX126X_CMD_SET_DIO_IRQ_PARAMS], 1, data, 8)
+        return self.SPIwriteCommand([_SX126X_CMD_SET_DIO_IRQ_PARAMS], 1, data, 8)
 
     def getIrqStatus(self):
         data = bytearray(2)
         data_mv = memoryview(data)
-        self.SPIreadCommand([SX126X_CMD_GET_IRQ_STATUS], 1, data_mv, 2)
+        self.SPIreadCommand([_SX126X_CMD_GET_IRQ_STATUS], 1, data_mv, 2)
         return int((data[0] << 8) | data[1])
 
-    def clearIrqStatus(self, clearIrqParams=SX126X_IRQ_ALL):
+    def clearIrqStatus(self, clearIrqParams=_SX126X_IRQ_ALL):
         data = [int((clearIrqParams >> 8) & 0xFF), int(clearIrqParams & 0xFF)]
-        return self.SPIwriteCommand([SX126X_CMD_CLEAR_IRQ_STATUS], 1, data, 2)
+        return self.SPIwriteCommand([_SX126X_CMD_CLEAR_IRQ_STATUS], 1, data, 2)
 
     def setRfFrequency(self, frf):
         data = [int((frf >> 24) & 0xFF), int((frf >> 16) & 0xFF), int((frf >> 8) & 0xFF), int(frf & 0xFF)]
-        return self.SPIwriteCommand([SX126X_CMD_SET_RF_FREQUENCY], 1, data, 4)
+        return self.SPIwriteCommand([_SX126X_CMD_SET_RF_FREQUENCY], 1, data, 4)
 
     def calibrateImage(self, data):
-        return self.SPIwriteCommand([SX126X_CMD_CALIBRATE_IMAGE], 1, data, 2)
+        return self.SPIwriteCommand([_SX126X_CMD_CALIBRATE_IMAGE], 1, data, 2)
 
     def getPacketType(self):
         data = bytearray([0xFF])
         data_mv = memoryview(data)
-        self.SPIreadCommand([SX126X_CMD_GET_PACKET_TYPE], 1, data_mv, 1)
+        self.SPIreadCommand([_SX126X_CMD_GET_PACKET_TYPE], 1, data_mv, 1)
         return data[0]
 
-    def setTxParams(self, power, rampTime=SX126X_PA_RAMP_200U):
+    def setTxParams(self, power, rampTime=_SX126X_PA_RAMP_200U):
         if power < 0:
             power += 256
         data = [power, rampTime]
-        return self.SPIwriteCommand([SX126X_CMD_SET_TX_PARAMS], 1, data, 2)
+        return self.SPIwriteCommand([_SX126X_CMD_SET_TX_PARAMS], 1, data, 2)
 
     def setHeaderType(self, headerType, len_=0xFF):
-        if self.getPacketType() != SX126X_PACKET_TYPE_LORA:
-            return ERR_WRONG_MODEM
+        if self.getPacketType() != _SX126X_PACKET_TYPE_LORA:
+            return _ERR_WRONG_MODEM
 
         state = self.setPacketParams(self._preambleLength, self._crcType, len_, headerType, self._invertIQ)
         ASSERT(state)
@@ -1219,105 +1219,105 @@ class SX126X:
         if self._ldroAuto:
             symbolLength = float((1 << self._sf)) / float(self._bwKhz)
             if symbolLength >= 16.0:
-                self._ldro = SX126X_LORA_LOW_DATA_RATE_OPTIMIZE_ON
+                self._ldro = _SX126X_LORA_LOW_DATA_RATE_OPTIMIZE_ON
             else:
-                self._ldro = SX126X_LORA_LOW_DATA_RATE_OPTIMIZE_OFF
+                self._ldro = _SX126X_LORA_LOW_DATA_RATE_OPTIMIZE_OFF
         else:
             self._ldro = ldro
 
         data = [sf, bw, cr, self._ldro]
-        return self.SPIwriteCommand([SX126X_CMD_SET_MODULATION_PARAMS], 1, data, 4)
+        return self.SPIwriteCommand([_SX126X_CMD_SET_MODULATION_PARAMS], 1, data, 4)
 
-    def setPacketParams(self, preambleLength, crcType, payloadLength, headerType, invertIQ=SX126X_LORA_IQ_STANDARD):
+    def setPacketParams(self, preambleLength, crcType, payloadLength, headerType, invertIQ=_SX126X_LORA_IQ_STANDARD):
         state = self.fixInvertedIQ(invertIQ)
         ASSERT(state)
         data = [int((preambleLength >> 8) & 0xFF), int(preambleLength & 0xFF), headerType, payloadLength, crcType, invertIQ]
-        return self.SPIwriteCommand([SX126X_CMD_SET_PACKET_PARAMS], 1, data, 6)
+        return self.SPIwriteCommand([_SX126X_CMD_SET_PACKET_PARAMS], 1, data, 6)
 
     def setBufferBaseAddress(self, txBaseAddress=0x00, rxBaseAddress=0x00):
         data = [txBaseAddress, rxBaseAddress]
-        return self.SPIwriteCommand([SX126X_CMD_SET_BUFFER_BASE_ADDRESS], 1, data, 2)
+        return self.SPIwriteCommand([_SX126X_CMD_SET_BUFFER_BASE_ADDRESS], 1, data, 2)
 
     def setRegulatorMode(self, mode):
         data = [mode]
-        return self.SPIwriteCommand([SX126X_CMD_SET_REGULATOR_MODE], 1, data, 1)
+        return self.SPIwriteCommand([_SX126X_CMD_SET_REGULATOR_MODE], 1, data, 1)
 
     def getStatus(self):
         data = bytearray(1)
         data_mv = memoryview(data)
-        self.SPIreadCommand([SX126X_CMD_GET_STATUS], 1, data_mv, 1)
+        self.SPIreadCommand([_SX126X_CMD_GET_STATUS], 1, data_mv, 1)
         return data[0]
 
     def getPacketStatus(self):
         data = bytearray(3)
         data_mv = memoryview(data)
-        self.SPIreadCommand([SX126X_CMD_GET_PACKET_STATUS], 1, data_mv, 3)
+        self.SPIreadCommand([_SX126X_CMD_GET_PACKET_STATUS], 1, data_mv, 3)
         return (data[0] << 16) | (data[1] << 8) | data[2]
 
     def getDeviceErrors(self):
         data = bytearray(2)
         data_mv = memoryview(data)
-        self.SPIreadCommand([SX126X_CMD_GET_DEVICE_ERRORS], 1, data_mv, 2)
+        self.SPIreadCommand([_SX126X_CMD_GET_DEVICE_ERRORS], 1, data_mv, 2)
         opError = ((data[0] & 0xFF) << 8) & data[1]
         return opError
 
     def clearDeviceErrors(self):
-        data = [SX126X_CMD_NOP, SX126X_CMD_NOP]
-        return self.SPIwriteCommand([SX126X_CMD_CLEAR_DEVICE_ERRORS], 1, data, 2)
+        data = [_SX126X_CMD_NOP, _SX126X_CMD_NOP]
+        return self.SPIwriteCommand([_SX126X_CMD_CLEAR_DEVICE_ERRORS], 1, data, 2)
 
     def setFrequencyRaw(self, freq):
-        frf = int((freq * (1 << SX126X_DIV_EXPONENT)) / SX126X_CRYSTAL_FREQ)
+        frf = int((freq * (1 << _SX126X_DIV_EXPONENT)) / _SX126X_CRYSTAL_FREQ)
         return self.setRfFrequency(frf)
 
     def fixSensitivity(self):
         sensitivityConfig = bytearray(1)
         sensitivityConfig_mv = memoryview(sensitivityConfig)
-        state = self.readRegister(SX126X_REG_SENSITIVITY_CONFIG, sensitivityConfig_mv, 1)
+        state = self.readRegister(_SX126X_REG_SENSITIVITY_CONFIG, sensitivityConfig_mv, 1)
         ASSERT(state)
 
-        if self.getPacketType() == SX126X_PACKET_TYPE_LORA and abs(self._bwKhz - 500.0) <= 0.001:
+        if self.getPacketType() == _SX126X_PACKET_TYPE_LORA and abs(self._bwKhz - 500.0) <= 0.001:
             sensitivityConfig_mv[0] &= 0xFB
         else:
             sensitivityConfig_mv[0] |= 0x04
-        return self.writeRegister(SX126X_REG_SENSITIVITY_CONFIG, sensitivityConfig, 1)
+        return self.writeRegister(_SX126X_REG_SENSITIVITY_CONFIG, sensitivityConfig, 1)
 
     def fixPaClamping(self):
         clampConfig = bytearray(1)
         clampConfig_mv = memoryview(clampConfig)
-        state = self.readRegister(SX126X_REG_TX_CLAMP_CONFIG, clampConfig_mv, 1)
+        state = self.readRegister(_SX126X_REG_TX_CLAMP_CONFIG, clampConfig_mv, 1)
         ASSERT(state)
 
         clampConfig_mv[0] |= 0x1E
-        return self.writeRegister(SX126X_REG_TX_CLAMP_CONFIG, clampConfig, 1)
+        return self.writeRegister(_SX126X_REG_TX_CLAMP_CONFIG, clampConfig, 1)
 
     def fixImplicitTimeout(self):
-        if not (self._headerType == SX126X_LORA_HEADER_IMPLICIT and self.getPacketType() == SX126X_PACKET_TYPE_LORA):
-            return ERR_WRONG_MODEM
+        if not (self._headerType == _SX126X_LORA_HEADER_IMPLICIT and self.getPacketType() == _SX126X_PACKET_TYPE_LORA):
+            return _ERR_WRONG_MODEM
 
         rtcStop = [0x00]
-        state = self.writeRegister(SX126X_REG_RTC_STOP, rtcStop, 1)
+        state = self.writeRegister(_SX126X_REG_RTC_STOP, rtcStop, 1)
         ASSERT(state)
 
         rtcEvent = bytearray(1)
         rtcEvent_mv = memoryview(rtcEvent)
-        state = self.readRegister(SX126X_REG_RTC_EVENT, rtcEvent_mv, 1)
+        state = self.readRegister(_SX126X_REG_RTC_EVENT, rtcEvent_mv, 1)
         ASSERT(state)
 
         rtcEvent_mv[0] |= 0x02
-        return self.writeRegister(SX126X_REG_RTC_EVENT, rtcEvent, 1)
+        return self.writeRegister(_SX126X_REG_RTC_EVENT, rtcEvent, 1)
 
     def fixInvertedIQ(self, iqConfig):
         iqConfigCurrent = bytearray(1)
         iqConfigCurrent_mv = memoryview(iqConfigCurrent)
-        state = self.readRegister(SX126X_REG_IQ_CONFIG, iqConfigCurrent_mv, 1)
+        state = self.readRegister(_SX126X_REG_IQ_CONFIG, iqConfigCurrent_mv, 1)
         ASSERT(state)
 
-        if iqConfig == SX126X_LORA_IQ_STANDARD:
+        if iqConfig == _SX126X_LORA_IQ_STANDARD:
             iqConfigCurrent_mv[0] &= 0xFB
         else:
             iqConfigCurrent_mv[0] |= 0x04
 
-        return self.writeRegister(SX126X_REG_IQ_CONFIG, iqConfigCurrent, 1)
+        return self.writeRegister(_SX126X_REG_IQ_CONFIG, iqConfigCurrent, 1)
 
     def config(self, modem):
         state = self.setBufferBaseAddress()
@@ -1325,29 +1325,29 @@ class SX126X:
 
         data = [0, 0, 0, 0, 0, 0, 0]
         data[0] = modem
-        state = self.SPIwriteCommand([SX126X_CMD_SET_PACKET_TYPE], 1, data, 1)
+        state = self.SPIwriteCommand([_SX126X_CMD_SET_PACKET_TYPE], 1, data, 1)
         ASSERT(state)
 
-        data[0] = SX126X_RX_TX_FALLBACK_MODE_STDBY_RC
-        state = self.SPIwriteCommand([SX126X_CMD_SET_RX_TX_FALLBACK_MODE], 1, data, 1)
+        data[0] = _SX126X_RX_TX_FALLBACK_MODE_STDBY_RC
+        state = self.SPIwriteCommand([_SX126X_CMD_SET_RX_TX_FALLBACK_MODE], 1, data, 1)
         ASSERT(state)
 
-        data[0] = SX126X_CAD_ON_8_SYMB
+        data[0] = _SX126X_CAD_ON_8_SYMB
         data[1] = self._sf + 13
         data[2] = 10
-        data[3] = SX126X_CAD_GOTO_STDBY
+        data[3] = _SX126X_CAD_GOTO_STDBY
         data[4] = 0x00
         data[5] = 0x00
         data[6] = 0x00
-        state = self.SPIwriteCommand([SX126X_CMD_SET_CAD_PARAMS], 1, data, 7)
+        state = self.SPIwriteCommand([_SX126X_CMD_SET_CAD_PARAMS], 1, data, 7)
         ASSERT(state)
 
         state = self.clearIrqStatus()
-        state |= self.setDioIrqParams(SX126X_IRQ_NONE, SX126X_IRQ_NONE)
+        state |= self.setDioIrqParams(_SX126X_IRQ_NONE, _SX126X_IRQ_NONE)
         ASSERT(state)
 
-        data[0] = SX126X_CALIBRATE_ALL
-        state = self.SPIwriteCommand([SX126X_CMD_CALIBRATE], 1, data, 1)
+        data[0] = _SX126X_CALIBRATE_ALL
+        state = self.SPIwriteCommand([_SX126X_CMD_CALIBRATE], 1, data, 1)
         ASSERT(state)
 
         sleep_ms(5)
@@ -1355,7 +1355,7 @@ class SX126X:
         while self.gpio.value:
             yield_()
 
-        return ERR_NONE
+        return _ERR_NONE
 
     def SPIwriteCommand(self, cmd, cmdLen, data, numBytes, waitForBusy=True):
         return self.SPItransfer(cmd, cmdLen, True, data, [], numBytes, waitForBusy)
@@ -1374,7 +1374,7 @@ class SX126X:
             if abs(ticks_diff(start, ticks_ms())) >= timeout:
                 self.cs.value = True
                 self.spi.unlock()
-                return ERR_SPI_CMD_TIMEOUT
+                return _ERR_SPI_CMD_TIMEOUT
 
         for i in range(cmdLen):
             self.spi.write(bytes([cmd[i]]))
@@ -1388,26 +1388,26 @@ class SX126X:
                 self.spi.write_readinto(bytes([dataOut[i]]), in_)
 
                 if (
-                    (in_[0] & 0b00001110) == SX126X_STATUS_CMD_TIMEOUT
-                    or (in_[0] & 0b00001110) == SX126X_STATUS_CMD_INVALID
-                    or (in_[0] & 0b00001110) == SX126X_STATUS_CMD_FAILED
+                    (in_[0] & 0b00001110) == _SX126X_STATUS_CMD_TIMEOUT
+                    or (in_[0] & 0b00001110) == _SX126X_STATUS_CMD_INVALID
+                    or (in_[0] & 0b00001110) == _SX126X_STATUS_CMD_FAILED
                 ):
                     status = in_[0] & 0b00001110
                     break
                 elif (in_[0] == 0x00) or (in_[0] == 0xFF):
-                    status = SX126X_STATUS_SPI_FAILED
+                    status = _SX126X_STATUS_SPI_FAILED
                     break
         else:
             self.spi.readinto(in_)
 
             if (
-                (in_[0] & 0b00001110) == SX126X_STATUS_CMD_TIMEOUT
-                or (in_[0] & 0b00001110) == SX126X_STATUS_CMD_INVALID
-                or (in_[0] & 0b00001110) == SX126X_STATUS_CMD_FAILED
+                (in_[0] & 0b00001110) == _SX126X_STATUS_CMD_TIMEOUT
+                or (in_[0] & 0b00001110) == _SX126X_STATUS_CMD_INVALID
+                or (in_[0] & 0b00001110) == _SX126X_STATUS_CMD_FAILED
             ):
                 status = in_[0] & 0b00001110
             elif (in_[0] == 0x00) or (in_[0] == 0xFF):
-                status = SX126X_STATUS_SPI_FAILED
+                status = _SX126X_STATUS_SPI_FAILED
             else:
                 for i in range(numBytes):
                     self.spi.readinto(in_)
@@ -1423,24 +1423,24 @@ class SX126X:
             while self.gpio.value:
                 yield_()
                 if abs(ticks_diff(start, ticks_ms())) >= timeout:
-                    status = SX126X_STATUS_CMD_TIMEOUT
+                    status = _SX126X_STATUS_CMD_TIMEOUT
                     break
 
         switch = {
-            SX126X_STATUS_CMD_TIMEOUT: ERR_SPI_CMD_TIMEOUT,
-            SX126X_STATUS_CMD_INVALID: ERR_SPI_CMD_INVALID,
-            SX126X_STATUS_CMD_FAILED: ERR_SPI_CMD_FAILED,
-            SX126X_STATUS_SPI_FAILED: ERR_CHIP_NOT_FOUND,
+            _SX126X_STATUS_CMD_TIMEOUT: _ERR_SPI_CMD_TIMEOUT,
+            _SX126X_STATUS_CMD_INVALID: _ERR_SPI_CMD_INVALID,
+            _SX126X_STATUS_CMD_FAILED: _ERR_SPI_CMD_FAILED,
+            _SX126X_STATUS_SPI_FAILED: _ERR_CHIP_NOT_FOUND,
         }
         try:
             return switch[status]
         except:  # noqa E722
-            return ERR_NONE
+            return _ERR_NONE
 
 
 class SX1262(SX126X):
-    TX_DONE = SX126X_IRQ_TX_DONE
-    RX_DONE = SX126X_IRQ_RX_DONE
+    TX_DONE = _SX126X_IRQ_TX_DONE
+    RX_DONE = _SX126X_IRQ_RX_DONE
     STATUS = ERROR
 
     def __init__(self, spi_bus, cs, irq, rst, gpio, tx_en, rx_en):
@@ -1453,7 +1453,7 @@ class SX1262(SX126X):
         bw=125.0,
         sf=9,
         cr=7,
-        syncWord=SX126X_SYNC_WORD_PRIVATE,
+        syncWord=_SX126X_SYNC_WORD_PRIVATE,
         power=14,
         currentLimit=60.0,
         preambleLength=8,
@@ -1493,27 +1493,27 @@ class SX1262(SX126X):
 
     def setFrequency(self, freq, calibrate=True):
         if freq < 150.0 or freq > 960.0:
-            return ERR_INVALID_FREQUENCY
+            return _ERR_INVALID_FREQUENCY
 
-        state = ERR_NONE
+        state = _ERR_NONE
 
         if calibrate:
             data = bytearray(2)
             if freq > 900.0:
-                data[0] = SX126X_CAL_IMG_902_MHZ_1
-                data[1] = SX126X_CAL_IMG_902_MHZ_2
+                data[0] = _SX126X_CAL_IMG_902_MHZ_1
+                data[1] = _SX126X_CAL_IMG_902_MHZ_2
             elif freq > 850.0:
-                data[0] = SX126X_CAL_IMG_863_MHZ_1
-                data[1] = SX126X_CAL_IMG_863_MHZ_2
+                data[0] = _SX126X_CAL_IMG_863_MHZ_1
+                data[1] = _SX126X_CAL_IMG_863_MHZ_2
             elif freq > 770.0:
-                data[0] = SX126X_CAL_IMG_779_MHZ_1
-                data[1] = SX126X_CAL_IMG_779_MHZ_2
+                data[0] = _SX126X_CAL_IMG_779_MHZ_1
+                data[1] = _SX126X_CAL_IMG_779_MHZ_2
             elif freq > 460.0:
-                data[0] = SX126X_CAL_IMG_470_MHZ_1
-                data[1] = SX126X_CAL_IMG_470_MHZ_2
+                data[0] = _SX126X_CAL_IMG_470_MHZ_1
+                data[1] = _SX126X_CAL_IMG_470_MHZ_2
             else:
-                data[0] = SX126X_CAL_IMG_430_MHZ_1
-                data[1] = SX126X_CAL_IMG_430_MHZ_2
+                data[0] = _SX126X_CAL_IMG_430_MHZ_1
+                data[1] = _SX126X_CAL_IMG_430_MHZ_2
             state = super().calibrateImage(data)
             ASSERT(state)
 
@@ -1521,11 +1521,11 @@ class SX1262(SX126X):
 
     def setOutputPower(self, power):
         if not ((power >= -9) and (power <= 22)):
-            return ERR_INVALID_OUTPUT_POWER
+            return _ERR_INVALID_OUTPUT_POWER
 
         ocp = bytearray(1)
         ocp_mv = memoryview(ocp)
-        state = super().readRegister(SX126X_REG_OCP_CONFIGURATION, ocp_mv, 1)
+        state = super().readRegister(_SX126X_REG_OCP_CONFIGURATION, ocp_mv, 1)
         ASSERT(state)
 
         state = super().setPaConfig(0x04, _SX126X_PA_CONFIG_SX1262)
@@ -1534,7 +1534,7 @@ class SX1262(SX126X):
         state = super().setTxParams(power)
         ASSERT(state)
 
-        return super().writeRegister(SX126X_REG_OCP_CONFIGURATION, ocp, 1)
+        return super().writeRegister(_SX126X_REG_OCP_CONFIGURATION, ocp, 1)
 
     def setTxIq(self, txIq):
         self._txIq = txIq
@@ -1590,12 +1590,12 @@ class SX1262(SX126X):
         return super().getIrqStatus()
 
     def _receive(self, len_=0, timeout_en=False, timeout_ms=0):
-        state = ERR_NONE
+        state = _ERR_NONE
 
         length = len_
 
         if len_ == 0:
-            length = SX126X_MAX_PACKET_LENGTH
+            length = _SX126X_MAX_PACKET_LENGTH
 
         data = bytearray(length)
         data_mv = memoryview(data)
@@ -1606,7 +1606,7 @@ class SX1262(SX126X):
             state = list(ERROR.keys())[list(ERROR.values()).index(str(e))]
 
         # TODO: CRC checks
-        if state == ERR_NONE or state == ERR_CRC_MISMATCH:
+        if state == _ERR_NONE or state == _ERR_CRC_MISMATCH:
             if len_ == 0:
                 length = super().getPacketLength(False)
                 data = data[:length]
@@ -1626,13 +1626,13 @@ class SX1262(SX126X):
         if isinstance(data, bytes) or isinstance(data, bytearray):
             pass
         else:
-            return 0, ERR_INVALID_PACKET_TYPE
+            return 0, _ERR_INVALID_PACKET_TYPE
 
         state = super().transmit(data, len(data))
         return len(data), state
 
     def _readData(self, len_=0):
-        state = ERR_NONE
+        state = _ERR_NONE
 
         length = super().getPacketLength()
 
@@ -1649,7 +1649,7 @@ class SX1262(SX126X):
 
         ASSERT(super().startReceive())
 
-        if state == ERR_NONE or state == ERR_CRC_MISMATCH:
+        if state == _ERR_NONE or state == _ERR_CRC_MISMATCH:
             return bytes(data), state
 
         else:
@@ -1659,7 +1659,7 @@ class SX1262(SX126X):
         if isinstance(data, bytes) or isinstance(data, bytearray):
             pass
         else:
-            return 0, ERR_INVALID_PACKET_TYPE
+            return 0, _ERR_INVALID_PACKET_TYPE
 
         state = super().startTransmit(data, len(data))
         return len(data), state
@@ -1669,6 +1669,6 @@ class SX1262(SX126X):
 
     def _onIRQ(self, callback):
         events = self._events()
-        if events & SX126X_IRQ_TX_DONE:
+        if events & _SX126X_IRQ_TX_DONE:
             super().startReceive()
         self._callbackFunction(events)
