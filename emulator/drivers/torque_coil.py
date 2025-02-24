@@ -1,6 +1,3 @@
-import numpy as np
-
-
 class CoilDriver:
     def __init__(self, id, simulator=None) -> None:
         self.__simulator = simulator
@@ -35,19 +32,6 @@ class TorqueCoilArray:
     def exist(self, face: str):
         return face in self.torque_coils
 
-    def apply_control(self, ctrl):
+    def apply_control(self, dir, ctrl):
         if self.__simulator is not None:
-            moment = np.zeros(3)
-            # volts to moment
-
-            # In X:
-            moment[0] += self.__simulator.set_coil_throttle("XP", ctrl["XP"])
-            moment[0] += self.__simulator.set_coil_throttle("XM", ctrl["XM"])
-            # In Y:
-            moment[1] += self.__simulator.set_coil_throttle("YP", ctrl["YP"])
-            moment[1] += self.__simulator.set_coil_throttle("YM", ctrl["YM"])
-            # In Z:
-            moment[2] += self.__simulator.set_coil_throttle("ZP", ctrl["ZP"])
-            moment[2] += self.__simulator.set_coil_throttle("ZM", ctrl["ZM"])
-
-            self.__simulator.set_torque_to_spacecraft(moment)
+            self.__simulator.set_control_input(dir, ctrl)
