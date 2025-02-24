@@ -344,7 +344,6 @@ class OPT4003:
 
         return lux if just_lux else lux, counter, crc
 
-    @property
     def lux(self) -> float:
         """
         Reads out JUST the lux value from the result register. The lux is calculated from the
@@ -357,7 +356,7 @@ class OPT4003:
 
         lux = (((RESULT_MSB << 8) + RESULT_LSB) << EXPONENT) * 535E-6
         """
-        return self.result_of_addr(True)
+        return self.result_of_addr(False)
 
     @property
     def result(self) -> tuple:

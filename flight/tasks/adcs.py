@@ -5,6 +5,7 @@ import time
 from apps.adcs.acs import spin_stabilizing_controller, sun_pointed_controller, zero_all_coils
 from apps.adcs.ad import AttitudeDetermination
 from apps.adcs.consts import Modes, StatusConst
+from apps.adcs.sun import read_light_sensors
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX
 from core import DataHandler as DH
 from core import TemplateTask
@@ -292,3 +293,5 @@ class Task(TemplateTask):
 
             # Log Gyro Angular Velocities
             self.log_info(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z + 1]}")
+
+            self.log_info(f"Sun Sensor Values : {read_light_sensors()}")

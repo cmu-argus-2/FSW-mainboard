@@ -43,6 +43,7 @@ class SUN_VECTOR_STATUS:
 
 def _read_light_sensor(face):
     if SATELLITE.LIGHT_SENSORS[face] is not None:
+        print("HELLO", SATELLITE.LIGHT_SENSORS[face].lux())
         return SATELLITE.LIGHT_SENSORS[face].lux()
     else:
         return ERROR_LUX
@@ -56,11 +57,12 @@ def read_light_sensors():
         lux_readings: list of lux readings on each face. A "ERROR_LUX" reading comes from a dysfunctional sensor.
     """
 
-    faces = ["XP", "XM", "YP", "YM", "ZM"]
+    faces = ["XP", "XM", "YP", "YM"]
     lux_readings = []
 
     for face in faces:
         try:
+            print(_read_light_sensor(face))
             lux_readings.append(_read_light_sensor(face))
         except Exception as e:
             logger.warning(f"Error reading {face}: {e}")
