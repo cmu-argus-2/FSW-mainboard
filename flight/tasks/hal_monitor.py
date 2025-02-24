@@ -14,11 +14,13 @@ class Task(TemplateTask):
         self.name = "HAL_MONITOR"
 
     async def main_task(self):
-        # TODO: toggle HW watchdog pin (do it first, irrespective of state logic)
 
         if SM.current_state == STATES.STARTUP:
-            # TODO: Enable HW watchdog (note that the pin must be toggled beforehand)
-            
-            pass
+            for name, device in SATELLITE.ERRORS.items():
+                if device[0] == 1:
+                    SM.set_state(STATES.HAL_ERROR)
+                    SM.set_error(name, device[1])
+                else:
+                    pass
         else:
             pass

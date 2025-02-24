@@ -140,6 +140,16 @@ class CubeSat:
         """append_device: Append a device to the device list"""
         self.__device_list.append(device)
 
+    @property
+    def ERRORS(self):
+        """ERRORS: Returns the errors object
+        :return: object or None
+        """
+        error_list = []
+        for name, device in self.__device_list.items():
+            error_list.append(device[DEVICE_ERROR])
+        return error_list
+
     ######################### STATE FLAGS ########################
     @property
     def STATE_FLAGS(self):

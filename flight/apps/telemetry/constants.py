@@ -136,5 +136,9 @@ class THERMAL_IDX:
     BATTERY_PACK_TEMPERATURE = const(3)
 
 
+class HAL_IDX:
+    pass
+
+
 class PAYLOAD_IDX:
     pass
