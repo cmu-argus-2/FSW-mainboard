@@ -48,8 +48,7 @@ class CubeSat:
             "BOARD_PWR": [
                 None,
                 0,
-                self.__power_monitor_boot,
-                "BOARD",
+                self.__power_monitor_boot
             ],
             # "XP_PWR": [self.__power_monitors["XP"],
             #     self.__power_monitor_boot,

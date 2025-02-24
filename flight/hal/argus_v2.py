@@ -273,33 +273,6 @@ class ArgusV2(CubeSat):
         self.__debug = debug
 
         super().__init__()
-        # self.__boot_list = {
-        #     "SDCARD": ["__sd_card", self.__sd_card_boot],
-        #     # "VFS": [self.__vfs, self.__vfs_boot],
-        #     "IMU": ["__imu", self.__imu_boot],
-        #     "RTC": ["__rtc", self.__rtc_boot],
-        #     # self.__gps: self.__gps_boot,
-        #     # self.__radio: self.__radio_boot,
-        #     "BOARD_PWR": [
-        #         "__power_monitors",
-        #         self.__power_monitor_boot,
-        #         ["BOARD", ArgusV2Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.BOARD_POWER_MONITOR_I2C],
-        #     ],
-        #     # "XP_PWR": [self.__power_monitors["XP"],
-        #     #     self.__power_monitor_boot,
-        #     #     ["XP", ArgusV2Components.XP_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.XP_POWER_MONITOR_I2C],
-        #     # ],
-        #     # "XM_PWR": [self.__power_monitors["XM"],
-        #     #     self.__power_monitor_boot,
-        #     #     ["XM", ArgusV2Components.XM_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.XM_POWER_MONITOR_I2C],
-        #     # ],
-        #     # self.__power_monitor["XP"]: self.__power_monitor_boot("XP"),
-        #     # self.__power_monitor["XM"]: self.__power_monitor_boot("XM"),
-        #     # self.__power_monitor["YP"]: self.__power_monitor_boot("YP"),
-        #     # self.__power_monitor["YM"]: self.__power_monitor_boot("YM"),
-        #     # self.__power_monitor["ZP"]: self.__power_monitor_boot("ZP"),
-        #     # self.__power_monitor["ZM"]: self.__power_monitor_boot("ZM"),
-        # }
 
     ######################## BOOT SEQUENCE ########################
 
@@ -309,7 +282,6 @@ class ArgusV2(CubeSat):
 
         for device, boot_func in self.__device_list.items():
             func = boot_func[2]
-            args = boot_func[3] if len(boot_func) > 3 else []
             if args:
                 self.__device_list[device][:2] = func(args)
             else:
@@ -489,15 +461,15 @@ class ArgusV2(CubeSat):
         :return: List of error codes for each sensor in the order of directions
         """
         directions = {
-            # "XP": [ArgusV2Components.LIGHT_SENSOR_XP_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_XP_I2C],
-            # "XM": [ArgusV2Components.LIGHT_SENSOR_XM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_XM_I2C],
-            # "YP": [ArgusV2Components.LIGHT_SENSOR_YP_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_YP_I2C],
+            "XP": [ArgusV2Components.LIGHT_SENSOR_XP_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_XP_I2C],
+            "XM": [ArgusV2Components.LIGHT_SENSOR_XM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_XM_I2C],
+            "YP": [ArgusV2Components.LIGHT_SENSOR_YP_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_YP_I2C],
             "YM": [ArgusV2Components.LIGHT_SENSOR_YM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_YM_I2C],
-            # "ZM": [ArgusV2Components.LIGHT_SENSOR_ZM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_ZM_I2C],
-            # "ZP1": [ArgusV2Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
-            # "ZP2": [ArgusV2Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
-            # "ZP3": [ArgusV2Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
-            # "ZP4": [ArgusV2Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
+            "ZM": [ArgusV2Components.LIGHT_SENSOR_ZM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_ZM_I2C],
+            "ZP1": [ArgusV2Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
+            "ZP2": [ArgusV2Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
+            "ZP3": [ArgusV2Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
+            "ZP4": [ArgusV2Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
         }
 
         from hal.drivers.opt4001 import OPT4001
@@ -687,12 +659,11 @@ class ArgusV2(CubeSat):
         """
         if device_name not in self.__device_list:
             return Errors.PERIPHERAL_NOT_FOUND
-        device = self.__boot_list[device_name][0]
-        func = self.__boot_list[device_name][1]
-        args = self.__boot_list[device_name][2] if len(self.__boot_list[device_name]) > 2 else []
-        if device in self.__device_list:
-            self.__device_list.remove(device)
+        # device = self.__boot_list[device_name][0]
+        func = self.__boot_list[device_name][2]
+        args = self.__boot_list[device_name][3] if len(self.__boot_list[device_name]) > 3 else []
+        self.__boot_list[device_name][0] = None
         if args:
-            func(device, args)
+            self.__device_list[device_name][:2] = func(args)
         else:
-            func(device)
+            self.__device_list[device_name][:2] = func()
