@@ -1,6 +1,6 @@
+import supervisor
 from hal.cubesat import CubeSat
 from micropython import const
-import supervisor
 
 supervisor.runtime.autoreload = False
 

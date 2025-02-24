@@ -11,10 +11,11 @@ Implementation Notes
 
 """
 
+import time
+
 from adafruit_bus_device.i2c_device import I2CDevice
 from hal.drivers.middleware.errors import Errors
 from micropython import const
-import time
 
 try:
     from typing import Any, Dict, List, Optional, Tuple

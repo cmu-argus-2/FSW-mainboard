@@ -1,5 +1,6 @@
-import circuitpython_csv as csv
 import time
+
+import circuitpython_csv as csv
 import supervisor
 from hal.configuration import SATELLITE
 
@@ -17,7 +18,7 @@ start_time = int(time.monotonic())
 strengths = [1.0, 0.0, 0.75, 0.0, 0.5, 0.0, 0.25, 0.0]
 idx = 0
 
-while (idx < len(strengths)):
+while idx < len(strengths):
 
     curr_time = int(time.monotonic())
 
@@ -27,7 +28,7 @@ while (idx < len(strengths)):
 
     applied_strength = SATELLITE.__torque_drivers["YP"].throttle()
 
-    if (curr_time-start_time) > 20:
+    if (curr_time - start_time) > 20:
         idx += 1
         start_time = curr_time
 

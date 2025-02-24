@@ -1,5 +1,6 @@
 from micropython import const
 
+
 class Errors:
 
     ####SD Card/VFS Errors####
@@ -21,6 +22,3 @@ class Errors:
 
     ####Power Monitor Errors####
     BOARD_POWER_MONITOR_NOT_INITIALIZED = const(0x160)
-
-    
-

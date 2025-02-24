@@ -44,12 +44,8 @@ class CubeSat:
             "IMU": [None, 0, self.__imu_boot],
             "RTC": [None, 0, self.__rtc_boot],
             # "GPS": [None, 0, self.__gps_boot],
-            "RADIO": [None, 0, self.__radio_boot],
-            "BOARD_PWR": [
-                None,
-                0,
-                self.__power_monitor_boot
-            ],
+            # "RADIO": [None, 0, self.__radio_boot],
+            "BOARD_PWR": [None, 0, self.__power_monitor_boot],
             # "XP_PWR": [self.__power_monitors["XP"],
             #     self.__power_monitor_boot,
             #     ["XP", ArgusV2Components.XP_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.XP_POWER_MONITOR_I2C],

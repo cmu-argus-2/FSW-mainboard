@@ -25,7 +25,7 @@ def copy_folder(source_folder, destination_folder, show_identical_files=True):
             if not os.path.exists(destination_dir_path):
                 os.makedirs(destination_dir_path)
                 print(f"Created directory {destination_dir_path}")
-        
+
         for file in files:
             source_path = os.path.join(root, file)
             relative_path = os.path.relpath(source_path, source_folder)
