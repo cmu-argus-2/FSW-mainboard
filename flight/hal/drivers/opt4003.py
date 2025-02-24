@@ -178,7 +178,7 @@ class OPT4003:
         quick_wakeup: bool = False,
         lux_range: int = 0b1100,
         conversion_time: int = 0b1000,
-        operating_mode: int = 0b00,
+        operating_mode: int = 0b11,
         latch: bool = True,
         int_pol: bool = False,
         fault_count: int = 0b00,
@@ -312,6 +312,7 @@ class OPT4003:
         start_time = time.monotonic() + 1.1
         while time.monotonic() < start_time:
             if self.conversion_ready_flag:
+            # return -1
                 break
             time.sleep(0.001)
 
@@ -335,14 +336,14 @@ class OPT4003:
         X[2]=XOR(C[3],R[3],R[7],R[11],R[15],R[19],E[3])
         X[3]=XOR(R[3],R[11],R[19])
         """
-        result_lsb, counter, crc = self.get_lsb_counter_crc(RESULT_LSB_CH0)
+        result_lsb, _, _ = self.get_lsb_counter_crc(RESULT_LSB_CH0)
 
         # equations from pages 17 and 18 of datasheet
         mantissa = (result_msb << 8) + result_lsb
         adc_codes = mantissa << exponent
         lux = adc_codes * 0.000535
 
-        return lux if just_lux else lux, counter, crc
+        return lux 
 
     def lux(self) -> float:
         """

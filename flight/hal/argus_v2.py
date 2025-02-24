@@ -262,7 +262,7 @@ class ArgusV2Components:
     # VFS
     VFS_MOUNT_POINT = "/sd"
 
-    LIGHT_SENSOR_CONVERSION_TIME = 0b0000
+    LIGHT_SENSOR_CONVERSION_TIME = 0b0110
 
 
 class ArgusV2(CubeSat):
