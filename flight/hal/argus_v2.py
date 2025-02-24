@@ -86,35 +86,35 @@ class ArgusV2Components:
 
     # JETSON POWER MONITOR
     JETSON_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
-    JETSON_POWER_MONITOR_I2C_ADDRESS = const(0x45)  # 8A
+    JETSON_POWER_MONITOR_I2C_ADDRESS = const(0x45)
 
-    # XM TORQUE COILS
+    # X TORQUE COILS
     TORQUE_COILS_XM_I2C = ArgusV2Interfaces.I2C0
-    TORQUE_XM_I2C_ADDRESS = const(0x63)
+    TORQUE_XM_I2C_ADDRESS = const(0x30)
 
-    # XM COIL DRIVER POWER MONITOR
-    TORQUE_XM_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
-    TORQUE_XM_POWER_MONITOR_I2C_ADDRESS = const(0x40)  # 80
+    # # X COIL DRIVER POWER MONITOR
+    # TORQUE_XM_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
+    # TORQUE_XM_POWER_MONITOR_I2C_ADDRESS = const(0x40)  # 80
 
-    # XM SOLAR CHARGING POWER MONITOR
+    # X SOLAR CHARGING POWER MONITOR
     SOLAR_CHARGING_XM_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
-    SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS = const(0x48)  # 90
+    SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS = const(0x40)
 
-    # XM LIGHT SENSOR
+    # X LIGHT SENSOR
     LIGHT_SENSOR_XM_I2C = ArgusV2Interfaces.I2C0
     LIGHT_SENSOR_XM_I2C_ADDRESS = const(0x44)
 
-    # YM TORQUE COILS
+    # Y TORQUE COILS
     TORQUE_COILS_YM_I2C = ArgusV2Interfaces.I2C0
-    TORQUE_YM_I2C_ADDRESS = const(0x64)
+    TORQUE_YM_I2C_ADDRESS = const(0x31)
 
-    # Y COIL DRIVER POWER MONITOR
-    TORQUE_YM_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
-    TORQUE_YM_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 80
+    # # Y COIL DRIVER POWER MONITOR
+    # TORQUE_YM_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
+    # TORQUE_YM_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 80
 
     # Y SOLAR CHARGING POWER MONITOR
     SOLAR_CHARGING_YM_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
-    SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS = const(0x49)  # 90
+    SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS = const(0x41)
 
     # Y LIGHT SENSOR
     LIGHT_SENSOR_YM_I2C = ArgusV2Interfaces.I2C0
@@ -124,9 +124,9 @@ class ArgusV2Components:
     TORQUE_COILS_ZP_I2C = ArgusV2Interfaces.I2C0
     TORQUE_ZP_I2C_ADDRESS = const(0x64)
 
-    # Z COIL DRIVER POWER MONITOR
-    TORQUE_ZP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
-    TORQUE_ZP_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 84
+    # # Z COIL DRIVER POWER MONITOR
+    # TORQUE_ZP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
+    # TORQUE_ZP_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 84
 
     # ZP SOLAR CHARGING POWER MONITOR
     SOLAR_CHARGING_ZP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
@@ -153,41 +153,41 @@ class ArgusV2Components:
 
     # GPS POWER MONITOR
     GPS_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    GPS_POWER_MONITOR_I2C_ADDRESS = const(0x40)
+    GPS_POWER_MONITOR_I2C_ADDRESS = const(0x41)
 
     # BOARD POWER MONITOR
     BOARD_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x48)
+    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x40)
 
     # CAMERA
 
     # X TORQUE COILS
     TORQUE_COILS_XP_I2C = ArgusV2Interfaces.I2C1
-    TORQUE_XP_I2C_ADDRESS = const(0x64)
+    TORQUE_XP_I2C_ADDRESS = const(0x30)
 
-    # X COIL DRIVER POWER MONITOR
-    TORQUE_XP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    TORQUE_XP_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 84
+    # # X COIL DRIVER POWER MONITOR
+    # TORQUE_XP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
+    # TORQUE_XP_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 84
 
     # X SOLAR CHARGING POWER MONITOR
     SOLAR_CHARGING_XP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS = const(0x49)  # 92
+    SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS = const(0x48)  # 92
 
     # X LIGHT SENSOR
     LIGHT_SENSOR_XP_I2C = ArgusV2Interfaces.I2C1
-    LIGHT_SENSOR_XP_I2C_ADDRESS = const(0x45)
+    LIGHT_SENSOR_XP_I2C_ADDRESS = const(0x44)
 
     # Y TORQUE COILS
     TORQUE_COILS_YP_I2C = ArgusV2Interfaces.I2C1
-    TORQUE_YP_I2C_ADDRESS = const(0x64)
+    TORQUE_YP_I2C_ADDRESS = const(0x31)
 
-    # Y COIL DRIVER POWER MONITOR
-    TORQUE_YP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    TORQUE_YP_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 84
+    # # Y COIL DRIVER POWER MONITOR
+    # TORQUE_YP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
+    # TORQUE_YP_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 84
 
     # Y SOLAR CHARGING POWER MONITOR
     SOLAR_CHARGING_YP_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS = const(0x49)  # 92
+    SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS = const(0x41)  # 92
 
     # Y LIGHT SENSOR
     LIGHT_SENSOR_YP_I2C = ArgusV2Interfaces.I2C1
@@ -197,9 +197,9 @@ class ArgusV2Components:
     TORQUE_COILS_ZM_I2C = ArgusV2Interfaces.I2C1
     TORQUE_ZM_I2C_ADDRESS = const(0x63)
 
-    # Z COIL DRIVER POWER MONITOR
-    TORQUE_ZM_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS = const(0x40)  # 80
+    # # Z COIL DRIVER POWER MONITOR
+    # TORQUE_ZM_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
+    # TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS = const(0x40)  # 80
 
     # ZM LIGHT SENSOR
     LIGHT_SENSOR_ZM_I2C = ArgusV2Interfaces.I2C1
@@ -291,10 +291,10 @@ class ArgusV2(CubeSat):
 
         error_list.append(self.__sd_card_boot())
         error_list.append(self.__vfs_boot())
+        error_list.append(self.__radio_boot())
         error_list.append(self.__imu_boot())
         error_list.append(self.__rtc_boot())
         error_list.append(self.__gps_boot())
-        error_list.append(self.__radio_boot())
         error_list.append(self.__power_monitor_boot())
         error_list.append(self.__fuel_gauge_boot())
         # error_list.append(self.__charger_boot())  # DO NOT boot this device, not used
@@ -354,7 +354,7 @@ class ArgusV2(CubeSat):
         locations = {
             "BOARD": [ArgusV2Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.BOARD_POWER_MONITOR_I2C],
             "RADIO": [ArgusV2Components.RADIO_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.RADIO_POWER_MONITOR_I2C],
-            # "GPS": [ArgusV2Components.GPS_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.GPS_POWER_MONITOR_I2C],
+            "GPS": [ArgusV2Components.GPS_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.GPS_POWER_MONITOR_I2C],
             # "JETSON": [ArgusV2Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV2Components.JETSON_POWER_MONITOR_I2C],
             # "TORQUE_XP": [
             #     ArgusV2Components.TORQUE_XP_POWER_MONITOR_I2C_ADDRESS,
@@ -380,22 +380,22 @@ class ArgusV2(CubeSat):
             #     ArgusV2Components.TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS,
             #     ArgusV2Components.TORQUE_ZM_POWER_MONITOR_I2C,
             # ],
-            # "SOLAR_XP": [
-            #     ArgusV2Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C,
-            # ],
-            # "SOLAR_XM": [
-            #     ArgusV2Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C,
-            # ],
+            "SOLAR_XP": [
+                ArgusV2Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV2Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C,
+            ],
+            "SOLAR_XM": [
+                ArgusV2Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV2Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C,
+            ],
             # "SOLAR_YP": [
             #     ArgusV2Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS,
             #     ArgusV2Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C,
             # ],
-            # "SOLAR_YM": [
-            #     ArgusV2Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV2Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C,
-            # ],
+            "SOLAR_YM": [
+                ArgusV2Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV2Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C,
+            ],
             # "SOLAR_ZP": [
             #     ArgusV2Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS,
             #     ArgusV2Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C,
@@ -530,7 +530,7 @@ class ArgusV2(CubeSat):
             "ZP4": [ArgusV2Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
         }
 
-        from hal.drivers.opt4001 import OPT4001
+        from hal.drivers.opt4003 import OPT4003
 
         error_codes = []  # List to store error codes per sensor
 
@@ -538,7 +538,7 @@ class ArgusV2(CubeSat):
             try:
                 address = busAndAddress[0]
                 bus = busAndAddress[1]
-                light_sensor = OPT4001(
+                light_sensor = OPT4003(
                     bus,
                     address,
                     conversion_time=ArgusV2Components.LIGHT_SENSOR_CONVERSION_TIME,

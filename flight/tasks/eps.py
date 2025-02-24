@@ -114,11 +114,11 @@ class Task(TemplateTask):
                         f"Board Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, "
                         + f"Board Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA "
                     )
-                elif key == "JETSON":
-                    self.read_vc(SATELLITE.POWER_MONITORS[key], EPS_IDX.JETSON_INPUT_VOLTAGE, EPS_IDX.JETSON_INPUT_CURRENT)
+                elif key == "GPS":
+                    self.read_vc(SATELLITE.POWER_MONITORS[key], EPS_IDX.GPS_VOLTAGE, EPS_IDX.GPS_CURRENT)
                     self.log_info(
-                        f"Jetson Voltage: {self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE]} mV, "
-                        + f"Jetson Current: {self.log_data[EPS_IDX.JETSON_INPUT_CURRENT]} mA"
+                        f"GPS Voltage: {self.log_data[EPS_IDX.GPS_VOLTAGE]} mV, "
+                        + f"GPS Current: {self.log_data[EPS_IDX.GPS_CURRENT]} mA"
                     )
                 elif key == "RADIO":
                     self.read_vc(SATELLITE.POWER_MONITORS[key], EPS_IDX.RF_LDO_OUTPUT_VOLTAGE, EPS_IDX.RF_LDO_OUTPUT_CURRENT)
@@ -126,6 +126,32 @@ class Task(TemplateTask):
                         f"Radio Voltage: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_VOLTAGE]} mV, "
                         + f"Radio Current: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_CURRENT]} mA"
                     )
+                elif key == "SOLAR_XP":
+                    self.read_vc(
+                        SATELLITE.POWER_MONITORS[key], EPS_IDX.XP_SOLAR_CHARGE_VOLTAGE, EPS_IDX.XP_SOLAR_CHARGE_CURRENT
+                    )
+                    self.log_info(
+                        f"XP Charge Voltage: {self.log_data[EPS_IDX.XP_SOLAR_CHARGE_VOLTAGE]} mV, "
+                        + f"XP Charge Current: {self.log_data[EPS_IDX.XP_SOLAR_CHARGE_CURRENT]} mA"
+                    )
+                elif key == "SOLAR_XM":
+                    self.read_vc(
+                        SATELLITE.POWER_MONITORS[key], EPS_IDX.XM_SOLAR_CHARGE_VOLTAGE, EPS_IDX.XM_SOLAR_CHARGE_CURRENT
+                    )
+                    self.log_info(
+                        f"XM Charge Voltage: {self.log_data[EPS_IDX.XM_SOLAR_CHARGE_VOLTAGE]} mV, "
+                        + f"XM Charge Current: {self.log_data[EPS_IDX.XM_SOLAR_CHARGE_CURRENT]} mA"
+                    )
+                elif key == "SOLAR_YM":
+                    self.read_vc(
+                        SATELLITE.POWER_MONITORS[key], EPS_IDX.YM_SOLAR_CHARGE_VOLTAGE, EPS_IDX.YM_SOLAR_CHARGE_CURRENT
+                    )
+                    self.log_info(
+                        f"YM Charge Voltage: {self.log_data[EPS_IDX.YM_SOLAR_CHARGE_VOLTAGE]} mV, "
+                        + f"YM Charge Current: {self.log_data[EPS_IDX.YM_SOLAR_CHARGE_CURRENT]} mA"
+                    )
+                else:
+                    self.log_warning("Unknown Power Monitor: Check HAL")
 
             self.log_data[EPS_IDX.CPU_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
             self.log_info(f"CPU temperature: {self.log_data[EPS_IDX.CPU_TEMPERATURE]} °cC ")
