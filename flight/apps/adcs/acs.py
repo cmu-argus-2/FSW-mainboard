@@ -17,7 +17,7 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
     """
 
     if np.linalg.norm(mag_field) == 0:  # Stop ACS if the field value is invalid
-        u_dir = np.zeros((3,))
+        return np.zeros(3)
 
     else:
 
@@ -25,20 +25,16 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
         error = PhysicalConst.INERTIA_MAJOR_DIR - np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET
 
         # Compute controller using B-cross
-        u_dir = ControllerConst.SPIN_STABILIZING_GAIN * np.cross(mag_field, error)
+        u = ControllerConst.SPIN_STABILIZING_GAIN * np.cross(mag_field, error)
 
         # Smooth controller using tanh
-        u_dir = np.tanh(u_dir)
-
-    coil_status = mcm_coil_allocator(u_dir)
-
-    return coil_status
+        return np.tanh(u)
 
 
 def sun_pointed_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field: np.ndarray) -> np.ndarray:
 
     if np.linalg.norm(mag_field) == 0 or np.linlag.norm(sun_vector) == 0:  # Stop ACS if either field is invalid
-        u_dir = np.zeros((3,))
+        return np.zeros((3,))
     else:
         # Compute Pointing Error
         error = sun_vector - np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET
@@ -48,13 +44,9 @@ def sun_pointed_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field:
         u_dir_norm = np.linalg.norm(u_dir)
 
         if u_dir_norm < 1e-6:
-            u_dir = np.zeros((3,))
+            return np.zeros((3,))
         else:
-            u_dir = u_dir / u_dir_norm
-
-    coil_status = mcm_coil_allocator(u_dir)
-
-    return coil_status
+            return u_dir / u_dir_norm
 
 
 def mcm_coil_allocator(u: np.ndarray) -> np.ndarray:
