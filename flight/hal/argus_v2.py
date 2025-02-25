@@ -367,15 +367,15 @@ class ArgusV2(CubeSat):
             "TORQUE_ZP": [ArgusV2Components.TORQUE_ZP_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_ZP_I2C],
             "TORQUE_ZM": [ArgusV2Components.TORQUE_ZM_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_ZM_I2C],
         }
-
-        from hal.drivers.drv8830 import DRV8830
+        # TODO: verify this driver actually works
+        from hal.drivers.drv8235 import DRV8235
 
         data = directions[direction]
 
         try:
             address = data[0]
             bus = data[1]
-            torque_driver = DRV8830(bus, address)
+            torque_driver = DRV8235(bus, address)
 
             return [torque_driver, Errors.NOERROR]
 
