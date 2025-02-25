@@ -38,25 +38,25 @@ class ArgusV3Interfaces:
     except Exception:
         I2C1 = None
 
-    JET_SPI_SCK = board.CLK1  # GPIO10
-    JET_SPI_MOSI = board.MOSI1  # GPIO11
-    JET_SPI_MISO = board.MISO1  # GPIO08
-    JET_SPI = SPI(JET_SPI_SCK, MOSI=JET_SPI_MOSI, MISO=JET_SPI_MISO)
+    # JET_SPI_SCK = board.CLK1  # GPIO10
+    # JET_SPI_MOSI = board.MOSI1  # GPIO11
+    # JET_SPI_MISO = board.MISO1  # GPIO08
+    # JET_SPI = SPI(JET_SPI_SCK, MOSI=JET_SPI_MOSI, MISO=JET_SPI_MISO)
 
     SPI_SCK = board.CLK0  # GPIO18
     SPI_MOSI = board.MOSI0  # GPIO19
     SPI_MISO = board.MISO0  # GPIO16
     SPI = SPI(SPI_SCK, MOSI=SPI_MOSI, MISO=SPI_MISO)
 
-    UART0_BAUD = const(115200)
-    UART0_TX = board.TX0  # GPIO12
-    UART0_RX = board.RX0  # GPIO13
-    UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD)
+    # UART0_BAUD = const(115200)
+    # UART0_TX = board.TX0  # GPIO12
+    # UART0_RX = board.RX0  # GPIO13
+    # UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD)
 
-    UART1_BAUD = const(115200)
-    UART1_TX = board.TX1  # GPIO4
-    UART1_RX = board.RX1  # GPIO5
-    UART1 = UART(UART1_TX, UART1_RX, baudrate=UART1_BAUD)
+    # UART1_BAUD = const(115200)
+    # UART1_TX = board.TX1  # GPIO4
+    # UART1_RX = board.RX1  # GPIO5
+    # UART1 = UART(UART1_TX, UART1_RX, baudrate=UART1_BAUD)
 
 
 class ArgusV3Components:
@@ -215,14 +215,14 @@ class ArgusV3Components:
     SD_BAUD = const(4000000)  # 4 MHz
 
     # RADIO
-    RADIO_SPI = ArgusV3Interfaces.SPI
-    RADIO_CS = board.LORA_CS  # GPIO17
-    RADIO_RESET = board.LORA_nRST  # GPIO21
-    RADIO_ENABLE = board.LORA_EN  # GPIO28_ADC2
-    RADIO_TX_EN = board.LORA_TX_EN  # GPIO22
-    RADIO_RX_EN = board.LORA_RX_EN  # GPIO20
-    RADIO_BUSY = board.LORA_BUSY  # GPIO23
-    RADIO_IRQ = board.GPS_EN  # GPIO27_ADC1
+    # RADIO_SPI = ArgusV3Interfaces.SPI
+    # RADIO_CS = board.LORA_CS  # GPIO17
+    # RADIO_RESET = board.LORA_nRST  # GPIO21
+    # RADIO_ENABLE = board.LORA_EN  # GPIO28_ADC2
+    # RADIO_TX_EN = board.LORA_TX_EN  # GPIO22
+    # RADIO_RX_EN = board.LORA_RX_EN  # GPIO20
+    # RADIO_BUSY = board.LORA_BUSY  # GPIO23
+    # RADIO_IRQ = board.GPS_EN  # GPIO27_ADC1
     # RADIO_FREQ = 915.6
 
     ########
@@ -230,16 +230,16 @@ class ArgusV3Components:
     ########
 
     # PAYLOAD(JETSON)
-    PAYLOAD_SPI = ArgusV3Interfaces.JET_SPI
-    PAYLOAD_CS = board.JETSON_CS  # GPIO9
-    PAYLOAD_ENABLE = board.JETSON_EN  # GPIO24
+    # PAYLOAD_SPI = ArgusV3Interfaces.JET_SPI
+    # PAYLOAD_CS = board.JETSON_CS  # GPIO9
+    # PAYLOAD_ENABLE = board.JETSON_EN  # GPIO24
 
     #########
     # UART0 #
     #########
 
     # GPS
-    GPS_UART = ArgusV3Interfaces.UART0
+    # GPS_UART = ArgusV3Interfaces.UART0
     # GPS_ENABLE = board.GPS_EN  # GPIO27_ADC1
 
     #########
