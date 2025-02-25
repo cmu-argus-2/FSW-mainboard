@@ -18,11 +18,9 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_RX0),     MP_ROM_PTR(&pin_GPIO5) },
 
     { MP_ROM_QSTR(MP_QSTR_MISO0),    MP_ROM_PTR(&pin_GPIO12) },
-    { MP_ROM_QSTR(MP_QSTR_LORA_CS),  MP_ROM_PTR(&pin_GPIO13) },
+    { MP_ROM_QSTR(MP_QSTR_SD_CS),  MP_ROM_PTR(&pin_GPIO13) },
     { MP_ROM_QSTR(MP_QSTR_CLK0),     MP_ROM_PTR(&pin_GPIO10) },
     { MP_ROM_QSTR(MP_QSTR_MOSI0),    MP_ROM_PTR(&pin_GPIO11) },
-
-    { MP_ROM_QSTR(MP_QSTR_SD_CS),   MP_ROM_PTR(&pin_GPIO26) },
     
     { MP_ROM_QSTR(MP_QSTR_I2C), MP_ROM_PTR(&board_i2c_obj) },
     { MP_ROM_QSTR(MP_QSTR_STEMMA_I2C), MP_ROM_PTR(&board_i2c_obj) },
