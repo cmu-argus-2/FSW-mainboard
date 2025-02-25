@@ -312,7 +312,7 @@ class OPT4003:
         start_time = time.monotonic() + 1.1
         while time.monotonic() < start_time:
             if self.conversion_ready_flag:
-            # return -1
+                # return -1
                 break
             time.sleep(0.001)
 
@@ -343,7 +343,7 @@ class OPT4003:
         adc_codes = mantissa << exponent
         lux = adc_codes * 0.000535
 
-        return lux 
+        return lux
 
     def lux(self) -> float:
         """
