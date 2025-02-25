@@ -271,13 +271,6 @@ class CubeSat:
         """SD_CARD: Returns the SD card object
         :return: object or None
         """
-        return self._sd_card
-
-    @property
-    def SD_CARD(self):
-        """SD_CARD: Returns the SD card object
-        :return: object or None
-        """
         return self.__device_list["SDCARD"].device
 
     @property
