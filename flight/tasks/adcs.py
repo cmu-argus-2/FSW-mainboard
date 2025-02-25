@@ -2,7 +2,7 @@
 
 import time
 
-from apps.adcs.acs import spin_stabilizing_controller, sun_pointed_controller, mcm_coil_allocator, zero_all_coils
+from apps.adcs.acs import spin_stabilizing_controller, sun_pointing_controller, mcm_coil_allocator, zero_all_coils
 from apps.adcs.ad import AttitudeDetermination
 from apps.adcs.consts import Modes, StatusConst
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX
@@ -241,7 +241,7 @@ class Task(TemplateTask):
             mag_field_body = self.AD.state[self.AD.mag_field_idx]
 
             # Control MCMs and obtain coil statuses
-            dipole_moment = sun_pointed_controller(sun_pos_body, omega_unbiased, mag_field_body)
+            dipole_moment = sun_pointing_controller(sun_pos_body, omega_unbiased, mag_field_body)
 
         self.coil_status = mcm_coil_allocator(dipole_moment)
 
