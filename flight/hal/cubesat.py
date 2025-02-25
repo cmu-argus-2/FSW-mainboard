@@ -197,9 +197,10 @@ class CubeSat:
         return self.__device_list["FUEL_GAUGE"].device
 
     # ABSTRACT METHOD #
-    def APPLY_MAGNETIC_CONTROL(self) -> None:
+    def APPLY_MAGNETIC_CONTROL(self, dir: str, throttle: float) -> None:
         """CONTROL_COILS: Control the coils on the CubeSat, depending on the control mode (identiical for all coils)."""
-        raise NotImplementedError("CubeSats must implement the control coils method")
+        if self.TORQUE_DRIVERS_AVAILABLE(dir):
+            self.__torque_drivers[dir].set_throttle(throttle)
 
     def TORQUE_DRIVERS_AVAILABLE(self, dir: str) -> bool:
         """Returns True if the specific torque driver for the given direction is available.

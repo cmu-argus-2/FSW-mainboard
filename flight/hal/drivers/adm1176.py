@@ -66,7 +66,7 @@ class ADM1176:
     def __init__(self, i2c_bus, addr):
         self.i2c_device = I2CDevice(i2c_bus, addr, probe=False)
         self.i2c_addr = addr
-        self.sense_resistor = 1
+        self.sense_resistor = 0.01
         self.config("V_CONT,I_CONT")
 
         self._on = True
