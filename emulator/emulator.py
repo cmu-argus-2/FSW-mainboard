@@ -48,13 +48,13 @@ class EmulatedSatellite(CubeSat):
 
         super().__init__()
 
-        self._radio = Radio(self.__use_socket)
-        self._sd_card = SD()
-        self._burnwires = self.init_device(BurnWires())
+        self.__device_list["RADIO"].device = Radio(self.__use_socket)
+        self.__device_list["SDCARD"].device = SD()
+        self.__device_list["BURN_WIRE"].device = self.init_device(BurnWires())
         self._payload_uart = self.init_device(Payload())
 
-        self._vfs = None
-        self._gps = self.init_device(GPS(simulator=self.__simulated_spacecraft))
+        # self._vfs = None
+        self.__device_list["GPS"] = self.init_device(GPS(simulator=self.__simulated_spacecraft))
         self._charger = None
 
         self._light_sensors = LightSensorArray(simulator=self.__simulated_spacecraft)
