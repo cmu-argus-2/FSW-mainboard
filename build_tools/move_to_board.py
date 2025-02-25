@@ -3,6 +3,7 @@ import filecmp
 import os
 import platform
 import shutil
+from build import CPY_VERSION
 
 if platform.system() == "Windows":
     BOARD_PATH = "D:\\"
@@ -22,7 +23,7 @@ def copy_folder(source_folder, destination_folder, show_identical_files=True):
             relative_dir_path = os.path.relpath(source_dir_path, source_folder)
             destination_dir_path = os.path.join(destination_folder, relative_dir_path)
 
-            if not os.path.exists(destination_dir_path):
+            if not os.path.exists(destination_dir_path) and CPY_VERSION == 9:
                 os.makedirs(destination_dir_path)
                 print(f"Created directory {destination_dir_path}")
 
