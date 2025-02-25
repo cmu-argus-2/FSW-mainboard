@@ -215,7 +215,7 @@ class CubeSat:
         light_sensors = {}
         for name, device in self.__device_list.items():
             if "LIGHT_" in name:
-                light_sensors[name] = device.device
+                light_sensors[name.replace("LIGHT_", "")] = device.device
         return light_sensors
 
     def LIGHT_SENSOR_AVAILABLE(self, dir: str) -> bool:
