@@ -8,8 +8,8 @@ class CubeSat:
     """CubeSat: Base class for all CubeSat implementations"""
 
     def __init__(self):
-        # List of successfully initialized devices
-        self._device_list: List[Diagnostics] = []
+        # # List of successfully initialized devices
+        # self._device_list: List[Diagnostics] = []
 
         # List of errors from most recent system diagnostic test
         self._recent_errors: List[int] = [Diagnostics.NOERROR]
@@ -27,7 +27,7 @@ class CubeSat:
         # Devices
         self._imu_temp_flag = False
         self._payload_uart = None
-        self.__device_list = {
+        self._device_list = {
             "SDCARD": Device(None),
             "IMU": Device(None),
             "RTC": Device(None),
