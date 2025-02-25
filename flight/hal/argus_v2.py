@@ -392,8 +392,6 @@ class ArgusV2(CubeSat):
         from hal.drivers.bno085 import BNO085, BNO_REPORT_UNCAL_GYROSCOPE, BNO_REPORT_UNCAL_MAGNETOMETER
 
         try:
-            from hal.drivers.bno085 import BNO085, BNO_REPORT_UNCAL_GYROSCOPE, BNO_REPORT_UNCAL_MAGNETOMETER
-
             imu = BNO085(
                 ArgusV2Components.IMU_I2C,
                 ArgusV2Components.IMU_I2C_ADDRESS,
