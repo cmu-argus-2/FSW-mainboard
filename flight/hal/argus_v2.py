@@ -301,6 +301,7 @@ class ArgusV2(CubeSat):
 
         from hal.drivers.gps import GPS
 
+        try:
             gps = GPS(ArgusV2Components.GPS_UART, ArgusV2Components.GPS_ENABLE)
 
             return [gps, Errors.NOERROR]
