@@ -3,6 +3,7 @@ import filecmp
 import os
 import platform
 import shutil
+
 from build import CPY_VERSION
 
 if platform.system() == "Windows":

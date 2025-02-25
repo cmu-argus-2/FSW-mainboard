@@ -78,36 +78,36 @@ class Task(TemplateTask):
             pass
 
         else:
-            pass
-            # if not DH.data_process_exists("adcs"):
-            #     data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f"
-            #     DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
 
-            # self.time = int(time.time())
-            # self.log_data[ADCS_IDX.TIME_ADCS] = self.time
+            if not DH.data_process_exists("adcs"):
+                data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f"
+                DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
 
-            # # ------------------------------------------------------------------------------------------------------------------------------------
-            # # DETUMBLING
-            # # ------------------------------------------------------------------------------------------------------------------------------------
-            # if SM.current_state == STATES.DETUMBLING:
+            self.time = int(time.time())
+            self.log_data[ADCS_IDX.TIME_ADCS] = self.time
 
-            #     # Query the Gyro
-            #     self.AD.gyro_update(self.time, update_covariance=False)
+            # ------------------------------------------------------------------------------------------------------------------------------------
+            # DETUMBLING
+            # ------------------------------------------------------------------------------------------------------------------------------------
+            if SM.current_state == STATES.DETUMBLING:
 
-            #     # Query Magnetometer
-            #     self.AD.magnetometer_update(self.time, update_covariance=False)
+                # Query the Gyro
+                self.AD.gyro_update(self.time, update_covariance=False)
 
-            #     # Run Attitude Control
-            #     self.attitude_control()
+                # Query Magnetometer
+                self.AD.magnetometer_update(self.time, update_covariance=False)
+
+                # Run Attitude Control
+                self.attitude_control()
 
                 # Check if detumbling has been completed
                 if self.AD.current_mode() != Modes.TUMBLING:
                     self.MODE = Modes.STABLE
 
-            # # ------------------------------------------------------------------------------------------------------------------------------------
-            # # LOW POWER
-            # # ------------------------------------------------------------------------------------------------------------------------------------
-            # elif SM.current_state == STATES.LOW_POWER:
+            # ------------------------------------------------------------------------------------------------------------------------------------
+            # LOW POWER
+            # ------------------------------------------------------------------------------------------------------------------------------------
+            elif SM.current_state == STATES.LOW_POWER:
 
                 # Turn coils off to conserve power
                 zero_all_coils()
@@ -151,10 +151,10 @@ class Task(TemplateTask):
                     # Reset Execution counter
                     self.execution_counter = 0
 
-            # # ------------------------------------------------------------------------------------------------------------------------------------
-            # # NOMINAL & EXPERIMENT
-            # # ------------------------------------------------------------------------------------------------------------------------------------
-            # else:
+            # ------------------------------------------------------------------------------------------------------------------------------------
+            # NOMINAL & EXPERIMENT
+            # ------------------------------------------------------------------------------------------------------------------------------------
+            else:
 
                 if (
                     SM.current_state == STATES.NOMINAL
@@ -168,10 +168,10 @@ class Task(TemplateTask):
                         # Turn coils off before measurements to allow time for coils to settle
                         zero_all_coils()
 
-            #         if self.execution_counter < 4:
-            #             # Update Gyro and attitude estimate via propagation
-            #             self.AD.gyro_update(self.time, update_covariance=False)
-            #             self.execution_counter += 1
+                    if self.execution_counter < 4:
+                        # Update Gyro and attitude estimate via propagation
+                        self.AD.gyro_update(self.time, update_covariance=False)
+                        self.execution_counter += 1
 
                     else:
                         if not self.AD.initialized:
@@ -205,18 +205,19 @@ class Task(TemplateTask):
                         # identify Mode based on current sensor readings
                         self.MODE = self.AD.current_mode()
 
-            #             # Run attitude control
-            #             self.attitude_control()
+                        # Run attitude control
+                        self.attitude_control()
 
-            #             # Reset Execution counter
-            #             self.execution_counter = 0
+                        # Reset Execution counter
+                        self.execution_counter = 0
 
-            # # Log data
-            # # NOTE: In detumbling, most of the log will be zeros since very few sensors are queried
-            # self.log()
+            # Log data
+            # NOTE: In detumbling, most of the log will be zeros since very few sensors are queried
+            self.log()
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ Attitude Control Auxiliary Functions """
+
     # ------------------------------------------------------------------------------------------------------------------------------------
     def attitude_control(self):
         """
@@ -245,6 +246,7 @@ class Task(TemplateTask):
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ LOGGING """
+
     # ------------------------------------------------------------------------------------------------------------------------------------
     def log(self):
         """
