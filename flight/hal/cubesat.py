@@ -79,6 +79,10 @@ class CubeSat:
         """device_list: Get the list of successfully initialized devices"""
         return self.__device_list
 
+    def append_device(self, device_name: str, boot_fn: object, device: object = None, error: int = 0) -> None:
+        """append_device: Append a device to the device list"""
+        self.__device_list[device_name] = Device(boot_fn, device, error)
+
     @property
     def ERRORS(self):
         """ERRORS: Returns the errors object
