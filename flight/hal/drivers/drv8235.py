@@ -1,7 +1,3 @@
-import sys
-
-import busio
-
 # sys.path.append("/home/sebastian/FSW-mainboard/flight")
 from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register.i2c_bit import ROBit, RWBit
