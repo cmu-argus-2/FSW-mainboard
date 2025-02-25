@@ -283,10 +283,6 @@ class ArgusV2(CubeSat):
             func = device.boot_fn
             device.device, device.error = func(name)
 
-        # self.__recent_errors = error_list
-
-        # return error_list
-
     def __state_flags_boot(self) -> None:
         """state_flags_boot: Boot sequence for the state flags"""
         from hal.drivers.stateflags import StateFlags
@@ -412,12 +408,12 @@ class ArgusV2(CubeSat):
         :return: List of error codes for each torque driver in the order of directions
         """
         directions = {
-            "XP": [ArgusV2Components.TORQUE_XP_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_XP_I2C],
-            "XM": [ArgusV2Components.TORQUE_XM_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_XM_I2C],
-            "YP": [ArgusV2Components.TORQUE_YP_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_YP_I2C],
-            "YM": [ArgusV2Components.TORQUE_YM_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_YM_I2C],
-            "ZP": [ArgusV2Components.TORQUE_ZP_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_ZP_I2C],
-            "ZM": [ArgusV2Components.TORQUE_ZM_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_ZM_I2C],
+            "TORQUE_XP": [ArgusV2Components.TORQUE_XP_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_XP_I2C],
+            "TORQUE_XM": [ArgusV2Components.TORQUE_XM_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_XM_I2C],
+            "TORQUE_YP": [ArgusV2Components.TORQUE_YP_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_YP_I2C],
+            "TORQUE_YM": [ArgusV2Components.TORQUE_YM_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_YM_I2C],
+            "TORQUE_ZP": [ArgusV2Components.TORQUE_ZP_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_ZP_I2C],
+            "TORQUE_ZM": [ArgusV2Components.TORQUE_ZM_I2C_ADDRESS, ArgusV2Components.TORQUE_COILS_ZM_I2C],
         }
 
         from hal.drivers.drv8830 import DRV8830
@@ -435,7 +431,7 @@ class ArgusV2(CubeSat):
             if self.__debug:
                 print(f"Failed to initialize {direction} torque driver: {e}")
                 raise e
-            return [None, Errors.DRV8830_NOT_INITIALIZED]  # Append failure code
+            return [None, Errors.DRV8830_NOT_INITIALIZED]
 
     def __light_sensors_boot(self, direction) -> list[object, int]:
         """Boot sequence for all light sensors in predefined directions.
@@ -443,11 +439,11 @@ class ArgusV2(CubeSat):
         :return: List of error codes for each sensor in the order of directions
         """
         directions = {
-            "XP": [ArgusV2Components.LIGHT_SENSOR_XP_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_XP_I2C],
-            "XM": [ArgusV2Components.LIGHT_SENSOR_XM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_XM_I2C],
-            "YP": [ArgusV2Components.LIGHT_SENSOR_YP_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_YP_I2C],
-            "YM": [ArgusV2Components.LIGHT_SENSOR_YM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_YM_I2C],
-            "ZM": [ArgusV2Components.LIGHT_SENSOR_ZM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_ZM_I2C],
+            "LIGHT_XP": [ArgusV2Components.LIGHT_SENSOR_XP_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_XP_I2C],
+            "LIGHT_XM": [ArgusV2Components.LIGHT_SENSOR_XM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_XM_I2C],
+            "LIGHT_YP": [ArgusV2Components.LIGHT_SENSOR_YP_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_YP_I2C],
+            "LIGHT_YM": [ArgusV2Components.LIGHT_SENSOR_YM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_YM_I2C],
+            "LIGHT_ZM": [ArgusV2Components.LIGHT_SENSOR_ZM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_ZM_I2C],
             "SUN1": [ArgusV2Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
             "SUN2": [ArgusV2Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
             "SUN3": [ArgusV2Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
@@ -472,7 +468,7 @@ class ArgusV2(CubeSat):
             if self.__debug:
                 print(f"Failed to initialize {direction} light sensor: {e}")
                 raise e
-            return [None, Errors.OPT4001_NOT_INITIALIZED]  # Append failure code
+            return [None, Errors.OPT4001_NOT_INITIALIZED]
 
     def __radio_boot(self, _) -> list[object, int]:
         """radio_boot: Boot sequence for the radio
@@ -609,11 +605,7 @@ class ArgusV2(CubeSat):
         """
         if device_name not in self.__device_list:
             return Errors.PERIPHERAL_NOT_FOUND
-        # device = self.__boot_list[device_name][0]
-        func = self.__boot_list[device_name][2]
-        args = self.__boot_list[device_name][3] if len(self.__boot_list[device_name]) > 3 else []
-        self.__boot_list[device_name][0] = None
-        if args:
-            self.__device_list[device_name][:2] = func(args)
-        else:
-            self.__device_list[device_name][:2] = func()
+        self.__device_list[device_name].device = None
+        func = self.__device_list[device_name].boot_fn
+        self.__device_list[device_name].device, self.__device_list[device_name].error = func(device_name)
+        return self.__device_list[device_name].error
