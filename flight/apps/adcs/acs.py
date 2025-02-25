@@ -36,11 +36,11 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
 
 def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field: np.ndarray) -> np.ndarray:
     # Stop ACS if the reading values are invalid
-    if omega.shape != (3,) or mag_field.shape != (3,):
+    if sun_vector.shape != (3,) or omega.shape != (3,) or mag_field.shape != (3,):
         return np.zeros(3)
 
     # Stop ACS if either field is invalid
-    elif np.linalg.norm(mag_field) == 0 or np.linlag.norm(sun_vector) == 0:
+    elif np.linalg.norm(mag_field) == 0 or np.linalg.norm(sun_vector) == 0:
         return np.zeros((3,))
 
     else:
