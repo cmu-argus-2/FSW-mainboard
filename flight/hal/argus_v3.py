@@ -324,47 +324,23 @@ class ArgusV3(CubeSat):
             "RADIO_PWR": [ArgusV3Components.RADIO_POWER_MONITOR_I2C_ADDRESS, ArgusV3Components.RADIO_POWER_MONITOR_I2C],
             "GPS_PWR": [ArgusV3Components.GPS_POWER_MONITOR_I2C_ADDRESS, ArgusV3Components.GPS_POWER_MONITOR_I2C],
             "JETSON_PWR": [ArgusV3Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV3Components.JETSON_POWER_MONITOR_I2C],
-            "TORQUE_XP_PWR": [
-                ArgusV3Components.TORQUE_XP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV3Components.TORQUE_XP_POWER_MONITOR_I2C,
-            ],
-            "TORQUE_XM_PWR": [
-                ArgusV3Components.TORQUE_XM_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV3Components.TORQUE_XM_POWER_MONITOR_I2C,
-            ],
-            "TORQUE_YP_PWR": [
-                ArgusV3Components.TORQUE_YP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV3Components.TORQUE_YP_POWER_MONITOR_I2C,
-            ],
-            "TORQUE_YM_PWR": [
-                ArgusV3Components.TORQUE_YM_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV3Components.TORQUE_YM_POWER_MONITOR_I2C,
-            ],
-            "TORQUE_ZP_PWR": [
-                ArgusV3Components.TORQUE_ZP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV3Components.TORQUE_ZP_POWER_MONITOR_I2C,
-            ],
-            "TORQUE_ZM_PWR": [
-                ArgusV3Components.TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV3Components.TORQUE_ZM_POWER_MONITOR_I2C,
-            ],
-            "SOLAR_XP_PWR": [
+            "XP_PWR": [
                 ArgusV3Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
                 ArgusV3Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C,
             ],
-            "SOLAR_XM_PWR": [
+            "XM_PWR": [
                 ArgusV3Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS,
                 ArgusV3Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C,
             ],
-            "SOLAR_YP_PWR": [
+            "YP_PWR": [
                 ArgusV3Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS,
                 ArgusV3Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C,
             ],
-            "SOLAR_YM_PWR": [
+            "YM_PWR": [
                 ArgusV3Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS,
                 ArgusV3Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C,
             ],
-            "SOLAR_ZP_PWR": [
+            "ZP_PWR": [
                 ArgusV3Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS,
                 ArgusV3Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C,
             ],
@@ -406,18 +382,18 @@ class ArgusV3(CubeSat):
                 raise e
             return [None, Errors.IMU_NOT_INITIALIZED]
 
-    def __torque_drivers_boot(self, direction) -> list[int]:
+    def __torque_driver_boot(self, direction) -> list[int]:
         """Boot sequence for all torque drivers in predefined directions.
 
         :return: List of error codes for each torque driver in the order of directions
         """
         directions = {
-            "XP": [ArgusV3Components.TORQUE_XP_I2C_ADDRESS, ArgusV3Components.TORQUE_COILS_XP_I2C],
-            "XM": [ArgusV3Components.TORQUE_XM_I2C_ADDRESS, ArgusV3Components.TORQUE_COILS_XM_I2C],
-            "YP": [ArgusV3Components.TORQUE_YP_I2C_ADDRESS, ArgusV3Components.TORQUE_COILS_YP_I2C],
-            "YM": [ArgusV3Components.TORQUE_YM_I2C_ADDRESS, ArgusV3Components.TORQUE_COILS_YM_I2C],
-            "ZP": [ArgusV3Components.TORQUE_ZP_I2C_ADDRESS, ArgusV3Components.TORQUE_COILS_ZP_I2C],
-            "ZM": [ArgusV3Components.TORQUE_ZM_I2C_ADDRESS, ArgusV3Components.TORQUE_COILS_ZM_I2C],
+            "TORQUE_XP": [ArgusV3Components.TORQUE_XP_I2C_ADDRESS, ArgusV3Components.TORQUE_COILS_XP_I2C],
+            "TORQUE_XM": [ArgusV3Components.TORQUE_XM_I2C_ADDRESS, ArgusV3Components.TORQUE_COILS_XM_I2C],
+            "TORQUE_YP": [ArgusV3Components.TORQUE_YP_I2C_ADDRESS, ArgusV3Components.TORQUE_COILS_YP_I2C],
+            "TORQUE_YM": [ArgusV3Components.TORQUE_YM_I2C_ADDRESS, ArgusV3Components.TORQUE_COILS_YM_I2C],
+            "TORQUE_ZP": [ArgusV3Components.TORQUE_ZP_I2C_ADDRESS, ArgusV3Components.TORQUE_COILS_ZP_I2C],
+            "TORQUE_ZM": [ArgusV3Components.TORQUE_ZM_I2C_ADDRESS, ArgusV3Components.TORQUE_COILS_ZM_I2C],
         }
 
         from hal.drivers.drv8830 import DRV8830
@@ -437,21 +413,21 @@ class ArgusV3(CubeSat):
                 raise e
             return [None, Errors.DRV8830_NOT_INITIALIZED]  # Append failure code
 
-    def __light_sensors_boot(self, direction) -> list[object, int]:
+    def __light_sensor_boot(self, direction) -> list[object, int]:
         """Boot sequence for all light sensors in predefined directions.
 
         :return: List of error codes for each sensor in the order of directions
         """
         directions = {
-            "XP": [ArgusV3Components.LIGHT_SENSOR_XP_I2C_ADDRESS, ArgusV3Components.LIGHT_SENSOR_XP_I2C],
-            "XM": [ArgusV3Components.LIGHT_SENSOR_XM_I2C_ADDRESS, ArgusV3Components.LIGHT_SENSOR_XM_I2C],
-            "YP": [ArgusV3Components.LIGHT_SENSOR_YP_I2C_ADDRESS, ArgusV3Components.LIGHT_SENSOR_YP_I2C],
-            "YM": [ArgusV3Components.LIGHT_SENSOR_YM_I2C_ADDRESS, ArgusV3Components.LIGHT_SENSOR_YM_I2C],
-            "ZM": [ArgusV3Components.LIGHT_SENSOR_ZM_I2C_ADDRESS, ArgusV3Components.LIGHT_SENSOR_ZM_I2C],
-            "SUN1": [ArgusV3Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV3Components.SUN_SENSOR_ZP_I2C],
-            "SUN2": [ArgusV3Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV3Components.SUN_SENSOR_ZP_I2C],
-            "SUN3": [ArgusV3Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV3Components.SUN_SENSOR_ZP_I2C],
-            "SUN4": [ArgusV3Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV3Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_XP": [ArgusV3Components.LIGHT_SENSOR_XP_I2C_ADDRESS, ArgusV3Components.LIGHT_SENSOR_XP_I2C],
+            "LIGHT_XM": [ArgusV3Components.LIGHT_SENSOR_XM_I2C_ADDRESS, ArgusV3Components.LIGHT_SENSOR_XM_I2C],
+            "LIGHT_YP": [ArgusV3Components.LIGHT_SENSOR_YP_I2C_ADDRESS, ArgusV3Components.LIGHT_SENSOR_YP_I2C],
+            "LIGHT_YM": [ArgusV3Components.LIGHT_SENSOR_YM_I2C_ADDRESS, ArgusV3Components.LIGHT_SENSOR_YM_I2C],
+            "LIGHT_ZM": [ArgusV3Components.LIGHT_SENSOR_ZM_I2C_ADDRESS, ArgusV3Components.LIGHT_SENSOR_ZM_I2C],
+            "LIGHT_SUN1": [ArgusV3Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV3Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_SUN2": [ArgusV3Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV3Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_SUN3": [ArgusV3Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV3Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_SUN4": [ArgusV3Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV3Components.SUN_SENSOR_ZP_I2C],
         }
 
         from hal.drivers.opt4001 import OPT4001

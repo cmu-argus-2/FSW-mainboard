@@ -43,10 +43,10 @@ class CubeSat:
             "LIGHT_YP": Device(self.__light_sensor_boot),
             "LIGHT_YM": Device(self.__light_sensor_boot),
             # "LIGHT_ZM": Device(self.__light_sensor_boot),
-            # "SUN1": Device(self.__light_sensor_boot),
-            # "SUN2": Device(self.__light_sensor_boot),
-            # "SUN3": Device(self.__light_sensor_boot),
-            # "SUN4": Device(self.__light_sensor_boot),
+            # "LIGHT_SUN1": Device(self.__light_sensor_boot),
+            # "LIGHT_SUN2": Device(self.__light_sensor_boot),
+            # "LIGHT_SUN3": Device(self.__light_sensor_boot),
+            # "LIGHT_SUN4": Device(self.__light_sensor_boot),
         }
 
         # List of errors from most recent system diagnostic test
