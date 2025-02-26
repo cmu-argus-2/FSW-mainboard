@@ -130,21 +130,29 @@ class AttitudeDetermination:
         """
         if DH.data_process_exists("gps") and SATELLITE.GPS_AVAILABLE:
             # Get last GPS update time and position at that time
-            gps_record_time = DH.get_latest_data("gps")[GPS_IDX.TIME_GPS]
-            gps_pos_ecef = 1e-2 * (
-                np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,))
-            )
-            gps_vel_ecef = 1e-2 * (
-                np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_VX : GPS_IDX.GPS_ECEF_VZ + 1]).reshape((3,))
-            )
+            gps_data = DH.get_latest_data("gps")
 
-            # Sensor validity check
-            if gps_pos_ecef is None or gps_vel_ecef is None or len(gps_pos_ecef) != 3 or len(gps_vel_ecef) != 3:
-                return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
-            elif not (6.0e6 <= np.linalg.norm(gps_pos_ecef) <= 7.5e6) or not (3.0e3 <= np.linalg.norm(gps_vel_ecef) <= 1.0e4):
-                return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
+            if gps_data is not None:
+                gps_record_time = [GPS_IDX.TIME_GPS]
+                gps_pos_ecef = 1e-2 * (
+                    np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,))
+                )
+                gps_vel_ecef = 1e-2 * (
+                    np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_VX : GPS_IDX.GPS_ECEF_VZ + 1]).reshape((3,))
+                )
 
-            return StatusConst.OK, gps_record_time, gps_pos_ecef, gps_vel_ecef
+                # Sensor validity check
+                if gps_pos_ecef is None or gps_vel_ecef is None or len(gps_pos_ecef) != 3 or len(gps_vel_ecef) != 3:
+                    return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
+                elif not (6.0e6 <= np.linalg.norm(gps_pos_ecef) <= 7.5e6) or not (
+                    3.0e3 <= np.linalg.norm(gps_vel_ecef) <= 1.0e4
+                ):
+                    return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
+
+                return StatusConst.OK, gps_record_time, gps_pos_ecef, gps_vel_ecef
+
+            else:
+                return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
         else:
             return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
 
