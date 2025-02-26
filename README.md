@@ -14,13 +14,13 @@ The flight software currently supports:
 - Argus v2 (RP2040, in testing)
 
 ## Installation
+NOTE : The simulation only supports Ubuntu systems with a version >= 22.04
 ```bash
+python3 -m venv .venv --system-site-packages
+source .venv/bin/activate
 git submodule init
 git submodule update
-pip install .
-cd simulation/
-pip install .
-cd ..
+sh install.sh
 ```
 
 ## Build and Execution
@@ -39,15 +39,17 @@ In the absence of the mainboard, you should either run the simulator or emulator
 
 To run the emulator:
 ```bash
+source .venv/bin/activate
 ./run.sh emulate
 ```
 
-To install the simulator, follow the main README [here](https://github.com/cmu-argus-1/argusloop). The software-in-the-loop is currently transitioning to a newly developed C++ simulator.
-
 To run the simulator:
 ```bash
+source .venv/bin/activate
 ./run.sh simulate
 ```
+
+Virtual Environment prevents any dependency conflicts with your global filesystem
 
 ### Build or move 
 
