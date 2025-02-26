@@ -15,32 +15,36 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
     Augmented with tanh function for soft clipping.
     All sensor estimates are in the body-fixed reference frame.
     """
+    # Stop ACS if the reading values are invalid
+    if omega.shape != (3,) or mag_field.shape != (3,):
+        return np.zeros(3)
 
-    if np.linalg.norm(mag_field) == 0:  # Stop ACS if the field value is invalid
-        u_dir = np.zeros((3,))
+    # Stop ACS if the field value is invalid
+    elif np.linalg.norm(mag_field) == 0:
+        return np.zeros(3)
 
     else:
-
-        # Compute Angular Momentum error
+        # Compute angular momentum error
         error = PhysicalConst.INERTIA_MAJOR_DIR - np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET
 
-        # Compute controller using B-cross
-        u_dir = ControllerConst.SPIN_STABILIZING_GAIN * np.cross(mag_field, error)
+        # Compute B-cross dipole moment
+        u = ControllerConst.SPIN_STABILIZING_GAIN * np.cross(mag_field, error)
 
-        # Smooth controller using tanh
-        u_dir = np.tanh(u_dir)
-
-    coil_status = mcm_coil_allocator(u_dir)
-
-    return coil_status
+        # Smoothly normalize the control input
+        return np.tanh(u)
 
 
-def sun_pointed_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field: np.ndarray) -> np.ndarray:
+def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field: np.ndarray) -> np.ndarray:
+    # Stop ACS if the reading values are invalid
+    if sun_vector.shape != (3,) or omega.shape != (3,) or mag_field.shape != (3,):
+        return np.zeros(3)
 
-    if np.linalg.norm(mag_field) == 0 or np.linlag.norm(sun_vector) == 0:  # Stop ACS if either field is invalid
-        u_dir = np.zeros((3,))
+    # Stop ACS if either field is invalid
+    elif np.linalg.norm(mag_field) == 0 or np.linalg.norm(sun_vector) == 0:
+        return np.zeros((3,))
+
     else:
-        # Compute Pointing Error
+        # Compute pointing error
         error = sun_vector - np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET
 
         # Compute controller using bang-bang control law
@@ -48,13 +52,11 @@ def sun_pointed_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field:
         u_dir_norm = np.linalg.norm(u_dir)
 
         if u_dir_norm < 1e-6:
-            u_dir = np.zeros((3,))
+            # Return zeros to avoid division by zero
+            return np.zeros(3)
         else:
-            u_dir = u_dir / u_dir_norm
-
-    coil_status = mcm_coil_allocator(u_dir)
-
-    return coil_status
+            # Normalize the control input
+            return u_dir / u_dir_norm
 
 
 def mcm_coil_allocator(u: np.ndarray) -> np.ndarray:
