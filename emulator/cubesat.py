@@ -8,8 +8,8 @@ class CubeSat:
     """CubeSat: Base class for all CubeSat implementations"""
 
     def __init__(self):
-        # List of successfully initialized devices
-        self._device_list: List[Diagnostics] = []
+        # # List of successfully initialized devices
+        # self._device_list: List[Diagnostics] = []
 
         # List of errors from most recent system diagnostic test
         self._recent_errors: List[int] = [Diagnostics.NOERROR]
@@ -27,38 +27,38 @@ class CubeSat:
         # Devices
         self._imu_temp_flag = False
         self._payload_uart = None
-        self.__device_list = {
-            "SDCARD": Device(self.__sd_card_boot),
-            "IMU": Device(self.__imu_boot),
-            "RTC": Device(self.__rtc_boot),
-            "GPS": Device(self.__gps_boot),
-            "RADIO": Device(self.__radio_boot),
-            "FUEL_GAUGE": Device(self.__fuel_gauge_boot),
-            "BURN_WIRE": Device(self.__burn_wire_boot),
-            "BOARD_PWR": Device(self.__power_monitor_boot),
-            "RADIO_PWR": Device(self.__power_monitor_boot),
-            "JETSON_PWR": Device(self.__power_monitor_boot),
-            "XP_PWR": Device(self.__power_monitor_boot),
-            "XM_PWR": Device(self.__power_monitor_boot),
-            "YP_PWR": Device(self.__power_monitor_boot),
-            "YM_PWR": Device(self.__power_monitor_boot),
-            "ZP_PWR": Device(self.__power_monitor_boot),
-            "ZM_PWR": Device(self.__power_monitor_boot),
-            "TORQUE_XP": Device(self.__torque_driver_boot),
-            "TORQUE_XM": Device(self.__torque_driver_boot),
-            "TORQUE_YP": Device(self.__torque_driver_boot),
-            "TORQUE_YM": Device(self.__torque_driver_boot),
-            "TORQUE_ZP": Device(self.__torque_driver_boot),
-            "TORQUE_ZM": Device(self.__torque_driver_boot),
-            "LIGHT_XP": Device(self.__light_sensor_boot),
-            "LIGHT_XM": Device(self.__light_sensor_boot),
-            "LIGHT_YP": Device(self.__light_sensor_boot),
-            "LIGHT_YM": Device(self.__light_sensor_boot),
-            "LIGHT_ZM": Device(self.__light_sensor_boot),
-            "SUN1": Device(self.__light_sensor_boot),
-            "SUN2": Device(self.__light_sensor_boot),
-            "SUN3": Device(self.__light_sensor_boot),
-            "SUN4": Device(self.__light_sensor_boot),
+        self._device_list = {
+            "SDCARD": Device(None),
+            "IMU": Device(None),
+            "RTC": Device(None),
+            "GPS": Device(None),
+            "RADIO": Device(None),
+            "FUEL_GAUGE": Device(None),
+            "BURN_WIRE": Device(None),
+            "BOARD_PWR": Device(None),
+            "RADIO_PWR": Device(None),
+            "JETSON_PWR": Device(None),
+            "XP_PWR": Device(None),
+            "XM_PWR": Device(None),
+            "YP_PWR": Device(None),
+            "YM_PWR": Device(None),
+            "ZP_PWR": Device(None),
+            "ZM_PWR": Device(None),
+            "TORQUE_XP": Device(None),
+            "TORQUE_XM": Device(None),
+            "TORQUE_YP": Device(None),
+            "TORQUE_YM": Device(None),
+            "TORQUE_ZP": Device(None),
+            "TORQUE_ZM": Device(None),
+            "LIGHT_XP": Device(None),
+            "LIGHT_XM": Device(None),
+            "LIGHT_YP": Device(None),
+            "LIGHT_YM": Device(None),
+            "LIGHT_ZM": Device(None),
+            "SUN1": Device(None),
+            "SUN2": Device(None),
+            "SUN3": Device(None),
+            "SUN4": Device(None),
         }
 
         # Debugging

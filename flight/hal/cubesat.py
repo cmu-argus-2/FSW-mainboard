@@ -26,22 +26,22 @@ class CubeSat:
             "BOARD_PWR": Device(self.__power_monitor_boot),
             # "RADIO_PWR": Device(self.__power_monitor_boot),
             # "JETSON_PWR": Device(self.__power_monitor_boot),
-            # "XP_PWR": Device(self.__power_monitor_boot),
-            # "XM_PWR": Device(self.__power_monitor_boot),
-            # "YP_PWR": Device(self.__power_monitor_boot),
-            # "YM_PWR": Device(self.__power_monitor_boot),
+            "XP_PWR": Device(self.__power_monitor_boot),
+            "XM_PWR": Device(self.__power_monitor_boot),
+            "YP_PWR": Device(self.__power_monitor_boot),
+            "YM_PWR": Device(self.__power_monitor_boot),
             # "ZP_PWR": Device(self.__power_monitor_boot),
             # "ZM_PWR": Device(self.__power_monitor_boot),
-            # "TORQUE_XP": Device(self.__torque_driver_boot),
-            # "TORQUE_XM": Device(self.__torque_driver_boot),
-            # "TORQUE_YP": Device(self.__torque_driver_boot),
-            # "TORQUE_YM": Device(self.__torque_driver_boot),
+            "TORQUE_XP": Device(self.__torque_driver_boot),
+            "TORQUE_XM": Device(self.__torque_driver_boot),
+            "TORQUE_YP": Device(self.__torque_driver_boot),
+            "TORQUE_YM": Device(self.__torque_driver_boot),
             # "TORQUE_ZP": Device(self.__torque_driver_boot),
             # "TORQUE_ZM": Device(self.__torque_driver_boot),
-            # "LIGHT_XP": Device(self.__light_sensor_boot),
-            # "LIGHT_XM": Device(self.__light_sensor_boot),
-            # "LIGHT_YP": Device(self.__light_sensor_boot),
-            # "LIGHT_YM": Device(self.__light_sensor_boot),
+            "LIGHT_XP": Device(self.__light_sensor_boot),
+            "LIGHT_XM": Device(self.__light_sensor_boot),
+            "LIGHT_YP": Device(self.__light_sensor_boot),
+            "LIGHT_YM": Device(self.__light_sensor_boot),
             # "LIGHT_ZM": Device(self.__light_sensor_boot),
             # "SUN1": Device(self.__light_sensor_boot),
             # "SUN2": Device(self.__light_sensor_boot),
@@ -204,7 +204,7 @@ class CubeSat:
     def APPLY_MAGNETIC_CONTROL(self, dir: str, throttle: float) -> None:
         """CONTROL_COILS: Control the coils on the CubeSat, depending on the control mode (identiical for all coils)."""
         if self.TORQUE_DRIVERS_AVAILABLE(dir):
-            self.__torque_drivers[dir].set_throttle(throttle)
+            self.__device_list["TORQUE_" + dir].set_throttle(throttle)
 
     def TORQUE_DRIVERS_AVAILABLE(self, dir: str) -> bool:
         """Returns True if the specific torque driver for the given direction is available.

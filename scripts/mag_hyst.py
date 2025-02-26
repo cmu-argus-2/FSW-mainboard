@@ -1,6 +1,6 @@
 import time
 
-import circuitpython_csv as csv
+# import circuitpython_csv as csv
 import supervisor
 from hal.configuration import SATELLITE
 
