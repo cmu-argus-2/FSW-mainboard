@@ -50,7 +50,7 @@ class Task(TemplateTask):
             ### RTC setup
 
             # r = rtc.RTC()
-            SATELLITE.RTC.set_datetime(time.struct_time((2024, 4, 24, 9, 30, 0, 3, 115, -1)))
+            # SATELLITE.RTC.set_datetime(time.struct_time((2024, 4, 24, 9, 30, 0, 3, 115, -1)))
             # rtc.set_time_source(r)
 
             # TODO: Burn wires
