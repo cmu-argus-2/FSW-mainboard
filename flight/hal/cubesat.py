@@ -93,6 +93,10 @@ class CubeSat:
             if device.error != Errors.NOERROR:
                 error_list[name] = device.device
         return error_list
+    
+    def key_in_device_list(self, key: str) -> bool:
+        """key_in_device_list: Check if the key is in the device list"""
+        return key in self.__device_list
 
     ######################### STATE FLAGS ########################
     @property
@@ -116,7 +120,7 @@ class CubeSat:
         """GPS_AVAILABLE: Returns True if the GPS is available
         :return: bool
         """
-        return self.__device_list["GPS"].device is not None
+        return self.key_in_device_list("GPS") and self.__device_list["GPS"].device is not None
 
     @property
     def POWER_MONITORS(self):
@@ -133,7 +137,7 @@ class CubeSat:
         """POWER_MONITOR_AVAILABLE: Returns True if the power monitor for the given direction is available
         :return: bool
         """
-        return self.__device_list[dir + "_PWR"].device is not None
+        return self.key_in_device_list(dir + "_PWR") and self.__device_list[dir + "_PWR"].device is not None
 
     @property
     def IMU(self):
@@ -147,7 +151,7 @@ class CubeSat:
         """IMU_AVAILABLE: Returns True if the IMU is available
         :return: bool
         """
-        return self.__device_list["IMU"].device is not None
+        return self.key_in_device_list("IMU") and self.__device_list["IMU"].device is not None
 
     @property
     def IMU_TEMPERATURE_AVAILABLE(self) -> bool:
@@ -204,7 +208,7 @@ class CubeSat:
     def APPLY_MAGNETIC_CONTROL(self, dir: str, throttle: float) -> None:
         """CONTROL_COILS: Control the coils on the CubeSat, depending on the control mode (identiical for all coils)."""
         if self.TORQUE_DRIVERS_AVAILABLE(dir):
-            self.__device_list["TORQUE_" + dir].set_throttle(throttle)
+            self.__device_list["TORQUE_" + dir].device.set_throttle(throttle)
 
     def TORQUE_DRIVERS_AVAILABLE(self, dir: str) -> bool:
         """Returns True if the specific torque driver for the given direction is available.
@@ -212,7 +216,9 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'XM', etc.)
         :return: bool - True if the driver exists and is not None, False otherwise.
         """
-        return self.device_list["TORQUE_" + dir].device is not None
+        # print("TORQUE_" + dir)
+        # print(self.device_list["TORQUE_" + dir].device is not None)
+        return self.key_in_device_list("TORQUE_" + dir) and self.device_list["TORQUE_" + dir].device is not None
 
     @property
     def LIGHT_SENSORS(self):
@@ -229,7 +235,7 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'XM', etc.)
         :return: bool - True if the sensor exists and is not None, False otherwise.
         """
-        return self.__device_list["LIGHT_" + dir].device is not None
+        return self.key_in_device_list("LIGHT_" + dir) and self.__device_list["LIGHT_" + dir].device is not None
 
     @property
     def RTC(self):
@@ -243,7 +249,7 @@ class CubeSat:
         """RTC_AVAILABLE: Returns True if the RTC is available
         :return: bool
         """
-        return self.__device_list["RTC"].device is not None
+        return self.key_in_device_list("RTC") and self.__device_list["RTC"].device is not None
 
     @property
     def RADIO(self):
@@ -257,7 +263,7 @@ class CubeSat:
         """RADIO_AVAILABLE: Returns True if the radio is available
         :return: bool
         """
-        return self.__device_list["RADIO"].device is not None
+        return self.key_in_device_list("RADIO") and self.__device_list["RADIO"].device is not None
 
     @property
     def BURN_WIRES(self):
@@ -271,7 +277,7 @@ class CubeSat:
         """BURN_WIRES_AVAILABLE: Returns True if the burn wires are available
         :return: bool
         """
-        return self.__device_list["BURN_WIRES"].device is not None
+        return self.key_in_device_list("BURN_WIRES") and self.__device_list["BURN_WIRES"].device is not None
 
     @property
     def SD_CARD(self):
@@ -285,7 +291,7 @@ class CubeSat:
         """SD_CARD_AVAILABLE: Returns True if the SD card is available
         :return: bool
         """
-        return self.__device_list["SDCARD"].device is not None
+        return self.key_in_device_list("SDCARD") and self.__device_list["SDCARD"].device is not None
 
     # @property
     # def VFS(self):
