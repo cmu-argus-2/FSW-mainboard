@@ -36,8 +36,8 @@ class CubeSat:
             "TORQUE_XM": Device(self.__torque_driver_boot),
             "TORQUE_YP": Device(self.__torque_driver_boot),
             "TORQUE_YM": Device(self.__torque_driver_boot),
-            # "TORQUE_ZP": Device(self.__torque_driver_boot),
-            # "TORQUE_ZM": Device(self.__torque_driver_boot),
+            "TORQUE_ZP": Device(self.__torque_driver_boot),
+            "TORQUE_ZM": Device(self.__torque_driver_boot),
             "LIGHT_XP": Device(self.__light_sensor_boot),
             "LIGHT_XM": Device(self.__light_sensor_boot),
             "LIGHT_YP": Device(self.__light_sensor_boot),
@@ -212,7 +212,7 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'XM', etc.)
         :return: bool - True if the driver exists and is not None, False otherwise.
         """
-        return "TORQUE_" + dir in self.device_list and self.device_list["TORQUE_" + dir].device is not None
+        return self.device_list["TORQUE_" + dir].device is not None
 
     @property
     def LIGHT_SENSORS(self):
