@@ -9,7 +9,6 @@ from ulab import numpy as np
 
 
 class OrbitPropagator:
-
     # Storage
     last_update_time = 0
     last_updated_state = np.zeros((6,))
@@ -28,7 +27,6 @@ class OrbitPropagator:
 
     @classmethod
     def propagate_orbit(cls, current_time: int, last_gps_time: int = None, last_gps_state: np.ndarray = None):
-
         if last_gps_state is not None:
             cls.last_updated_state = last_gps_state
             cls.last_update_time = last_gps_time

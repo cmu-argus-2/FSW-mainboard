@@ -271,7 +271,7 @@ class SATELLITE_RADIO:
 
     @classmethod
     def data_available(cls):
-        return SATELLITE.RADIO.RX_available()
+        return cls.sat.RADIO.RX_available()
 
     """
         Name: file_get_metadata
@@ -448,7 +448,10 @@ class SATELLITE_RADIO:
         # Get packet from radio over SPI
         # Assumes packet is in FIFO buffer
 
-        packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
+        if cls.sat.RADIO_AVAILABLE:
+            packet, err = cls.sat.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
+        else:
+            logger.warning("[COMMS ERROR] RADIO no longer active on SAT")
 
         # Check if packet exists
         if packet is None:
@@ -467,7 +470,10 @@ class SATELLITE_RADIO:
             cls.rx_gs_len = 0
             return cls.rx_gs_cmd
 
-        cls.rx_message_rssi = SATELLITE.RADIO.rssi()
+        if cls.sat.RADIO_AVAILABLE:
+            cls.rx_message_rssi = cls.sat.RADIO.rssi()
+        else:
+            logger.warning("[COMMS ERROR] RADIO no longer active on SAT")
 
         # Unpack source header
         cls.rx_src_id = int.from_bytes(packet[0:1], "big")
@@ -521,34 +527,14 @@ class SATELLITE_RADIO:
         else:
             cls.rx_payload = bytearray()
 
-        # Internal handling for file requests
-        if cls.rx_gs_cmd == MSG_ID.GS_CMD_FILE_METADATA:
+        if cls.rx_gs_cmd == MSG_ID.GS_CMD_FILE_PKT:
             if cls.check_rq_file_params(packet[4:]) is False:
                 # Filepath does not match
 
-                # TODO: Replace error with a filepath request from the CDH
+                # Error, send down empty file array to signal the error
                 logger.warning("[COMMS ERROR] Filepath requested from the GS does not exist")
-                cls.rx_gs_cmd = 0x00
-                cls.rx_sq_cnt = 0
-                cls.rx_gs_len = 0
-                return cls.rx_gs_cmd
-
-            else:
-                # Filepath matches, move forward with request
-                pass
-
-        elif cls.rx_gs_cmd == MSG_ID.GS_CMD_FILE_PKT:
-            if cls.check_rq_file_params(packet[4:]) is False:
-                # Filepath does not match
-
-                # Error, currently just go back to heartbeat state
-                logger.warning("[COMMS ERROR] Filepath requested from the GS does not exist")
-                cls.rx_gs_cmd = 0x00
-                cls.rx_sq_cnt = 0
-                cls.rx_gs_len = 0
-
+                cls.filepath = None
                 cls.rq_sq_cnt = 0
-                return cls.rx_gs_cmd
 
             else:
                 # Filepath matches, move forward with request
@@ -599,8 +585,11 @@ class SATELLITE_RADIO:
         cls.tx_message = bytes([MSG_ID.ARGUS_ID, MSG_ID.GS_ID]) + cls.tx_message
 
         # Send a message to GS
-        cls.sat.RADIO.send(cls.tx_message)
-        cls.crc_count = 0
+        if cls.sat.RADIO_AVAILABLE:
+            cls.sat.RADIO.send(cls.tx_message)
+            cls.crc_count = 0
+        else:
+            logger.warning("[COMMS ERROR] RADIO no longer active on SAT")
 
         # Return TX message header
         cls.tx_message_ID = int.from_bytes(cls.tx_message[2:3], "big")

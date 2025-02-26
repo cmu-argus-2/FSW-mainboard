@@ -25,7 +25,7 @@ class ArgusV2Interfaces:
 
     # Line may not be connected, try except sequence
     try:
-        I2C0 = I2C(I2C0_SCL, I2C0_SDA)
+        I2C0 = I2C(I2C0_SCL, I2C0_SDA, frequency=400000)
     except Exception:
         I2C0 = None
 
@@ -153,11 +153,11 @@ class ArgusV2Components:
 
     # GPS POWER MONITOR
     GPS_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    GPS_POWER_MONITOR_I2C_ADDRESS = const(0x40)
+    GPS_POWER_MONITOR_I2C_ADDRESS = const(0x41)
 
     # BOARD POWER MONITOR
     BOARD_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x48)
+    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x40)
 
     # CAMERA
 
@@ -291,10 +291,10 @@ class ArgusV2(CubeSat):
 
         error_list.append(self.__sd_card_boot())
         error_list.append(self.__vfs_boot())
+        error_list.append(self.__radio_boot())
         error_list.append(self.__imu_boot())
         error_list.append(self.__rtc_boot())
         error_list.append(self.__gps_boot())
-        error_list.append(self.__radio_boot())
         error_list.append(self.__power_monitor_boot())
         error_list.append(self.__fuel_gauge_boot())
         # error_list.append(self.__charger_boot())  # DO NOT boot this device, not used
@@ -460,7 +460,6 @@ class ArgusV2(CubeSat):
         from hal.drivers.bq25883 import BQ25883
 
         try:
-
             charger = BQ25883(
                 ArgusV2Components.CHARGER_I2C,
                 ArgusV2Components.CHARGER_I2C_ADDRESS,
@@ -566,7 +565,6 @@ class ArgusV2(CubeSat):
         from hal.drivers.sx126x import SX1262
 
         try:
-
             # Enable power to the radio
             radioEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_ENABLE)
             radioEn.direction = digitalio.Direction.OUTPUT
@@ -583,7 +581,7 @@ class ArgusV2(CubeSat):
             )
 
             radio.begin(
-                freq=915.6,
+                freq=433,
                 bw=125,
                 sf=7,
                 cr=8,
@@ -701,7 +699,6 @@ class ArgusV2(CubeSat):
         from hal.drivers.max17205 import MAX17205
 
         try:
-
             fuel_gauge = MAX17205(
                 ArgusV2Components.FUEL_GAUGE_I2C,
                 ArgusV2Components.FUEL_GAUGE_I2C_ADDRESS,
