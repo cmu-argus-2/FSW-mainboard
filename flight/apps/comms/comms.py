@@ -271,7 +271,7 @@ class SATELLITE_RADIO:
 
     @classmethod
     def data_available(cls):
-        return SATELLITE.RADIO.RX_available()
+        return cls.sat.RADIO.RX_available()
 
     """
         Name: file_get_metadata
@@ -449,7 +449,7 @@ class SATELLITE_RADIO:
         # Assumes packet is in FIFO buffer
 
         if cls.sat.RADIO_AVAILABLE:
-            packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
+            packet, err = cls.sat.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
         else:
             logger.warning("[COMMS ERROR] RADIO no longer active on SAT")
 
@@ -470,7 +470,10 @@ class SATELLITE_RADIO:
             cls.rx_gs_len = 0
             return cls.rx_gs_cmd
 
-        cls.rx_message_rssi = SATELLITE.RADIO.rssi()
+        if cls.sat.RADIO_AVAILABLE:
+            cls.rx_message_rssi = cls.sat.RADIO.rssi()
+        else:
+            logger.warning("[COMMS ERROR] RADIO no longer active on SAT")
 
         # Unpack source header
         cls.rx_src_id = int.from_bytes(packet[0:1], "big")
