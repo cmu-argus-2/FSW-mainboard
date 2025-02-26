@@ -160,34 +160,6 @@ class CubeSat:
         """
         return self.__imu_temp_flag
 
-    # @property
-    # def CHARGER(self):
-    #     """CHARGER: Returns the charger object
-    #     :return: object or None
-    #     """
-    #     return self.__charger
-
-    # @property
-    # def CHARGER_AVAILABLE(self) -> bool:
-    #     """CHARGER_AVAILABLE: Returns True if the charger is available
-    #     :return: bool
-    #     """
-    #     return self.__charger is not None
-
-    @property
-    def TORQUE_XP_POWER_MONITOR(self):
-        """TORQUE_XP: Returns the torque driver in the x+ direction
-        :return: object or None
-        """
-        return self.__device_list["TORQUE_XP"].device
-
-    # @property
-    # def TORQUE_XP_POWER_MONITOR_AVAILABLE(self) -> bool:
-    #     """TORQUE_XP_POWER_MONITOR_AVAILABLE: Returns True if the torque driver in the x+ direction is available
-    #     :return: bool
-    #     """
-    #     return self.__device_list["TORQUE_XP"].device is not None
-
     @property
     def TORQUE_DRIVERS(self):
         """Returns a dictionary of torque drivers with the direction as the key (e.g. 'XP', 'XM', 'YP', 'YM', 'ZM')"""
@@ -203,6 +175,12 @@ class CubeSat:
         :return: object or None
         """
         return self.__device_list["FUEL_GAUGE"].device
+    
+    def FUEL_GAUGE_AVAILABLE(self) -> bool:
+        """FUEL_GAUGE_AVAILABLE: Returns True if the fuel gauge is available
+        :return: bool
+        """
+        return self.key_in_device_list("FUEL_GAUGE") and self.__device_list["FUEL_GAUGE"].device is not None
 
     # ABSTRACT METHOD #
     def APPLY_MAGNETIC_CONTROL(self, dir: str, throttle: float) -> None:
@@ -216,8 +194,6 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'XM', etc.)
         :return: bool - True if the driver exists and is not None, False otherwise.
         """
-        # print("TORQUE_" + dir)
-        # print(self.device_list["TORQUE_" + dir].device is not None)
         return self.key_in_device_list("TORQUE_" + dir) and self.device_list["TORQUE_" + dir].device is not None
 
     @property
