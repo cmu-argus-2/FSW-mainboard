@@ -11,8 +11,8 @@ from hal.drivers.power_monitor import PowerMonitor
 from hal.drivers.radio import Radio
 from hal.drivers.rtc import RTC
 from hal.drivers.sd import SD
-from hal.drivers.sun_sensor import LightSensor
-from hal.drivers.torque_coil import CoilDriver
+from hal.drivers.sun_sensor import LightSensorArray
+from hal.drivers.torque_coil import TorqueCoilArray
 
 
 class device:
@@ -48,38 +48,30 @@ class EmulatedSatellite(CubeSat):
 
         super().__init__()
 
-        self._device_list["RADIO"].device = Radio(self.__use_socket)
-        self._device_list["SDCARD"].device = SD()
-        self._device_list["BURN_WIRE"].device = self.init_device(BurnWires())
+        self._radio = Radio(self.__use_socket)
+        self._sd_card = SD()
+        self._burnwires = self.init_device(BurnWires())
         self._payload_uart = self.init_device(Payload())
 
-        # self._vfs = None
-        self._device_list["GPS"].device = self.init_device(GPS(simulator=self.__simulated_spacecraft))
-        # self._charger = None
+        self._vfs = None
+        self._gps = self.init_device(GPS(simulator=self.__simulated_spacecraft))
+        self._charger = None
 
-        self._device_list["LIGHT_XP"].device = self.init_device(LightSensor(4500, 0, simulator=self.__simulated_spacecraft))
-        self._device_list["LIGHT_XM"].device = self.init_device(LightSensor(48000, 1, simulator=self.__simulated_spacecraft))
-        self._device_list["LIGHT_YP"].device = self.init_device(LightSensor(85000, 2, simulator=self.__simulated_spacecraft))
-        self._device_list["LIGHT_YM"].device = self.init_device(LightSensor(0, 3, simulator=self.__simulated_spacecraft))
-        self._device_list["LIGHT_ZM"].device = self.init_device(LightSensor(0, 4, simulator=self.__simulated_spacecraft))
+        self._light_sensors = LightSensorArray(simulator=self.__simulated_spacecraft)
 
-        # self._torque_drivers = TorqueCoilArray(simulator=self.__simulated_spacecraft)
-        self._device_list["TORQUE_XP"].device = self.init_device(CoilDriver(0, simulator=self.__simulated_spacecraft))
-        self._device_list["TORQUE_XM"].device = self.init_device(CoilDriver(1, simulator=self.__simulated_spacecraft))
-        self._device_list["TORQUE_YP"].device = self.init_device(CoilDriver(2, simulator=self.__simulated_spacecraft))
-        self._device_list["TORQUE_YM"].device = self.init_device(CoilDriver(3, simulator=self.__simulated_spacecraft))
-        self._device_list["TORQUE_ZP"].device = self.init_device(CoilDriver(4, simulator=self.__simulated_spacecraft))
-        self._device_list["TORQUE_ZM"].device = self.init_device(CoilDriver(5, simulator=self.__simulated_spacecraft))
+        self._torque_drivers = TorqueCoilArray(simulator=self.__simulated_spacecraft)
 
-        self._device_list["IMU"].device = self.init_device(IMU(simulator=self.__simulated_spacecraft))
-        self._device_list["IMU"].device.enable()
+        self._imu = self.init_device(IMU(simulator=self.__simulated_spacecraft))
+        self._imu.enable()
 
-        self._device_list["BOARD_PWR"].device = self.init_device(PowerMonitor(7.6, 0.1))
-        self._device_list["JETSON_PWR"].device = self.init_device(PowerMonitor(4, 0.05))
+        self._jetson_power_monitor = self.init_device(PowerMonitor(4, 0.05))
+        self._board_power_monitor = self.init_device(PowerMonitor(7.6, 0.1))
+        self._power_monitors["BOARD"] = self._board_power_monitor
+        self._power_monitors["JETSON"] = self._jetson_power_monitor
 
-        self._device_list["FUEL_GAUGE"].device = self.init_device(FuelGauge())
+        self._fuel_gauge = self.init_device(FuelGauge())
 
-        self._device_list["RTC"].device = self.init_device(RTC(time.gmtime()))
+        self._rtc = self.init_device(RTC(time.gmtime()))
 
     def init_device(self, device):
         return device
