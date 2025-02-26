@@ -24,7 +24,8 @@ class CubeSat:
             # "FUEL_GAUGE": Device(self.__fuel_gauge_boot),
             # "BURN_WIRE": Device(self.__burn_wire_boot),
             "BOARD_PWR": Device(self.__power_monitor_boot),
-            # "RADIO_PWR": Device(self.__power_monitor_boot),
+            # "RADIO_PWR": Device(self.__power_monitor_boot),\
+            # "GPS_PWR": Device(self.__power_monitor_boot),
             # "JETSON_PWR": Device(self.__power_monitor_boot),
             "XP_PWR": Device(self.__power_monitor_boot),
             "XM_PWR": Device(self.__power_monitor_boot),
@@ -94,6 +95,10 @@ class CubeSat:
                 error_list[name] = device.device
         return error_list
 
+    def key_in_device_list(self, key: str) -> bool:
+        """key_in_device_list: Check if the key is in the device list"""
+        return key in self.__device_list
+
     ######################### STATE FLAGS ########################
     @property
     def STATE_FLAGS(self):
@@ -116,7 +121,7 @@ class CubeSat:
         """GPS_AVAILABLE: Returns True if the GPS is available
         :return: bool
         """
-        return self.__device_list["GPS"].device is not None
+        return self.key_in_device_list("GPS") and self.__device_list["GPS"].device is not None
 
     @property
     def POWER_MONITORS(self):
@@ -133,7 +138,7 @@ class CubeSat:
         """POWER_MONITOR_AVAILABLE: Returns True if the power monitor for the given direction is available
         :return: bool
         """
-        return self.__device_list[dir + "_PWR"].device is not None
+        return self.key_in_device_list(dir + "_PWR") and self.__device_list[dir + "_PWR"].device is not None
 
     @property
     def IMU(self):
@@ -147,7 +152,7 @@ class CubeSat:
         """IMU_AVAILABLE: Returns True if the IMU is available
         :return: bool
         """
-        return self.__device_list["IMU"].device is not None
+        return self.key_in_device_list("IMU") and self.__device_list["IMU"].device is not None
 
     @property
     def IMU_TEMPERATURE_AVAILABLE(self) -> bool:
@@ -155,34 +160,6 @@ class CubeSat:
         :return: bool
         """
         return self.__imu_temp_flag
-
-    # @property
-    # def CHARGER(self):
-    #     """CHARGER: Returns the charger object
-    #     :return: object or None
-    #     """
-    #     return self.__charger
-
-    # @property
-    # def CHARGER_AVAILABLE(self) -> bool:
-    #     """CHARGER_AVAILABLE: Returns True if the charger is available
-    #     :return: bool
-    #     """
-    #     return self.__charger is not None
-
-    @property
-    def TORQUE_XP_POWER_MONITOR(self):
-        """TORQUE_XP: Returns the torque driver in the x+ direction
-        :return: object or None
-        """
-        return self.__device_list["TORQUE_XP"].device
-
-    # @property
-    # def TORQUE_XP_POWER_MONITOR_AVAILABLE(self) -> bool:
-    #     """TORQUE_XP_POWER_MONITOR_AVAILABLE: Returns True if the torque driver in the x+ direction is available
-    #     :return: bool
-    #     """
-    #     return self.__device_list["TORQUE_XP"].device is not None
 
     @property
     def TORQUE_DRIVERS(self):
@@ -193,6 +170,20 @@ class CubeSat:
                 torque_drivers[name.replace("TORQUE_", "")] = device.device
         return torque_drivers
 
+    def TORQUE_DRIVERS_AVAILABLE(self, dir: str) -> bool:
+        """Returns True if the specific torque driver for the given direction is available.
+
+        :param dir: The direction key (e.g., 'XP', 'XM', etc.)
+        :return: bool - True if the driver exists and is not None, False otherwise.
+        """
+        return self.key_in_device_list("TORQUE_" + dir) and self.device_list["TORQUE_" + dir].device is not None
+
+    # ABSTRACT METHOD #
+    def APPLY_MAGNETIC_CONTROL(self, dir: str, throttle: float) -> None:
+        """CONTROL_COILS: Control the coils on the CubeSat, depending on the control mode (identiical for all coils)."""
+        if self.TORQUE_DRIVERS_AVAILABLE(dir):
+            self.__device_list["TORQUE_" + dir].device.set_throttle(throttle)
+
     @property
     def FUEL_GAUGE(self):
         """FUEL_GAUGE: Returns the fuel gauge object
@@ -200,19 +191,11 @@ class CubeSat:
         """
         return self.__device_list["FUEL_GAUGE"].device
 
-    # ABSTRACT METHOD #
-    def APPLY_MAGNETIC_CONTROL(self, dir: str, throttle: float) -> None:
-        """CONTROL_COILS: Control the coils on the CubeSat, depending on the control mode (identiical for all coils)."""
-        if self.TORQUE_DRIVERS_AVAILABLE(dir):
-            self.__device_list["TORQUE_" + dir].set_throttle(throttle)
-
-    def TORQUE_DRIVERS_AVAILABLE(self, dir: str) -> bool:
-        """Returns True if the specific torque driver for the given direction is available.
-
-        :param dir: The direction key (e.g., 'XP', 'XM', etc.)
-        :return: bool - True if the driver exists and is not None, False otherwise.
+    def FUEL_GAUGE_AVAILABLE(self) -> bool:
+        """FUEL_GAUGE_AVAILABLE: Returns True if the fuel gauge is available
+        :return: bool
         """
-        return self.device_list["TORQUE_" + dir].device is not None
+        return self.key_in_device_list("FUEL_GAUGE") and self.__device_list["FUEL_GAUGE"].device is not None
 
     @property
     def LIGHT_SENSORS(self):
@@ -229,7 +212,7 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'XM', etc.)
         :return: bool - True if the sensor exists and is not None, False otherwise.
         """
-        return self.__device_list["LIGHT_" + dir].device is not None
+        return self.key_in_device_list("LIGHT_" + dir) and self.__device_list["LIGHT_" + dir].device is not None
 
     @property
     def RTC(self):
@@ -243,7 +226,7 @@ class CubeSat:
         """RTC_AVAILABLE: Returns True if the RTC is available
         :return: bool
         """
-        return self.__device_list["RTC"].device is not None
+        return self.key_in_device_list("RTC") and self.__device_list["RTC"].device is not None
 
     @property
     def RADIO(self):
@@ -257,7 +240,7 @@ class CubeSat:
         """RADIO_AVAILABLE: Returns True if the radio is available
         :return: bool
         """
-        return self.__device_list["RADIO"].device is not None
+        return self.key_in_device_list("RADIO") and self.__device_list["RADIO"].device is not None
 
     @property
     def BURN_WIRES(self):
@@ -271,7 +254,7 @@ class CubeSat:
         """BURN_WIRES_AVAILABLE: Returns True if the burn wires are available
         :return: bool
         """
-        return self.__device_list["BURN_WIRES"].device is not None
+        return self.key_in_device_list("BURN_WIRES") and self.__device_list["BURN_WIRES"].device is not None
 
     @property
     def SD_CARD(self):
@@ -285,7 +268,7 @@ class CubeSat:
         """SD_CARD_AVAILABLE: Returns True if the SD card is available
         :return: bool
         """
-        return self.__device_list["SDCARD"].device is not None
+        return self.key_in_device_list("SDCARD") and self.__device_list["SDCARD"].device is not None
 
     # @property
     # def VFS(self):
