@@ -2,11 +2,13 @@ import time
 
 from hal.drivers.middleware.errors import Errors
 
+
 class Device:
     def __init__(self, boot_fn: object, device: object = None, error: int = 0):
         self.device = device
         self.error = error
         self.boot_fn = boot_fn
+
 
 class CubeSat:
     """CubeSat: Base class for all CubeSat implementations"""
@@ -309,5 +311,3 @@ class CubeSat:
         :return: object or None
         """
         return self._time_ref_boot
-
-
