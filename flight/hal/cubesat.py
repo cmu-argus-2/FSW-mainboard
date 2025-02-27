@@ -2,6 +2,11 @@ import time
 
 from hal.drivers.middleware.errors import Errors
 
+class Device:
+    def __init__(self, boot_fn: object, device: object = None, error: int = 0):
+        self.device = device
+        self.error = error
+        self.boot_fn = boot_fn
 
 class CubeSat:
     """CubeSat: Base class for all CubeSat implementations"""
@@ -24,7 +29,7 @@ class CubeSat:
             # "FUEL_GAUGE": Device(self.__fuel_gauge_boot),
             # "BURN_WIRE": Device(self.__burn_wire_boot),
             "BOARD_PWR": Device(self.__power_monitor_boot),
-            # "RADIO_PWR": Device(self.__power_monitor_boot),\
+            # "RADIO_PWR": Device(self.__power_monitor_boot),
             # "GPS_PWR": Device(self.__power_monitor_boot),
             # "JETSON_PWR": Device(self.__power_monitor_boot),
             "XP_PWR": Device(self.__power_monitor_boot),
@@ -44,10 +49,10 @@ class CubeSat:
             "LIGHT_YP": Device(self.__light_sensor_boot),
             "LIGHT_YM": Device(self.__light_sensor_boot),
             # "LIGHT_ZM": Device(self.__light_sensor_boot),
-            # "SUN1": Device(self.__light_sensor_boot),
-            # "SUN2": Device(self.__light_sensor_boot),
-            # "SUN3": Device(self.__light_sensor_boot),
-            # "SUN4": Device(self.__light_sensor_boot),
+            # "LIGHT_ZP_1": Device(self.__light_sensor_boot),
+            # "LIGHT_ZP_2": Device(self.__light_sensor_boot),
+            # "LIGHT_ZP_3": Device(self.__light_sensor_boot),
+            # "LIGHT_ZP_4": Device(self.__light_sensor_boot),
         }
 
         # List of errors from most recent system diagnostic test
@@ -305,13 +310,4 @@ class CubeSat:
         """
         return self._time_ref_boot
 
-    def reboot_peripheral(self, peripheral: object) -> int:
-        """REBOOT_PERIPHERAL: Reboot the peripheral"""
-        raise NotImplementedError("CubeSats must implement reboot peripheral method")
 
-
-class Device:
-    def __init__(self, boot_fn: object, device: object = None, error: int = 0):
-        self.device = device
-        self.error = error
-        self.boot_fn = boot_fn

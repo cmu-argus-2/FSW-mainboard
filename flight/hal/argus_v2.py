@@ -396,10 +396,10 @@ class ArgusV2(CubeSat):
             "LIGHT_YP": [ArgusV2Components.LIGHT_SENSOR_YP_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_YP_I2C],
             "LIGHT_YM": [ArgusV2Components.LIGHT_SENSOR_YM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_YM_I2C],
             "LIGHT_ZM": [ArgusV2Components.LIGHT_SENSOR_ZM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_ZM_I2C],
-            "SUN1": [ArgusV2Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
-            "SUN2": [ArgusV2Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
-            "SUN3": [ArgusV2Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
-            "SUN4": [ArgusV2Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_1": [ArgusV2Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_2": [ArgusV2Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_3": [ArgusV2Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_4": [ArgusV2Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
         }
 
         from hal.drivers.opt4003 import OPT4003
@@ -448,7 +448,7 @@ class ArgusV2(CubeSat):
             )
 
             radio.begin(
-                freq=915.6,
+                freq=433,
                 bw=125,
                 sf=7,
                 cr=8,
@@ -548,16 +548,3 @@ class ArgusV2(CubeSat):
             if self.__debug:
                 raise e
             return [None, Errors.MAX17205_NOT_INITIALIZED]
-
-    def reboot_peripheral(self, device_name: str) -> int:
-        """__reboot_peripheral: Reboot a peripheral
-
-        :param peripheral: The peripheral to reboot
-        :return: Error code if the reboot failed
-        """
-        if device_name not in self.__device_list:
-            return Errors.PERIPHERAL_NOT_FOUND
-        self.__device_list[device_name].device = None
-        func = self.__device_list[device_name].boot_fn
-        self.__device_list[device_name].device, self.__device_list[device_name].error = func(device_name)
-        return self.__device_list[device_name].error

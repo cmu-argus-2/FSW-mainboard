@@ -162,10 +162,10 @@ class ArgusV1Components:
 
     # ZP SUN SENSOR
     SUN_SENSOR_ZP_I2C = ArgusV1Interfaces.I2C3
-    SUN_SENSOR_ZP1_I2C_ADDRESS = const(0x44)  # Conflict with ZM
-    SUN_SENSOR_ZP2_I2C_ADDRESS = const(0x45)
-    SUN_SENSOR_ZP3_I2C_ADDRESS = const(0x46)
-    SUN_SENSOR_ZP4_I2C_ADDRESS = const(0x47)
+    LIGHT_SENSOR_ZP1_I2C_ADDRESS = const(0x44)  # Conflict with ZM
+    LIGHT_SENSOR_ZP2_I2C_ADDRESS = const(0x45)
+    LIGHT_SENSOR_ZP3_I2C_ADDRESS = const(0x46)
+    LIGHT_SENSOR_ZP4_I2C_ADDRESS = const(0x47)
 
     # GPS
     GPS_UART = ArgusV1Interfaces.UART1
@@ -258,47 +258,23 @@ class ArgusV1(CubeSat):
         locations = {
             "BOARD_PWR": [ArgusV1Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV1Components.BOARD_POWER_MONITOR_I2C],
             "JETSON_PWR": [ArgusV1Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV1Components.JETSON_POWER_MONITOR_I2C],
-            "TORQUE_XP_PWR": [
-                ArgusV1Components.TORQUE_XP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV1Components.TORQUE_X_POWER_MONITOR_I2C,
-            ],
-            "TORQUE_XM_PWR": [
-                ArgusV1Components.TORQUE_XM_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV1Components.TORQUE_X_POWER_MONITOR_I2C,
-            ],
-            "TORQUE_YP_PWR": [
-                ArgusV1Components.TORQUE_YP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV1Components.TORQUE_Y_POWER_MONITOR_I2C,
-            ],
-            "TORQUE_YM_PWR": [
-                ArgusV1Components.TORQUE_YM_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV1Components.TORQUE_Y_POWER_MONITOR_I2C,
-            ],
-            "TORQUE_ZP_PWR": [
-                ArgusV1Components.TORQUE_ZP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV1Components.TORQUE_Z_POWER_MONITOR_I2C,
-            ],
-            "TORQUE_ZM_PWR": [
-                ArgusV1Components.TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV1Components.TORQUE_Z_POWER_MONITOR_I2C,
-            ],
-            "SOLAR_XP_PWR": [
+            "XP_PWR": [
                 ArgusV1Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
                 ArgusV1Components.SOLAR_CHARGING_X_POWER_MONITOR_I2C,
             ],
-            "SOLAR_XM_PWR": [
+            "XM_PWR": [
                 ArgusV1Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS,
                 ArgusV1Components.SOLAR_CHARGING_X_POWER_MONITOR_I2C,
             ],
-            "SOLAR_YP_PWR": [
+            "YP_PWR": [
                 ArgusV1Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS,
                 ArgusV1Components.SOLAR_CHARGING_Y_POWER_MONITOR_I2C,
             ],
-            "SOLAR_YM_PWR": [
+            "YM_PWR": [
                 ArgusV1Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS,
                 ArgusV1Components.SOLAR_CHARGING_Y_POWER_MONITOR_I2C,
             ],
-            "SOLAR_ZP_PWR": [
+            "ZP_PWR": [
                 ArgusV1Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS,
                 ArgusV1Components.SOLAR_CHARGING_Z_POWER_MONITOR_I2C,
             ],
@@ -379,10 +355,10 @@ class ArgusV1(CubeSat):
             "LIGHT_YP": [ArgusV1Components.LIGHT_SENSOR_YP_I2C_ADDRESS, ArgusV1Components.LIGHT_SENSOR_Y_I2C],
             "LIGHT_YM": [ArgusV1Components.LIGHT_SENSOR_YM_I2C_ADDRESS, ArgusV1Components.LIGHT_SENSOR_Y_I2C],
             "LIGHT_ZM": [ArgusV1Components.LIGHT_SENSOR_ZM_I2C_ADDRESS, ArgusV1Components.LIGHT_SENSOR_Z_I2C],
-            "SUN1": [ArgusV1Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
-            "SUN2": [ArgusV1Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
-            "SUN3": [ArgusV1Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
-            "SUN4": [ArgusV1Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_1": [ArgusV1Components.LIGHT_SENSOR_ZP1_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_2": [ArgusV1Components.LIGHT_SENSOR_ZP2_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_3": [ArgusV1Components.LIGHT_SENSOR_ZP3_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_4": [ArgusV1Components.LIGHT_SENSOR_ZP4_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
         }
 
         from hal.drivers.opt4001 import OPT4001
