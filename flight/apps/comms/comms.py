@@ -102,9 +102,6 @@ class MSG_ID:
 
 
 class SATELLITE_RADIO:
-    # Hardware abstraction for satellite
-    sat = SATELLITE
-
     # Comms state
     state = COMMS_STATE.TX_HEARTBEAT
 
@@ -271,7 +268,11 @@ class SATELLITE_RADIO:
 
     @classmethod
     def data_available(cls):
-        return cls.sat.RADIO.RX_available()
+        if SATELLITE.RADIO_AVAILABLE:
+            return SATELLITE.RADIO.RX_available()
+        else:
+            logger.warning("[COMMS ERROR] RADIO no longer active on SAT")
+            return False
 
     """
         Name: file_get_metadata
@@ -448,8 +449,8 @@ class SATELLITE_RADIO:
         # Get packet from radio over SPI
         # Assumes packet is in FIFO buffer
 
-        if cls.sat.RADIO_AVAILABLE:
-            packet, err = cls.sat.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
+        if SATELLITE.RADIO_AVAILABLE:
+            packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
         else:
             logger.warning("[COMMS ERROR] RADIO no longer active on SAT")
 
@@ -470,8 +471,8 @@ class SATELLITE_RADIO:
             cls.rx_gs_len = 0
             return cls.rx_gs_cmd
 
-        if cls.sat.RADIO_AVAILABLE:
-            cls.rx_message_rssi = cls.sat.RADIO.rssi()
+        if SATELLITE.RADIO_AVAILABLE:
+            cls.rx_message_rssi = SATELLITE.RADIO.rssi()
         else:
             logger.warning("[COMMS ERROR] RADIO no longer active on SAT")
 
@@ -585,8 +586,8 @@ class SATELLITE_RADIO:
         cls.tx_message = bytes([MSG_ID.ARGUS_ID, MSG_ID.GS_ID]) + cls.tx_message
 
         # Send a message to GS
-        if cls.sat.RADIO_AVAILABLE:
-            cls.sat.RADIO.send(cls.tx_message)
+        if SATELLITE.RADIO_AVAILABLE:
+            SATELLITE.RADIO.send(cls.tx_message)
             cls.crc_count = 0
         else:
             logger.warning("[COMMS ERROR] RADIO no longer active on SAT")
