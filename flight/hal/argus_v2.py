@@ -25,7 +25,7 @@ class ArgusV2Interfaces:
 
     # Line may not be connected, try except sequence
     try:
-        I2C0 = I2C(I2C0_SCL, I2C0_SDA, frequency=400000)
+        I2C0 = I2C(I2C0_SCL, I2C0_SDA)
     except Exception:
         I2C0 = None
 
