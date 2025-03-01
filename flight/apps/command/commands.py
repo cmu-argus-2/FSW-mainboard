@@ -20,8 +20,6 @@ Author: Ibrahima S. Sow
 
 """
 
-import time
-
 import supervisor
 from apps.adcs.orbit_propagation import OrbitPropagator
 from apps.command.constants import file_tags_str
@@ -66,9 +64,8 @@ def UPLINK_ORBIT_REFERENCE(time_reference, orbital_parameters):
     logger.info(
         f"Executing UPLINK_ORBIT_REFERENCE with orbital_parameters: pos({orbital_parameters}, time_reference: {time_reference}"
     )
-    OrbitPropagator.propagate_orbit(
-        time.time(), time_reference, np.array(orbital_parameters[0:3]), np.array(orbital_parameters[3:])
-    )
+    OrbitPropagator.last_update_time = time_reference
+    OrbitPropagator.last_update_state = np.array(orbital_parameters)
     return []
 
 
