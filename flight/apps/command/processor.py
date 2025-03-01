@@ -134,9 +134,12 @@ def handle_command_execution_status(status, response_args):
 
 def unpack_command_arguments(cmd_id, cmd_arglist):
     """This will unpack the command arguments received from Command Queue"""
-    # TODO: need to do error handling for unpacking
+    # TODO: Need to do error handling for unpacking
+
     cmd_arglist = list(cmd_arglist)
     cmd_args = []
+
+    # TODO: Check payload size based on command type
 
     if cmd_id == CMD_ID.SWITCH_TO_STATE or cmd_id == CMD_ID.REQUEST_FILE_METADATA:
         cmd_args.append(cmd_arglist[0])  # target_state_id / file_id (uint8)
