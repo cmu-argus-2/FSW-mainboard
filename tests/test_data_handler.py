@@ -8,6 +8,8 @@ import flight.core.data_handler as dh
 from flight.core.data_handler import DataProcess as DP
 from flight.core.data_handler import extract_time_from_filename, get_closest_file_time
 
+DH = dh.DataHandler
+
 
 @pytest.mark.parametrize(
     "data_format, expected_size",
@@ -101,13 +103,37 @@ def test_get_closest_file_time(file_time, expected_output):
 
 # TODO - mock filesystem
 
-"""@pytest.fixture
+
+@pytest.fixture
 def sd_root(tmpdir):
-    sd_root = tmpdir.mkdir("sd")
+    sd_root = tmpdir.mkdir(dh._HOME_PATH)
     return sd_root
 
-def test_scan_sd_card(sd_root):
-    DH.sd_path = str(sd_root)"""
+
+def test_image_log(sd_root):
+    dh._HOME_PATH = str(sd_root)  # temporary SD card
+    DH.register_image_process()
+    assert dh._IMG_TAG_NAME in DH.data_process_registry  # ensure that image process was registered
+
+    DH.log_image(bytearray(100))  # Adding 100 bytes
+    img_process = DH.data_process_registry[dh._IMG_TAG_NAME]
+    assert img_process.img_buf_index == 100
+
+    DH.log_image(bytearray(412))  # Adding remaining 412 bytes
+    assert os.stat(img_process.current_path)[6] == 512  # Ensure block of 512 was written to file
+
+    DH.log_image(bytearray(700))  # Testing overflow
+    assert img_process.img_buf_index == 188
+    assert os.stat(img_process.current_path)[6] == 1024
+
+    DH.log_image(bytearray(200))  # Testing not writing if not 512 block
+    assert img_process.img_buf_index == 388
+    assert os.stat(img_process.current_path)[6] == 1024
+
+    DH.log_image(bytearray(200))  # Testing a second 512 write
+    assert img_process.img_buf_index == 76
+    assert os.stat(img_process.current_path)[6] == 1536
+
 
 if __name__ == "__main__":
     pytest.main()
