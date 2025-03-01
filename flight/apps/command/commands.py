@@ -20,8 +20,6 @@ Author: Ibrahima S. Sow
 
 """
 
-import time
-
 import supervisor
 from apps.adcs.orbit_propagation import OrbitPropagator
 from apps.command.constants import file_tags_str
