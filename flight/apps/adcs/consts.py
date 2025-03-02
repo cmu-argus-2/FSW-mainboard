@@ -93,6 +93,9 @@ class ControllerConst:
     Constants associated with Controller Behavior
     """
 
+    # Dimensionality of sensor readings
+    READING_DIMS = (3,)
+
     # Spin-stabilized Constants
     OMEGA_MAG_TARGET = 0.1125  # Target angular velocity along major axis
     MOMENTUM_TARGET = np.linalg.norm(np.dot(PhysicalConst.INERTIA_MAT, PhysicalConst.INERTIA_MAJOR_DIR * OMEGA_MAG_TARGET))

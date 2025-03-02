@@ -9,6 +9,18 @@ from hal.configuration import SATELLITE
 from ulab import numpy as np
 
 
+# TODO: test on mainboard
+def readings_are_valid(
+    readings: tuple[np.ndarray],
+) -> bool:
+    for reading in readings:
+        if not isinstance(reading, np.ndarray) \
+        or reading.shape != ControllerConst.READING_DIMS \
+        or not isinstance(reading[0], np.float64):
+            return False
+    return True
+
+
 def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.ndarray:
     """
     B-cross law: https://arc.aiaa.org/doi/epdf/10.2514/1.53074.
@@ -16,13 +28,14 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
     All sensor estimates are in the body-fixed reference frame.
     """
     # Stop ACS if the reading values are invalid
-    if omega.shape != (3,) or mag_field.shape != (3,):
+    if not readings_are_valid((omega, mag_field)):
         return np.zeros(3)
 
     # Stop ACS if the field value is invalid
     elif np.linalg.norm(mag_field) == 0:
         return np.zeros(3)
 
+    # Do spin stabilization
     else:
         # Compute angular momentum error
         error = PhysicalConst.INERTIA_MAJOR_DIR - np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET
@@ -36,7 +49,7 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
 
 def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field: np.ndarray) -> np.ndarray:
     # Stop ACS if the reading values are invalid
-    if sun_vector.shape != (3,) or omega.shape != (3,) or mag_field.shape != (3,):
+    if not readings_are_valid((sun_vector, omega, mag_field)):
         return np.zeros(3)
 
     # Stop ACS if either field is invalid
