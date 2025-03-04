@@ -271,7 +271,7 @@ class SATELLITE_RADIO:
         if SATELLITE.RADIO_AVAILABLE:
             return SATELLITE.RADIO.RX_available()
         else:
-            logger.warning("[COMMS ERROR] RADIO no longer active on SAT")
+            logger.error("[COMMS ERROR] RADIO no longer active on SAT")
             return False
 
     """
@@ -452,7 +452,7 @@ class SATELLITE_RADIO:
         if SATELLITE.RADIO_AVAILABLE:
             packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
         else:
-            logger.warning("[COMMS ERROR] RADIO no longer active on SAT")
+            logger.error("[COMMS ERROR] RADIO no longer active on SAT")
 
         # Check if packet exists
         if packet is None:
@@ -474,7 +474,7 @@ class SATELLITE_RADIO:
         if SATELLITE.RADIO_AVAILABLE:
             cls.rx_message_rssi = SATELLITE.RADIO.rssi()
         else:
-            logger.warning("[COMMS ERROR] RADIO no longer active on SAT")
+            logger.error("[COMMS ERROR] RADIO no longer active on SAT")
 
         # Unpack source header
         cls.rx_src_id = int.from_bytes(packet[0:1], "big")
@@ -590,7 +590,7 @@ class SATELLITE_RADIO:
             SATELLITE.RADIO.send(cls.tx_message)
             cls.crc_count = 0
         else:
-            logger.warning("[COMMS ERROR] RADIO no longer active on SAT")
+            logger.error("[COMMS ERROR] RADIO no longer active on SAT")
 
         # Return TX message header
         cls.tx_message_ID = int.from_bytes(cls.tx_message[2:3], "big")

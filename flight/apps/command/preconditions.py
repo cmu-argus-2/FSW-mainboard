@@ -7,7 +7,7 @@ from micropython import const
 
 """ Contains functions to check the preconditions of Commands """
 
-SECONDS_IN_WEEK = const(604800)
+_SECONDS_IN_WEEK = const(604800)
 
 
 def valid_state(*args) -> bool:
@@ -31,7 +31,7 @@ def valid_time_format(*args) -> bool:
         return False
 
     # Get the timestamp for 7 days ago
-    past_week = time.time() - (SECONDS_IN_WEEK)
+    past_week = time.time() - (_SECONDS_IN_WEEK)
 
     # Check that time is not from before the past week
     if time_reference < past_week:
