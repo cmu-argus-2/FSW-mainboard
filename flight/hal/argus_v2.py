@@ -255,7 +255,6 @@ class ArgusV2(CubeSat):
         """boot_sequence: Boot sequence for the CubeSat."""
 
         for name, device in self.__device_list.items():
-            print(name)
             func = device.boot_fn
             device.device, device.error = func(name)
 
