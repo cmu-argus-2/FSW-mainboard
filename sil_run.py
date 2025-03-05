@@ -7,9 +7,10 @@ import time
 DEFAULT_RUNTIME = 5 * 60  # 5 minutes
 DEFAULT_OUTFILE = "sil_logs.log"
 
-# Colored Output
-WARNING_YELLOW = '\033[93m'
-ERROR_RED = '\033[91m'
+# KEYWORD SEARCHES:
+# List of all keywords to probe the log for
+# Enter as a dictionary of KEYWORD - COLOR combos
+KEYWORDS = {"WARNING": "\033[93m", "ERROR": "\033[91m"}
 
 
 def FSW_simulate(runtime: float, outfile: str) -> None:
@@ -29,14 +30,14 @@ def parse_FSW_logs(outfile):
     errors_detected = False
     with open(outfile, "r") as log_file:
         for line in log_file:
-            if "WARNING" in line:
-                print(f'{WARNING_YELLOW}{line}')
-            if "ERROR" in line:
-                print(f'{ERROR_RED}{line}')
-                errors_detected = True
-    
+            for keyword in KEYWORDS.keys():
+                if keyword in line:
+                    print(f"{KEYWORDS[keyword]}{line}")
+                    if keyword == "ERROR":
+                        errors_detected = True
+
     if errors_detected:
-        raise Exception('FSW Simulation Failed')
+        raise Exception("FSW Simulation Failed")
 
 
 if __name__ == "__main__":
