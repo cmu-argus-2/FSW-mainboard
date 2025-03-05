@@ -56,4 +56,4 @@ if __name__ == "__main__":
     FSW_simulate(int(args.duration), args.outfile)
 
     # Parse Logs
-    parse_FSW_logs()
+    parse_FSW_logs(args.outfile)
