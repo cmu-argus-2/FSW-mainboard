@@ -15,7 +15,6 @@ class CubeSat:
 
     __slots__ = (
         "__device_list",
-        "__recent_errors",
         "__payload_uart",
         "_time_ref_boot",
     )
@@ -33,31 +32,27 @@ class CubeSat:
             # "RADIO_PWR": Device(self.__power_monitor_boot),
             # "GPS_PWR": Device(self.__power_monitor_boot),
             # "JETSON_PWR": Device(self.__power_monitor_boot),
-            "XP_PWR": Device(self.__power_monitor_boot),
-            "XM_PWR": Device(self.__power_monitor_boot),
-            "YP_PWR": Device(self.__power_monitor_boot),
-            "YM_PWR": Device(self.__power_monitor_boot),
+            # "XP_PWR": Device(self.__power_monitor_boot),
+            # "XM_PWR": Device(self.__power_monitor_boot),
+            # "YP_PWR": Device(self.__power_monitor_boot),
+            # "YM_PWR": Device(self.__power_monitor_boot),
             # "ZP_PWR": Device(self.__power_monitor_boot),
-            # "ZM_PWR": Device(self.__power_monitor_boot),
-            "TORQUE_XP": Device(self.__torque_driver_boot),
-            "TORQUE_XM": Device(self.__torque_driver_boot),
-            "TORQUE_YP": Device(self.__torque_driver_boot),
-            "TORQUE_YM": Device(self.__torque_driver_boot),
+            # "TORQUE_XP": Device(self.__torque_driver_boot),
+            # "TORQUE_XM": Device(self.__torque_driver_boot),
+            # "TORQUE_YP": Device(self.__torque_driver_boot),
+            # "TORQUE_YM": Device(self.__torque_driver_boot),
             # "TORQUE_ZP": Device(self.__torque_driver_boot),
             # "TORQUE_ZM": Device(self.__torque_driver_boot),
-            "LIGHT_XP": Device(self.__light_sensor_boot),
-            "LIGHT_XM": Device(self.__light_sensor_boot),
-            "LIGHT_YP": Device(self.__light_sensor_boot),
-            "LIGHT_YM": Device(self.__light_sensor_boot),
+            # "LIGHT_XP": Device(self.__light_sensor_boot),
+            # "LIGHT_XM": Device(self.__light_sensor_boot),
+            # "LIGHT_YP": Device(self.__light_sensor_boot),
+            # "LIGHT_YM": Device(self.__light_sensor_boot),
             # "LIGHT_ZM": Device(self.__light_sensor_boot),
             # "LIGHT_ZP_1": Device(self.__light_sensor_boot),
             # "LIGHT_ZP_2": Device(self.__light_sensor_boot),
             # "LIGHT_ZP_3": Device(self.__light_sensor_boot),
             # "LIGHT_ZP_4": Device(self.__light_sensor_boot),
         }
-
-        # List of errors from most recent system diagnostic test
-        self.__recent_errors: list[int] = [Errors.NOERROR]
 
         self.__imu_temp_flag = False
 
@@ -68,20 +63,6 @@ class CubeSat:
     def boot_sequence(self) -> list[int]:
         """boot_sequence: Boot sequence for the CubeSat."""
         raise NotImplementedError("CubeSats must implement boot method")
-
-    # ABSTRACT METHOD #
-    def run_system_diagnostics(self) -> list[int] | None:
-        """run_diagnostic_test: Run all tests for the component"""
-        raise NotImplementedError("CubeSats must implement diagnostics method")
-
-    def get_recent_errors(self) -> list[int]:
-        """get_recent_errors: Get the most recent errors from the system"""
-        return self._recent_errors
-
-    @property
-    def device_list(self):
-        """device_list: Get the list of successfully initialized devices"""
-        return self.__device_list
 
     def append_device(self, device_name: str, boot_fn: object, device: object = None, error: int = 0) -> None:
         """append_device: Append a device to the device list"""
@@ -95,7 +76,7 @@ class CubeSat:
         error_list = {}
         for name, device in self.__device_list.items():
             if device.error != Errors.NOERROR:
-                error_list[name] = device.device
+                error_list[name] = device.error
         return error_list
 
     def key_in_device_list(self, key: str) -> bool:
@@ -264,20 +245,6 @@ class CubeSat:
         :return: bool
         """
         return self.key_in_device_list("SDCARD") and self.__device_list["SDCARD"].device is not None
-
-    # @property
-    # def VFS(self):
-    #     """VFS: Returns the VFS object
-    #     :return: object or None
-    #     """
-    #     return self.__vfs
-
-    # @property
-    # def VFS_AVAILABLE(self) -> bool:
-    #     """VFS_AVAILABLE: Returns True if the VFS is available
-    #     :return: bool
-    #     """
-    #     return self.__vfs is not None
 
     # @property
     # def PAYLOADUART(self):

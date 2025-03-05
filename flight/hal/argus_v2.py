@@ -1,5 +1,5 @@
 """
-Author: Harry, Thomas, Ibrahima, Perrin
+Author: Ibrahima, Perrin
 Description: This file contains the definition of the ArgusV2 class and its associated interfaces and components.
 """
 
@@ -199,7 +199,6 @@ class ArgusV2Components:
     RADIO_RX_EN = board.LORA_RX_EN  # GPIO20
     RADIO_BUSY = board.LORA_BUSY  # GPIO23
     RADIO_IRQ = board.GPS_EN  # GPIO27_ADC1
-    # RADIO_FREQ = 915.6
 
     ########
     # SPI1 #
@@ -256,6 +255,7 @@ class ArgusV2(CubeSat):
         """boot_sequence: Boot sequence for the CubeSat."""
 
         for name, device in self.__device_list.items():
+            print(name)
             func = device.boot_fn
             device.device, device.error = func(name)
 
@@ -320,7 +320,6 @@ class ArgusV2(CubeSat):
             return [power_monitor, Errors.NOERROR]
 
         except Exception as e:
-            print(f"Failed to initialize {location}: {e}")
             if self.__debug:
                 raise e
             return [None, Errors.ADM1176_NOT_INITIALIZED]
@@ -343,7 +342,6 @@ class ArgusV2(CubeSat):
 
             return [imu, Errors.NOERROR]
         except Exception as e:
-            print(f"Failed to initialize IMU: {e}")
             if self.__debug:
                 raise e
             return [None, Errors.IMU_NOT_INITIALIZED]
@@ -375,7 +373,6 @@ class ArgusV2(CubeSat):
 
         except Exception as e:
             if self.__debug:
-                print(f"Failed to initialize {direction} torque driver: {e}")
                 raise e
             return [None, Errors.DRV8830_NOT_INITIALIZED]
 
@@ -412,7 +409,6 @@ class ArgusV2(CubeSat):
 
         except Exception as e:
             if self.__debug:
-                print(f"Failed to initialize {direction} light sensor: {e}")
                 raise e
             return [None, Errors.OPT4001_NOT_INITIALIZED]
 
