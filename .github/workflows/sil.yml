@@ -59,19 +59,15 @@ jobs:
         run: pip list  # Confirm that brahe and argusim are installed
       - name: Set timestamp
         run: echo "TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_ENV
-      - name: Run flight software 30 sec
-        run: python3 sil_run.py 
+      - name: Define Runtime
+        run: echo "RUNTIME=300" >> $GITHUB_ENV
+      - name: Define Log file name
+        run: echo "OUTFILE='sil_logs.log'" >> $GITHUB_ENV
+      - name: Run flight software
+        run: python3 sil_run.py --duration $RUNTIME --outfile $OUTFILE
       - name: Upload log file
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.TIMESTAMP }}-sil-logs
-          path: sil_sim.log
-      - name: Parse logs for errors
-        run: python3 parse_sillogs.py
-      - name: Upload error log file
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ${{ env.TIMESTAMP }}-sil-errs
-          path: sil_err.log
+          path: $OUTFILE
       
