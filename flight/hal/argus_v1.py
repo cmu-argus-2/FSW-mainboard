@@ -180,12 +180,6 @@ class ArgusV1(CubeSat):
 
         return error_list
 
-    def __state_flags_boot(self) -> None:
-        """state_flags_boot: Boot sequence for the state flags"""
-        from hal.drivers.stateflags import StateFlags
-
-        self.__state_flags = StateFlags()
-
     def __gps_boot(self) -> list[int]:
         """GPS_boot: Boot sequence for the GPS
 

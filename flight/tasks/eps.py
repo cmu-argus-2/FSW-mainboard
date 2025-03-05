@@ -71,15 +71,15 @@ class Task(TemplateTask):
 
     def read_vc(self, sensor, voltage_idx, current_idx):
         # log power monitor voltage and current
-        if sensor is not None:
+        if SATELLITE.POWER_MONITOR_AVAILABLE(sensor):
             board_voltage, board_current = sensor.read_voltage_current()
             self.log_data[voltage_idx] = int(board_voltage * 1000)  # mV - max 8.4V
             self.log_data[current_idx] = int(board_current * 1000)  # mA
 
     def read_fuel_gauge(self):
         # read values from MAX17205
-        fuel_gauge = SATELLITE.FUEL_GAUGE
-        if fuel_gauge is not None:
+        if SATELLITE.FUEL_GAUGE_AVAILABLE:
+            fuel_gauge = SATELLITE.FUEL_GAUGE
             self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] = int(fuel_gauge.read_soc())
             self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY] = int(fuel_gauge.read_capacity())
             self.log_data[EPS_IDX.BATTERY_PACK_CURRENT] = int(fuel_gauge.read_current())

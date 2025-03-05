@@ -16,7 +16,6 @@ class CubeSat:
     __slots__ = (
         "__device_list",
         "__recent_errors",
-        "__state_flags",
         "__payload_uart",
         "_time_ref_boot",
     )
@@ -60,9 +59,6 @@ class CubeSat:
         # List of errors from most recent system diagnostic test
         self.__recent_errors: list[int] = [Errors.NOERROR]
 
-        # State flags
-        # self.__state_flags = None
-
         self.__imu_temp_flag = False
 
         # Debugging
@@ -105,14 +101,6 @@ class CubeSat:
     def key_in_device_list(self, key: str) -> bool:
         """key_in_device_list: Check if the key is in the device list"""
         return key in self.__device_list
-
-    ######################### STATE FLAGS ########################
-    @property
-    def STATE_FLAGS(self):
-        """STATE_FLAGS: Returns the state flags object
-        :return: object or None
-        """
-        return self._state_flags
 
     ######################### DEVICES #########################
 

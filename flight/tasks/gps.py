@@ -53,7 +53,7 @@ class Task(TemplateTask):
                     data_format = "fBBBHLllllHHHHHllllll"
                     DH.register_data_process("gps", data_format, True, data_limit=100000, write_interval=1)
 
-                if SATELLITE.GPS.update():
+                if SATELLITE.GPS_AVAILABLE and SATELLITE.GPS.update():
                     # Assuming we have a fix for now
                     if SATELLITE.GPS.has_fix():
                         # TODO GPS frame parsing - get ECEF in (cm) and ECEF velocity in cm/s
