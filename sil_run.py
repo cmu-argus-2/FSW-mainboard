@@ -3,10 +3,13 @@ import os
 import signal
 import subprocess
 import time
-import warnings
 
 DEFAULT_RUNTIME = 5 * 60  # 5 minutes
 DEFAULT_OUTFILE = "sil_logs.log"
+
+# Colored Output
+WARNING_YELLOW = '\033[93m'
+ERROR_RED = '\033[91m'
 
 
 def FSW_simulate(runtime: float, outfile: str) -> None:
@@ -23,13 +26,17 @@ def FSW_simulate(runtime: float, outfile: str) -> None:
 
 
 def parse_FSW_logs(outfile):
-
+    errors_detected = False
     with open(outfile, "r") as log_file:
         for line in log_file:
             if "WARNING" in line:
-                warnings.warn(line)
+                print(f'{WARNING_YELLOW}{line}')
             if "ERROR" in line:
-                raise Exception(f"Error detected at {line}")
+                print(f'{ERROR_RED}{line}')
+                errors_detected = True
+    
+    if errors_detected:
+        raise Exception('FSW Simulation Failed')
 
 
 if __name__ == "__main__":
