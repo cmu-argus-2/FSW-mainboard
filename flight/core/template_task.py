@@ -24,7 +24,7 @@ class TemplateTask:
         :param msg: Debug message to print
         :param level: > 1 will print as a sub-level
         """
-        logger.info(f"[{self.ID}][{self.name}] {msg}")
+        logger.error(f"[{self.ID}][{self.name}] {msg}")
 
     def set_frequency(self, frequency):
         """
