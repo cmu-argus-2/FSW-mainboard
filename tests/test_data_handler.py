@@ -10,6 +10,8 @@ from flight.core.data_handler import extract_time_from_filename, get_closest_fil
 
 DH = dh.DataHandler
 
+DH = dh.DataHandler
+
 
 @pytest.mark.parametrize(
     "data_format, expected_size",
