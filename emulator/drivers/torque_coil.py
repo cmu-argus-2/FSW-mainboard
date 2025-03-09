@@ -7,12 +7,6 @@ class CoilDriver:
     def set_throttle_volts(self, new_throttle_volts):
         self.current_throttle = new_throttle_volts
 
-    def run_diagnostics(self):
-        return []
-
-    def get_flags(self) -> dict:
-        return {}
-
 
 class TorqueCoilArray:
     def __init__(self, simulator=None) -> None:

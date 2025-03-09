@@ -5,7 +5,6 @@ from adafruit_register.i2c_bit import ROBit
 from adafruit_register.i2c_bits import ROBits, RWBits
 from adafruit_register.i2c_struct import Struct
 from digitalio import DigitalInOut
-from hal.drivers.middleware.errors import Errors
 from micropython import const
 
 # Chip ID

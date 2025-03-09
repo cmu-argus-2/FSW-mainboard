@@ -327,19 +327,5 @@ class DRV8830:
 
         return Errors.NOERROR
 
-    def run_diagnostics(self) -> list[int] | None:
-        """run_diagnostic_test: Run all tests for the component"""
-        error_list: list[int] = []
-
-        error_list = self.__check_for_faults()
-        error_list.append(self.__throttle_tests())
-
-        error_list = list(set(error_list))
-
-        if Errors.NOERROR not in error_list:
-            self.errors_present = True
-
-        return error_list
-
     def deinit(self):
         return

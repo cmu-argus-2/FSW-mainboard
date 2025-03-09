@@ -987,33 +987,12 @@ class RFM9x:
             return bytes(packet)
         return packet
 
-    """
-    ----------------------- HANDLER METHODS -----------------------
-    """
-
-    def get_flags(self):
-        return {}
-
-    ######################### DIAGNOSTICS #########################
     def _read_frequency(self) -> bool:
         frequency = self._device.frequency_mhz()
         if math.isclose(frequency, 433, abs_tol=1) or math.isclose(frequency, 915, abs_tol=1):
             return True
         else:
             return False
-
-    def run_diagnostics(self) -> list[int] | None:
-        """run_diagnostic_test: Run all tests for the component"""
-        error_list: list[int] = []
-
-        error_list.append(self._read_frequency())
-
-        error_list = list(set(error_list))
-
-        if Errors.NOERROR not in error_list:
-            self.errors_present = True
-
-        return error_list
 
     def deinit(self):
         self.dio0.deinit()

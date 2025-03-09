@@ -537,3 +537,10 @@ class ArgusV2(CubeSat):
             if self.__debug:
                 raise e
             return [None, Errors.MAX17205_NOT_INITIALIZED]
+
+    def reboot_device(self, device_name: str):
+        if device_name not in self.__device_list:
+            return Errors.INVALID_DEVICE_NAME
+        device = self.__device_list[device_name]
+        device.deinit()
+        # TODO: Implement reboot logic
