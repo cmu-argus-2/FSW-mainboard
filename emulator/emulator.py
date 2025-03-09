@@ -73,6 +73,8 @@ class EmulatedSatellite(CubeSat):
 
         self._rtc = self.init_device(RTC(time.gmtime()))
 
+        self.ERRORS = []
+
     def init_device(self, device):
         return device
 
