@@ -88,6 +88,16 @@ def test_get_closest_file_time(file_time, expected_output):
     ]
     assert get_closest_file_time(file_time, files) == expected_output
 
+    invalid_files = [
+        "imu.bin",
+        "cdh.bin",
+        "thermal.bin",
+        "img.bin",
+        "comms.bin",
+    ]
+
+    assert get_closest_file_time(file_time, invalid_files) is None
+
 
 # TODO - mock filesystem
 

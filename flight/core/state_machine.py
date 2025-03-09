@@ -152,6 +152,8 @@ class StateManager:
                 self.__force_state = True
                 self.__time_in_state = time_in_state
 
+        logger.info("SWITCH_TO_STATE tried switching to current state - not allowed")
+
     def update_time_in_state(self):
         # Update variables to stay in state for a forced switch to state command
         if self.__force_state:
