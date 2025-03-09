@@ -10,7 +10,6 @@ from time import monotonic, sleep
 
 import adafruit_bus_device.spi_device as spidev
 from digitalio import DigitalInOut, Pull
-from hal.drivers.middleware.errors import Errors
 from micropython import const
 
 # pylint: disable=bad-whitespace

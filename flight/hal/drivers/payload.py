@@ -9,7 +9,6 @@ Author(s): Harry Rosmann
 """
 
 from digitalio import DigitalInOut
-from hal.drivers.middleware.errors import Errors
 
 
 class PayloadUART:

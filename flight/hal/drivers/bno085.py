@@ -35,7 +35,6 @@ from collections import namedtuple
 from struct import pack_into, unpack_from
 
 from adafruit_bus_device import i2c_device
-from hal.drivers.middleware.errors import Errors  # noqa F401
 from micropython import const
 
 # For IDE type recognition
