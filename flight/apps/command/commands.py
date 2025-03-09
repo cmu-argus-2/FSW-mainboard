@@ -144,11 +144,9 @@ def REQUEST_FILE_METADATA(file_id, file_time=None):
     return [file_path]
 
 
-def REQUEST_FILE_PKT(file_id, file_time, rq_sq_cnt):
+def REQUEST_FILE_PKT(file_id, file_time):
     """Requests a specific file packet from the spacecraft."""
-    logger.info(
-        f"Executing REQUEST_FILE_PKT with file_tag: {file_id}, file_tim: {file_time}, requested sequence count: {rq_sq_cnt}"
-    )
+    logger.info(f"Executing REQUEST_FILE_PKT with file_tag: {file_id}, file_tim: {file_time}")
     # TODO: potentially change if we want to handle file packets here instead of Comms
     file_path = None
     file_tag = file_tags_str[file_id]

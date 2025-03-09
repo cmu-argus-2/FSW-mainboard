@@ -72,7 +72,7 @@ COMMANDS = [
         ["file_id", "file_time"],
         REQUEST_FILE_METADATA,
     ),
-    (CMD_ID.REQUEST_FILE_PKT, file_id_exists, ["file_id", "file_time", "rq_sq_cnt"], REQUEST_FILE_PKT),
+    (CMD_ID.REQUEST_FILE_PKT, file_id_exists, ["file_id", "file_time"], REQUEST_FILE_PKT),
     (CMD_ID.REQUEST_IMAGE, lambda: True, [], REQUEST_IMAGE),
     (CMD_ID.DOWNLINK_ALL, lambda: True, [], DOWNLINK_ALL),
 ]
@@ -132,6 +132,16 @@ def handle_command_execution_status(status, response_args):
         pass
 
 
+def check_arguments_size(cmd_id, cmd_arglist):
+    """
+    Checks that the payload size containing the command arguments are
+    of the correct size that we expect
+    """
+    if CMD_ID.ARGS_LEN[cmd_id] != len(cmd_arglist):
+        return False
+    return True
+
+
 def unpack_command_arguments(cmd_id, cmd_arglist):
     """This will unpack the command arguments received from Command Queue"""
     # TODO: Need to do error handling for unpacking
@@ -139,7 +149,10 @@ def unpack_command_arguments(cmd_id, cmd_arglist):
     cmd_arglist = list(cmd_arglist)
     cmd_args = []
 
-    # TODO: Check payload size based on command type
+    # Check that the payload is of the correct length
+    if not check_arguments_size(cmd_id, cmd_arglist):
+        logger.error(f"[COMMAND]: Incorrect payload size, expected: {CMD_ID.ARGS_LEN[cmd_id]}, received: {len(cmd_arglist)}")
+        return CommandProcessingStatus.ARGUMENT_UNPACKING_FAILED
 
     if cmd_id == CMD_ID.SWITCH_TO_STATE or cmd_id == CMD_ID.REQUEST_FILE_METADATA:
         cmd_args.append(cmd_arglist[0])  # target_state_id / file_id (uint8)
@@ -162,15 +175,14 @@ def unpack_command_arguments(cmd_id, cmd_arglist):
     elif cmd_id == CMD_ID.REQUEST_FILE_PKT:
         cmd_args.append(cmd_arglist[0])  # file_id (uint8)
         cmd_args.append(tm_helper.unpack_unsigned_long_int(cmd_arglist[1:5]))  # file_time (uint32)
-        cmd_args.append(tm_helper.unpack_unsigned_short_int(cmd_arglist[5:7]))  # rq_sq_cnt (uint16)
 
     else:
         # For all other commands with no arguments
         cmd_args = []
 
     if False in cmd_args:
-        logger.error("Cmd: Command argument unpacking failed")
+        logger.error("[COMMAND] Command argument unpacking failed")
         return CommandProcessingStatus.ARGUMENT_UNPACKING_FAILED
 
-    logger.info(f"Unpacked arguments - CMD_ID: {cmd_id}, Argument List: {cmd_args}")
+    logger.info(f"[COMMAND] Unpacked arguments - CMD_ID: {cmd_id}, Argument List: {cmd_args}")
     return cmd_args

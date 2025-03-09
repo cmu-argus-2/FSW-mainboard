@@ -21,6 +21,21 @@ class CMD_ID:
 
     DOWNLINK_ALL = const(0x4D)
 
+    ARGS_LEN = {
+        FORCE_REBOOT: 0,
+        SWITCH_TO_STATE: 5,
+        UPLINK_TIME_REFERENCE: 4,
+        UPLINK_ORBIT_REFERENCE: 28,
+        TURN_OFF_PAYLOAD: 0,
+        SCHEDULE_OD_EXPERIMENT: 0,
+        REQUEST_TM_HEARTBEAT: 0,
+        REQUEST_TM_HAL: 0,
+        REQUEST_TM_STORAGE: 0,
+        REQUEST_TM_PAYLOAD: 0,
+        REQUEST_FILE_METADATA: 5,
+        REQUEST_FILE_PKT: 5,
+    }
+
 
 file_tags_str = {
     1: "cmd_logs",

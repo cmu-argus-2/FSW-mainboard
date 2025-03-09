@@ -7,8 +7,9 @@ from micropython import const
 from flight.apps.command.constants import CMD_ID
 from flight.apps.command.preconditions import valid_state, valid_time_format
 from flight.apps.command.processor import process_command  # noqa F401
-from flight.apps.command.processor import CommandProcessingStatus, unpack_command_arguments
+from flight.apps.command.processor import CommandProcessingStatus, unpack_command_arguments, check_arguments_size
 from flight.core.state_machine import STATES
+from flight.apps.telemetry.helpers import pack_signed_long_int, pack_unsigned_long_int
 
 
 class MOCK_ARGUMENTS:
@@ -127,6 +128,89 @@ def test_unpack_several_arguments(setup_commands):
             MOCK_ARGUMENTS.vel * 3,
         ],
     ]
+
+
+@pytest.mark.parametrize(
+    "command_id, arguments, expected_outputs",
+    [
+        (CMD_ID.FORCE_REBOOT, bytearray(), True),
+        (CMD_ID.FORCE_REBOOT, [(1).to_bytes(1, "big")], False),
+        (CMD_ID.SWITCH_TO_STATE, ((1).to_bytes(1, "big") + pack_unsigned_long_int([10], 0)), True),
+        (CMD_ID.UPLINK_TIME_REFERENCE, (pack_unsigned_long_int([1741539497], 0)), True),
+        (CMD_ID.UPLINK_TIME_REFERENCE, bytearray(), False),
+        (
+            CMD_ID.UPLINK_TIME_REFERENCE,
+            (pack_unsigned_long_int([1741539497], 0) + pack_unsigned_long_int([1741539497], 0)),
+            False,
+        ),
+        (
+            CMD_ID.UPLINK_ORBIT_REFERENCE,
+            (
+                pack_unsigned_long_int([1741539497], 0)
+                + pack_signed_long_int([0], 0)
+                + pack_signed_long_int([1], 0)
+                + pack_signed_long_int([2], 0)
+                + pack_signed_long_int([3], 0)
+                + pack_signed_long_int([4], 0)
+                + pack_signed_long_int([5], 0)
+            ),
+            True,
+        ),
+        (CMD_ID.UPLINK_ORBIT_REFERENCE, (), False),
+        (
+            CMD_ID.UPLINK_ORBIT_REFERENCE,
+            (
+                pack_unsigned_long_int([1741539497], 0)
+                + pack_signed_long_int([0], 0)
+                + pack_signed_long_int([1], 0)
+                + pack_signed_long_int([2], 0)
+                + pack_signed_long_int([3], 0)
+                + pack_signed_long_int([4], 0)
+                + pack_signed_long_int([5], 0)
+                + pack_signed_long_int([6], 0)
+            ),
+            False,
+        ),
+        (
+            CMD_ID.UPLINK_ORBIT_REFERENCE,
+            (
+                pack_unsigned_long_int([1741539497], 0)
+                + pack_signed_long_int([0], 0)
+                + pack_signed_long_int([1], 0)
+                + pack_signed_long_int([6], 0)
+            ),
+            False,
+        ),
+        (CMD_ID.TURN_OFF_PAYLOAD, (), True),
+        (CMD_ID.TURN_OFF_PAYLOAD, ((1).to_bytes(1, "big")), False),
+        (CMD_ID.SCHEDULE_OD_EXPERIMENT, (), True),
+        (CMD_ID.SCHEDULE_OD_EXPERIMENT, ((1).to_bytes(1, "big")), False),
+        (CMD_ID.REQUEST_TM_HEARTBEAT, (), True),
+        (CMD_ID.REQUEST_TM_HEARTBEAT, ((1).to_bytes(1, "big")), False),
+        (CMD_ID.REQUEST_TM_HAL, (), True),
+        (CMD_ID.REQUEST_TM_HAL, ((1).to_bytes(1, "big")), False),
+        (CMD_ID.REQUEST_TM_STORAGE, (), True),
+        (CMD_ID.REQUEST_TM_STORAGE, ((1).to_bytes(1, "big")), False),
+        (CMD_ID.REQUEST_TM_PAYLOAD, (), True),
+        (CMD_ID.REQUEST_TM_PAYLOAD, ((1).to_bytes(1, "big")), False),
+        (CMD_ID.REQUEST_FILE_METADATA, ((1).to_bytes(1, "big") + pack_unsigned_long_int([10], 0)), True),
+        (
+            CMD_ID.REQUEST_FILE_METADATA,
+            ((1).to_bytes(1, "big") + pack_unsigned_long_int([10], 0) + pack_unsigned_long_int([20], 0)),
+            False,
+        ),
+        (CMD_ID.REQUEST_FILE_METADATA, (), False),
+        (CMD_ID.REQUEST_FILE_PKT, ((1).to_bytes(1, "big") + pack_unsigned_long_int([10], 0)), True),
+        (
+            CMD_ID.REQUEST_FILE_PKT,
+            ((1).to_bytes(1, "big") + pack_unsigned_long_int([10], 0) + pack_unsigned_long_int([20], 0)),
+            False,
+        ),
+        (CMD_ID.REQUEST_FILE_PKT, (), False),
+    ],
+)
+def test_argument_size_check(command_id, arguments, expected_outputs):
+    assert check_arguments_size(command_id, arguments) == expected_outputs
 
 
 # TODO: fix test without datetime
