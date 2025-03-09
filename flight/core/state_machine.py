@@ -146,10 +146,13 @@ class StateManager:
 
     def start_forced_state(self, target_state_id, time_in_state):
         """Ensures that SWITCH_TO_STATE Command is enforced and maintains values to do so"""
-        self.switch_to(target_state_id)
-        if time_in_state > 0:
-            self.__force_state = True
-            self.__time_in_state = time_in_state
+        if target_state_id != self.__current_state:  # Check that it is not trying to switch to itself
+            self.switch_to(target_state_id)
+            if time_in_state > 0:
+                self.__force_state = True
+                self.__time_in_state = time_in_state
+
+        logger.info("SWITCH_TO_STATE tried switching to current state - not allowed")
 
     def update_time_in_state(self):
         # Update variables to stay in state for a forced switch to state command
