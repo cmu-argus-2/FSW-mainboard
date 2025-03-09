@@ -8,12 +8,17 @@ class EPS_POWER_FLAG:
     NOMINAL = const(0x2)
     EXPERIMENT = const(0x3)
 
-
+# SOC thresholds in percentage
 class EPS_SOC_THRESHOLD:
     LOW_POWER_ENTRY = const(30)
     LOW_POWER_EXIT = const(40)
     EXPERIMENT_ENTRY = const(80)
     EXPERIMENT_EXIT = const(60)
+
+# Temperature thresholds in cC (centi-Celsius)
+class EPS_TEMP_THRESHOLD:
+    BATTERY_HEAT_ENABLE = const(1000)
+    BATTERY_HEAT_DISABLE = const(2000)
 
 
 def GET_EPS_POWER_FLAG(curr_flag, soc):

@@ -3,7 +3,7 @@
 import time
 
 import microcontroller
-from apps.eps.eps import EPS_POWER_FLAG, GET_EPS_POWER_FLAG
+from apps.eps.eps import EPS_POWER_FLAG, EPS_TEMP_THRESHOLD, GET_EPS_POWER_FLAG
 from apps.telemetry.constants import EPS_IDX
 from core import DataHandler as DH
 from core import TemplateTask
@@ -64,6 +64,7 @@ class Task(TemplateTask):
     ]"""
 
     log_data = [0] * 43  # - use mV for voltage and mA for current (h = short integer 2 bytes)
+    heaters_enabled = False
 
     def __init__(self, id):
         super().__init__(id)
@@ -91,6 +92,14 @@ class Task(TemplateTask):
             return True
         else:
             return False
+        
+    def enable_heaters(self):
+        #TODO: set battery heater GPIO pins
+        heaters_enabled = True
+    
+    def disable_heaters(self):
+        #TODO: clear battery heater GPIO pins
+        heaters_enabled = False
 
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:
@@ -148,5 +157,12 @@ class Task(TemplateTask):
                     self.log_info(f"EPS state: {self.log_data[EPS_IDX.EPS_POWER_FLAG]} ")
                 else:
                     self.log_error("EPS state invalid; SOC or power flag may be corrupted")
+
+                curr_temp = self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]
+                if (not self.heaters_enabled) and (curr_temp <= EPS_TEMP_THRESHOLD.BATTERY_HEAT_ENABLE):
+                    self.enable_heaters()
+                elif self.heaters_enabled and curr_temp >= EPS_TEMP_THRESHOLD.BATTERY_HEAT_DISABLE:
+                    self.disable_heaters()
+                
 
             DH.log_data("eps", self.log_data)
