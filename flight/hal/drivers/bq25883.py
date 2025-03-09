@@ -134,57 +134,5 @@ class BQ25883:
     def led(self, value: bool) -> None:
         self._stat_dis = not value
 
-    """
-    ----------------------- HANDLER METHODS -----------------------
-    """
-
-    def get_flags(self):
-        flags = {}
-        status = self.fault_status()
-        if status & 0x10:
-            flags["VBUS_OVP_STAT"] = None
-        if status & (0x1 << 5):
-            flags["TSHUT_STAT"] = None
-        if status & (0x1 << 6):
-            flags["BATOVP_STAT"] = None
-        if status & (0x1 << 7):
-            flags["TMR_STAT"] = None
-        return flags
-
-    ######################### DIAGNOSTICS #########################
-
-    def __check_for_faults(self) -> list[int]:
-        """__check_for_faults: Check for faults in the BQ25883.
-        Returns:
-            bool: True if there is a fault, False if there is not a fault.
-        """
-        errors: list[int] = []
-
-        status = self.fault_status()
-
-        if (status & (0xF << 4)) != 0:
-            list.append[Errors.BQ25883_INPUT_OVERVOLTAGE]
-        if (status & (0x1 << 5)) != 0:
-            list.append[Errors.BQ25883_THERMAL_SHUTDOWN]
-        if (status & (0x1 << 6)) != 0:
-            list.append[Errors.BQ25883_BATTERY_OVERVOLTAGE]
-        if (status & (0x1 << 7)) != 0:
-            list.append[Errors.BQ25883_CHARGE_SAFETY_TIMER_EXPIRED]
-
-        return errors
-
-    def run_diagnostics(self) -> list[int] | None:
-        """run_diagnostic_test: Run all tests for the component
-
-        :return: List of error codes
-        """
-        error_list = []
-
-        error_list = self.__check_for_faults()
-
-        error_list = list(set(error_list))
-
-        if Errors.NOERROR not in error_list:
-            self.errors_present = True
-
-        return error_list
+    def deinit(self):
+        return

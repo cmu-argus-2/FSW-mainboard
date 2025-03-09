@@ -45,3 +45,8 @@ class PayloadUART:
     def run_diagnostics(self) -> list[int] | None:
         """run_diagnostic_test: Run all tests for the component"""
         return [Errors.NOERROR]
+
+    def deinit(self):
+        self.__enable.deinit()
+        self.__enable = None
+        return

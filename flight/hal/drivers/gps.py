@@ -597,7 +597,7 @@ class GPS:
 
     # TODO : Change this so that it always sends the binary message rather than needing set on each run
     def set_to_binary(self) -> None:
-        self.write(b"\xA0\xA1\x00\x03\x09\x02\x00\x0B\x0D\x0A")
+        self.write(b"\xa0\xa1\x00\x03\x09\x02\x00\x0b\x0d\x0a")
 
     @property
     def in_waiting(self) -> int:
@@ -666,3 +666,9 @@ class GPS:
             self.errors_present = True
 
         return error_list
+
+    def deinit(self):
+        if self._enable is not None:
+            self._enable.deinit()
+            self._enable = None
+        return

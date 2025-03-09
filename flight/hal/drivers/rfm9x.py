@@ -1014,3 +1014,14 @@ class RFM9x:
             self.errors_present = True
 
         return error_list
+
+    def deinit(self):
+        self.dio0.deinit()
+        self.dio0 = None
+        self.__cs.deinit()
+        self.__cs = None
+        self.__enable.deinit()
+        self.__enable = None
+        self._rst.deinit()
+        self._rst = None
+        return

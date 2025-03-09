@@ -340,3 +340,6 @@ class DRV8830:
             self.errors_present = True
 
         return error_list
+
+    def deinit(self):
+        return

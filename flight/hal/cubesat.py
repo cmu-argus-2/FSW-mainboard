@@ -21,39 +21,41 @@ class CubeSat:
     )
 
     def __init__(self):
-        self.__device_list = OrderedDict([
-            ("SDCARD", Device(self.__sd_card_boot)),
-            ("IMU", Device(self.__imu_boot)),
-            ("RTC", Device(self.__rtc_boot)),
-            # ("GPS", Device(self.__gps_boot)),
-            # ("RADIO", Device(self.__radio_boot)),
-            # ("FUEL_GAUGE", Device(self.__fuel_gauge_boot)),
-            # ("BURN_WIRE", Device(self.__burn_wire_boot)),
-            ("BOARD_PWR", Device(self.__power_monitor_boot)),
-            # ("RADIO_PWR", Device(self.__power_monitor_boot)),
-            # ("GPS_PWR", Device(self.__power_monitor_boot)),
-            # ("JETSON_PWR", Device(self.__power_monitor_boot)),
-            # ("XP_PWR", Device(self.__power_monitor_boot)),
-            # ("XM_PWR", Device(self.__power_monitor_boot)),
-            # ("YP_PWR", Device(self.__power_monitor_boot)),
-            # ("YM_PWR", Device(self.__power_monitor_boot)),
-            # ("ZP_PWR", Device(self.__power_monitor_boot)),
-            # ("TORQUE_XP", Device(self.__torque_driver_boot)),
-            # ("TORQUE_XM", Device(self.__torque_driver_boot)),
-            # ("TORQUE_YP", Device(self.__torque_driver_boot)),
-            # ("TORQUE_YM", Device(self.__torque_driver_boot)),
-            # ("TORQUE_ZP", Device(self.__torque_driver_boot)),
-            # ("TORQUE_ZM", Device(self.__torque_driver_boot)),
-            # ("LIGHT_XP", Device(self.__light_sensor_boot)),
-            # ("LIGHT_XM", Device(self.__light_sensor_boot)),
-            # ("LIGHT_YP", Device(self.__light_sensor_boot)),
-            # ("LIGHT_YM", Device(self.__light_sensor_boot)),
-            # ("LIGHT_ZM", Device(self.__light_sensor_boot)),
-            # ("LIGHT_ZP_1", Device(self.__light_sensor_boot)),
-            # ("LIGHT_ZP_2", Device(self.__light_sensor_boot)),
-            # ("LIGHT_ZP_3", Device(self.__light_sensor_boot)),
-            # ("LIGHT_ZP_4", Device(self.__light_sensor_boot)),
-        ])
+        self.__device_list = OrderedDict(
+            [
+                ("SDCARD", Device(self.__sd_card_boot)),
+                ("IMU", Device(self.__imu_boot)),
+                ("RTC", Device(self.__rtc_boot)),
+                # ("GPS", Device(self.__gps_boot)),
+                # ("RADIO", Device(self.__radio_boot)),
+                # ("FUEL_GAUGE", Device(self.__fuel_gauge_boot)),
+                # ("BURN_WIRE", Device(self.__burn_wire_boot)),
+                ("BOARD_PWR", Device(self.__power_monitor_boot)),
+                # ("RADIO_PWR", Device(self.__power_monitor_boot)),
+                # ("GPS_PWR", Device(self.__power_monitor_boot)),
+                # ("JETSON_PWR", Device(self.__power_monitor_boot)),
+                # ("XP_PWR", Device(self.__power_monitor_boot)),
+                # ("XM_PWR", Device(self.__power_monitor_boot)),
+                # ("YP_PWR", Device(self.__power_monitor_boot)),
+                # ("YM_PWR", Device(self.__power_monitor_boot)),
+                # ("ZP_PWR", Device(self.__power_monitor_boot)),
+                # ("TORQUE_XP", Device(self.__torque_driver_boot)),
+                # ("TORQUE_XM", Device(self.__torque_driver_boot)),
+                # ("TORQUE_YP", Device(self.__torque_driver_boot)),
+                # ("TORQUE_YM", Device(self.__torque_driver_boot)),
+                # ("TORQUE_ZP", Device(self.__torque_driver_boot)),
+                # ("TORQUE_ZM", Device(self.__torque_driver_boot)),
+                # ("LIGHT_XP", Device(self.__light_sensor_boot)),
+                # ("LIGHT_XM", Device(self.__light_sensor_boot)),
+                # ("LIGHT_YP", Device(self.__light_sensor_boot)),
+                # ("LIGHT_YM", Device(self.__light_sensor_boot)),
+                # ("LIGHT_ZM", Device(self.__light_sensor_boot)),
+                # ("LIGHT_ZP_1", Device(self.__light_sensor_boot)),
+                # ("LIGHT_ZP_2", Device(self.__light_sensor_boot)),
+                # ("LIGHT_ZP_3", Device(self.__light_sensor_boot)),
+                # ("LIGHT_ZP_4", Device(self.__light_sensor_boot)),
+            ]
+        )
 
         self.__imu_temp_flag = False
 
@@ -167,7 +169,7 @@ class CubeSat:
         :return: object or None
         """
         return self.__device_list["FUEL_GAUGE"].device
-    
+
     @property
     def FUEL_GAUGE_AVAILABLE(self) -> bool:
         """FUEL_GAUGE_AVAILABLE: Returns True if the fuel gauge is available
