@@ -90,54 +90,42 @@ class ArgusV3Components:
 
     # XM TORQUE COILS
     TORQUE_COILS_XM_I2C = ArgusV3Interfaces.I2C0
-    TORQUE_XM_I2C_ADDRESS = const(0x64)
-
-    # XM COIL DRIVER POWER MONITOR
-    TORQUE_XM_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C0
-    TORQUE_XM_POWER_MONITOR_I2C_ADDRESS = const(0x40)  # 80
+    TORQUE_XM_I2C_ADDRESS = const(0x30)
 
     # XM SOLAR CHARGING POWER MONITOR
     SOLAR_CHARGING_XM_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C0
-    SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS = const(0x48)  # 90
+    SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS = const(0x40)  # 90
 
     # XM LIGHT SENSOR
     LIGHT_SENSOR_XM_I2C = ArgusV3Interfaces.I2C0
-    LIGHT_SENSOR_XM_I2C_ADDRESS = const(0x45)
+    LIGHT_SENSOR_XM_I2C_ADDRESS = const(0x44)
 
-    # YM TORQUE COILS
-    TORQUE_COILS_YM_I2C = ArgusV3Interfaces.I2C0
-    TORQUE_YM_I2C_ADDRESS = const(0x63)
+    # YP TORQUE COILS
+    TORQUE_COILS_YP_I2C = ArgusV3Interfaces.I2C0
+    TORQUE_YP_I2C_ADDRESS = const(0x31)
 
-    # Y COIL DRIVER POWER MONITOR
-    TORQUE_YM_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C0
-    TORQUE_YM_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 80
+    # YP SOLAR CHARGING POWER MONITOR
+    SOLAR_CHARGING_YP_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C0
+    SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS = const(0x41)  # 90
 
-    # Y SOLAR CHARGING POWER MONITOR
-    SOLAR_CHARGING_YM_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C0
-    SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS = const(0x49)  # 90
+    # YP LIGHT SENSOR
+    LIGHT_SENSOR_YP_I2C = ArgusV3Interfaces.I2C0
+    LIGHT_SENSOR_YP_I2C_ADDRESS = const(0x45)
 
-    # Y LIGHT SENSOR
-    LIGHT_SENSOR_YM_I2C = ArgusV3Interfaces.I2C0
-    LIGHT_SENSOR_YM_I2C_ADDRESS = const(0x44)
-
-    # Z TORQUE COILS
+    # ZP TORQUE COILS
     TORQUE_COILS_ZP_I2C = ArgusV3Interfaces.I2C0
-    TORQUE_ZP_I2C_ADDRESS = const(0x64)
-
-    # Z COIL DRIVER POWER MONITOR
-    TORQUE_ZP_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C0
-    TORQUE_ZP_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 84
+    TORQUE_ZP_I2C_ADDRESS = const(0x10)
 
     # ZP SOLAR CHARGING POWER MONITOR
     SOLAR_CHARGING_ZP_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C0
-    SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS = const(0x4A)  # 94
+    SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS = const(0x62)  # 94
 
     # ZP SUN SENSOR
     SUN_SENSOR_ZP_I2C = ArgusV3Interfaces.I2C0
-    SUN_SENSOR_ZP1_I2C_ADDRESS = const(0x44)  # Conflict with ZM
-    SUN_SENSOR_ZP2_I2C_ADDRESS = const(0x45)
-    SUN_SENSOR_ZP3_I2C_ADDRESS = const(0x46)
-    SUN_SENSOR_ZP4_I2C_ADDRESS = const(0x47)
+    SUN_SENSOR_ZP1_I2C_ADDRESS = const(0x64)  # Conflict with ZM
+    SUN_SENSOR_ZP2_I2C_ADDRESS = const(0x65)
+    SUN_SENSOR_ZP3_I2C_ADDRESS = const(0x66)
+    SUN_SENSOR_ZP4_I2C_ADDRESS = const(0x67)
 
     ########
     # I2C1 #
@@ -145,7 +133,7 @@ class ArgusV3Components:
 
     # LORA POWER MONITOR
     RADIO_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
-    RADIO_POWER_MONITOR_I2C_ADDRESS = const(0x41)
+    RADIO_POWER_MONITOR_I2C_ADDRESS = const(0x42)
 
     # USB CHARGER
     CHARGER_I2C = ArgusV3Interfaces.I2C1
@@ -153,7 +141,7 @@ class ArgusV3Components:
 
     # GPS POWER MONITOR
     GPS_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
-    GPS_POWER_MONITOR_I2C_ADDRESS = const(0x42)
+    GPS_POWER_MONITOR_I2C_ADDRESS = const(0x41)
 
     # BOARD POWER MONITOR
     BOARD_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
@@ -161,49 +149,37 @@ class ArgusV3Components:
 
     # CAMERA
 
-    # X TORQUE COILS
+    # XP TORQUE COILS
     TORQUE_COILS_XP_I2C = ArgusV3Interfaces.I2C1
-    TORQUE_XP_I2C_ADDRESS = const(0x64)
+    TORQUE_XP_I2C_ADDRESS = const(0x30)
 
-    # X COIL DRIVER POWER MONITOR
-    TORQUE_XP_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
-    TORQUE_XP_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 84
-
-    # X SOLAR CHARGING POWER MONITOR
+    # XP SOLAR CHARGING POWER MONITOR
     SOLAR_CHARGING_XP_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
-    SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS = const(0x49)  # 92
+    SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS = const(0x48)  # 92
 
-    # X LIGHT SENSOR
+    # XP LIGHT SENSOR
     LIGHT_SENSOR_XP_I2C = ArgusV3Interfaces.I2C1
-    LIGHT_SENSOR_XP_I2C_ADDRESS = const(0x45)
+    LIGHT_SENSOR_XP_I2C_ADDRESS = const(0x44)
 
-    # Y TORQUE COILS
-    TORQUE_COILS_YP_I2C = ArgusV3Interfaces.I2C1
-    TORQUE_YP_I2C_ADDRESS = const(0x64)
+    # YM TORQUE COILS
+    TORQUE_COILS_YM_I2C = ArgusV3Interfaces.I2C1
+    TORQUE_YM_I2C_ADDRESS = const(0x31)
 
-    # Y COIL DRIVER POWER MONITOR
-    TORQUE_YP_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
-    TORQUE_YP_POWER_MONITOR_I2C_ADDRESS = const(0x42)  # 84
+    # YM SOLAR CHARGING POWER MONITOR
+    SOLAR_CHARGING_YM_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
+    SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS = const(0x4A)  # 92
 
-    # Y SOLAR CHARGING POWER MONITOR
-    SOLAR_CHARGING_YP_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
-    SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS = const(0x49)  # 92
+    # YM LIGHT SENSOR
+    LIGHT_SENSOR_YM_I2C = ArgusV3Interfaces.I2C1
+    LIGHT_SENSOR_YM_I2C_ADDRESS = const(0x45)
 
-    # Y LIGHT SENSOR
-    LIGHT_SENSOR_YP_I2C = ArgusV3Interfaces.I2C1
-    LIGHT_SENSOR_YP_I2C_ADDRESS = const(0x45)
-
-    # Z TORQUE COILS
+    # ZM TORQUE COILS
     TORQUE_COILS_ZM_I2C = ArgusV3Interfaces.I2C1
-    TORQUE_ZM_I2C_ADDRESS = const(0x63)
-
-    # Z COIL DRIVER POWER MONITOR
-    TORQUE_ZM_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
-    TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS = const(0x40)  # 80
+    TORQUE_ZM_I2C_ADDRESS = const(0x32)
 
     # ZM LIGHT SENSOR
     LIGHT_SENSOR_ZM_I2C = ArgusV3Interfaces.I2C1
-    LIGHT_SENSOR_ZM_I2C_ADDRESS = const(0x44)  # Conflict with ZP
+    LIGHT_SENSOR_ZM_I2C_ADDRESS = const(0x46)  # Conflict with ZP
 
     ########
     # SPI0 #
@@ -223,7 +199,6 @@ class ArgusV3Components:
     # RADIO_RX_EN = board.LORA_RX_EN  # GPIO20
     # RADIO_BUSY = board.LORA_BUSY  # GPIO23
     # RADIO_IRQ = board.GPS_EN  # GPIO27_ADC1
-    # RADIO_FREQ = 915.6
 
     ########
     # SPI1 #
@@ -282,16 +257,6 @@ class ArgusV3(CubeSat):
         for name, device in self.__device_list.items():
             func = device.boot_fn
             device.device, device.error = func(name)
-
-        # self.__recent_errors = error_list
-
-        # return error_list
-
-    def __state_flags_boot(self) -> None:
-        """state_flags_boot: Boot sequence for the state flags"""
-        from hal.drivers.stateflags import StateFlags
-
-        self.__state_flags = StateFlags()
 
     def __gps_boot(self, _) -> list[object, int]:
         """GPS_boot: Boot sequence for the GPS
@@ -354,7 +319,6 @@ class ArgusV3(CubeSat):
             return [power_monitor, Errors.NOERROR]
 
         except Exception as e:
-            print(f"Failed to initialize {location}: {e}")
             if self.__debug:
                 raise e
             return [None, Errors.ADM1176_NOT_INITIALIZED]
@@ -377,7 +341,6 @@ class ArgusV3(CubeSat):
 
             return [imu, Errors.NOERROR]
         except Exception as e:
-            print(f"Failed to initialize IMU: {e}")
             if self.__debug:
                 raise e
             return [None, Errors.IMU_NOT_INITIALIZED]
@@ -395,23 +358,22 @@ class ArgusV3(CubeSat):
             "TORQUE_ZP": [ArgusV3Components.TORQUE_ZP_I2C_ADDRESS, ArgusV3Components.TORQUE_COILS_ZP_I2C],
             "TORQUE_ZM": [ArgusV3Components.TORQUE_ZM_I2C_ADDRESS, ArgusV3Components.TORQUE_COILS_ZM_I2C],
         }
-
-        from hal.drivers.drv8830 import DRV8830
+        # TODO: verify this driver actually works
+        from hal.drivers.drv8235 import DRV8235
 
         data = directions[direction]
 
         try:
             address = data[0]
             bus = data[1]
-            torque_driver = DRV8830(bus, address)
+            torque_driver = DRV8235(bus, address)
 
             return [torque_driver, Errors.NOERROR]
 
         except Exception as e:
             if self.__debug:
-                print(f"Failed to initialize {direction} torque driver: {e}")
                 raise e
-            return [None, Errors.DRV8830_NOT_INITIALIZED]  # Append failure code
+            return [None, Errors.DRV8830_NOT_INITIALIZED]
 
     def __light_sensor_boot(self, direction) -> list[object, int]:
         """Boot sequence for all light sensors in predefined directions.
@@ -424,20 +386,20 @@ class ArgusV3(CubeSat):
             "LIGHT_YP": [ArgusV3Components.LIGHT_SENSOR_YP_I2C_ADDRESS, ArgusV3Components.LIGHT_SENSOR_YP_I2C],
             "LIGHT_YM": [ArgusV3Components.LIGHT_SENSOR_YM_I2C_ADDRESS, ArgusV3Components.LIGHT_SENSOR_YM_I2C],
             "LIGHT_ZM": [ArgusV3Components.LIGHT_SENSOR_ZM_I2C_ADDRESS, ArgusV3Components.LIGHT_SENSOR_ZM_I2C],
-            "LIGHT_SUN1": [ArgusV3Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV3Components.SUN_SENSOR_ZP_I2C],
-            "LIGHT_SUN2": [ArgusV3Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV3Components.SUN_SENSOR_ZP_I2C],
-            "LIGHT_SUN3": [ArgusV3Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV3Components.SUN_SENSOR_ZP_I2C],
-            "LIGHT_SUN4": [ArgusV3Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV3Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_1": [ArgusV3Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV3Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_2": [ArgusV3Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV3Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_3": [ArgusV3Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV3Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_4": [ArgusV3Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV3Components.SUN_SENSOR_ZP_I2C],
         }
 
-        from hal.drivers.opt4001 import OPT4001
+        from hal.drivers.opt4003 import OPT4003
 
         data = directions[direction]
 
         try:
             address = data[0]
             bus = data[1]
-            light_sensor = OPT4001(
+            light_sensor = OPT4003(
                 bus,
                 address,
                 conversion_time=ArgusV3Components.LIGHT_SENSOR_CONVERSION_TIME,
@@ -446,9 +408,8 @@ class ArgusV3(CubeSat):
 
         except Exception as e:
             if self.__debug:
-                print(f"Failed to initialize {direction} light sensor: {e}")
                 raise e
-            return [None, Errors.OPT4001_NOT_INITIALIZED]  # Append failure code
+            return [None, Errors.OPT4001_NOT_INITIALIZED]
 
     def __radio_boot(self, _) -> list[object, int]:
         """radio_boot: Boot sequence for the radio
@@ -459,14 +420,13 @@ class ArgusV3(CubeSat):
         from hal.drivers.sx126x import SX1262
 
         try:
-
             # Enable power to the radio
             radioEn = digitalio.DigitalInOut(ArgusV3Components.RADIO_ENABLE)
             radioEn.direction = digitalio.Direction.OUTPUT
             radioEn.value = True
 
             radio = SX1262(
-                spi_bus=ArgusV3Interfaces.SPI,
+                spi_bus=ArgusV2Interfaces.SPI,
                 cs=ArgusV3Components.RADIO_CS,
                 irq=ArgusV3Components.RADIO_IRQ,
                 rst=ArgusV3Components.RADIO_RESET,
@@ -476,7 +436,7 @@ class ArgusV3(CubeSat):
             )
 
             radio.begin(
-                freq=915.6,
+                freq=433,
                 bw=125,
                 sf=7,
                 cr=8,
@@ -565,7 +525,6 @@ class ArgusV3(CubeSat):
         from hal.drivers.max17205 import MAX17205
 
         try:
-
             fuel_gauge = MAX17205(
                 ArgusV3Components.FUEL_GAUGE_I2C,
                 ArgusV3Components.FUEL_GAUGE_I2C_ADDRESS,
@@ -577,15 +536,9 @@ class ArgusV3(CubeSat):
                 raise e
             return [None, Errors.MAX17205_NOT_INITIALIZED]
 
-    def reboot_peripheral(self, device_name: str) -> int:
-        """__reboot_peripheral: Reboot a peripheral
-
-        :param peripheral: The peripheral to reboot
-        :return: Error code if the reboot failed
-        """
+    def reboot_device(self, device_name: str):
         if device_name not in self.__device_list:
-            return Errors.PERIPHERAL_NOT_FOUND
-        self.__device_list[device_name].device = None
-        func = self.__device_list[device_name].boot_fn
-        self.__device_list[device_name].device, self.__device_list[device_name].error = func(device_name)
-        return self.__device_list[device_name].error
+            return Errors.INVALID_DEVICE_NAME
+        device = self.__device_list[device_name]
+        device.deinit()
+        # TODO: Implement reboot logic
