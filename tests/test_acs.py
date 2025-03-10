@@ -27,17 +27,17 @@ def larger_spin_error_omega(zero_spin_error_omega: np.ndarray) -> np.ndarray:
         (   # zero error test case
             "zero_spin_error_omega",
             np.ones(3),
-            np.zeros(3),
+            ControllerConst.FALLBACK_CONTROL,
         ),
         (   # parallel magnetic field and spin error test case
             "larger_spin_error_omega",
             "zero_spin_error_omega",
-            np.zeros(3),
+            ControllerConst.FALLBACK_CONTROL,
         ),
         (   # zero magnetic field test case
             "larger_spin_error_omega",
             np.zeros(3),
-            np.zeros(3),
+            ControllerConst.FALLBACK_CONTROL,
         ),
     ]
 )
@@ -85,31 +85,31 @@ def larger_pointing_error_omega(
             "nominal_sun_vector",
             "zero_pointing_error_omega",
             np.ones(3),
-            np.zeros(3),
+            ControllerConst.FALLBACK_CONTROL,
         ),
         (   # parallel magnetic field and pointing error test case
             "nominal_sun_vector",
             "larger_pointing_error_omega",
             "zero_pointing_error_omega",
-            np.zeros(3),
+            ControllerConst.FALLBACK_CONTROL,
         ),
         (   # zero sun vector test case
             np.zeros(3),
             "larger_pointing_error_omega",
             np.ones(3),
-            np.zeros(3),
+            ControllerConst.FALLBACK_CONTROL,
         ),
         (   # zero magnetic field test case
             "nominal_sun_vector",
             "larger_pointing_error_omega",
             np.zeros(3),
-            np.zeros(3),
+            ControllerConst.FALLBACK_CONTROL,
         ),
-        (   # zero sun vector and magnetic field tst case
+        (   # zero sun vector and magnetic field tEst case
             np.zeros(3),
             "larger_pointing_error_omega",
             np.zeros(3),
-            np.zeros(3),
+            ControllerConst.FALLBACK_CONTROL,
         )
     ]
 )
@@ -145,7 +145,7 @@ def invalid_dims() -> list[int]:
         (
             np.ones(3),
             np.ones(3),
-            np.zeros(3),
+            ControllerConst.FALLBACK_CONTROL,
         )
     ]
 )
@@ -173,7 +173,7 @@ def test_invalid_dim_spin_stabilization(
         (
             np.ones(3),
             np.ones(3),
-            np.zeros(3),
+            ControllerConst.FALLBACK_CONTROL,
         )
     ]
 )

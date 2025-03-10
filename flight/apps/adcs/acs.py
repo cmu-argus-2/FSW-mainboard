@@ -15,7 +15,7 @@ def readings_are_valid(
 ) -> bool:
     for reading in readings:
         if not isinstance(reading, np.ndarray) \
-        or reading.shape != ControllerConst.READING_DIMS \
+        or reading.shape != ControllerConst.READING_DIM \
         or not isinstance(reading[0], np.float64):
             return False
     return True
@@ -29,11 +29,11 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
     """
     # Stop ACS if the reading values are invalid
     if not readings_are_valid((omega, mag_field)):
-        return np.zeros(3)
+        return ControllerConst.FALLBACK_CONTROL
 
     # Stop ACS if the field value is invalid
     elif np.linalg.norm(mag_field) == 0:
-        return np.zeros(3)
+        return ControllerConst.FALLBACK_CONTROL
 
     # Do spin stabilization
     else:
@@ -50,11 +50,11 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
 def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field: np.ndarray) -> np.ndarray:
     # Stop ACS if the reading values are invalid
     if not readings_are_valid((sun_vector, omega, mag_field)):
-        return np.zeros(3)
+        return ControllerConst.FALLBACK_CONTROL
 
-    # Stop ACS if either field is invalid
+    # Stop ACS if either reading has invalid norm
     elif np.linalg.norm(mag_field) == 0 or np.linalg.norm(sun_vector) == 0:
-        return np.zeros((3,))
+        return ControllerConst.FALLBACK_CONTROL
 
     else:
         # Compute pointing error
@@ -66,7 +66,7 @@ def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field
 
         if u_dir_norm < 1e-6:
             # Return zeros to avoid division by zero
-            return np.zeros(3)
+            return ControllerConst.FALLBACK_CONTROL
         else:
             # Normalize the control input
             return u_dir / u_dir_norm
