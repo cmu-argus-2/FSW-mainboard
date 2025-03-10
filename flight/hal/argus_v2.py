@@ -98,7 +98,7 @@ class ArgusV2Components:
 
     # XM LIGHT SENSOR
     LIGHT_SENSOR_XM_I2C = ArgusV2Interfaces.I2C0
-    LIGHT_SENSOR_XM_I2C_ADDRESS = const(0x45)
+    LIGHT_SENSOR_XM_I2C_ADDRESS = const(0x44)
 
     # YP TORQUE COILS
     TORQUE_COILS_YP_I2C = ArgusV2Interfaces.I2C0
