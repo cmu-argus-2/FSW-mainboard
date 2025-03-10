@@ -65,7 +65,7 @@ class Faults:
            resumes with voltage restoration
     """
 
-    DESCRIPTOR = ["FAULT", "OCP", "OVP", "UVLO", "TSD"]
+    DESCRIPTOR = ["FAULT", "STALL", "OCP", "OVP", "TSD", "NPOR"]
 
 
 class DRV8235:
@@ -85,13 +85,15 @@ class DRV8235:
         self._reg_ctrl = 0x3  # Sets to voltage regulation
         self._wset_vset = 0  # Sets initial voltage to 0
         self._int_vref = True
+        # TODO: check inv_r_scale and inv_r values
         self._inv_r_scale = 0x3
         self._inv_r = 82
         self._en_out = True
+        # TODO: initialize self.bridge_control ??
         # Clear all fault status flags
         self.clear_faults()
 
-        super().__init__()
+        # super().__init__()
 
     # DEFINE I2C DEVICE BITS AND REGISTERS
     _clear = RWBit(_CONFIG0, 1, 1, False)  # Clears fault status flag bits
@@ -221,14 +223,16 @@ class DRV8235:
         faults = []
         if self._fault:
             faults.append(Faults.DESCRIPTOR[0])
-            if self._ocp:
+            if self._stall:
                 faults.append(Faults.DESCRIPTOR[1])
-            if self._uvlo:
+            if self._ocp:
                 faults.append(Faults.DESCRIPTOR[2])
-            if self._ots:
+            if self._ovp:
                 faults.append(Faults.DESCRIPTOR[3])
-            if self._ilimit:
+            if self._tsd:
                 faults.append(Faults.DESCRIPTOR[4])
+            if self._npor:
+                faults.append(Faults.DESCRIPTOR[5])
         return self._fault, faults
 
     def clear_faults(self):
@@ -240,7 +244,7 @@ class DRV8235:
 
     def __exit__(self, exception_type, exception_value, traceback):
         self._wset_vset = 0
-        self._dir = BridgeControl.STANDBY
+        self._dir = BridgeControl.COAST
 
     def deinit(self):
         return
