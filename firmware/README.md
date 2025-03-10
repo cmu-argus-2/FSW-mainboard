@@ -1,7 +1,13 @@
 CircuitPython Compilation & Flashing Guide for Argus
 =====
+## Supported Board CPY Information
+| Mainboard  | MCU | CPY  |
+| ------------- | ------------- | ------------- |
+| Argus 1.0  | ATSAMD51 | 8 |
+| Argus 1.1  | ATSAMD51 | 8, 9 |
+| Argus 2  | RP2040 | 8, 9 |
 ## Compilation
-This guide will be specific to Argus, for additional information refer to the [official Adafruit CircuitPython Guide](https://learn.adafruit.com/how-to-add-a-new-board-to-circuitpython/get-setup-to-add-your-board)
+This guide is specific to Argus, for additional information refer to the [official Adafruit CircuitPython Guide](https://learn.adafruit.com/how-to-add-a-new-board-to-circuitpython/get-setup-to-add-your-board)
 
 **1. Setup Environment**
 
@@ -47,6 +53,7 @@ This folder should contain the following files:
      CIRCUITPY_DRIVE_LABEL = "ARGUS"
      ```
   4. pins.c
+   
      This file defines the pin names available on the board. Add the relevant name of each GPIO pin for ease of read in FSW.  
   5. There might be other files depending on the port.
 
@@ -65,7 +72,7 @@ If the compilation is successful, a build-ArgusX folder will be be created. A fi
 ### Raspberry Pi
 To enter bootloader, turn off the board and hold the RESET button. Drag and drop the uf2 file to the board, it will restart with the new firmware.
 
-### SAMD
+### ATSAMD
 
 To enter bootloader, double tap the RESET button. Drag and drop the uf2 file to the board, it will restart with the new firmware.
 
