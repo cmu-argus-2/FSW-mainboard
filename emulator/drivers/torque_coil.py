@@ -7,6 +7,10 @@ class CoilDriver:
     def set_throttle_volts(self, new_throttle_volts):
         self.current_throttle = new_throttle_volts
 
+    def set_throttle(self, dir, ctrl):
+        if self.__simulator is not None:
+            self.__simulator.set_control_input(dir, ctrl)
+
 
 class TorqueCoilArray:
     def __init__(self, simulator=None) -> None:

@@ -155,7 +155,7 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'XM', etc.)
         :return: bool - True if the driver exists and is not None, False otherwise.
         """
-        return self.key_in_device_list("TORQUE_" + dir) and self.device_list["TORQUE_" + dir].device is not None
+        return self.key_in_device_list("TORQUE_" + dir) and self.__device_list["TORQUE_" + dir].device is not None
 
     # ABSTRACT METHOD #
     def APPLY_MAGNETIC_CONTROL(self, dir: str, throttle: float) -> None:
