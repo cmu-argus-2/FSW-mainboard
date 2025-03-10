@@ -73,7 +73,6 @@ def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field
 
 
 def mcm_coil_allocator(u: np.ndarray) -> np.ndarray:
-
     # Query the available coil statuses
     coil_status = []
     mcm_alloc = np.zeros((6, 3))

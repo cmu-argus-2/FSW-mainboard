@@ -32,7 +32,6 @@ from ulab import numpy as np
 
 
 class AttitudeDetermination:
-
     # Initialized Flag to retry initialization
     initialized = False
 
@@ -71,6 +70,7 @@ class AttitudeDetermination:
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ SENSOR READ FUNCTIONS """
+
     # ------------------------------------------------------------------------------------------------------------------------------------
     def read_sun_position(self) -> tuple[int, np.ndarray, np.ndarray]:
         """
@@ -129,28 +129,36 @@ class AttitudeDetermination:
         - NOTE: Since GPS is a task, this function will read values from C&DH
         """
         if DH.data_process_exists("gps") and SATELLITE.GPS_AVAILABLE:
-
             # Get last GPS update time and position at that time
-            gps_record_time = DH.get_latest_data("gps")[GPS_IDX.TIME_GPS]
-            gps_pos_ecef = 1e-2 * (
-                np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,))
-            )
-            gps_vel_ecef = 1e-2 * (
-                np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_VX : GPS_IDX.GPS_ECEF_VZ + 1]).reshape((3,))
-            )
+            gps_data = DH.get_latest_data("gps")
 
-            # Sensor validity check
-            if gps_pos_ecef is None or gps_vel_ecef is None or len(gps_pos_ecef) != 3 or len(gps_vel_ecef) != 3:
-                return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
-            elif not (6.0e6 <= np.linalg.norm(gps_pos_ecef) <= 7.5e6) or not (3.0e3 <= np.linalg.norm(gps_vel_ecef) <= 1.0e4):
-                return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
+            if gps_data is not None:
+                gps_record_time = [GPS_IDX.TIME_GPS]
+                gps_pos_ecef = 1e-2 * (
+                    np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,))
+                )
+                gps_vel_ecef = 1e-2 * (
+                    np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_VX : GPS_IDX.GPS_ECEF_VZ + 1]).reshape((3,))
+                )
 
-            return StatusConst.OK, gps_record_time, gps_pos_ecef, gps_vel_ecef
+                # Sensor validity check
+                if gps_pos_ecef is None or gps_vel_ecef is None or len(gps_pos_ecef) != 3 or len(gps_vel_ecef) != 3:
+                    return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
+                elif not (6.0e6 <= np.linalg.norm(gps_pos_ecef) <= 7.5e6) or not (
+                    3.0e3 <= np.linalg.norm(gps_vel_ecef) <= 1.0e4
+                ):
+                    return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
+
+                return StatusConst.OK, gps_record_time, gps_pos_ecef, gps_vel_ecef
+
+            else:
+                return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
         else:
             return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ MEKF INITIALIZATION """
+
     # ------------------------------------------------------------------------------------------------------------------------------------
     def initialize_mekf(self) -> int:
         """
@@ -258,6 +266,7 @@ class AttitudeDetermination:
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ MEKF PROPAGATION """
+
     # ------------------------------------------------------------------------------------------------------------------------------------
     def position_update(self, current_time: int) -> None:
         """
@@ -354,7 +363,6 @@ class AttitudeDetermination:
         self.state[self.omega_idx] = omega_body  # save omega to state
 
         if status == StatusConst.OK:
-
             if self.initialized:  # If initialized, also update attitude via propagation
                 bias = self.state[self.bias_idx]
                 dt = current_time - self.last_gyro_update_time
@@ -375,7 +383,6 @@ class AttitudeDetermination:
                 self.last_gyro_update_time = current_time
 
                 if update_covariance:  # if update covariance, update covariance matrices
-
                     F = np.zeros((6, 6))
                     F[0:3, 3:6] = -R_q_next
 
@@ -403,7 +410,6 @@ class AttitudeDetermination:
         status, _, mag_field_body = self.read_magnetometer()
 
         if self.initialized and update_covariance and status == StatusConst.OK:  # Update EKF
-
             true_mag_field_eci = igrf_eci(current_time, self.state[self.position_idx] / 1000)
             true_mag_field_eci_norm = np.linalg.norm(true_mag_field_eci)
             if true_mag_field_eci_norm == 0:

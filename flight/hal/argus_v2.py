@@ -460,7 +460,6 @@ class ArgusV2(CubeSat):
         from hal.drivers.bq25883 import BQ25883
 
         try:
-
             charger = BQ25883(
                 ArgusV2Components.CHARGER_I2C,
                 ArgusV2Components.CHARGER_I2C_ADDRESS,
@@ -566,7 +565,6 @@ class ArgusV2(CubeSat):
         from hal.drivers.sx126x import SX1262
 
         try:
-
             # Enable power to the radio
             radioEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_ENABLE)
             radioEn.direction = digitalio.Direction.OUTPUT
@@ -701,7 +699,6 @@ class ArgusV2(CubeSat):
         from hal.drivers.max17205 import MAX17205
 
         try:
-
             fuel_gauge = MAX17205(
                 ArgusV2Components.FUEL_GAUGE_I2C,
                 ArgusV2Components.FUEL_GAUGE_I2C_ADDRESS,

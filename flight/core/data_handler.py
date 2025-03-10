@@ -571,6 +571,9 @@ class ImageProcess(DataProcess):
         self.delete_paths = []  # Paths that are flagged for deletion
         self.excluded_paths = []  # Paths that are currently being transmitted
         self.circular_buffer_size = 20  # Default size of the circular buffer for the files in the directory
+        self.img_buf_size = 512  # Default size of the circular buffer for image data logs
+        self.img_buf = bytearray(self.img_buf_size)  # Pre-allocated static buffer for image process
+        self.img_buf_index = 0  # index to track position in buffer
 
         config_file_path = join_path(self.dir_path, _PROCESS_CONFIG_FILENAME)
         if not path_exist(config_file_path):
@@ -604,7 +607,7 @@ class ImageProcess(DataProcess):
 
     def log(self, data: bytearray) -> None:
         """
-        Logs the given image data.
+        Logs the given image data. Stores into a buffer and write in blocks of 512 Bytes
 
         Args:
             data (List[bytes]): The bytes of image data to be logged.
@@ -612,11 +615,37 @@ class ImageProcess(DataProcess):
         Returns:
             None
         """
-        self.resolve_current_file()
-        self.last_data = data
 
-        self.file.write(data)
-        self.file.flush()
+        if not DataHandler.SD_ERROR_FLAG:
+            # Add to image buffer and transmit only when multiples of 512 Bytes have been attained
+            data_len = len(data)
+            data_offset = 0  # Keeps track of processed data
+
+            while data_offset < data_len:
+                space_remaining = self.img_buf_size - self.img_buf_index
+                chunk_size = min(data_len - data_offset, space_remaining)  # Fill as much as possible
+
+                # Copy data into buffer
+                self.img_buf[self.img_buf_index : self.img_buf_index + chunk_size] = data[
+                    data_offset : data_offset + chunk_size
+                ]
+                self.img_buf_index += chunk_size
+                data_offset += chunk_size  # Move data offset
+
+                if self.img_buf_index == self.img_buf_size:
+                    # Buffer is full, write to SD card
+                    self.resolve_current_file()
+                    self.file.write(self.img_buf[: self.img_buf_size])  # Write full 512-byte block
+                    self.file.flush()
+                    self.img_buf_index = 0  # Reset buffer index
+
+        else:
+            # Transmit each time without adding to a buf
+            self.resolve_current_file()
+            self.last_data = data
+
+            self.file.write(data)
+            self.file.flush()
 
     def request_TM_path(self, latest: bool = False) -> Optional[str]:
         """

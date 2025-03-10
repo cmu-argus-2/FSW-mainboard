@@ -78,7 +78,6 @@ class Task(TemplateTask):
             pass
 
         else:
-
             if not DH.data_process_exists("adcs"):
                 data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f"
                 DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
@@ -90,7 +89,6 @@ class Task(TemplateTask):
             # DETUMBLING
             # ------------------------------------------------------------------------------------------------------------------------------------
             if SM.current_state == STATES.DETUMBLING:
-
                 # Query the Gyro
                 self.AD.gyro_update(self.time, update_covariance=False)
 
@@ -108,7 +106,6 @@ class Task(TemplateTask):
             # LOW POWER
             # ------------------------------------------------------------------------------------------------------------------------------------
             elif SM.current_state == STATES.LOW_POWER:
-
                 # Turn coils off to conserve power
                 zero_all_coils()
 
@@ -155,7 +152,6 @@ class Task(TemplateTask):
             # NOMINAL & EXPERIMENT
             # ------------------------------------------------------------------------------------------------------------------------------------
             else:
-
                 if (
                     SM.current_state == STATES.NOMINAL
                     and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
@@ -217,6 +213,7 @@ class Task(TemplateTask):
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ Attitude Control Auxiliary Functions """
+
     # ------------------------------------------------------------------------------------------------------------------------------------
     def attitude_control(self):
         """
@@ -225,7 +222,6 @@ class Task(TemplateTask):
 
         # Decide which controller to choose
         if self.MODE in [Modes.TUMBLING, Modes.STABLE]:  # B-cross controller
-
             # Get sensor measurements
             omega_unbiased = self.AD.state[self.AD.omega_idx] - self.AD.state[self.AD.bias_idx]
             mag_field_body = self.AD.state[self.AD.mag_field_idx]
@@ -234,7 +230,6 @@ class Task(TemplateTask):
             dipole_moment = spin_stabilizing_controller(omega_unbiased, mag_field_body)
 
         else:  # Sun-pointed controller
-
             # Get measurements
             sun_pos_body = self.AD.state[self.AD.sun_pos_idx]
             omega_unbiased = self.AD.state[self.AD.omega_idx] - self.AD.state[self.AD.omega_idx]
@@ -247,6 +242,7 @@ class Task(TemplateTask):
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ LOGGING """
+
     # ------------------------------------------------------------------------------------------------------------------------------------
     def log(self):
         """
@@ -286,7 +282,6 @@ class Task(TemplateTask):
         DH.log_data("adcs", self.log_data)
 
         if self.execution_counter == 0:
-
             # Empty failure message buffers
             for msg in self.failure_messages:
                 self.log_warning(msg)
