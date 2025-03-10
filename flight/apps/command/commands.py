@@ -81,15 +81,16 @@ def SCHEDULE_OD_EXPERIMENT():
     return []
 
 
-def REQUEST_TM_HEARTBEAT():
+def REQUEST_TM_NOMINAL():
     """Requests a nominal snapshot of all subsystems."""
-    logger.info("Executing REQUEST_TM_HEARTBEAT")
-    # TODO: change message ID to nominal to differentiate between heart beat (0x05)
+    logger.info("Executing REQUEST_TM_NOMINAL")
     # Pack telemetry
     packed = TelemetryPacker.pack_tm_heartbeat()
     if packed:
-        logger.info("Telemetry heartbeat packed")
+        logger.info("Telemetry nominal packed")
 
+    # Change message ID to nominal - differentiate between SAT_HEARTBEAT
+    TelemetryPacker.change_tm_id_nominal()
     # Return TX message header
     return [get_tx_message_header()]
 

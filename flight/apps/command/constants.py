@@ -10,7 +10,7 @@ class CMD_ID:
     TURN_OFF_PAYLOAD = const(0x44)
     SCHEDULE_OD_EXPERIMENT = const(0x45)
 
-    REQUEST_TM_HEARTBEAT = const(0x46)
+    REQUEST_TM_NOMINAL = const(0x46)
     REQUEST_TM_HAL = const(0x47)
     REQUEST_TM_STORAGE = const(0x48)
     REQUEST_TM_PAYLOAD = const(0x49)
@@ -28,7 +28,7 @@ class CMD_ID:
         UPLINK_ORBIT_REFERENCE: 28,
         TURN_OFF_PAYLOAD: 0,
         SCHEDULE_OD_EXPERIMENT: 0,
-        REQUEST_TM_HEARTBEAT: 0,
+        REQUEST_TM_NOMINAL: 0,
         REQUEST_TM_HAL: 0,
         REQUEST_TM_STORAGE: 0,
         REQUEST_TM_PAYLOAD: 0,

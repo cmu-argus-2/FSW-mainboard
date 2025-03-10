@@ -514,3 +514,12 @@ class TelemetryPacker:
     @classmethod
     def pack_tm_payload(cls):
         pass
+
+    @classmethod
+    def change_tm_id_nominal(cls):
+        """
+        This will change the pack_tm_heartbeat() frame message ID to nominal.
+        This is to help differentiate between a SAT_HEARTBEAT (nominally sent down)
+        and one that was from REQUEST_TM_NOMINAL (requested by command)
+        """
+        cls._FRAME[0] = const(0x05) & 0xFF  # message ID

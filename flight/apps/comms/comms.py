@@ -63,16 +63,7 @@ class MSG_ID:
     SAT_HEARTBEAT = 0x01
 
     # SAT TM frames, requested by GS
-    SAT_TM_NOMINAL = 0x02
-    SAT_TM_HAL = 0x03
-    SAT_TM_STORAGE = 0x04
-    SAT_TM_PAYLOAD = 0x05
-
-    # SAT ACK, in response to GS commands
-    SAT_ACK = 0x0F
-
-    # SAT file metadata and file content messages
-    # SAT TM frames, requested by GS
+    SAT_TM_NOMINAL = 0x05
     SAT_TM_HAL = 0x02
     SAT_TM_STORAGE = 0x03
     SAT_TM_PAYLOAD = 0x04
