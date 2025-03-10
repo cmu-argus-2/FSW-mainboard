@@ -131,9 +131,5 @@ class GPS_IDX:
     GPS_ECEF_VZ = const(20)
 
 
-class HAL_IDX:
-    pass
-
-
 class PAYLOAD_IDX:
     pass

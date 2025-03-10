@@ -383,3 +383,6 @@ class OPT4003:
             XOR ( R[3], R[11], R[19])
         """
         return self.result_of_addr(False)
+
+    def deinit(self):
+        return

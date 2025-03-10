@@ -7,8 +7,8 @@ import sys
 
 ROOT_PATH = os.getcwd()
 
-# CPY_VERSION = 8
-CPY_VERSION = 9
+CPY_VERSION = 8
+# CPY_VERSION = 9
 
 MPY_CROSS_NAME = "mpy-cross-cpy9" if CPY_VERSION == 9 else "mpy-cross"
 if platform.system() == "Darwin":

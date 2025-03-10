@@ -48,38 +48,53 @@ class EmulatedSatellite(CubeSat):
 
         super().__init__()
 
-        self._device_list["RADIO"].device = Radio(self.__use_socket)
-        self._device_list["SDCARD"].device = SD()
-        self._device_list["BURN_WIRE"].device = self.init_device(BurnWires())
+        # self._radio = Radio(self.__use_socket)
+        self.append_device("RADIO", None, Radio(self.__use_socket))
+        # self._sd_card = SD()
+        self.append_device("SD", None, SD())
+        # self._burnwires = self.init_device(BurnWires())
+        self.append_device("BURNWIRES", None, BurnWires())
         self._payload_uart = self.init_device(Payload())
+        self.append_device("PAYLOAD_UART", None, self._payload_uart)
 
         # self._vfs = None
-        self._device_list["GPS"].device = self.init_device(GPS(simulator=self.__simulated_spacecraft))
+        self._gps = self.init_device(GPS(simulator=self.__simulated_spacecraft))
+        self.append_device("GPS", None, self._gps)
         # self._charger = None
 
-        self._device_list["LIGHT_XP"].device = self.init_device(LightSensor(4500, 0, simulator=self.__simulated_spacecraft))
-        self._device_list["LIGHT_XM"].device = self.init_device(LightSensor(48000, 1, simulator=self.__simulated_spacecraft))
-        self._device_list["LIGHT_YP"].device = self.init_device(LightSensor(85000, 2, simulator=self.__simulated_spacecraft))
-        self._device_list["LIGHT_YM"].device = self.init_device(LightSensor(0, 3, simulator=self.__simulated_spacecraft))
-        self._device_list["LIGHT_ZM"].device = self.init_device(LightSensor(0, 4, simulator=self.__simulated_spacecraft))
+        self._light_sensors = LightSensorArray(simulator=self.__simulated_spacecraft)
+        self.append_device("LIGHT_XP", None, self._light_sensors["XP"])
+        self.append_device("LIGHT_XM", None, self._light_sensors["XM"])
+        self.append_device("LIGHT_YP", None, self._light_sensors["YP"])
+        self.append_device("LIGHT_YM", None, self._light_sensors["YM"])
+        self.append_device("LIGHT_ZM", None, self._light_sensors["ZM"])
 
-        # self._torque_drivers = TorqueCoilArray(simulator=self.__simulated_spacecraft)
-        self._device_list["TORQUE_XP"].device = self.init_device(CoilDriver(0, simulator=self.__simulated_spacecraft))
-        self._device_list["TORQUE_XM"].device = self.init_device(CoilDriver(1, simulator=self.__simulated_spacecraft))
-        self._device_list["TORQUE_YP"].device = self.init_device(CoilDriver(2, simulator=self.__simulated_spacecraft))
-        self._device_list["TORQUE_YM"].device = self.init_device(CoilDriver(3, simulator=self.__simulated_spacecraft))
-        self._device_list["TORQUE_ZP"].device = self.init_device(CoilDriver(4, simulator=self.__simulated_spacecraft))
-        self._device_list["TORQUE_ZM"].device = self.init_device(CoilDriver(5, simulator=self.__simulated_spacecraft))
+        self._torque_drivers = TorqueCoilArray(simulator=self.__simulated_spacecraft)
+        self.append_device("TORQUE_XP", None, self._torque_drivers["XP"])
+        self.append_device("TORQUE_XM", None, self._torque_drivers["XM"])
+        self.append_device("TORQUE_YP", None, self._torque_drivers["YP"])
+        self.append_device("TORQUE_YM", None, self._torque_drivers["YM"])
+        self.append_device("TORQUE_ZP", None, self._torque_drivers["ZP"])
+        self.append_device("TORQUE_ZM", None, self._torque_drivers["ZM"])
 
-        self._device_list["IMU"].device = self.init_device(IMU(simulator=self.__simulated_spacecraft))
-        self._device_list["IMU"].device.enable()
+        self._imu = self.init_device(IMU(simulator=self.__simulated_spacecraft))
+        self._imu.enable()
+        self.append_device("IMU", None, self._imu)
 
-        self._device_list["BOARD_PWR"].device = self.init_device(PowerMonitor(7.6, 0.1))
-        self._device_list["JETSON_PWR"].device = self.init_device(PowerMonitor(4, 0.05))
+        self._jetson_power_monitor = self.init_device(PowerMonitor(4, 0.05))
+        self._board_power_monitor = self.init_device(PowerMonitor(7.6, 0.1))
+        # self._power_monitors["BOARD"] = self._board_power_monitor
+        # self._power_monitors["JETSON"] = self._jetson_power_monitor
+        self.append_device("BOARD_PWR", None, self._board_power_monitor)
+        self.append_device("JETSON_PWR", None, self._jetson_power_monitor)
 
-        self._device_list["FUEL_GAUGE"].device = self.init_device(FuelGauge())
+        # self._fuel_gauge = self.init_device(FuelGauge())
+        self.append_device("FUEL_GAUGE", None, FuelGauge())
 
-        self._device_list["RTC"].device = self.init_device(RTC(time.gmtime()))
+        # self._rtc = self.init_device(RTC(time.gmtime()))
+        self.append_device("RTC", None, RTC(time.gmtime()))
+
+        # self.ERRORS = []
 
     def init_device(self, device):
         return device
@@ -93,4 +108,6 @@ class EmulatedSatellite(CubeSat):
     ######################## INTERFACES ########################
     def APPLY_MAGNETIC_CONTROL(self, dir, ctrl) -> None:
         """CONTROL_COILS: Control the coils on the CubeSat, depending on the control mode (identical for all coils)."""
-        self._torque_drivers.apply_control(dir, ctrl)
+        # self._torque_drivers.apply_control(dir, ctrl)
+        if self.TORQUE_DRIVERS_AVAILABLE(dir):
+            self._device_list["TORQUE_" + dir].device.set_throttle(dir, ctrl)

@@ -1,5 +1,5 @@
 """
-Author: Harry, Thomas, Ibrahima, Perrin
+Author: Ibrahima, Perrin
 Description: This file contains the definition of the ArgusV2 class and its associated interfaces and components.
 """
 
@@ -98,7 +98,7 @@ class ArgusV2Components:
 
     # XM LIGHT SENSOR
     LIGHT_SENSOR_XM_I2C = ArgusV2Interfaces.I2C0
-    LIGHT_SENSOR_XM_I2C_ADDRESS = const(0x45)
+    LIGHT_SENSOR_XM_I2C_ADDRESS = const(0x44)
 
     # YP TORQUE COILS
     TORQUE_COILS_YP_I2C = ArgusV2Interfaces.I2C0
@@ -133,7 +133,7 @@ class ArgusV2Components:
 
     # LORA POWER MONITOR
     RADIO_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    RADIO_POWER_MONITOR_I2C_ADDRESS = const(0x41)
+    RADIO_POWER_MONITOR_I2C_ADDRESS = const(0x42)
 
     # USB CHARGER
     CHARGER_I2C = ArgusV2Interfaces.I2C1
@@ -141,7 +141,7 @@ class ArgusV2Components:
 
     # GPS POWER MONITOR
     GPS_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    GPS_POWER_MONITOR_I2C_ADDRESS = const(0x42)
+    GPS_POWER_MONITOR_I2C_ADDRESS = const(0x41)
 
     # BOARD POWER MONITOR
     BOARD_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
@@ -199,7 +199,6 @@ class ArgusV2Components:
     RADIO_RX_EN = board.LORA_RX_EN  # GPIO20
     RADIO_BUSY = board.LORA_BUSY  # GPIO23
     RADIO_IRQ = board.GPS_EN  # GPIO27_ADC1
-    # RADIO_FREQ = 915.6
 
     ########
     # SPI1 #
@@ -258,12 +257,6 @@ class ArgusV2(CubeSat):
         for name, device in self.__device_list.items():
             func = device.boot_fn
             device.device, device.error = func(name)
-
-    def __state_flags_boot(self) -> None:
-        """state_flags_boot: Boot sequence for the state flags"""
-        from hal.drivers.stateflags import StateFlags
-
-        self.__state_flags = StateFlags()
 
     def __gps_boot(self, _) -> list[object, int]:
         """GPS_boot: Boot sequence for the GPS
@@ -326,7 +319,6 @@ class ArgusV2(CubeSat):
             return [power_monitor, Errors.NOERROR]
 
         except Exception as e:
-            print(f"Failed to initialize {location}: {e}")
             if self.__debug:
                 raise e
             return [None, Errors.ADM1176_NOT_INITIALIZED]
@@ -349,7 +341,6 @@ class ArgusV2(CubeSat):
 
             return [imu, Errors.NOERROR]
         except Exception as e:
-            print(f"Failed to initialize IMU: {e}")
             if self.__debug:
                 raise e
             return [None, Errors.IMU_NOT_INITIALIZED]
@@ -381,7 +372,6 @@ class ArgusV2(CubeSat):
 
         except Exception as e:
             if self.__debug:
-                print(f"Failed to initialize {direction} torque driver: {e}")
                 raise e
             return [None, Errors.DRV8830_NOT_INITIALIZED]
 
@@ -396,10 +386,10 @@ class ArgusV2(CubeSat):
             "LIGHT_YP": [ArgusV2Components.LIGHT_SENSOR_YP_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_YP_I2C],
             "LIGHT_YM": [ArgusV2Components.LIGHT_SENSOR_YM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_YM_I2C],
             "LIGHT_ZM": [ArgusV2Components.LIGHT_SENSOR_ZM_I2C_ADDRESS, ArgusV2Components.LIGHT_SENSOR_ZM_I2C],
-            "SUN1": [ArgusV2Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
-            "SUN2": [ArgusV2Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
-            "SUN3": [ArgusV2Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
-            "SUN4": [ArgusV2Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_1": [ArgusV2Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_2": [ArgusV2Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_3": [ArgusV2Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_4": [ArgusV2Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV2Components.SUN_SENSOR_ZP_I2C],
         }
 
         from hal.drivers.opt4003 import OPT4003
@@ -418,7 +408,6 @@ class ArgusV2(CubeSat):
 
         except Exception as e:
             if self.__debug:
-                print(f"Failed to initialize {direction} light sensor: {e}")
                 raise e
             return [None, Errors.OPT4001_NOT_INITIALIZED]
 
@@ -431,7 +420,6 @@ class ArgusV2(CubeSat):
         from hal.drivers.sx126x import SX1262
 
         try:
-
             # Enable power to the radio
             radioEn = digitalio.DigitalInOut(ArgusV2Components.RADIO_ENABLE)
             radioEn.direction = digitalio.Direction.OUTPUT
@@ -448,7 +436,7 @@ class ArgusV2(CubeSat):
             )
 
             radio.begin(
-                freq=915.6,
+                freq=433,
                 bw=125,
                 sf=7,
                 cr=8,
@@ -537,7 +525,6 @@ class ArgusV2(CubeSat):
         from hal.drivers.max17205 import MAX17205
 
         try:
-
             fuel_gauge = MAX17205(
                 ArgusV2Components.FUEL_GAUGE_I2C,
                 ArgusV2Components.FUEL_GAUGE_I2C_ADDRESS,
@@ -549,15 +536,9 @@ class ArgusV2(CubeSat):
                 raise e
             return [None, Errors.MAX17205_NOT_INITIALIZED]
 
-    def reboot_peripheral(self, device_name: str) -> int:
-        """__reboot_peripheral: Reboot a peripheral
-
-        :param peripheral: The peripheral to reboot
-        :return: Error code if the reboot failed
-        """
+    def reboot_device(self, device_name: str):
         if device_name not in self.__device_list:
-            return Errors.PERIPHERAL_NOT_FOUND
-        self.__device_list[device_name].device = None
-        func = self.__device_list[device_name].boot_fn
-        self.__device_list[device_name].device, self.__device_list[device_name].error = func(device_name)
-        return self.__device_list[device_name].error
+            return Errors.INVALID_DEVICE_NAME
+        device = self.__device_list[device_name]
+        device.deinit()
+        # TODO: Implement reboot logic

@@ -35,7 +35,6 @@ from collections import namedtuple
 from struct import pack_into, unpack_from
 
 from adafruit_bus_device import i2c_device
-from hal.drivers.middleware.errors import Errors  # noqa F401
 from micropython import const
 
 # For IDE type recognition
@@ -885,3 +884,9 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
 
     def _get_report_seq_id(self, report_id: int) -> int:
         return self._two_ended_sequence_numbers.get(report_id, 0)
+
+    def deinit(self):
+        if self._reset is not None:
+            self._reset.deinit()
+            self._reset = None
+        return

@@ -20,12 +20,10 @@ def GET_EPS_POWER_FLAG(curr_flag, soc):
     """returns current EPS state based on SOC"""
     flag = EPS_POWER_FLAG.NONE
     if EPS_POWER_FLAG.NONE <= curr_flag <= EPS_POWER_FLAG.EXPERIMENT:
-
         if 0 <= soc <= EPS_SOC_THRESHOLD.LOW_POWER_ENTRY:  # below low power threshold
             flag = EPS_POWER_FLAG.LOW_POWER
 
         elif EPS_SOC_THRESHOLD.LOW_POWER_ENTRY < soc < EPS_SOC_THRESHOLD.LOW_POWER_EXIT:
-
             if curr_flag == EPS_POWER_FLAG.LOW_POWER:
                 flag = EPS_POWER_FLAG.LOW_POWER
             else:
@@ -39,7 +37,6 @@ def GET_EPS_POWER_FLAG(curr_flag, soc):
             flag = EPS_POWER_FLAG.NOMINAL
 
         elif (soc >= EPS_SOC_THRESHOLD.EXPERIMENT_EXIT) and (soc <= EPS_SOC_THRESHOLD.EXPERIMENT_ENTRY):
-
             if curr_flag == EPS_POWER_FLAG.EXPERIMENT:
                 flag = EPS_POWER_FLAG.EXPERIMENT
             else:
