@@ -54,7 +54,8 @@ class EmulatedSatellite(CubeSat):
         self.append_device("SD", None, SD())
         # self._burnwires = self.init_device(BurnWires())
         self.append_device("BURNWIRES", None, BurnWires())
-        # self._payload_uart = self.init_device(Payload())
+        self._payload_uart = self.init_device(Payload())
+        self.append_device("PAYLOAD_UART", None, self._payload_uart)
 
         # self._vfs = None
         self._gps = self.init_device(GPS(simulator=self.__simulated_spacecraft))

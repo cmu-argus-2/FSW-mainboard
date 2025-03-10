@@ -1,6 +1,6 @@
 import time
 from collections import OrderedDict
-from typing import List, Optional
+from typing import List
 
 from hal.drivers.diagnostics.diagnostics import Diagnostics
 
