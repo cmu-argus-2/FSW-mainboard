@@ -17,7 +17,6 @@ from adafruit_bus_device.i2c_device import I2CDevice
 from hal.drivers.middleware.errors import Errors
 from micropython import const
 
-
 # def _to_signed(num):
 #     if num > 0x7FFF:
 #         num -= 0x10000
