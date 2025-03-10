@@ -51,12 +51,6 @@ class GPS:
             self.ecef_vy = int(ecef_state[5])
             self.ecef_vz = int(ecef_state[6])
 
-    def run_diagnostics(self):
-        return []
-
-    def get_flags(self) -> dict:
-        return {}
-
     def enable(self):
         self.__enable = True
 

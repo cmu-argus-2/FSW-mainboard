@@ -42,7 +42,7 @@ class SUN_VECTOR_STATUS:
 
 
 def _read_light_sensor(face):
-    if SATELLITE.LIGHT_SENSORS[face] is not None:
+    if SATELLITE.LIGHT_SENSOR_AVAILABLE(face):
         return SATELLITE.LIGHT_SENSORS[face].lux()
     else:
         return ERROR_LUX

@@ -9,7 +9,6 @@ Author(s): Harry Rosmann
 """
 
 from digitalio import DigitalInOut
-from hal.drivers.middleware.errors import Errors
 
 
 class PayloadUART:
@@ -35,13 +34,7 @@ class PayloadUART:
     def reset_input_buffer(self) -> None:
         self.__uart.reset_input_buffer()
 
-    """
-    ----------------------- HANDLER METHODS -----------------------
-    """
-
-    def get_flags(self):
-        return {}
-
-    def run_diagnostics(self) -> list[int] | None:
-        """run_diagnostic_test: Run all tests for the component"""
-        return [Errors.NOERROR]
+    def deinit(self):
+        self.__enable.deinit()
+        self.__enable = None
+        return

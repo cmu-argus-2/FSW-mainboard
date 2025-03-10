@@ -114,10 +114,6 @@ class Diagnostics:
     def error_present(self) -> bool:
         return self.errors_present
 
-    def run_diagnostics(self) -> list:
-        """run_diagnostic_test: Run all tests for the component"""
-        raise NotImplementedError("Subclasses must implement run_diagnostic_test method")
-
     @property
     def resetable(self):
         """resetable: Check if the component is resetable"""

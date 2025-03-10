@@ -10,9 +10,3 @@ class RTC:
 
     def set_datetime(self, date_input: struct_time):
         self.datetime = date_input
-
-    def run_diagnostics(self):
-        return []
-
-    def get_flags(self) -> dict:
-        return {}

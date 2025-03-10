@@ -226,3 +226,6 @@ class MAX17205:
         with self.i2c_device as i2c:
             # Write to _MAX1720X_CONFIG2_ADDR
             i2c.write(bytes([_MAX1720X_CONFIG2_ADDR, 0x01, 0x00]))
+
+    def deinit(self):
+        return

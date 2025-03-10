@@ -11,6 +11,8 @@ Implementation Notes
 
 """
 
+import time
+
 from adafruit_bus_device.i2c_device import I2CDevice
 from hal.drivers.middleware.errors import Errors
 from micropython import const
@@ -53,7 +55,8 @@ CONTROL_SWOFF = const(0x1 << 0)
 
 
 class ADM1176:
-    def __init__(self, i2c_bus, addr=0x4A):
+    # def __init__(self, i2c_bus, addr=0x4A):
+    def __init__(self, i2c_bus, addr):
         self.i2c_device = I2CDevice(i2c_bus, addr, probe=False)
         self.i2c_addr = addr
         self.sense_resistor = 0.01
@@ -69,6 +72,16 @@ class ADM1176:
 
         self.v_fs_over_res = 26.35 / 4096
         self.i_fs_over_res = 0.10584 / 4096
+
+    def reset(self) -> None:
+        """reset: Resets the device and clears all registers.
+
+        :return: None
+        """
+        self.__turn_off()
+        time.sleep(0.1)
+        self.__turn_on()
+        time.sleep(0.1)
 
     def config(self, value: str) -> None:
         """config: sets voltage current readout configuration.
@@ -291,20 +304,5 @@ class ADM1176:
 
         return Errors.NOERROR
 
-    def run_diagnostics(self) -> list[int] | None:
-        """run_diagnostic_test: Run all tests for the component
-
-        :return: List of error codes
-        """
-        error_list = []
-
-        error_list.append(self.__simple_vi_read())
-        error_list.append(self.__on_off_test())
-        error_list.append(self.__overcurrent_test())
-
-        error_list = list(set(error_list))
-
-        if Errors.NOERROR not in error_list:
-            self.errors_present = True
-
-        return error_list
+    def deinit(self):
+        return

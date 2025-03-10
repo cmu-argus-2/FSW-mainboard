@@ -1672,3 +1672,18 @@ class SX1262(SX126X):
         if events & _SX126X_IRQ_TX_DONE:
             super().startReceive()
         self._callbackFunction(events)
+
+    def deinit(self):
+        self.cs.deinit()
+        self.cs = None
+        self.irq.deinit()
+        self.irq = None
+        self.rst.deinit()
+        self.rst = None
+        self.gpio.deinit()
+        self.gpio = None
+        self.tx_en.deinit()
+        self.tx_en = None
+        self.rx_en.deinit()
+        self.rx_en = None
+        return

@@ -4,6 +4,8 @@ import os
 import platform
 import shutil
 
+from build import CPY_VERSION
+
 if platform.system() == "Windows":
     BOARD_PATH = "D:\\"
 elif platform.system() == "Linux":
@@ -17,6 +19,15 @@ if platform.node() == "raspberrypi":
 
 def copy_folder(source_folder, destination_folder, show_identical_files=True):
     for root, dirs, files in os.walk(source_folder):
+        for dir in dirs:
+            source_dir_path = os.path.join(root, dir)
+            relative_dir_path = os.path.relpath(source_dir_path, source_folder)
+            destination_dir_path = os.path.join(destination_folder, relative_dir_path)
+
+            if not os.path.exists(destination_dir_path) and CPY_VERSION == 9:
+                os.makedirs(destination_dir_path)
+                print(f"Created directory {destination_dir_path}")
+
         for file in files:
             source_path = os.path.join(root, file)
             relative_path = os.path.relpath(source_path, source_folder)
@@ -36,30 +47,20 @@ def copy_folder(source_folder, destination_folder, show_identical_files=True):
                     shutil.copy2(source_path, destination_path)
                     print(f"Overwrote {destination_path} with {source_path}")
 
-    # Delete files in destination folder that are not in the new copy
-    for root, dirs, files in os.walk(destination_folder):
-        for file in files:
-            destination_path = os.path.join(root, file)
-            relative_path = os.path.relpath(destination_path, destination_folder)
-            source_path = os.path.join(source_folder, relative_path)
-
-            """if not os.path.exists(source_path):
-                os.remove(destination_path)
-                print(f"Deleted {destination_path}")"""
+    # Attempt to remove the SD folder if in CPY 8
+    sd_path = os.path.join(destination_folder, "sd")
+    if CPY_VERSION == 8 and os.path.exists(sd_path):
+        try:
+            os.chmod(sd_path, 0o777)
+            os.rmdir(sd_path)
+            print(f"Removed {sd_path}")
+        except PermissionError as e:
+            print(f"PermissionError: {e}. Please manually remove the 'sd' folder from the board.")
+        except Exception as e:
+            print(f"Error: {e}")
 
 
 if __name__ == "__main__":
-    if platform.system() == "Windows":
-        BOARD_PATH = "D:\\"
-    elif platform.system() == "Linux":
-        username = os.getlogin()
-        BOARD_PATH = f"/media/{username}/ARGUS"
-        print(BOARD_PATH)
-    elif platform.system() == "Darwin":
-        BOARD_PATH = "/Volumes/ARGUS"
-    if platform.node() == "raspberrypi":
-        BOARD_PATH = "/mnt/mainboard"
-
     # Parses command line arguments.
     parser = argparse.ArgumentParser()
 

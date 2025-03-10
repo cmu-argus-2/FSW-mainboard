@@ -107,9 +107,3 @@ class Radio:
 
     def crc_error(self):
         return 0
-
-    def run_diagnostics(self):
-        return []
-
-    def get_flags(self) -> dict:
-        return {}

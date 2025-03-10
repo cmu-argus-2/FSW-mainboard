@@ -179,3 +179,6 @@ class DS3231:
     def calibration(self, value: int) -> None:
         self._calibration = value
         self.force_temperature_conversion()
+
+    def deinint(self) -> None:
+        return
