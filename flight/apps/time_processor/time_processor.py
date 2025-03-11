@@ -11,8 +11,9 @@ Requirements:
 2 - The TPM shall be the sole point of access to the RTC.
 3 - The TPM shall be imported into applications when they require
 time-of-day access.
-4 - The TPM shall perform state correction based on GPS time whenever
-the spacecraft gets a GPS fix.
+4 - The TPM shall perform state correction using GPS time if the
+spacecraft gets a fix and the difference in RTC time and GPS time is
+significant.
 5 - In the event of GPS failure, the TPM shall peform state corrections
 through the command UPLINK_TIME_REFERENCE.
 """

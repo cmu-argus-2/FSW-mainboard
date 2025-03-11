@@ -53,9 +53,8 @@ def SWITCH_TO_STATE(target_state_id, time_in_state=None):
 def UPLINK_TIME_REFERENCE(time_reference):
     """Sends a time reference to the spacecraft to update the time processing module."""
     logger.info(f"Executing UPLINK_TIME_REFERENCE with current_time: {time_reference}")
-    # TODO: Time module interfacing
-    # if SATELLITE.RTC_AVAILABLE:
-    #     SATELLITE.set_datetime(time.gmtime(time_reference))
+    # Overwrite SD card using time module
+
     return []
 
 

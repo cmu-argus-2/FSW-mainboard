@@ -9,8 +9,6 @@ magnetic field data on the mainboard.
 
 """
 
-import time
-
 from apps.adcs.consts import Modes, StatusConst
 from apps.adcs.frames import ecef_to_eci
 from apps.adcs.igrf import igrf_eci

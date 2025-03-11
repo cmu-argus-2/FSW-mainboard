@@ -3,7 +3,6 @@
 # It also executes commands received from the ground station (TBD)
 
 import gc
-import time
 
 import apps.command.processor as processor
 from apps.adcs.consts import Modes
@@ -14,7 +13,6 @@ from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES, STR_STATES
-from hal.configuration import SATELLITE
 
 
 class Task(TemplateTask):

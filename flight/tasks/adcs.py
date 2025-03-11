@@ -1,7 +1,5 @@
 # Attitude Determination and Control (ADC) task
 
-import time
-
 from apps.adcs.acs import spin_stabilizing_controller, sun_pointed_controller, zero_all_coils
 from apps.adcs.ad import AttitudeDetermination
 from apps.adcs.consts import Modes, StatusConst

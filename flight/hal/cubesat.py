@@ -27,7 +27,7 @@ class CubeSat:
                 ("IMU", Device(self.__imu_boot)),
                 ("RTC", Device(self.__rtc_boot)),
                 ("GPS", Device(self.__gps_boot)),
-                ("RADIO", Device(self.__radio_boot)),
+                # ("RADIO", Device(self.__radio_boot)),
                 # ("FUEL_GAUGE", Device(self.__fuel_gauge_boot)),
                 # ("BURN_WIRE", Device(self.__burn_wire_boot)),
                 ("BOARD_PWR", Device(self.__power_monitor_boot)),

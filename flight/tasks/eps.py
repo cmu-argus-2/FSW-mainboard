@@ -1,7 +1,5 @@
 # Electrical Power Subsystem Task
 
-import time
-
 import microcontroller
 from apps.eps.eps import EPS_POWER_FLAG, GET_EPS_POWER_FLAG
 from apps.telemetry.constants import EPS_IDX
