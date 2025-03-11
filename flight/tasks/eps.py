@@ -3,7 +3,7 @@
 import time
 
 import microcontroller
-from apps.eps.eps import EPS_POWER_FLAG, GET_EPS_POWER_FLAG
+from apps.eps.eps import EPS_POWER_FLAG, EPS_POWER_THRESHOLD, GET_EPS_POWER_FLAG
 from apps.telemetry.constants import EPS_IDX
 from core import DataHandler as DH
 from core import TemplateTask
@@ -91,6 +91,20 @@ class Task(TemplateTask):
             return True
         else:
             return False
+    
+    def set_radio_power_alert(self, power):
+        # TODO: set flag or alert to indicate that radio is consuming too much power
+        # Disable radio?
+        return None
+    
+    def set_mainboard_power_alert(self, power):
+        # TODO: potentially log error to indicate mainboard is consuming too much power
+        return None
+    
+    def set_jetson_power_alert(self, power):
+        # TODO: potentially log error to indicate Jetson is consuming too much power
+        # Switch to low power mode? Or too much logic, since SOC should be handling that already
+        return None
 
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:
@@ -114,18 +128,34 @@ class Task(TemplateTask):
                         f"Board Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, "
                         + f"Board Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA "
                     )
+                    voltage = self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]
+                    current = self.log_data[EPS_IDX.MAINBOARD_CURRENT]
+                    power = voltage * current * 1000 # power consumed in mW
+                    if (power > EPS_POWER_THRESHOLD.MAINBOARD):
+                        self.set_mainboard_power_alert(power)
                 elif key == "JETSON":
                     self.read_vc(SATELLITE.POWER_MONITORS[key], EPS_IDX.JETSON_INPUT_VOLTAGE, EPS_IDX.JETSON_INPUT_CURRENT)
                     self.log_info(
                         f"Jetson Voltage: {self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE]} mV, "
                         + f"Jetson Current: {self.log_data[EPS_IDX.JETSON_INPUT_CURRENT]} mA"
                     )
+                    voltage = self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE]
+                    current = self.log_data[EPS_IDX.JETSON_INPUT_CURRENT]
+                    power = voltage * current * 1000 # power consumed in mW
+                    if (power > EPS_POWER_THRESHOLD.JETSON):
+                        self.set_jetson_power_alert(power)
                 elif key == "RADIO":
                     self.read_vc(SATELLITE.POWER_MONITORS[key], EPS_IDX.RF_LDO_OUTPUT_VOLTAGE, EPS_IDX.RF_LDO_OUTPUT_CURRENT)
                     self.log_info(
                         f"Radio Voltage: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_VOLTAGE]} mV, "
                         + f"Radio Current: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_CURRENT]} mA"
                     )
+                    voltage = self.log_data[EPS_IDX.RF_LDO_OUTPUT_VOLTAGE]
+                    current = self.log_data[EPS_IDX.RF_LDO_OUTPUT_CURRENT]
+                    power = voltage * current * 1000 # power consumed in mW
+                    if (power > EPS_POWER_THRESHOLD.RADIO):
+                        self.set_radio_power_alert(power)
+                # TODO: add casing for XY & Z+ power monitors
 
             self.log_data[EPS_IDX.CPU_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
             self.log_info(f"CPU temperature: {self.log_data[EPS_IDX.CPU_TEMPERATURE]} °cC ")

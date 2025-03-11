@@ -15,6 +15,12 @@ class EPS_SOC_THRESHOLD:
     EXPERIMENT_ENTRY = const(80)
     EXPERIMENT_EXIT = const(60)
 
+# Power threshold in mW
+class EPS_POWER_THRESHOLD:
+    MAINBOARD = const(600)
+    RADIO = const(350)
+    JETSON = const(1600)
+
 
 def GET_EPS_POWER_FLAG(curr_flag, soc):
     """returns current EPS state based on SOC"""
