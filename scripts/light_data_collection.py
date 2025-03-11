@@ -1,6 +1,6 @@
 import time
-import supervisor
 
+import supervisor
 from apps.adcs.sun import read_light_sensors
 from hal.configuration import SATELLITE
 
