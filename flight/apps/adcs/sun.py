@@ -79,12 +79,11 @@ def compute_body_sun_vector_from_lux(I_vec):
         return status, sun_body
     elif num_valid_readings < 3:
         status = StatusConst.SUN_NOT_ENOUGH_READINGS
-    elif num_valid_readings == 5:  # All readings are valid and unique determination is possible
-        status = StatusConst.OK
-
-    if in_eclipse(I_vec, THRESHOLD_ILLUMINATION_LUX):
+    elif in_eclipse(I_vec, THRESHOLD_ILLUMINATION_LUX):
         status = StatusConst.SUN_ECLIPSE
         return status, sun_body
+    elif num_valid_readings == 5:  # All readings are valid and unique determination is possible
+        status = StatusConst.OK
 
     i_vec = I_vec.copy()
 
@@ -104,7 +103,7 @@ def compute_body_sun_vector_from_lux(I_vec):
         return status, sun_body
 
     sun_body = sun_body / norm
-    status = StatusConst.OK
+
     return status, sun_body
 
 
