@@ -5,7 +5,7 @@ from hal.cubesat import CubeSat
 from hal.emulator import EmulatedSatellite
 from hal.simulator import Simulator
 
-DH.sd_path = "sd"
+# DH.sd_path = "sd"
 
 # Enable for Middleware
 DEBUG_MODE = True

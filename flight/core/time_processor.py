@@ -34,6 +34,7 @@ from hal.configuration import SATELLITE
 
 
 class TimeProcessor:
+    """ """
 
     """
     Name: set_time

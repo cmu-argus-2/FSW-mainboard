@@ -40,7 +40,6 @@ import json
 import os
 import re
 import struct
-import time
 
 from core.logging import logger
 from core.time_processor import TimeProcessor
