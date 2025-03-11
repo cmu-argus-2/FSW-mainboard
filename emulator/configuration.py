@@ -1,9 +1,11 @@
 import os
 
-from core import DataHandler as DH
 from hal.cubesat import CubeSat
 from hal.emulator import EmulatedSatellite
 from hal.simulator import Simulator
+
+# from core import DataHandler as DH
+
 
 # DH.sd_path = "sd"
 
