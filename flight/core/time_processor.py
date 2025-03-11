@@ -34,7 +34,23 @@ from hal.configuration import SATELLITE
 
 
 class TimeProcessor:
-    """ """
+    """
+    time_reference: Last known TPM time, either from
+    the last RTC reading or from the commanding task
+    (on boot) if the RTC has failed.
+    """
+
+    # Initialize time_reference to 0
+    time_reference = 0
+
+    """
+    time_offset: Offset between time.time() and
+    time_reference, calculated whenever the RTC is
+    available or state correction occurs.
+    """
+
+    # Initialize time_offset to 0
+    time_offset = 0
 
     """
     Name: set_time
@@ -47,9 +63,7 @@ class TimeProcessor:
             # RTC exists, set RTC time
             SATELLITE.RTC.set_datetime(time.localtime(unix_timestamp))
         else:
-            # RTC does not exist, update TPM time offset
-
-            # TODO: TPM time offset
+            # RTC does not exist, update TPM time reference
             pass
 
     """
