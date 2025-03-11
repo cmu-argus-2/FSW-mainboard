@@ -259,6 +259,7 @@ class ArgusV2(CubeSat):
             device.device, device.error = func(name)
 
     def __gps_boot(self, _) -> list[object, int]:
+
         """GPS_boot: Boot sequence for the GPS
 
         :return: Error code if the GPS failed to initialize
