@@ -71,26 +71,21 @@ class Task(TemplateTask):
 
     def read_vc(self, sensor, voltage_idx, current_idx):
         # log power monitor voltage and current
-        if sensor is not None:
-            board_voltage, board_current = sensor.read_voltage_current()
-            self.log_data[voltage_idx] = int(board_voltage * 1000)  # mV - max 8.4V
-            self.log_data[current_idx] = int(board_current * 1000)  # mA
+        board_voltage, board_current = sensor.read_voltage_current()
+        self.log_data[voltage_idx] = int(board_voltage * 1000)  # mV - max 8.4V
+        self.log_data[current_idx] = int(board_current * 1000)  # mA
 
     def read_fuel_gauge(self):
         # read values from MAX17205
         fuel_gauge = SATELLITE.FUEL_GAUGE
-        if fuel_gauge is not None:
-            self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] = int(fuel_gauge.read_soc())
-            self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY] = int(fuel_gauge.read_capacity())
-            self.log_data[EPS_IDX.BATTERY_PACK_CURRENT] = int(fuel_gauge.read_current())
-            self.log_data[EPS_IDX.BATTERY_PACK_VOLTAGE] = int(fuel_gauge.read_voltage())
-            self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE] = int(fuel_gauge.read_midvoltage())
-            self.log_data[EPS_IDX.BATTERY_PACK_TTE] = int(fuel_gauge.read_tte())
-            self.log_data[EPS_IDX.BATTERY_PACK_TTF] = int(fuel_gauge.read_ttf())
-            self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE] = int(fuel_gauge.read_temperature())
-            return True
-        else:
-            return False
+        self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] = int(fuel_gauge.read_soc())
+        self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY] = int(fuel_gauge.read_capacity())
+        self.log_data[EPS_IDX.BATTERY_PACK_CURRENT] = int(fuel_gauge.read_current())
+        self.log_data[EPS_IDX.BATTERY_PACK_VOLTAGE] = int(fuel_gauge.read_voltage())
+        self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE] = int(fuel_gauge.read_midvoltage())
+        self.log_data[EPS_IDX.BATTERY_PACK_TTE] = int(fuel_gauge.read_tte())
+        self.log_data[EPS_IDX.BATTERY_PACK_TTF] = int(fuel_gauge.read_ttf())
+        self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE] = int(fuel_gauge.read_temperature())
 
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:
@@ -107,30 +102,32 @@ class Task(TemplateTask):
 
             self.log_data[EPS_IDX.TIME_EPS] = int(time.time())
 
-            for key in SATELLITE.POWER_MONITORS:
-                if key == "BOARD":
-                    self.read_vc(SATELLITE.POWER_MONITORS[key], EPS_IDX.MAINBOARD_VOLTAGE, EPS_IDX.MAINBOARD_CURRENT)
-                    self.log_info(
-                        f"Board Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, "
-                        + f"Board Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA "
-                    )
-                elif key == "JETSON":
-                    self.read_vc(SATELLITE.POWER_MONITORS[key], EPS_IDX.JETSON_INPUT_VOLTAGE, EPS_IDX.JETSON_INPUT_CURRENT)
-                    self.log_info(
-                        f"Jetson Voltage: {self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE]} mV, "
-                        + f"Jetson Current: {self.log_data[EPS_IDX.JETSON_INPUT_CURRENT]} mA"
-                    )
-                elif key == "RADIO":
-                    self.read_vc(SATELLITE.POWER_MONITORS[key], EPS_IDX.RF_LDO_OUTPUT_VOLTAGE, EPS_IDX.RF_LDO_OUTPUT_CURRENT)
-                    self.log_info(
-                        f"Radio Voltage: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_VOLTAGE]} mV, "
-                        + f"Radio Current: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_CURRENT]} mA"
-                    )
+            for location, sensor in SATELLITE.POWER_MONITORS.items():
+                if SATELLITE.POWER_MONITOR_AVAILABLE(location):
+                    if location == "BOARD":
+                        self.read_vc(sensor, EPS_IDX.MAINBOARD_VOLTAGE, EPS_IDX.MAINBOARD_CURRENT)
+                        self.log_info(
+                            f"Board Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, "
+                            + f"Board Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA "
+                        )
+                    elif location == "JETSON":
+                        self.read_vc(sensor, EPS_IDX.JETSON_INPUT_VOLTAGE, EPS_IDX.JETSON_INPUT_CURRENT)
+                        self.log_info(
+                            f"Jetson Voltage: {self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE]} mV, "
+                            + f"Jetson Current: {self.log_data[EPS_IDX.JETSON_INPUT_CURRENT]} mA"
+                        )
+                    elif location == "RADIO":
+                        self.read_vc(sensor, EPS_IDX.RF_LDO_OUTPUT_VOLTAGE, EPS_IDX.RF_LDO_OUTPUT_CURRENT)
+                        self.log_info(
+                            f"Radio Voltage: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_VOLTAGE]} mV, "
+                            + f"Radio Current: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_CURRENT]} mA"
+                        )
 
             self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
             self.log_info(f"CPU temperature: {self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE]} °cC ")
 
-            if self.read_fuel_gauge():
+            if SATELLITE.FUEL_GAUGE_AVAILABLE:
+                self.read_fuel_gauge()
                 self.log_info(f"Battery Pack Temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]}°cC")
                 self.log_info(f"Battery Pack Reported SOC: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]}% ")
                 self.log_info(f"Battery Pack Reported Capacity: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY]} mAh ")

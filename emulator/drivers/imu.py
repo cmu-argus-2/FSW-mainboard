@@ -33,9 +33,3 @@ class IMU:
 
     def disable(self):
         self.__enable = False
-
-    def run_diagnostics(self) -> list:
-        return []
-
-    def get_flags(self) -> dict:
-        return {}
