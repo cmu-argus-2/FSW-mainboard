@@ -25,9 +25,14 @@ from hal.configuration import SATELLITE
 
 class TIME_PROCESSOR:
     @classmethod
-    def unix_time(self):
+    def set_time(self, unix_timestamp):
+        if SATELLITE.RTC_AVAILABLE:
+            SATELLITE.RTC.set_datetime(time.localtime(unix_timestamp))
+
+    @classmethod
+    def time(self):
         if SATELLITE.RTC_AVAILABLE:
             return time.mktime(SATELLITE.RTC.datetime)
         else:
             logger.error("[TPM ERROR] RTC no longer active on SAT")
-            return False
+            return 0

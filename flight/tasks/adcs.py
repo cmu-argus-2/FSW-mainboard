@@ -6,6 +6,7 @@ from apps.adcs.acs import spin_stabilizing_controller, sun_pointed_controller, z
 from apps.adcs.ad import AttitudeDetermination
 from apps.adcs.consts import Modes, StatusConst
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX
+from apps.time_processor.time_processor import TIME_PROCESSOR
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
@@ -82,7 +83,7 @@ class Task(TemplateTask):
                 data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f"
                 DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
 
-            self.time = int(time.time())
+            self.time = int(TIME_PROCESSOR.time())
             self.log_data[ADCS_IDX.TIME_ADCS] = self.time
 
             # ------------------------------------------------------------------------------------------------------------------------------------

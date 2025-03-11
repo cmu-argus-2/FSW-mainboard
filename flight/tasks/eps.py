@@ -5,6 +5,7 @@ import time
 import microcontroller
 from apps.eps.eps import EPS_POWER_FLAG, GET_EPS_POWER_FLAG
 from apps.telemetry.constants import EPS_IDX
+from apps.time_processor.time_processor import TIME_PROCESSOR
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
@@ -100,7 +101,7 @@ class Task(TemplateTask):
 
             # Get power system readings
 
-            self.log_data[EPS_IDX.TIME_EPS] = int(time.time())
+            self.log_data[EPS_IDX.TIME_EPS] = int(TIME_PROCESSOR.time())
 
             for location, sensor in SATELLITE.POWER_MONITORS.items():
                 if SATELLITE.POWER_MONITOR_AVAILABLE(location):
