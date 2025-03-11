@@ -24,7 +24,7 @@ from core import logger
 from hal.configuration import SATELLITE
 
 
-class TIME_PROCESSOR:
+class TimeProcessor:
     @classmethod
     def set_time(self, unix_timestamp):
         if SATELLITE.RTC_AVAILABLE:

@@ -8,7 +8,7 @@ import apps.command.processor as processor
 from apps.adcs.consts import Modes
 from apps.command import QUEUE_STATUS, CommandQueue
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX
-from apps.time_processor.time_processor import TIME_PROCESSOR
+from apps.time_processor.time_processor import TimeProcessor
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
@@ -32,7 +32,7 @@ class Task(TemplateTask):
     def __init__(self, id):
         super().__init__(id)
         self.name = "COMMAND"
-        self.boot_time = TIME_PROCESSOR.time()
+        self.boot_time = TimeProcessor.time()
 
     def get_memory_usage(self):
         return int(gc.mem_alloc() / self.total_memory * 100)
@@ -49,7 +49,7 @@ class Task(TemplateTask):
             # TODO: Deployment
 
             # HAL_DIAGNOSTICS
-            time_since_boot = int(TIME_PROCESSOR.time()) - self.boot_time
+            time_since_boot = int(TimeProcessor.time()) - self.boot_time
             if DH.SD_SCANNED() and time_since_boot > 5:  # seconds into start-up
                 if not DH.data_process_exists("cdh"):
                     data_format = "LbLbbbbb"
@@ -109,13 +109,13 @@ class Task(TemplateTask):
                     processor.handle_command_execution_status(status, response_args)
 
                     # Log the command execution history
-                    self.log_commands[0] = int(TIME_PROCESSOR.time())
+                    self.log_commands[0] = int(TimeProcessor.time())
                     self.log_commands[1] = cmd_id
                     self.log_commands[2] = status
                     DH.log_data("cmd_logs", self.log_commands)
 
             # Set CDH log data
-            self.log_data[CDH_IDX.TIME] = int(TIME_PROCESSOR.time())
+            self.log_data[CDH_IDX.TIME] = int(TimeProcessor.time())
             self.log_data[CDH_IDX.SC_STATE] = SM.current_state
             self.log_data[CDH_IDX.SD_USAGE] = int(DH.SD_usage() / 1000)  # kb - gets updated in the OBDH task
             self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = self.get_memory_usage()
@@ -131,7 +131,7 @@ class Task(TemplateTask):
         self.log_print_counter += 1
         if self.log_print_counter % self.frequency == 0:
             self.log_print_counter = 0
-            self.log_info(f"Time: {int(TIME_PROCESSOR.time())}")
-            self.log_info(f"Time since boot: {int(TIME_PROCESSOR.time()) - self.boot_time}")
+            self.log_info(f"Time: {int(TimeProcessor.time())}")
+            self.log_info(f"Time since boot: {int(TimeProcessor.time()) - self.boot_time}")
             self.log_info(f"GLOBAL STATE: {STR_STATES[SM.current_state]}.")
             self.log_info(f"RAM USAGE: {self.log_data[CDH_IDX.CURRENT_RAM_USAGE]}%")

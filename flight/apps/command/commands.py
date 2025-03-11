@@ -24,6 +24,7 @@ import supervisor
 from apps.adcs.orbit_propagation import OrbitPropagator
 from apps.command.constants import file_tags_str
 from apps.telemetry import TelemetryPacker
+from apps.time_processor.time_processor import TimeProcessor
 from core import logger
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
@@ -53,8 +54,7 @@ def SWITCH_TO_STATE(target_state_id, time_in_state=None):
 def UPLINK_TIME_REFERENCE(time_reference):
     """Sends a time reference to the spacecraft to update the time processing module."""
     logger.info(f"Executing UPLINK_TIME_REFERENCE with current_time: {time_reference}")
-    # Overwrite SD card using time module
-
+    TimeProcessor.set_time(time_reference)
     return []
 
 
