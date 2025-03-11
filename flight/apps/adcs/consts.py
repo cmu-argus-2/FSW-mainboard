@@ -37,9 +37,9 @@ class StatusConst:
     # GPS
     GPS_FAIL = -31
     # Light Sensor
-    LIGHT_SENSOR_NO_READINGS = -41
-    LIGHT_SENSOR_NOT_ENOUGH_READINGS = -42
-    LIGHT_SENSOR_ECLIPSE = -43
+    SUN_NO_READINGS = -41
+    SUN_NOT_ENOUGH_READINGS = -42
+    SUN_ECLIPSE = -43
 
     # Misc
     ZERO_NORM = -51
@@ -61,9 +61,9 @@ class StatusConst:
         GYRO_FAIL: "Gyro failure",
         MAG_FAIL: "Magnetometer failure",
         GPS_FAIL: "GPS failure",
-        LIGHT_SENSOR_NO_READINGS: "No readings",
-        LIGHT_SENSOR_NOT_ENOUGH_READINGS: "Insufficient readings",
-        LIGHT_SENSOR_ECLIPSE: "In eclipse",
+        SUN_NO_READINGS: "No readings",
+        SUN_NOT_ENOUGH_READINGS: "Insufficient readings",
+        SUN_ECLIPSE: "In eclipse",
         ZERO_NORM: "Zero-normed vector",
     }
 

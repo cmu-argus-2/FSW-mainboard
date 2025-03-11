@@ -75,15 +75,15 @@ def compute_body_sun_vector_from_lux(I_vec):
     num_valid_readings = NUM_LIGHT_SENSORS - I_vec.count(ERROR_LUX)
 
     if num_valid_readings == 0:
-        status = StatusConst.LIGHT_SENSOR_NO_READINGS
+        status = StatusConst.SUN_NO_READINGS
         return status, sun_body
     elif num_valid_readings < 3:
-        status = StatusConst.LIGHT_SENSOR_NOT_ENOUGH_READINGS
+        status = StatusConst.SUN_NOT_ENOUGH_READINGS
     elif num_valid_readings == 5:  # All readings are valid and unique determination is possible
         status = StatusConst.OK
 
     if in_eclipse(I_vec, THRESHOLD_ILLUMINATION_LUX):
-        status = StatusConst.LIGHT_SENSOR_ECLIPSE
+        status = StatusConst.SUN_ECLIPSE
         return status, sun_body
 
     i_vec = I_vec.copy()

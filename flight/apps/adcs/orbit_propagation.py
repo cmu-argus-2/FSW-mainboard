@@ -38,7 +38,7 @@ class OrbitPropagator:
                 return StatusConst.OPROP_INIT_FAIL, np.zeros((3,)), np.zeros((3,))
 
         # Propagate orbit
-        num_steps = (cls.last_update_time - current_time) // cls.min_timestep
+        num_steps = int((cls.last_update_time - current_time) / cls.min_timestep)
         if num_steps >= 20:
             num_steps = 20
             timestep = (cls.last_update_time - current_time) / num_steps

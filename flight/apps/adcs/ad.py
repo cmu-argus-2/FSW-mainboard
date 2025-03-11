@@ -183,9 +183,9 @@ class AttitudeDetermination:
         sun_status, sun_pos_body, lux_readings = self.read_sun_position()
 
         if (
-            sun_status == StatusConst.LIGHT_SENSOR_NO_READINGS
-            or sun_status == StatusConst.LIGHT_SENSOR_NOT_ENOUGH_READINGS
-            or sun_status == StatusConst.LIGHT_SENSOR_ECLIPSE
+            sun_status == StatusConst.SUN_NO_READINGS
+            or sun_status == StatusConst.SUN_NOT_ENOUGH_READINGS
+            or sun_status == StatusConst.SUN_ECLIPSE
         ):
             return StatusConst.MEKF_INIT_FAIL, sun_status
 
@@ -321,9 +321,9 @@ class AttitudeDetermination:
             and update_covariance
             and status
             not in [
-                StatusConst.LIGHT_SENSOR_NO_READINGS,
-                StatusConst.LIGHT_SENSOR_NOT_ENOUGH_READINGS,
-                StatusConst.LIGHT_SENSOR_ECLIPSE,
+                StatusConst.SUN_NO_READINGS,
+                StatusConst.SUN_NOT_ENOUGH_READINGS,
+                StatusConst.SUN_ECLIPSE,
             ]
         ):
             true_sun_pos_eci = approx_sun_position_ECI(current_time)
@@ -490,7 +490,7 @@ class AttitudeDetermination:
         if np.linalg.norm(self.state[self.omega_idx]) >= Modes.STABLE_TOL:
             return Modes.TUMBLING
         else:
-            if self.state[self.sun_status_idx] == StatusConst.LIGHT_SENSOR_ECLIPSE:
+            if self.state[self.sun_status_idx] == StatusConst.SUN_ECLIPSE:
                 return Modes.STABLE
             else:
                 sun_vector_error = Modes.SUN_VECTOR_REF - self.state[self.sun_pos_idx]
