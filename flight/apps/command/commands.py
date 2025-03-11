@@ -64,8 +64,8 @@ def UPLINK_ORBIT_REFERENCE(time_reference, orbital_parameters):
     logger.info(
         f"Executing UPLINK_ORBIT_REFERENCE with orbital_parameters: pos({orbital_parameters}, time_reference: {time_reference}"
     )
-    OrbitPropagator.last_update_time = time_reference
-    OrbitPropagator.last_update_state = np.array(orbital_parameters)
+    OrbitPropagator.set_last_update_time(time_reference)
+    OrbitPropagator.set_last_updated_state(np.array(orbital_parameters))
     return []
 
 
