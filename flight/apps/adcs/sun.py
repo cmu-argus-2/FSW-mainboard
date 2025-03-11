@@ -14,6 +14,7 @@ both for the mode transitions, sun pointing controller accuracy, and attitude de
 
 """
 
+from apps.adcs.consts import StatusConst
 from core import logger
 from hal.configuration import SATELLITE
 from micropython import const
@@ -23,22 +24,6 @@ MAX_RANGE = const(117000)  # OPT4001
 THRESHOLD_ILLUMINATION_LUX = const(3000)
 NUM_LIGHT_SENSORS = const(5)
 ERROR_LUX = const(-1)
-
-
-class SUN_VECTOR_STATUS:
-    UNIQUE_DETERMINATION = 0x0  # Successful computation with at least 3 lux readings
-    UNDETERMINED_VECTOR = 0x1  # Vector computed with less than 3 lux readings
-    NOT_ENOUGH_READINGS = 0x2  # Computation failed due to lack of readings (less than 3 valid readings)
-    NO_READINGS = 0x3
-    MISSING_XP_READING = 0x4
-    MISSING_XM_READING = 0x5
-    MISSING_YP_READING = 0x6
-    MISSING_YM_READING = 0x7
-    MISSING_ZM_READING = 0x8
-    MISSING_FULL_X_AXIS_READING = 0x9
-    MISSING_FULL_Y_AXIS_READING = 0xA
-    MISSING_FULL_Z_AXIS_READING = 0xB
-    ECLIPSE = 0xC
 
 
 def _read_light_sensor(face):
@@ -90,29 +75,15 @@ def compute_body_sun_vector_from_lux(I_vec):
     num_valid_readings = NUM_LIGHT_SENSORS - I_vec.count(ERROR_LUX)
 
     if num_valid_readings == 0:
-        status = SUN_VECTOR_STATUS.NO_READINGS
+        status = StatusConst.LIGHT_SENSOR_NO_READINGS
         return status, sun_body
     elif num_valid_readings < 3:
-        status = SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS
-    elif I_vec[4] == ERROR_LUX:
-        status = SUN_VECTOR_STATUS.MISSING_ZM_READING
-    elif I_vec[0] == ERROR_LUX and I_vec[1] == ERROR_LUX:
-        status = SUN_VECTOR_STATUS.MISSING_FULL_X_AXIS_READING
-    elif I_vec[2] == ERROR_LUX and I_vec[3] == ERROR_LUX:
-        status = SUN_VECTOR_STATUS.MISSING_FULL_Y_AXIS_READING
-    elif I_vec[0] == ERROR_LUX:
-        status = SUN_VECTOR_STATUS.MISSING_XP_READING
-    elif I_vec[1] == ERROR_LUX:
-        status = SUN_VECTOR_STATUS.MISSING_XM_READING
-    elif I_vec[2] == ERROR_LUX:
-        status = SUN_VECTOR_STATUS.MISSING_YP_READING
-    elif I_vec[3] == ERROR_LUX:
-        status = SUN_VECTOR_STATUS.MISSING_YM_READING
+        status = StatusConst.LIGHT_SENSOR_NOT_ENOUGH_READINGS
     elif num_valid_readings == 5:  # All readings are valid and unique determination is possible
-        status = SUN_VECTOR_STATUS.UNIQUE_DETERMINATION
+        status = StatusConst.OK
 
     if in_eclipse(I_vec, THRESHOLD_ILLUMINATION_LUX):
-        status = SUN_VECTOR_STATUS.ECLIPSE
+        status = StatusConst.LIGHT_SENSOR_ECLIPSE
         return status, sun_body
 
     i_vec = I_vec.copy()
@@ -129,11 +100,11 @@ def compute_body_sun_vector_from_lux(I_vec):
     # norm = MAX_RANGE
 
     if norm == 0:  # Avoid division by zero - not perfect
-        status = SUN_VECTOR_STATUS.UNDETERMINED_VECTOR
+        status = StatusConst.ZERO_NORM
         return status, sun_body
 
     sun_body = sun_body / norm
-
+    status = StatusConst.OK
     return status, sun_body
 
 
