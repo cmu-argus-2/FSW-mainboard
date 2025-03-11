@@ -57,3 +57,17 @@ class OrbitPropagator:
         cls.last_update_time = current_time
 
         return StatusConst.OK, cls.last_updated_state[0:3], cls.last_updated_state[3:6]
+
+    @classmethod
+    def set_last_update_time(cls, updated_time):
+        """
+        Update the last_update_time variable with a time reference
+        """
+        cls.last_update_time = updated_time
+
+    @classmethod
+    def set_last_updated_state(cls, updated_state: np.ndarray):
+        """
+        Update the last_updated_state variable with orbital position and velocity
+        """
+        cls.last_updated_state = updated_state
