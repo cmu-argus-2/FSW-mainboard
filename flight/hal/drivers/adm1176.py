@@ -77,10 +77,7 @@ class ADM1176:
 
         :return: None
         """
-        self.__turn_off()
-        time.sleep(0.1)
-        self.__turn_on()
-        time.sleep(0.1)
+        pass
 
     def config(self, value: str) -> None:
         """config: sets voltage current readout configuration.
