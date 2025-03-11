@@ -7,8 +7,6 @@ from micropython import const
 
 """ Contains functions to check the preconditions of Commands """
 
-_SECONDS_IN_WEEK = const(604800)
-
 
 def valid_state(*args) -> bool:
     """
@@ -22,22 +20,19 @@ def valid_state(*args) -> bool:
 def valid_time_format(*args) -> bool:
     """
     Precondition for UPLINK_TIME_REFERENCE / UPLINK_ORBIT_TIME_REFERENCE commands.
-    Will check that time is not in the future or in the far past.
+    Will check that time is of proper UNIX format
     """
     time_reference = args[0]
 
-    # Check that time is not in the future
-    if time_reference > time.time():
+    if time_reference is None:
         return False
 
-    # Get the timestamp for 7 days ago
-    past_week = time.time() - (_SECONDS_IN_WEEK)
-
-    # Check that time is not from before the past week
-    if time_reference < past_week:
+    try:
+        # Try to convert it to a time struct will verify if it was of proper UNIX format
+        time.gmtime(time_reference)
+        return True
+    except (ValueError, TypeError, OverflowError, OSError):
         return False
-
-    return True
 
 
 def file_id_exists(*args) -> bool:

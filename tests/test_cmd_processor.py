@@ -1,5 +1,4 @@
 import time
-from datetime import datetime, timedelta
 
 import pytest
 from micropython import const
@@ -213,19 +212,21 @@ def test_argument_size_check(command_id, arguments, expected_outputs):
     assert check_arguments_size(command_id, arguments) == expected_outputs
 
 
-# TODO: fix test without datetime
 def test_valid_time_format():
-    current_time = datetime.now()
-    # Checking invalid time in the future
-    future_time = current_time + timedelta(days=15)
-    assert not valid_time_format(future_time.timestamp())
+    # Test valid Unix
+    assert valid_time_format(1709980800)
+    assert valid_time_format(1700001234)
+    assert valid_time_format(1739719846)
+    assert valid_time_format(1699900000)
+    assert valid_time_format(1589387500)
 
-    # Checking invalid time in past
-    past_time = current_time - timedelta(days=15)
-    assert not valid_time_format(past_time.timestamp())
-
-    # Checking a valid time
-    assert valid_time_format(current_time.timestamp())
+    # Test edge cases and failing
+    assert valid_time_format(0)
+    assert not valid_time_format("not_a_timestamp")  # invalid type
+    assert not valid_time_format(9223372036854775807)  # beyond time_t limits
+    assert not valid_time_format(999999999999999999999999999999)  # far positive
+    assert not valid_time_format(-999999999999999999999999999999)  # far negative
+    assert not valid_time_format(None)
 
 
 def test_valid_state():
