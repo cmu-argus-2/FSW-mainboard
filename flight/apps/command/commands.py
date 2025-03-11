@@ -24,11 +24,11 @@ import supervisor
 from apps.adcs.orbit_propagation import OrbitPropagator
 from apps.command.constants import file_tags_str
 from apps.telemetry import TelemetryPacker
-from apps.time_processor.time_processor import TimeProcessor
 from core import logger
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
+from core.time_processor import TimeProcessor
 
 # from hal.configuration import SATELLITE
 from ulab import numpy as np

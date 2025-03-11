@@ -4,11 +4,11 @@ from apps.adcs.acs import spin_stabilizing_controller, sun_pointed_controller, z
 from apps.adcs.ad import AttitudeDetermination
 from apps.adcs.consts import Modes, StatusConst
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX
-from apps.time_processor.time_processor import TimeProcessor
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
+from core.time_processor import TimeProcessor
 
 """
     ASSUMPTIONS :

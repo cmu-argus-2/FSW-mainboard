@@ -3,11 +3,11 @@
 import microcontroller
 from apps.eps.eps import EPS_POWER_FLAG, GET_EPS_POWER_FLAG
 from apps.telemetry.constants import EPS_IDX
-from apps.time_processor.time_processor import TimeProcessor
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
+from core.time_processor import TimeProcessor
 from hal.configuration import SATELLITE
 
 

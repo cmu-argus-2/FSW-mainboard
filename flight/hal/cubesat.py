@@ -59,7 +59,7 @@ class CubeSat:
 
         self.__imu_temp_flag = False
 
-        # Debugging
+        # TODO: Is this even needed?
         self._time_ref_boot = int(time.time())
 
     # ABSTRACT METHOD #

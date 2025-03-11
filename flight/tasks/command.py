@@ -8,11 +8,11 @@ import apps.command.processor as processor
 from apps.adcs.consts import Modes
 from apps.command import QUEUE_STATUS, CommandQueue
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX
-from apps.time_processor.time_processor import TimeProcessor
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES, STR_STATES
+from core.time_processor import TimeProcessor
 
 
 class Task(TemplateTask):
