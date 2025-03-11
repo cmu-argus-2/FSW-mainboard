@@ -92,7 +92,7 @@ class AttitudeDetermination:
             gyro = np.array(SATELLITE.IMU.gyro())
             query_time = int(time.time())
 
-            # Sensor validity check
+            # Sensor validity check (check length and ensure reasding within range)
             if gyro is None or len(gyro) != 3:
                 return StatusConst.GYRO_FAIL, 0, np.zeros((3,))
             elif not (0 <= np.linalg.norm(gyro) <= 1000):  # Setting a very (VERY) large upper bound
@@ -112,7 +112,7 @@ class AttitudeDetermination:
             mag = np.array(SATELLITE.IMU.mag())
             query_time = int(time.time())
 
-            # Sensor validity check
+            # Sensor validity check (check length and ensure reading wihtin range)
             if mag is None or len(mag) != 3:
                 return StatusConst.MAG_FAIL, 0, np.zeros((3,))
             elif not (10 <= np.linalg.norm(mag) <= 100):  # Allowed between 10 and 100 uT (MSL : 58 uT, 600km : 37uT)
@@ -132,7 +132,7 @@ class AttitudeDetermination:
             # Get last GPS update time and position at that time
             gps_data = DH.get_latest_data("gps")
 
-            if gps_data is not None:
+            if gps_data is not None: # gps_data is None occurs when the DH process is registered but a fix has not yet been obtained
                 gps_record_time = gps_data[GPS_IDX.TIME_GPS]
                 gps_pos_ecef = 1e-2 * (np.array(gps_data[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,)))
                 gps_vel_ecef = 1e-2 * (np.array(gps_data[GPS_IDX.GPS_ECEF_VX : GPS_IDX.GPS_ECEF_VZ + 1]).reshape((3,)))
@@ -210,6 +210,7 @@ class AttitudeDetermination:
         if triad_status == StatusConst.TRIAD_FAIL:  # If TRIAD fails, do not initialize
             return StatusConst.MEKF_INIT_FAIL, StatusConst.TRIAD_FAIL
 
+        # Log variables to state
         self.state[self.position_idx] = true_pos_eci
         self.state[self.velocity_idx] = true_vel_eci
         self.state[self.attitude_idx] = attitude
@@ -325,7 +326,9 @@ class AttitudeDetermination:
                 StatusConst.SUN_NOT_ENOUGH_READINGS,
                 StatusConst.SUN_ECLIPSE,
             ]
-        ):
+        ): # Only run an update if MEKF is initialized and valid readings were obtained
+            
+            # Extract true sun position based on a map
             true_sun_pos_eci = approx_sun_position_ECI(current_time)
             true_sun_pos_eci_norm = np.linalg.norm(true_sun_pos_eci)
             if true_sun_pos_eci_norm == 0:
@@ -333,6 +336,7 @@ class AttitudeDetermination:
             else:
                 true_sun_pos_eci = true_sun_pos_eci / true_sun_pos_eci_norm
 
+            # Convert the measured position to ECI
             measured_sun_pos_eci = np.dot(quat_to_R(self.state[self.attitude_idx]), sun_pos_body)
             measured_sun_pos_eci_norm = np.linalg.norm(measured_sun_pos_eci)
             if measured_sun_pos_eci_norm == 0:
@@ -347,6 +351,7 @@ class AttitudeDetermination:
             H = np.zeros((3, 6))
             H[0:3, 0:3] = -s_cross
 
+            # Log status based on EKF update
             update_status = self.EKF_update(H, innovation, Cov_sunsensor)
             if update_status != StatusConst.OK:
                 return StatusConst.SUN_UPDATE_FAIL, update_status
@@ -412,10 +417,13 @@ class AttitudeDetermination:
 
         status, _, mag_field_body = self.read_magnetometer()
 
-        if status == StatusConst.OK:
-            self.state[self.mag_field_idx] = mag_field_body  # store magnetic field reading
+        if status == StatusConst.OK: # store magnetic field reading even if update fails to use for ACS
+            self.state[self.mag_field_idx] = mag_field_body 
 
-        if self.initialized and update_covariance and status == StatusConst.OK:  # Update EKF
+        # Perform an update only if MEKF initialized and valid field reading obtained
+        if self.initialized and update_covariance and status == StatusConst.OK:  
+            
+            # Obtain true mag field in ECI from IGRF
             true_mag_field_eci = igrf_eci(current_time, self.state[self.position_idx] / 1000)
             true_mag_field_eci_norm = np.linalg.norm(true_mag_field_eci)
             if true_mag_field_eci_norm == 0:
@@ -423,6 +431,7 @@ class AttitudeDetermination:
             else:
                 true_mag_field_eci = true_mag_field_eci / true_mag_field_eci_norm
 
+            # Convert measured mag field into ECI
             measured_mag_field_eci = np.dot(quat_to_R(self.state[self.attitude_idx]), mag_field_body)
             measured_mag_field_eci_norm = np.linalg.norm(measured_mag_field_eci)
             if measured_mag_field_eci_norm == 0:
@@ -437,6 +446,7 @@ class AttitudeDetermination:
             H = np.zeros((3, 6))
             H[0:3, 0:3] = -s_cross
 
+            # Update log based on EKF status
             update_status = self.EKF_update(H, innovation, Cov_mag_field)
             if update_status != StatusConst.OK:
                 return StatusConst.MAG_UPDATE_FAIL, update_status
