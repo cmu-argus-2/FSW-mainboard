@@ -9,6 +9,7 @@ import apps.command.processor as processor
 from apps.adcs.consts import Modes
 from apps.command import QUEUE_STATUS, CommandQueue
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX
+from apps.time_processor.time_processor import TIME_PROCESSOR
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
@@ -38,7 +39,7 @@ class Task(TemplateTask):
         return int(gc.mem_alloc() / self.total_memory * 100)
 
     async def main_task(self):
-        if SM.current_state == STATES.STARTUP:
+        if SM.current_state == STATES.STARTUP:  # Startup sequence
             # Must perform / check all startup tasks here (rtc, sd, etc.)
 
             # TODO
@@ -52,7 +53,7 @@ class Task(TemplateTask):
             # r = rtc.RTC()
 
             if SATELLITE.RTC_AVAILABLE:
-                SATELLITE.RTC.set_datetime(time.struct_time((2024, 4, 24, 9, 30, 0, 3, 115, -1)))
+                SATELLITE.RTC.set_datetime(time.localtime(1741709997))
 
             # rtc.set_time_source(r)
 
@@ -71,14 +72,13 @@ class Task(TemplateTask):
                 SM.switch_to(STATES.DETUMBLING)
                 self.log_info("Switching to DETUMBLING state.")
 
-                # Just for testing
-                # CommandQueue.push_command(0x40, [])
+        else:
+            # Code that executes in all states
 
-                # Testing single-element queue
-                # CommandQueue.overwrite_command(0x01,[STATES.LOW_POWER, 0x00])
-                # CommandQueue.overwrite_command(0x41,[STATES.DETUMBLING, 0x00])  #should only execute this with overwrite
-        else:  # Run for all other states
-            ### STATE MACHINE ###
+            # ------------------------------------------------------------------------------------------------------------------------------------
+            # STATE MACHINE
+            # ------------------------------------------------------------------------------------------------------------------------------------
+
             if SM.current_state == STATES.DETUMBLING:
                 # Check detumbling status from the ADCS
                 if DH.data_process_exists("adcs"):
@@ -103,12 +103,12 @@ class Task(TemplateTask):
 
             SM.update_time_in_state()
 
-            ### COMMAND PROCESSING ###
+            # ------------------------------------------------------------------------------------------------------------------------------------
+            # COMMAND PROCESSOR
+            # ------------------------------------------------------------------------------------------------------------------------------------
 
             if CommandQueue.command_available():
                 (cmd_id, cmd_arglist), queue_error_code = CommandQueue.pop_command()
-                # self.log_info(f"ID: {cmd_id} Arguments: {cmd_args}")
-
                 cmd_args = processor.unpack_command_arguments(cmd_id, cmd_arglist)
 
                 if (
@@ -120,19 +120,21 @@ class Task(TemplateTask):
                     processor.handle_command_execution_status(status, response_args)
 
                     # Log the command execution history
-                    self.log_commands[0] = int(time.time())
+                    self.log_commands[0] = int(TIME_PROCESSOR.unix_time())
                     self.log_commands[1] = cmd_id
                     self.log_commands[2] = status
                     DH.log_data("cmd_logs", self.log_commands)
 
-            self.log_data[CDH_IDX.TIME] = int(time.time())
+            # Set CDH log data
+            self.log_data[CDH_IDX.TIME] = int(TIME_PROCESSOR.unix_time())
             self.log_data[CDH_IDX.SC_STATE] = SM.current_state
             self.log_data[CDH_IDX.SD_USAGE] = int(DH.SD_usage() / 1000)  # kb - gets updated in the OBDH task
             self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = self.get_memory_usage()
             self.log_data[CDH_IDX.REBOOT_COUNT] = 0
             self.log_data[CDH_IDX.WATCHDOG_TIMER] = 0
             self.log_data[CDH_IDX.HAL_BITFLAGS] = 0
-            # the detumbling error flag is set in the DETUMBLING state
+
+            # The detumbling error flag is set in the DETUMBLING state
 
             # Should always run
             DH.log_data("cdh", self.log_data)
@@ -140,7 +142,7 @@ class Task(TemplateTask):
         self.log_print_counter += 1
         if self.log_print_counter % self.frequency == 0:
             self.log_print_counter = 0
-            self.log_info(f"Time: {int(time.time())}")
+            self.log_info(f"Time: {int(TIME_PROCESSOR.unix_time())}")
             self.log_info(f"Time since boot: {int(time.time()) - SATELLITE.BOOTTIME}")
             self.log_info(f"GLOBAL STATE: {STR_STATES[SM.current_state]}.")
             self.log_info(f"RAM USAGE: {self.log_data[CDH_IDX.CURRENT_RAM_USAGE]}%")
