@@ -259,6 +259,7 @@ class ArgusV2(CubeSat):
             device.device, device.error = func(name)
 
     def __gps_boot(self, _) -> list[object, int]:
+
         """GPS_boot: Boot sequence for the GPS
 
         :return: Error code if the GPS failed to initialize
@@ -267,7 +268,7 @@ class ArgusV2(CubeSat):
         from hal.drivers.gps import GPS
 
         try:
-            gps = GPS(ArgusV2Components.GPS_UART, ArgusV2Components.GPS_ENABLE)
+            gps = GPS(ArgusV2Components.GPS_UART, None, False, False)
 
             return [gps, Errors.NOERROR]
         except Exception as e:

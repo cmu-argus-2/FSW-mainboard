@@ -5,12 +5,10 @@
 import gc
 import time
 
+import apps.command.processor as processor
 from apps.adcs.consts import Modes
 from apps.command import QUEUE_STATUS, CommandQueue
-from apps.command.constants import CMD_ID
-from apps.command.processor import handle_command_execution_status, process_command
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX
-from apps.telemetry.helpers import unpack_unsigned_long_int
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
@@ -52,8 +50,10 @@ class Task(TemplateTask):
             ### RTC setup
 
             # r = rtc.RTC()
+
             if SATELLITE.RTC_AVAILABLE:
                 SATELLITE.RTC.set_datetime(time.struct_time((2024, 4, 24, 9, 30, 0, 3, 115, -1)))
+
             # rtc.set_time_source(r)
 
             # TODO: Burn wires
@@ -109,23 +109,15 @@ class Task(TemplateTask):
                 (cmd_id, cmd_arglist), queue_error_code = CommandQueue.pop_command()
                 # self.log_info(f"ID: {cmd_id} Arguments: {cmd_args}")
 
-                # TODO: Move to another function
-                # Unpack arguments based on message ID
-                if cmd_id == CMD_ID.SWITCH_TO_STATE:
-                    cmd_arglist = list(cmd_arglist)
-                    cmd_args = [0x00, 0x00]
-                    cmd_args[0] = cmd_arglist[0]
-                    cmd_args[1] = unpack_unsigned_long_int(cmd_arglist[1:5])
+                cmd_args = processor.unpack_command_arguments(cmd_id, cmd_arglist)
 
-                    self.log_info(f"ID: {cmd_id} Argument List: {cmd_args}")
-                else:
-                    cmd_args = []
-
-                if queue_error_code == QUEUE_STATUS.OK:
+                if (
+                    queue_error_code == QUEUE_STATUS.OK
+                    and cmd_args != processor.CommandProcessingStatus.ARGUMENT_UNPACKING_FAILED
+                ):
                     self.log_info(f"Processing command: {cmd_id} with args: {cmd_args}")
-                    status, response_args = process_command(cmd_id, *cmd_args)
-
-                    handle_command_execution_status(status, response_args)
+                    status, response_args = processor.process_command(cmd_id, *cmd_args)
+                    processor.handle_command_execution_status(status, response_args)
 
                     # Log the command execution history
                     self.log_commands[0] = int(time.time())

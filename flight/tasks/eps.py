@@ -20,10 +20,10 @@ class Task(TemplateTask):
     """data_keys = [
         "TIME",
         "EPS_POWER_FLAG",
-        "CPU_TEMPERATURE",
-        "BATTERY_PACK_TEMPERATURE",
+        "MAINBOARD_TEMPERATURE",
         "MAINBOARD_VOLTAGE",
         "MAINBOARD_CURRENT",
+        "BATTERY_PACK_TEMPERATURE",
         "BATTERY_PACK_REPORTED_SOC",
         "BATTERY_PACK_REPORTED_CAPACITY",
         "BATTERY_PACK_CURRENT",
@@ -123,8 +123,8 @@ class Task(TemplateTask):
                             + f"Radio Current: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_CURRENT]} mA"
                         )
 
-            self.log_data[EPS_IDX.CPU_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
-            self.log_info(f"CPU temperature: {self.log_data[EPS_IDX.CPU_TEMPERATURE]} °cC ")
+            self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
+            self.log_info(f"CPU temperature: {self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE]} °cC ")
 
             if SATELLITE.FUEL_GAUGE_AVAILABLE:
                 self.read_fuel_gauge()
