@@ -3,7 +3,6 @@ import time
 from apps.command.constants import file_tags_str
 from core.data_handler import DataHandler
 from core.state_machine import STATES
-from micropython import const
 
 """ Contains functions to check the preconditions of Commands """
 
