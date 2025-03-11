@@ -32,9 +32,6 @@ class Task(TemplateTask):
     def __init__(self, id):
         super().__init__(id)
         self.name = "COMMAND"
-
-        # TODO: Remove once a coil cell is found in the lab
-        TIME_PROCESSOR.set_time(1741709997)
         self.boot_time = TIME_PROCESSOR.time()
 
     def get_memory_usage(self):
