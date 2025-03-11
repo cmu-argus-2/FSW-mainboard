@@ -21,10 +21,18 @@ Author: Ibrahima S. Sow
 """
 
 import supervisor
+from apps.adcs.orbit_propagation import OrbitPropagator
+from apps.command.constants import file_tags_str
 from apps.telemetry import TelemetryPacker
 from core import logger
 from core import state_manager as SM
+from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
+
+# from hal.configuration import SATELLITE
+from ulab import numpy as np
+
+FILE_PKTSIZE = 240
 
 
 def FORCE_REBOOT():
@@ -42,17 +50,22 @@ def SWITCH_TO_STATE(target_state_id, time_in_state=None):
     return []
 
 
-def UPLINK_TIME_REFERENCE(time_in_state):
+def UPLINK_TIME_REFERENCE(time_reference):
     """Sends a time reference to the spacecraft to update the time processing module."""
-    logger.info(f"Executing UPLINK_TIME_REFERENCE with current_time: {time_in_state}")
+    logger.info(f"Executing UPLINK_TIME_REFERENCE with current_time: {time_reference}")
+    # TODO: Time module interfacing
+    # if SATELLITE.RTC_AVAILABLE:
+    #     SATELLITE.set_datetime(time.gmtime(time_reference))
     return []
 
 
-def UPLINK_ORBIT_REFERENCE(time_in_state, orbital_parameters):
+def UPLINK_ORBIT_REFERENCE(time_reference, orbital_parameters):
     """Sends time-referenced orbital information to update the orbit reference."""
     logger.info(
-        f"Executing UPLINK_ORBIT_REFERENCE with orbital_parameters: {orbital_parameters}, time_in_state: {time_in_state}"
+        f"Executing UPLINK_ORBIT_REFERENCE with orbital_parameters: pos({orbital_parameters}, time_reference: {time_reference}"
     )
+    OrbitPropagator.set_last_update_time(time_reference)
+    OrbitPropagator.set_last_updated_state(np.array(orbital_parameters))
     return []
 
 
@@ -68,17 +81,18 @@ def SCHEDULE_OD_EXPERIMENT():
     return []
 
 
-def REQUEST_TM_HEARTBEAT():
+def REQUEST_TM_NOMINAL():
     """Requests a nominal snapshot of all subsystems."""
-    logger.info("Executing REQUEST_TM_HEARTBEAT")
+    logger.info("Executing REQUEST_TM_NOMINAL")
     # Pack telemetry
     packed = TelemetryPacker.pack_tm_heartbeat()
     if packed:
-        logger.info("Telemetry heartbeat packed")
+        logger.info("Telemetry nominal packed")
 
+    # Change message ID to nominal - differentiate between SAT_HEARTBEAT
+    TelemetryPacker.change_tm_id_nominal()
     # Return TX message header
-    tx_msg_id = int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
-    return [tx_msg_id]
+    return [get_tx_message_header()]
 
 
 def REQUEST_TM_HAL():
@@ -90,8 +104,7 @@ def REQUEST_TM_HAL():
         logger.info("Telemetry hal packed")
 
     # Return TX message header
-    tx_msg_id = int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
-    return [tx_msg_id]
+    return [get_tx_message_header()]
 
 
 def REQUEST_TM_STORAGE():
@@ -103,8 +116,7 @@ def REQUEST_TM_STORAGE():
         logger.info("Telemetry storage packed")
 
     # Return TX message header
-    tx_msg_id = int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
-    return [tx_msg_id]
+    return [get_tx_message_header()]
 
 
 def REQUEST_TM_PAYLOAD():
@@ -116,23 +128,52 @@ def REQUEST_TM_PAYLOAD():
         logger.info("Telemetry payload packed")
 
     # Return TX message header
-    tx_msg_id = int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
-    return [tx_msg_id]
+    return [get_tx_message_header()]
 
 
-def REQUEST_FILE_METADATA(file_tag, requested_time=None):
+def REQUEST_FILE_METADATA(file_id, file_time=None):
     """Requests metadata for a specific file from the spacecraft."""
-    logger.info(f"Executing REQUEST_FILE_METADATA with file_tag: {file_tag} and requested_time: {requested_time}")
-    return []
+    logger.info(f"Executing REQUEST_FILE_METADATA with file_tag: {file_id} and file_time: {file_time}")
+    file_path = None
+    file_tag = file_tags_str[file_id]
+
+    if file_time is None:
+        file_path = DH.request_TM_path(file_tag)
+    else:
+        file_path = DH.request_TM_path(file_tag, file_time)
+
+    return [file_path]
 
 
-def REQUEST_FILE_PKT(file_tag):
+def REQUEST_FILE_PKT(file_id, file_time):
     """Requests a specific file packet from the spacecraft."""
-    logger.info(f"Executing REQUEST_FILE_PKT with file_tag: {file_tag}")
-    return []
+    logger.info(f"Executing REQUEST_FILE_PKT with file_tag: {file_id}, file_tim: {file_time}")
+    # TODO: potentially change if we want to handle file packets here instead of Comms
+    file_path = None
+    file_tag = file_tags_str[file_id]
+
+    if file_time is None:
+        file_path = DH.request_TM_path(file_tag)
+    else:
+        file_path = DH.request_TM_path(file_tag, file_time)
+
+    return [file_path]
 
 
 def REQUEST_IMAGE():
     """Requests an image from the spacecraft's internal storage."""
     logger.info("Executing REQUEST_IMAGE")
-    return []
+    # TODO: finish implementation, if we are keeping this command
+    path = DH.request_TM_path_image()
+    return [path]
+
+
+def DOWNLINK_ALL():
+    """Requests all files, images, and mission data be downlinked immediately in the event mission is compromised"""
+    logger.info("Executing DOWNLINK_ALL")
+    return [DH.get_all_data_processes_name()]
+
+
+def get_tx_message_header():
+    """ " Helper function to obtain the tx message header to send back"""
+    return int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")

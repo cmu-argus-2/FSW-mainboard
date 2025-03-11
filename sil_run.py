@@ -41,7 +41,6 @@ def parse_FSW_logs(outfile):
 
 
 if __name__ == "__main__":
-
     # Define Parser
     parser = argparse.ArgumentParser(prog="SIL_tester")
 

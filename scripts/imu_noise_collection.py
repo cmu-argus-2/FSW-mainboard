@@ -5,9 +5,9 @@ import supervisor
 from hal.configuration import SATELLITE
 
 print("Booting ARGUS-1...")
-boot_errors = SATELLITE.boot_sequence()
+SATELLITE.boot_sequence()
 print("ARGUS-1 booted.")
-print(f"Boot Errors: {boot_errors}")
+print(f"Boot Errors: {SATELLITE.ERRORS}")
 mag_data = []
 gyro_data = []
 last_flush_time = time.monotonic()
