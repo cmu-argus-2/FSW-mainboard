@@ -129,6 +129,12 @@ class GPS_IDX:
     GPS_ECEF_VX = const(18)
     GPS_ECEF_VY = const(19)
     GPS_ECEF_VZ = const(20)
+    GPS_ECI_X = const(21)
+    GPS_ECI_Y = const(22)
+    GPS_ECI_Z = const(23)
+    GPS_ECI_VX = const(24)
+    GPS_ECI_VY = const(25)
+    GPS_ECI_VZ = const(26)
 
 
 class PAYLOAD_IDX:

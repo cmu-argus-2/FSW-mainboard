@@ -118,3 +118,10 @@ def convert_ecef_to_geoc(ecef, degrees=False):
         lon = lon * 180.0 / np.pi
 
     return np.array([lon, lat, alt])
+
+
+def vec_ecef_to_eci(x: np.ndarray, utime: int) -> np.ndarray:
+    R_ecef2eci = ecef_to_eci(utime)
+    x_eci = np.dot(R_ecef2eci, x)
+
+    return x_eci

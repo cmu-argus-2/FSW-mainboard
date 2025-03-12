@@ -2,12 +2,14 @@
 
 # import time
 
+from apps.adcs.frames import vec_ecef_to_eci
 from apps.telemetry.constants import GPS_IDX
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
 from hal.configuration import SATELLITE
+from ulab import numpy as np
 
 
 class Task(TemplateTask):
@@ -33,9 +35,15 @@ class Task(TemplateTask):
         "GPS_ECEF_VX",
         "GPS_ECEF_VY",
         "GPS_ECEF_VZ",
+        "GPS_ECI_X",
+        "GPS_ECI_Y",
+        "GPS_ECI_Z",
+        "GPS_ECI_VX",
+        "GPS_ECI_VY",
+        "GPS_ECI_VZ",
     ]"""
 
-    log_data = [0] * 21
+    log_data = [0] * 27
 
     def __init__(self, id):
         super().__init__(id)
@@ -50,7 +58,7 @@ class Task(TemplateTask):
                 if not DH.data_process_exists("gps"):
                     # TODO : This format is no longer correct
                     # data_format = "LBBBHIiiiiHHHHHiiiiii"
-                    data_format = "fBBBHLllllHHHHHllllll"
+                    data_format = "fBBBHLllllHHHHHllllllllllll"
                     DH.register_data_process("gps", data_format, True, data_limit=100000, write_interval=1)
 
                 if SATELLITE.GPS.update():
@@ -80,6 +88,20 @@ class Task(TemplateTask):
                         self.log_data[GPS_IDX.GPS_ECEF_VX] = SATELLITE.GPS.ecef_vx  # cm/s
                         self.log_data[GPS_IDX.GPS_ECEF_VY] = SATELLITE.GPS.ecef_vy
                         self.log_data[GPS_IDX.GPS_ECEF_VZ] = SATELLITE.GPS.ecef_vz
+
+                        # Convert ECEFs to ECI
+                        ecef_position = np.array([SATELLITE.GPS.ecef_x, SATELLITE.GPS.ecef_y, SATELLITE.GPS.ecef_z])
+                        ecef_velocity = np.array([SATELLITE.GPS.ecef_vx, SATELLITE.GPS.ecef_vy, SATELLITE.GPS.ecef_vz])
+
+                        eci_position = vec_ecef_to_eci(ecef_position, SATELLITE.GPS.unix_time)
+                        eci_velocity = vec_ecef_to_eci(ecef_velocity, SATELLITE.GPS.unix_time)
+
+                        self.log_data[GPS_IDX.GPS_ECI_X] = int(eci_position[0])  # cm
+                        self.log_data[GPS_IDX.GPS_ECI_Y] = int(eci_position[1])
+                        self.log_data[GPS_IDX.GPS_ECI_Z] = int(eci_position[2])
+                        self.log_data[GPS_IDX.GPS_ECI_VX] = int(eci_velocity[0])  # cm/s
+                        self.log_data[GPS_IDX.GPS_ECI_VY] = int(eci_velocity[1])
+                        self.log_data[GPS_IDX.GPS_ECI_VZ] = int(eci_velocity[2])
 
                         DH.log_data("gps", self.log_data)
                 else:
