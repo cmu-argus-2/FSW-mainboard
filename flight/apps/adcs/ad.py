@@ -132,7 +132,9 @@ class AttitudeDetermination:
             # Get last GPS update time and position at that time
             gps_data = DH.get_latest_data("gps")
 
-            if gps_data is not None: # gps_data is None occurs when the DH process is registered but a fix has not yet been obtained
+            if (
+                gps_data is not None
+            ):  # gps_data is None occurs when the DH process is registered but a fix has not yet been obtained
                 gps_record_time = gps_data[GPS_IDX.TIME_GPS]
                 gps_pos_ecef = 1e-2 * (np.array(gps_data[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,)))
                 gps_vel_ecef = 1e-2 * (np.array(gps_data[GPS_IDX.GPS_ECEF_VX : GPS_IDX.GPS_ECEF_VZ + 1]).reshape((3,)))
@@ -326,8 +328,8 @@ class AttitudeDetermination:
                 StatusConst.SUN_NOT_ENOUGH_READINGS,
                 StatusConst.SUN_ECLIPSE,
             ]
-        ): # Only run an update if MEKF is initialized and valid readings were obtained
-            
+        ):  # Only run an update if MEKF is initialized and valid readings were obtained
+
             # Extract true sun position based on a map
             true_sun_pos_eci = approx_sun_position_ECI(current_time)
             true_sun_pos_eci_norm = np.linalg.norm(true_sun_pos_eci)
@@ -417,12 +419,12 @@ class AttitudeDetermination:
 
         status, _, mag_field_body = self.read_magnetometer()
 
-        if status == StatusConst.OK: # store magnetic field reading even if update fails to use for ACS
-            self.state[self.mag_field_idx] = mag_field_body 
+        if status == StatusConst.OK:  # store magnetic field reading even if update fails to use for ACS
+            self.state[self.mag_field_idx] = mag_field_body
 
         # Perform an update only if MEKF initialized and valid field reading obtained
-        if self.initialized and update_covariance and status == StatusConst.OK:  
-            
+        if self.initialized and update_covariance and status == StatusConst.OK:
+
             # Obtain true mag field in ECI from IGRF
             true_mag_field_eci = igrf_eci(current_time, self.state[self.position_idx] / 1000)
             true_mag_field_eci_norm = np.linalg.norm(true_mag_field_eci)
