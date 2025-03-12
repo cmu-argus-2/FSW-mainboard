@@ -42,14 +42,6 @@ class OrbitPropagator:
                 initialized = True
 
     @classmethod
-    def acceleration(cls, state):
-        # Earth Constants
-        mu_earth = 3.986004418e14  # m^3s^-2 Earth standard gravitational parameter
-
-        acc = -(mu_earth / (np.linalg.norm(state[0:3]) ** 3)) * state[0:3]
-        return acc
-
-    @classmethod
     def propagate_orbit(cls, current_time: int, last_gps_time: int = None, last_gps_state: np.ndarray = None):
         if last_gps_state is not None:
             cls.last_updated_state = last_gps_state
