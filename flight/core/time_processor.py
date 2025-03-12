@@ -15,7 +15,7 @@ time-of-day access.
 
 4 - The TPM shall perform state correction using GPS time if the
 spacecraft gets a fix and the difference between RTC and GPS time is
-significant (> 10s), in an effort to conserve write cycles to the RTC.
+significant (> 1s), in an effort to conserve write cycles to the RTC.
 
 5 - In the event of GPS failure, the TPM shall peform state corrections
 through the command UPLINK_TIME_REFERENCE.
@@ -40,7 +40,7 @@ class TimeProcessor:
     (on boot) if the RTC has failed.
     """
 
-    # Initialize time_reference to 0
+    # Initialize to UTC timestamp for Jan 1st 2020 (time.time() init val)
     time_reference = 1577836800
 
     """
@@ -49,7 +49,7 @@ class TimeProcessor:
     available or state correction occurs.
     """
 
-    # Initialize time_offset to 0
+    # Initialize to 0 (no offset)
     time_offset = 0
 
     """
