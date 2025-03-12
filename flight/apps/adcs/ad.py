@@ -133,7 +133,7 @@ class AttitudeDetermination:
             gps_data = DH.get_latest_data("gps")
 
             if gps_data is not None:
-                gps_record_time = [GPS_IDX.TIME_GPS]
+                gps_record_time = DH.get_latest_data("gps")[GPS_IDX.TIME_GPS]
                 gps_pos_ecef = 1e-2 * (
                     np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,))
                 )
