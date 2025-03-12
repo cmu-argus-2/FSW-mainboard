@@ -41,7 +41,7 @@ class TimeProcessor:
     """
 
     # Initialize to UTC timestamp for Jan 1st 2020 (time.time() init val)
-    time_reference = 1577836800
+    time_reference = time.time()
 
     """
     time_offset: Offset between time.time() and

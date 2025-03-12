@@ -20,18 +20,19 @@ def valid_time_format(*args) -> bool:
     """
     Precondition for UPLINK_TIME_REFERENCE / UPLINK_ORBIT_TIME_REFERENCE commands.
     Will check that time is of proper UNIX format
-    """
-    time_reference = args[0]
+    #"""
+    # time_reference = args[0]
 
-    if time_reference is None:
-        return False
+    # if time_reference is None:
+    #     return False
 
-    try:
-        # Try to convert it to a time struct will verify if it was of proper UNIX format
-        time.gmtime(time_reference)
-        return True
-    except (ValueError, TypeError, OverflowError, OSError):
-        return False
+    # try:
+    #     # Try to convert it to a time struct will verify if it was of proper UNIX format
+    #     time.gmtime(time_reference)
+    #     return True
+    # except (ValueError, TypeError, OverflowError, OSError):
+    #     return False
+    pass
 
 
 def file_id_exists(*args) -> bool:

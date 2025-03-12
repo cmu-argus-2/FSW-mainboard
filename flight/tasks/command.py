@@ -57,6 +57,7 @@ class Task(TemplateTask):
             # from GPS or uplinked commands, and until then the time will be egregiously wrong
 
             # NOTE: This will not work until OBDH initializes CDH data process
+
             if DH.data_process_exists("cdh"):
                 cdh_data = DH.get_latest_data("cdh")
 
