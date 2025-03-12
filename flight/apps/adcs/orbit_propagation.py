@@ -62,23 +62,28 @@ class OrbitPropagator:
                 return StatusConst.OPROP_INIT_FAIL, np.zeros((3,)), np.zeros((3,))
 
         # Propagate orbit
-        num_steps = (cls.last_update_time - current_time) // cls.min_timestep
-        if num_steps >= 20:
-            num_steps = 20
-            timestep = (cls.last_update_time - current_time) / num_steps
-        else:
-            timestep = cls.min_timestep
+        position_norm = np.linalg.norm(cls.last_updated_state[0:3])
+        velocity_norm = np.linalg.norm(cls.last_updated_state[3:6])
 
-        for _ in range(num_steps):
-            # Update state based on Euler integration
-            state_derivative = np.concatenate((cls.acceleration(cls.last_updated_state), cls.last_updated_state[3:6]))
-            cls.last_updated_state = cls.last_updated_state + timestep * state_derivative
+        if not (6.0e6 <= position_norm <= 7.5e6 and 3.0e3 <= velocity_norm <= 1.0e4):
+            # Somehow, we have messed up so bad that our position and/or velocity vectors are garbage.
+            # Reset OrbitProp and wait for a valid GPS fix
+            cls.initialized = False
+            return StatusConst.OPROP_INIT_FAIL, np.zeros((3,)), np.zeros((3,))
 
-        fractional_state_update = ((cls.last_update_time - current_time) % timestep) * np.concatenate(
-            (cls.acceleration(cls.last_updated_state), cls.last_updated_state[3:6])
+        # Calculate omega (angular velocity) vector
+        omega = np.cross(cls.last_updated_state[0:3], cls.last_updated_state[3:6]) / position_norm**2
+
+        # Calculate roation angle about omega
+        theta = omega * (cls.last_update_time - current_time)
+
+        # Rotate position about omega by angle theta
+        cls.last_updated_state[0:3] = position_norm * (
+            np.cos(theta) + cls.last_updated_state[3:6] * np.sin(theta) / velocity_norm
         )
-        cls.last_updated_state = cls.last_updated_state + fractional_state_update
-        cls.last_update_time = current_time
+
+        # Compute velocity using (v = omega x r)
+        cls.last_updated_state[3:6] = np.cross(omega, cls.last_updated_state[0:3])
 
         return StatusConst.OK, cls.last_updated_state[0:3], cls.last_updated_state[3:6]
 
