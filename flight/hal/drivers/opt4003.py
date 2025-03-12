@@ -30,19 +30,19 @@ except ImportError:
     pass
 
 # Registers as descirbed in page 25 of datasheet
-RESULT_MSB_CH0 = 0x00
-RESULT_LSB_CH0 = 0x01
-RESULT_MSB_CH1 = 0x02
-RESULT_LSB_CH1 = 0x03
-FIFO_MSB_CH0 = 0x04
-FIFO_LSB_CH0 = 0x05
-FIFO_MSB_CH1 = 0x06
-FIFO_LSB_CH1 = 0x07
-THRESHOLD_L = 0x08
-THRESHOLD_H = 0x09
-CONFIGURATION = 0x0A
-FLAGS = 0x0C
-DEVICE_ID = 0x11
+_RESULT_MSB_CH0 = 0x00
+_RESULT_LSB_CH0 = 0x01
+# _RESULT_MSB_CH1 = 0x02
+# RESULT_LSB_CH1 = 0x03
+# FIFO_MSB_CH0 = 0x04
+# FIFO_LSB_CH0 = 0x05
+# FIFO_MSB_CH1 = 0x06
+# FIFO_LSB_CH1 = 0x07
+# THRESHOLD_L = 0x08
+# THRESHOLD_H = 0x09
+_CONFIGURATION = 0x0A
+_FLAGS = 0x0C
+_DEVICE_ID = 0x11
 
 
 class OPT4003:
@@ -154,19 +154,19 @@ class OPT4003:
 
     # Configuration settings
     # Locations of these bits are descirbed in page 30 and 31 of the datasheet
-    quick_wakeup = RWBit(CONFIGURATION, 15, register_width=2, lsb_first=False)
-    lux_range = RWBits(4, CONFIGURATION, 10, register_width=2, lsb_first=False)
-    conversion_time = RWBits(4, CONFIGURATION, 6, register_width=2, lsb_first=False)
-    operating_mode = RWBits(2, CONFIGURATION, 4, register_width=2, lsb_first=False)
-    latch = RWBit(CONFIGURATION, 3, register_width=2, lsb_first=False)
-    int_pol = RWBit(CONFIGURATION, 2, register_width=2, lsb_first=False)
-    fault_count = RWBits(2, CONFIGURATION, 0, register_width=2, lsb_first=False)
+    quick_wakeup = RWBit(_CONFIGURATION, 15, register_width=2, lsb_first=False)
+    lux_range = RWBits(4, _CONFIGURATION, 10, register_width=2, lsb_first=False)
+    conversion_time = RWBits(4, _CONFIGURATION, 6, register_width=2, lsb_first=False)
+    operating_mode = RWBits(2, _CONFIGURATION, 4, register_width=2, lsb_first=False)
+    latch = RWBit(_CONFIGURATION, 3, register_width=2, lsb_first=False)
+    int_pol = RWBit(_CONFIGURATION, 2, register_width=2, lsb_first=False)
+    fault_count = RWBits(2, _CONFIGURATION, 0, register_width=2, lsb_first=False)
 
     # flags
-    overload_flag = ROBit(FLAGS, 3, register_width=2, lsb_first=False)
-    conversion_ready_flag = ROBit(FLAGS, 2, register_width=2, lsb_first=False)
-    flag_h = ROBit(FLAGS, 1, register_width=2, lsb_first=False)
-    flag_L = ROBit(FLAGS, 0, register_width=2, lsb_first=False)
+    overload_flag = ROBit(_FLAGS, 3, register_width=2, lsb_first=False)
+    conversion_ready_flag = ROBit(_FLAGS, 2, register_width=2, lsb_first=False)
+    flag_h = ROBit(_FLAGS, 1, register_width=2, lsb_first=False)
+    flag_L = ROBit(_FLAGS, 0, register_width=2, lsb_first=False)
 
     def __init__(
         self,
@@ -261,7 +261,7 @@ class OPT4003:
 
     def check_id(self) -> bool:
         # first check that DIDL == 0
-        self.read_u16(DEVICE_ID)
+        self.read_u16(_DEVICE_ID)
         DIDL = (self.buf[0] >> 4) & ((1 << 2) - 1)  # 13-12
         if not DIDL == 0:
             return False
@@ -317,7 +317,7 @@ class OPT4003:
         15-12: EXPONENT
         11-0: RESULT_MSB
         """
-        exponent, result_msb = self.get_exp_msb(RESULT_MSB_CH0)
+        exponent, result_msb = self.get_exp_msb(_RESULT_MSB_CH0)
 
         """
         15-8: RESULT_LSB
@@ -333,7 +333,7 @@ class OPT4003:
         X[2]=XOR(C[3],R[3],R[7],R[11],R[15],R[19],E[3])
         X[3]=XOR(R[3],R[11],R[19])
         """
-        result_lsb, _, _ = self.get_lsb_counter_crc(RESULT_LSB_CH0)
+        result_lsb, _, _ = self.get_lsb_counter_crc(_RESULT_LSB_CH0)
 
         # equations from pages 17 and 18 of datasheet
         mantissa = (result_msb << 8) + result_lsb
