@@ -14,36 +14,57 @@ class StatusConst:
     Status codes used in ADCS apps.
     """
 
-    # Failure Status Constants
-    # Sensor Failures
-    GYRO_FAIL = -1
-    MAG_FAIL = -2
-    GPS_FAIL = -3
+    """
+        Failure Status Constants
+    """
 
     # Algorithm Failures
-    MEKF_INIT_FAIL = -4
-    OPROP_INIT_FAIL = -5
-    TRIAD_FAIL = -6
-    POS_UPDATE_FAIL = -7
-    SUN_UPDATE_FAIL = -8
-    MAG_UPDATE_FAIL = -9
-    EKF_UPDATE_FAIL = -10
+    MEKF_INIT_FAIL = -1
+    OPROP_INIT_FAIL = -2
+    TRIAD_FAIL = -3
+    POS_UPDATE_FAIL = -4
+    SUN_UPDATE_FAIL = -5
+    MAG_UPDATE_FAIL = -6
+    EKF_UPDATE_FAIL = -7
+    TRUE_SUN_MAP_FAIL = -8
+    TRUE_MAG_MAP_FAIL = -9
+
+    # Sensor based Failures
+    # Gyro
+    GYRO_FAIL = -11
+    # Magnetometer
+    MAG_FAIL = -21
+    # GPS
+    GPS_FAIL = -31
+    # Light Sensor
+    SUN_NO_READINGS = -41
+    SUN_NOT_ENOUGH_READINGS = -42
+    SUN_ECLIPSE = -43
+
+    # Misc
+    ZERO_NORM = -51
 
     # Success Status Constants
     OK = 1
 
     # Failure Messages
     _FAIL_MESSAGES = {
-        GYRO_FAIL: "Gyro failure",
-        MAG_FAIL: "Magnetometer failure",
-        GPS_FAIL: "GPS failure",
         MEKF_INIT_FAIL: "MEKF init failure",
         OPROP_INIT_FAIL: "Orbit Prop Init failure",
         TRIAD_FAIL: "TRIAD failure",
         POS_UPDATE_FAIL: "Position update failure",
         SUN_UPDATE_FAIL: "Sun update failure",
-        MAG_UPDATE_FAIL: "Magneto update failure",
+        MAG_UPDATE_FAIL: "Mag update failure",
         EKF_UPDATE_FAIL: "Singular Matrix",
+        TRUE_SUN_MAP_FAIL: "Invalid true sunpos",
+        TRUE_MAG_MAP_FAIL: "Invalid true mag",
+        GYRO_FAIL: "Gyro failure",
+        MAG_FAIL: "Magnetometer failure",
+        GPS_FAIL: "GPS failure",
+        SUN_NO_READINGS: "No readings",
+        SUN_NOT_ENOUGH_READINGS: "Insufficient readings",
+        SUN_ECLIPSE: "In eclipse",
+        ZERO_NORM: "Zero-normed vector",
     }
 
     @classmethod
