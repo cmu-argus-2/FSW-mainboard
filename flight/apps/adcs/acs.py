@@ -28,11 +28,8 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
     All sensor estimates are in the body-fixed reference frame.
     """
     # Stop ACS if the reading values are invalid
-    if not readings_are_valid((omega, mag_field)):
-        return ControllerConst.FALLBACK_CONTROL
-
-    # Stop ACS if the field value is invalid
-    elif np.linalg.norm(mag_field) == 0:
+    if not readings_are_valid((omega, mag_field)) \
+    or np.linalg.norm(mag_field) == 0:
         return ControllerConst.FALLBACK_CONTROL
 
     # Do spin stabilization
@@ -49,13 +46,12 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
 
 def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field: np.ndarray) -> np.ndarray:
     # Stop ACS if the reading values are invalid
-    if not readings_are_valid((sun_vector, omega, mag_field)):
+    if not readings_are_valid((sun_vector, omega, mag_field)) \
+    or np.linalg.norm(mag_field) == 0 \
+    or np.linalg.norm(sun_vector) == 0:
         return ControllerConst.FALLBACK_CONTROL
 
-    # Stop ACS if either reading has invalid norm
-    elif np.linalg.norm(mag_field) == 0 or np.linalg.norm(sun_vector) == 0:
-        return ControllerConst.FALLBACK_CONTROL
-
+    # Do sun pointing
     else:
         # Compute pointing error
         error = sun_vector - np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET
