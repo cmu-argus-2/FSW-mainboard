@@ -213,19 +213,5 @@ class PCF8523:
 
         return Errors.NOERROR
 
-    def run_diagnostics(self) -> list[int] | None:
-        """run_diagnostic_test: Run all tests for the component
-
-        :return: List of error codes
-        """
-        error_list = []
-
-        error_list.append(self.__check_battery_status())
-        error_list.append(self.__check_lost_power())
-
-        error_list = list(set(error_list))
-
-        if Errors.NOERROR not in error_list:
-            self.errors_present = True
-
-        return error_list
+    def deinit(self):
+        return

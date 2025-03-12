@@ -5,7 +5,6 @@ from adafruit_register.i2c_bit import ROBit
 from adafruit_register.i2c_bits import ROBits, RWBits
 from adafruit_register.i2c_struct import Struct
 from digitalio import DigitalInOut
-from hal.drivers.middleware.errors import Errors
 from micropython import const
 
 # Chip ID
@@ -667,48 +666,12 @@ class BMX160:
         else:
             settingswarning(warning_interp)
     """
-    ######################### DIAGNOSTICS #########################
 
-    def __check_for_errors(self) -> list[int]:
-        """_check_for_errors: Checks for any device errors on BMX160
-
-        :return: List of error conditions if present
-        """
-        NO_ERROR = const(0x00)
-
-        error_list = []
-
-        error_reg = self.query_error()
-        if error_reg != NO_ERROR:
-            error_list.append(Errors.IMU_UNSPECIFIED_ERROR)
-
-        if self.fatal_err != 0:
-            error_list.append(Errors.IMU_FATAL_ERROR)
-
-        if self.error_code in self.BMX160_ERROR_CODES:
-            error_list.append(Errors.IMU_NON_FATAL_ERROR)
-
-        if self.drop_cmd_err != 0:
-            error_list.append(Errors.IMU_DROP_COMMAND_ERROR)
-
-        if error_list.count() == 0:
-            error_list.append(Errors.NOERROR)
-
-    def run_diagnostics(self) -> list[int] | None:
-        """run_diagnostic_test: Run all tests for the component
-
-        :return: List of error codes
-        """
-        error_list = []
-
-        error_list = self.__check_for_errors()
-
-        error_list = list(set(error_list))
-
-        if Errors.NOERROR not in error_list:
-            self.errors_present = True
-
-        return error_list
+    def deinit(self):
+        if self._enable is not None:
+            self._enable.deinit()
+            self._enable = None
+        return
 
 
 ######################### UTILS #########################

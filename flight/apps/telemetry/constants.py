@@ -17,7 +17,7 @@ class CDH_IDX:
 class EPS_IDX:
     TIME_EPS = const(0)
     EPS_POWER_FLAG = const(1)
-    CPU_TEMPERATURE = const(2)
+    MAINBOARD_TEMPERATURE = const(2)
     MAINBOARD_VOLTAGE = const(3)
     MAINBOARD_CURRENT = const(4)
     BATTERY_PACK_TEMPERATURE = const(5)
@@ -133,3 +133,8 @@ class GPS_IDX:
 
 class PAYLOAD_IDX:
     pass
+
+
+class STORAGE_IDX:
+    NUM_FILES = const(0)
+    DIR_SIZE = const(1)

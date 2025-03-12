@@ -209,9 +209,15 @@ class BurnWires:
         """
         self.__burn(self.__burn_ym)
 
-    """
-    ----------------------- HANDLER METHODS -----------------------
-    """
-
-    def get_flags(self):
-        return {}
+    def deinit(self):
+        self.__enable.deinit()
+        self.__enable = None
+        self.__burn_xp.deinit()
+        self.__burn_xp = None
+        self.__burn_xm.deinit()
+        self.__burn_xm = None
+        self.__burn_yp.deinit()
+        self.__burn_yp = None
+        self.__burn_ym.deinit()
+        self.__burn_ym = None
+        return
