@@ -25,7 +25,7 @@ class Task(TemplateTask):
         # Setup for heartbeat frequency
         self.frequency_set = False
 
-        self.TX_heartbeat_frequency = 0.5
+        self.TX_heartbeat_frequency = 0.2
         self.RX_timeout_frequency = 0.5
 
         # Counter for TX frequency
@@ -69,29 +69,55 @@ class Task(TemplateTask):
         if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD or self.ground_pass:
             # If heartbeat TX counter has elapsed, or currently in an active ground pass
 
-            # TODO: Set frame / filepath here based on the active GS command
-            if self.comms_state == COMMS_STATE.TX_ACK:
+            # Set frame / filepath here based on the active GS command
+            if not (self.comms_state == COMMS_STATE.TX_HEARTBEAT or self.comms_state == COMMS_STATE.TX_FILEPKT):
                 if ResponseQueue.response_available():
                     # The response to the current GS command is ready, downlink it
                     (response_id, response_args), queue_error_code = ResponseQueue.pop_response()
 
-                    if queue_error_code == QUEUE_STATUS.OK:
-                        self.log_info(f"Response: {response_id}, with args: {response_args}")
-                        SATELLITE_RADIO.set_tx_ack(response_id)
+                    # TODO: Receive response based on comms state
+                    if self.comms_state == COMMS_STATE.TX_ACK:
+                        # Downlinking an ACK to the GS
+                        if queue_error_code == QUEUE_STATUS.OK:
+                            self.log_info(f"Response: {response_id}, with args: {response_args}")
+                            SATELLITE_RADIO.set_tx_ack(response_id)
+
+                    elif self.comms_state == COMMS_STATE.TX_FRAME:
+                        # Downlinking telemetry to the GS
+                        if queue_error_code == QUEUE_STATUS.OK:
+                            self.log_info(f"Response: {response_id}, with args: {response_args}")
+
+                            # Assume we have telemetry packed
+                            if TelemetryPacker.TM_AVAILABLE:
+                                SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
+
+                    elif self.comms_state == COMMS_STATE.TX_METADATA:
+                        # Starting a file transfer to the GS
+                        if queue_error_code == QUEUE_STATUS.OK:
+                            self.log_info(f"Response: {response_id}, with args: {response_args}")
+
+                            # Filepath present in response_args
+                            SATELLITE_RADIO.set_filepath(response_args[1])
+
+                    else:
+                        # Do nothing
+                        pass
+
                 else:
                     # The response to the current GS command not ready, return
                     return
             else:
-                # Do nothing
+                # Heartbeat or file packet TX, do nothing
                 pass
 
             # Pack telemetry
-            self.packed = TelemetryPacker.pack_tm_heartbeat()
-            if self.packed:
-                self.log_info("Telemetry heartbeat packed")
+            if not self.ground_pass:
+                self.packed = TelemetryPacker.pack_tm_heartbeat()
+                if self.packed:
+                    self.log_info("Telemetry heartbeat packed")
 
             # Set current TM frame
-            if TelemetryPacker.TM_AVAILABLE and self.comms_state == COMMS_STATE.TX_HEARTBEAT:
+            if TelemetryPacker.TM_AVAILABLE:
                 SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
 
             # Transmit a message from the satellite
@@ -122,7 +148,7 @@ class Task(TemplateTask):
                 # Get most recent payload
                 self.rx_payload = SATELLITE_RADIO.get_rx_payload()
 
-                if self.rq_cmd != MSG_ID.GS_CMD_FILE_METADATA and self.rq_cmd != MSG_ID.GS_CMD_FILE_PKT:
+                if self.rq_cmd != MSG_ID.GS_CMD_FILE_PKT:
                     # Push rq_cmd onto CommandQueue along with all its arguments
                     CommandQueue.overwrite_command(self.rq_cmd, self.rx_payload)
 
@@ -168,23 +194,6 @@ class Task(TemplateTask):
             # Check if TX and RX frequencies are set
             if not self.frequency_set:
                 self.cls_change_counter_frequency()
-
-            # TODO: Only set filepath on response from ResponseQueue
-            if not self.filepath_flag:
-                # Check if image process exists
-                if DH.image_process_exists():
-                    # Set filepath for comms TX file
-                    filepath = DH.request_TM_path_image()
-                    SATELLITE_RADIO.set_filepath(filepath)
-
-                    self.log_info(f"Initializing TX file filepath: {filepath}")
-                    self.filepath_flag = True
-                else:
-                    # Process does not exist, filepath remains None
-                    SATELLITE_RADIO.set_filepath(None)
-                    self.filepath_flag = False
-            else:
-                pass
 
             # Register comms process for logging RX RSSI
             if not DH.data_process_exists("comms"):

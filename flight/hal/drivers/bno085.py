@@ -35,7 +35,6 @@ from collections import namedtuple
 from struct import pack_into, unpack_from
 
 from adafruit_bus_device import i2c_device
-from hal.drivers.middleware.errors import Errors  # noqa F401
 from micropython import const
 
 # For IDE type recognition
@@ -106,8 +105,8 @@ except ImportError:
 
 # TODO: shorten names
 # Channel 0: the SHTP command channel
-BNO_CHANNEL_SHTP_COMMAND = const(0)
-BNO_CHANNEL_EXE = const(1)
+_BNO_CHANNEL_SHTP_COMMAND = const(0)
+_BNO_CHANNEL_EXE = const(1)
 _BNO_CHANNEL_CONTROL = const(2)
 # _BNO_CHANNEL_INPUT_SENSOR_REPORTS = const(3)
 # _BNO_CHANNEL_WAKE_INPUT_SENSOR_REPORTS = const(4)
@@ -253,7 +252,7 @@ _AVAIL_SENSOR_REPORTS = {
 
 # _ENABLED_ACTIVITIES = 0x1FF  # All activities; 1 bit set for each of 8 activities, + Unknown
 
-DATA_BUFFER_SIZE = const(512)  # data buffer size. obviously eats ram
+_DATA_BUFFER_SIZE = const(512)  # data buffer size. obviously eats ram
 PacketHeader = namedtuple(
     "PacketHeader",
     [
@@ -288,10 +287,6 @@ def _parse_sensor_report_data(report_bytes: bytearray) -> Tuple[Tuple, int]:
     data_offset = 4  # this may not always be true
     report_id = report_bytes[0]
     scalar, count, _report_length = _AVAIL_SENSOR_REPORTS[report_id]
-    # if report_id in _RAW_REPORTS:
-    #     # raw reports are unsigned
-    #     format_str = "<H"
-    # else:
     format_str = "<h"
     results = []
     accuracy = unpack_from("<B", report_bytes, offset=2)[0]
@@ -307,15 +302,6 @@ def _parse_sensor_report_data(report_bytes: bytearray) -> Tuple[Tuple, int]:
     return (results_tuple, accuracy)
 
 
-# def _parse_step_couter_report(report_bytes: bytearray) -> int:
-#     return unpack_from("<H", report_bytes, offset=8)[0]
-
-
-# def _parse_stability_classifier_report(report_bytes: bytearray) -> str:
-#     classification_bitfield = unpack_from("<B", report_bytes, offset=4)[0]
-#     return ["Unknown", "On Table", "Stationary", "Stable", "In motion"][classification_bitfield]
-
-
 # report_id
 # feature_report_id
 # feature_flags
@@ -325,46 +311,6 @@ def _parse_sensor_report_data(report_bytes: bytearray) -> Tuple[Tuple, int]:
 # sensor_specific_configuration_word
 def _parse_get_feature_response_report(report_bytes: bytearray) -> Tuple[Any, ...]:
     return unpack_from("<BBBHIII", report_bytes)
-
-
-# 0 Report ID = 0x1E
-# 1 Sequence number
-# 2 Status
-# 3 Delay
-# 4 Page Number + EOS
-# 5 Most likely state
-# 6-15 Classification (10 x Page Number) + confidence
-# def _parse_activity_classifier_report(report_bytes: bytearray) -> Dict[str, str]:
-#     activities = [
-#         "Unknown",
-#         "In-Vehicle",  # look
-#         "On-Bicycle",  # at
-#         "On-Foot",  # all
-#         "Still",  # this
-#         "Tilting",  # room
-#         "Walking",  # for
-#         "Running",  # activities
-#         "OnStairs",
-#     ]
-
-#     end_and_page_number = unpack_from("<B", report_bytes, offset=4)[0]
-#     # last_page = (end_and_page_number & 0b10000000) > 0
-#     page_number = end_and_page_number & 0x7F
-#     most_likely = unpack_from("<B", report_bytes, offset=5)[0]
-#     confidences = unpack_from("<BBBBBBBBB", report_bytes, offset=6)
-
-#     classification = {}
-#     classification["most_likely"] = activities[most_likely]
-#     for idx, raw_confidence in enumerate(confidences):
-#         confidence = (10 * page_number) + raw_confidence
-#         activity_string = activities[idx]
-#         classification[activity_string] = confidence
-#     return classification
-
-
-# def _parse_shake_report(report_bytes: bytearray) -> bool:
-#     shake_bitfield = unpack_from("<H", report_bytes, offset=4)[0]
-#     return (shake_bitfield & 0x111) > 0
 
 
 def parse_sensor_id(buffer: bytearray) -> Tuple[int, ...]:
@@ -451,53 +397,6 @@ class Packet:
         data_end_index = self.header.data_length + _BNO_HEADER_LEN
         self.data = packet_bytes[_BNO_HEADER_LEN:data_end_index]
 
-    # def __str__(self) -> str:
-    #     length = self.header.packet_byte_count
-    #     outstr = "\n\t\t********** Packet *************\n"
-    #     outstr += "DBG::\t\t HEADER:\n"
-
-    #     outstr += "DBG::\t\t Data Len: %d\n" % (self.header.data_length)
-    #     outstr += "DBG::\t\t Channel: %s (%d)\n" % (
-    #         channels[self.channel_number],
-    #         self.channel_number,
-    #     )
-    #     if self.channel_number in [
-    #         _BNO_CHANNEL_CONTROL,
-    #         _BNO_CHANNEL_INPUT_SENSOR_REPORTS,
-    #     ]:
-    #         if self.report_id in reports:
-    #             outstr += "DBG::\t\t \tReport Type: %s (0x%x)\n" % (
-    #                 reports[self.report_id],
-    #                 self.report_id,
-    #             )
-    #         else:
-    #             outstr += "DBG::\t\t \t** UNKNOWN Report Type **: %s\n" % hex(self.report_id)
-
-    #         if self.report_id > 0xF0 and len(self.data) >= 6 and self.data[5] in reports:
-    #             outstr += "DBG::\t\t \tSensor Report Type: %s(%s)\n" % (
-    #                 reports[self.data[5]],
-    #                 hex(self.data[5]),
-    #             )
-
-    #         if self.report_id == 0xFC and len(self.data) >= 6 and self.data[1] in reports:
-    #             outstr += "DBG::\t\t \tEnabled Feature: %s(%s)\n" % (
-    #                 reports[self.data[1]],
-    #                 hex(self.data[5]),
-    #             )
-    #     outstr += "DBG::\t\t Sequence number: %s\n" % self.header.sequence_number
-    #     outstr += "\n"
-    #     outstr += "DBG::\t\t Data:"
-
-    #     for idx, packet_byte in enumerate(self.data[:length]):
-    #         packet_index = idx + 4
-    #         if (packet_index % 4) == 0:
-    #             outstr += "\nDBG::\t\t[0x{:02X}] ".format(packet_index)
-    #         outstr += "0x{:02X} ".format(packet_byte)
-    #     outstr += "\n"
-    #     outstr += "\t\t*******************************\n"
-
-    #     return outstr
-
     @property
     def report_id(self) -> int:
         """The Packet's Report ID"""
@@ -543,7 +442,7 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         self._debug: bool = debug
         self._reset: Optional[DigitalInOut] = reset
         self._dbg("********** __init__ *************")
-        self._data_buffer: bytearray = bytearray(DATA_BUFFER_SIZE)
+        self._data_buffer: bytearray = bytearray(_DATA_BUFFER_SIZE)
         self._command_buffer: bytearray = bytearray(12)
         self._packet_slices: List[Any] = []
 
@@ -559,13 +458,12 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         self._id_read = False
         # for saving the most recent reading when decoding several packets
         self._readings: Dict[int, Any] = {}
-        super().__init__()
         self.initialize()
 
     def initialize(self) -> None:
         """Initialize the sensor"""
         for _ in range(3):
-            self.hard_reset()
+            # self.hard_reset()
             self.soft_reset()
             try:
                 if self._check_id():
@@ -576,177 +474,6 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
                     raise e
         else:
             raise RuntimeError("Could not read ID")
-
-    # @property
-    # Built-in, calibrated mag function
-    # def cal_mag(self) -> Optional[Tuple[float, float, float]]:
-    #     """A tuple of the current magnetic field measurements on the X, Y, and Z axes"""
-    #     self._process_available_packets()  # decorator?
-    #     try:
-    #         return self._readings[BNO_REPORT_MAGNETOMETER]
-    #     except KeyError:
-    #         raise RuntimeError("No magfield report found, is it enabled?") from None
-
-    # @property
-    # def quaternion(self) -> Optional[Tuple[float, float, float, float]]:
-    #     """A quaternion representing the current rotation vector"""
-    #     self._process_available_packets()
-    #     try:
-    #         return self._readings[BNO_REPORT_ROTATION_VECTOR]
-    #     except KeyError:
-    #         raise RuntimeError("No quaternion report found, is it enabled?") from None
-
-    # @property
-    # def geomagnetic_quaternion(self) -> Optional[Tuple[float, float, float, float]]:
-    #     """A quaternion representing the current geomagnetic rotation vector"""
-    #     self._process_available_packets()
-    #     try:
-    #         return self._readings[BNO_REPORT_GEOMAGNETIC_ROTATION_VECTOR]
-    #     except KeyError:
-    #         raise RuntimeError("No geomag quaternion report found, is it enabled?") from None
-
-    # @property
-    # def game_quaternion(self) -> Optional[Tuple[float, float, float, float]]:
-    #     """A quaternion representing the current rotation vector expressed as a quaternion with no
-    #     specific reference for heading, while roll and pitch are referenced against gravity. To
-    #     prevent sudden jumps in heading due to corrections, the `game_quaternion` property is not
-    #     corrected using the magnetometer. Some drift is expected"""
-    #     self._process_available_packets()
-    #     try:
-    #         return self._readings[BNO_REPORT_GAME_ROTATION_VECTOR]
-    #     except KeyError:
-    #         raise RuntimeError("No game quaternion report found, is it enabled?") from None
-
-    # @property
-    # def steps(self) -> Optional[int]:
-    #     """The number of steps detected since the sensor was initialized"""
-    #     self._process_available_packets()
-    #     try:
-    #         return self._readings[BNO_REPORT_STEP_COUNTER]
-    #     except KeyError:
-    #         raise RuntimeError("No steps report found, is it enabled?") from None
-
-    # @property
-    # def linear_acceleration(self) -> Optional[Tuple[float, float, float]]:
-    #     """A tuple representing the current linear acceleration values on the X, Y, and Z
-    #     axes in meters per second squared"""
-    #     self._process_available_packets()
-    #     try:
-    #         return self._readings[BNO_REPORT_LINEAR_ACCELERATION]
-    #     except KeyError:
-    #         raise RuntimeError("No lin. accel report found, is it enabled?") from None
-
-    # @property
-    # def cal_accel(self) -> Optional[Tuple[float, float, float]]:
-    #     """A tuple representing the acceleration measurements on the X, Y, and Z
-    #     axes in meters per second squared"""
-    #     self._process_available_packets()
-    #     try:
-    #         return self._readings[BNO_REPORT_ACCELEROMETER]
-    #     except KeyError:
-    #         raise RuntimeError("No accel report found, is it enabled?") from None
-
-    # @property
-    # def gravity(self) -> Optional[Tuple[float, float, float]]:
-    #     """A tuple representing the gravity vector in the X, Y, and Z components
-    #     axes in meters per second squared"""
-    #     self._process_available_packets()
-    #     try:
-    #         return self._readings[BNO_REPORT_GRAVITY]
-    #     except KeyError:
-    #         raise RuntimeError("No gravity report found, is it enabled?") from None
-
-    # @property
-    # built in calibrated gyro
-    # def cal_gyro(self) -> Optional[Tuple[float, float, float]]:
-    #     """A tuple representing Gyro's rotation measurements on the X, Y, and Z
-    #     axes in radians per second"""
-    #     self._process_available_packets()
-    #     try:
-    #         return self._readings[BNO_REPORT_GYROSCOPE]
-    #     except KeyError:
-    #         raise RuntimeError("No gyro report found, is it enabled?") from None
-
-    # @property
-    # def shake(self) -> Optional[bool]:
-    #     """True if a shake was detected on any axis since the last time it was checked
-
-    #     This property has a "latching" behavior where once a shake is detected, it will stay in a
-    #     "shaken" state until the value is read. This prevents missing shake events but means that
-    #     this property is not guaranteed to reflect the shake state at the moment it is read
-    #     """
-    #     self._process_available_packets()
-    #     try:
-    #         shake_detected = self._readings[BNO_REPORT_SHAKE_DETECTOR]
-    #         # clear on read
-    #         if shake_detected:
-    #             self._readings[BNO_REPORT_SHAKE_DETECTOR] = False
-    #         return shake_detected
-    #     except KeyError:
-    #         raise RuntimeError("No shake report found, is it enabled?") from None
-
-    # @property
-    # def stability_classification(self) -> Optional[str]:
-    #     """Returns the sensor's assessment of it's current stability, one of:
-
-    #     * "Unknown" - The sensor is unable to classify the current stability
-    #     * "On Table" - The sensor is at rest on a stable surface with very little vibration
-    #     * "Stationary" -  The sensor’s motion is below the stable threshold but\
-    #     the stable duration requirement has not been met. This output is only available when\
-    #     gyro calibration is enabled
-    #     * "Stable" - The sensor’s motion has met the stable threshold and duration requirements.
-    #     * "In motion" - The sensor is moving.
-
-    #     """
-    #     self._process_available_packets()
-    #     try:
-    #         stability_classification = self._readings[BNO_REPORT_STABILITY_CLASSIFIER]
-    #         return stability_classification
-    #     except KeyError:
-    #         raise RuntimeError("No stability classification report found, is it enabled?") from None
-
-    # @property
-    # def activity_classification(self) -> Optional[dict]:
-    #     """Returns the sensor's assessment of the activity that is creating the motions\
-    #     that it is sensing, one of:
-
-    #     * "Unknown"
-    #     * "In-Vehicle"
-    #     * "On-Bicycle"
-    #     * "On-Foot"
-    #     * "Still"
-    #     * "Tilting"
-    #     * "Walking"
-    #     * "Running"
-    #     * "On Stairs"
-
-    #     """
-    #     self._process_available_packets()
-    #     try:
-    #         activity_classification = self._readings[BNO_REPORT_ACTIVITY_CLASSIFIER]
-    #         return activity_classification
-    #     except KeyError:
-    #         raise RuntimeError("No activity classification report found, is it enabled?") from None
-
-    # @property
-    # def raw_acceleration(self) -> Optional[Tuple[int, int, int]]:
-    #     """Returns the sensor's raw, unscaled value from the accelerometer registers"""
-    #     self._process_available_packets()
-    #     try:
-    #         raw_acceleration = self._readings[BNO_REPORT_RAW_ACCELEROMETER]
-    #         return raw_acceleration
-    #     except KeyError:
-    #         raise RuntimeError("No raw acceleration report found, is it enabled?") from None
-
-    # @property
-    # def raw_gyro(self) -> Optional[Tuple[int, int, int]]:
-    #     """Returns the sensor's raw, unscaled value from the gyro registers"""
-    #     self._process_available_packets()
-    #     try:
-    #         raw_gyro = self._readings[BNO_REPORT_RAW_GYROSCOPE]
-    #         return raw_gyro
-    #     except KeyError:
-    #         raise RuntimeError("No raw gyro report found, is it enabled?") from None
 
     def gyro(self) -> Optional[Tuple[int, int, int]]:
         """Returns the sensor's uncalibrated value from the gyro registers"""
@@ -765,52 +492,6 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
             return uncal_mag
         except KeyError:
             raise RuntimeError("No uncal mag report found, is it enabled?") from None
-
-    # @property
-    # def raw_magnetic(self) -> Optional[Tuple[int, int, int]]:
-    #     """Returns the sensor's raw, unscaled value from the magnetometer registers"""
-    #     self._process_available_packets()
-    #     try:
-    #         raw_magnetic = self._readings[BNO_REPORT_RAW_MAGNETOMETER]
-    #         return raw_magnetic
-    #     except KeyError:
-    #         raise RuntimeError("No raw magnetic report found, is it enabled?") from None
-
-    # def begin_calibration(self) -> None:
-    #     """Begin the sensor's self-calibration routine"""
-    #     # start calibration for accel, gyro, and mag
-    #     self._send_me_command(
-    #         [
-    #             1,  # calibrate accel
-    #             1,  # calibrate gyro
-    #             1,  # calibrate mag
-    #             _ME_CAL_CONFIG,
-    #             0,  # calibrate planar acceleration
-    #             0,  # 'on_table' calibration
-    #             0,  # reserved
-    #             0,  # reserved
-    #             0,  # reserved
-    #         ]
-    #     )
-    #     self._calibration_complete = False
-
-    # @property
-    # def calibration_status(self) -> int:
-    #     """Get the status of the self-calibration"""
-    #     self._send_me_command(
-    #         [
-    #             0,  # calibrate accel
-    #             0,  # calibrate gyro
-    #             0,  # calibrate mag
-    #             _ME_GET_CAL,
-    #             0,  # calibrate planar acceleration
-    #             0,  # 'on_table' calibration
-    #             0,  # reserved
-    #             0,  # reserved
-    #             0,  # reserved
-    #         ]
-    #     )
-    #     return self._magnetometer_accuracy
 
     def _send_me_command(self, subcommand_params: Optional[List[int]]) -> None:
         start_time = time.monotonic()
@@ -883,8 +564,8 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
                 else:
                     return new_packet
             if new_packet.channel_number not in (
-                BNO_CHANNEL_EXE,
-                BNO_CHANNEL_SHTP_COMMAND,
+                _BNO_CHANNEL_EXE,
+                _BNO_CHANNEL_SHTP_COMMAND,
             ):
                 self._dbg("passing packet to handler for de-slicing")
                 self._handle_packet(new_packet)
@@ -978,29 +659,6 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
             self._dbg(outstr)
             self._dbg("")
 
-        # if report_id == BNO_REPORT_STEP_COUNTER:
-        #     self._readings[report_id] = _parse_step_couter_report(report_bytes)
-        #     return
-
-        # if report_id == BNO_REPORT_SHAKE_DETECTOR:
-        #     shake_detected = _parse_shake_report(report_bytes)
-        #     # shake not previously detected - auto cleared by 'shake' property
-        #     try:
-        #         if not self._readings[BNO_REPORT_SHAKE_DETECTOR]:
-        #             self._readings[BNO_REPORT_SHAKE_DETECTOR] = shake_detected
-        #     except KeyError:
-        #         pass
-        #     return
-
-        # if report_id == BNO_REPORT_STABILITY_CLASSIFIER:
-        #     stability_classification = _parse_stability_classifier_report(report_bytes)
-        #     self._readings[BNO_REPORT_STABILITY_CLASSIFIER] = stability_classification
-        #     return
-
-        # if report_id == BNO_REPORT_ACTIVITY_CLASSIFIER:
-        #     activity_classification = _parse_activity_classifier_report(report_bytes)
-        #     self._readings[BNO_REPORT_ACTIVITY_CLASSIFIER] = activity_classification
-        #     return
         sensor_data, accuracy = _parse_sensor_report_data(report_bytes)
         # if report_id == BNO_REPORT_MAGNETOMETER:
         #     self._magnetometer_accuracy = accuracy
@@ -1035,12 +693,6 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         #     set_feature_report = self._get_feature_enable_report(feature_id, sensor_specific_config=_ENABLED_ACTIVITIES)
         # else:
         set_feature_report = self._get_feature_enable_report(feature_id)
-
-        # feature_dependency = _RAW_REPORTS.get(feature_id, None)
-        # # if the feature was enabled it will have a key in the readings dict
-        # if feature_dependency and feature_dependency not in self._readings:
-        #     self._dbg("Enabling feature depencency:", feature_dependency)
-        #     self.enable_feature(feature_dependency)
 
         self._dbg("Enabling", feature_id)
         self._send_packet(_BNO_CHANNEL_CONTROL, set_feature_report)
@@ -1119,28 +771,31 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         # self._dbg("\tdata ready", ready)
         return ready
 
-    def hard_reset(self) -> None:
-        """Hardware reset the sensor to an initial unconfigured state"""
-        if not self._reset:
-            return
-        import digitalio  # pylint:disable=import-outside-toplevel
+    # def hard_reset(self) -> None:
+    #     """Hardware reset the sensor to an initial unconfigured state"""
+    #     if not self._reset:
+    #         return
+    #     import digitalio  # pylint:disable=import-outside-toplevel
 
-        self._reset.direction = digitalio.Direction.OUTPUT
-        self._reset.value = True
-        time.sleep(0.01)
-        self._reset.value = False
-        time.sleep(0.01)
-        self._reset.value = True
-        time.sleep(0.01)
+    #     self._reset.direction = digitalio.Direction.OUTPUT
+    #     self._reset.value = True
+    #     time.sleep(0.01)
+    #     self._reset.value = False
+    #     time.sleep(0.01)
+    #     self._reset.value = True
+    #     time.sleep(0.01)
+
+    def reset(self) -> None:
+        self.soft_reset()
 
     def soft_reset(self) -> None:
         """Reset the sensor to an initial unconfigured state"""
         self._dbg("Soft resetting...", end="")
         data = bytearray(1)
         data[0] = 1
-        self._send_packet(BNO_CHANNEL_EXE, data)
+        self._send_packet(_BNO_CHANNEL_EXE, data)
         time.sleep(0.5)
-        self._send_packet(BNO_CHANNEL_EXE, data)
+        self._send_packet(_BNO_CHANNEL_EXE, data)
         time.sleep(0.5)
 
         for _i in range(3):
@@ -1183,7 +838,7 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         self._dbg("trying to read", requested_read_length, "bytes")
         # +4 for the header
         total_read_length = requested_read_length + 4
-        if total_read_length > DATA_BUFFER_SIZE:
+        if total_read_length > _DATA_BUFFER_SIZE:
             self._data_buffer = bytearray(total_read_length)
             self._dbg("!!!!!!!!!!!! ALLOCATION: increased _data_buffer to bytearray(%d) !!!!!!!!!!!!! " % total_read_length)
         with self.bus_device_obj as i2c:
@@ -1229,3 +884,9 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
 
     def _get_report_seq_id(self, report_id: int) -> int:
         return self._two_ended_sequence_numbers.get(report_id, 0)
+
+    def deinit(self):
+        if self._reset is not None:
+            self._reset.deinit()
+            self._reset = None
+        return
