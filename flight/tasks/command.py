@@ -13,6 +13,7 @@ from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES, STR_STATES
 from core.time_processor import TimeProcessor
+from hal.configuration import SATELLITE
 
 
 class Task(TemplateTask):
@@ -32,7 +33,7 @@ class Task(TemplateTask):
     def __init__(self, id):
         super().__init__(id)
         self.name = "COMMAND"
-        self.boot_time = TimeProcessor.time()
+        self.set_boot_time = False
 
     def get_memory_usage(self):
         return int(gc.mem_alloc() / self.total_memory * 100)
@@ -47,6 +48,32 @@ class Task(TemplateTask):
             # Boot errors and system diagnostics must be logged
 
             # TODO: Deployment
+
+            # NOTE: TPM time reference initialization
+            # In case the RTC has died, TPM uses time reference for time keeping
+            # Time reference used to get offset from time.time()
+
+            # If an old time reference is not available, we depend on state correction
+            # from GPS or uplinked commands, and until then the time will be egregiously wrong
+
+            # NOTE: This will not work until OBDH initializes CDH data process
+            if DH.data_process_exists("cdh"):
+                cdh_data = DH.get_latest_data("cdh")
+
+                if cdh_data:
+                    # Found an old timestamp reference
+                    TimeProcessor.time_reference = cdh_data[CDH_IDX.TIME]
+                    TimeProcessor.calc_time_offset()
+                else:
+                    # No RTC or old time reference available, unfortunate
+                    self.log_warning("Cannot set time reference as CDH process has no latest data")
+            else:
+                # No RTC or old time reference available, unfortunate
+                self.log_warning("Cannot set time reference as CDH process does not exist")
+
+            if not self.set_boot_time:
+                self.boot_time = TimeProcessor.time()
+                self.set_boot_time = True
 
             # HAL_DIAGNOSTICS
             time_since_boot = int(TimeProcessor.time()) - self.boot_time
@@ -131,6 +158,10 @@ class Task(TemplateTask):
         self.log_print_counter += 1
         if self.log_print_counter % self.frequency == 0:
             self.log_print_counter = 0
+
+            if not SATELLITE.RTC_AVAILABLE:
+                self.log_warning("RTC FAILURE: Time reference is best-effort from TPM")
+
             self.log_info(f"Time: {int(TimeProcessor.time())}")
             self.log_info(f"Time since boot: {int(TimeProcessor.time()) - self.boot_time}")
             self.log_info(f"GLOBAL STATE: {STR_STATES[SM.current_state]}.")
