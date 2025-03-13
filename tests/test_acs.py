@@ -1,5 +1,5 @@
 import pytest
-from ulab import numpy as np
+import numpy as np
 
 import tests.cp_mock  # noqa: F401
 from flight.apps.adcs.acs import spin_stabilizing_controller, sun_pointing_controller
