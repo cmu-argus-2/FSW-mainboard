@@ -14,9 +14,11 @@ def readings_are_valid(
     readings: tuple[np.ndarray],
 ) -> bool:
     for reading in readings:
-        if not isinstance(reading, np.ndarray) \
-        or reading.shape != ControllerConst.READING_DIM \
-        or not isinstance(reading[0], np.float64):
+        if (
+            not isinstance(reading, np.ndarray)
+            or reading.shape != ControllerConst.READING_DIM
+            or not isinstance(reading[0], np.float64)
+        ):
             return False
     return True
 
@@ -28,8 +30,7 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
     All sensor estimates are in the body-fixed reference frame.
     """
     # Stop ACS if the reading values are invalid
-    if not readings_are_valid((omega, mag_field)) \
-    or np.linalg.norm(mag_field) == 0:
+    if not readings_are_valid((omega, mag_field)) or np.linalg.norm(mag_field) == 0:
         return ControllerConst.FALLBACK_CONTROL
 
     # Do spin stabilization
@@ -46,9 +47,11 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
 
 def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field: np.ndarray) -> np.ndarray:
     # Stop ACS if the reading values are invalid
-    if not readings_are_valid((sun_vector, omega, mag_field)) \
-    or np.linalg.norm(mag_field) == 0 \
-    or np.linalg.norm(sun_vector) == 0:
+    if (
+        not readings_are_valid((sun_vector, omega, mag_field))
+        or np.linalg.norm(mag_field) == 0
+        or np.linalg.norm(sun_vector) == 0
+    ):
         return ControllerConst.FALLBACK_CONTROL
 
     # Do sun pointing
