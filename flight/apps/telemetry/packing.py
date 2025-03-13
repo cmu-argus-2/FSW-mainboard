@@ -347,10 +347,10 @@ class TelemetryPacker:
             cls._TM_AVAILABLE = True
 
         # TODO: Frame definition for TM_HAL
-        cls._FRAME = bytearray(13 + 4)  # pre-allocated buffer for packing
+        cls._FRAME = bytearray(14 + 4)  # pre-allocated buffer for packing
         cls._FRAME[0] = const(0x02) & 0xFF  # message ID
         cls._FRAME[1:3] = pack_unsigned_short_int([const(0x00)], 0)  # sequence count
-        cls._FRAME[3] = const(13) & 0xFF  # packet length
+        cls._FRAME[3] = const(14) & 0xFF  # packet length
 
         ############ CDH fields ############
         if DH.data_process_exists("cdh"):
@@ -386,10 +386,10 @@ class TelemetryPacker:
         if not cls._TM_AVAILABLE:
             cls._TM_AVAILABLE = True
 
-        cls._FRAME = bytearray(72 + 4)  # pre-allocated buffer for packing
+        cls._FRAME = bytearray(82 + 4)  # pre-allocated buffer for packing
         cls._FRAME[0] = const(0x03) & 0xFF  # message ID
         cls._FRAME[1:3] = pack_unsigned_short_int([const(0x00)], 0)  # sequence count
-        cls._FRAME[3] = const(72) & 0xFF  # packet length
+        cls._FRAME[3] = const(82) & 0xFF  # packet length
 
         ############ CDH fields ############
         if DH.data_process_exists("cdh"):
@@ -420,15 +420,15 @@ class TelemetryPacker:
             logger.warning("No CDH data available")
 
         # Total SD card usage
-        cls._FRAME[18:22] = pack_signed_long_int([DH.SD_usage()], 0)
+        cls._FRAME[18:22] = pack_unsigned_long_int([DH.SD_usage()], 0)
 
         ############ CDH fields ###########
         if DH.data_process_exists("cdh"):
             cdh_storage_info = DH.get_storage_info("cdh")
             # CDH number of files
-            cls._FRAME[22:26] = pack_signed_long_int(cdh_storage_info, STORAGE_IDX.NUM_FILES)
+            cls._FRAME[22:26] = pack_unsigned_long_int(cdh_storage_info, STORAGE_IDX.NUM_FILES)
             # CDH directory size
-            cls._FRAME[26:30] = pack_signed_long_int(cdh_storage_info, STORAGE_IDX.DIR_SIZE)
+            cls._FRAME[26:30] = pack_unsigned_long_int(cdh_storage_info, STORAGE_IDX.DIR_SIZE)
         else:
             logger.warning("CDH Data process does not exist")
 
@@ -436,9 +436,9 @@ class TelemetryPacker:
         if DH.data_process_exists("eps"):
             eps_storage_info = DH.get_storage_info("eps")
             # EPS number of files
-            cls._FRAME[30:34] = pack_signed_long_int(eps_storage_info, STORAGE_IDX.NUM_FILES)
+            cls._FRAME[30:34] = pack_unsigned_long_int(eps_storage_info, STORAGE_IDX.NUM_FILES)
             # EPS directory size
-            cls._FRAME[34:38] = pack_signed_long_int(eps_storage_info, STORAGE_IDX.DIR_SIZE)
+            cls._FRAME[34:38] = pack_unsigned_long_int(eps_storage_info, STORAGE_IDX.DIR_SIZE)
         else:
             logger.warning("EPS Data process does not exist")
 
@@ -446,9 +446,9 @@ class TelemetryPacker:
         if DH.data_process_exists("adcs"):
             adcs_storage_info = DH.get_storage_info("adcs")
             # ADCS number of files
-            cls._FRAME[38:42] = pack_signed_long_int(adcs_storage_info, STORAGE_IDX.NUM_FILES)
+            cls._FRAME[38:42] = pack_unsigned_long_int(adcs_storage_info, STORAGE_IDX.NUM_FILES)
             # ADCS directory size
-            cls._FRAME[42:46] = pack_signed_long_int(adcs_storage_info, STORAGE_IDX.DIR_SIZE)
+            cls._FRAME[42:46] = pack_unsigned_long_int(adcs_storage_info, STORAGE_IDX.DIR_SIZE)
         else:
             logger.warning("ADCS Data process does not exist")
 
@@ -456,9 +456,9 @@ class TelemetryPacker:
         if DH.data_process_exists("comms"):
             comms_storage_info = DH.get_storage_info("comms")
             # COMMS number of files
-            cls._FRAME[46:50] = pack_signed_long_int(comms_storage_info, STORAGE_IDX.NUM_FILES)
+            cls._FRAME[46:50] = pack_unsigned_long_int(comms_storage_info, STORAGE_IDX.NUM_FILES)
             # COMMS directory size
-            cls._FRAME[50:54] = pack_signed_long_int(comms_storage_info, STORAGE_IDX.DIR_SIZE)
+            cls._FRAME[50:54] = pack_unsigned_long_int(comms_storage_info, STORAGE_IDX.DIR_SIZE)
         else:
             logger.warning("Comms Data process does not exist")
 
@@ -466,9 +466,9 @@ class TelemetryPacker:
         if DH.data_process_exists("gps"):
             gps_storage_info = DH.get_storage_info("gps")
             # GPS number of files
-            cls._FRAME[54:58] = pack_signed_long_int(gps_storage_info, STORAGE_IDX.NUM_FILES)
+            cls._FRAME[54:58] = pack_unsigned_long_int(gps_storage_info, STORAGE_IDX.NUM_FILES)
             # GPS directory size
-            cls._FRAME[58:62] = pack_signed_long_int(gps_storage_info, STORAGE_IDX.DIR_SIZE)
+            cls._FRAME[58:62] = pack_unsigned_long_int(gps_storage_info, STORAGE_IDX.DIR_SIZE)
         else:
             logger.warning("GPS Data process does not exist")
 
@@ -476,9 +476,9 @@ class TelemetryPacker:
         if DH.data_process_exists("payload"):
             payload_storage_info = DH.get_storage_info("payload")
             # PAYLOAD number of files
-            cls._FRAME[62:66] = pack_signed_long_int(payload_storage_info, STORAGE_IDX.NUM_FILES)
+            cls._FRAME[62:66] = pack_unsigned_long_int(payload_storage_info, STORAGE_IDX.NUM_FILES)
             # PAYLOAD directory size
-            cls._FRAME[66:70] = pack_signed_long_int(payload_storage_info, STORAGE_IDX.DIR_SIZE)
+            cls._FRAME[66:70] = pack_unsigned_long_int(payload_storage_info, STORAGE_IDX.DIR_SIZE)
         else:
             logger.warning("Payload Data process does not exist")
 
@@ -486,9 +486,9 @@ class TelemetryPacker:
         if DH.data_process_exists("thermal"):
             thermal_storage_info = DH.get_storage_info("thermal")
             # THERMAL number of files
-            cls._FRAME[70:74] = pack_signed_long_int(thermal_storage_info, STORAGE_IDX.NUM_FILES)
+            cls._FRAME[70:74] = pack_unsigned_long_int(thermal_storage_info, STORAGE_IDX.NUM_FILES)
             # THERMAL directory size
-            cls._FRAME[74:78] = pack_signed_long_int(thermal_storage_info, STORAGE_IDX.DIR_SIZE)
+            cls._FRAME[74:78] = pack_unsigned_long_int(thermal_storage_info, STORAGE_IDX.DIR_SIZE)
         else:
             logger.warning("Thermal Data process does not exist")
 
@@ -496,9 +496,9 @@ class TelemetryPacker:
         if DH.data_process_exists("cmd_logs"):
             cmd_logs_storage_info = DH.get_storage_info("cmd_logs")
             # Command logs number of files
-            cls._FRAME[78:82] = pack_signed_long_int(cmd_logs_storage_info, STORAGE_IDX.NUM_FILES)
+            cls._FRAME[78:82] = pack_unsigned_long_int(cmd_logs_storage_info, STORAGE_IDX.NUM_FILES)
             # Command logs directory size
-            cls._FRAME[82:86] = pack_signed_long_int(cmd_logs_storage_info, STORAGE_IDX.DIR_SIZE)
+            cls._FRAME[82:86] = pack_unsigned_long_int(cmd_logs_storage_info, STORAGE_IDX.DIR_SIZE)
         else:
             logger.warning("Command logs Data process does not exist")
 
