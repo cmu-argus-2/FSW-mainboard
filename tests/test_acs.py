@@ -2,13 +2,14 @@ import pytest
 from ulab import numpy as np
 
 import tests.cp_mock  # noqa: F401
-from flight.apps.adcs.acs import mcm_coil_allocator, spin_stabilizing_controller, sun_pointing_controller, zero_all_coils
+from flight.apps.adcs.acs import spin_stabilizing_controller, sun_pointing_controller
 from flight.apps.adcs.consts import ControllerConst, PhysicalConst
 
 
 @pytest.fixture
 def tolerance() -> float:
     return 1.0e-9
+
 
 @pytest.fixture
 def zero_spin_error_omega() -> np.ndarray:
@@ -23,29 +24,25 @@ def larger_spin_error_omega(zero_spin_error_omega: np.ndarray) -> np.ndarray:
 @pytest.mark.parametrize(
     "omega, mag_field, expected",
     [
-        (   # zero error test case
+        (  # zero error test case
             "zero_spin_error_omega",
             np.ones(3),
             np.zeros(3),
         ),
-        (   # parallel magnetic field and spin error test case
+        (  # parallel magnetic field and spin error test case
             "larger_spin_error_omega",
             "zero_spin_error_omega",
             ControllerConst.FALLBACK_CONTROL,
         ),
-        (   # zero magnetic field test case
+        (  # zero magnetic field test case
             "larger_spin_error_omega",
             np.zeros(3),
             ControllerConst.FALLBACK_CONTROL,
         ),
-    ]
+    ],
 )
 def test_nominal_spin_stabilization(
-    omega: np.ndarray,
-    mag_field: np.ndarray,
-    expected: np.ndarray,
-    tolerance: float,
-    request: pytest.FixtureRequest
+    omega: np.ndarray, mag_field: np.ndarray, expected: np.ndarray, tolerance: float, request: pytest.FixtureRequest
 ) -> None:
     # Get fixture values
     if isinstance(omega, str):
@@ -81,37 +78,37 @@ def larger_pointing_error_omega(
 @pytest.mark.parametrize(
     "sun_vector, omega, mag_field, expected",
     [
-        (   # zero error test case
+        (  # zero error test case
             "nominal_sun_vector",
             "zero_pointing_error_omega",
             np.ones(3),
             np.zeros(3),
         ),
-        (   # parallel magnetic field and pointing error test case
+        (  # parallel magnetic field and pointing error test case
             "nominal_sun_vector",
             "larger_pointing_error_omega",
             "zero_pointing_error_omega",
             ControllerConst.FALLBACK_CONTROL,
         ),
-        (   # zero sun vector test case
+        (  # zero sun vector test case
             np.zeros(3),
             "larger_pointing_error_omega",
             np.ones(3),
             ControllerConst.FALLBACK_CONTROL,
         ),
-        (   # zero magnetic field test case
+        (  # zero magnetic field test case
             "nominal_sun_vector",
             "larger_pointing_error_omega",
             np.zeros(3),
             ControllerConst.FALLBACK_CONTROL,
         ),
-        (   # zero sun vector and magnetic field tEst case
+        (  # zero sun vector and magnetic field tEst case
             np.zeros(3),
             "larger_pointing_error_omega",
             np.zeros(3),
             ControllerConst.FALLBACK_CONTROL,
-        )
-    ]
+        ),
+    ],
 )
 def test_nominal_sun_pointing(
     sun_vector: np.ndarray,
@@ -119,7 +116,7 @@ def test_nominal_sun_pointing(
     mag_field: np.ndarray,
     expected: np.ndarray,
     tolerance: float,
-    request: pytest.FixtureRequest
+    request: pytest.FixtureRequest,
 ) -> None:
     # Get fixture values
     if isinstance(sun_vector, str):
@@ -148,7 +145,7 @@ def invalid_dims() -> list[int]:
             np.ones(3),
             ControllerConst.FALLBACK_CONTROL,
         )
-    ]
+    ],
 )
 def test_invalid_dim_spin_stabilization(
     invalid_dims: list[int],
@@ -177,7 +174,7 @@ def test_invalid_dim_spin_stabilization(
             np.ones(3),
             ControllerConst.FALLBACK_CONTROL,
         )
-    ]
+    ],
 )
 def test_invalid_dim_sun_pointing(
     invalid_dims: list[int],
@@ -190,21 +187,15 @@ def test_invalid_dim_sun_pointing(
     for i in invalid_dims:
         # Test sun vector with invalid dimensions
         invalid_sun_vector = np.ones(i)
-        result = sun_pointing_controller(
-            invalid_sun_vector, valid_omega, valid_mag_field
-        )
+        result = sun_pointing_controller(invalid_sun_vector, valid_omega, valid_mag_field)
         assert result == pytest.approx(expected, abs=tolerance)
 
         # Test angular velocity with invalid dimensions
         invalid_omega = np.ones(i)
-        result = sun_pointing_controller(
-            nominal_sun_vector, invalid_omega, valid_mag_field
-        )
+        result = sun_pointing_controller(nominal_sun_vector, invalid_omega, valid_mag_field)
         assert result == pytest.approx(expected, abs=tolerance)
 
         # Test magnetic field with invalid dimensions
         invalid_mag_field = np.ones(i)
-        result = sun_pointing_controller(
-            nominal_sun_vector, valid_omega, invalid_mag_field
-        )
+        result = sun_pointing_controller(nominal_sun_vector, valid_omega, invalid_mag_field)
         assert result == pytest.approx(expected, abs=tolerance)
