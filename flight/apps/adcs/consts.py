@@ -114,6 +114,13 @@ class ControllerConst:
     Constants associated with Controller Behavior
     """
 
+    # Dimensions of sensor readings and control input
+    READING_DIM = (3,)
+    CONTROL_DIM = (3,)
+
+    # Fallback control input
+    FALLBACK_CONTROL = np.zeros(CONTROL_DIM)
+
     # Spin-stabilized Constants
     OMEGA_MAG_TARGET = 0.1125  # Target angular velocity along major axis
     MOMENTUM_TARGET = np.linalg.norm(np.dot(PhysicalConst.INERTIA_MAT, PhysicalConst.INERTIA_MAJOR_DIR * OMEGA_MAG_TARGET))
