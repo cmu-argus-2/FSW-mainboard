@@ -42,9 +42,12 @@ class OrbitPropagator:
                 initialized = True
 
     @classmethod
-    def propagate_orbit(cls, current_time: int, last_gps_time: int = None, last_gps_state: np.ndarray = None):
-        if last_gps_state is not None:
-            cls.last_updated_state = last_gps_state
+    def propagate_orbit(cls, current_time: int, last_gps_time: int = None, last_gps_state_eci: np.ndarray = None):
+        if current_time is None:
+            return StatusConst.OPROP_INIT_FAIL, np.zeros((3,)), np.zeros((3,))
+
+        if cls.valid_gps_state(last_gps_state_eci) and last_gps_time is not None:
+            cls.last_updated_state = last_gps_state_eci
             cls.last_update_time = last_gps_time
 
             if not cls.initialized:
@@ -57,7 +60,7 @@ class OrbitPropagator:
         position_norm = np.linalg.norm(cls.last_updated_state[0:3])
         velocity_norm = np.linalg.norm(cls.last_updated_state[3:6])
 
-        if not (6.0e6 <= position_norm <= 7.5e6 and 3.0e3 <= velocity_norm <= 1.0e4):
+        if not cls.valid_gps_state(cls.last_updated_state):
             # Somehow, we have messed up so bad that our position and/or velocity vectors are garbage.
             # Reset OrbitProp and wait for a valid GPS fix
             cls.initialized = False
@@ -67,17 +70,27 @@ class OrbitPropagator:
         omega = np.cross(cls.last_updated_state[0:3], cls.last_updated_state[3:6]) / position_norm**2
 
         # Calculate rotation angle about omega
-        theta = omega * (cls.last_update_time - current_time)
+        theta = np.linalg.norm(omega) * (current_time - cls.last_update_time)
 
         # Rotate position about omega by angle theta
         cls.last_updated_state[0:3] = position_norm * (
-            cls.last_updated_state[0:3] * np.cos(theta) / position_norm + cls.last_updated_state[3:6] * np.sin(theta) / velocity_norm
+            cls.last_updated_state[0:3] * np.cos(theta) / position_norm
+            + cls.last_updated_state[3:6] * np.sin(theta) / velocity_norm
         )
 
         # Compute velocity using (v = omega x r)
         cls.last_updated_state[3:6] = np.cross(omega, cls.last_updated_state[0:3])
 
         return StatusConst.OK, cls.last_updated_state[0:3], cls.last_updated_state[3:6]
+
+    @classmethod
+    def valid_gps_state(cls, gps_state):
+        return (
+            gps_state is not None
+            and gps_state.shape == (6,)
+            and 6.0e6 <= np.linalg.norm(gps_state[0:3]) <= 7.5e6
+            and 3.0e3 <= np.linalg.norm(gps_state[3:6]) <= 1.0e4
+        )
 
     @classmethod
     def set_last_update_time(cls, updated_time):
