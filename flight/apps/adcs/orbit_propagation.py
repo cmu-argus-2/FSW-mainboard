@@ -66,7 +66,7 @@ class OrbitPropagator:
         # Calculate omega (angular velocity) vector
         omega = np.cross(cls.last_updated_state[0:3], cls.last_updated_state[3:6]) / position_norm**2
 
-        # Calculate roation angle about omega
+        # Calculate rotation angle about omega
         theta = omega * (cls.last_update_time - current_time)
 
         # Rotate position about omega by angle theta
