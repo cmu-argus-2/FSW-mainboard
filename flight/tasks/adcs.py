@@ -2,7 +2,7 @@
 
 import time
 
-from apps.adcs.acs import spin_stabilizing_controller, sun_pointing_controller, mcm_coil_allocator, zero_all_coils
+from apps.adcs.acs import mcm_coil_allocator, spin_stabilizing_controller, sun_pointing_controller, zero_all_coils
 from apps.adcs.ad import AttitudeDetermination
 from apps.adcs.consts import Modes, StatusConst
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX

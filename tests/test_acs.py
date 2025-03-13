@@ -1,14 +1,9 @@
 import pytest
+from ulab import numpy as np
 
 import tests.cp_mock  # noqa: F401
-from flight.apps.adcs.consts import PhysicalConst, ControllerConst
-from flight.apps.adcs.acs import (
-    spin_stabilizing_controller,
-    sun_pointing_controller,
-    mcm_coil_allocator,
-    zero_all_coils,
-)
-from ulab import numpy as np
+from flight.apps.adcs.acs import mcm_coil_allocator, spin_stabilizing_controller, sun_pointing_controller, zero_all_coils
+from flight.apps.adcs.consts import ControllerConst, PhysicalConst
 
 
 @pytest.fixture
