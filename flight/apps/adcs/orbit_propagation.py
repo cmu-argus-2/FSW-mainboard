@@ -71,7 +71,7 @@ class OrbitPropagator:
 
         # Rotate position about omega by angle theta
         cls.last_updated_state[0:3] = position_norm * (
-            np.cos(theta) + cls.last_updated_state[3:6] * np.sin(theta) / velocity_norm
+            cls.last_updated_state[0:3] * np.cos(theta) / position_norm + cls.last_updated_state[3:6] * np.sin(theta) / velocity_norm
         )
 
         # Compute velocity using (v = omega x r)
