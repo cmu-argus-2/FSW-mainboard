@@ -24,6 +24,15 @@ def valid_time_format(*args) -> bool:
     if not isinstance(time_reference, int):
         return False
 
+    """
+    Since CPy time.time() starts on Jan 1st 2020,
+    limit the time reference to at least this date.
+
+    Can also update this to be our launch date,
+    although that will lead to issues in testing
+    while in development.
+    """
+
     # Check that the timestamp is above Jan 1st 2020
     # Check that the timestamp is below Jan 1st 2080
     if 1577854800 < time_reference < 3471310800:
