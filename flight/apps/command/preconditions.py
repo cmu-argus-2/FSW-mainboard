@@ -1,5 +1,3 @@
-import time
-
 from apps.command.constants import file_tags_str
 from core.data_handler import DataHandler
 from core.state_machine import STATES
@@ -23,19 +21,15 @@ def valid_time_format(*args) -> bool:
     """
     time_reference = args[0]
 
-    if time_reference < 3004213696:  # 40 years into the future
+    if not isinstance(time_reference, int):
+        return False
+
+    # Check that the timestamp is above Jan 1st 2020
+    # Check that the timestamp is below Jan 1st 2080
+    if 1577854800 < time_reference < 3471310800:
         return True
-    return False
-
-    # if time_reference is None:
-    #     return False
-
-    # try:
-    #     # Try to convert it to a time struct will verify if it was of proper UNIX format
-    #     time.gmtime(time_reference)
-    #     return True
-    # except (ValueError, TypeError, OverflowError, OSError):
-    #     return False
+    else:
+        return False
 
 
 def file_id_exists(*args) -> bool:
