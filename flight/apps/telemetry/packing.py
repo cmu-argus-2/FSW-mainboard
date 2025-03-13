@@ -386,10 +386,10 @@ class TelemetryPacker:
         if not cls._TM_AVAILABLE:
             cls._TM_AVAILABLE = True
 
-        cls._FRAME = bytearray(82 + 4)  # pre-allocated buffer for packing
+        cls._FRAME = bytearray(74 + 4)  # pre-allocated buffer for packing
         cls._FRAME[0] = const(0x03) & 0xFF  # message ID
         cls._FRAME[1:3] = pack_unsigned_short_int([const(0x00)], 0)  # sequence count
-        cls._FRAME[3] = const(82) & 0xFF  # packet length
+        cls._FRAME[3] = const(74) & 0xFF  # packet length
 
         ############ CDH fields ############
         if DH.data_process_exists("cdh"):
@@ -482,35 +482,15 @@ class TelemetryPacker:
         else:
             logger.warning("Payload Data process does not exist")
 
-        ############ Thermal fields ###########
-        if DH.data_process_exists("thermal"):
-            thermal_storage_info = DH.get_storage_info("thermal")
-            # THERMAL number of files
-            cls._FRAME[70:74] = pack_unsigned_long_int(thermal_storage_info, STORAGE_IDX.NUM_FILES)
-            # THERMAL directory size
-            cls._FRAME[74:78] = pack_unsigned_long_int(thermal_storage_info, STORAGE_IDX.DIR_SIZE)
-        else:
-            logger.warning("Thermal Data process does not exist")
-
         ############ Command fields ###########
         if DH.data_process_exists("cmd_logs"):
             cmd_logs_storage_info = DH.get_storage_info("cmd_logs")
             # Command logs number of files
-            cls._FRAME[78:82] = pack_unsigned_long_int(cmd_logs_storage_info, STORAGE_IDX.NUM_FILES)
+            cls._FRAME[70:74] = pack_unsigned_long_int(cmd_logs_storage_info, STORAGE_IDX.NUM_FILES)
             # Command logs directory size
-            cls._FRAME[82:86] = pack_unsigned_long_int(cmd_logs_storage_info, STORAGE_IDX.DIR_SIZE)
+            cls._FRAME[74:78] = pack_unsigned_long_int(cmd_logs_storage_info, STORAGE_IDX.DIR_SIZE)
         else:
             logger.warning("Command logs Data process does not exist")
-
-        # ############ Image fields ###########
-        # if DH.data_process_exists("img"):
-        #     img_logs_storage_info = DH.get_storage_info("img")
-        #     # Image number of files
-        #     cls._FRAME[86:90] = pack_signed_long_int(img_logs_storage_info, STORAGE_IDX.NUM_FILES)
-        #     # Image directory size
-        #     cls._FRAME[90:94] = pack_signed_long_int(img_logs_storage_info, STORAGE_IDX.DIR_SIZE)
-        # else:
-        #     logger.warning("IMG Data process does not exist")
 
     @classmethod
     def pack_tm_payload(cls):

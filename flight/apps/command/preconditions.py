@@ -23,15 +23,19 @@ def valid_time_format(*args) -> bool:
     """
     time_reference = args[0]
 
-    if time_reference is None:
-        return False
-
-    try:
-        # Try to convert it to a time struct will verify if it was of proper UNIX format
-        time.gmtime(time_reference)
+    if time_reference < 3004213696:  # 40 years into the future
         return True
-    except (ValueError, TypeError, OverflowError, OSError):
-        return False
+    return False
+
+    # if time_reference is None:
+    #     return False
+
+    # try:
+    #     # Try to convert it to a time struct will verify if it was of proper UNIX format
+    #     time.gmtime(time_reference)
+    #     return True
+    # except (ValueError, TypeError, OverflowError, OSError):
+    #     return False
 
 
 def file_id_exists(*args) -> bool:
