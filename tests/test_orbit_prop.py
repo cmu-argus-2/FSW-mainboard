@@ -1,8 +1,8 @@
-import pytest
 import numpy as np
+import pytest
 
-from flight.apps.adcs.orbit_propagation import OrbitPropagator
 from flight.apps.adcs.consts import StatusConst
+from flight.apps.adcs.orbit_propagation import OrbitPropagator
 
 # NOTE: All these tests run on ISS orbit since they have the most amount of publicly available data
 """
