@@ -31,7 +31,7 @@ class OrbitPropagator:
             if pre_reboot_state[0:3] is None or pre_reboot_state[3:6] is None:
                 pass
             elif not (6.0e6 <= np.linalg.norm(pre_reboot_state[0:3]) <= 7.5e6) or not (
-                3.0e3 <= np.linalg.norm(pre_reboot_state[3:6]) <= 1.0e4
+                0 <= np.linalg.norm(pre_reboot_state[3:6]) <= 1.0e4
             ):
                 pass
             else:
@@ -89,7 +89,7 @@ class OrbitPropagator:
             gps_state is not None
             and gps_state.shape == (6,)
             and 6.0e6 <= np.linalg.norm(gps_state[0:3]) <= 7.5e6
-            and 3.0e3 <= np.linalg.norm(gps_state[3:6]) <= 1.0e4
+            and 0 <= np.linalg.norm(gps_state[3:6]) <= 1.0e4
         )
 
     @classmethod
