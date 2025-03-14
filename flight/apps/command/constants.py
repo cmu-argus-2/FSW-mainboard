@@ -49,3 +49,16 @@ file_tags_str = {
     9: "gps",
     10: "img",
 }
+
+file_ids_str = {
+    "cmd_logs": 1,
+    "watchdog": 2,
+    "eps": 3,
+    "cdh": 4,
+    "comms": 5,
+    "imu": 6,
+    "adcs": 7,
+    "thermal": 8,
+    "gps": 9,
+    "img": 10,
+}

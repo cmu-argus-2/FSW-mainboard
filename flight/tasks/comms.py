@@ -26,7 +26,7 @@ class Task(TemplateTask):
         self.frequency_set = False
 
         self.TX_heartbeat_frequency = 0.2
-        self.RX_timeout_frequency = 0.5
+        self.RX_timeout_frequency = 0.1
 
         # Counter for TX frequency
         self.TX_COUNT_THRESHOLD = 0

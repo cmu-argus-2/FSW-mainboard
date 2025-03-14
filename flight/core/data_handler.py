@@ -510,7 +510,11 @@ class DataProcess:
         """
         files = os.listdir(self.dir_path)
         # TODO - implement the rest of the function
-        total_size = (len(files) - 2) * self.size_limit + self.get_current_file_size()
+        if self.get_current_file_size() is not None:
+            total_size = (len(files) - 2) * self.size_limit + self.get_current_file_size()
+        else:
+            total_size = 0
+
         return (len(files) - 1), total_size
 
     def get_current_file_size(self) -> Optional[int]:

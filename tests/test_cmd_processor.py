@@ -221,7 +221,7 @@ def test_valid_time_format():
     assert valid_time_format(1589387500)
 
     # Test edge cases and failing
-    assert valid_time_format(0)
+    assert not valid_time_format(0)  # outside of valid mission range
     assert not valid_time_format("not_a_timestamp")  # invalid type
     assert not valid_time_format(9223372036854775807)  # beyond time_t limits
     assert not valid_time_format(999999999999999999999999999999)  # far positive
