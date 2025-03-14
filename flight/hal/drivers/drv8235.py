@@ -207,15 +207,17 @@ class DRV8235:
             self._wset_vset = 0
             self._dir = BridgeControl.BRAKE
         return
+
     def read_voltage(self):
-        voltage_index = self._vmtr  
+        voltage_index = self._vmtr
         voltage = VoltageAdapter.index_to_voltage(self, voltage_index)
         return voltage
 
     def read_current(self):
-        current_index = self._imtr  
+        current_index = self._imtr
         current = current_index * (3.7 / 255)  # max 3.7A range
         return current
+
     @property
     def bridge_control(self):
         """Motor driver bridge status. Returns the 2-bit bridge control integer
