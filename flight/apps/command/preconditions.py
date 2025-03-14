@@ -33,9 +33,9 @@ def valid_time_format(*args) -> bool:
     while in development.
     """
 
-    # Check that the timestamp is above Jan 1st 2020
-    # Check that the timestamp is below Jan 1st 2080
-    if 1577854800 < time_reference < 3471310800:
+    # Check that the timestamp is above Jan 1st 2020 UTC
+    # Check that the timestamp is below Jan 1st 2030 UTC
+    if 1577836800 < time_reference < 1893456000:
         return True
     else:
         return False
