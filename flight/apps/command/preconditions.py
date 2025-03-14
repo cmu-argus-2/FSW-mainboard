@@ -4,6 +4,9 @@ from core.state_machine import STATES
 
 """ Contains functions to check the preconditions of Commands """
 
+_TIME_RANGE_LOW = 1577836800
+_TIME_RANGE_HIGH = 1893456000
+
 
 def valid_state(*args) -> bool:
     """
