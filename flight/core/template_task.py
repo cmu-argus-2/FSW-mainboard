@@ -53,7 +53,7 @@ class TemplateTask:
             await self.main_task()
             gc.collect()
         except Exception as e:
-            self.debug(e, traceback.format_exc())
+            self.debug(e, "".join(traceback.format_exception(e)))
 
     def log_debug(self, msg):
         """
