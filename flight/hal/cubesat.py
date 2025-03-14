@@ -21,7 +21,9 @@ class CubeSat:
     )
 
     def __new__(cls, *args, **kwargs):
-        raise TypeError(f"{cls.__name__} is a static base class and cannot be instantiated.")
+        if cls is CubeSat:
+            raise TypeError(f"{cls.__name__} is a static base class and cannot be instantiated.")
+        return super().__new__(cls)
 
     def __init__(self):
         self.__device_list = OrderedDict(
