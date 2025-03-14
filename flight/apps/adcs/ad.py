@@ -97,8 +97,8 @@ class AttitudeDetermination:
                 return StatusConst.GYRO_FAIL, 0, np.zeros((3,))
             elif not (0 <= np.linalg.norm(gyro) <= 1000):  # Setting a very (VERY) large upper bound
                 return StatusConst.GYRO_FAIL, 0, np.zeros((3,))
-
-            return StatusConst.OK, query_time, gyro
+            else:
+                return StatusConst.OK, query_time, gyro
         else:
             return StatusConst.GYRO_FAIL, 0, np.zeros((3,))
 
