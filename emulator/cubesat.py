@@ -15,6 +15,11 @@ class Device:
 class CubeSat:
     """CubeSat: Base class for all CubeSat implementations"""
 
+    def __new__(cls, *args, **kwargs):
+        if cls is CubeSat:
+            raise TypeError(f"{cls.__name__} is a static base class and cannot be instantiated.")
+        return super().__new__(cls)
+
     def __init__(self):
         # List of successfully initialized devices
         self._device_list = OrderedDict(
