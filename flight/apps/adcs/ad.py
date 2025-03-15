@@ -16,6 +16,7 @@ from apps.adcs.igrf import igrf_eci
 from apps.adcs.math import R_to_quat, quat_to_R, quaternion_multiply, skew
 from apps.adcs.orbit_propagation import OrbitPropagator
 from apps.adcs.sun import SUN_VECTOR_STATUS, approx_sun_position_ECI, compute_body_sun_vector_from_lux, read_light_sensors
+from apps.adcs.utils import is_valid_gps_state, is_valid_gyro_reading, is_valid_mag_reading
 from apps.telemetry.constants import GPS_IDX
 from core import DataHandler as DH
 from hal.configuration import SATELLITE
@@ -92,12 +93,10 @@ class AttitudeDetermination:
             query_time = int(time.time())
 
             # Sensor validity check
-            if gyro is None or len(gyro) != 3:
+            if not is_valid_gyro_reading(gyro):
                 return StatusConst.GYRO_FAIL, 0, np.zeros((3,))
-            elif not (0 <= np.linalg.norm(gyro) <= 1000):  # Setting a very (VERY) large upper bound
-                return StatusConst.GYRO_FAIL, 0, np.zeros((3,))
-
-            return StatusConst.OK, query_time, gyro
+            else:
+                return StatusConst.OK, query_time, gyro
         else:
             return StatusConst.GYRO_FAIL, 0, np.zeros((3,))
 
@@ -112,12 +111,10 @@ class AttitudeDetermination:
             query_time = int(time.time())
 
             # Sensor validity check
-            if mag is None or len(mag) != 3:
+            if not is_valid_mag_reading(mag):
                 return StatusConst.MAG_FAIL, 0, np.zeros((3,))
-            elif not (10 <= np.linalg.norm(mag) <= 100):  # Allowed between 10 and 100 uT (MSL : 58 uT, 600km : 37uT)
-                return StatusConst.MAG_FAIL, 0, np.zeros((3,))
-
-            return StatusConst.OK, query_time, mag * 1e-6
+            else:
+                return StatusConst.OK, query_time, mag * 1e-6
 
         else:
             return StatusConst.MAG_FAIL, 0, np.zeros((3,))
@@ -133,22 +130,14 @@ class AttitudeDetermination:
 
             if gps_data is not None:
                 gps_record_time = [GPS_IDX.TIME_GPS]
-                gps_pos_eci = 1e-2 * (
-                    np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECI_X : GPS_IDX.GPS_ECI_Z + 1]).reshape((3,))
-                )
-                gps_vel_eci = 1e-2 * (
-                    np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECI_VX : GPS_IDX.GPS_ECI_VZ + 1]).reshape((3,))
-                )
+                gps_pos_eci = np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECI_X : GPS_IDX.GPS_ECI_Z + 1]).reshape((3,))
+                gps_vel_eci = np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECI_VX : GPS_IDX.GPS_ECI_VZ + 1]).reshape((3,))
 
                 # Sensor validity check
-                if gps_pos_eci is None or gps_vel_eci is None or len(gps_pos_eci) != 3 or len(gps_vel_eci) != 3:
+                if not is_valid_gps_state(gps_pos_eci, gps_vel_eci):
                     return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
-                elif not (6.0e6 <= np.linalg.norm(gps_pos_eci) <= 7.5e6) or not (
-                    3.0e3 <= np.linalg.norm(gps_vel_eci) <= 1.0e4
-                ):
-                    return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
-
-                return StatusConst.OK, gps_record_time, gps_pos_eci, gps_vel_eci
+                else:
+                    return StatusConst.OK, gps_record_time, gps_pos_eci, gps_vel_eci
 
             else:
                 return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
