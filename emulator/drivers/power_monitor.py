@@ -5,9 +5,3 @@ class PowerMonitor:
 
     def read_voltage_current(self):
         return (self.__voltage, self.__current)
-
-    def run_diagnostics(self):
-        return []
-
-    def get_flags(self) -> dict:
-        return {}

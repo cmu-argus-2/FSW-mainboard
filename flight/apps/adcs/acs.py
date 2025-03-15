@@ -20,7 +20,6 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
         u_dir = np.zeros((3,))
 
     else:
-
         # Compute Angular Momentum error
         error = PhysicalConst.INERTIA_MAJOR_DIR - np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET
 
@@ -36,8 +35,7 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
 
 
 def sun_pointed_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field: np.ndarray) -> np.ndarray:
-
-    if np.linalg.norm(mag_field) == 0 or np.linlag.norm(sun_vector) == 0:  # Stop ACS if either field is invalid
+    if np.linalg.norm(mag_field) == 0 or np.linalg.norm(sun_vector) == 0:  # Stop ACS if either field is invalid
         u_dir = np.zeros((3,))
     else:
         # Compute Pointing Error
@@ -58,7 +56,6 @@ def sun_pointed_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field:
 
 
 def mcm_coil_allocator(u: np.ndarray) -> np.ndarray:
-
     # Query the available coil statuses
     coil_status = []
     mcm_alloc = np.zeros((6, 3))

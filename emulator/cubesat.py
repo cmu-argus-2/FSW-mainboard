@@ -1,46 +1,62 @@
 import time
-from typing import List, Optional
+from collections import OrderedDict
+from typing import List
 
 from hal.drivers.diagnostics.diagnostics import Diagnostics
+
+
+class Device:
+    def __init__(self, boot_fn: object, device: object = None, error: int = 0):
+        self.device = device
+        self.error = error
+        self.boot_fn = boot_fn
 
 
 class CubeSat:
     """CubeSat: Base class for all CubeSat implementations"""
 
+    def __new__(cls, *args, **kwargs):
+        if cls is CubeSat:
+            raise TypeError(f"{cls.__name__} is a static base class and cannot be instantiated.")
+        return super().__new__(cls)
+
     def __init__(self):
         # List of successfully initialized devices
-        self._device_list: List[Diagnostics] = []
-
-        # List of errors from most recent system diagnostic test
-        self._recent_errors: List[int] = [Diagnostics.NOERROR]
-
-        # State flags
-        self._state_flags = None
-
-        # Interfaces
-        self._uart1 = None
-        self._uart2 = None
-        self._spi = None
-        self._i2c1 = None
-        self._i2c2 = None
-
-        # Devices
-        self._gps = None
-        self._board_power_monitor = None
-        self._jetson_power_monitor = None
-        self._imu = None
-        self._imu_temp_flag = False
-        self._charger = None
-        self._power_monitors = {}
-        self._torque_drivers = {}
-        self._light_sensors = {}
-        self._fuel_gauge = None
-        self._rtc = None
-        self._radio = None
-        self._sd_card = None
-        self._burn_wires = None
-        self._vfs = None
-        self._payload_uart = None
+        self._device_list = OrderedDict(
+            [
+                # ("SDCARD", Device(self.__sd_card_boot)),
+                # ("IMU", Device(self.__imu_boot)),
+                # ("RTC", Device(self.__rtc_boot)),
+                # # ("GPS", Device(self.__gps_boot)),
+                # # ("RADIO", Device(self.__radio_boot)),
+                # # ("FUEL_GAUGE", Device(self.__fuel_gauge_boot)),
+                # # ("BURN_WIRE", Device(self.__burn_wire_boot)),
+                # ("BOARD_PWR", Device(self.__power_monitor_boot)),
+                # # ("RADIO_PWR", Device(self.__power_monitor_boot)),
+                # # ("GPS_PWR", Device(self.__power_monitor_boot)),
+                # # ("JETSON_PWR", Device(self.__power_monitor_boot)),
+                # # ("XP_PWR", Device(self.__power_monitor_boot)),
+                # # ("XM_PWR", Device(self.__power_monitor_boot)),
+                # # ("YP_PWR", Device(self.__power_monitor_boot)),
+                # # ("YM_PWR", Device(self.__power_monitor_boot)),
+                # # ("ZP_PWR", Device(self.__power_monitor_boot)),
+                # # ("TORQUE_XP", Device(self.__torque_driver_boot)),
+                # # ("TORQUE_XM", Device(self.__torque_driver_boot)),
+                # # ("TORQUE_YP", Device(self.__torque_driver_boot)),
+                # # ("TORQUE_YM", Device(self.__torque_driver_boot)),
+                # # ("TORQUE_ZP", Device(self.__torque_driver_boot)),
+                # # ("TORQUE_ZM", Device(self.__torque_driver_boot)),
+                # ("LIGHT_XP", Device(self.__light_sensor_boot)),
+                # ("LIGHT_XM", Device(self.__light_sensor_boot)),
+                # ("LIGHT_YP", Device(self.__light_sensor_boot)),
+                # ("LIGHT_YM", Device(self.__light_sensor_boot)),
+                # ("LIGHT_ZM", Device(self.__light_sensor_boot)),
+                # ("LIGHT_ZP_1", Device(self.__light_sensor_boot)),
+                # ("LIGHT_ZP_2", Device(self.__light_sensor_boot)),
+                # ("LIGHT_ZP_3", Device(self.__light_sensor_boot)),
+                # ("LIGHT_ZP_4", Device(self.__light_sensor_boot)),
+            ]
+        )
 
         # Debugging
         self._time_ref_boot = int(time.time())
@@ -50,31 +66,24 @@ class CubeSat:
         """boot_sequence: Boot sequence for the CubeSat."""
         raise NotImplementedError("CubeSats must implement boot method")
 
-    # ABSTRACT METHOD #
-    def run_system_diagnostics(self) -> Optional[List[int]]:
-        """run_diagnostic_test: Run all tests for the component"""
-        raise NotImplementedError("CubeSats must implement diagnostics method")
-
-    def get_recent_errors(self) -> List[int]:
-        """get_recent_errors: Get the most recent errors from the system"""
-        return self._recent_errors
-
-    @property
-    def device_list(self):
-        """device_list: Get the list of successfully initialized devices"""
-        return self._device_list
-
-    def append_device(self, device):
+    def append_device(self, device_name: str, boot_fn: object, device: object = None, error: int = 0) -> None:
         """append_device: Append a device to the device list"""
-        self._device_list.append(device)
+        self._device_list[device_name] = Device(boot_fn, device, error)
 
-    ######################### STATE FLAGS ########################
     @property
-    def STATE_FLAGS(self):
-        """STATE_FLAGS: Returns the state flags object
+    def ERRORS(self):
+        """ERRORS: Returns the errors object
         :return: object or None
         """
-        return self._state_flags
+        error_list = {}
+        for name, device in self._device_list.items():
+            if device.error != Diagnostics.NOERROR:
+                error_list[name] = device.error
+        return error_list
+
+    def key_in_device_list(self, key: str) -> bool:
+        """key_in_device_list: Check if the key is in the device list"""
+        return key in self._device_list
 
     ######################### DEVICES #########################
     @property
@@ -82,63 +91,45 @@ class CubeSat:
         """GPS: Returns the gps object
         :return: object or None
         """
-        return self._gps
+        return self._device_list["GPS"].device
 
     @property
     def GPS_AVAILABLE(self) -> bool:
         """GPS_AVAILABLE: Returns True if the GPS is available
         :return: bool
         """
-        return self._gps is not None
+        return self.key_in_device_list("GPS") and self._device_list["GPS"].device is not None
 
     @property
     def POWER_MONITORS(self):
         """POWER_MONITORS: Returns the power monitor object
         :return: object or None
         """
-        return self._power_monitors
+        power_monitors = {}
+        for name, device in self._device_list.items():
+            if "_PWR" in name:
+                power_monitors[name.replace("_PWR", "")] = device.device
+        return power_monitors
 
-    @property
-    def BOARD_POWER_MONITOR(self):
-        """BOARD_POWER_MONITOR: Returns the board power monitor object
-        :return: object or None
-        """
-        return self._board_power_monitor
-
-    @property
-    def BOARD_POWER_MONITOR_AVAILABLE(self) -> bool:
-        """BOARD_POWER_MONITOR_AVAILABLE: Returns True if the board power monitor is available
+    def POWER_MONITOR_AVAILABLE(self, dir: str) -> bool:
+        """POWER_MONITOR_AVAILABLE: Returns True if the power monitor for the given direction is available
         :return: bool
         """
-        return self._board_power_monitor is not None
-
-    @property
-    def JETSON_POWER_MONITOR(self):
-        """JETSON_MONITOR: Returns the Jetson monitor object
-        :return: object or None
-        """
-        return self._jetson_power_monitor
-
-    @property
-    def JETSON_POWER_MONITOR_AVAILABLE(self) -> bool:
-        """JETSON_POWER_MONITOR_AVAILABLE: Returns True if the Jetson power monitor is available
-        :return: bool
-        """
-        return self._jetson_power_monitor is not None
+        return self.key_in_device_list(dir + "_PWR") and self._device_list[dir + "_PWR"].device is not None
 
     @property
     def IMU(self):
         """IMU: Returns the IMU object
         :return: object or None
         """
-        return self._imu
+        return self._device_list["IMU"].device
 
     @property
     def IMU_AVAILABLE(self) -> bool:
         """IMU_AVAILABLE: Returns True if the IMU is available
         :return: bool
         """
-        return self._imu is not None
+        return self.key_in_device_list("IMU") and self._device_list["IMU"].device is not None
 
     @property
     def IMU_TEMPERATURE_AVAILABLE(self) -> bool:
@@ -148,44 +139,13 @@ class CubeSat:
         return self._imu_temp_flag
 
     @property
-    def CHARGER(self):
-        """CHARGER: Returns the charger object
-        :return: object or None
-        """
-        return self._charger
-
-    @property
-    def CHARGER_AVAILABLE(self) -> bool:
-        """CHARGER_AVAILABLE: Returns True if the charger is available
-        :return: bool
-        """
-        return self._charger is not None
-
-    @property
-    def TORQUE_XP_POWER_MONITOR(self):
-        """TORQUE_XP: Returns the torque driver in the x+ direction
-        :return: object or None
-        """
-        return self._torque_xp_power_monitor
-
-    @property
-    def TORQUE_XP_POWER_MONITOR_AVAILABLE(self) -> bool:
-        """TORQUE_XP_POWER_MONITOR_AVAILABLE: Returns True if the torque driver in the x+ direction is available
-        :return: bool
-        """
-        return self._torque_xp_power_monitor is not None
-
-    @property
-    def FUEL_GAUGE(self):
-        """FUEL_GAUGE: Returns the fuel gauge object
-        :return: object or None
-        """
-        return self._fuel_gauge
-
-    @property
     def TORQUE_DRIVERS(self):
         """Returns a dictionary of torque drivers with the direction as the key (e.g. 'XP', 'XM', 'YP', 'YM', 'ZM')"""
-        return self._torque_drivers
+        torque_drivers = {}
+        for name, device in self._device_list.items():
+            if "TORQUE_" in name:
+                torque_drivers[name.replace("TORQUE_", "")] = device.device
+        return torque_drivers
 
     def TORQUE_DRIVERS_AVAILABLE(self, dir: str) -> bool:
         """Returns True if the specific torque driver for the given direction is available.
@@ -193,12 +153,30 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'XM', etc.)
         :return: bool - True if the driver exists and is not None, False otherwise.
         """
-        return self._torque_drivers.exist(dir) and self._torque_drivers[dir] is not None
+        return self.key_in_device_list("TORQUE_" + dir) and self._device_list["TORQUE_" + dir].device is not None
+
+    @property
+    def FUEL_GAUGE(self):
+        """FUEL_GAUGE: Returns the fuel gauge object
+        :return: object or None
+        """
+        return self._device_list["FUEL_GAUGE"].device
+
+    @property
+    def FUEL_GAUGE_AVAILABLE(self) -> bool:
+        """FUEL_GAUGE_AVAILABLE: Returns True if the fuel gauge is available
+        :return: bool
+        """
+        return self.key_in_device_list("FUEL_GAUGE") and self._device_list["FUEL_GAUGE"].device is not None
 
     @property
     def LIGHT_SENSORS(self):
         """Returns a dictionary of light sensors with the direction as the key (e.g. 'XP', 'XM', 'YP', 'YM', 'ZM')"""
-        return self._light_sensors
+        light_sensors = {}
+        for name, device in self._device_list.items():
+            if "LIGHT_" in name:
+                light_sensors[name.replace("LIGHT_", "")] = device.device
+        return light_sensors
 
     def LIGHT_SENSOR_AVAILABLE(self, dir: str) -> bool:
         """Returns True if the specific light sensor for the given direction is available.
@@ -206,91 +184,63 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'XM', etc.)
         :return: bool - True if the sensor exists and is not None, False otherwise.
         """
-        return dir in self._light_sensors and self._light_sensors[dir] is not None
+        return self.key_in_device_list("LIGHT_" + dir) and self._device_list["LIGHT_" + dir].device is not None
 
     @property
     def RTC(self):
         """RTC: Returns the RTC object
         :return: object or None
         """
-        return self._rtc
+        return self._device_list["RTC"].device
 
     @property
     def RTC_AVAILABLE(self) -> bool:
         """RTC_AVAILABLE: Returns True if the RTC is available
         :return: bool
         """
-        return self._rtc is not None
+        return self.key_in_device_list("RTC") and self._device_list["RTC"].device is not None
 
     @property
     def RADIO(self):
         """RADIO: Returns the radio object
         :return: object or None
         """
-        return self._radio
+        return self._device_list["RADIO"].device
 
     @property
     def RADIO_AVAILABLE(self) -> bool:
         """RADIO_AVAILABLE: Returns True if the radio is available
         :return: bool
         """
-        return self._radio is not None
+        return self.key_in_device_list("RADIO") and self._device_list["RADIO"].device is not None
 
     @property
     def BURN_WIRES(self):
         """BURN_WIRES: Returns the burn wire object
         :return: object or None
         """
-        return self._burn_wires
+        return self._device_list["BURN_WIRES"].device
 
     @property
     def BURN_WIRES_AVAILABLE(self) -> bool:
         """BURN_WIRES_AVAILABLE: Returns True if the burn wires are available
         :return: bool
         """
-        return self._burn_wires is not None
+        return self.key_in_device_list("BURN_WIRES") and self._device_list["BURN_WIRES"].device is not None
 
     @property
     def SD_CARD(self):
         """SD_CARD: Returns the SD card object
         :return: object or None
         """
-        return self._sd_card
+        return self._device_list["SDCARD"].device
 
     @property
     def SD_CARD_AVAILABLE(self) -> bool:
         """SD_CARD_AVAILABLE: Returns True if the SD card is available
         :return: bool
         """
-        return self._sd_card is not None
-
-    @property
-    def VFS(self):
-        """VFS: Returns the VFS object
-        :return: object or None
-        """
-        return self._vfs
-
-    @property
-    def VFS_AVAILABLE(self) -> bool:
-        """VFS_AVAILABLE: Returns True if the VFS is available
-        :return: bool
-        """
-        return self._vfs is not None
-
-    @property
-    def PAYLOADUART(self):
-        """PAYLOAD_EN: Returns the payload enable object
-        :return: object or None
-        """
-        return self._payload_uart
-
-    @property
-    def PAYLOADUART_AVAILABLE(self) -> bool:
-        """PAYLOADUART_AVAILABLE: Returns True if the payload UART is available
-        :return: bool
-        """
-        return self._payload_uart is not None
+        return self.key_in_device_list("SDCARD") and self._device_list["SDCARD"].device is not None
 
     @property
     def BOOTTIME(self):

@@ -1,0 +1,77 @@
+name: SIL CI
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  sil-simulation:
+    name: SIL simulation
+
+    strategy:
+      fail-fast: false
+    
+    continue-on-error: true
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Setup virtual environment
+        run: |
+          python3 -m venv .venv --system-site-packages
+          source .venv/bin/activate
+      - name: Install main repository dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Update submodules to latest commit
+        run: |
+          git submodule init
+          git submodule update
+
+      - name: Install submodule dependencies
+        run: |
+          sh install.sh
+          echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV  # Add current directory to PYTHONPATH 
+          python -c "import argusim; print('argusim is installed')"
+
+      - name: Verify installation
+        run: pip list  # Confirm that brahe and argusim are installed
+      - name: Set timestamp
+        run: echo "TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_ENV
+      - name: Define Runtime
+        run: echo "RUNTIME=300" >> $GITHUB_ENV
+      - name: Define Log file name
+        run: echo "OUTFILE=sil_logs.log" >> $GITHUB_ENV
+      
+      - name: Run flight software
+        run: python3 sil_run.py --duration ${{env.RUNTIME}} --outfile ${{env.OUTFILE}}
+      
+      - name: Upload log file
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.TIMESTAMP }}-sil-logs
+          path: ${{env.OUTFILE}}
+      

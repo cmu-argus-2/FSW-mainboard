@@ -14,7 +14,7 @@ both for the mode transitions, sun pointing controller accuracy, and attitude de
 
 """
 
-from apps.adcs.consts import PhysicalConst
+from apps.adcs.consts import PhysicalConst, StatusConst
 from apps.adcs.math import invert_3x3_psd
 from core import logger
 from hal.configuration import SATELLITE
@@ -27,16 +27,8 @@ NUM_LIGHT_SENSORS = const(9)
 ERROR_LUX = const(-1)
 
 
-class SUN_VECTOR_STATUS:
-    UNIQUE_DETERMINATION = 0x0  # Successful computation with at least 3 lux readings
-    UNDETERMINED_VECTOR = 0x1  # Vector computed with less than 3 lux readings
-    NOT_ENOUGH_READINGS = 0x2  # Computation failed due to lack of readings (less than 3 valid readings)
-    NO_READINGS = 0x3
-    ECLIPSE = 0x4
-
-
 def _read_light_sensor(face):
-    if SATELLITE.LIGHT_SENSORS[face] is not None:
+    if SATELLITE.LIGHT_SENSOR_AVAILABLE(face):
         return SATELLITE.LIGHT_SENSORS[face].lux()
     else:
         return ERROR_LUX
@@ -81,15 +73,16 @@ def compute_body_sun_vector_from_lux(I_vec):
     # Determine Sun Status
     num_valid_readings = NUM_LIGHT_SENSORS - I_vec.count(ERROR_LUX)
     if num_valid_readings == 0:
-        status = SUN_VECTOR_STATUS.NO_READINGS
+        status = StatusConst.SUN_NO_READINGS
         return status, sun_body
     elif num_valid_readings < 3:
-        status = SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS
-    elif in_eclipse(I_vec):
-        status = SUN_VECTOR_STATUS.ECLIPSE
+
+        status = StatusConst.SUN_NOT_ENOUGH_READINGS
+    elif in_eclipse(I_vec, THRESHOLD_ILLUMINATION_LUX):
+        status = StatusConst.SUN_ECLIPSE
         return status, sun_body
-    elif num_valid_readings >= 3:  # All readings are valid and unique determination is possible
-        status = SUN_VECTOR_STATUS.UNIQUE_DETERMINATION
+    elif num_valid_readings == 5:  # All readings are valid and unique determination is possible
+        status = StatusConst.OK
 
     # Extract body vectors and lux readings where the sensor readings are valid
     valid_sensor_idxs = [
@@ -101,7 +94,7 @@ def compute_body_sun_vector_from_lux(I_vec):
     # Compute the Inverse of the valid light sensor normals using the Moore-Penrose pseudo-inverse
     oprod_sun_inv = invert_3x3_psd(np.dot(N_valid.transpose(), N_valid))
     if oprod_sun_inv is None:  # If the inverse is not possible, sun positioning is not uniquely determinable
-        status = SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS
+        status = StatusConst.SUN_NOT_ENOUGH_READINGS
         return status, sun_body
     else:
         oprod_sun_inv = np.dot(oprod_sun_inv, N_valid.transpose())
@@ -111,7 +104,7 @@ def compute_body_sun_vector_from_lux(I_vec):
     norm = (sun_body[0] ** 2 + sun_body[1] ** 2 + sun_body[2] ** 2) ** 0.5
 
     if norm == 0:  # Avoid division by zero - not perfect
-        status = SUN_VECTOR_STATUS.UNDETERMINED_VECTOR
+        status = StatusConst.ZERO_NORM
         return status, sun_body
 
     sun_body = sun_body / norm

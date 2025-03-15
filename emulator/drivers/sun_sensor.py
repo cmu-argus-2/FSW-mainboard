@@ -9,12 +9,6 @@ class LightSensor:
             return self.__simulator.sun_lux()[self.__id]
         return self.__lux
 
-    def run_diagnostics(self):
-        return []
-
-    def get_flags(self) -> dict:
-        return {}
-
 
 class LightSensorArray:
     def __init__(self, simulator=None) -> None:

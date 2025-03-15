@@ -8,6 +8,7 @@ Authors: Akshat Sahay, Ibrahima S. Sow
 
 import os
 
+from apps.command.constants import file_ids_str
 from core import logger
 from core.data_handler import extract_time_from_filename
 from hal.configuration import SATELLITE
@@ -63,16 +64,7 @@ class MSG_ID:
     SAT_HEARTBEAT = 0x01
 
     # SAT TM frames, requested by GS
-    SAT_TM_NOMINAL = 0x02
-    SAT_TM_HAL = 0x03
-    SAT_TM_STORAGE = 0x04
-    SAT_TM_PAYLOAD = 0x05
-
-    # SAT ACK, in response to GS commands
-    SAT_ACK = 0x0F
-
-    # SAT file metadata and file content messages
-    # SAT TM frames, requested by GS
+    SAT_TM_NOMINAL = 0x05
     SAT_TM_HAL = 0x02
     SAT_TM_STORAGE = 0x03
     SAT_TM_PAYLOAD = 0x04
@@ -102,9 +94,6 @@ class MSG_ID:
 
 
 class SATELLITE_RADIO:
-    # Hardware abstraction for satellite
-    sat = SATELLITE
-
     # Comms state
     state = COMMS_STATE.TX_HEARTBEAT
 
@@ -271,7 +260,11 @@ class SATELLITE_RADIO:
 
     @classmethod
     def data_available(cls):
-        return SATELLITE.RADIO.RX_available()
+        if SATELLITE.RADIO_AVAILABLE:
+            return SATELLITE.RADIO.RX_available()
+        else:
+            logger.error("[COMMS ERROR] RADIO no longer active on SAT")
+            return False
 
     """
         Name: file_get_metadata
@@ -293,8 +286,9 @@ class SATELLITE_RADIO:
             # Valid filepath from DH, set size and message count
             file_stat = os.stat(cls.filepath)
 
-            # TODO: Associate file IDs with subsystems
-            cls.file_ID = 0x01
+            # Extract file_tag from filepath
+            file_tag = cls.filepath.split("/")[2]
+            cls.file_ID = file_ids_str[file_tag]
 
             # Extract file_time from filepath
             cls.file_time = extract_time_from_filename(cls.filepath)
@@ -318,9 +312,18 @@ class SATELLITE_RADIO:
 
         else:
             logger.warning("[COMMS ERROR] Undefined TX filepath")
-            cls.file_array = bytes([0x00, 0x00, 0x00, 0x00])
+            cls.file_array = bytes([0x00])
 
-            return 4
+            # Return file array size
+            return 1
+
+        # Check if the sequence count is valid
+        if sq_cnt >= cls.file_message_count:
+            logger.warning("[COMMS ERROR] Invalid sequence count")
+            cls.file_array = bytes([0x00])
+
+            # Return file array size
+            return 1
 
         # Seek to the correct sq_cnt
         if sq_cnt != cls.file_message_count - 1:
@@ -425,13 +428,15 @@ class SATELLITE_RADIO:
             # Check if request matches stored filepath
             if cls.file_ID != int.from_bytes(packet[0:1], "big"):
                 # File does not match
-                logger.warning("[COMMS ERROR] File ID does not match")
+                bad_id = int.from_bytes(packet[0:1], "big")
+                logger.warning(f"[COMMS ERROR] File ID does not match {cls.file_ID}, {bad_id}")
                 return False
 
             # Check if request matches stored file time
             elif cls.file_time != int.from_bytes(packet[1:5], "big"):
                 # File does not match
-                logger.warning("[COMMS ERROR] File time does not match")
+                bad_time = int.from_bytes(packet[1:5], "big")
+                logger.warning(f"[COMMS ERROR] File time does not match {cls.file_time}, {bad_time}")
                 return False
 
             else:
@@ -448,7 +453,10 @@ class SATELLITE_RADIO:
         # Get packet from radio over SPI
         # Assumes packet is in FIFO buffer
 
-        packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
+        if SATELLITE.RADIO_AVAILABLE:
+            packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
+        else:
+            logger.error("[COMMS ERROR] RADIO no longer active on SAT")
 
         # Check if packet exists
         if packet is None:
@@ -467,7 +475,10 @@ class SATELLITE_RADIO:
             cls.rx_gs_len = 0
             return cls.rx_gs_cmd
 
-        cls.rx_message_rssi = SATELLITE.RADIO.rssi()
+        if SATELLITE.RADIO_AVAILABLE:
+            cls.rx_message_rssi = SATELLITE.RADIO.rssi()
+        else:
+            logger.error("[COMMS ERROR] RADIO no longer active on SAT")
 
         # Unpack source header
         cls.rx_src_id = int.from_bytes(packet[0:1], "big")
@@ -521,34 +532,14 @@ class SATELLITE_RADIO:
         else:
             cls.rx_payload = bytearray()
 
-        # Internal handling for file requests
-        if cls.rx_gs_cmd == MSG_ID.GS_CMD_FILE_METADATA:
+        if cls.rx_gs_cmd == MSG_ID.GS_CMD_FILE_PKT:
             if cls.check_rq_file_params(packet[4:]) is False:
                 # Filepath does not match
 
-                # TODO: Replace error with a filepath request from the CDH
+                # Error, send down empty file array to signal the error
                 logger.warning("[COMMS ERROR] Filepath requested from the GS does not exist")
-                cls.rx_gs_cmd = 0x00
-                cls.rx_sq_cnt = 0
-                cls.rx_gs_len = 0
-                return cls.rx_gs_cmd
-
-            else:
-                # Filepath matches, move forward with request
-                pass
-
-        elif cls.rx_gs_cmd == MSG_ID.GS_CMD_FILE_PKT:
-            if cls.check_rq_file_params(packet[4:]) is False:
-                # Filepath does not match
-
-                # Error, currently just go back to heartbeat state
-                logger.warning("[COMMS ERROR] Filepath requested from the GS does not exist")
-                cls.rx_gs_cmd = 0x00
-                cls.rx_sq_cnt = 0
-                cls.rx_gs_len = 0
-
+                cls.filepath = None
                 cls.rq_sq_cnt = 0
-                return cls.rx_gs_cmd
 
             else:
                 # Filepath matches, move forward with request
@@ -599,8 +590,11 @@ class SATELLITE_RADIO:
         cls.tx_message = bytes([MSG_ID.ARGUS_ID, MSG_ID.GS_ID]) + cls.tx_message
 
         # Send a message to GS
-        cls.sat.RADIO.send(cls.tx_message)
-        cls.crc_count = 0
+        if SATELLITE.RADIO_AVAILABLE:
+            SATELLITE.RADIO.send(cls.tx_message)
+            cls.crc_count = 0
+        else:
+            logger.error("[COMMS ERROR] RADIO no longer active on SAT")
 
         # Return TX message header
         cls.tx_message_ID = int.from_bytes(cls.tx_message[2:3], "big")
