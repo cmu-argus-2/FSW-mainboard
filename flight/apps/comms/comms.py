@@ -8,6 +8,7 @@ Authors: Akshat Sahay, Ibrahima S. Sow
 
 import os
 
+from apps.command.constants import file_ids_str
 from core import logger
 from core.data_handler import extract_time_from_filename
 from hal.configuration import SATELLITE
@@ -285,8 +286,9 @@ class SATELLITE_RADIO:
             # Valid filepath from DH, set size and message count
             file_stat = os.stat(cls.filepath)
 
-            # TODO: Associate file IDs with subsystems
-            cls.file_ID = 0x01
+            # Extract file_tag from filepath
+            file_tag = cls.filepath.split("/")[2]
+            cls.file_ID = file_ids_str[file_tag]
 
             # Extract file_time from filepath
             cls.file_time = extract_time_from_filename(cls.filepath)
@@ -310,9 +312,18 @@ class SATELLITE_RADIO:
 
         else:
             logger.warning("[COMMS ERROR] Undefined TX filepath")
-            cls.file_array = bytes([0x00, 0x00, 0x00, 0x00])
+            cls.file_array = bytes([0x00])
 
-            return 4
+            # Return file array size
+            return 1
+
+        # Check if the sequence count is valid
+        if sq_cnt >= cls.file_message_count:
+            logger.warning("[COMMS ERROR] Invalid sequence count")
+            cls.file_array = bytes([0x00])
+
+            # Return file array size
+            return 1
 
         # Seek to the correct sq_cnt
         if sq_cnt != cls.file_message_count - 1:
@@ -417,13 +428,15 @@ class SATELLITE_RADIO:
             # Check if request matches stored filepath
             if cls.file_ID != int.from_bytes(packet[0:1], "big"):
                 # File does not match
-                logger.warning("[COMMS ERROR] File ID does not match")
+                bad_id = int.from_bytes(packet[0:1], "big")
+                logger.warning(f"[COMMS ERROR] File ID does not match {cls.file_ID}, {bad_id}")
                 return False
 
             # Check if request matches stored file time
             elif cls.file_time != int.from_bytes(packet[1:5], "big"):
                 # File does not match
-                logger.warning("[COMMS ERROR] File time does not match")
+                bad_time = int.from_bytes(packet[1:5], "big")
+                logger.warning(f"[COMMS ERROR] File time does not match {cls.file_time}, {bad_time}")
                 return False
 
             else:
