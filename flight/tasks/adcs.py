@@ -119,7 +119,7 @@ class Task(TemplateTask):
                         status_1, status_2 = self.AD.initialize_mekf()
                         if status_1 != StatusConst.OK:
                             self.failure_messages.append(
-                                StatusConst.get_fail_message(status_1) + " : " + 1 + StatusConst.get_fail_message(status_2)
+                                StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
                             )
                     else:
                         # Update Each sensor with covariances

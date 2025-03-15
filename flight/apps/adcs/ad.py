@@ -129,9 +129,9 @@ class AttitudeDetermination:
             gps_data = DH.get_latest_data("gps")
 
             if gps_data is not None:
-                gps_record_time = [GPS_IDX.TIME_GPS]
-                gps_pos_eci = np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECI_X : GPS_IDX.GPS_ECI_Z + 1]).reshape((3,))
-                gps_vel_eci = np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECI_VX : GPS_IDX.GPS_ECI_VZ + 1]).reshape((3,))
+                gps_record_time = gps_data[GPS_IDX.TIME_GPS]
+                gps_pos_eci = np.array(gps_data[GPS_IDX.GPS_ECI_X : GPS_IDX.GPS_ECI_Z + 1]).reshape((3,))
+                gps_vel_eci = np.array(gps_data[GPS_IDX.GPS_ECI_VX : GPS_IDX.GPS_ECI_VZ + 1]).reshape((3,))
 
                 # Sensor validity check
                 if not is_valid_gps_state(gps_pos_eci, gps_vel_eci):
