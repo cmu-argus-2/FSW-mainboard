@@ -5,6 +5,10 @@ It leverages orbit information, either from the GPS module or uplinked informati
 """
 
 from apps.adcs.consts import StatusConst
+from apps.adcs.frames import ecef_to_eci
+from apps.adcs.utils import is_valid_gps_state
+from apps.telemetry.constants import GPS_IDX
+from core import DataHandler as DH
 from ulab import numpy as np
 
 
@@ -17,18 +21,26 @@ class OrbitPropagator:
     min_timestep = 1  # seconds
     initialized = False
 
-    @classmethod
-    def acceleration(cls, state):
-        # Earth Constants
-        mu_earth = 3.986004418e14  # m^3s^-2 Earth standard gravitational parameter
+    # If Reboot, check log for a pre-existing GPS fix
+    if DH.data_process_exists("gps"):
+        pre_reboot_fix = DH.get_latest_data("gps")
+        if pre_reboot_fix is not None:
+            pre_reboot_time = pre_reboot_fix[GPS_IDX.TIME_GPS]
+            pre_reboot_state = pre_reboot_fix[GPS_IDX.GPS_ECI_X : GPS_IDX.GPS_ECI_VZ + 1]
 
-        acc = -(mu_earth / (np.linalg.norm(state[0:3]) ** 3)) * state[0:3]
-        return acc
+            # Compute validity of GPS measurements
+            if pre_reboot_time is not None and is_valid_gps_state(pre_reboot_state[0:3], pre_reboot_state[3:6]):
+                last_updated_state = pre_reboot_state
+                last_update_time = pre_reboot_time
+                initialized = True
 
     @classmethod
-    def propagate_orbit(cls, current_time: int, last_gps_time: int = None, last_gps_state: np.ndarray = None):
-        if last_gps_state is not None:
-            cls.last_updated_state = last_gps_state
+    def propagate_orbit(cls, current_time: int, last_gps_time: int = None, last_gps_state_eci: np.ndarray = None):
+        if current_time is None:
+            return StatusConst.OPROP_INIT_FAIL, np.zeros((3,)), np.zeros((3,))
+
+        if is_valid_gps_state(last_gps_state_eci[0:3], last_gps_state_eci[3:6]) and last_gps_time is not None:
+            cls.last_updated_state = last_gps_state_eci
             cls.last_update_time = last_gps_time
 
             if not cls.initialized:
@@ -38,23 +50,30 @@ class OrbitPropagator:
                 return StatusConst.OPROP_INIT_FAIL, np.zeros((3,)), np.zeros((3,))
 
         # Propagate orbit
-        num_steps = int((cls.last_update_time - current_time) / cls.min_timestep)
-        if num_steps >= 20:
-            num_steps = 20
-            timestep = (cls.last_update_time - current_time) / num_steps
-        else:
-            timestep = cls.min_timestep
+        position_norm = np.linalg.norm(cls.last_updated_state[0:3])
+        velocity_norm = np.linalg.norm(cls.last_updated_state[3:6])
 
-        for _ in range(num_steps):
-            # Update state based on Euler integration
-            state_derivative = np.concatenate((cls.acceleration(cls.last_updated_state), cls.last_updated_state[3:6]))
-            cls.last_updated_state = cls.last_updated_state + timestep * state_derivative
+        if not is_valid_gps_state(cls.last_updated_state[0:3], cls.last_updated_state[3:6]):
+            # Somehow, we have messed up so bad that our position and/or velocity vectors are garbage.
+            # Reset OrbitProp and wait for a valid GPS fix
+            cls.initialized = False
+            cls.last_updated_state = np.zeros((6,))
+            return StatusConst.OPROP_INIT_FAIL, np.zeros((3,)), np.zeros((3,))
 
-        fractional_state_update = ((cls.last_update_time - current_time) % timestep) * np.concatenate(
-            (cls.acceleration(cls.last_updated_state), cls.last_updated_state[3:6])
+        # Calculate omega (angular velocity) vector
+        omega = np.cross(cls.last_updated_state[0:3], cls.last_updated_state[3:6]) / position_norm**2
+
+        # Calculate rotation angle about omega
+        theta = np.linalg.norm(omega) * (current_time - cls.last_update_time)
+
+        # Rotate position about omega by angle theta
+        cls.last_updated_state[0:3] = position_norm * (
+            cls.last_updated_state[0:3] * np.cos(theta) / position_norm
+            + cls.last_updated_state[3:6] * np.sin(theta) / velocity_norm
         )
-        cls.last_updated_state = cls.last_updated_state + fractional_state_update
-        cls.last_update_time = current_time
+
+        # Compute velocity using (v = omega x r)
+        cls.last_updated_state[3:6] = np.cross(omega, cls.last_updated_state[0:3])
 
         return StatusConst.OK, cls.last_updated_state[0:3], cls.last_updated_state[3:6]
 

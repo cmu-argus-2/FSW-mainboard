@@ -107,14 +107,14 @@ class AttitudeDetermination:
         """
 
         if SATELLITE.IMU_AVAILABLE:
-            mag = np.array(SATELLITE.IMU.mag())
+            mag = 1e-6 * np.array(SATELLITE.IMU.mag())
             query_time = int(time.time())
 
             # Sensor validity check
             if not is_valid_mag_reading(mag):
                 return StatusConst.MAG_FAIL, 0, np.zeros((3,))
             else:
-                return StatusConst.OK, query_time, mag * 1e-6
+                return StatusConst.OK, query_time, mag
 
         else:
             return StatusConst.MAG_FAIL, 0, np.zeros((3,))
