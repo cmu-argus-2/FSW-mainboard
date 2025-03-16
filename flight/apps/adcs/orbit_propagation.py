@@ -38,7 +38,11 @@ class OrbitPropagator:
         if current_time is None:
             return StatusConst.OPROP_INIT_FAIL, np.zeros((3,)), np.zeros((3,))
 
-        if is_valid_gps_state(last_gps_state_eci[0:3], last_gps_state_eci[3:6]) and last_gps_time is not None:
+        if (
+            last_gps_state_eci is not None
+            and is_valid_gps_state(last_gps_state_eci[0:3], last_gps_state_eci[3:6])
+            and last_gps_time is not None
+        ):
             cls.last_updated_state = last_gps_state_eci
             cls.last_update_time = last_gps_time
 
