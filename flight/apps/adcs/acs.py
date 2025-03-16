@@ -35,7 +35,7 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
 
 
 def sun_pointed_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field: np.ndarray) -> np.ndarray:
-    if np.linalg.norm(mag_field) == 0 or np.linlag.norm(sun_vector) == 0:  # Stop ACS if either field is invalid
+    if np.linalg.norm(mag_field) == 0 or np.linalg.norm(sun_vector) == 0:  # Stop ACS if either field is invalid
         u_dir = np.zeros((3,))
     else:
         # Compute Pointing Error

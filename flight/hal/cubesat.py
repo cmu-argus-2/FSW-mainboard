@@ -20,6 +20,11 @@ class CubeSat:
         "_time_ref_boot",
     )
 
+    def __new__(cls, *args, **kwargs):
+        if cls is CubeSat:
+            raise TypeError(f"{cls.__name__} is a static base class and cannot be instantiated.")
+        return super().__new__(cls)
+
     def __init__(self):
         self.__device_list = OrderedDict(
             [
