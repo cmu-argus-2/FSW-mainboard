@@ -5,7 +5,6 @@ It leverages orbit information, either from the GPS module or uplinked informati
 """
 
 from apps.adcs.consts import StatusConst
-from apps.adcs.frames import ecef_to_eci
 from apps.adcs.utils import is_valid_gps_state
 from apps.telemetry.constants import GPS_IDX
 from core import DataHandler as DH
