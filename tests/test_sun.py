@@ -1,5 +1,6 @@
-import pytest
 import numpy as np
+import pytest
+
 import tests.cp_mock  # noqa: F401
 from flight.apps.adcs.consts import StatusConst
 from flight.apps.adcs.sun import ERROR_LUX, compute_body_sun_vector_from_lux, in_eclipse
