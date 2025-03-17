@@ -76,12 +76,11 @@ def compute_body_sun_vector_from_lux(I_vec):
         status = StatusConst.SUN_NO_READINGS
         return status, sun_body
     elif num_valid_readings < 3:
-
         status = StatusConst.SUN_NOT_ENOUGH_READINGS
     elif in_eclipse(I_vec, THRESHOLD_ILLUMINATION_LUX):
         status = StatusConst.SUN_ECLIPSE
         return status, sun_body
-    elif num_valid_readings == 5:  # All readings are valid and unique determination is possible
+    else:
         status = StatusConst.OK
 
     # Extract body vectors and lux readings where the sensor readings are valid
@@ -90,6 +89,7 @@ def compute_body_sun_vector_from_lux(I_vec):
     ]
     N_valid = PhysicalConst.LIGHT_SENSOR_NORMALS[valid_sensor_idxs, :]
     I_valid = [I_vec[idx] for idx in valid_sensor_idxs]
+    print(N_valid)
 
     # Compute the Inverse of the valid light sensor normals using the Moore-Penrose pseudo-inverse
     oprod_sun_inv = invert_3x3_psd(np.dot(N_valid.transpose(), N_valid))

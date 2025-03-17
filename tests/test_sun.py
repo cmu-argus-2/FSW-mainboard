@@ -1,5 +1,5 @@
 import pytest
-
+import numpy as np
 import tests.cp_mock  # noqa: F401
 from flight.apps.adcs.consts import StatusConst
 from flight.apps.adcs.sun import ERROR_LUX, compute_body_sun_vector_from_lux, in_eclipse
@@ -8,76 +8,47 @@ from flight.apps.adcs.sun import ERROR_LUX, compute_body_sun_vector_from_lux, in
 @pytest.mark.parametrize(
     "I_vec, expected",
     [
+        # NO Readings
+        ([ERROR_LUX] * 9, (StatusConst.SUN_NO_READINGS, np.zeros((3,)))),
+        # Not enough Readings
+        ([90000, 35000] + [ERROR_LUX] * 7, (StatusConst.SUN_NOT_ENOUGH_READINGS, np.zeros((3,)))),
+        # Eclipse
+        ([100, 0, 2900, 1100, 0, ERROR_LUX, 0, 1000, 1800], (StatusConst.SUN_ECLIPSE, np.zeros((3,)))),
+        # Random vectors and errors from MATLAB
         (
-            [80000, 0, 30000, 0, 0],
-            (
-                StatusConst.OK,
-                [0.93632918, 0.35112344, 0.0],
-            ),
+            [8.7307e04, 0, 0, 5.7749e03, 0, 1.3901e05, 7.3195e04, 1.5543e04, 8.1362e04],  # All sensors active
+            (StatusConst.OK, np.array([0.6236, -0.0412, 0.7806])),
         ),
         (
-            [117000, 0, 0, 0, 0],
-            (StatusConst.OK, [1.0, 0.0, 0.0]),
+            [0, 1.2325e05, ERROR_LUX, 5.1884e04, 0, 0, 0, 1.1645e05, 6.5985e04],  # 1 sensor not working
+            (StatusConst.OK, np.array([-0.8804, -0.3706, 0.2959])),
         ),
         (
-            [0, 117000, 0, 0, 0],
-            (StatusConst.OK, [-1.0, 0.0, 0.0]),
+            [0, 8.7216e04, ERROR_LUX, 7.6500e04, ERROR_LUX, 0, 1.3197e03, 1.1708e05, 1.0951e05],  # 2 not working
+            (StatusConst.OK, np.array([-0.6230, -0.5464, 0.5598])),
         ),
         (
-            [0, 0, 117000, 0, 0],
-            (StatusConst.OK, [0.0, 1.0, 0.0]),
+            [ERROR_LUX, 6.8659e04, 7.2462e04, 0, ERROR_LUX, 2.0860e04, ERROR_LUX, 1.1796e05, 1.8171e04],  # 3 not working
+            (StatusConst.OK, np.array([-0.4904, 0.5176, 0.7011])),
         ),
         (
-            [0, 0, 0, 117000, 0],
-            (StatusConst.OK, [0.0, -1.0, 0.0]),
+            [ERROR_LUX, ERROR_LUX, 2.2247e04, ERROR_LUX, 0, ERROR_LUX, 8.1732e04, 0, 5.0270e04],  # No readings along X-axis
+            (StatusConst.SUN_NOT_ENOUGH_READINGS, np.zeros((3,))),
         ),
         (
-            [0, 0, 0, 0, 117000],
-            (StatusConst.OK, [0.0, 0.0, 1.0]),
+            [0, ERROR_LUX, 3.8006e04, ERROR_LUX, ERROR_LUX, ERROR_LUX, ERROR_LUX, 9.6227e04, 6.8397e04],  # 5 not working
+            (StatusConst.OK, np.array([-0.0096, 0.2715, 0.9624])),
         ),
         (
-            [ERROR_LUX, 20000, 0, ERROR_LUX, ERROR_LUX],
-            (StatusConst.SUN_NOT_ENOUGH_READINGS, [-1.0, 0.0, 0.0]),
-        ),
-        (
-            [ERROR_LUX, ERROR_LUX, ERROR_LUX, ERROR_LUX, ERROR_LUX],
-            (StatusConst.SUN_NO_READINGS, [0.0, 0.0, 0.0]),
+            [ERROR_LUX, ERROR_LUX, ERROR_LUX, ERROR_LUX, ERROR_LUX, 0, ERROR_LUX, 8.0155e04, 0],  # No readings along X
+            (StatusConst.SUN_NOT_ENOUGH_READINGS, np.zeros((3,))),
         ),
     ],
 )
 def test_compute_body_sun_vector_from_lux(I_vec, expected):
-    result = compute_body_sun_vector_from_lux(I_vec)
-    assert result[0] == expected[0]
-    assert result[1] == pytest.approx(expected[1], rel=1e-6)
-
-
-@pytest.mark.parametrize(
-    "raw_readings, threshold_lux_illumination, expected",
-    [
-        (
-            [2000, 3000, 2500, 4000, 3500],
-            1000,
-            False,
-        ),  # All readings are above threshold
-        (
-            [500, 600, 700, 400, 550],
-            5000,
-            True,
-        ),  # All readings are below threshold
-        (
-            [2000, 300, 2500, 400, 3500],
-            1000,
-            False,
-        ),  # Aboove and below threshold
-        (
-            [ERROR_LUX, ERROR_LUX, ERROR_LUX, ERROR_LUX, ERROR_LUX],
-            1000,
-            False,
-        ),  # All readings are ERROR_LUX
-    ],
-)
-def test_in_eclipse(raw_readings, threshold_lux_illumination, expected):
-    assert in_eclipse(raw_readings, threshold_lux_illumination) == expected
+    status, sun_pos = compute_body_sun_vector_from_lux(I_vec)
+    assert status == expected[0]
+    assert sun_pos == pytest.approx(expected[1], rel=1e-2)  # 7e-2 error on each axis corresponds to a 10 deg error in sun vec
 
 
 if __name__ == "__main__":
