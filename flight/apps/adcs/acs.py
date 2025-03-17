@@ -17,7 +17,7 @@ def readings_are_valid(
         if (
             not isinstance(reading, np.ndarray)
             or reading.shape != ControllerConst.READING_DIM
-            or not isinstance(reading[0], np.float64)
+            or type(reading[0]) is not np.float
         ):
             return False
     return True
