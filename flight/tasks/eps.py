@@ -87,6 +87,18 @@ class Task(TemplateTask):
         self.log_data[EPS_IDX.BATTERY_PACK_TTF] = int(fuel_gauge.read_ttf())
         self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE] = int(fuel_gauge.read_temperature())
 
+    def set_radio_power_alert(self, power):
+        # TODO: set flag or alert to indicate that radio is consuming too much power
+        return None
+    
+    def set_mainboard_power_alert(self, power):
+        # TODO: potentially log error to indicate mainboard is consuming too much power
+        return None
+    
+    def set_jetson_power_alert(self, power):
+        # TODO: potentially log error to indicate Jetson is consuming too much power
+        return None
+
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:
             pass
@@ -110,18 +122,28 @@ class Task(TemplateTask):
                             f"Board Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, "
                             + f"Board Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA "
                         )
+                        power = self.log_data[EPS_IDX.MAINBOARD_VOLTAGE] * self.log_data[EPS_IDX.MAINBOARD_CURRENT] * 1000 # mW
+                        if (power > EPS_POWER_THRESHOLD.MAINBOARD):
+                            self.set_mainboard_power_alert(power)
                     elif location == "JETSON":
                         self.read_vc(sensor, EPS_IDX.JETSON_INPUT_VOLTAGE, EPS_IDX.JETSON_INPUT_CURRENT)
                         self.log_info(
                             f"Jetson Voltage: {self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE]} mV, "
                             + f"Jetson Current: {self.log_data[EPS_IDX.JETSON_INPUT_CURRENT]} mA"
                         )
+                        power = self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE] * self.log_data[EPS_IDX.JETSON_INPUT_CURRENT] * 1000 # mW
+                        if (power > EPS_POWER_THRESHOLD.JETSON):
+                            self.set_jetson_power_alert(power)
                     elif location == "RADIO":
                         self.read_vc(sensor, EPS_IDX.RF_LDO_OUTPUT_VOLTAGE, EPS_IDX.RF_LDO_OUTPUT_CURRENT)
                         self.log_info(
                             f"Radio Voltage: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_VOLTAGE]} mV, "
                             + f"Radio Current: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_CURRENT]} mA"
                         )
+                        power = self.log_data[EPS_IDX.RF_LDO_OUTPUT_VOLTAGE] * self.log_data[EPS_IDX.RF_LDO_OUTPUT_CURRENT] * 1000 # mW
+                        if (power > EPS_POWER_THRESHOLD.RADIO):
+                            self.set_radio_power_alert(power)
+                    # TODO: check torque coil power consumption
 
             self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
             self.log_info(f"CPU temperature: {self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE]} °cC ")
