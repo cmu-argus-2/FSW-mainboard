@@ -1,1 +1,0 @@
-# Command registry and metadata
