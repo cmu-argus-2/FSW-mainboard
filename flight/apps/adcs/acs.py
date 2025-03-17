@@ -14,11 +14,7 @@ def readings_are_valid(
     readings: tuple[np.ndarray],
 ) -> bool:
     for reading in readings:
-        if (
-            not isinstance(reading, np.ndarray)
-            or reading.shape != ControllerConst.READING_DIM
-            or type(reading[0]) is not np.float
-        ):
+        if not isinstance(reading, np.ndarray) or reading.shape != ControllerConst.READING_DIM:
             return False
     return True
 
