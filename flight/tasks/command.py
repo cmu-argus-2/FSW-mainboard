@@ -33,6 +33,8 @@ class Task(TemplateTask):
     def __init__(self, id):
         super().__init__(id)
         self.name = "COMMAND"
+        self.boot_time = 0
+
         self.set_boot_flag = False
         self.set_boot_cnt = 0
 
@@ -70,6 +72,7 @@ class Task(TemplateTask):
                     # Found an old timestamp reference
                     TimeProcessor.time_reference = cdh_data[CDH_IDX.TIME]
                     TimeProcessor.calc_time_offset()
+                    self.set_boot_cnt = 4
                 else:
                     # If no RTC or old time reference available, TPM goes back to init for time.time()
                     self.log_warning("Cannot set time reference as CDH process has no latest data")
@@ -147,20 +150,6 @@ class Task(TemplateTask):
                 self.log_commands[2] = status
                 DH.log_data("cmd_logs", self.log_commands)
 
-        # Set CDH log data
-        self.log_data[CDH_IDX.TIME] = int(TimeProcessor.time())
-        self.log_data[CDH_IDX.SC_STATE] = SM.current_state
-        self.log_data[CDH_IDX.SD_USAGE] = int(DH.SD_usage() / 1000)  # kb - gets updated in the OBDH task
-        self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = self.get_memory_usage()
-        self.log_data[CDH_IDX.REBOOT_COUNT] = 0
-        self.log_data[CDH_IDX.WATCHDOG_TIMER] = 0
-        self.log_data[CDH_IDX.HAL_BITFLAGS] = 0
-
-        # The detumbling error flag is set in the DETUMBLING state
-
-        # Should always run
-        DH.log_data("cdh", self.log_data)
-
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:
             # Startup sequence
@@ -173,7 +162,21 @@ class Task(TemplateTask):
             # Run command processor
             self.command_processor_execution()
 
-        # Periodically log data
+            # Set CDH log data
+            self.log_data[CDH_IDX.TIME] = int(TimeProcessor.time())
+            self.log_data[CDH_IDX.SC_STATE] = SM.current_state
+            self.log_data[CDH_IDX.SD_USAGE] = int(DH.SD_usage() / 1000)  # kb - gets updated in the OBDH task
+            self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = self.get_memory_usage()
+            self.log_data[CDH_IDX.REBOOT_COUNT] = 0
+            self.log_data[CDH_IDX.WATCHDOG_TIMER] = 0
+            self.log_data[CDH_IDX.HAL_BITFLAGS] = 0
+
+            # The detumbling error flag is set in the DETUMBLING state
+
+            # Should always run
+            DH.log_data("cdh", self.log_data)
+
+        # Periodically log to serial
         self.log_print_counter += 1
 
         if self.log_print_counter % self.frequency == 0:
