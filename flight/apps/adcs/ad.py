@@ -97,8 +97,8 @@ class AttitudeDetermination:
                 return StatusConst.GYRO_FAIL, 0, np.zeros((3,))
             elif not (0 <= np.linalg.norm(gyro) <= 1000):  # Setting a very (VERY) large upper bound
                 return StatusConst.GYRO_FAIL, 0, np.zeros((3,))
-
-            return StatusConst.OK, query_time, gyro
+            else:
+                return StatusConst.OK, query_time, gyro
         else:
             return StatusConst.GYRO_FAIL, 0, np.zeros((3,))
 
@@ -142,9 +142,7 @@ class AttitudeDetermination:
                 # Sensor validity check
                 if gps_pos_ecef is None or gps_vel_ecef is None or len(gps_pos_ecef) != 3 or len(gps_vel_ecef) != 3:
                     return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
-                elif not (6.0e6 <= np.linalg.norm(gps_pos_ecef) <= 7.5e6) or not (
-                    3.0e3 <= np.linalg.norm(gps_vel_ecef) <= 1.0e4
-                ):
+                elif not (6.0e6 <= np.linalg.norm(gps_pos_ecef) <= 7.5e6) or not (0 <= np.linalg.norm(gps_vel_ecef) <= 1.0e4):
                     return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
 
                 return StatusConst.OK, gps_record_time, gps_pos_ecef, gps_vel_ecef
