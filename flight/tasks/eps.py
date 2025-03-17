@@ -90,11 +90,11 @@ class Task(TemplateTask):
     def set_radio_power_alert(self, power):
         # TODO: set flag or alert to indicate that radio is consuming too much power
         return None
-    
+
     def set_mainboard_power_alert(self, power):
         # TODO: potentially log error to indicate mainboard is consuming too much power
         return None
-    
+
     def set_jetson_power_alert(self, power):
         # TODO: potentially log error to indicate Jetson is consuming too much power
         return None
@@ -122,7 +122,7 @@ class Task(TemplateTask):
                             f"Board Voltage: {self.log_data[EPS_IDX.MAINBOARD_VOLTAGE]} mV, "
                             + f"Board Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA "
                         )
-                        power = self.log_data[EPS_IDX.MAINBOARD_VOLTAGE] * self.log_data[EPS_IDX.MAINBOARD_CURRENT] * 1000 # mW
+                        power = self.log_data[EPS_IDX.MAINBOARD_VOLTAGE] * self.log_data[EPS_IDX.MAINBOARD_CURRENT] * 1000  # mW
                         if (power > EPS_POWER_THRESHOLD.MAINBOARD):
                             self.set_mainboard_power_alert(power)
                     elif location == "JETSON":
@@ -131,7 +131,7 @@ class Task(TemplateTask):
                             f"Jetson Voltage: {self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE]} mV, "
                             + f"Jetson Current: {self.log_data[EPS_IDX.JETSON_INPUT_CURRENT]} mA"
                         )
-                        power = self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE] * self.log_data[EPS_IDX.JETSON_INPUT_CURRENT] * 1000 # mW
+                        power = self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE] * self.log_data[EPS_IDX.JETSON_INPUT_CURRENT] * 1000  # mW
                         if (power > EPS_POWER_THRESHOLD.JETSON):
                             self.set_jetson_power_alert(power)
                     elif location == "RADIO":
@@ -140,7 +140,7 @@ class Task(TemplateTask):
                             f"Radio Voltage: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_VOLTAGE]} mV, "
                             + f"Radio Current: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_CURRENT]} mA"
                         )
-                        power = self.log_data[EPS_IDX.RF_LDO_OUTPUT_VOLTAGE] * self.log_data[EPS_IDX.RF_LDO_OUTPUT_CURRENT] * 1000 # mW
+                        power = self.log_data[EPS_IDX.RF_LDO_OUTPUT_VOLTAGE] * self.log_data[EPS_IDX.RF_LDO_OUTPUT_CURRENT] * 1000  # mW
                         if (power > EPS_POWER_THRESHOLD.RADIO):
                             self.set_radio_power_alert(power)
                     # TODO: check torque coil power consumption

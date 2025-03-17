@@ -15,6 +15,7 @@ class EPS_SOC_THRESHOLD:
     EXPERIMENT_ENTRY = const(80)
     EXPERIMENT_EXIT = const(60)
 
+
 # Power threshold in mW
 class EPS_POWER_THRESHOLD:
     MAINBOARD = const(600)
