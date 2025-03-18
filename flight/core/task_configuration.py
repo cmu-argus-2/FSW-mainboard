@@ -15,6 +15,6 @@ TASK_CONFIG = {
     TASK.OBDH: {"Task": obdh, "Frequency": 0.5, "Priority": 2},
     TASK.COMMS: {"Task": comms, "Frequency": 1, "Priority": 2, "ScheduleLater": True},
     TASK.ADCS: {"Task": adcs, "Frequency": 5, "Priority": 1},
-    TASK.GPS: {"Task": gps, "Frequency": 0.025, "Priority": 3, "ScheduleLater": True},
+    TASK.GPS: {"Task": gps, "Frequency": 0.2, "Priority": 3, "ScheduleLater": True},
     TASK.PAYLOAD: {"Task": payload, "Frequency": 0.1, "Priority": 3, "ScheduleLater": True},
 }
