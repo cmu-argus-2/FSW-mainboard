@@ -50,7 +50,7 @@ class Task(TemplateTask):
                 if not DH.data_process_exists("gps"):
                     # TODO : This format is no longer correct
                     # data_format = "LBBBHIiiiiHHHHHiiiiii"
-                    data_format = "fBBBHLllllHHHHHllllllllllll"
+                    data_format = "fBBBHLllllHHHHHllllll"
                     DH.register_data_process("gps", data_format, True, data_limit=100000, write_interval=1)
 
                 if SATELLITE.GPS.update():
@@ -86,4 +86,5 @@ class Task(TemplateTask):
                     # Do nothing
                     self.log_info("GPS module did not get a fix")
 
+            # self.log_info(f"{dict(zip(self.data_keys[-6:], self.log_data[-6:]))}")
             self.log_info(f"GPS ECEF: {self.log_data[GPS_IDX.GPS_ECEF_X:]}")
