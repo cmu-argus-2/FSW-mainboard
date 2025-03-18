@@ -2,7 +2,6 @@
 
 # import time
 
-from apps.adcs.frames import convert_ecef_state_to_eci
 from apps.telemetry.constants import GPS_IDX
 from core import DataHandler as DH
 from core import TemplateTask
