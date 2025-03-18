@@ -63,18 +63,9 @@ class Task(TemplateTask):
 
                 # Check if the module sent a valid nav data message
                 if SATELLITE.GPS.update():
-                    # Log info
-                    self.log_info(f"GPS Time: {self.log_data[GPS_IDX.TIME_GPS]}")
-                    self.log_info(f"GPS Fix Mode: {self.log_data[GPS_IDX.GPS_FIX_MODE]}")
-                    self.log_info(f"Number of SV: {self.log_data[GPS_IDX.GPS_NUMBER_OF_SV]}")
-
                     # Check if the fix is at least a 2D fix (fix_mode >= 1)
                     if SATELLITE.GPS.has_fix():
-                        # If both are true, trust the fix and log
-                        if SATELLITE.GPS.fix_mode == 5:
-                            # Time fix: update the RTC's time reference
-                            TimeProcessor.set_time(SATELLITE.GPS.unix_time)
-
+                        # If a valid message and a fix, update GPS log info
                         self.log_info("GPS module got a valid fix")
                         self.log_info(f"GPS ECEF: {self.log_data[GPS_IDX.GPS_ECEF_X:]}")
                         self.log_data[GPS_IDX.TIME_GPS] = SATELLITE.GPS.unix_time
@@ -103,6 +94,11 @@ class Task(TemplateTask):
 
                     else:
                         self.log_info("GPS module did not get a valid fix")
+
+                    # Log info
+                    self.log_info(f"GPS Time: {int(self.log_data[GPS_IDX.TIME_GPS])}")
+                    self.log_info(f"GPS Fix Mode: {self.log_data[GPS_IDX.GPS_FIX_MODE]}")
+                    self.log_info(f"Number of SV: {self.log_data[GPS_IDX.GPS_NUMBER_OF_SV]}")
 
                 else:
                     # Did not get a valid nav data message

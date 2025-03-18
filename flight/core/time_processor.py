@@ -69,7 +69,7 @@ class TimeProcessor:
     @classmethod
     def set_time(self, unix_timestamp):
         if SATELLITE.RTC_AVAILABLE:
-            if time.mktime(SATELLITE.RTC.datetime) - unix_timestamp > 0:
+            if time.mktime(SATELLITE.RTC.datetime) != unix_timestamp:
                 # RTC exists, update RTC time
                 SATELLITE.RTC.set_datetime(time.localtime(unix_timestamp))
 
