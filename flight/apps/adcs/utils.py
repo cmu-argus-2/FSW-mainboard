@@ -6,7 +6,7 @@ from ulab import numpy as np
 
 _MIN_POSITION_NORM = 6.0e6  # Min allowed position is 6000 km from Earth centre (~300km underground)
 _MAX_POSITION_NORM = 7.5e6  # Max allowed position is 7500 km (~1200km altitude)
-_MIN_VELOCITY_NORM = 1.0e2  # Min alllowed ECI velocity is 100 m/s (Earth surface velocity is ~480 m/s)
+_MIN_VELOCITY_NORM = 0.0  # Min alllowed ECEF velocity is 0 m/s (Earth surface velocity is 0 m/s)
 _MAX_VELOCITY_NORM = 1.0e4  # Max allowed velocity is 10 km/s (Expected rbital velocity is 7-8km/s)
 
 _MIN_MAG_NORM = 1.0e-5  # Min allowed magnetometer reading is 10 uT (Expected field strength in orbit is ~40 uT)
@@ -16,7 +16,7 @@ _MAX_GYRO_NORM = 1.0e3  # Max allowed gyro angular velocity is 1000 rad/s (Expec
 
 
 def is_valid_gps_state(r: np.ndarray, v: np.ndarray) -> bool:
-    # GPS position validity checks
+    # GPS position validity checks on ECEF state
     # Check Position
     if r is None or r.shape != (3,) or not (_MIN_POSITION_NORM <= np.linalg.norm(r) <= _MAX_POSITION_NORM):
         return False

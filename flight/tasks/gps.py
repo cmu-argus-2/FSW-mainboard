@@ -35,15 +35,9 @@ class Task(TemplateTask):
         "GPS_ECEF_VX",
         "GPS_ECEF_VY",
         "GPS_ECEF_VZ",
-        "GPS_ECI_X",
-        "GPS_ECI_Y",
-        "GPS_ECI_Z",
-        "GPS_ECI_VX",
-        "GPS_ECI_VY",
-        "GPS_ECI_VZ",
     ]"""
 
-    log_data = [0] * 27
+    log_data = [0] * 21
 
     def __init__(self, id):
         super().__init__(id)
@@ -88,21 +82,6 @@ class Task(TemplateTask):
                         self.log_data[GPS_IDX.GPS_ECEF_VX] = SATELLITE.GPS.ecef_vx  # cm/s
                         self.log_data[GPS_IDX.GPS_ECEF_VY] = SATELLITE.GPS.ecef_vy
                         self.log_data[GPS_IDX.GPS_ECEF_VZ] = SATELLITE.GPS.ecef_vz
-
-                        # Convert ECEFs to ECI
-                        ecef_position = 1e-2 * np.array([SATELLITE.GPS.ecef_x, SATELLITE.GPS.ecef_y, SATELLITE.GPS.ecef_z])
-                        ecef_velocity = 1e-2 * np.array([SATELLITE.GPS.ecef_vx, SATELLITE.GPS.ecef_vy, SATELLITE.GPS.ecef_vz])
-
-                        eci_position, eci_velocity = convert_ecef_state_to_eci(
-                            ecef_position, ecef_velocity, SATELLITE.GPS.unix_time
-                        )
-
-                        self.log_data[GPS_IDX.GPS_ECI_X] = int(eci_position[0])  # m
-                        self.log_data[GPS_IDX.GPS_ECI_Y] = int(eci_position[1])
-                        self.log_data[GPS_IDX.GPS_ECI_Z] = int(eci_position[2])
-                        self.log_data[GPS_IDX.GPS_ECI_VX] = int(eci_velocity[0])  # m/s
-                        self.log_data[GPS_IDX.GPS_ECI_VY] = int(eci_velocity[1])
-                        self.log_data[GPS_IDX.GPS_ECI_VZ] = int(eci_velocity[2])
 
                         DH.log_data("gps", self.log_data)
                 else:

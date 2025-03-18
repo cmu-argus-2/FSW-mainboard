@@ -12,6 +12,7 @@ magnetic field data on the mainboard.
 import time
 
 from apps.adcs.consts import Modes, StatusConst
+from apps.adcs.frames import convert_ecef_state_to_eci
 from apps.adcs.igrf import igrf_eci
 from apps.adcs.math import R_to_quat, quat_to_R, quaternion_multiply, skew
 from apps.adcs.orbit_propagation import OrbitPropagator
@@ -130,13 +131,15 @@ class AttitudeDetermination:
 
             if gps_data is not None:
                 gps_record_time = gps_data[GPS_IDX.TIME_GPS]
-                gps_pos_eci = np.array(gps_data[GPS_IDX.GPS_ECI_X : GPS_IDX.GPS_ECI_Z + 1]).reshape((3,))
-                gps_vel_eci = np.array(gps_data[GPS_IDX.GPS_ECI_VX : GPS_IDX.GPS_ECI_VZ + 1]).reshape((3,))
+                gps_pos_ecef = 1e-2 * np.array(gps_data[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,))
+                gps_vel_ecef = 1e-2 * np.array(gps_data[GPS_IDX.GPS_ECEF_VX : GPS_IDX.GPS_ECEF_VZ + 1]).reshape((3,))
 
                 # Sensor validity check
-                if not is_valid_gps_state(gps_pos_eci, gps_vel_eci):
+                if not is_valid_gps_state(gps_pos_ecef, gps_vel_ecef):
                     return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
                 else:
+                    # Convert ECEF to ECI
+                    gps_pos_eci, gps_vel_eci = convert_ecef_state_to_eci(gps_pos_ecef, gps_vel_ecef, gps_record_time)
                     return StatusConst.OK, gps_record_time, gps_pos_eci, gps_vel_eci
 
             else:

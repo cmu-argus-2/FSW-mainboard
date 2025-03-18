@@ -5,6 +5,7 @@ It leverages orbit information, either from the GPS module or uplinked informati
 """
 
 from apps.adcs.consts import StatusConst
+from apps.adcs.frames import convert_ecef_state_to_eci
 from apps.adcs.utils import is_valid_gps_state
 from apps.telemetry.constants import GPS_IDX
 from core import DataHandler as DH
@@ -15,6 +16,7 @@ class OrbitPropagator:
     # Storage
     last_update_time = 0
     last_updated_state = np.zeros((6,))
+    last_valid_gps_time = 0
 
     # Propagation settings
     min_timestep = 1  # seconds
@@ -25,11 +27,13 @@ class OrbitPropagator:
         pre_reboot_fix = DH.get_latest_data("gps")
         if pre_reboot_fix is not None:
             pre_reboot_time = pre_reboot_fix[GPS_IDX.TIME_GPS]
-            pre_reboot_state = pre_reboot_fix[GPS_IDX.GPS_ECI_X : GPS_IDX.GPS_ECI_VZ + 1]
+            pre_reboot_state = pre_reboot_fix[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_VZ + 1]
 
             # Compute validity of GPS measurements
             if pre_reboot_time is not None and is_valid_gps_state(pre_reboot_state[0:3], pre_reboot_state[3:6]):
-                last_updated_state = pre_reboot_state
+                last_updated_state[0:3], last_updated_state[3:6] = convert_ecef_state_to_eci(
+                    pre_reboot_state[0:3], pre_reboot_state[3:6], pre_reboot_time
+                )
                 last_update_time = pre_reboot_time
                 initialized = True
 
@@ -39,12 +43,14 @@ class OrbitPropagator:
             return StatusConst.OPROP_INIT_FAIL, np.zeros((3,)), np.zeros((3,))
 
         if (
-            last_gps_state_eci is not None
+            last_gps_time != cls.last_valid_gps_time
+            and last_gps_state_eci is not None
             and is_valid_gps_state(last_gps_state_eci[0:3], last_gps_state_eci[3:6])
             and last_gps_time is not None
         ):
             cls.last_updated_state = last_gps_state_eci
             cls.last_update_time = last_gps_time
+            cls.last_valid_gps_time = last_gps_time
 
             if not cls.initialized:
                 cls.initialized = True
@@ -77,6 +83,9 @@ class OrbitPropagator:
 
         # Compute velocity using (v = omega x r)
         cls.last_updated_state[3:6] = np.cross(omega, cls.last_updated_state[0:3])
+
+        # Update last update time
+        cls.last_update_time = current_time
 
         return StatusConst.OK, cls.last_updated_state[0:3], cls.last_updated_state[3:6]
 
