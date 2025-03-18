@@ -8,7 +8,6 @@ from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
 from hal.configuration import SATELLITE
-from ulab import numpy as np
 
 
 class Task(TemplateTask):
