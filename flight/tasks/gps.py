@@ -51,11 +51,11 @@ class Task(TemplateTask):
         self.name = "GPS"
 
     async def main_task(self):
-        if SATELLITE.GPS_AVAILABLE:
-            if SM.current_state == STATES.STARTUP:
-                pass
+        if SM.current_state == STATES.STARTUP:
+            pass
 
-            else:
+        else:
+            if SATELLITE.GPS_AVAILABLE:
                 if not DH.data_process_exists("gps"):
                     data_format = "fBBBHLllllHHHHHllllll"
                     DH.register_data_process("gps", data_format, True, data_limit=100000, write_interval=1)
@@ -103,6 +103,6 @@ class Task(TemplateTask):
                     # Did not get a valid nav data message
                     self.log_info("GPS module did not send a valid nav data message")
 
-        else:
-            # GPS is not active in HAL
-            self.log_warning("GPS module is no longer active on the SC")
+            else:
+                # GPS is not active in HAL
+                self.log_warning("GPS module is no longer active on the SC")
