@@ -5,6 +5,7 @@ from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
+from core.time_processor import TimeProcessor
 from hal.configuration import SATELLITE
 
 """
@@ -70,6 +71,10 @@ class Task(TemplateTask):
                     # Check if the fix is at least a 2D fix (fix_mode >= 1)
                     if SATELLITE.GPS.has_fix():
                         # If both are true, trust the fix and log
+                        if SATELLITE.GPS.fix_mode == 5:
+                            # Time fix: update the RTC's time reference
+                            TimeProcessor.set_time(SATELLITE.GPS.unix_time)
+
                         self.log_info("GPS module got a valid fix")
                         self.log_info(f"GPS ECEF: {self.log_data[GPS_IDX.GPS_ECEF_X:]}")
                         self.log_data[GPS_IDX.TIME_GPS] = SATELLITE.GPS.unix_time

@@ -69,12 +69,18 @@ class TimeProcessor:
     @classmethod
     def set_time(self, unix_timestamp):
         if SATELLITE.RTC_AVAILABLE:
-            # RTC exists, update RTC time
-            SATELLITE.RTC.set_datetime(time.localtime(unix_timestamp))
+            if time.mktime(SATELLITE.RTC.datetime) - unix_timestamp > 0:
+                # RTC exists, update RTC time
+                SATELLITE.RTC.set_datetime(time.localtime(unix_timestamp))
 
-            # Update TPM time reference and offset, in case RTC fails later
-            self.time_reference = unix_timestamp
-            self.calc_time_offset()
+                # Update TPM time reference and offset, in case RTC fails later
+                self.time_reference = unix_timestamp
+                self.calc_time_offset()
+
+            else:
+                # Time reference to set is the same as the existing time reference
+                pass
+
         else:
             # RTC does not exist, update TPM time reference and offset
             self.time_reference = unix_timestamp
