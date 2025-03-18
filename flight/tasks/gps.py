@@ -5,7 +5,6 @@ from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
-from core.time_processor import TimeProcessor
 from hal.configuration import SATELLITE
 
 """
