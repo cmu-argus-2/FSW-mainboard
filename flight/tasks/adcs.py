@@ -176,6 +176,10 @@ class Task(TemplateTask):
                                 self.failure_messages.append(
                                     StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
                                 )
+                            elif status_2 != StatusConst.OK:
+                                self.failure_messages.append(
+                                    StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
+                                )
                         else:
                             # Update Each sensor with covariances
                             status_1, status_2 = self.AD.position_update(self.time)
