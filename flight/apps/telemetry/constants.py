@@ -132,7 +132,7 @@ class GPS_IDX:
 
 
 class PAYLOAD_IDX:
-    pass
+    MSG_STATUS = const(0)
 
 
 class STORAGE_IDX:

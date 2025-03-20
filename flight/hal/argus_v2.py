@@ -51,11 +51,13 @@ class ArgusV2Interfaces:
     UART1_BAUD = const(115200)
     UART1_TX = board.TX1  # GPIO4
     UART1_RX = board.RX1  # GPIO5
-    UART1 = UART(UART1_TX, UART1_RX, baudrate=UART1_BAUD)
+    # UART1 = UART(UART1_TX, UART1_RX, baudrate=UART1_BAUD)
 
+    JETSON_UART_BAUD = const(57600)
     JETSON_UART_TX = board.MISO1  # GPIO16
     JETSON_UART_RX = board.JETSON_CS
-    JETSON_UART = UART(JETSON_UART_TX, JETSON_UART_RX)
+    JETSON_UART = UART(JETSON_UART_TX, JETSON_UART_RX, baudrate=JETSON_UART_BAUD)
+
 
 class ArgusV2Components:
     """
@@ -244,6 +246,7 @@ class ArgusV2(CubeSat):
         self.__debug = debug
 
         super().__init__()
+        self.__payload_uart = ArgusV2Components.PAYLOAD_UART
 
     ######################## BOOT SEQUENCE ########################
 
@@ -532,7 +535,7 @@ class ArgusV2(CubeSat):
             if self.__debug:
                 raise e
             return [None, Errors.MAX17205_NOT_INITIALIZED]
-    
+
     def __payload_boot(self, _) -> list[object, int]:
         """fuel_gauge_boot: Boot sequence for the fuel gauge"""
 
