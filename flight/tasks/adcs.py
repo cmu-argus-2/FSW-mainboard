@@ -117,7 +117,7 @@ class Task(TemplateTask):
                 else:
                     if not self.AD.initialized:
                         status_1, status_2 = self.AD.initialize_mekf()
-                        if status_1 != StatusConst.OK:
+                        if status_1 != StatusConst.OK or status_2 != StatusConst.OK:
                             self.failure_messages.append(
                                 StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
                             )
@@ -172,11 +172,7 @@ class Task(TemplateTask):
                     else:
                         if not self.AD.initialized:
                             status_1, status_2 = self.AD.initialize_mekf()
-                            if status_1 != StatusConst.OK:
-                                self.failure_messages.append(
-                                    StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
-                                )
-                            elif status_2 != StatusConst.OK:
+                            if status_1 != StatusConst.OK or status_2 != StatusConst.OK:
                                 self.failure_messages.append(
                                     StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
                                 )
