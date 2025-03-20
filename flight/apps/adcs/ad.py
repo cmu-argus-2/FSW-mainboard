@@ -157,19 +157,15 @@ class AttitudeDetermination:
         - This function is not directly written into init to allow multiple retires of initialization
         - Sets the initialized attribute of the class once done
         """
-        # Get a valid GPS position
-        gps_status, gps_record_time, gps_pos_eci, gps_vel_eci = self.read_gps()
+        # Get a valid position from OrbitProp
+        _, gps_record_time, gps_pos_eci, gps_vel_eci = self.read_gps()
 
-        if gps_status == StatusConst.GPS_FAIL:
-            return StatusConst.MEKF_INIT_FAIL, StatusConst.GPS_FAIL
-        else:
-            # Propagate from GPS measurement record
-            current_time = int(time.time())
-            gps_state_eci = np.concatenate((gps_pos_eci, gps_vel_eci))
-            status, true_pos_eci, true_vel_eci = OrbitPropagator.propagate_orbit(current_time, gps_record_time, gps_state_eci)
+        current_time = int(time.time())
+        gps_state_eci = np.concatenate((gps_pos_eci, gps_vel_eci))
+        status, true_pos_eci, true_vel_eci = OrbitPropagator.propagate_orbit(current_time, gps_record_time, gps_state_eci)
 
-            if status == StatusConst.OPROP_INIT_FAIL:
-                return StatusConst.MEKF_INIT_FAIL, StatusConst.OPROP_INIT_FAIL
+        if status == StatusConst.OPROP_INIT_FAIL:
+            return StatusConst.MEKF_INIT_FAIL, StatusConst.OPROP_INIT_FAIL
 
         # Get a valid sun position
         sun_status, sun_pos_body, lux_readings = self.read_sun_position()
