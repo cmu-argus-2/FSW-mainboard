@@ -38,11 +38,6 @@ class ArgusV2Interfaces:
     except Exception:
         I2C1 = None
 
-    JET_SPI_SCK = board.CLK1  # GPIO10
-    JET_SPI_MOSI = board.MOSI1  # GPIO11
-    JET_SPI_MISO = board.MISO1  # GPIO08
-    JET_SPI = SPI(JET_SPI_SCK, MOSI=JET_SPI_MOSI, MISO=JET_SPI_MISO)
-
     SPI_SCK = board.CLK0  # GPIO18
     SPI_MOSI = board.MOSI0  # GPIO19
     SPI_MISO = board.MISO0  # GPIO16
@@ -58,6 +53,9 @@ class ArgusV2Interfaces:
     UART1_RX = board.RX1  # GPIO5
     UART1 = UART(UART1_TX, UART1_RX, baudrate=UART1_BAUD)
 
+    JETSON_UART_TX = board.MISO1  # GPIO16
+    JETSON_UART_RX = board.JETSON_CS
+    JETSON_UART = UART(JETSON_UART_TX, JETSON_UART_RX)
 
 class ArgusV2Components:
     """
@@ -205,9 +203,7 @@ class ArgusV2Components:
     ########
 
     # PAYLOAD(JETSON)
-    PAYLOAD_SPI = ArgusV2Interfaces.JET_SPI
-    PAYLOAD_CS = board.JETSON_CS  # GPIO9
-    PAYLOAD_ENABLE = board.JETSON_EN  # GPIO24
+    PAYLOAD_UART = ArgusV2Interfaces.JETSON_UART
 
     #########
     # UART0 #
@@ -536,6 +532,11 @@ class ArgusV2(CubeSat):
             if self.__debug:
                 raise e
             return [None, Errors.MAX17205_NOT_INITIALIZED]
+    
+    def __payload_boot(self, _) -> list[object, int]:
+        """fuel_gauge_boot: Boot sequence for the fuel gauge"""
+
+        self.__payload_uart = ArgusV2Components.PAYLOAD_UART
 
     def reboot_device(self, device_name: str):
         if device_name not in self.__device_list:

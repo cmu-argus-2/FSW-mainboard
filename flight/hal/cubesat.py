@@ -250,12 +250,12 @@ class CubeSat:
         """
         return self.key_in_device_list("SDCARD") and self.__device_list["SDCARD"].device is not None
 
-    # @property
-    # def PAYLOADUART(self):
-    #     """PAYLOAD_EN: Returns the payload enable object
-    #     :return: object or None
-    #     """
-    #     return self.__payload_uart
+    @property
+    def PAYLOADUART(self):
+        """PAYLOAD_EN: Returns the payload enable object
+        :return: object or None
+        """
+        return self.__payload_uart
 
     # @property
     # def PAYLOADUART_AVAILABLE(self) -> bool:
