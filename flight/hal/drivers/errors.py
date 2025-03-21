@@ -21,4 +21,4 @@ class Errors:
     RADIO_NOT_INITIALIZED = const(0x50)
 
     # Power Monitor Errors
-    BOARD_POWER_MONITOR_NOT_INITIALIZED = const(0x160)
+    POWER_MONITOR_NOT_INITIALIZED = const(0x160)

@@ -129,6 +129,10 @@ class ArgusV3Components:
     RADIO_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
     RADIO_POWER_MONITOR_I2C_ADDRESS = const(0x42)
 
+    # JETSON POWER MONITOR
+    JETSON_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
+    JETSON_POWER_MONITOR_I2C_ADDRESS = const(0x43)
+
     # RTC
     RTC_I2C = ArgusV3Interfaces.I2C1
     RTC_I2C_ADDRESS = const(0x68)
@@ -316,6 +320,7 @@ class ArgusV3(CubeSat):
             "BOARD_PWR": [ArgusV3Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV3Components.BOARD_POWER_MONITOR_I2C],
             "RADIO_PWR": [ArgusV3Components.RADIO_POWER_MONITOR_I2C_ADDRESS, ArgusV3Components.RADIO_POWER_MONITOR_I2C],
             "GPS_PWR": [ArgusV3Components.GPS_POWER_MONITOR_I2C_ADDRESS, ArgusV3Components.GPS_POWER_MONITOR_I2C],
+            "JETSON_PWR": [ArgusV3Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV3Components.JETSON_POWER_MONITOR_I2C],
             "XP_PWR": [
                 ArgusV3Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
                 ArgusV3Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C,
