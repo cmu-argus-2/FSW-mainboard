@@ -20,29 +20,30 @@ class StatusConst:
 
     # Algorithm Failures
     MEKF_INIT_FAIL = 1
-    OPROP_INIT_FAIL = 2
-    TRIAD_FAIL = 3
-    POS_UPDATE_FAIL = 4
-    SUN_UPDATE_FAIL = 5
-    MAG_UPDATE_FAIL = 6
-    EKF_UPDATE_FAIL = 7
-    TRUE_SUN_MAP_FAIL = 8
-    TRUE_MAG_MAP_FAIL = 9
+    MEKF_INIT_FORCE = 2
+    OPROP_INIT_FAIL = 3
+    TRIAD_FAIL = 4
+    POS_UPDATE_FAIL = 5
+    SUN_UPDATE_FAIL = 6
+    MAG_UPDATE_FAIL = 7
+    EKF_UPDATE_FAIL = 8
+    TRUE_SUN_MAP_FAIL = 9
+    TRUE_MAG_MAP_FAIL = 10
 
     # Sensor based Failures
     # Gyro
-    GYRO_FAIL = 11
+    GYRO_FAIL = 21
     # Magnetometer
-    MAG_FAIL = 21
+    MAG_FAIL = 31
     # GPS
-    GPS_FAIL = 31
+    GPS_FAIL = 41
     # Light Sensor
-    SUN_NO_READINGS = 41
-    SUN_NOT_ENOUGH_READINGS = 42
-    SUN_ECLIPSE = 43
+    SUN_NO_READINGS = 51
+    SUN_NOT_ENOUGH_READINGS = 52
+    SUN_ECLIPSE = 53
 
     # Misc
-    ZERO_NORM = 51
+    ZERO_NORM = 61
 
     # Success Status Constants
     OK = 0
@@ -50,6 +51,7 @@ class StatusConst:
     # Failure Messages
     _FAIL_MESSAGES = {
         MEKF_INIT_FAIL: "MEKF init failure",
+        MEKF_INIT_FORCE: "Force initializing MEKF",
         OPROP_INIT_FAIL: "Orbit Prop Init failure",
         TRIAD_FAIL: "TRIAD failure",
         POS_UPDATE_FAIL: "Position update failure",
@@ -65,6 +67,7 @@ class StatusConst:
         SUN_NOT_ENOUGH_READINGS: "Insufficient readings",
         SUN_ECLIPSE: "In eclipse",
         ZERO_NORM: "Zero-normed vector",
+        OK: "Success",
     }
 
     @classmethod
@@ -127,6 +130,13 @@ class ControllerConst:
     """
     Constants associated with Controller Behavior
     """
+
+    # Dimensions of sensor readings and control input
+    READING_DIM = (3,)
+    CONTROL_DIM = (3,)
+
+    # Fallback control input
+    FALLBACK_CONTROL = np.zeros(CONTROL_DIM)
 
     # Spin-stabilized Constants
     OMEGA_MAG_TARGET = 0.1125  # Target angular velocity along major axis

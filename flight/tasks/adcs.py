@@ -2,7 +2,7 @@
 
 import time
 
-from apps.adcs.acs import spin_stabilizing_controller, sun_pointed_controller, zero_all_coils
+from apps.adcs.acs import mcm_coil_allocator, spin_stabilizing_controller, sun_pointing_controller, zero_all_coils
 from apps.adcs.ad import AttitudeDetermination
 from apps.adcs.consts import Modes, StatusConst
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX
@@ -117,7 +117,7 @@ class Task(TemplateTask):
                 else:
                     if not self.AD.initialized:
                         status_1, status_2 = self.AD.initialize_mekf()
-                        if status_1 != StatusConst.OK:
+                        if status_1 != StatusConst.OK or status_2 != StatusConst.OK:
                             self.failure_messages.append(
                                 StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
                             )
@@ -172,7 +172,7 @@ class Task(TemplateTask):
                     else:
                         if not self.AD.initialized:
                             status_1, status_2 = self.AD.initialize_mekf()
-                            if status_1 != StatusConst.OK:
+                            if status_1 != StatusConst.OK or status_2 != StatusConst.OK:
                                 self.failure_messages.append(
                                     StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
                                 )
@@ -227,7 +227,7 @@ class Task(TemplateTask):
             mag_field_body = self.AD.state[self.AD.mag_field_idx]
 
             # Control MCMs and obtain coil statuses
-            self.coil_status = spin_stabilizing_controller(omega_unbiased, mag_field_body)
+            dipole_moment = spin_stabilizing_controller(omega_unbiased, mag_field_body)
 
         else:  # Sun-pointed controller
             # Get measurements
@@ -236,7 +236,9 @@ class Task(TemplateTask):
             mag_field_body = self.AD.state[self.AD.mag_field_idx]
 
             # Control MCMs and obtain coil statuses
-            self.coil_status = sun_pointed_controller(sun_pos_body, omega_unbiased, mag_field_body)
+            dipole_moment = sun_pointing_controller(sun_pos_body, omega_unbiased, mag_field_body)
+
+        self.coil_status = mcm_coil_allocator(dipole_moment)
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ LOGGING """
