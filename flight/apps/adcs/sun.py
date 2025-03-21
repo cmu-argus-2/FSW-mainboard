@@ -14,7 +14,8 @@ both for the mode transitions, sun pointing controller accuracy, and attitude de
 
 """
 
-from apps.adcs.consts import StatusConst
+from apps.adcs.consts import PhysicalConst, StatusConst
+from apps.adcs.math import invert_3x3_psd
 from core import logger
 from hal.configuration import SATELLITE
 from micropython import const
@@ -22,7 +23,7 @@ from ulab import numpy as np
 
 MAX_RANGE = const(117000)  # OPT4001
 THRESHOLD_ILLUMINATION_LUX = const(3000)
-NUM_LIGHT_SENSORS = const(5)
+NUM_LIGHT_SENSORS = const(9)
 ERROR_LUX = const(-1)
 
 
@@ -41,7 +42,7 @@ def read_light_sensors():
         lux_readings: list of lux readings on each face. A "ERROR_LUX" reading comes from a dysfunctional sensor.
     """
 
-    faces = ["XP", "XM", "YP", "YM", "ZM"]
+    faces = ["XP", "XM", "YP", "YM", "ZM", "ZP1", "ZP2", "ZP3", "ZP4"]
     lux_readings = []
 
     for face in faces:
@@ -50,9 +51,6 @@ def read_light_sensors():
         except Exception as e:
             logger.warning(f"Error reading {face}: {e}")
             lux_readings.append(ERROR_LUX)
-
-    # Placeholder for the z+ face pyramid reading
-    # lux_readings.append(ERROR_LUX)
 
     return lux_readings
 
@@ -63,7 +61,7 @@ def compute_body_sun_vector_from_lux(I_vec):
 
     Args:
         I_vec: flux values on each face in the following order
-        - X+ face, X- face, Y+ face, Y- face, Z- face
+        - X+ face, X- face, Y+ face, Y- face, Z- face, ZP1 face, ZP2 face, ZP3 face, ZP4 face
 
     Returns:
         sun_body: unit vector from spacecraft to sun expressed in body frame
@@ -72,8 +70,8 @@ def compute_body_sun_vector_from_lux(I_vec):
     status = None
     sun_body = np.zeros(3)
 
+    # Determine Sun Status
     num_valid_readings = NUM_LIGHT_SENSORS - I_vec.count(ERROR_LUX)
-
     if num_valid_readings == 0:
         status = StatusConst.SUN_NO_READINGS
         return status, sun_body
@@ -82,21 +80,28 @@ def compute_body_sun_vector_from_lux(I_vec):
     elif in_eclipse(I_vec, THRESHOLD_ILLUMINATION_LUX):
         status = StatusConst.SUN_ECLIPSE
         return status, sun_body
-    elif num_valid_readings == 5:  # All readings are valid and unique determination is possible
+    else:
         status = StatusConst.OK
 
-    i_vec = I_vec.copy()
+    # Extract body vectors and lux readings where the sensor readings are valid
+    valid_sensor_idxs = [
+        idx for idx in range(len(I_vec)) if I_vec[idx] != ERROR_LUX and I_vec[idx] >= THRESHOLD_ILLUMINATION_LUX
+    ]
+    N_valid = PhysicalConst.LIGHT_SENSOR_NORMALS[valid_sensor_idxs, :]
+    I_valid = [I_vec[idx] for idx in valid_sensor_idxs]
+    print(N_valid)
 
-    for i in range(len(I_vec)):  # if ERROR_LUX replace with 0 to cancel
-        if i_vec[i] is ERROR_LUX:
-            i_vec[i] = 0
+    # Compute the Inverse of the valid light sensor normals using the Moore-Penrose pseudo-inverse
+    oprod_sun_inv = invert_3x3_psd(np.dot(N_valid.transpose(), N_valid))
+    if oprod_sun_inv is None:  # If the inverse is not possible, sun positioning is not uniquely determinable
+        status = StatusConst.SUN_NOT_ENOUGH_READINGS
+        return status, sun_body
+    else:
+        oprod_sun_inv = np.dot(oprod_sun_inv, N_valid.transpose())
 
-    sun_body[0] = i_vec[0] if i_vec[0] > i_vec[1] else -i_vec[1]
-    sun_body[1] = i_vec[2] if i_vec[2] > i_vec[3] else -i_vec[3]
-    sun_body[2] = i_vec[4]
-
+    # Extract the sun body vector
+    sun_body = np.dot(oprod_sun_inv, I_valid)
     norm = (sun_body[0] ** 2 + sun_body[1] ** 2 + sun_body[2] ** 2) ** 0.5
-    # norm = MAX_RANGE
 
     if norm == 0:  # Avoid division by zero - not perfect
         status = StatusConst.ZERO_NORM
@@ -131,11 +136,6 @@ def in_eclipse(raw_readings, threshold_lux_illumination=THRESHOLD_ILLUMINATION_L
     eclipse = True
 
     return eclipse
-
-
-def read_pyramid_sun_sensor_zm():
-    # TODO
-    pass
 
 
 def unix_time_to_julian_day(unix_time):
