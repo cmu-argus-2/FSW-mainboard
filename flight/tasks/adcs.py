@@ -8,7 +8,7 @@ from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
-from core.time_processor import TimeProcessor
+from core.time_processor import TimeProcessor as TPM
 
 """
     ASSUMPTIONS :
@@ -81,7 +81,7 @@ class Task(TemplateTask):
                 data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f"
                 DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
 
-            self.time = int(TimeProcessor.time())
+            self.time = int(TPM.time())
             self.log_data[ADCS_IDX.TIME_ADCS] = self.time
 
             # ------------------------------------------------------------------------------------------------------------------------------------

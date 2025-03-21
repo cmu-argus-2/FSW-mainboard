@@ -17,7 +17,7 @@ from apps.adcs.orbit_propagation import OrbitPropagator
 from apps.adcs.sun import approx_sun_position_ECI, compute_body_sun_vector_from_lux, read_light_sensors
 from apps.telemetry.constants import GPS_IDX
 from core import DataHandler as DH
-from core.time_processor import TimeProcessor
+from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 from ulab import numpy as np
 
@@ -89,7 +89,7 @@ class AttitudeDetermination:
 
         if SATELLITE.IMU_AVAILABLE:
             gyro = np.array(SATELLITE.IMU.gyro())
-            query_time = int(TimeProcessor.time())
+            query_time = int(TPM.time())
 
             # Sensor validity check (check length and ensure reasding within range)
             if gyro is None or len(gyro) != 3:
@@ -109,7 +109,7 @@ class AttitudeDetermination:
 
         if SATELLITE.IMU_AVAILABLE:
             mag = np.array(SATELLITE.IMU.mag())
-            query_time = int(TimeProcessor.time())
+            query_time = int(TPM.time())
 
             # Sensor validity check (check length and ensure reading wihtin range)
             if mag is None or len(mag) != 3:
@@ -168,7 +168,7 @@ class AttitudeDetermination:
             return StatusConst.MEKF_INIT_FAIL, StatusConst.GPS_FAIL
         else:
             # Propagate from GPS measurement record
-            current_time = int(TimeProcessor.time())
+            current_time = int(TPM.time())
             R_ecef2eci = ecef_to_eci(current_time)
             gps_pos_eci = np.dot(R_ecef2eci, gps_pos_ecef)
             gps_vel_eci = np.dot(R_ecef2eci, gps_vel_ecef)
