@@ -175,9 +175,6 @@ class Task(TemplateTask):
         if self.log_print_counter % self.frequency == 0:
             self.log_print_counter = 0
 
-            if not SATELLITE.RTC_AVAILABLE:
-                self.log_warning("RTC FAILURE: Time reference is best-effort from TPM")
-
             self.log_info(f"Time: {int(TPM.time())}")
             self.log_info(f"Time since boot: {int(TPM.monotonic()) - SATELLITE.BOOTTIME}")
             self.log_info(f"GLOBAL STATE: {STR_STATES[SM.current_state]}.")
