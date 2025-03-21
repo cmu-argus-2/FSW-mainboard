@@ -55,6 +55,8 @@ class AttitudeDetermination:
     last_position_update_time = 0
     last_gyro_update_time = 0
     last_gyro_cov_update_time = 0
+    mekf_init_start_time = None
+    mekf_timeout = 30  # seconds TODO: Decide a timeout and change
 
     # Sensor noise covariances (Decide if these numbers should be hardcoded here or placed in adcs/consts.py)
     gyro_white_noise_sigma = 0.01  # TODO : characetrize sensor and update
@@ -162,6 +164,16 @@ class AttitudeDetermination:
         - This function is not directly written into init to allow multiple retires of initialization
         - Sets the initialized attribute of the class once done
         """
+        current_time = int(time.time())
+
+        if self.mekf_init_start_time is None:
+            self.mekf_init_start_time = current_time
+        elif abs(current_time - self.mekf_init_start_time) >= self.mekf_timeout:
+            # Ignore MEKF initialization
+            self.state[self.attitude_idx] = np.array([1, 0, 0, 0])
+            self.initialized = True
+            return StatusConst.OK, StatusConst.MEKF_INIT_FORCE
+
         # Get a valid GPS position
         gps_status, gps_record_time, gps_pos_ecef, gps_vel_ecef = self.read_gps()
 
