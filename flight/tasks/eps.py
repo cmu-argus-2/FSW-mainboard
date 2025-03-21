@@ -94,7 +94,7 @@ class Task(TemplateTask):
         else:
             if not DH.data_process_exists("eps"):
                 data_format = (
-                    "Lbhhhhb" + "L" + "h" * 3 + "L" * 2 + "h" * 30
+                    "Lbhhhhb" + "h" * 4 + "L" * 2 + "h" * 30
                 )  # - use mV for voltage and mA for current (h = short integer 2 bytes, L = 4 bytes)
                 DH.register_data_process("eps", data_format, True, data_limit=100000)
 
