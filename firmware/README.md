@@ -6,6 +6,7 @@ CircuitPython Compilation & Flashing Guide for Argus
 | Argus 1.0  | ATSAMD51 | 8 |
 | Argus 1.1  | ATSAMD51 | 8, 9 |
 | Argus 2  | RP2040 | 8, 9 |
+| Argus 3  | RP2350 | 9 |
 ## Compilation
 This guide is specific to Argus, for additional information refer to the [official Adafruit CircuitPython Guide](https://learn.adafruit.com/how-to-add-a-new-board-to-circuitpython/get-setup-to-add-your-board)
 
