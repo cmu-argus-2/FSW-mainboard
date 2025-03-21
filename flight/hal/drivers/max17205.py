@@ -77,7 +77,7 @@ class MAX17205:
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to pack capacity
-        self.capacity = int.from_bytes(self.rx_buffer, "little", signed=False) / 0.01
+        self.capacity = int.from_bytes(self.rx_buffer, "little", signed=False) * 0.5
 
         return self.capacity
 
