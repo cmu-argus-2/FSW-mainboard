@@ -7,6 +7,7 @@ from sys import path
 
 import board
 import digitalio
+import neopixel
 from busio import I2C, SPI, UART
 from hal.cubesat import CubeSat
 from hal.drivers.middleware.errors import Errors
@@ -67,7 +68,7 @@ class ArgusV3Components:
     power monitor, Jetson power monitor, IMU, charger, torque coils,
     light sensors, radio, and SD card.
     """
-
+    
     ########
     # I2C0 #
     ########
@@ -174,59 +175,87 @@ class ArgusV3Components:
     # BATTERY BOARD FUEL GAUGE
     FUEL_GAUGE_I2C = ArgusV3Interfaces.I2C1
     FUEL_GAUGE_I2C_ADDRESS = const(0x36)
+    FUEL_GAUGE_ALERT = board.BATT_ALRT
 
     ########
     # SPI0 #
     ########
 
-    # SD CARD
-    SD_CARD_SPI = ArgusV3Interfaces.SPI
-    SD_CARD_CS = board.SD_CS  # GPIO26_ADC0
-    SD_BAUD = const(4000000)  # 4 MHz
-
     # RADIO
-    # RADIO_SPI = ArgusV3Interfaces.SPI
-    # RADIO_CS = board.LORA_CS  # GPIO17
-    # RADIO_RESET = board.LORA_nRST  # GPIO21
-    # RADIO_ENABLE = board.LORA_EN  # GPIO28_ADC2
-    # RADIO_TX_EN = board.LORA_TX_EN  # GPIO22
-    # RADIO_RX_EN = board.LORA_RX_EN  # GPIO20
-    # RADIO_BUSY = board.LORA_BUSY  # GPIO23
-    # RADIO_IRQ = board.GPS_EN  # GPIO27_ADC1
+    RADIO_SPI = ArgusV3Interfaces.SPI0
+    RADIO_CS = board.LORA_nCS
+    RADIO_RESET = board.LORA_nRST 
+    RADIO_ENABLE = board.LORA_EN 
+    RADIO_TX_EN = board.LORA_TX_EN 
+    RADIO_RX_EN = board.LORA_RX_EN 
+    RADIO_BUSY = board.LORA_BUSY 
+    RADIO_IRQ = board.LORA_INT
+    RADIO_FAULT = board.LORA_FLT 
 
     ########
     # SPI1 #
     ########
 
-    # PAYLOAD(JETSON)
-    # PAYLOAD_SPI = ArgusV3Interfaces.JET_SPI
-    # PAYLOAD_CS = board.JETSON_CS  # GPIO9
-    # PAYLOAD_ENABLE = board.JETSON_EN  # GPIO24
+    # SD CARD
+    SD_CARD_SPI = ArgusV3Interfaces.SPI1
+    SD_CARD_CS = board.SD_CS
+    SD_BAUD = const(4000000)  # 4 MHz
+
+    # Payload
+    PAYLOAD_IO0 = board.PAYLOAD_IO0
+    PAYLOAD_IO1 = board.PAYLOAD_IO1
+    PAYLOAD_IO2 = board.PAYLOAD_IO2
+    PAYLOAD_CS = board.PAYLOAD_nCS
+    PAYLOAD_EN = board.PAYLOAD_EN
+    PAYLOAD_FAULT = board.PAYLOAD_FLT
 
     #########
     # UART0 #
     #########
 
     # GPS
-    # GPS_UART = ArgusV3Interfaces.UART0
-    # GPS_ENABLE = board.GPS_EN  # GPIO27_ADC1
+    GPS_UART = ArgusV3Interfaces.UART0
+    GPS_ENABLE = board.GPS_EN
+    GPS_FAULT = board.GPS_FLT
 
     #########
     # UART1 #
     #########
 
-    # RS485
+    # JETSON
+    JETSON_UART = ArgusV3Interfaces.JETSON_UART
+    JETSON_ENABLE = board.JETSON_EN
+
+    #########
+    # eFUSE #
+    #########
+
+    # PERIPHERALS
+    PERIPH_RESET = board.3V3P_EN
+    PERIPH_FAULT = board.3V3P_FLT
+
+    # SATELLITE (MCU)
+    SAT_RESET = board.3V3M_RST
 
     ########
-    # OLD #
+    # MISC #
     ########
 
-    # BURN WIRES
-    # BURN_WIRE_ENABLE = board.RELAY_A
-    # BURN_WIRE_XP = board.BURN1
-    # BURN_WIRE_XM = board.BURN2
-    # BURN_WIRE_YP = board.BURN3
-    # BURN_WIRE_YM = board.BURN4
+    # TORQUE COILS ENABLE
+    COIL_EN = board.COIL_EN
+
+    # BATTERY HEATERS
+    BATT_HEATER0_ON = board.HEAT0_ON
+    BATT_HEATER1_ON = board.HEAT1_ON
+    BATT_HEAT_EN = board.HEAT_EN
+
+    # NEOPIXEL
+    NEOPIXEL_SDA = board.NEOPIXEL
+    NEOPIXEL_N = const(1)
+    NEOPIXEL_BRIGHTNESS = 0.2
+
+    # REACTION WHEEL
+    RW_ENABLE = board.RW_EN
 
     # VFS
     VFS_MOUNT_POINT = "/sd"
@@ -235,13 +264,18 @@ class ArgusV3Components:
 
 
 class ArgusV3(CubeSat):
-    """ArgusV3: Represents the Argus V2 CubeSat."""
+    """ArgusV3: Represents the Argus V3 CubeSat."""
 
     def __init__(self, debug: bool = False):
-        """__init__: Initializes the Argus V2 CubeSat."""
+        """__init__: Initializes the Argus V3 CubeSat."""
         self.__debug = debug
 
         super().__init__()
+
+        self.append_device("NEOPIXEL", self.__neopixel_boot)
+        self.append_device("REACTION_WHEEL", self.__reaction_wheel_boot)
+
+        self.__payload_uart = ArgusV3Interfaces.PAYLOAD_UART
 
     ######################## BOOT SEQUENCE ########################
 
@@ -282,7 +316,6 @@ class ArgusV3(CubeSat):
             "BOARD_PWR": [ArgusV3Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV3Components.BOARD_POWER_MONITOR_I2C],
             "RADIO_PWR": [ArgusV3Components.RADIO_POWER_MONITOR_I2C_ADDRESS, ArgusV3Components.RADIO_POWER_MONITOR_I2C],
             "GPS_PWR": [ArgusV3Components.GPS_POWER_MONITOR_I2C_ADDRESS, ArgusV3Components.GPS_POWER_MONITOR_I2C],
-            "JETSON_PWR": [ArgusV3Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV3Components.JETSON_POWER_MONITOR_I2C],
             "XP_PWR": [
                 ArgusV3Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
                 ArgusV3Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C,
@@ -495,17 +528,8 @@ class ArgusV3(CubeSat):
     def __burn_wire_boot(self, _) -> list[object, int]:
         """burn_wire_boot: Boot sequence for the burn wires"""
         try:
-            # TODO: Burnwire software module
-            from hal.drivers.burnwire import BurnWires
-
-            burn_wires = BurnWires(
-                ArgusV3Components.BURN_WIRE_ENABLE,
-                ArgusV3Components.BURN_WIRE_XP,
-                ArgusV3Components.BURN_WIRE_XM,
-                ArgusV3Components.BURN_WIRE_YP,
-                ArgusV3Components.BURN_WIRE_YM,
-            )
-
+            # TODO: Burnwire driver
+            burn_wires = None
             return [burn_wires, Errors.NOERROR]
         except Exception as e:
             if self.__debug:
@@ -529,6 +553,33 @@ class ArgusV3(CubeSat):
             if self.__debug:
                 raise e
             return [None, Errors.MAX17205_NOT_INITIALIZED]
+
+    def __neopixel_boot(self) -> list[object, int]:
+        """neopixel_boot: Boot sequence for the neopixel"""
+        try:
+            np = neopixel.NeoPixel(
+                ArgusV3Components.NEOPIXEL_SDA,
+                ArgusV3Components.NEOPIXEL_N,
+                brightness=ArgusV3Components.NEOPIXEL_BRIGHTNESS,
+                pixel_order=neopixel.GRB,
+            )
+            return [np, Errors.NOERROR]
+        except Exception as e:
+            if self.__debug:
+                raise e
+
+            return [None, Errors.NEOPIXEL_NOT_INITIALIZED]
+
+    def __reaction_wheel_boot(self, _) -> list[object, int]:
+        try:
+            # TODO: reaction wheel driver + boot sequence
+            rw = None
+            return [rw, Errors.NOERROR]
+        except Exception as e:
+            if self.__debug:
+                raise e
+            # TODO: reaction wheel errors
+            return [None, Errors.NOERROR]
 
     def reboot_device(self, device_name: str):
         if device_name not in self.__device_list:
