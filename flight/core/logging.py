@@ -52,6 +52,7 @@ import sys
 import time
 from collections import namedtuple
 
+from core.time_processor import TimeProcessor as TPM
 from micropython import const
 
 try:
@@ -174,7 +175,7 @@ class Formatter:
             "args": record.args,
         }
         if "{asctime}" in self.fmt or "%(asctime)s" in self.fmt:
-            now = time.localtime()
+            now = time.localtime(TPM.time())
             # pylint: disable=line-too-long
             vals[
                 "asctime"
