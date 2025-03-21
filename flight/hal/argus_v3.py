@@ -20,8 +20,8 @@ class ArgusV3Interfaces:
     This class represents the interfaces used in the ArgusV3 module.
     """
 
-    I2C0_SDA = board.SDA0  # GPIO0
-    I2C0_SCL = board.SCL0  # GPIO1
+    I2C0_SDA = board.SDA0
+    I2C0_SCL = board.SCL0
 
     # Line may not be connected, try except sequence
     try:
@@ -29,8 +29,8 @@ class ArgusV3Interfaces:
     except Exception:
         I2C0 = None
 
-    I2C1_SDA = board.SDA1  # GPIO2
-    I2C1_SCL = board.SCL1  # GPIO3
+    I2C1_SDA = board.SDA1
+    I2C1_SCL = board.SCL1
 
     # Line may not be connected, try except sequence
     try:
@@ -38,25 +38,25 @@ class ArgusV3Interfaces:
     except Exception:
         I2C1 = None
 
-    # JET_SPI_SCK = board.CLK1  # GPIO10
-    # JET_SPI_MOSI = board.MOSI1  # GPIO11
-    # JET_SPI_MISO = board.MISO1  # GPIO08
-    # JET_SPI = SPI(JET_SPI_SCK, MOSI=JET_SPI_MOSI, MISO=JET_SPI_MISO)
+    SPI0_SCK = board.CLK0 
+    SPI0_MOSI = board.MOSI0 
+    SPI0_MISO = board.MISO0 
+    SPI0 = SPI(SPI0_SCK, MOSI=SPI0_MOSI, MISO=SPI0_MISO)
 
-    SPI_SCK = board.CLK0  # GPIO18
-    SPI_MOSI = board.MOSI0  # GPIO19
-    SPI_MISO = board.MISO0  # GPIO16
-    SPI = SPI(SPI_SCK, MOSI=SPI_MOSI, MISO=SPI_MISO)
+    SPI1_SCK = board.CLK1
+    SPI1_MOSI = board.MOSI1
+    SPI1_MISO = board.MISO1
+    SPI1 = SPI(SPI1_SCK, MOSI=SPI1_MOSI, MISO=SPI1_MISO)
 
-    # UART0_BAUD = const(115200)
-    # UART0_TX = board.TX0  # GPIO12
-    # UART0_RX = board.RX0  # GPIO13
-    # UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD)
+    UART0_BAUD = const(115200)
+    UART0_TX = board.TX0 
+    UART0_RX = board.RX0 
+    UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD)
 
-    # UART1_BAUD = const(115200)
-    # UART1_TX = board.TX1  # GPIO4
-    # UART1_RX = board.RX1  # GPIO5
-    # UART1 = UART(UART1_TX, UART1_RX, baudrate=UART1_BAUD)
+    JETSON_BAUD = const(57600)
+    JETSON_TX = board.TX1
+    JETSON_RX = board.RX1
+    JETSON_UART = UART(JETSON_TX, JETSON_RX, baudrate=JETSON_BAUD)
 
 
 class ArgusV3Components:
@@ -72,21 +72,9 @@ class ArgusV3Components:
     # I2C0 #
     ########
 
-    # RTC
-    RTC_I2C = ArgusV3Interfaces.I2C0
-    RTC_I2C_ADDRESS = const(0x68)
-
     # IMU
     IMU_I2C = ArgusV3Interfaces.I2C0
     IMU_I2C_ADDRESS = const(0x4A)
-
-    # BATTERY BOARD FUEL GAUGE
-    FUEL_GAUGE_I2C = ArgusV3Interfaces.I2C0
-    FUEL_GAUGE_I2C_ADDRESS = const(0x36)
-
-    # JETSON POWER MONITOR
-    JETSON_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C0
-    JETSON_POWER_MONITOR_I2C_ADDRESS = const(0x45)  # 8A
 
     # XM TORQUE COILS
     TORQUE_COILS_XM_I2C = ArgusV3Interfaces.I2C0
@@ -94,60 +82,55 @@ class ArgusV3Components:
 
     # XM SOLAR CHARGING POWER MONITOR
     SOLAR_CHARGING_XM_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C0
-    SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS = const(0x40)  # 90
+    SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS = const(0x40)
 
     # XM LIGHT SENSOR
     LIGHT_SENSOR_XM_I2C = ArgusV3Interfaces.I2C0
     LIGHT_SENSOR_XM_I2C_ADDRESS = const(0x44)
 
-    # YP TORQUE COILS
-    TORQUE_COILS_YP_I2C = ArgusV3Interfaces.I2C0
-    TORQUE_YP_I2C_ADDRESS = const(0x31)
+    # YM TORQUE COILS
+    TORQUE_COILS_YM_I2C = ArgusV3Interfaces.I2C0
+    TORQUE_YM_I2C_ADDRESS = const(0x31)
 
-    # YP SOLAR CHARGING POWER MONITOR
-    SOLAR_CHARGING_YP_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C0
-    SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS = const(0x41)  # 90
+    # YM SOLAR CHARGING POWER MONITOR
+    SOLAR_CHARGING_YM_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C0
+    SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS = const(0x41)
 
-    # YP LIGHT SENSOR
-    LIGHT_SENSOR_YP_I2C = ArgusV3Interfaces.I2C0
-    LIGHT_SENSOR_YP_I2C_ADDRESS = const(0x45)
+    # YM LIGHT SENSOR
+    LIGHT_SENSOR_YM_I2C = ArgusV3Interfaces.I2C0
+    LIGHT_SENSOR_YM_I2C_ADDRESS = const(0x45)
 
-    # ZP TORQUE COILS
-    TORQUE_COILS_ZP_I2C = ArgusV3Interfaces.I2C0
-    TORQUE_ZP_I2C_ADDRESS = const(0x10)
+    # ZM TORQUE COILS
+    TORQUE_COILS_ZM_I2C = ArgusV3Interfaces.I2C0
+    TORQUE_ZM_I2C_ADDRESS = const(0x32)
 
-    # ZP SOLAR CHARGING POWER MONITOR
-    SOLAR_CHARGING_ZP_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C0
-    SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS = const(0x62)  # 94
+    # ZM LIGHT SENSOR
+    LIGHT_SENSOR_ZM_I2C = ArgusV3Interfaces.I2C0
+    LIGHT_SENSOR_ZM_I2C_ADDRESS = const(0x46)
 
-    # ZP SUN SENSOR
-    SUN_SENSOR_ZP_I2C = ArgusV3Interfaces.I2C0
-    SUN_SENSOR_ZP1_I2C_ADDRESS = const(0x64)  # Conflict with ZM
-    SUN_SENSOR_ZP2_I2C_ADDRESS = const(0x65)
-    SUN_SENSOR_ZP3_I2C_ADDRESS = const(0x66)
-    SUN_SENSOR_ZP4_I2C_ADDRESS = const(0x67)
+    # ZM BURN WIRE DRIVER
+    BURN_WIRE_I2C = ArgusV3Interfaces.I2C0
+    BURN_WIRE_I2C_ADDRESS = const(0x60)
 
     ########
     # I2C1 #
     ########
 
-    # LORA POWER MONITOR
-    RADIO_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
-    RADIO_POWER_MONITOR_I2C_ADDRESS = const(0x42)
-
-    # USB CHARGER
-    CHARGER_I2C = ArgusV3Interfaces.I2C1
-    CHARGER_I2C_ADDRESS = const(0x6B)
+    # BOARD POWER MONITOR
+    BOARD_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
+    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x40)
 
     # GPS POWER MONITOR
     GPS_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
     GPS_POWER_MONITOR_I2C_ADDRESS = const(0x41)
 
-    # BOARD POWER MONITOR
-    BOARD_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
-    BOARD_POWER_MONITOR_I2C_ADDRESS = const(0x40)
+    # LORA POWER MONITOR
+    RADIO_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
+    RADIO_POWER_MONITOR_I2C_ADDRESS = const(0x42)
 
-    # CAMERA
+    # RTC
+    RTC_I2C = ArgusV3Interfaces.I2C1
+    RTC_I2C_ADDRESS = const(0x68)
 
     # XP TORQUE COILS
     TORQUE_COILS_XP_I2C = ArgusV3Interfaces.I2C1
@@ -155,31 +138,42 @@ class ArgusV3Components:
 
     # XP SOLAR CHARGING POWER MONITOR
     SOLAR_CHARGING_XP_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
-    SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS = const(0x48)  # 92
+    SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS = const(0x48)
 
     # XP LIGHT SENSOR
     LIGHT_SENSOR_XP_I2C = ArgusV3Interfaces.I2C1
     LIGHT_SENSOR_XP_I2C_ADDRESS = const(0x44)
 
-    # YM TORQUE COILS
-    TORQUE_COILS_YM_I2C = ArgusV3Interfaces.I2C1
-    TORQUE_YM_I2C_ADDRESS = const(0x31)
+    # YP TORQUE COILS
+    TORQUE_COILS_YP_I2C = ArgusV3Interfaces.I2C1
+    TORQUE_YP_I2C_ADDRESS = const(0x31)
 
-    # YM SOLAR CHARGING POWER MONITOR
-    SOLAR_CHARGING_YM_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
-    SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS = const(0x4A)  # 92
+    # YP SOLAR CHARGING POWER MONITOR
+    SOLAR_CHARGING_YP_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
+    SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS = const(0x4A)
 
-    # YM LIGHT SENSOR
-    LIGHT_SENSOR_YM_I2C = ArgusV3Interfaces.I2C1
-    LIGHT_SENSOR_YM_I2C_ADDRESS = const(0x45)
+    # YP LIGHT SENSOR
+    LIGHT_SENSOR_YP_I2C = ArgusV3Interfaces.I2C1
+    LIGHT_SENSOR_YP_I2C_ADDRESS = const(0x45)
 
-    # ZM TORQUE COILS
-    TORQUE_COILS_ZM_I2C = ArgusV3Interfaces.I2C1
-    TORQUE_ZM_I2C_ADDRESS = const(0x32)
+    # ZP TORQUE COILS
+    TORQUE_COILS_ZP_I2C = ArgusV3Interfaces.I2C1
+    TORQUE_ZP_I2C_ADDRESS = const(0x10)
 
-    # ZM LIGHT SENSOR
-    LIGHT_SENSOR_ZM_I2C = ArgusV3Interfaces.I2C1
-    LIGHT_SENSOR_ZM_I2C_ADDRESS = const(0x46)  # Conflict with ZP
+    # ZP SOLAR CHARGING POWER MONITOR
+    SOLAR_CHARGING_ZP_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
+    SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS = const(0x62)
+
+    # ZP SUN SENSOR
+    SUN_SENSOR_ZP_I2C = ArgusV3Interfaces.I2C1
+    SUN_SENSOR_ZP1_I2C_ADDRESS = const(0x64) 
+    SUN_SENSOR_ZP2_I2C_ADDRESS = const(0x65)
+    SUN_SENSOR_ZP3_I2C_ADDRESS = const(0x66)
+    SUN_SENSOR_ZP4_I2C_ADDRESS = const(0x67)
+
+    # BATTERY BOARD FUEL GAUGE
+    FUEL_GAUGE_I2C = ArgusV3Interfaces.I2C1
+    FUEL_GAUGE_I2C_ADDRESS = const(0x36)
 
     ########
     # SPI0 #
