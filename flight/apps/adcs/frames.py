@@ -128,7 +128,6 @@ def convert_ecef_state_to_eci(r: np.ndarray, v: np.ndarray, utime: int):
     r_eci = np.dot(R_ecef2eci, r)
 
     # Transform Velocity
-    r_ecef_surface = (np.linalg.norm(r) - EQUATORIAL_RADIUS * 1e3) * r / np.linalg.norm(r)
-    v_eci = np.dot(R_ecef2eci, v) + np.cross(np.array([0, 0, OMEGA_E]), r_ecef_surface)
+    v_eci = np.dot(R_ecef2eci, v) + np.cross(np.array([0, 0, OMEGA_E]), r)
 
     return r_eci, v_eci
