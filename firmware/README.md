@@ -64,7 +64,9 @@ Navigate one level up (i.e. circuitpython/ports/[vendor]).
 Ensure that build-ArgusX folder does not exist in this directory, or else the compilation might fail.
 Run the following command to compile the target firmware
 ```
-make BOARD=ArgusX # ArgusX is the folder name in the boards folder
+# ArgusX is the folder name in the boards folder
+# -jY is an optional argument, where Y is the number of threads available on your computer
+make BOARD=ArgusX -jY
 ```
 If the compilation is successful, a build-ArgusX folder will be be created. A firmware.uf2 file will be created in this folder. Please upload this to the FSW repo and all relevant files for future development.
 
