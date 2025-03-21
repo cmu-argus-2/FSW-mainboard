@@ -61,9 +61,9 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_GPS_EN),  MP_ROM_PTR(&pin_GPIO38) },
     { MP_ROM_QSTR(MP_QSTR_GPS_FLT),  MP_ROM_PTR(&pin_GPIO39) },
 
-    { MP_ROM_QSTR(MP_QSTR_3V3P_FLT),  MP_ROM_PTR(&pin_GPIO41) },
-    { MP_ROM_QSTR(MP_QSTR_3V3P_EN),  MP_ROM_PTR(&pin_GPIO42) },
-    { MP_ROM_QSTR(MP_QSTR_3V3M_RST),  MP_ROM_PTR(&pin_GPIO43) },
+    { MP_ROM_QSTR(MP_QSTR_PERIPH_PWR_FLT),  MP_ROM_PTR(&pin_GPIO41) },
+    { MP_ROM_QSTR(MP_QSTR_PERIPH_PWR_EN),  MP_ROM_PTR(&pin_GPIO42) },
+    { MP_ROM_QSTR(MP_QSTR_MAIN_PWR_RST),  MP_ROM_PTR(&pin_GPIO43) },
 
     { MP_ROM_QSTR(MP_QSTR_TX0),  MP_ROM_PTR(&pin_GPIO44) },
     { MP_ROM_QSTR(MP_QSTR_RX0),  MP_ROM_PTR(&pin_GPIO45) },

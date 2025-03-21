@@ -11,8 +11,8 @@ from hal.drivers.power_monitor import PowerMonitor
 from hal.drivers.radio import Radio
 from hal.drivers.rtc import RTC
 from hal.drivers.sd import SD
-from hal.drivers.sun_sensor import LightSensor
-from hal.drivers.torque_coil import CoilDriver
+from hal.drivers.sun_sensor import LightSensorArray
+from hal.drivers.torque_coil import TorqueCoilArray
 
 
 class device:

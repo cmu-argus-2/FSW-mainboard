@@ -39,9 +39,9 @@ class ArgusV3Interfaces:
     except Exception:
         I2C1 = None
 
-    SPI0_SCK = board.CLK0 
-    SPI0_MOSI = board.MOSI0 
-    SPI0_MISO = board.MISO0 
+    SPI0_SCK = board.CLK0
+    SPI0_MOSI = board.MOSI0
+    SPI0_MISO = board.MISO0
     SPI0 = SPI(SPI0_SCK, MOSI=SPI0_MOSI, MISO=SPI0_MISO)
 
     SPI1_SCK = board.CLK1
@@ -50,8 +50,8 @@ class ArgusV3Interfaces:
     SPI1 = SPI(SPI1_SCK, MOSI=SPI1_MOSI, MISO=SPI1_MISO)
 
     UART0_BAUD = const(115200)
-    UART0_TX = board.TX0 
-    UART0_RX = board.RX0 
+    UART0_TX = board.TX0
+    UART0_RX = board.RX0
     UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD)
 
     JETSON_BAUD = const(57600)
@@ -68,7 +68,7 @@ class ArgusV3Components:
     power monitor, Jetson power monitor, IMU, charger, torque coils,
     light sensors, radio, and SD card.
     """
-    
+
     ########
     # I2C0 #
     ########
@@ -167,7 +167,7 @@ class ArgusV3Components:
 
     # ZP SUN SENSOR
     SUN_SENSOR_ZP_I2C = ArgusV3Interfaces.I2C1
-    SUN_SENSOR_ZP1_I2C_ADDRESS = const(0x64) 
+    SUN_SENSOR_ZP1_I2C_ADDRESS = const(0x64)
     SUN_SENSOR_ZP2_I2C_ADDRESS = const(0x65)
     SUN_SENSOR_ZP3_I2C_ADDRESS = const(0x66)
     SUN_SENSOR_ZP4_I2C_ADDRESS = const(0x67)
@@ -184,13 +184,13 @@ class ArgusV3Components:
     # RADIO
     RADIO_SPI = ArgusV3Interfaces.SPI0
     RADIO_CS = board.LORA_nCS
-    RADIO_RESET = board.LORA_nRST 
-    RADIO_ENABLE = board.LORA_EN 
-    RADIO_TX_EN = board.LORA_TX_EN 
-    RADIO_RX_EN = board.LORA_RX_EN 
-    RADIO_BUSY = board.LORA_BUSY 
+    RADIO_RESET = board.LORA_nRST
+    RADIO_ENABLE = board.LORA_EN
+    RADIO_TX_EN = board.LORA_TX_EN
+    RADIO_RX_EN = board.LORA_RX_EN
+    RADIO_BUSY = board.LORA_BUSY
     RADIO_IRQ = board.LORA_INT
-    RADIO_FAULT = board.LORA_FLT 
+    RADIO_OVC = board.LORA_FLT
 
     ########
     # SPI1 #
@@ -207,7 +207,7 @@ class ArgusV3Components:
     PAYLOAD_IO2 = board.PAYLOAD_IO2
     PAYLOAD_CS = board.PAYLOAD_nCS
     PAYLOAD_EN = board.PAYLOAD_EN
-    PAYLOAD_FAULT = board.PAYLOAD_FLT
+    PAYLOAD_OVC = board.PAYLOAD_FLT
 
     #########
     # UART0 #
@@ -216,7 +216,7 @@ class ArgusV3Components:
     # GPS
     GPS_UART = ArgusV3Interfaces.UART0
     GPS_ENABLE = board.GPS_EN
-    GPS_FAULT = board.GPS_FLT
+    GPS_OVC = board.GPS_FLT
 
     #########
     # UART1 #
@@ -230,12 +230,12 @@ class ArgusV3Components:
     # eFUSE #
     #########
 
-    # PERIPHERALS
-    PERIPH_RESET = board.3V3P_EN
-    PERIPH_FAULT = board.3V3P_FLT
+    # PERIPHERALS 3.3V
+    PERIPH_PWR_EN = board.PERIPH_PWR_EN
+    PERIPH_PWR_OVC = board.PERIPH_PWR_FLT
 
-    # SATELLITE (MCU)
-    SAT_RESET = board.3V3M_RST
+    # MAIN (MCU, WATCHDOG) 3.3V
+    MAIN_PWR_RESET = board.MAIN_PWR_RST
 
     ########
     # MISC #
@@ -453,7 +453,7 @@ class ArgusV3(CubeSat):
             radioEn.value = True
 
             radio = SX1262(
-                spi_bus=ArgusV2Interfaces.SPI,
+                spi_bus=ArgusV3Interfaces.SPI,
                 cs=ArgusV3Components.RADIO_CS,
                 irq=ArgusV3Components.RADIO_IRQ,
                 rst=ArgusV3Components.RADIO_RESET,
