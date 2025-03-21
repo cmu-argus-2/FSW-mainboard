@@ -12,7 +12,7 @@ Implementation Notes
 """
 
 from adafruit_bus_device.i2c_device import I2CDevice
-from hal.drivers.middleware.errors import Errors
+from hal.drivers.errors import Errors
 from micropython import const
 
 # def _to_signed(num):
@@ -250,7 +250,7 @@ class ADM1176:
                 )
                 return Errors.ADM1176_VOLTAGE_OUT_OF_RANGE
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     def __on_off_test(self) -> int:
         """_on_off_test: Turns the device on, off, and on
@@ -276,7 +276,7 @@ class ADM1176:
             print("Error: Could not turn on device after turning off")
             return Errors.ADM1176_COULD_NOT_TURN_ON
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     def __overcurrent_test(self) -> bool:
         """_overcurrent_test: Tests that the threshold is triggering
@@ -296,7 +296,7 @@ class ADM1176:
             print("Error: ADC Alert was triggered at overcurrent max")
             return Errors.ADM1176_ADC_ALERT_OVERCURRENT_MAX
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     def deinit(self):
         return

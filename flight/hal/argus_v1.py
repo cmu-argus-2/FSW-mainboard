@@ -9,7 +9,7 @@ from sys import path
 import board
 from busio import I2C, SPI, UART
 from hal.cubesat import CubeSat
-from hal.drivers.middleware.errors import Errors
+from hal.drivers.errors import Errors
 from micropython import const
 
 
@@ -167,7 +167,7 @@ class ArgusV1(CubeSat):
 
         gc.collect()
 
-        error_list = [error for error in error_list if error != Errors.NOERROR]
+        error_list = [error for error in error_list if error != Errors.NO_ERROR]
 
         if self.__debug:
             print("Boot Errors:")
@@ -199,7 +199,7 @@ class ArgusV1(CubeSat):
 
             return Errors.GPS_NOT_INITIALIZED
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     def __board_power_monitor_boot(self) -> list[int]:
         """board_power_monitor_boot: Boot sequence for the board power monitor
@@ -222,9 +222,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return Errors.ADM1176_NOT_INITIALIZED
+            return Errors.DEVICE_NOT_INITIALISED
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     def __jetson_power_monitor_boot(self) -> list[int]:
         """jetson_power_monitor_boot: Boot sequence for the Jetson power monitor
@@ -246,9 +246,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return Errors.ADM1176_NOT_INITIALIZED
+            return Errors.DEVICE_NOT_INITIALISED
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     def __imu_boot(self) -> list[int]:
         """imu_boot: Boot sequence for the IMU
@@ -272,9 +272,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return Errors.IMU_NOT_INITIALIZED
+            return Errors.DEVICE_NOT_INITIALISED
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     def __charger_boot(self) -> list[int]:
         """charger_boot: Boot sequence for the charger
@@ -296,9 +296,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return Errors.BQ25883_NOT_INITIALIZED
+            return Errors.DEVICE_NOT_INITIALISED
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     def __torque_drivers_boot(self) -> list[int]:
         """Boot sequence for all torque drivers in predefined directions.
@@ -326,14 +326,14 @@ class ArgusV1(CubeSat):
 
                 self.__torque_drivers[direction] = torque_driver
                 self.__device_list.append(torque_driver)
-                error_codes.append(Errors.NOERROR)  # Append success code if no error
+                error_codes.append(Errors.NO_ERROR)  # Append success code if no error
 
             except Exception as e:
                 self.__torque_drivers[direction] = None
                 if self.__debug:
                     print(f"Failed to initialize {direction} torque driver: {e}")
                     raise e
-                error_codes.append(Errors.DRV8830_NOT_INITIALIZED)  # Append failure code
+                error_codes.append(Errors.DEVICE_NOT_INITIALISED)  # Append failure code
 
         return error_codes
 
@@ -364,14 +364,14 @@ class ArgusV1(CubeSat):
 
                 self.__light_sensors[direction] = light_sensor
                 self.__device_list.append(light_sensor)
-                error_codes.append(Errors.NOERROR)  # Append success code if no error
+                error_codes.append(Errors.NO_ERROR)  # Append success code if no error
 
             except Exception as e:
                 self.__light_sensors[direction] = None
                 if self.__debug:
                     print(f"Failed to initialize {direction} light sensor: {e}")
                     raise e
-                error_codes.append(Errors.OPT4001_NOT_INITIALIZED)  # Append failure code
+                error_codes.append(Errors.DEVICE_NOT_INITIALISED)  # Append failure code
 
         return error_codes
 
@@ -401,7 +401,7 @@ class ArgusV1(CubeSat):
 
             return Errors.RFM9X_NOT_INITIALIZED
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     def __rtc_boot(self) -> list[int]:
         """rtc_boot: Boot sequence for the RTC
@@ -420,9 +420,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return Errors.PCF8523_NOT_INITIALIZED
+            return Errors.DEVICE_NOT_INITIALISED
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     def __sd_card_boot(self) -> list[int]:
         """sd_card_boot: Boot sequence for the SD card"""
@@ -441,14 +441,14 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return Errors.SDCARD_NOT_INITIALIZED
+            return Errors.DEVICE_NOT_INITIALISED
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     def __vfs_boot(self) -> list[int]:
         """vfs_boot: Boot sequence for the VFS"""
         if self.__sd_card is None:
-            return Errors.SDCARD_NOT_INITIALIZED
+            return Errors.DEVICE_NOT_INITIALISED
 
         try:
             from storage import VfsFat, mount
@@ -466,9 +466,9 @@ class ArgusV1(CubeSat):
                 raise e
             raise e
 
-            return Errors.VFS_NOT_INITIALIZED
+            return Errors.DEVICE_NOT_INITIALISED
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     def __burn_wire_boot(self) -> list[int]:
         """burn_wire_boot: Boot sequence for the burn wires"""
@@ -490,9 +490,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return Errors.BURNWIRES_NOT_INITIALIZED
+            return Errors.DEVICE_NOT_INITIALISED
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     def __payload_uart_boot(self) -> list[int]:
         """payload_uart_boot: Boot sequence for the Jetson UART"""
@@ -511,9 +511,9 @@ class ArgusV1(CubeSat):
             if self.__debug:
                 raise e
 
-            return Errors.PAYLOAD_UART_NOT_INITIALIZED
+            return Errors.DEVICE_NOT_INITIALISED
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     ######################## INTERFACES ########################
     def APPLY_MAGNETIC_CONTROL(self, ctrl) -> None:

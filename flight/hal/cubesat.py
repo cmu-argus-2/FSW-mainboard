@@ -1,7 +1,7 @@
 import time
 from collections import OrderedDict
 
-from hal.drivers.middleware.errors import Errors
+from hal.drivers.errors import Errors
 
 
 class Device:
@@ -83,7 +83,7 @@ class CubeSat:
         """
         error_list = {}
         for name, device in self.__device_list.items():
-            if device.error != Errors.NOERROR:
+            if device.error != Errors.NO_ERROR:
                 error_list[name] = device.error
         return error_list
 

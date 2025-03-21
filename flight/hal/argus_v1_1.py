@@ -9,7 +9,7 @@ import board
 import neopixel
 from busio import I2C, SPI, UART
 from hal.cubesat import CubeSat
-from hal.drivers.middleware.errors import Errors
+from hal.drivers.errors import Errors
 from micropython import const
 from sdcardio import SDCard
 from storage import VfsFat, mount
@@ -234,12 +234,12 @@ class ArgusV1(CubeSat):
 
             gps = GPS(ArgusV1Components.GPS_UART, ArgusV1Components.GPS_ENABLE)
 
-            return [gps, Errors.NOERROR]
+            return [gps, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return [None, Errors.GPS_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __power_monitor_boot(self, location) -> list[int]:
         """power_monitor_boot: Boot sequence for the power monitor
@@ -279,13 +279,13 @@ class ArgusV1(CubeSat):
             bus = data[1]
             power_monitor = ADM1176(bus, address)
 
-            return [power_monitor, Errors.NOERROR]
+            return [power_monitor, Errors.NO_ERROR]
 
         except Exception as e:
             print(f"Failed to initialize {location}: {e}")
             if self.__debug:
                 raise e
-            return [None, Errors.ADM1176_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __imu_boot(self, _) -> list[int]:
         """imu_boot: Boot sequence for the IMU
@@ -300,12 +300,12 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.IMU_I2C_ADDRESS,
             )
 
-            return [imu, Errors.NOERROR]
+            return [imu, Errors.NO_ERROR]
         except Exception as e:
             print(f"Failed to initialize IMU: {e}")
             if self.__debug:
                 raise e
-            return [None, Errors.IMU_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __torque_drivers_boot(self, direction) -> list[int]:
         """Boot sequence for all torque drivers in predefined directions.
@@ -330,13 +330,13 @@ class ArgusV1(CubeSat):
             bus = data[1]
             torque_driver = DRV8830(bus, address)
 
-            return [torque_driver, Errors.NOERROR]
+            return [torque_driver, Errors.NO_ERROR]
 
         except Exception as e:
             if self.__debug:
                 print(f"Failed to initialize {direction} torque driver: {e}")
                 raise e
-            return [None, Errors.DRV8830_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __light_sensors_boot(self, direction) -> list[int]:
         """Boot sequence for all light sensors in predefined directions.
@@ -367,13 +367,13 @@ class ArgusV1(CubeSat):
                 address,
                 conversion_time=ArgusV1Components.LIGHT_SENSOR_CONVERSION_TIME,
             )
-            return [light_sensor, Errors.NOERROR]
+            return [light_sensor, Errors.NO_ERROR]
 
         except Exception as e:
             if self.__debug:
                 print(f"Failed to initialize {direction} light sensor: {e}")
                 raise e
-            return [None, Errors.OPT4001_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __radio_boot(self, _) -> list[int]:
         """radio_boot: Boot sequence for the radio
@@ -392,12 +392,12 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.RADIO_FREQ,
             )
 
-            return [radio, Errors.NOERROR]
+            return [radio, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return [None, Errors.RFM9X_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __rtc_boot(self, _) -> list[int]:
         """rtc_boot: Boot sequence for the RTC
@@ -409,12 +409,12 @@ class ArgusV1(CubeSat):
 
         try:
             rtc = PCF8523(ArgusV1Components.RTC_I2C, ArgusV1Components.RTC_I2C_ADDRESS)
-            return [rtc, Errors.NOERROR]
+            return [rtc, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return [None, Errors.PCF8523_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __neopixel_boot(self) -> list[int]:
         """neopixel_boot: Boot sequence for the neopixel"""
@@ -425,12 +425,12 @@ class ArgusV1(CubeSat):
                 brightness=ArgusV1Components.NEOPIXEL_BRIGHTNESS,
                 pixel_order=neopixel.GRB,
             )
-            return [np, Errors.NOERROR]
+            return [np, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return [None, Errors.NEOPIXEL_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __sd_card_boot(self, _) -> list[object, int]:
         """sd_card_boot: Boot sequence for the SD card"""
@@ -444,12 +444,12 @@ class ArgusV1(CubeSat):
             vfs = VfsFat(sd_card)
             mount(vfs, ArgusV1Components.VFS_MOUNT_POINT)
             path.append(ArgusV1Components.VFS_MOUNT_POINT)
-            return [vfs, Errors.NOERROR]
+            return [vfs, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return [None, Errors.SDCARD_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __burn_wire_boot(self) -> list[int]:
         """burn_wire_boot: Boot sequence for the burn wires"""
@@ -464,12 +464,12 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.BURN_WIRE_YM,
             )
 
-            return [burn_wires, Errors.NOERROR]
+            return [burn_wires, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return [None, Errors.BURNWIRES_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __fuel_gauge_boot(self) -> list[int]:
         """fuel_gauge_boot: Boot sequence for the fuel gauge"""
@@ -480,12 +480,12 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.FUEL_GAUGE_I2C,
                 ArgusV1Components.FUEL_GAUGE_I2C_ADDRESS,
             )
-            return [fuel_gauge, Errors.NOERROR]
+            return [fuel_gauge, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return [None, Errors.MAX17205_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def reboot_device(self, device_name: str):
         if device_name not in self.__device_list:

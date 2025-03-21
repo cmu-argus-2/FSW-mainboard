@@ -5,8 +5,6 @@ try:
     from busio import UART
     from digitalio import DigitalInOut
     from hal.drivers.middleware.errors import Errors
-
-    # from hal.drivers.middleware.generic_driver import Driver
     from micropython import const
 except ImportError:
     pass

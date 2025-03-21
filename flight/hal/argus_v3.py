@@ -10,7 +10,7 @@ import digitalio
 import neopixel
 from busio import I2C, SPI, UART
 from hal.cubesat import CubeSat
-from hal.drivers.middleware.errors import Errors
+from hal.drivers.errors import Errors
 from micropython import const
 from sdcardio import SDCard
 from storage import VfsFat, mount
@@ -301,12 +301,12 @@ class ArgusV3(CubeSat):
         try:
             gps = GPS(ArgusV3Components.GPS_UART, ArgusV3Components.GPS_ENABLE)
 
-            return [gps, Errors.NOERROR]
+            return [gps, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return [None, Errors.GPS_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __power_monitor_boot(self, location) -> list[object, int]:
         """power_monitor_boot: Boot sequence for the power monitor
@@ -348,12 +348,12 @@ class ArgusV3(CubeSat):
             bus = data[1]
             power_monitor = ADM1176(bus, address)
 
-            return [power_monitor, Errors.NOERROR]
+            return [power_monitor, Errors.NO_ERROR]
 
         except Exception as e:
             if self.__debug:
                 raise e
-            return [None, Errors.ADM1176_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __imu_boot(self, _) -> list[object, int]:
         """imu_boot: Boot sequence for the IMU
@@ -371,11 +371,11 @@ class ArgusV3(CubeSat):
             imu.enable_feature(BNO_REPORT_UNCAL_MAGNETOMETER)
             imu.enable_feature(BNO_REPORT_UNCAL_GYROSCOPE)
 
-            return [imu, Errors.NOERROR]
+            return [imu, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
-            return [None, Errors.IMU_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __torque_driver_boot(self, direction) -> list[int]:
         """Boot sequence for all torque drivers in predefined directions.
@@ -400,12 +400,12 @@ class ArgusV3(CubeSat):
             bus = data[1]
             torque_driver = DRV8235(bus, address)
 
-            return [torque_driver, Errors.NOERROR]
+            return [torque_driver, Errors.NO_ERROR]
 
         except Exception as e:
             if self.__debug:
                 raise e
-            return [None, Errors.DRV8830_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __light_sensor_boot(self, direction) -> list[object, int]:
         """Boot sequence for all light sensors in predefined directions.
@@ -436,12 +436,12 @@ class ArgusV3(CubeSat):
                 address,
                 conversion_time=ArgusV3Components.LIGHT_SENSOR_CONVERSION_TIME,
             )
-            return [light_sensor, Errors.NOERROR]
+            return [light_sensor, Errors.NO_ERROR]
 
         except Exception as e:
             if self.__debug:
                 raise e
-            return [None, Errors.OPT4001_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __radio_boot(self, _) -> list[object, int]:
         """radio_boot: Boot sequence for the radio
@@ -486,13 +486,13 @@ class ArgusV3(CubeSat):
                 blocking=True,
             )
 
-            return [radio, Errors.NOERROR]
+            return [radio, Errors.NO_ERROR]
 
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return [None, Errors.SX1262_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __rtc_boot(self, _) -> list[object, int]:
         """rtc_boot: Boot sequence for the RTC
@@ -504,12 +504,12 @@ class ArgusV3(CubeSat):
 
         try:
             rtc = DS3231(ArgusV3Components.RTC_I2C, ArgusV3Components.RTC_I2C_ADDRESS)
-            return [rtc, Errors.NOERROR]
+            return [rtc, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return [None, Errors.PCF8523_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __sd_card_boot(self, _) -> list[object, int]:
         """sd_card_boot: Boot sequence for the SD card"""
@@ -523,24 +523,24 @@ class ArgusV3(CubeSat):
             vfs = VfsFat(sd_card)
             mount(vfs, ArgusV3Components.VFS_MOUNT_POINT)
             path.append(ArgusV3Components.VFS_MOUNT_POINT)
-            return [vfs, Errors.NOERROR]
+            return [vfs, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return [None, Errors.SDCARD_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __burn_wire_boot(self, _) -> list[object, int]:
         """burn_wire_boot: Boot sequence for the burn wires"""
         try:
             # TODO: Burnwire driver
             burn_wires = None
-            return [burn_wires, Errors.NOERROR]
+            return [burn_wires, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return [None, Errors.BURNWIRES_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __fuel_gauge_boot(self, _) -> list[object, int]:
         """fuel_gauge_boot: Boot sequence for the fuel gauge"""
@@ -553,11 +553,11 @@ class ArgusV3(CubeSat):
                 ArgusV3Components.FUEL_GAUGE_I2C_ADDRESS,
             )
 
-            return [fuel_gauge, Errors.NOERROR]
+            return [fuel_gauge, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
-            return [None, Errors.MAX17205_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __neopixel_boot(self) -> list[object, int]:
         """neopixel_boot: Boot sequence for the neopixel"""
@@ -568,23 +568,23 @@ class ArgusV3(CubeSat):
                 brightness=ArgusV3Components.NEOPIXEL_BRIGHTNESS,
                 pixel_order=neopixel.GRB,
             )
-            return [np, Errors.NOERROR]
+            return [np, Errors.DEVICE_NOT_INITIALISED]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return [None, Errors.NEOPIXEL_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __reaction_wheel_boot(self, _) -> list[object, int]:
         try:
             # TODO: reaction wheel driver + boot sequence
             rw = None
-            return [rw, Errors.NOERROR]
+            return [rw, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
             # TODO: reaction wheel errors
-            return [None, Errors.NOERROR]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def reboot_device(self, device_name: str):
         if device_name not in self.__device_list:
