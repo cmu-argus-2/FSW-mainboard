@@ -163,7 +163,7 @@ class AttitudeDetermination:
         - This function is not directly written into init to allow multiple retires of initialization
         - Sets the initialized attribute of the class once done
         """
-        current_time = int(time.time())
+        current_time = int(TPM.time())
 
         if self.mekf_init_start_time is None:
             self.mekf_init_start_time = current_time

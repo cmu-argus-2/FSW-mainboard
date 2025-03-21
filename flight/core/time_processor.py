@@ -101,3 +101,7 @@ class TimeProcessor:
         else:
             # RTC has failed, return time.time() + TPM offset
             return time.time() + self.time_offset
+
+    @classmethod
+    def monotonic(self):
+        return time.monotonic()
