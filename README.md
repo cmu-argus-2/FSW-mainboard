@@ -10,8 +10,8 @@ See [High-Level Architecture](docs/architecture.md)
 
 The flight software currently supports:
 - Argus v1 (ATSAMD51J20)
-- Argus v1.1
-- Argus v2 (RP2040, in testing)
+- Argus v1.1 (ATSAMD51J20)
+- Argus v2 (RP2040)
 - Argus v3 (RP2350, in testing)
 
 ## Installation
