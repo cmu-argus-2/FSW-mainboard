@@ -131,8 +131,12 @@ class AttitudeDetermination:
 
             if gps_data is not None:
                 gps_record_time = gps_data[GPS_IDX.TIME_GPS]
-                gps_pos_ecef = 1e-2 * np.array(gps_data[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,))
-                gps_vel_ecef = 1e-2 * np.array(gps_data[GPS_IDX.GPS_ECEF_VX : GPS_IDX.GPS_ECEF_VZ + 1]).reshape((3,))
+                gps_pos_ecef = 1e-2 * np.array(gps_data[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape(
+                    (3,)
+                )  # Convert from cm to m
+                gps_vel_ecef = 1e-2 * np.array(gps_data[GPS_IDX.GPS_ECEF_VX : GPS_IDX.GPS_ECEF_VZ + 1]).reshape(
+                    (3,)
+                )  # Convert from cm/s to m/s
 
                 # Sensor validity check
                 if not is_valid_gps_state(gps_pos_ecef, gps_vel_ecef):
