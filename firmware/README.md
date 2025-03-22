@@ -65,8 +65,7 @@ Ensure that build-ArgusX folder does not exist in this directory, or else the co
 Run the following command to compile the target firmware
 ```
 # ArgusX is the folder name in the boards folder
-# -jY is an optional argument, where Y is the number of threads available on your computer
-make BOARD=ArgusX -jY
+make BOARD=ArgusX -j$(nproc)
 ```
 If the compilation is successful, a build-ArgusX folder will be be created. A firmware.uf2 file will be created in this folder. Please upload this to the FSW repo and all relevant files for future development.
 
