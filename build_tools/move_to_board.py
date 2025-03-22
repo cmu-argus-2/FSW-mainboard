@@ -1,7 +1,6 @@
 import argparse
 import filecmp
 import os
-import platform
 import shutil
 
 from build import get_board_path, get_circuitpython_version

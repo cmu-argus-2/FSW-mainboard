@@ -27,7 +27,6 @@ class ArgusV3Interfaces:
     try:
         I2C0 = I2C(I2C0_SCL, I2C0_SDA)
     except Exception:
-        print("I2C0 not connected")
         I2C0 = None
 
     I2C1_SDA = board.SDA1
@@ -37,7 +36,6 @@ class ArgusV3Interfaces:
     try:
         I2C1 = I2C(I2C1_SCL, I2C1_SDA)
     except Exception:
-        print("I2C1 not connected")
         I2C1 = None
 
     SPI0_SCK = board.CLK0
@@ -263,7 +261,7 @@ class ArgusV3Components:
     BATT_HEATER0_ON.direction = digitalio.Direction.OUTPUT
     BATT_HEATER1_ON = digitalio.DigitalInOut(board.HEAT1_ON)
     BATT_HEATER1_ON.direction = digitalio.Direction.OUTPUT
-    BATT_HEAT_EN = digitalio.DigitalInOut(board.BATT_HEAT_EN)
+    BATT_HEAT_EN = digitalio.DigitalInOut(board.HEAT_EN)
     BATT_HEAT_EN.direction = digitalio.Direction.OUTPUT
 
     # NEOPIXEL
@@ -293,7 +291,10 @@ class ArgusV3(CubeSat):
         self.append_device("REACTION_WHEEL", self.__reaction_wheel_boot)
 
         self.__payload_uart = ArgusV3Interfaces.JETSON_UART
-        ArgusV3Components.PERIPH_PWR_EN.value = True  # Enable peripherals power
+
+        # TODO: maybe make this nicer or something
+        ArgusV3Components.PERIPH_PWR_EN.value = True
+        ArgusV3Components.COIL_EN.value = True
 
     ######################## BOOT SEQUENCE ########################
 

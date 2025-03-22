@@ -1,14 +1,13 @@
 import supervisor
 from hal.cubesat import CubeSat
-from micropython import const
 
 supervisor.runtime.autoreload = False
 
 with open("boot_out.txt") as boot:
-    lines = boot.readlines()  # Read all lines into a list
-    if len(lines) > 1:  # Check if the file has at least two lines
-        second_line = lines[1].strip()  # Get the second line and strip whitespace
-        board_id = second_line.split(":")[1].strip()  # Extract the part after the colon
+    lines = boot.readlines()
+    if len(lines) > 1:
+        second_line = lines[1].strip()
+        board_id = second_line.split(":")[1].strip()
 
 DEBUG_MODE = False
 
