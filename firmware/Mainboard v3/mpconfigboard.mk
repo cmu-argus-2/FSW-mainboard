@@ -16,3 +16,4 @@ CIRCUITPY_ULAB = 1
 FROZEN_MPY_DIRS += $(TOP)/frozen/Adafruit_CircuitPython_BusDevice
 FROZEN_MPY_DIRS += $(TOP)/frozen/Adafruit_CircuitPython_Register
 FROZEN_MPY_DIRS += $(TOP)/frozen/Adafruit_CircuitPython_SD
+FROZEN_MPY_DIRS += $(TOP)/frozen/Adafruit_CircuitPython_NeoPixel

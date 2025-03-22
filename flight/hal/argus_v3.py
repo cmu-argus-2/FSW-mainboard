@@ -27,6 +27,7 @@ class ArgusV3Interfaces:
     try:
         I2C0 = I2C(I2C0_SCL, I2C0_SDA)
     except Exception:
+        print("I2C0 not connected")
         I2C0 = None
 
     I2C1_SDA = board.SDA1
@@ -36,6 +37,7 @@ class ArgusV3Interfaces:
     try:
         I2C1 = I2C(I2C1_SCL, I2C1_SDA)
     except Exception:
+        print("I2C1 not connected")
         I2C1 = None
 
     SPI0_SCK = board.CLK0
@@ -234,11 +236,15 @@ class ArgusV3Components:
     #########
 
     # PERIPHERALS 3.3V
-    PERIPH_PWR_EN = board.PERIPH_PWR_EN
-    PERIPH_PWR_OVC = board.PERIPH_PWR_FLT
+    PERIPH_PWR_EN = digitalio.DigitalInOut(board.PERIPH_PWR_EN)
+    PERIPH_PWR_EN.direction = digitalio.Direction.OUTPUT
+
+    PERIPH_PWR_OVC = digitalio.DigitalInOut(board.PERIPH_PWR_FLT)
+    PERIPH_PWR_OVC.direction = digitalio.Direction.INPUT
 
     # MAIN (MCU, WATCHDOG) 3.3V
-    MAIN_PWR_RESET = board.MAIN_PWR_RST
+    MAIN_PWR_RESET = digitalio.DigitalInOut(board.MAIN_PWR_RST)
+    MAIN_PWR_RESET.direction = digitalio.Direction.OUTPUT
 
     ########
     # MISC #
@@ -278,7 +284,8 @@ class ArgusV3(CubeSat):
         # self.append_device("NEOPIXEL", self.__neopixel_boot)
         self.append_device("REACTION_WHEEL", self.__reaction_wheel_boot)
 
-        # self.__payload_uart = ArgusV3Interfaces.PAYLOAD_UART
+        self.__payload_uart = ArgusV3Interfaces.JETSON_UART
+        ArgusV3Components.PERIPH_PWR_EN.value = True  # Enable peripherals power
 
     ######################## BOOT SEQUENCE ########################
 
@@ -558,7 +565,7 @@ class ArgusV3(CubeSat):
                 raise e
             return [None, Errors.MAX17205_NOT_INITIALIZED]
 
-    def __neopixel_boot(self) -> list[object, int]:
+    def __neopixel_boot(self, _) -> list[object, int]:
         """neopixel_boot: Boot sequence for the neopixel"""
         import neopixel
 
