@@ -72,10 +72,8 @@ class TimeProcessor:
             if cls.time() != unix_timestamp:
                 # RTC exists and time is different enough, update RTC time
                 SATELLITE.RTC.set_datetime(time.localtime(unix_timestamp))
-                print("Updating RTC time")
             else:
                 # Time references are the same, save a write cycle
-                print("Not updating RTC time")
                 pass
 
         else:
