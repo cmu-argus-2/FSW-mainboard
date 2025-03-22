@@ -281,7 +281,7 @@ class ArgusV3(CubeSat):
 
         super().__init__()
 
-        # self.append_device("NEOPIXEL", self.__neopixel_boot)
+        self.append_device("NEOPIXEL", self.__neopixel_boot)
         self.append_device("REACTION_WHEEL", self.__reaction_wheel_boot)
 
         self.__payload_uart = ArgusV3Interfaces.JETSON_UART
