@@ -58,8 +58,8 @@ class TimeProcessor:
     """
 
     @classmethod
-    def calc_time_offset(self):
-        self.time_offset = self.time_reference - time.time()
+    def calc_time_offset(cls):
+        cls.time_offset = cls.time_reference - time.time()
 
     """
         Name: set_time
@@ -67,19 +67,24 @@ class TimeProcessor:
     """
 
     @classmethod
-    def set_time(self, unix_timestamp):
+    def set_time(cls, unix_timestamp):
         if SATELLITE.RTC_AVAILABLE:
-            # RTC exists, update RTC time
-            SATELLITE.RTC.set_datetime(time.localtime(unix_timestamp))
-
-            # Update TPM time reference and offset, in case RTC fails later
-            self.time_reference = unix_timestamp
-            self.calc_time_offset()
+            if cls.time() != unix_timestamp:
+                # RTC exists and time is different enough, update RTC time
+                SATELLITE.RTC.set_datetime(time.localtime(unix_timestamp))
+                print("Updating RTC time")
+            else:
+                # Time references are the same, save a write cycle
+                print("Not updating RTC time")
+                pass
 
         else:
             # RTC does not exist, update TPM time reference and offset
-            self.time_reference = unix_timestamp
-            self.calc_time_offset()
+            pass
+
+        # Update TPM time reference and offset, regardless of RTC status
+        cls.time_reference = unix_timestamp
+        cls.calc_time_offset()
 
     """
         Name: time
@@ -87,21 +92,21 @@ class TimeProcessor:
     """
 
     @classmethod
-    def time(self):
+    def time(cls):
         if SATELLITE.RTC_AVAILABLE:
             # RTC exists, get RTC time
             rtc_time = time.mktime(SATELLITE.RTC.datetime)
 
             # Update TPM time reference and offset, in case RTC fails later
-            self.time_reference = rtc_time
-            self.calc_time_offset()
+            cls.time_reference = rtc_time
+            cls.calc_time_offset()
 
             # Return RTC time
             return rtc_time
         else:
             # RTC has failed, return time.time() + TPM offset
-            return time.time() + self.time_offset
+            return time.time() + cls.time_offset
 
     @classmethod
-    def monotonic(self):
+    def monotonic(cls):
         return time.monotonic()
