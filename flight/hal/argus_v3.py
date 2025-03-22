@@ -195,7 +195,8 @@ class ArgusV3Components:
     RADIO_RX_EN = board.LORA_RX_EN
     RADIO_BUSY = board.LORA_BUSY
     RADIO_IRQ = board.LORA_INT
-    RADIO_OVC = board.LORA_FLT
+    RADIO_OVC = digitalio.DigitalInOut(board.LORA_FLT)
+    RADIO_OVC.direction = digitalio.Direction.INPUT
 
     ########
     # SPI1 #
@@ -212,7 +213,8 @@ class ArgusV3Components:
     PAYLOAD_IO2 = board.PAYLOAD_IO2
     PAYLOAD_CS = board.PAYLOAD_nCS
     PAYLOAD_EN = board.PAYLOAD_EN
-    PAYLOAD_OVC = board.PAYLOAD_FLT
+    PAYLOAD_FLT = digitalio.DigitalInOut(board.PAYLOAD_FLT)
+    PAYLOAD_FLT.direction = digitalio.Direction.INPUT
 
     #########
     # UART0 #
@@ -221,7 +223,8 @@ class ArgusV3Components:
     # GPS
     GPS_UART = ArgusV3Interfaces.UART0
     GPS_ENABLE = board.GPS_EN
-    GPS_OVC = board.GPS_FLT
+    GPS_OVC = digitalio.DigitalInOut(board.GPS_FLT)
+    GPS_OVC.direction = digitalio.Direction.INPUT
 
     #########
     # UART1 #
@@ -229,7 +232,8 @@ class ArgusV3Components:
 
     # JETSON
     JETSON_UART = ArgusV3Interfaces.JETSON_UART
-    JETSON_ENABLE = board.JETSON_EN
+    JETSON_ENABLE = digitalio.DigitalInOut(board.JETSON_EN)
+    JETSON_ENABLE.direction = digitalio.Direction.OUTPUT
 
     #########
     # eFUSE #
@@ -251,12 +255,16 @@ class ArgusV3Components:
     ########
 
     # TORQUE COILS ENABLE
-    COIL_EN = board.COIL_EN
+    COIL_EN = digitalio.DigitalInOut(board.COIL_EN)
+    COIL_EN.direction = digitalio.Direction.OUTPUT
 
     # BATTERY HEATERS
-    BATT_HEATER0_ON = board.HEAT0_ON
-    BATT_HEATER1_ON = board.HEAT1_ON
-    BATT_HEAT_EN = board.HEAT_EN
+    BATT_HEATER0_ON = digitalio.DigitalInOut(board.HEAT0_ON)
+    BATT_HEATER0_ON.direction = digitalio.Direction.OUTPUT
+    BATT_HEATER1_ON = digitalio.DigitalInOut(board.HEAT1_ON)
+    BATT_HEATER1_ON.direction = digitalio.Direction.OUTPUT
+    BATT_HEAT_EN = digitalio.DigitalInOut(board.BATT_HEAT_EN)
+    BATT_HEAT_EN.direction = digitalio.Direction.OUTPUT
 
     # NEOPIXEL
     NEOPIXEL_SDA = board.NEOPIXEL
