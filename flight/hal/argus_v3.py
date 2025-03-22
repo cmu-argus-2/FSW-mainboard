@@ -7,7 +7,6 @@ from sys import path
 
 import board
 import digitalio
-import neopixel
 from busio import I2C, SPI, UART
 from hal.cubesat import CubeSat
 from hal.drivers.middleware.errors import Errors
@@ -276,10 +275,10 @@ class ArgusV3(CubeSat):
 
         super().__init__()
 
-        self.append_device("NEOPIXEL", self.__neopixel_boot)
+        # self.append_device("NEOPIXEL", self.__neopixel_boot)
         self.append_device("REACTION_WHEEL", self.__reaction_wheel_boot)
 
-        self.__payload_uart = ArgusV3Interfaces.PAYLOAD_UART
+        # self.__payload_uart = ArgusV3Interfaces.PAYLOAD_UART
 
     ######################## BOOT SEQUENCE ########################
 
@@ -458,7 +457,7 @@ class ArgusV3(CubeSat):
             radioEn.value = True
 
             radio = SX1262(
-                spi_bus=ArgusV3Interfaces.SPI,
+                spi_bus=ArgusV3Components.RADIO_SPI,
                 cs=ArgusV3Components.RADIO_CS,
                 irq=ArgusV3Components.RADIO_IRQ,
                 rst=ArgusV3Components.RADIO_RESET,
@@ -561,6 +560,8 @@ class ArgusV3(CubeSat):
 
     def __neopixel_boot(self) -> list[object, int]:
         """neopixel_boot: Boot sequence for the neopixel"""
+        import neopixel
+
         try:
             np = neopixel.NeoPixel(
                 ArgusV3Components.NEOPIXEL_SDA,
