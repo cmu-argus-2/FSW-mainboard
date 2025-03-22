@@ -73,11 +73,11 @@ If the compilation is successful, a build-ArgusX folder will be be created. A fi
 ## Flashing
 
 ### Raspberry Pi
-To enter bootloader, turn off the board and hold the RESET button. Drag and drop the uf2 file to the board, it will restart with the new firmware.
+To enter bootloader, turn off the board and hold the BOOT button. Drag and drop the uf2 file to the board, it will restart with the new firmware.
 
 ### ATSAMD
 
-To enter bootloader, double tap the RESET button. Drag and drop the uf2 file to the board, it will restart with the new firmware.
+To enter bootloader, double tap the BOOT button. Drag and drop the uf2 file to the board, it will restart with the new firmware.
 
 
 
