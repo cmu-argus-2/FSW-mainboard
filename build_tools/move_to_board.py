@@ -4,17 +4,12 @@ import os
 import platform
 import shutil
 
-from build import CPY_VERSION
+from build import get_board_path, get_circuitpython_version
 
-if platform.system() == "Windows":
-    BOARD_PATH = "D:\\"
-elif platform.system() == "Linux":
-    username = os.getlogin()
-    BOARD_PATH = f"/media/{username}/ARGUS"
-elif platform.system() == "Darwin":
-    BOARD_PATH = "/Volumes/ARGUS"
-if platform.node() == "raspberrypi":
-    BOARD_PATH = "/mnt/mainboard"
+BOARD_PATH = get_board_path()
+CPY_VERSION = 8  # Default to CPY 8
+if os.path.exists(BOARD_PATH):
+    CPY_VERSION = get_circuitpython_version(BOARD_PATH)
 
 
 def copy_folder(source_folder, destination_folder, show_identical_files=True):
