@@ -4,9 +4,9 @@ import circuitpython_csv as csv
 import supervisor
 from hal.configuration import SATELLITE
 
-print("Booting ARGUS-1...")
+print("Booting ARGUS...")
 SATELLITE.boot_sequence()
-print("ARGUS-1 booted.")
+print("ARGUS booted.")
 print(f"Boot Errors: {SATELLITE.ERRORS}")
 mag_data = []
 gyro_data = []
