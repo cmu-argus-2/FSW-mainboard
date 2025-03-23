@@ -113,10 +113,8 @@ class TelemetryPacker:
                 cls._FRAME[14] = cdh_data[CDH_IDX.REBOOT_COUNT] & 0xFF
                 # Watchdog Timer
                 cls._FRAME[15] = cdh_data[CDH_IDX.WATCHDOG_TIMER] & 0xFF
-                # HAL Bitflags
-                cls._FRAME[16] = cdh_data[CDH_IDX.HAL_BITFLAGS] & 0xFF
                 # Detumbling Error Flag
-                cls._FRAME[17] = cdh_data[CDH_IDX.DETUMBLING_ERROR_FLAG] & 0xFF
+                cls._FRAME[16] = cdh_data[CDH_IDX.DETUMBLING_ERROR_FLAG] & 0xFF
 
             else:
                 logger.warning("No latest CDH data available")
@@ -373,10 +371,8 @@ class TelemetryPacker:
                 cls._FRAME[14] = cdh_data[CDH_IDX.REBOOT_COUNT] & 0xFF
                 # Watchdog Timer
                 cls._FRAME[15] = cdh_data[CDH_IDX.WATCHDOG_TIMER] & 0xFF
-                # HAL Bitflags
-                cls._FRAME[16] = cdh_data[CDH_IDX.HAL_BITFLAGS] & 0xFF
                 # Detumbling Error Flag
-                cls._FRAME[17] = cdh_data[CDH_IDX.DETUMBLING_ERROR_FLAG] & 0xFF
+                cls._FRAME[16] = cdh_data[CDH_IDX.DETUMBLING_ERROR_FLAG] & 0xFF
 
             else:
                 logger.warning("No latest CDH data available")
@@ -412,10 +408,8 @@ class TelemetryPacker:
                 cls._FRAME[14] = cdh_data[CDH_IDX.REBOOT_COUNT] & 0xFF
                 # Watchdog Timer
                 cls._FRAME[15] = cdh_data[CDH_IDX.WATCHDOG_TIMER] & 0xFF
-                # HAL Bitflags
-                cls._FRAME[16] = cdh_data[CDH_IDX.HAL_BITFLAGS] & 0xFF
                 # Detumbling Error Flag
-                cls._FRAME[17] = cdh_data[CDH_IDX.DETUMBLING_ERROR_FLAG] & 0xFF
+                cls._FRAME[16] = cdh_data[CDH_IDX.DETUMBLING_ERROR_FLAG] & 0xFF
 
             else:
                 logger.warning("No latest CDH data available")

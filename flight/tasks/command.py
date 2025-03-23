@@ -19,7 +19,7 @@ from hal.configuration import SATELLITE
 class Task(TemplateTask):
     # To be removed
     # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "REBOOT_COUNT",
-    # "WATCHDOG_TIMER", "HAL_BITFLAGS", "DETUMBLING_ERROR_FLAG"]
+    # "WATCHDOG_TIMER", "DETUMBLING_ERROR_FLAG"]
 
     log_data = [0] * 8
 
@@ -131,7 +131,6 @@ class Task(TemplateTask):
             self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = self.get_memory_usage()
             self.log_data[CDH_IDX.REBOOT_COUNT] = 0
             self.log_data[CDH_IDX.WATCHDOG_TIMER] = 0
-            self.log_data[CDH_IDX.HAL_BITFLAGS] = 0
             # the detumbling error flag is set in the DETUMBLING state
 
             # Should always run
