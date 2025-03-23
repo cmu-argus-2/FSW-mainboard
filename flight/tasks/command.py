@@ -154,11 +154,11 @@ class Task(TemplateTask):
             self.startup()
 
         else:
-            # Execute state machine
-            self.state_machine_execution()
-
             # Run command processor
             self.command_processor_execution()
+
+            # Execute state machine
+            self.state_machine_execution()
 
             # Set CDH log data
             self.log_data[CDH_IDX.TIME] = TPM.time()
