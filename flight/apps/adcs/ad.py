@@ -91,7 +91,7 @@ class AttitudeDetermination:
 
         if SATELLITE.IMU_AVAILABLE:
             gyro = np.array(SATELLITE.IMU.gyro())
-            query_time = int(TPM.time())
+            query_time = TPM.time()
 
             # Sensor validity check (check length and ensure reasding within range)
             if gyro is None or len(gyro) != 3:
@@ -111,7 +111,7 @@ class AttitudeDetermination:
 
         if SATELLITE.IMU_AVAILABLE:
             mag = np.array(SATELLITE.IMU.mag())
-            query_time = int(TPM.time())
+            query_time = TPM.time()
 
             # Sensor validity check (check length and ensure reading wihtin range)
             if mag is None or len(mag) != 3:
@@ -163,7 +163,7 @@ class AttitudeDetermination:
         - This function is not directly written into init to allow multiple retires of initialization
         - Sets the initialized attribute of the class once done
         """
-        current_time = int(TPM.time())
+        current_time = TPM.time()
 
         if self.mekf_init_start_time is None:
             self.mekf_init_start_time = current_time
@@ -180,7 +180,7 @@ class AttitudeDetermination:
             return StatusConst.MEKF_INIT_FAIL, StatusConst.GPS_FAIL
         else:
             # Propagate from GPS measurement record
-            current_time = int(TPM.time())
+            current_time = TPM.time()
             R_ecef2eci = ecef_to_eci(current_time)
             gps_pos_eci = np.dot(R_ecef2eci, gps_pos_ecef)
             gps_vel_eci = np.dot(R_ecef2eci, gps_vel_ecef)

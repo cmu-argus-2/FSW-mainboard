@@ -99,7 +99,7 @@ class Task(TemplateTask):
 
             # Get power system readings
 
-            self.log_data[EPS_IDX.TIME_EPS] = int(TPM.time())
+            self.log_data[EPS_IDX.TIME_EPS] = TPM.time()
 
             for location, sensor in SATELLITE.POWER_MONITORS.items():
                 if SATELLITE.POWER_MONITOR_AVAILABLE(location):

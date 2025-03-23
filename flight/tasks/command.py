@@ -138,7 +138,7 @@ class Task(TemplateTask):
                 processor.handle_command_execution_status(status, response_args)
 
                 # Log the command execution history
-                self.log_commands[0] = int(TPM.time())
+                self.log_commands[0] = TPM.time()
                 self.log_commands[1] = cmd_id
                 self.log_commands[2] = status
                 DH.log_data("cmd_logs", self.log_commands)
@@ -156,7 +156,7 @@ class Task(TemplateTask):
             self.command_processor_execution()
 
             # Set CDH log data
-            self.log_data[CDH_IDX.TIME] = int(TPM.time())
+            self.log_data[CDH_IDX.TIME] = TPM.time()
             self.log_data[CDH_IDX.SC_STATE] = SM.current_state
             self.log_data[CDH_IDX.SD_USAGE] = int(DH.SD_usage() / 1000)  # kb - gets updated in the OBDH task
             self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = self.get_memory_usage()
@@ -175,7 +175,7 @@ class Task(TemplateTask):
         if self.log_print_counter % self.frequency == 0:
             self.log_print_counter = 0
 
-            self.log_info(f"Time: {int(TPM.time())}")
+            self.log_info(f"Time: {TPM.time()}")
             self.log_info(f"Time since boot: {int(TPM.monotonic()) - SATELLITE.BOOTTIME}")
             self.log_info(f"GLOBAL STATE: {STR_STATES[SM.current_state]}.")
             self.log_info(f"RAM USAGE: {self.log_data[CDH_IDX.CURRENT_RAM_USAGE]}%")

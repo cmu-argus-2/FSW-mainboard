@@ -100,10 +100,10 @@ class TimeProcessor:
             cls.calc_time_offset()
 
             # Return RTC time
-            return rtc_time
+            return int(rtc_time)
         else:
             # RTC has failed, return time.time() + TPM offset
-            return time.time() + cls.time_offset
+            return int(time.time() + cls.time_offset)
 
     @classmethod
     def monotonic(cls):
