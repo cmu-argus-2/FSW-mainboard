@@ -40,7 +40,7 @@ class TimeProcessor:
     (on boot) if the RTC has failed.
     """
 
-    # Initialize to UTC timestamp for Jan 1st 2020 (time.time() init val)
+    # Initialize to initial value for time.time()
     time_reference = time.time()
 
     """

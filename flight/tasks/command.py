@@ -33,7 +33,9 @@ class Task(TemplateTask):
     def __init__(self, id):
         super().__init__(id)
         self.name = "COMMAND"
-        self.tpm_init_tries_cnt = 0
+        self.tpm_init_timeout_set = False
+        self.tpm_init_timeout = 2  # 2 seconds
+        self.tpm_init_cnt = 0
 
     def get_memory_usage(self):
         return int(gc.mem_alloc() / self.total_memory * 100)
@@ -60,7 +62,10 @@ class Task(TemplateTask):
         # from GPS or uplinked commands, and until then the time will be egregiously wrong
 
         # This will not work until OBDH initializes CDH data process, so try 4 times
-        if (self.tpm_init_tries_cnt) < 4 and (SATELLITE.RTC_AVAILABLE is False):
+        if not self.tpm_init_timeout_set:
+            self.tpm_init_timeout_thr = int(self.frequency * self.tpm_init_timeout)
+
+        if (self.tpm_init_cnt) < self.tpm_init_timeout_thr and (SATELLITE.RTC_AVAILABLE is False):
             # Only worth it if the RTC is dead
             if DH.data_process_exists("cdh"):
                 cdh_data = DH.get_latest_data("cdh")
@@ -77,7 +82,7 @@ class Task(TemplateTask):
                 # If no RTC or old time reference available, TPM goes back to init for time.time()
                 self.log_warning("Cannot set time reference as CDH process does not exist")
 
-            self.tpm_init_tries_cnt += 1
+            self.tpm_init_cnt += 1
 
         else:
             # Check time_since_boot
