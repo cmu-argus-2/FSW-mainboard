@@ -4,7 +4,7 @@ import time
 
 import microcontroller
 from apps.eps.eps import EPS_POWER_FLAG, EPS_POWER_THRESHOLD, GET_EPS_POWER_FLAG
-from apps.telemetry.constants import EPS_IDX
+from apps.telemetry.constants import EPS_IDX, EPS_WARNING_IDX
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
@@ -64,6 +64,7 @@ class Task(TemplateTask):
     ]"""
 
     log_data = [0] * 43  # - use mV for voltage and mA for current (h = short integer 2 bytes)
+    warning_log_data = [0] * 4
 
     def __init__(self, id):
         super().__init__(id)
@@ -89,15 +90,27 @@ class Task(TemplateTask):
 
     def set_radio_power_alert(self, power):
         # TODO: set flag or alert to indicate that radio is consuming too much power
-        return None
+        if (power > EPS_POWER_THRESHOLD.RADIO):
+            self.warning_log_data[EPS_WARNING_IDX.RADIO_POWER_WARNING] = 1
+            self.log_warning(f"Radio Power Consumption Warning: {power} with threshold {EPS_POWER_THRESHOLD.RADIO}")
+        else:
+            self.warning_log_data[EPS_WARNING_IDX.RADIO_POWER_WARNING] = 0
 
     def set_mainboard_power_alert(self, power):
         # TODO: potentially log error to indicate mainboard is consuming too much power
-        return None
+        if (power > EPS_POWER_THRESHOLD.MAINBOARD):
+            self.warning_log_data[EPS_WARNING_IDX.MAINBOARD_POWER_WARNING] = 1
+            self.log_warning(f"Mainboard Power Consumption Warning: {power} with threshold {EPS_POWER_THRESHOLD.MAINBOARD}")
+        else:
+            self.warning_log_data[EPS_WARNING_IDX.MAINBOARD_POWER_WARNING] = 0
 
     def set_jetson_power_alert(self, power):
         # TODO: potentially log error to indicate Jetson is consuming too much power
-        return None
+        if (power > EPS_POWER_THRESHOLD.JETSON):
+            self.warning_log_data[EPS_WARNING_IDX.JETSON_POWER_WARNING] = 1
+            self.log_warning(f"Jetson Power Consumption Warning: {power} with threshold {EPS_POWER_THRESHOLD.JETSON}")
+        else:
+            self.warning_log_data[EPS_WARNING_IDX.JETSON_POWER_WARNING] = 0
 
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:
@@ -109,10 +122,17 @@ class Task(TemplateTask):
                     "Lbhhhhb" + "L" + "h" * 3 + "L" * 2 + "h" * 30
                 )  # - use mV for voltage and mA for current (h = short integer 2 bytes, L = 4 bytes)
                 DH.register_data_process("eps", data_format, True, data_limit=100000)
+            
+            if not DH.data_process_exists("eps_warning"):
+                data_format = (
+                    "L" + "b" * 3
+                )
+                DH.register_data_process("eps_warning", data_format, True, data_limit=10000)
 
             # Get power system readings
 
             self.log_data[EPS_IDX.TIME_EPS] = int(time.time())
+            self.warning_log_data[EPS_WARNING_IDX.TIME_EPS_WARNING] = int(time.time())
 
             for location, sensor in SATELLITE.POWER_MONITORS.items():
                 if SATELLITE.POWER_MONITOR_AVAILABLE(location):
@@ -123,8 +143,7 @@ class Task(TemplateTask):
                             + f"Board Current: {self.log_data[EPS_IDX.MAINBOARD_CURRENT]} mA "
                         )
                         power = self.log_data[EPS_IDX.MAINBOARD_VOLTAGE] * self.log_data[EPS_IDX.MAINBOARD_CURRENT] * 1000  # mW
-                        if (power > EPS_POWER_THRESHOLD.MAINBOARD):
-                            self.set_mainboard_power_alert(power)
+                        self.set_mainboard_power_alert(power)
                     elif location == "JETSON":
                         self.read_vc(sensor, EPS_IDX.JETSON_INPUT_VOLTAGE, EPS_IDX.JETSON_INPUT_CURRENT)
                         self.log_info(
@@ -132,8 +151,7 @@ class Task(TemplateTask):
                             + f"Jetson Current: {self.log_data[EPS_IDX.JETSON_INPUT_CURRENT]} mA"
                         )
                         power = self.log_data[EPS_IDX.JETSON_INPUT_VOLTAGE] * self.log_data[EPS_IDX.JETSON_INPUT_CURRENT] * 1000  # mW
-                        if (power > EPS_POWER_THRESHOLD.JETSON):
-                            self.set_jetson_power_alert(power)
+                        self.set_jetson_power_alert(power)
                     elif location == "RADIO":
                         self.read_vc(sensor, EPS_IDX.RF_LDO_OUTPUT_VOLTAGE, EPS_IDX.RF_LDO_OUTPUT_CURRENT)
                         self.log_info(
@@ -141,9 +159,34 @@ class Task(TemplateTask):
                             + f"Radio Current: {self.log_data[EPS_IDX.RF_LDO_OUTPUT_CURRENT]} mA"
                         )
                         power = self.log_data[EPS_IDX.RF_LDO_OUTPUT_VOLTAGE] * self.log_data[EPS_IDX.RF_LDO_OUTPUT_CURRENT] * 1000  # mW
-                        if (power > EPS_POWER_THRESHOLD.RADIO):
-                            self.set_radio_power_alert(power)
-                    # TODO: check torque coil power consumption
+                        self.set_radio_power_alert(power)
+            # TODO: check torque coil power consumption
+            for location, sensor in SATELLITE.TORQUE_DRIVERS:
+                if SATELLITE.TORQUE_DRIVERS_AVAILABLE(location):
+                    if location == "XP":
+                        self.read_vc(sensor, EPS_IDX.XP_COIL_VOLTAGE, EPS_IDX.XP_COIL_CURRENT)
+                        self.log_info(
+                            f"XP Coil Voltage: {self.log_data[EPS_IDX.XP_COIL_VOLTAGE]} mV, "
+                            + f"XP Coil Current: {self.log_data[EPS_IDX.XP_COIL_CURRENT]} mA "
+                        )
+                    elif location == "XM":
+                        self.read_vc(sensor, EPS_IDX.XM_COIL_VOLTAGE, EPS_IDX.XM_COIL_CURRENT)
+                        self.log_info(
+                            f"XM Coil Voltage: {self.log_data[EPS_IDX.XM_COIL_VOLTAGE]} mV, "
+                            + f"XM Coil Current: {self.log_data[EPS_IDX.XM_COIL_CURRENT]} mA "
+                        )
+                    elif location == "YP":
+                        self.read_vc(sensor, EPS_IDX.YP_COIL_VOLTAGE, EPS_IDX.YP_COIL_CURRENT)
+                        self.log_info(
+                            f"YP Coil Voltage: {self.log_data[EPS_IDX.YP_COIL_VOLTAGE]} mV, "
+                            + f"YP Coil Current: {self.log_data[EPS_IDX.YP_COIL_CURRENT]} mA "
+                        )
+                    elif location == "YM":
+                        self.read_vc(sensor, EPS_IDX.YM_COIL_VOLTAGE, EPS_IDX.YM_COIL_CURRENT)
+                        self.log_info(
+                            f"YM Coil Voltage: {self.log_data[EPS_IDX.YM_COIL_VOLTAGE]} mV, "
+                            + f"YM Coil Current: {self.log_data[EPS_IDX.YM_COIL_CURRENT]} mA "
+                        )
 
             self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
             self.log_info(f"CPU temperature: {self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE]} °cC ")
@@ -169,3 +212,4 @@ class Task(TemplateTask):
                     self.log_error("EPS state invalid; SOC or power flag may be corrupted")
 
             DH.log_data("eps", self.log_data)
+            DH.log_data("eps_warning", self.warning_log_data)

@@ -59,6 +59,11 @@ class EPS_IDX:
     ZM_SOLAR_CHARGE_VOLTAGE = const(41)
     ZM_SOLAR_CHARGE_CURRENT = const(42)
 
+class EPS_WARNING_IDX:
+    TIME_EPS_WARNING = const(0)
+    MAINBOARD_POWER_ALERT = const(1)
+    RADIO_POWER_ALERT = const(2)
+    JETSON_POWER_ALERT = const(3)
 
 class ADCS_IDX:
     TIME_ADCS = const(0)

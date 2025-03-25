@@ -26,7 +26,7 @@ For struct module format strings:
 
 import gc
 
-from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, STORAGE_IDX
+from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX, EPS_WARNING_IDX, GPS_IDX, STORAGE_IDX
 from apps.telemetry.helpers import (
     convert_float_to_fixed_point_hp,
     pack_signed_long_int,
@@ -219,6 +219,15 @@ class TelemetryPacker:
                 cls._FRAME[100:102] = pack_signed_short_int(eps_data, EPS_IDX.ZM_SOLAR_CHARGE_VOLTAGE)
                 # ZM solar charge current
                 cls._FRAME[102:104] = pack_signed_short_int(eps_data, EPS_IDX.ZM_SOLAR_CHARGE_CURRENT)
+        
+        ############ EPS warning fields ############
+        if DH.data_process_exists("eps_warning"):
+            eps_warning_data = DH.get_latest_data("eps_warning")
+
+            if eps_warning_data:
+                cls._FRAME[104] = eps_warning_data[EPS_WARNING_IDX.MAINBOARD_POWER_ALERT] & 0xFF
+                cls._FRAME[105] = eps_warning_data[EPS_WARNING_IDX.RADIO_POWER_ALERT] & 0xFF
+                cls._FRAME[106] = eps_warning_data[EPS_WARNING_IDX.JETSON_POWER_ALERT] & 0xFF
 
         ############ ADCS fields ############
         if DH.data_process_exists("adcs"):
@@ -445,6 +454,16 @@ class TelemetryPacker:
             cls._FRAME[34:38] = pack_unsigned_long_int(eps_storage_info, STORAGE_IDX.DIR_SIZE)
         else:
             logger.warning("EPS Data process does not exist")
+
+        ############ EPS Warning fields ###########
+        if DH.data_process_exists("eps_warning"):
+            eps_warning_storage_info = DH.get_storage_info("eps_warning")
+            # EPS number of files
+            cls._FRAME[38:42] = pack_unsigned_long_int(eps_warning_storage_info, STORAGE_IDX.NUM_FILES)
+            # EPS directory size
+            cls._FRAME[42:46] = pack_unsigned_long_int(eps_warning_storage_info, STORAGE_IDX.DIR_SIZE)
+        else:
+            logger.warning("EPS Warning Data process does not exist")
 
         ############ ADCS fields ###########
         if DH.data_process_exists("adcs"):
