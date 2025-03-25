@@ -20,7 +20,8 @@ class EPS_SOC_THRESHOLD:
 class EPS_POWER_THRESHOLD:
     MAINBOARD = const(600)
     RADIO = const(350)
-    JETSON = const(1600)
+    JETSON = const(16000)
+    TORQUE_COIL = const(1500)
 
 
 def GET_EPS_POWER_FLAG(curr_flag, soc):
