@@ -110,5 +110,5 @@ class TimeProcessor:
         return int(time.monotonic())
 
     @classmethod
-    def localtime(cls, unix_timestamp):
-        return time.localtime(unix_timestamp)
+    def localtime(cls):
+        return time.localtime(cls.time())
