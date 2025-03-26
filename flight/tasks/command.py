@@ -14,6 +14,10 @@ from core import state_manager as SM
 from core.states import STATES, STR_STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
+from micropython import const
+
+_TPM_INIT_TIMEOUT = const(10)  # seconds
+_EXIT_STARTUP_TIMEOUT = const(5)  # seconds
 
 
 class Task(TemplateTask):
@@ -33,9 +37,7 @@ class Task(TemplateTask):
     def __init__(self, id):
         super().__init__(id)
         self.name = "COMMAND"
-        self.tpm_init_timeout_set = False
-        self.tpm_init_timeout = 2  # 2 seconds
-        self.tpm_init_cnt = 0
+        self.time_ref_set = False
 
     def get_memory_usage(self):
         return int(gc.mem_alloc() / self.total_memory * 100)
@@ -54,6 +56,9 @@ class Task(TemplateTask):
 
         # TODO: Deployment
 
+        # Check time_since_boot
+        time_since_boot = TPM.monotonic() - SATELLITE.BOOTTIME
+
         # NOTE: TPM time reference initialization
         # In case the RTC has died, TPM uses time reference for time keeping
         # The time reference is used to get offset from time.time()
@@ -61,11 +66,10 @@ class Task(TemplateTask):
         # If an old time reference is not available, we depend on state correction
         # from GPS or uplinked commands, and until then the time will be egregiously wrong
 
-        # This will not work until OBDH initializes CDH data process, so try 4 times
-        if not self.tpm_init_timeout_set:
-            self.tpm_init_timeout_thr = int(self.frequency * self.tpm_init_timeout)
+        # This will not work until OBDH initializes CDH data process, so try for 10 seconds
+        # since the SC has booted
 
-        if (self.tpm_init_cnt) < self.tpm_init_timeout_thr and (SATELLITE.RTC_AVAILABLE is False):
+        if time_since_boot < _TPM_INIT_TIMEOUT and SATELLITE.RTC_AVAILABLE is False and self.time_ref_set is False:
             # Only worth it if the RTC is dead
             if DH.data_process_exists("cdh"):
                 cdh_data = DH.get_latest_data("cdh")
@@ -74,7 +78,9 @@ class Task(TemplateTask):
                     # Found an old timestamp reference
                     TPM.time_reference = cdh_data[CDH_IDX.TIME]
                     TPM.calc_time_offset()
-                    self.tpm_init_tries_cnt = 4
+                    self.time_ref_set = True
+                    self.log_info(f"Updated time reference for TPM: {TPM.time()}")
+
                 else:
                     # If no RTC or old time reference available, TPM goes back to init for time.time()
                     self.log_warning("Cannot set time reference as CDH process has no latest data")
@@ -82,13 +88,9 @@ class Task(TemplateTask):
                 # If no RTC or old time reference available, TPM goes back to init for time.time()
                 self.log_warning("Cannot set time reference as CDH process does not exist")
 
-            self.tpm_init_cnt += 1
-
         else:
-            # Check time_since_boot
-            time_since_boot = int(TPM.monotonic()) - SATELLITE.BOOTTIME
-
-            if DH.SD_SCANNED() and time_since_boot > 5:  # seconds into start-up
+            # If the DH successfully scanned the SD card, and it has been 5 secs since FSW boot
+            if DH.SD_SCANNED() and time_since_boot > _EXIT_STARTUP_TIMEOUT:
                 if not DH.data_process_exists("cdh"):
                     data_format = "LbLbbbbb"
                     DH.register_data_process("cdh", data_format, True, data_limit=100000)
@@ -181,6 +183,6 @@ class Task(TemplateTask):
             self.log_print_counter = 0
 
             self.log_info(f"Time: {TPM.time()}")
-            self.log_info(f"Time since boot: {int(TPM.monotonic()) - SATELLITE.BOOTTIME}")
+            self.log_info(f"Time since boot: {TPM.monotonic() - SATELLITE.BOOTTIME}")
             self.log_info(f"GLOBAL STATE: {STR_STATES[SM.current_state]}.")
             self.log_info(f"RAM USAGE: {self.log_data[CDH_IDX.CURRENT_RAM_USAGE]}%")
