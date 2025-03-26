@@ -3,6 +3,7 @@ Author: Harry, Thomas, Ibrahima, Perrin
 Description: This file contains the definition of the ArgusV3 class and its associated interfaces and components.
 """
 
+import time
 from sys import path
 
 import board
@@ -15,6 +16,25 @@ from sdcardio import SDCard
 from storage import VfsFat, mount
 
 
+class ArgusV3Power:
+    #########
+    # eFUSE #
+    #########
+
+    # PERIPHERALS 3.3V
+    PERIPH_PWR_EN = digitalio.DigitalInOut(board.PERIPH_PWR_EN)
+    PERIPH_PWR_EN.direction = digitalio.Direction.OUTPUT
+    PERIPH_PWR_EN.value = True
+    time.sleep(1)  # Wait for peripherals to power up
+
+    PERIPH_PWR_OVC = digitalio.DigitalInOut(board.PERIPH_PWR_FLT)
+    PERIPH_PWR_OVC.direction = digitalio.Direction.INPUT
+
+    # MAIN (MCU, WATCHDOG) 3.3V
+    MAIN_PWR_RESET = digitalio.DigitalInOut(board.MAIN_PWR_RST)
+    MAIN_PWR_RESET.direction = digitalio.Direction.OUTPUT
+
+
 class ArgusV3Interfaces:
     """
     This class represents the interfaces used in the ArgusV3 module.
@@ -25,8 +45,9 @@ class ArgusV3Interfaces:
 
     # Line may not be connected, try except sequence
     try:
-        I2C0 = I2C(I2C0_SCL, I2C0_SDA)
+        I2C0 = I2C(I2C0_SCL, I2C0_SDA, frequency=400000)
     except Exception:
+        print("I2C0 not found")
         I2C0 = None
 
     I2C1_SDA = board.SDA1
@@ -233,21 +254,6 @@ class ArgusV3Components:
     JETSON_ENABLE = digitalio.DigitalInOut(board.JETSON_EN)
     JETSON_ENABLE.direction = digitalio.Direction.OUTPUT
 
-    #########
-    # eFUSE #
-    #########
-
-    # PERIPHERALS 3.3V
-    PERIPH_PWR_EN = digitalio.DigitalInOut(board.PERIPH_PWR_EN)
-    PERIPH_PWR_EN.direction = digitalio.Direction.OUTPUT
-
-    PERIPH_PWR_OVC = digitalio.DigitalInOut(board.PERIPH_PWR_FLT)
-    PERIPH_PWR_OVC.direction = digitalio.Direction.INPUT
-
-    # MAIN (MCU, WATCHDOG) 3.3V
-    MAIN_PWR_RESET = digitalio.DigitalInOut(board.MAIN_PWR_RST)
-    MAIN_PWR_RESET.direction = digitalio.Direction.OUTPUT
-
     ########
     # MISC #
     ########
@@ -285,16 +291,14 @@ class ArgusV3(CubeSat):
         """__init__: Initializes the Argus V3 CubeSat."""
         self.__debug = debug
 
+        # TODO: maybe make this nicer or something
+        ArgusV3Components.COIL_EN.value = True
+
         super().__init__()
 
-        self.append_device("NEOPIXEL", self.__neopixel_boot)
         self.append_device("REACTION_WHEEL", self.__reaction_wheel_boot)
 
         self.__payload_uart = ArgusV3Interfaces.JETSON_UART
-
-        # TODO: maybe make this nicer or something
-        ArgusV3Components.PERIPH_PWR_EN.value = True
-        ArgusV3Components.COIL_EN.value = True
 
     ######################## BOOT SEQUENCE ########################
 
@@ -388,6 +392,7 @@ class ArgusV3(CubeSat):
 
             return [imu, Errors.NOERROR]
         except Exception as e:
+            print(e)
             if self.__debug:
                 raise e
             return [None, Errors.IMU_NOT_INITIALIZED]
@@ -585,6 +590,7 @@ class ArgusV3(CubeSat):
                 brightness=ArgusV3Components.NEOPIXEL_BRIGHTNESS,
                 pixel_order=neopixel.GRB,
             )
+            np
             return [np, Errors.NOERROR]
         except Exception as e:
             if self.__debug:

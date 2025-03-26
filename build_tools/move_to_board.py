@@ -53,6 +53,17 @@ def copy_folder(source_folder, destination_folder, show_identical_files=True):
         except Exception as e:
             print(f"Error: {e}")
 
+    code_py_path = os.path.join(destination_folder, "code.py")
+    if os.path.exists(code_py_path):
+        try:
+            os.chmod(code_py_path, 0o777)
+            os.remove(code_py_path)
+            print(f"Removed {code_py_path}")
+        except PermissionError as e:
+            print(f"PermissionError: {e}. Please manually remove the 'code.py' file from the board.")
+        except Exception as e:
+            print(f"Error: {e}")
+
 
 if __name__ == "__main__":
     # Parses command line arguments.
