@@ -6,9 +6,9 @@ This module controls acts as a software interface to the RTC and
 an alternate source for time-of-day in case of RTC failures.
 
 Requirements:
-1 - The TPM shall always and only use UTC time.
+1 - The TPM shall be the sole point of access to time in all FSW.
 
-2 - The TPM shall be the sole point of access to the RTC.
+2 - The TPM shall act as a controller for the RTC.
 
 3 - The TPM shall be imported into applications when they require
 time-of-day access.
