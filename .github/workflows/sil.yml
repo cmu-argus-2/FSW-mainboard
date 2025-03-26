@@ -70,6 +70,7 @@ jobs:
         run: python3 sil_run.py --duration ${{env.RUNTIME}} --outfile ${{env.OUTFILE}}
       
       - name: Upload log file
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.TIMESTAMP }}-sil-logs
