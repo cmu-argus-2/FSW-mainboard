@@ -25,11 +25,14 @@ Author: Ibrahima Sory Sow
 
 """
 
-from definitions import ACK, CommandID, ErrorCodes
+from definitions import ACK, CommandID, ErrorCodes, PayloadTM
 
 # Asymmetric sizes for send and receive buffers
 _RECV_PCKT_BUF_SIZE = 256
 _SEND_PCKT_BUF_SIZE = 32
+
+# Byte order
+_BYTE_ORDER = "big"
 
 
 class Encoder:
@@ -181,7 +184,7 @@ class Decoder:
     @classmethod
     def decode(cls, data):
         cls._recv_buffer = data
-        print(cls._recv_buffer[0])
+
         # header processing
         cls._curr_id = cls._recv_buffer[0]
         # TODO: Seq count
@@ -221,3 +224,50 @@ class Decoder:
             return ErrorCodes.OK
         else:
             return ErrorCodes.INVALID_RESPONSE
+
+    @classmethod
+    def decode_request_telemetry(cls):
+        if cls._curr_data_length != 46:  # should be a constant in definitions.py
+            return ErrorCodes.INVALID_PACKET
+
+        if int(cls._recv_buffer[cls._data_idx][0]) == ACK.ERROR:
+            return ErrorCodes.COMMAND_ERROR_EXECUTION
+
+        # Filling the PayloadTM structure
+
+        # System part
+        PayloadTM.SYSTEM_TIME = int.from_bytes(cls._recv_buffer[cls._data_idx][0:8], byteorder=_BYTE_ORDER, signed=False)
+        PayloadTM.SYSTEM_UPTIME = int.from_bytes(cls._recv_buffer[cls._data_idx][8:12], byteorder=_BYTE_ORDER, signed=False)
+        PayloadTM.LAST_EXECUTED_CMD_TIME = int.from_bytes(
+            cls._recv_buffer[cls._data_idx][12:16], byteorder=_BYTE_ORDER, signed=False
+        )
+        PayloadTM.LAST_EXECUTED_CMD_ID = cls._recv_buffer[cls._data_idx][16]
+        PayloadTM.PAYLOAD_STATE = cls._recv_buffer[cls._data_idx][17]
+        PayloadTM.ACTIVE_CAMERAS = cls._recv_buffer[cls._data_idx][18]
+        PayloadTM.CAPTURE_MODE = cls._recv_buffer[cls._data_idx][19]
+        PayloadTM.CAM_STATUS[0] = cls._recv_buffer[cls._data_idx][20]
+        PayloadTM.CAM_STATUS[1] = cls._recv_buffer[cls._data_idx][21]
+        PayloadTM.CAM_STATUS[2] = cls._recv_buffer[cls._data_idx][22]
+        PayloadTM.CAM_STATUS[3] = cls._recv_buffer[cls._data_idx][23]
+        PayloadTM.TASKS_IN_EXECUTION = cls._recv_buffer[cls._data_idx][24]
+        PayloadTM.DISK_USAGE = cls._recv_buffer[cls._data_idx][25]
+        PayloadTM.LATEST_ERROR = cls._recv_buffer[cls._data_idx][26]
+        # Tegrastats part
+        PayloadTM.TEGRASTATS_PROCESS_STATUS = bool(cls._recv_buffer[cls._data_idx][27])
+        PayloadTM.RAM_USAGE = cls._recv_buffer[cls._data_idx][28]
+        PayloadTM.SWAP_USAGE = cls._recv_buffer[cls._data_idx][29]
+        PayloadTM.ACTIVE_CORES = cls._recv_buffer[cls._data_idx][30]
+        PayloadTM.CPU_LOAD[0] = cls._recv_buffer[cls._data_idx][31]
+        PayloadTM.CPU_LOAD[1] = cls._recv_buffer[cls._data_idx][32]
+        PayloadTM.CPU_LOAD[2] = cls._recv_buffer[cls._data_idx][33]
+        PayloadTM.CPU_LOAD[3] = cls._recv_buffer[cls._data_idx][34]
+        PayloadTM.CPU_LOAD[4] = cls._recv_buffer[cls._data_idx][35]
+        PayloadTM.CPU_LOAD[5] = cls._recv_buffer[cls._data_idx][36]
+        PayloadTM.GPU_FREQ = cls._recv_buffer[cls._data_idx][37]
+        PayloadTM.CPU_TEMP = cls._recv_buffer[cls._data_idx][38]
+        PayloadTM.GPU_TEMP = cls._recv_buffer[cls._data_idx][39]
+        PayloadTM.VDD_IN = int.from_bytes(cls._recv_buffer[cls._data_idx][40:42], byteorder=_BYTE_ORDER, signed=False)
+        PayloadTM.VDD_CPU_GPU_CV = int.from_bytes(cls._recv_buffer[cls._data_idx][42:44], byteorder=_BYTE_ORDER, signed=False)
+        PayloadTM.VDD_SOC = int.from_bytes(cls._recv_buffer[cls._data_idx][44:46], byteorder=_BYTE_ORDER, signed=False)
+
+        return ErrorCodes.OK

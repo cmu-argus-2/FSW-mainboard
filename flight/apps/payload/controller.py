@@ -24,33 +24,6 @@ class PayloadState:  # Only from the host perspective
     REBOOTING = 4  # Going through shutdown + boot
 
 
-class PayloadTM:  # Simple data structure holder
-    # System part
-    SYSTEM_TIME: int = 0
-    SYSTEM_UPTIME: int = 0
-    LAST_EXECUTED_CMD_TIME: int = 0
-    LAST_EXECUTED_CMD_ID: int = 0
-    PAYLOAD_STATE: int = 0
-    ACTIVE_CAMERAS: int = 0
-    CAPTURE_MODE: int = 0
-    CAM_STATUS: list = [0] * 4
-    TASKS_IN_EXECUTION: int = 0
-    DISK_USAGE: int = 0
-    LATEST_ERROR: int = 0
-    # Tegrastats part
-    TEGRASTATS_PROCESS_STATUS: bool = False
-    RAM_USAGE: int = 0
-    SWAP_USAGE: int = 0
-    ACTIVE_CORES: int = 0
-    CPU_LOAD: list = [0] * 6
-    GPU_FREQ: int = 0
-    CPU_TEMP: int = 0
-    GPU_TEMP: int = 0
-    VDD_IN: int = 0
-    VDD_CPU_GPU_CV: int = 0
-    VDD_SOC: int = 0
-
-
 class PayloadController:
 
     # Bi-directional communication interface
@@ -99,6 +72,9 @@ class PayloadController:
 
         elif cls.state == PayloadState.POWERING_ON:
             # Wait for the Payload to be ready
+
+            # The serial link will be purged by the payload when it opens its channel
+            # so we ping to check until it is ready, i.e. the ping response is received
             pass
 
         elif cls.state == PayloadState.READY:
@@ -124,7 +100,7 @@ class PayloadController:
         resp = cls.communication_interface.receive()
         if resp:
             return Decoder.decode(resp)
-        return None
+        return ErrorCodes.NO_RESPONSE
 
     @classmethod
     def ping(cls):
