@@ -74,12 +74,16 @@ class PayloadIPC(PayloadCommunicationInterface):  # needed for local testing and
             return False
 
         try:
+            # Convert bytearray to a hex string representation
+            # cls._pipe_in.write(pckt.hex() + "\n") # Append newline for FIFO compatibility
             # NOTE: this is just for ease of piping data. The Payload in this mode decode the string to bytes
             # and the actual UART communication is done with raw bytes
-            # Convert each byte to its integer string representation and join with spaces
-            byte_str = " ".join(str(b) for b in pckt) + "\n"  # append newline for FIFO compatibility
+            # cls._pipe_in.flush()
 
-            cls._pipe_in.write(byte_str)
+            # Convert each byte to its integer string representation and join with spaces
+            byte_str = " ".join(str(b) for b in pckt) + "\n"  # Ensure newline for FIFO compatibility
+
+            cls._pipe_in.write(byte_str)  # Send formatted string
             cls._pipe_in.flush()
 
             return True
@@ -157,6 +161,6 @@ if __name__ == "__main__":
 
     response = PayloadIPC.receive()
     if response:
-        print(f"Received: {response.decode()}")
-
+        print(f"Received packet of size {len(response)}: {response}")
+        # Note the actual packet size is different from the one contained in response
     PayloadIPC.disconnect()
