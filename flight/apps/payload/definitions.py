@@ -25,11 +25,14 @@ class CommandID:
 
 
 class ACK:
-    SUCCESS_FLAG = 0x0A
-    ERROR_FLAG = 0x0B  # Temp
+    SUCCESS = 0x0A
+    ERROR = 0x0B
 
 
 class ErrorCodes:
+    # Contains host's error codes
     OK = 0
     INVALID_COMMAND = 1
-    INVALID_PACKET = 2
+    COMMAND_ERROR_EXECUTION = 2
+    INVALID_RESPONSE = 3
+    TIMEOUT_SHUTDOWN = 4
