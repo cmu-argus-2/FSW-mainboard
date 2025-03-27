@@ -26,7 +26,7 @@ For struct module format strings:
 
 import gc
 
-from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX, EPS_WARNING_IDX, GPS_IDX, STORAGE_IDX
+from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, STORAGE_IDX
 from apps.telemetry.helpers import (
     convert_float_to_fixed_point_hp,
     pack_signed_long_int,
@@ -42,7 +42,7 @@ from micropython import const
 # TM frame sizes as defined in message database
 # TODO: TM HAL
 # TODO: TM PAYLOAD
-_TM_NOMINAL_SIZE = const(230)
+_TM_NOMINAL_SIZE = const(227)
 _TM_HAL_SIZE = const(46)
 _TM_STORAGE_SIZE = const(74)
 _TM_PAYLOAD_SIZE = const(0)
@@ -220,85 +220,76 @@ class TelemetryPacker:
                 # ZM solar charge current
                 cls._FRAME[102:104] = pack_signed_short_int(eps_data, EPS_IDX.ZM_SOLAR_CHARGE_CURRENT)
 
-        ############ EPS warning fields ############
-        if DH.data_process_exists("eps_warning"):
-            eps_warning_data = DH.get_latest_data("eps_warning")
-
-            if eps_warning_data:
-                cls._FRAME[104] = eps_warning_data[EPS_WARNING_IDX.MAINBOARD_POWER_ALERT] & 0xFF
-                cls._FRAME[105] = eps_warning_data[EPS_WARNING_IDX.RADIO_POWER_ALERT] & 0xFF
-                cls._FRAME[106] = eps_warning_data[EPS_WARNING_IDX.JETSON_POWER_ALERT] & 0xFF
-
         ############ ADCS fields ############
         if DH.data_process_exists("adcs"):
             adcs_data = DH.get_latest_data("adcs")
 
             if adcs_data:
                 # ADCS state
-                cls._FRAME[107] = adcs_data[ADCS_IDX.MODE] & 0xFF
+                cls._FRAME[104] = adcs_data[ADCS_IDX.MODE] & 0xFF
 
                 # Gyro X
-                cls._FRAME[108:112] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.GYRO_X])
+                cls._FRAME[105:109] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.GYRO_X])
                 # Gyro Y
-                cls._FRAME[112:116] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.GYRO_Y])
+                cls._FRAME[109:113] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.GYRO_Y])
                 # Gyro Z
-                cls._FRAME[116:120] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.GYRO_Z])
+                cls._FRAME[113:117] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.GYRO_Z])
 
                 # Magnetometer X
-                cls._FRAME[120:124] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.MAG_X])
+                cls._FRAME[117:121] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.MAG_X])
                 # Magnetometer Y
-                cls._FRAME[124:128] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.MAG_Y])
+                cls._FRAME[121:125] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.MAG_Y])
                 # Magnetometer Z
-                cls._FRAME[128:132] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.MAG_Z])
+                cls._FRAME[125:129] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.MAG_Z])
 
                 # Sun status
-                cls._FRAME[132] = adcs_data[ADCS_IDX.SUN_STATUS] & 0xFF
+                cls._FRAME[129] = adcs_data[ADCS_IDX.SUN_STATUS] & 0xFF
                 # Sun vector X
-                cls._FRAME[133:137] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.SUN_VEC_X])
+                cls._FRAME[130:134] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.SUN_VEC_X])
                 # Sun vector Y
-                cls._FRAME[137:141] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.SUN_VEC_Y])
+                cls._FRAME[134:138] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.SUN_VEC_Y])
                 # Sun vector Z
-                cls._FRAME[141:145] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.SUN_VEC_Z])
+                cls._FRAME[138:142] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.SUN_VEC_Z])
                 # Light sensor X+
-                cls._FRAME[145:147] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_XP)
+                cls._FRAME[142:144] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_XP)
                 # Light sensor X-
-                cls._FRAME[147:149] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_XM)
+                cls._FRAME[144:146] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_XM)
                 # Light sensor Y+
-                cls._FRAME[149:151] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_YP)
+                cls._FRAME[146:148] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_YP)
                 # Light sensor Y-
-                cls._FRAME[151:153] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_YM)
+                cls._FRAME[148:150] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_YM)
                 # Light sensor Z+ 1
-                cls._FRAME[153:155] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP1)
+                cls._FRAME[150:152] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP1)
                 # Light sensor Z+ 2
-                cls._FRAME[155:157] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP2)
+                cls._FRAME[152:154] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP2)
                 # Light sensor Z+ 3
-                cls._FRAME[157:159] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP3)
+                cls._FRAME[154:156] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP3)
                 # Light sensor Z+ 4
-                cls._FRAME[159:161] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP4)
+                cls._FRAME[156:158] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP4)
                 # Light sensor Z-
-                cls._FRAME[161:163] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZM)
+                cls._FRAME[158:160] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZM)
 
                 # XP coil status
-                cls._FRAME[163] = adcs_data[ADCS_IDX.XP_COIL_STATUS] & 0xFF
+                cls._FRAME[160] = adcs_data[ADCS_IDX.XP_COIL_STATUS] & 0xFF
                 # XM coil status
-                cls._FRAME[164] = adcs_data[ADCS_IDX.XM_COIL_STATUS] & 0xFF
+                cls._FRAME[161] = adcs_data[ADCS_IDX.XM_COIL_STATUS] & 0xFF
                 # YP coil status
-                cls._FRAME[165] = adcs_data[ADCS_IDX.YP_COIL_STATUS] & 0xFF
+                cls._FRAME[162] = adcs_data[ADCS_IDX.YP_COIL_STATUS] & 0xFF
                 # YM coil status
-                cls._FRAME[166] = adcs_data[ADCS_IDX.YM_COIL_STATUS] & 0xFF
+                cls._FRAME[163] = adcs_data[ADCS_IDX.YM_COIL_STATUS] & 0xFF
                 # ZP coil status
-                cls._FRAME[167] = adcs_data[ADCS_IDX.ZP_COIL_STATUS] & 0xFF
+                cls._FRAME[164] = adcs_data[ADCS_IDX.ZP_COIL_STATUS] & 0xFF
                 # ZM coil status
-                cls._FRAME[168] = adcs_data[ADCS_IDX.ZM_COIL_STATUS] & 0xFF
+                cls._FRAME[165] = adcs_data[ADCS_IDX.ZM_COIL_STATUS] & 0xFF
 
                 # Coarse attitude QW
-                cls._FRAME[169:173] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.ATTITUDE_QW])
+                cls._FRAME[166:170] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.ATTITUDE_QW])
                 # Coarse attitude QX
-                cls._FRAME[173:177] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.ATTITUDE_QX])
+                cls._FRAME[170:174] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.ATTITUDE_QX])
                 # Coarse attitude QY
-                cls._FRAME[177:181] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.ATTITUDE_QY])
+                cls._FRAME[174:178] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.ATTITUDE_QY])
                 # Coarse attitude QZ
-                cls._FRAME[181:185] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.ATTITUDE_QZ])
+                cls._FRAME[178:182] = convert_float_to_fixed_point_hp(adcs_data[ADCS_IDX.ATTITUDE_QZ])
 
             else:
                 logger.warning("No latest ADCS data available")
@@ -311,35 +302,35 @@ class TelemetryPacker:
 
             if gps_data:
                 # message ID
-                cls._FRAME[185] = gps_data[GPS_IDX.GPS_MESSAGE_ID] & 0xFF
+                cls._FRAME[182] = gps_data[GPS_IDX.GPS_MESSAGE_ID] & 0xFF
                 # fix mode
-                cls._FRAME[186] = gps_data[GPS_IDX.GPS_FIX_MODE] & 0xFF
+                cls._FRAME[183] = gps_data[GPS_IDX.GPS_FIX_MODE] & 0xFF
                 # number of SV
-                cls._FRAME[187] = gps_data[GPS_IDX.GPS_NUMBER_OF_SV] & 0xFF
+                cls._FRAME[184] = gps_data[GPS_IDX.GPS_NUMBER_OF_SV] & 0xFF
                 # GNSS week
-                cls._FRAME[188:190] = pack_unsigned_short_int(gps_data, GPS_IDX.GPS_GNSS_WEEK)
+                cls._FRAME[185:187] = pack_unsigned_short_int(gps_data, GPS_IDX.GPS_GNSS_WEEK)
                 # GNSS TOW
-                cls._FRAME[190:194] = pack_unsigned_long_int(gps_data, GPS_IDX.GPS_GNSS_TOW)
+                cls._FRAME[187:191] = pack_unsigned_long_int(gps_data, GPS_IDX.GPS_GNSS_TOW)
                 # latitude
-                cls._FRAME[194:198] = pack_signed_long_int(gps_data, GPS_IDX.GPS_LATITUDE)
+                cls._FRAME[191:195] = pack_signed_long_int(gps_data, GPS_IDX.GPS_LATITUDE)
                 # longitude
-                cls._FRAME[198:202] = pack_signed_long_int(gps_data, GPS_IDX.GPS_LONGITUDE)
+                cls._FRAME[195:199] = pack_signed_long_int(gps_data, GPS_IDX.GPS_LONGITUDE)
                 # ellipsoid altitude
-                cls._FRAME[202:206] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ELLIPSOID_ALT)
+                cls._FRAME[199:203] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ELLIPSOID_ALT)
                 # mean sea level altitude
-                cls._FRAME[206:210] = pack_signed_long_int(gps_data, GPS_IDX.GPS_MEAN_SEA_LVL_ALT)
+                cls._FRAME[203:207] = pack_signed_long_int(gps_data, GPS_IDX.GPS_MEAN_SEA_LVL_ALT)
                 # ECEF X
-                cls._FRAME[210:214] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_X)
+                cls._FRAME[207:211] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_X)
                 # ECEF Y
-                cls._FRAME[214:218] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_Y)
+                cls._FRAME[211:215] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_Y)
                 # ECEF Z
-                cls._FRAME[218:222] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_Z)
+                cls._FRAME[215:219] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_Z)
                 # ECEF VX
-                cls._FRAME[222:226] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VX)
+                cls._FRAME[219:223] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VX)
                 # ECEF VY
-                cls._FRAME[226:230] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VY)
+                cls._FRAME[223:227] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VY)
                 # ECEF VZ
-                cls._FRAME[230:234] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VZ)
+                cls._FRAME[227:231] = pack_signed_long_int(gps_data, GPS_IDX.GPS_ECEF_VZ)
             else:
                 logger.warning("No latest GPS data available")
         else:
@@ -454,16 +445,6 @@ class TelemetryPacker:
             cls._FRAME[34:38] = pack_unsigned_long_int(eps_storage_info, STORAGE_IDX.DIR_SIZE)
         else:
             logger.warning("EPS Data process does not exist")
-
-        ############ EPS Warning fields ###########
-        if DH.data_process_exists("eps_warning"):
-            eps_warning_storage_info = DH.get_storage_info("eps_warning")
-            # EPS number of files
-            cls._FRAME[38:42] = pack_unsigned_long_int(eps_warning_storage_info, STORAGE_IDX.NUM_FILES)
-            # EPS directory size
-            cls._FRAME[42:46] = pack_unsigned_long_int(eps_warning_storage_info, STORAGE_IDX.DIR_SIZE)
-        else:
-            logger.warning("EPS Warning Data process does not exist")
 
         ############ ADCS fields ###########
         if DH.data_process_exists("adcs"):

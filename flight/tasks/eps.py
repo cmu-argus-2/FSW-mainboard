@@ -3,7 +3,7 @@
 import time
 
 import microcontroller
-from apps.eps.eps import EPS_POWER_FLAG, EPS_POWER_THRESHOLD, GET_EPS_POWER_FLAG
+from apps.eps.eps import EPS_POWER_FLAG, EPS_POWER_THRESHOLD, GET_EPS_POWER_FLAG, GET_POWER_STATUS
 from apps.telemetry.constants import EPS_IDX, EPS_WARNING_IDX
 from core import DataHandler as DH
 from core import TemplateTask
@@ -81,11 +81,12 @@ class Task(TemplateTask):
         self.name = "EPS"
 
     def read_vc(self, sensor):
-        # log power monitor voltage and current
+        # read power monitor voltage and current
         board_voltage, board_current = sensor.read_voltage_current()
         return (int(board_voltage * 1000), int(board_current * 1000))
 
     def log_vc(self, key, voltage_idx, current_idx, voltage, current):
+        # log power monitor voltage and current
         if (self.log_counter % self.frequency == 0):
             self.log_data[voltage_idx] = voltage
             self.log_data[current_idx] = current
@@ -108,21 +109,17 @@ class Task(TemplateTask):
 
     # Update MAV and set alert to indicate that resource is consuming too much power
     # TODO: add torque coil alerts?
-    def set_power_alert(self, power, idx, threshold):
-        buf = self.power_buffer_dict[idx]
-        buf.append(power)
-        # Remove first element of list to implement moving average
-        if (len(buf) > self.frequency):
-            buf.pop(0)
-        power_avg = sum(buf) / len(buf)
-        if (power_avg > threshold):
-            self.warning_log_data[idx] = 1
+    def set_power_alert(self, voltage, current, idx, threshold):
+        power = voltage * current * 0.001  # mW
+        alert, power_avg = GET_POWER_STATUS(self.power_buffer_dict[idx], power, threshold, self.frequency)
+        self.warning_log_data[idx] = int(alert) & 0xFF
+        if (alert):
             if (idx == EPS_WARNING_IDX.MAINBOARD_POWER_ALERT):
-                self.log_warning(f"Mainboard Avg Power Consumption Warning: {power_avg} with threshold {threshold}")
+                self.log_warning(f"Mainboard Avg Power Consumption Warning: {power_avg} mW with threshold {threshold}")
             elif (idx == EPS_WARNING_IDX.RADIO_POWER_ALERT):
-                self.log_warning(f"Radio Avg Power Consumption Warning: {power_avg} with threshold {threshold}")
+                self.log_warning(f"Radio Avg Power Consumption Warning: {power_avg} mW with threshold {threshold}")
             elif (idx == EPS_WARNING_IDX.JETSON_POWER_ALERT):
-                self.log_warning(f"Jetson Avg Power Consumption Warning: {power_avg} with threshold {threshold}")
+                self.log_warning(f"Jetson Avg Power Consumption Warning: {power_avg} mW with threshold {threshold}")
             # TODO: uncomment to add torque coil alerts
             # elif (idx == EPS_WARNING_IDX.XP_COIL_POWER_ALERT):
             #     self.log_warning(f"XP Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold}")
@@ -132,8 +129,6 @@ class Task(TemplateTask):
             #     self.log_warning(f"YP Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold}")
             # elif (idx == EPS_WARNING_IDX.YM_COIL_POWER_ALERT):
             #    self.log_warning(f"YM Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold}")
-        else:
-            self.warning_log_data[idx] = 0
 
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:
@@ -161,18 +156,15 @@ class Task(TemplateTask):
                 if SATELLITE.POWER_MONITOR_AVAILABLE(location):
                     if location == "BOARD":
                         voltage, current = self.read_vc(sensor)
-                        power = voltage * current * 1000  # mW
-                        self.set_power_alert(power, EPS_WARNING_IDX.MAINBOARD_POWER_ALERT, EPS_POWER_THRESHOLD.MAINBOARD)
+                        self.set_power_alert(voltage, current, EPS_WARNING_IDX.MAINBOARD_POWER_ALERT, EPS_POWER_THRESHOLD.MAINBOARD)
                         self.log_vc("Board", EPS_IDX.MAINBOARD_VOLTAGE, EPS_IDX.MAINBOARD_CURRENT, voltage, current)
                     elif location == "JETSON":
-                        voltage, current = self.read_vc(sensor, EPS_IDX.JETSON_INPUT_VOLTAGE, EPS_IDX.JETSON_INPUT_CURRENT)
-                        power = voltage * current * 1000  # mW
-                        self.set_power_alert(power, EPS_WARNING_IDX.JETSON_POWER_ALERT, EPS_POWER_THRESHOLD.JETSON)
+                        voltage, current = self.read_vc(sensor)
+                        self.set_power_alert(voltage, current, EPS_WARNING_IDX.JETSON_POWER_ALERT, EPS_POWER_THRESHOLD.JETSON)
                         self.log_vc("Jetson", EPS_IDX.JETSON_INPUT_VOLTAGE, EPS_IDX.JETSON_INPUT_CURRENT, voltage, current)
                     elif location == "RADIO":
-                        voltage, current = self.read_vc(sensor, EPS_IDX.RF_LDO_OUTPUT_VOLTAGE, EPS_IDX.RF_LDO_OUTPUT_CURRENT)
-                        power = voltage * current * 1000  # mW
-                        self.set_power_alert(power, EPS_WARNING_IDX.RADIO_POWER_ALERT, EPS_POWER_THRESHOLD.RADIO)
+                        voltage, current = self.read_vc(sensor)
+                        self.set_power_alert(voltage, current, EPS_WARNING_IDX.RADIO_POWER_ALERT, EPS_POWER_THRESHOLD.RADIO)
                         self.log_vc("Radio", EPS_IDX.RF_LDO_OUTPUT_VOLTAGE, EPS_IDX.RF_LDO_OUTPUT_CURRENT, voltage, current)
             # TODO: Uncomment when DRV8235 driver is in
             # for location, sensor in SATELLITE.TORQUE_DRIVERS:
