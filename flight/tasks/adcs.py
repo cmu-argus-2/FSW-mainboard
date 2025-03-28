@@ -1,7 +1,5 @@
 # Attitude Determination and Control (ADC) task
 
-import time
-
 from apps.adcs.acs import mcm_coil_allocator, spin_stabilizing_controller, sun_pointing_controller, zero_all_coils
 from apps.adcs.ad import AttitudeDetermination
 from apps.adcs.consts import Modes, StatusConst
@@ -10,6 +8,7 @@ from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
+from core.time_processor import TimeProcessor as TPM
 
 """
     ASSUMPTIONS :
@@ -82,7 +81,7 @@ class Task(TemplateTask):
                 data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f"
                 DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
 
-            self.time = int(time.time())
+            self.time = TPM.time()
             self.log_data[ADCS_IDX.TIME_ADCS] = self.time
 
             # ------------------------------------------------------------------------------------------------------------------------------------

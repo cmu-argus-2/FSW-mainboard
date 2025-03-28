@@ -59,7 +59,7 @@ class CubeSat:
         )
 
         # Debugging
-        self._time_ref_boot = int(time.time())
+        self._time_ref_boot = int(time.monotonic())
 
     # ABSTRACT METHOD #
     def boot_sequence(self) -> List[int]:

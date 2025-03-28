@@ -96,7 +96,7 @@ class PyCubed:
         """
         Big init routine as the whole board is brought up.
         """
-        self.BOOTTIME = const(time.time())
+        self.BOOTTIME = const(time.monotonic())
         self.data_cache = {}
         self.filenumbers = {}
         self.vlowbatt = 6.0
