@@ -28,6 +28,7 @@ class CubeSat:
     def __init__(self):
         self.__device_list = OrderedDict(
             [
+                ("NEOPIXEL", Device(self.__neopixel_boot)),
                 ("SDCARD", Device(self.__sd_card_boot)),
                 ("RTC", Device(self.__rtc_boot)),
                 ("GPS", Device(self.__gps_boot)),
@@ -59,7 +60,6 @@ class CubeSat:
                 # ("LIGHT_ZP_2", Device(self.__light_sensor_boot)),
                 # ("LIGHT_ZP_3", Device(self.__light_sensor_boot)),
                 # ("LIGHT_ZP_4", Device(self.__light_sensor_boot)),
-                ("NEOPIXEL", Device(self.__neopixel_boot)),
             ]
         )
 

@@ -25,7 +25,7 @@ class ArgusV3Power:
     PERIPH_PWR_EN = digitalio.DigitalInOut(board.PERIPH_PWR_EN)
     PERIPH_PWR_EN.direction = digitalio.Direction.OUTPUT
     PERIPH_PWR_EN.value = True
-    time.sleep(1)  # Wait for peripherals to power up
+    time.sleep(2)  # Wait for peripherals to power up
 
     PERIPH_PWR_OVC = digitalio.DigitalInOut(board.PERIPH_PWR_FLT)
     PERIPH_PWR_OVC.direction = digitalio.Direction.INPUT
@@ -590,7 +590,7 @@ class ArgusV3(CubeSat):
                 brightness=ArgusV3Components.NEOPIXEL_BRIGHTNESS,
                 pixel_order=neopixel.GRB,
             )
-            np
+            np.fill((128, 128, 128))
             return [np, Errors.NOERROR]
         except Exception as e:
             if self.__debug:
