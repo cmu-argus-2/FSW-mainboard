@@ -17,10 +17,13 @@ class MockTime:
 
         # Datum references for Speedup
         self.start_real_time = real_time.time_ns() / 1.0e9
+        self.start_real_time_ns = real_time.time_ns()
         self.start_real_time_monotonic = real_time.monotonic_ns() / 1.0e9
+        self.start_real_time_monotonic_ns = real_time.monotonic_ns()
 
-        # Spedup times
+        # Sped-up times
         self.spedup_time = self.start_real_time
+        self.spedup_time_ns = self.start_real_time_ns
 
         self.start_simulated_time = real_time.time()
 
@@ -28,6 +31,11 @@ class MockTime:
         real_elapsed = real_time.time_ns() / 1.0e9 - self.start_real_time
         self.spedup_time = self.start_real_time + real_elapsed * self.acceleration
         return self.spedup_time
+
+    def time_ns(self):
+        real_elapsed = real_time.time_ns() - self.start_real_time_ns
+        self.spedup_time_ns = self.start_real_time_ns + real_elapsed * self.acceleration
+        return self.spedup_time_ns
 
     def sleep(self, seconds):
         real_time.sleep(seconds / self.acceleration)
@@ -38,6 +46,10 @@ class MockTime:
 
     def monotonic(self):
         real_elapsed = real_time.monotonic_ns() / 1.0e9 - self.start_real_time_monotonic
+        return real_elapsed * self.acceleration
+
+    def monotonic_ns(self):
+        real_elapsed = real_time.monotonic_ns() - self.start_real_time_monotonic_ns
         return real_elapsed * self.acceleration
 
     def tzset(self):
