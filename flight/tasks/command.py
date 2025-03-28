@@ -39,6 +39,8 @@ class Task(TemplateTask):
 
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:
+            if SATELLITE.NEOPIXEL_AVAILABLE:
+                SATELLITE.NEOPIXEL.fill((255, 0, 0))
             # Must perform / check all startup tasks here (rtc, sd, etc.)
 
             # TODO
@@ -80,6 +82,8 @@ class Task(TemplateTask):
         else:  # Run for all other states
             ### STATE MACHINE ###
             if SM.current_state == STATES.DETUMBLING:
+                if SATELLITE.NEOPIXEL_AVAILABLE:
+                    SATELLITE.NEOPIXEL.fill((0, 255, 0))
                 # Check detumbling status from the ADCS
                 if DH.data_process_exists("adcs"):
                     if DH.get_latest_data("adcs")[ADCS_IDX.MODE] != Modes.TUMBLING:
@@ -95,10 +99,16 @@ class Task(TemplateTask):
                     SM.switch_to(STATES.NOMINAL)
 
             elif SM.current_state == STATES.NOMINAL:
+                if SATELLITE.NEOPIXEL_AVAILABLE:
+                    SATELLITE.NEOPIXEL.fill((0, 0, 255))
                 pass
             elif SM.current_state == STATES.EXPERIMENT:
+                if SATELLITE.NEOPIXEL_AVAILABLE:
+                    SATELLITE.NEOPIXEL.fill((0, 122, 122))
                 pass
             elif SM.current_state == STATES.LOW_POWER:
+                if SATELLITE.NEOPIXEL_AVAILABLE:
+                    SATELLITE.NEOPIXEL.fill((122, 122, 0))
                 pass
 
             SM.update_time_in_state()

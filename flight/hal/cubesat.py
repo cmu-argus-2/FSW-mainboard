@@ -28,11 +28,12 @@ class CubeSat:
     def __init__(self):
         self.__device_list = OrderedDict(
             [
+                ("NEOPIXEL", Device(self.__neopixel_boot)),
                 ("SDCARD", Device(self.__sd_card_boot)),
-                ("IMU", Device(self.__imu_boot)),
                 ("RTC", Device(self.__rtc_boot)),
                 ("GPS", Device(self.__gps_boot)),
-                ("RADIO", Device(self.__radio_boot)),
+                # ("RADIO", Device(self.__radio_boot)),
+                ("IMU", Device(self.__imu_boot)),
                 # ("FUEL_GAUGE", Device(self.__fuel_gauge_boot)),
                 # ("BURN_WIRE", Device(self.__burn_wire_boot)),
                 ("BOARD_PWR", Device(self.__power_monitor_boot)),
@@ -254,6 +255,20 @@ class CubeSat:
         :return: bool
         """
         return self.key_in_device_list("SDCARD") and self.__device_list["SDCARD"].device is not None
+
+    @property
+    def NEOPIXEL(self):
+        """NEOPIXEL: Returns the neopixel object
+        :return: object or None
+        """
+        return self.__device_list["NEOPIXEL"].device
+
+    @property
+    def NEOPIXEL_AVAILABLE(self) -> bool:
+        """NEOPIXEL_AVAILABLE: Returns True if the neopixel is available
+        :return: bool
+        """
+        return self.key_in_device_list("NEOPIXEL") and self.__device_list["NEOPIXEL"].device is not None
 
     # @property
     # def PAYLOADUART(self):

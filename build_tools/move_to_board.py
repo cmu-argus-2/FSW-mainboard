@@ -1,20 +1,14 @@
 import argparse
 import filecmp
 import os
-import platform
 import shutil
 
-from build import CPY_VERSION
+from build import get_board_path, get_circuitpython_version
 
-if platform.system() == "Windows":
-    BOARD_PATH = "D:\\"
-elif platform.system() == "Linux":
-    username = os.getlogin()
-    BOARD_PATH = f"/media/{username}/ARGUS"
-elif platform.system() == "Darwin":
-    BOARD_PATH = "/Volumes/ARGUS"
-if platform.node() == "raspberrypi":
-    BOARD_PATH = "/mnt/mainboard"
+BOARD_PATH = get_board_path()
+CPY_VERSION = 8  # Default to CPY 8
+if os.path.exists(BOARD_PATH):
+    CPY_VERSION = get_circuitpython_version(BOARD_PATH)
 
 
 def copy_folder(source_folder, destination_folder, show_identical_files=True):
@@ -56,6 +50,17 @@ def copy_folder(source_folder, destination_folder, show_identical_files=True):
             print(f"Removed {sd_path}")
         except PermissionError as e:
             print(f"PermissionError: {e}. Please manually remove the 'sd' folder from the board.")
+        except Exception as e:
+            print(f"Error: {e}")
+
+    code_py_path = os.path.join(destination_folder, "code.py")
+    if os.path.exists(code_py_path):
+        try:
+            os.chmod(code_py_path, 0o777)
+            os.remove(code_py_path)
+            print(f"Removed {code_py_path}")
+        except PermissionError as e:
+            print(f"PermissionError: {e}. Please manually remove the 'code.py' file from the board.")
         except Exception as e:
             print(f"Error: {e}")
 
