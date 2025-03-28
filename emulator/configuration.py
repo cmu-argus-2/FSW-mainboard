@@ -1,5 +1,4 @@
 import os
-import sys
 
 from hal.cubesat import CubeSat
 from hal.emulator import EmulatedSatellite

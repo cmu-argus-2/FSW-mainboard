@@ -1,12 +1,11 @@
 """
 This module provides a custom accelerated time module for the emulator for testing purposes.
 
-Author: Ibrahima S. Sow
+Author: Ibrahima S. Sow, Karthik Karumanchi
 
 """
 
 import os
-import sys
 import time as real_time
 
 real_time_module = real_time
