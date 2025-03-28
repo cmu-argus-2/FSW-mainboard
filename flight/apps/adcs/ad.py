@@ -17,7 +17,7 @@ from apps.adcs.orbit_propagation import OrbitPropagator
 from apps.adcs.sun import approx_sun_position_ECI, compute_body_sun_vector_from_lux, read_light_sensors
 from apps.telemetry.constants import GPS_IDX
 from core import DataHandler as DH
-from core.time_processor import TimeProcessor
+from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 from ulab import numpy as np
 
@@ -54,6 +54,8 @@ class AttitudeDetermination:
     last_position_update_time = 0
     last_gyro_update_time = 0
     last_gyro_cov_update_time = 0
+    mekf_init_start_time = None
+    mekf_timeout = 30  # seconds TODO: Decide a timeout and change
 
     # Sensor noise covariances (Decide if these numbers should be hardcoded here or placed in adcs/consts.py)
     gyro_white_noise_sigma = 0.01  # TODO : characetrize sensor and update
@@ -89,7 +91,7 @@ class AttitudeDetermination:
 
         if SATELLITE.IMU_AVAILABLE:
             gyro = np.array(SATELLITE.IMU.gyro())
-            query_time = int(TimeProcessor.time())
+            query_time = TPM.time()
 
             # Sensor validity check (check length and ensure reasding within range)
             if gyro is None or len(gyro) != 3:
@@ -109,7 +111,7 @@ class AttitudeDetermination:
 
         if SATELLITE.IMU_AVAILABLE:
             mag = np.array(SATELLITE.IMU.mag())
-            query_time = int(TimeProcessor.time())
+            query_time = TPM.time()
 
             # Sensor validity check (check length and ensure reading wihtin range)
             if mag is None or len(mag) != 3:
@@ -161,6 +163,16 @@ class AttitudeDetermination:
         - This function is not directly written into init to allow multiple retires of initialization
         - Sets the initialized attribute of the class once done
         """
+        current_time = TPM.time()
+
+        if self.mekf_init_start_time is None:
+            self.mekf_init_start_time = current_time
+        elif abs(current_time - self.mekf_init_start_time) >= self.mekf_timeout:
+            # Ignore MEKF initialization
+            self.state[self.attitude_idx] = np.array([1, 0, 0, 0])
+            self.initialized = True
+            return StatusConst.OK, StatusConst.MEKF_INIT_FORCE
+
         # Get a valid GPS position
         gps_status, gps_record_time, gps_pos_ecef, gps_vel_ecef = self.read_gps()
 
@@ -168,7 +180,7 @@ class AttitudeDetermination:
             return StatusConst.MEKF_INIT_FAIL, StatusConst.GPS_FAIL
         else:
             # Propagate from GPS measurement record
-            current_time = int(TimeProcessor.time())
+            current_time = TPM.time()
             R_ecef2eci = ecef_to_eci(current_time)
             gps_pos_eci = np.dot(R_ecef2eci, gps_pos_ecef)
             gps_vel_eci = np.dot(R_ecef2eci, gps_vel_ecef)

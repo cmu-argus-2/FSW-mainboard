@@ -64,8 +64,8 @@ class CubeSat:
 
         self.__imu_temp_flag = False
 
-        # TODO: Is this even needed?
-        self._time_ref_boot = int(time.time())
+        # Get boot time from time.monotonic()
+        self._time_ref_boot = int(time.monotonic())
 
     # ABSTRACT METHOD #
     def boot_sequence(self) -> list[int]:
