@@ -23,7 +23,7 @@ source /home/Shared/venv/bin/activate # Python Virtual Environment with all nece
 # this directory contain circuitpython 9
 cd /home/Shared/circuitpython
 # this directory contain circuitpython 8
-cd /home/Shared/circuitpython8
+# cd /home/Shared/circuitpython8
 ```
 
 **2. Create/Copy Board Definitions**
