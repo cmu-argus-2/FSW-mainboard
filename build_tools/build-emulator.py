@@ -72,6 +72,8 @@ def create_build(source_folder, emulator_folder):
         f.write("import sys\n")
         f.write("if '/lib' not in sys.path:\n")
         f.write("   sys.path.insert(0, './lib')\n")
+        f.write("from hal.accel_time import MockTime\n")
+        f.write("sys.modules['time'] = MockTime()\n")
         f.write("import hal.cp_mock\n")
         f.write("import lib.main_module\n")
 
