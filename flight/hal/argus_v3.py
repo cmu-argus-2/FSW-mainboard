@@ -25,7 +25,6 @@ class ArgusV3Power:
     PERIPH_PWR_EN = digitalio.DigitalInOut(board.PERIPH_PWR_EN)
     PERIPH_PWR_EN.direction = digitalio.Direction.OUTPUT
     PERIPH_PWR_EN.value = True
-    time.sleep(2)  # Wait for peripherals to power up
 
     PERIPH_PWR_OVC = digitalio.DigitalInOut(board.PERIPH_PWR_FLT)
     PERIPH_PWR_OVC.direction = digitalio.Direction.INPUT
@@ -33,6 +32,11 @@ class ArgusV3Power:
     # MAIN (MCU, WATCHDOG) 3.3V
     MAIN_PWR_RESET = digitalio.DigitalInOut(board.MAIN_PWR_RST)
     MAIN_PWR_RESET.direction = digitalio.Direction.OUTPUT
+
+    GPS_EN = digitalio.DigitalInOut(board.GPS_EN)
+    GPS_EN.direction = digitalio.Direction.OUTPUT
+    GPS_EN.value = True
+    time.sleep(1)  # Wait for peripherals to power up
 
 
 class ArgusV3Interfaces:
@@ -318,7 +322,7 @@ class ArgusV3(CubeSat):
         from hal.drivers.gps import GPS
 
         try:
-            gps = GPS(ArgusV3Components.GPS_UART, ArgusV3Components.GPS_ENABLE)
+            gps = GPS(ArgusV3Components.GPS_UART, None, False, False)
 
             return [gps, Errors.NOERROR]
         except Exception as e:
