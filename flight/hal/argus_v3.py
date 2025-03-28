@@ -36,7 +36,7 @@ class ArgusV3Power:
     GPS_EN = digitalio.DigitalInOut(board.GPS_EN)
     GPS_EN.direction = digitalio.Direction.OUTPUT
     GPS_EN.value = True
-    time.sleep(1)  # Wait for peripherals to power up
+    time.sleep(2)  # Wait for peripherals to power up
 
 
 class ArgusV3Interfaces:
