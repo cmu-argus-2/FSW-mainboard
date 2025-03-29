@@ -10,11 +10,12 @@ magnetic field data on the mainboard.
 """
 
 from apps.adcs.consts import Modes, StatusConst
-from apps.adcs.frames import ecef_to_eci
+from apps.adcs.frames import convert_ecef_state_to_eci
 from apps.adcs.igrf import igrf_eci
 from apps.adcs.math import R_to_quat, quat_to_R, quaternion_multiply, skew
 from apps.adcs.orbit_propagation import OrbitPropagator
 from apps.adcs.sun import approx_sun_position_ECI, compute_body_sun_vector_from_lux, read_light_sensors
+from apps.adcs.utils import is_valid_gps_state, is_valid_gyro_reading, is_valid_mag_reading
 from apps.telemetry.constants import GPS_IDX
 from core import DataHandler as DH
 from core.time_processor import TimeProcessor as TPM
@@ -93,10 +94,8 @@ class AttitudeDetermination:
             gyro = np.array(SATELLITE.IMU.gyro())
             query_time = TPM.time()
 
-            # Sensor validity check (check length and ensure reasding within range)
-            if gyro is None or len(gyro) != 3:
-                return StatusConst.GYRO_FAIL, 0, np.zeros((3,))
-            elif not (0 <= np.linalg.norm(gyro) <= 1000):  # Setting a very (VERY) large upper bound
+            # Sensor validity check
+            if not is_valid_gyro_reading(gyro):
                 return StatusConst.GYRO_FAIL, 0, np.zeros((3,))
             else:
                 return StatusConst.OK, query_time, gyro
@@ -110,16 +109,14 @@ class AttitudeDetermination:
         """
 
         if SATELLITE.IMU_AVAILABLE:
-            mag = np.array(SATELLITE.IMU.mag())
+            mag = 1e-6 * np.array(SATELLITE.IMU.mag())  # Convert field from uT to T
             query_time = TPM.time()
 
-            # Sensor validity check (check length and ensure reading wihtin range)
-            if mag is None or len(mag) != 3:
+            # Sensor validity check
+            if not is_valid_mag_reading(mag):
                 return StatusConst.MAG_FAIL, 0, np.zeros((3,))
-            elif not (10 <= np.linalg.norm(mag) <= 100):  # Allowed between 10 and 100 uT (MSL : 58 uT, 600km : 37uT)
-                return StatusConst.MAG_FAIL, 0, np.zeros((3,))
-
-            return StatusConst.OK, query_time, mag * 1e-6
+            else:
+                return StatusConst.OK, query_time, mag
 
         else:
             return StatusConst.MAG_FAIL, 0, np.zeros((3,))
@@ -133,20 +130,22 @@ class AttitudeDetermination:
             # Get last GPS update time and position at that time
             gps_data = DH.get_latest_data("gps")
 
-            if (
-                gps_data is not None
-            ):  # gps_data is None occurs when the DH process is registered but a fix has not yet been obtained
+            if gps_data is not None:
                 gps_record_time = gps_data[GPS_IDX.TIME_GPS]
-                gps_pos_ecef = 1e-2 * (np.array(gps_data[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,)))
-                gps_vel_ecef = 1e-2 * (np.array(gps_data[GPS_IDX.GPS_ECEF_VX : GPS_IDX.GPS_ECEF_VZ + 1]).reshape((3,)))
+                gps_pos_ecef = 1e-2 * np.array(gps_data[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape(
+                    (3,)
+                )  # Convert from cm to m
+                gps_vel_ecef = 1e-2 * np.array(gps_data[GPS_IDX.GPS_ECEF_VX : GPS_IDX.GPS_ECEF_VZ + 1]).reshape(
+                    (3,)
+                )  # Convert from cm/s to m/s
 
                 # Sensor validity check
-                if gps_pos_ecef is None or gps_vel_ecef is None or len(gps_pos_ecef) != 3 or len(gps_vel_ecef) != 3:
+                if not is_valid_gps_state(gps_pos_ecef, gps_vel_ecef):
                     return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
-                elif not (6.0e6 <= np.linalg.norm(gps_pos_ecef) <= 7.5e6) or not (0 <= np.linalg.norm(gps_vel_ecef) <= 1.0e4):
-                    return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
-
-                return StatusConst.OK, gps_record_time, gps_pos_ecef, gps_vel_ecef
+                else:
+                    # Convert ECEF to ECI
+                    gps_pos_eci, gps_vel_eci = convert_ecef_state_to_eci(gps_pos_ecef, gps_vel_ecef, gps_record_time)
+                    return StatusConst.OK, gps_record_time, gps_pos_eci, gps_vel_eci
 
             else:
                 return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
@@ -174,21 +173,14 @@ class AttitudeDetermination:
             return StatusConst.OK, StatusConst.MEKF_INIT_FORCE
 
         # Get a valid GPS position
-        gps_status, gps_record_time, gps_pos_ecef, gps_vel_ecef = self.read_gps()
+        _, gps_record_time, gps_pos_eci, gps_vel_eci = self.read_gps()
 
-        if gps_status == StatusConst.GPS_FAIL:
-            return StatusConst.MEKF_INIT_FAIL, StatusConst.GPS_FAIL
-        else:
-            # Propagate from GPS measurement record
-            current_time = TPM.time()
-            R_ecef2eci = ecef_to_eci(current_time)
-            gps_pos_eci = np.dot(R_ecef2eci, gps_pos_ecef)
-            gps_vel_eci = np.dot(R_ecef2eci, gps_vel_ecef)
-            gps_state_eci = np.concatenate((gps_pos_eci, gps_vel_eci))
-            status, true_pos_eci, true_vel_eci = OrbitPropagator.propagate_orbit(current_time, gps_record_time, gps_state_eci)
+        current_time = TPM.time()
+        gps_state_eci = np.concatenate((gps_pos_eci, gps_vel_eci))
+        status, true_pos_eci, true_vel_eci = OrbitPropagator.propagate_orbit(current_time, gps_record_time, gps_state_eci)
 
-            if status == StatusConst.OPROP_INIT_FAIL:
-                return StatusConst.MEKF_INIT_FAIL, StatusConst.OPROP_INIT_FAIL
+        if status == StatusConst.OPROP_INIT_FAIL:
+            return StatusConst.MEKF_INIT_FAIL, StatusConst.OPROP_INIT_FAIL
 
         # Get a valid sun position
         sun_status, sun_pos_body, lux_readings = self.read_sun_position()
@@ -207,7 +199,7 @@ class AttitudeDetermination:
             return StatusConst.MEKF_INIT_FAIL, StatusConst.MAG_FAIL
 
         # Get a gyro reading (just to store in state)
-        gyro_status, _, omega_body = self.read_gyro()
+        _, _, omega_body = self.read_gyro()
 
         # Inertial sun position
         true_sun_pos_eci = approx_sun_position_ECI(current_time)
@@ -283,7 +275,7 @@ class AttitudeDetermination:
         - Updates the last_position_update time attribute
         - NOTE: This is not an MEKF update. We assume that the estimated position is true
         """
-        gps_status, gps_record_time, gps_pos_ecef, gps_vel_ecef = self.read_gps()
+        gps_status, gps_record_time, gps_pos_eci, gps_vel_eci = self.read_gps()
 
         if gps_status == StatusConst.GPS_FAIL:
             # Update GPS based on past estimate of state
@@ -296,15 +288,13 @@ class AttitudeDetermination:
         else:
             if abs(current_time - gps_record_time) < (1 / self.position_update_frequency):
                 # Use current GPS measurement without propagation
-                R_ecef2eci = ecef_to_eci(current_time)
-                self.state[self.position_idx] = np.dot(R_ecef2eci, gps_pos_ecef)
-                self.state[self.velocity_idx] = np.dot(R_ecef2eci, gps_vel_ecef)
+                self.state[self.position_idx] = gps_pos_eci
+                self.state[self.velocity_idx] = gps_vel_eci
 
             else:
                 # Propagate from GPS measurement record
-                R_ecef2eci = ecef_to_eci(current_time)
-                gps_pos_eci = np.dot(R_ecef2eci, gps_pos_ecef)
-                gps_vel_eci = np.dot(R_ecef2eci, gps_vel_ecef)
+                gps_pos_eci = gps_pos_eci
+                gps_vel_eci = gps_vel_eci
                 gps_state_eci = np.concatenate((gps_pos_eci, gps_vel_eci))
                 status, self.state[self.position_idx], self.state[self.velocity_idx] = OrbitPropagator.propagate_orbit(
                     current_time, gps_record_time, gps_state_eci

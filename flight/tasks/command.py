@@ -81,10 +81,10 @@ class Task(TemplateTask):
                     self.log_info(f"Updated time reference for TPM: {TPM.time()}")
 
                 else:
-                    # If no RTC or old time reference available, TPM goes back to init for time.time()
+                    # If no RTC or old time reference available, TPM goes back to Jan 1st 2025
                     self.log_warning("Cannot set time reference as CDH process has no latest data")
             else:
-                # If no RTC or old time reference available, TPM goes back to init for time.time()
+                # If no RTC or old time reference available, TPM goes back to Jan 1st 2025
                 self.log_warning("Cannot set time reference as CDH process does not exist")
 
             if time_since_boot == _TPM_INIT_TIMEOUT - 1:
