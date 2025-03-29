@@ -175,7 +175,7 @@ class Formatter:
             "args": record.args,
         }
         if "{asctime}" in self.fmt or "%(asctime)s" in self.fmt:
-            now = TPM.localtime()
+            now = time.localtime()
             # pylint: disable=line-too-long
             vals[
                 "asctime"
