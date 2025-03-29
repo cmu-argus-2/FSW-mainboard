@@ -36,6 +36,10 @@ class Task(TemplateTask):
         self.RX_COUNT_THRESHOLD = 0
         self.RX_COUNTER = 0
 
+        # Counter for response timeout
+        self.RP_COUNT_THRESHOLD = 0
+        self.RP_COUNTER = 0
+
         # Counter for ground pass timeout
         self.ground_pass = False
 
@@ -49,6 +53,7 @@ class Task(TemplateTask):
             self.log_error("TX heartbeat frequency faster than task frequency. Defaulting to task frequency.")
             self.TX_heartbeat_frequency = self.frequency
 
+        # Set TX frequency counter and threshold
         self.TX_COUNT_THRESHOLD = int(self.frequency / self.TX_heartbeat_frequency)
         self.TX_COUNTER = self.TX_COUNT_THRESHOLD - 1
 
@@ -57,9 +62,15 @@ class Task(TemplateTask):
             self.log_error("RX timeout frequency faster than task frequency. Defaulting to task frequency.")
             self.RX_timeout_frequency = self.frequency
 
+        # Set RX frequency counter and threshold
         self.RX_COUNT_THRESHOLD = int(self.frequency / self.RX_timeout_frequency)
         self.RX_COUNTER = 0
 
+        # Set RP frequency counter and threshold
+        self.RP_COUNT_THRESHOLD = self.RX_COUNT_THRESHOLD
+        self.RP_COUNTER = 0
+
+        # Set flag indicating all counters set
         self.frequency_set = True
 
         self.log_info(f"Heartbeat frequency threshold set to {self.TX_COUNT_THRESHOLD}")
@@ -100,12 +111,22 @@ class Task(TemplateTask):
                             SATELLITE_RADIO.set_filepath(response_args[1])
 
                     else:
-                        # Do nothing
-                        pass
+                        # What state is this
+                        self.log_error(f"Unknown comms state {self.comms_state}")
 
                 else:
                     # The response to the current GS command not ready, return
+                    self.RP_COUNTER += 1
+
+                    if self.RP_COUNTER >= self.RP_COUNT_THRESHOLD:
+                        # Timeout in response from commanding
+                        # Transition state to RX and hope for the best (RX count values not checked)
+                        SATELLITE_RADIO.transition_state(0, 0)
+                        self.comms_state = SATELLITE_RADIO.get_state()
+                        self.log_error("Commanding response timed out, transitioning to RX")
+
                     return
+
             else:
                 # Heartbeat or file packet TX, do nothing
                 pass
@@ -130,6 +151,7 @@ class Task(TemplateTask):
             self.comms_state = SATELLITE_RADIO.get_state()
 
             self.log_info(f"Sent message with ID: {self.tx_msg_id}")
+
         else:
             # If not, do nothing
             return
