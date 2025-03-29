@@ -42,7 +42,7 @@ class OrbitPropagator:
 
                 # Sensor validity check
                 if not is_valid_gps_state(gps_pos_ecef, gps_vel_ecef):
-                    return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
+                    return StatusConst.GPS_FAIL, np.zeros((3,)), np.zeros((3,))
                 else:
                     # Convert ECEF to ECI
                     gps_pos_eci, gps_vel_eci = convert_ecef_state_to_eci(gps_pos_ecef, gps_vel_ecef, gps_record_time)
@@ -54,9 +54,9 @@ class OrbitPropagator:
 
                     return status, pos_eci, vel_eci
             else:
-                return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
+                return StatusConst.GPS_FAIL, np.zeros((3,)), np.zeros((3,))
         else:
-            return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
+            return StatusConst.GPS_FAIL, np.zeros((3,)), np.zeros((3,))
 
     @classmethod
     def propagate_orbit(cls, current_time: int, last_gps_time: int = None, last_gps_state_eci: np.ndarray = None):
