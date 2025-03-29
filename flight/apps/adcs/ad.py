@@ -9,8 +9,6 @@ magnetic field data on the mainboard.
 
 """
 
-import time
-
 from apps.adcs.consts import Modes, StatusConst
 from apps.adcs.frames import convert_ecef_state_to_eci
 from apps.adcs.igrf import igrf_eci
@@ -20,6 +18,7 @@ from apps.adcs.sun import approx_sun_position_ECI, compute_body_sun_vector_from_
 from apps.adcs.utils import is_valid_gps_state, is_valid_gyro_reading, is_valid_mag_reading
 from apps.telemetry.constants import GPS_IDX
 from core import DataHandler as DH
+from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 from ulab import numpy as np
 
@@ -93,7 +92,7 @@ class AttitudeDetermination:
 
         if SATELLITE.IMU_AVAILABLE:
             gyro = np.array(SATELLITE.IMU.gyro())
-            query_time = int(time.time())
+            query_time = TPM.time()
 
             # Sensor validity check
             if not is_valid_gyro_reading(gyro):
@@ -111,7 +110,7 @@ class AttitudeDetermination:
 
         if SATELLITE.IMU_AVAILABLE:
             mag = 1e-6 * np.array(SATELLITE.IMU.mag())  # Convert field from uT to T
-            query_time = int(time.time())
+            query_time = TPM.time()
 
             # Sensor validity check
             if not is_valid_mag_reading(mag):
@@ -163,7 +162,7 @@ class AttitudeDetermination:
         - This function is not directly written into init to allow multiple retires of initialization
         - Sets the initialized attribute of the class once done
         """
-        current_time = int(time.time())
+        current_time = TPM.time()
 
         if self.mekf_init_start_time is None:
             self.mekf_init_start_time = current_time
@@ -176,7 +175,7 @@ class AttitudeDetermination:
         # Get a valid GPS position
         _, gps_record_time, gps_pos_eci, gps_vel_eci = self.read_gps()
 
-        current_time = int(time.time())
+        current_time = TPM.time()
         gps_state_eci = np.concatenate((gps_pos_eci, gps_vel_eci))
         status, true_pos_eci, true_vel_eci = OrbitPropagator.propagate_orbit(current_time, gps_record_time, gps_state_eci)
 
