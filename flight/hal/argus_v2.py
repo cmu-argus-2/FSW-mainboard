@@ -133,7 +133,7 @@ class ArgusV2Components:
 
     # LORA POWER MONITOR
     RADIO_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    RADIO_POWER_MONITOR_I2C_ADDRESS = const(0x41)
+    RADIO_POWER_MONITOR_I2C_ADDRESS = const(0x42)
 
     # USB CHARGER
     CHARGER_I2C = ArgusV2Interfaces.I2C1
@@ -141,7 +141,7 @@ class ArgusV2Components:
 
     # GPS POWER MONITOR
     GPS_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
-    GPS_POWER_MONITOR_I2C_ADDRESS = const(0x42)
+    GPS_POWER_MONITOR_I2C_ADDRESS = const(0x41)
 
     # BOARD POWER MONITOR
     BOARD_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C1
@@ -259,6 +259,7 @@ class ArgusV2(CubeSat):
             device.device, device.error = func(name)
 
     def __gps_boot(self, _) -> list[object, int]:
+
         """GPS_boot: Boot sequence for the GPS
 
         :return: Error code if the GPS failed to initialize
@@ -267,7 +268,7 @@ class ArgusV2(CubeSat):
         from hal.drivers.gps import GPS
 
         try:
-            gps = GPS(ArgusV2Components.GPS_UART, ArgusV2Components.GPS_ENABLE)
+            gps = GPS(ArgusV2Components.GPS_UART, None, False, False)
 
             return [gps, Errors.NOERROR]
         except Exception as e:

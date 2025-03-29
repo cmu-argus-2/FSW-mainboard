@@ -20,19 +20,24 @@ class CubeSat:
         "_time_ref_boot",
     )
 
+    def __new__(cls, *args, **kwargs):
+        if cls is CubeSat:
+            raise TypeError(f"{cls.__name__} is a static base class and cannot be instantiated.")
+        return super().__new__(cls)
+
     def __init__(self):
         self.__device_list = OrderedDict(
             [
                 ("SDCARD", Device(self.__sd_card_boot)),
                 ("IMU", Device(self.__imu_boot)),
                 ("RTC", Device(self.__rtc_boot)),
-                # ("GPS", Device(self.__gps_boot)),
-                # ("RADIO", Device(self.__radio_boot)),
+                ("GPS", Device(self.__gps_boot)),
+                ("RADIO", Device(self.__radio_boot)),
                 # ("FUEL_GAUGE", Device(self.__fuel_gauge_boot)),
                 # ("BURN_WIRE", Device(self.__burn_wire_boot)),
                 ("BOARD_PWR", Device(self.__power_monitor_boot)),
-                # ("RADIO_PWR", Device(self.__power_monitor_boot)),
-                # ("GPS_PWR", Device(self.__power_monitor_boot)),
+                ("RADIO_PWR", Device(self.__power_monitor_boot)),
+                ("GPS_PWR", Device(self.__power_monitor_boot)),
                 # ("JETSON_PWR", Device(self.__power_monitor_boot)),
                 # ("XP_PWR", Device(self.__power_monitor_boot)),
                 # ("XM_PWR", Device(self.__power_monitor_boot)),
@@ -45,15 +50,15 @@ class CubeSat:
                 ("TORQUE_YM", Device(self.__torque_driver_boot)),
                 # ("TORQUE_ZP", Device(self.__torque_driver_boot)),
                 # ("TORQUE_ZM", Device(self.__torque_driver_boot)),
-                ("LIGHT_XP", Device(self.__light_sensor_boot)),
-                ("LIGHT_XM", Device(self.__light_sensor_boot)),
-                ("LIGHT_YP", Device(self.__light_sensor_boot)),
-                ("LIGHT_YM", Device(self.__light_sensor_boot)),
-                ("LIGHT_ZM", Device(self.__light_sensor_boot)),
-                ("LIGHT_ZP_1", Device(self.__light_sensor_boot)),
-                ("LIGHT_ZP_2", Device(self.__light_sensor_boot)),
-                ("LIGHT_ZP_3", Device(self.__light_sensor_boot)),
-                ("LIGHT_ZP_4", Device(self.__light_sensor_boot)),
+                # ("LIGHT_XP", Device(self.__light_sensor_boot)),
+                # ("LIGHT_XM", Device(self.__light_sensor_boot)),
+                # ("LIGHT_YP", Device(self.__light_sensor_boot)),
+                # ("LIGHT_YM", Device(self.__light_sensor_boot)),
+                # ("LIGHT_ZM", Device(self.__light_sensor_boot)),
+                # ("LIGHT_ZP_1", Device(self.__light_sensor_boot)),
+                # ("LIGHT_ZP_2", Device(self.__light_sensor_boot)),
+                # ("LIGHT_ZP_3", Device(self.__light_sensor_boot)),
+                # ("LIGHT_ZP_4", Device(self.__light_sensor_boot)),
             ]
         )
 
