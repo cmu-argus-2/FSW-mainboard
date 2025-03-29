@@ -9,14 +9,13 @@ magnetic field data on the mainboard.
 
 """
 
-import time
-
 from apps.adcs.consts import Modes, StatusConst
 from apps.adcs.igrf import igrf_eci
 from apps.adcs.math import R_to_quat, quat_to_R, quaternion_multiply, skew
 from apps.adcs.orbit_propagation import OrbitPropagator
 from apps.adcs.sun import approx_sun_position_ECI, compute_body_sun_vector_from_lux, read_light_sensors
 from apps.adcs.utils import is_valid_gyro_reading, is_valid_mag_reading
+from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 from ulab import numpy as np
 
@@ -88,7 +87,7 @@ class AttitudeDetermination:
 
         if SATELLITE.IMU_AVAILABLE:
             gyro = np.array(SATELLITE.IMU.gyro())
-            query_time = int(time.time())
+            query_time = TPM.time()
 
             # Sensor validity check
             if not is_valid_gyro_reading(gyro):
@@ -106,7 +105,7 @@ class AttitudeDetermination:
 
         if SATELLITE.IMU_AVAILABLE:
             mag = 1e-6 * np.array(SATELLITE.IMU.mag())  # Convert field from uT to T
-            query_time = int(time.time())
+            query_time = TPM.time()
 
             # Sensor validity check
             if not is_valid_mag_reading(mag):
@@ -127,7 +126,7 @@ class AttitudeDetermination:
         - This function is not directly written into init to allow multiple retires of initialization
         - Sets the initialized attribute of the class once done
         """
-        current_time = int(time.time())
+        current_time = TPM.time()
 
         if self.mekf_init_start_time is None:
             self.mekf_init_start_time = current_time
@@ -142,6 +141,7 @@ class AttitudeDetermination:
 
         if status != StatusConst.OK:
             return StatusConst.MEKF_INIT_FAIL, status
+
 
         # Get a valid sun position
         sun_status, sun_pos_body, lux_readings = self.read_sun_position()

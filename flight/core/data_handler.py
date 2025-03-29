@@ -40,9 +40,9 @@ import json
 import os
 import re
 import struct
-import time
 
 from core.logging import logger
+from core.time_processor import TimeProcessor as TPM
 from micropython import const
 
 try:
@@ -309,7 +309,7 @@ class DataProcess:
             str: The new filename.
         """
         # Keeping the tag name in the filename for identification in debugging
-        return join_path(self.dir_path, self.tag_name) + "_" + str(int(time.time())) + ".bin"
+        return join_path(self.dir_path, self.tag_name) + "_" + str(TPM.time()) + ".bin"
 
     def try_to_reuse_latest_file(self) -> bool:
         """
@@ -613,7 +613,7 @@ class ImageProcess(DataProcess):
             str: The new filename.
         """
         # Keeping the tag name in the filename for identification
-        return join_path(self.dir_path, self.tag_name) + "_" + str(int(time.time())) + ".jpg"
+        return join_path(self.dir_path, self.tag_name) + "_" + str(TPM.time()) + ".jpg"
 
     def log(self, data: bytearray) -> None:
         """
