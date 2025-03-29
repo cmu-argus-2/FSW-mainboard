@@ -66,13 +66,13 @@ class Task(TemplateTask):
     log_data = [0] * 43  # - use mV for voltage and mA for current (h = short integer 2 bytes)
     warning_log_data = [0] * 4
     power_buffer_dict = {
-        EPS_WARNING_IDX.MAINBOARD_POWER_ALERT : [0],
-        EPS_WARNING_IDX.RADIO_POWER_ALERT : [0],
-        EPS_WARNING_IDX.JETSON_POWER_ALERT : [0]
-        # EPS_WARNING_IDX.XP_COIL_POWER_ALERT : [0],
-        # EPS_WARNING_IDX.XM_COIL_POWER_ALERT : [0],
-        # EPS_WARNING_IDX.YP_COIL_POWER_ALERT : [0],
-        # EPS_WARNING_IDX.YM_COIL_POWER_ALERT : [0]
+        EPS_WARNING_IDX.MAINBOARD_POWER_ALERT : [],
+        EPS_WARNING_IDX.RADIO_POWER_ALERT : [],
+        EPS_WARNING_IDX.JETSON_POWER_ALERT : []
+        # EPS_WARNING_IDX.XP_COIL_POWER_ALERT : [],
+        # EPS_WARNING_IDX.XM_COIL_POWER_ALERT : [],
+        # EPS_WARNING_IDX.YP_COIL_POWER_ALERT : [],
+        # EPS_WARNING_IDX.YM_COIL_POWER_ALERT : []
     }
     log_counter = 0
 
@@ -171,23 +171,19 @@ class Task(TemplateTask):
             #     if SATELLITE.TORQUE_DRIVERS_AVAILABLE(location):
             #         if location == "XP":
             #           voltage, current = self.read_vc(sensor)
-            #           power = voltage * current * 1000  # mW
-            #           self.set_power_alert(power, EPS_WARNING_IDX.XP_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
+            #           self.set_power_alert(voltage, current, EPS_WARNING_IDX.XP_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
             #           self.log_vc("XP Coil", EPS_IDX.XP_COIL_VOLTAGE, EPS_IDX.XP_COIL_CURRENT, voltage, current)
             #         elif location == "XM":
             #           voltage, current = self.read_vc(sensor)
-            #           power = voltage * current * 1000  # mW
-            #           self.set_power_alert(power, EPS_WARNING_IDX.XM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
+            #           self.set_power_alert(voltage, current, EPS_WARNING_IDX.XM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
             #           self.log_vc("XM Coil", EPS_IDX.XM_COIL_VOLTAGE, EPS_IDX.XM_COIL_CURRENT, voltage, current)
             #         elif location == "YP":
             #           voltage, current = self.read_vc(sensor)
-            #           power = voltage * current * 1000  # mW
-            #           self.set_power_alert(power, EPS_WARNING_IDX.YP_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
+            #           self.set_power_alert(voltage, current, EPS_WARNING_IDX.YP_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
             #           self.log_vc("YP Coil", EPS_IDX.YP_COIL_VOLTAGE, EPS_IDX.YP_COIL_CURRENT, voltage, current)
             #         elif location == "YM":
             #           voltage, current = self.read_vc(sensor)
-            #           power = voltage * current * 1000  # mW
-            #           self.set_power_alert(power, EPS_WARNING_IDX.YM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
+            #           self.set_power_alert(voltage, current, EPS_WARNING_IDX.YM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
             #           self.log_vc("YM Coil", EPS_IDX.YM_COIL_VOLTAGE, EPS_IDX.YM_COIL_CURRENT, voltage, current)
 
             if self.log_counter % self.frequency == 0:
