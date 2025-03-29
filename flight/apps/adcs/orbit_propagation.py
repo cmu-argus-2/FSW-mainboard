@@ -5,9 +5,7 @@ It leverages orbit information, either from the GPS module or uplinked informati
 """
 
 from apps.adcs.consts import StatusConst
-from apps.adcs.frames import ecef_to_eci
-from apps.telemetry.constants import GPS_IDX
-from core import DataHandler as DH
+from apps.adcs.utils import is_valid_gps_state
 from ulab import numpy as np
 
 
@@ -15,55 +13,58 @@ class OrbitPropagator:
     # Storage
     last_update_time = 0
     last_updated_state = np.zeros((6,))
+    last_valid_gps_time = 0
 
     # Propagation settings
     min_timestep = 1  # seconds
     initialized = False
 
-    # If Reboot, check log for a pre-existing GPS fix
-    if DH.data_process_exists("gps"):
-        pre_reboot_fix = DH.get_latest_data("gps")
-        if pre_reboot_fix is not None:
-            pre_reboot_time = pre_reboot_fix[GPS_IDX.TIME_GPS]
-            pre_reboot_state = 1e-2 * pre_reboot_fix[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_VZ + 1]
-
-            # Compute validity of GPS measurements
-            if pre_reboot_state[0:3] is None or pre_reboot_state[3:6] is None:
-                pass
-            elif not (6.0e6 <= np.linalg.norm(pre_reboot_state[0:3]) <= 7.5e6) or not (
-                0 <= np.linalg.norm(pre_reboot_state[3:6]) <= 1.0e4
-            ):
-                pass
-            else:
-                last_update_time = pre_reboot_time
-                Recef2eci = ecef_to_eci(last_update_time)
-                last_updated_state[0:3] = np.dot(Recef2eci, pre_reboot_state[0:3])
-                last_updated_state[3:6] = np.dot(Recef2eci, pre_reboot_state[3:6])
-                initialized = True
-
     @classmethod
     def propagate_orbit(cls, current_time: int, last_gps_time: int = None, last_gps_state_eci: np.ndarray = None):
+        """
+        Estimates the current position and velocity in ECI frame from a last known GPS fix
+
+        1. If a GPS fix was already used, then the state is propagated forward from a previous estimate
+        2. If the GPS fix is new, the state is directly set to it and forward propagated from that reference
+
+        INPUTS:
+        1. current_time : int, current unix timestamp
+        2. last_gps_time : int, unix timestamp of the last gps fix
+        3. last_gps_state_eci : np.ndarray (6,), 6x1 [position (m), velocity (m/s)] ECI state at the last gps fix
+        """
+
+        # If the current ime is None, fail and exit
         if current_time is None:
             return StatusConst.OPROP_INIT_FAIL, np.zeros((3,)), np.zeros((3,))
 
-        if cls.valid_gps_state(last_gps_state_eci) and last_gps_time is not None:
+        # If a valid gps fix is provided and it is previously unused, force update the state estimate to the gps state
+        if (
+            last_gps_time != cls.last_valid_gps_time
+            and last_gps_state_eci is not None
+            and is_valid_gps_state(last_gps_state_eci[0:3], last_gps_state_eci[3:6])
+            and last_gps_time is not None
+        ):
             cls.last_updated_state = last_gps_state_eci
             cls.last_update_time = last_gps_time
+            cls.last_valid_gps_time = last_gps_time
 
+            # Initialize the Orbit Prop with the valid GPS fix
             if not cls.initialized:
                 cls.initialized = True
         else:
+            # If Orbit Prop is not initialized and a valid gps fix was not provided, fail and exit
             if not cls.initialized:
                 return StatusConst.OPROP_INIT_FAIL, np.zeros((3,)), np.zeros((3,))
 
-        # Propagate orbit
+        # Propagate orbit from the last state estimate
         position_norm = np.linalg.norm(cls.last_updated_state[0:3])
         velocity_norm = np.linalg.norm(cls.last_updated_state[3:6])
 
-        if not cls.valid_gps_state(cls.last_updated_state):
+        if not is_valid_gps_state(cls.last_updated_state[0:3], cls.last_updated_state[3:6]):
             # Somehow, we have messed up so bad that our position and/or velocity vectors are garbage.
             # Reset OrbitProp and wait for a valid GPS fix
             cls.initialized = False
+            cls.last_updated_state = np.zeros((6,))
             return StatusConst.OPROP_INIT_FAIL, np.zeros((3,)), np.zeros((3,))
 
         # Calculate omega (angular velocity) vector
@@ -81,16 +82,10 @@ class OrbitPropagator:
         # Compute velocity using (v = omega x r)
         cls.last_updated_state[3:6] = np.cross(omega, cls.last_updated_state[0:3])
 
-        return StatusConst.OK, cls.last_updated_state[0:3], cls.last_updated_state[3:6]
+        # Update last update time
+        cls.last_update_time = current_time
 
-    @classmethod
-    def valid_gps_state(cls, gps_state):
-        return (
-            gps_state is not None
-            and gps_state.shape == (6,)
-            and 6.0e6 <= np.linalg.norm(gps_state[0:3]) <= 7.5e6
-            and 0 <= np.linalg.norm(gps_state[3:6]) <= 1.0e4
-        )
+        return StatusConst.OK, cls.last_updated_state[0:3], cls.last_updated_state[3:6]
 
     @classmethod
     def set_last_update_time(cls, updated_time):
