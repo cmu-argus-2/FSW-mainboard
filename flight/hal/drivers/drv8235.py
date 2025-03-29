@@ -40,6 +40,14 @@ class VoltageAdapter:
         return round(volts * (255 / 42.67))
 
 
+class CurrentAdapter:
+    """Output current calculator"""
+
+    def index_to_current(self, index):
+        """Convert an index value to current value based on max 3.7A current."""
+        return index * (3.7 / 255)
+
+
 class BridgeControl:
     """H-bridge PWM control states and descriptors. Bit order: IN2 IN1"""
 
@@ -51,49 +59,12 @@ class BridgeControl:
     DESCRIPTOR = ["COAST", "REVERSE", "FORWARD", "BRAKE"]
 
 
-class Faults:
-    """Fault Register Flag Descriptors
-    FAULT  Any fault condition
-    STALL  Stall event;
-           device disabled, clear fault to reactivate
-    OCP    Overcurrent event;
-           device disabled, clear fault to reactivate
-    OVP    Overvoltage event
-    TSD    Overtemperature condition;
-           device disabled, resumes with lower temperature
-    NPOR   Undervoltage lockout; device disabled,
-           resumes with voltage restoration
-    """
-
-    DESCRIPTOR = ["FAULT", "STALL", "OCP", "OVP", "TSD", "NPOR"]
-
-
 class DRV8235:
     # class DRV8235(Driver):
     """DC motor driver with I2C interface.
 
     :param i2c_bus: The microcontroller I2C interface bus pins.
     :param address: The I2C address of the DRV8235 motor controller."""
-
-    def __init__(self, i2c_bus, address):
-        """Instantiate DRV8235. Set output voltage to 0.0, place into STANDBY
-        mode, and reset all fault status flags."""
-        self.i2c_device = I2CDevice(i2c_bus, address)
-        self._i2c_bc = True
-        self._pmode = True
-        self._dir = BridgeControl.COAST
-        self._reg_ctrl = 0x3  # Sets to voltage regulation
-        self._wset_vset = 0  # Sets initial voltage to 0
-        self._int_vref = True
-        # TODO: check inv_r_scale and inv_r values
-        self._inv_r_scale = 0x3
-        self._inv_r = 82
-        self._en_out = True
-        # Clear all fault status flags
-        self.clear_faults()
-
-        # super().__init__()
-
     # DEFINE I2C DEVICE BITS AND REGISTERS
     _clear = RWBit(_CONFIG0, 1, 1, False)  # Clears fault status flag bits
     _i2c_bc = RWBit(_CONFIG4, 2, 1, False)  # Sets Bridge Control to I2C
@@ -114,6 +85,23 @@ class DRV8235:
     _int_vref = RWBit(_CONFIG3, 4, 1, False)
     _inv_r = RWBits(8, _RC_CTRL3, 0, 1, False)
     _inv_r_scale = RWBits(2, _RC_CTRL2, 6, 1, False)
+
+    def __init__(self, i2c_bus, address):
+        """Instantiate DRV8235. Set output voltage to 0.0, place into STANDBY
+        mode, and reset all fault status flags."""
+        self.i2c_device = I2CDevice(i2c_bus, address)
+        self._i2c_bc = True
+        self._pmode = True
+        self._dir = BridgeControl.COAST
+        self._reg_ctrl = 0x3  # Sets to voltage regulation
+        self._wset_vset = 0  # Sets initial voltage to 0
+        self._int_vref = True
+        # TODO: check inv_r_scale and inv_r values
+        self._inv_r_scale = 0x3
+        self._inv_r = 82
+        self._en_out = True
+        # Clear all fault status flags
+        self.clear_faults()
 
     def throttle(self):
         """Current motor voltage, ranging from -1.0 (full speed reverse) to
@@ -215,7 +203,7 @@ class DRV8235:
 
     def read_current(self):
         current_index = self._imtr
-        current = current_index * (3.7 / 255)  # max 3.7A range
+        current = CurrentAdapter.index_to_current(self, current_index)
         return current
 
     @property
@@ -229,19 +217,33 @@ class DRV8235:
         """Motor driver fault register status. Returns state of FAULT flag and
         a list of activated fault flag descriptors. FAULT flag is ``True`` if
         one or more fault register flags are ``True``."""
+
+        """ Fault Register Flag Descriptors
+        FAULT  Any fault condition
+        STALL  Stall event;
+            device disabled, clear fault to reactivate
+        OCP    Overcurrent event;
+            device disabled, clear fault to reactivate
+        OVP    Overvoltage event
+        TSD    Overtemperature condition;
+            device disabled, resumes with lower temperature
+        NPOR   Undervoltage lockout; device disabled,
+            resumes with voltage restoration
+        """
+
         faults = []
         if self._fault:
-            faults.append(Faults.DESCRIPTOR[0])
+            faults.append("FAULT")
             if self._stall:
-                faults.append(Faults.DESCRIPTOR[1])
+                faults.append("STALL")
             if self._ocp:
-                faults.append(Faults.DESCRIPTOR[2])
+                faults.append("OCP")
             if self._ovp:
-                faults.append(Faults.DESCRIPTOR[3])
+                faults.append("OVP")
             if self._tsd:
-                faults.append(Faults.DESCRIPTOR[4])
+                faults.append("TSD")
             if self._npor:
-                faults.append(Faults.DESCRIPTOR[5])
+                faults.append("NPOR")
         return self._fault, faults
 
     def clear_faults(self):
