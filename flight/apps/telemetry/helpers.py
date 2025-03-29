@@ -3,6 +3,7 @@
 Helper functions for converting to fixed point format and back.
 
 """
+from core import logger
 
 
 def convert_float_to_fixed_point_lp(val):
@@ -12,6 +13,12 @@ def convert_float_to_fixed_point_lp(val):
     :param val: Value to convert to fixed point
     :return: value in fixed point as a list of bytes
     """
+
+    # Check for None and NaN
+    if val is None or val != val:
+        logger.error("Tried packing None / NaN")
+        return bytearray([0x00, 0x00, 0x00, 0x00])
+
     # Handle sign and absolute value
     neg_bit_flag = 1 if val < 0 else 0
     val = abs(val)
@@ -61,6 +68,12 @@ def convert_float_to_fixed_point_hp(val):
     Convert float value to fixed point with 1 integer bytes, 3 decimal bytes (high-precision).
     Range: [-127.9999999, 127.9999999]
     """
+
+    # Check for None and NaN
+    if val is None or val != val:
+        logger.error("Tried packing None / NaN")
+        return bytearray([0x00, 0x00, 0x00, 0x00])
+
     # Handle negative flag and convert to positive if necessary
     neg_bit_flag = 1 if val < 0 else 0
     val = abs(val)
@@ -109,6 +122,12 @@ def pack_unsigned_long_int(data, idx):
     :param idx: Index of the integer in the data list to pack.
     :return: List of 4 bytes representing the packed 4-byte integer.
     """
+
+    # Check for None and NaN
+    if data is None or data != data:
+        logger.error("Tried packing None / NaN")
+        return bytearray([0x00, 0x00, 0x00, 0x00])
+
     return bytearray([(data[idx] >> 24) & 0xFF, (data[idx] >> 16) & 0xFF, (data[idx] >> 8) & 0xFF, data[idx] & 0xFF])
 
 
@@ -120,6 +139,12 @@ def pack_signed_long_int(data, idx):
     :param idx: Index of the integer in the data list to pack.
     :return: List of 4 bytes representing the packed 4-byte signed integer.
     """
+
+    # Check for None and NaN
+    if data is None or data != data:
+        logger.error("Tried packing None / NaN")
+        return bytearray([0x00, 0x00, 0x00, 0x00])
+
     # Handle signed integers by converting to unsigned before packing
     val = data[idx] & 0xFFFFFFFF
     return bytearray([(val >> 24) & 0xFF, (val >> 16) & 0xFF, (val >> 8) & 0xFF, val & 0xFF])
@@ -158,6 +183,12 @@ def pack_unsigned_short_int(data, idx):
     :param idx: Index of the integer in the data list to pack.
     :return: List of 2 bytes representing the packed 2-byte unsigned integer.
     """
+
+    # Check for None and NaN
+    if data is None or data != data:
+        logger.error("Tried packing None / NaN")
+        return bytearray([0x00, 0x00])
+
     return bytearray([(data[idx] >> 8) & 0xFF, data[idx] & 0xFF])
 
 
@@ -179,6 +210,12 @@ def pack_signed_short_int(data, idx):
     :param idx: Index of the integer in the data list to pack.
     :return: List of 2 bytes representing the packed 2-byte signed integer.
     """
+
+    # Check for None and NaN
+    if data is None or data != data:
+        logger.error("Tried packing None / NaN")
+        return bytearray([0x00, 0x00])
+
     val = data[idx] & 0xFFFF
     return bytearray([(val >> 8) & 0xFF, val & 0xFF])
 
