@@ -28,24 +28,24 @@ _RC_CTRL7 = const(0x18)  # RW
 _RC_CTRL8 = const(0x19)  # RW
 
 
-class VoltageAdapter:
-    """Output voltage calculator."""
-
-    def index_to_voltage(self, index):
-        """Convert an index value to nearest voltage value."""
-        return index * (42.67 / 255)
-
-    def voltage_to_index(self, volts):
-        """Convert a voltage to nearest index value."""
-        return round(volts * (255 / 42.67))
-
-
-class CurrentAdapter:
-    """Output current calculator"""
-
-    def index_to_current(self, index):
-        """Convert an index value to current value based on max 3.7A current."""
-        return index * (3.7 / 255)
+"""Fault Register Flag Descriptors
+    FAULT  Any fault condition
+    STALL  Stall event;
+        device disabled, clear fault to reactivate
+    OCP    Overcurrent event;
+        device disabled, clear fault to reactivate
+    OVP    Overvoltage event
+    TSD    Overtemperature condition;
+        device disabled, resumes with lower temperature
+    NPOR   Undervoltage lockout; device disabled,
+        resumes with voltage restoration
+    """
+_FAULT = const(0x01)
+_STALL = const(0x02)
+_OCP = const(0x03)
+_OVP = const(0x04)
+_TSD = const(0x05)
+_NPOR = const(0x06)
 
 
 class BridgeControl:
@@ -103,6 +103,21 @@ class DRV8235:
         # Clear all fault status flags
         self.clear_faults()
 
+    def index_to_voltage(self, index):
+        """Convert an index value to nearest voltage value.
+        Scale by 42.67 / 255 = 0.16733 (max output voltage range) precomputed"""
+        return index * (0.16733)
+
+    def voltage_to_index(self, volts):
+        """Convert a voltage to nearest index value.
+        Scale by 255 / 42.67 = 5.9761 precomputed"""
+        return round(volts * 5.9761)
+
+    def index_to_current(self, index):
+        """Convert an index value to current value.
+        Scale by 3.7 / 255 = 0.01451 (max output current range) precomputed"""
+        return index * (0.01451)
+
     def throttle(self):
         """Current motor voltage, ranging from -1.0 (full speed reverse) to
         +1.0 (full speed forward), or ``None`` (controller off). If ``None``,
@@ -144,8 +159,8 @@ class DRV8235:
         if self.bridge_control[0] == BridgeControl.BRAKE:
             return 0.0
         if self.bridge_control[0] == BridgeControl.REVERSE:
-            return -1 * VoltageAdapter.index_to_voltage(self, self._wset_vset)
-        return VoltageAdapter.index_to_voltage(self, self._wset_vset)
+            return -1 * self.index_to_voltage(self._wset_vset)
+        return self.index_to_voltage(self._wset_vset)
 
     def set_throttle_volts(self, new_throttle_volts):
         if new_throttle_volts is None:
@@ -155,10 +170,10 @@ class DRV8235:
         # Constrain throttle voltage value
         new_throttle_volts = min(max(new_throttle_volts, -42.7), +42.7)
         if new_throttle_volts < 0:
-            self._wset_vset = VoltageAdapter.voltage_to_index(self, abs(new_throttle_volts))
+            self._wset_vset = self.voltage_to_index(abs(new_throttle_volts))
             self._dir = BridgeControl.REVERSE
         elif new_throttle_volts > 0:
-            self._wset_vset = VoltageAdapter.voltage_to_index(self, new_throttle_volts)
+            self._wset_vset = self.voltage_to_index(new_throttle_volts)
             self._dir = BridgeControl.FORWARD
         else:
             self._wset_vset = 0
@@ -198,12 +213,12 @@ class DRV8235:
 
     def read_voltage(self):
         voltage_index = self._vmtr
-        voltage = VoltageAdapter.index_to_voltage(self, voltage_index)
+        voltage = self.index_to_voltage(voltage_index)
         return voltage
 
     def read_current(self):
         current_index = self._imtr
-        current = CurrentAdapter.index_to_current(self, current_index)
+        current = self.index_to_current(current_index)
         return current
 
     @property
@@ -217,33 +232,19 @@ class DRV8235:
         """Motor driver fault register status. Returns state of FAULT flag and
         a list of activated fault flag descriptors. FAULT flag is ``True`` if
         one or more fault register flags are ``True``."""
-
-        """ Fault Register Flag Descriptors
-        FAULT  Any fault condition
-        STALL  Stall event;
-            device disabled, clear fault to reactivate
-        OCP    Overcurrent event;
-            device disabled, clear fault to reactivate
-        OVP    Overvoltage event
-        TSD    Overtemperature condition;
-            device disabled, resumes with lower temperature
-        NPOR   Undervoltage lockout; device disabled,
-            resumes with voltage restoration
-        """
-
         faults = []
         if self._fault:
-            faults.append("FAULT")
+            faults.append(_FAULT)
             if self._stall:
-                faults.append("STALL")
+                faults.append(_STALL)
             if self._ocp:
-                faults.append("OCP")
+                faults.append(_OCP)
             if self._ovp:
-                faults.append("OVP")
+                faults.append(_OVP)
             if self._tsd:
-                faults.append("TSD")
+                faults.append(_TSD)
             if self._npor:
-                faults.append("NPOR")
+                faults.append(_NPOR)
         return self._fault, faults
 
     def clear_faults(self):
