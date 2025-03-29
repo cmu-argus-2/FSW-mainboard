@@ -1,7 +1,5 @@
 # Electrical Power Subsystem Task
 
-import time
-
 import microcontroller
 from apps.eps.eps import EPS_POWER_FLAG, EPS_POWER_THRESHOLD, GET_EPS_POWER_FLAG, GET_POWER_STATUS
 from apps.telemetry.constants import EPS_IDX, EPS_WARNING_IDX
@@ -9,6 +7,7 @@ from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
+from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 
 
@@ -137,7 +136,7 @@ class Task(TemplateTask):
         else:
             if not DH.data_process_exists("eps"):
                 data_format = (
-                    "Lbhhhhb" + "L" + "h" * 3 + "L" * 2 + "h" * 30
+                    "Lbhhhhb" + "h" * 4 + "L" * 2 + "h" * 30
                 )  # - use mV for voltage and mA for current (h = short integer 2 bytes, L = 4 bytes)
                 DH.register_data_process("eps", data_format, True, data_limit=100000)
 
@@ -149,8 +148,8 @@ class Task(TemplateTask):
 
             # Get power system readings
 
-            self.log_data[EPS_IDX.TIME_EPS] = int(time.time())
-            self.warning_log_data[EPS_WARNING_IDX.TIME_EPS_WARNING] = int(time.time())
+            self.log_data[EPS_IDX.TIME_EPS] = TPM.time()
+            self.warning_log_data[EPS_WARNING_IDX.TIME_EPS_WARNING] = TPM.time()
 
             for location, sensor in SATELLITE.POWER_MONITORS.items():
                 if SATELLITE.POWER_MONITOR_AVAILABLE(location):
