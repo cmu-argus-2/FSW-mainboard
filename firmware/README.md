@@ -20,7 +20,10 @@ CircuitPython has been cloned and avilable to all users on the FSW FlatSat machi
 Run the following commands to prepare your environment.
 ```
 source /home/Shared/venv/bin/activate # Python Virtual Environment with all necessary libraries
+# this directory contain circuitpython 9
 cd /home/Shared/circuitpython
+# this directory contain circuitpython 8
+# cd /home/Shared/circuitpython8
 ```
 
 **2. Create/Copy Board Definitions**
@@ -65,19 +68,18 @@ Ensure that build-ArgusX folder does not exist in this directory, or else the co
 Run the following command to compile the target firmware
 ```
 # ArgusX is the folder name in the boards folder
-# -jY is an optional argument, where Y is the number of threads available on your computer
-make BOARD=ArgusX -jY
+make BOARD=ArgusX -j$(nproc)
 ```
 If the compilation is successful, a build-ArgusX folder will be be created. A firmware.uf2 file will be created in this folder. Please upload this to the FSW repo and all relevant files for future development.
 
 ## Flashing
 
 ### Raspberry Pi
-To enter bootloader, turn off the board and hold the RESET button. Drag and drop the uf2 file to the board, it will restart with the new firmware.
+To enter bootloader, turn off the board and hold the BOOT button. Drag and drop the uf2 file to the board, it will restart with the new firmware.
 
 ### ATSAMD
 
-To enter bootloader, double tap the RESET button. Drag and drop the uf2 file to the board, it will restart with the new firmware.
+To enter bootloader, double tap the BOOT button. Drag and drop the uf2 file to the board, it will restart with the new firmware.
 
 
 

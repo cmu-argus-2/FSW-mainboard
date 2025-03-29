@@ -28,12 +28,6 @@ sh install.sh
 
 ### With mainboard
 
-Before building the current file, select the correct CircuitPython Version in build_tools/build.py by uncommenting it.
-```
-CPY_VERSION = 8
-# CPY_VERSION = 9
-```
-
 Building current files and moving them to the board can be handled by the run.sh script which can be run via:
 ```bash
 ./run.sh

@@ -9,6 +9,7 @@ import time
 
 import board
 import busio
+import digitalio
 
 
 class i2c_device:
@@ -17,9 +18,29 @@ class i2c_device:
         self.i2c = busio.I2C(scl, sda)
 
 
+if hasattr(board, "PERIPH_PWR_EN"):
+    PERIPH_PWR_EN = digitalio.DigitalInOut(board.PERIPH_PWR_EN)
+    PERIPH_PWR_EN.direction = digitalio.Direction.OUTPUT
+    PERIPH_PWR_EN.value = True  # Enable peripherals if applicable
+
+time.sleep(1)  # Wait for peripherals to power up
+
+RADIO_ENABLE = digitalio.DigitalInOut(board.LORA_EN)
+RADIO_ENABLE.direction = digitalio.Direction.OUTPUT
+RADIO_ENABLE.value = True
+
 # List of potential I2C busses
-I2C0 = i2c_device("I2C0", board.SCL0, board.SDA0)
-I2C1 = i2c_device("I2C1", board.SCL1, board.SDA1)
+try:
+    I2C0 = i2c_device("I2C0", board.SCL0, board.SDA0)
+except Exception as e:
+    I2C0 = None
+    print("I2C0 not found:", e)
+
+try:
+    I2C1 = i2c_device("I2C1", board.SCL1, board.SDA1)
+except Exception as e:
+    I2C1 = None
+    print("I2C1 not found:", e)
 ALL_I2C = [I2C0, I2C1]
 
 # Determine which busses are valid

@@ -3,17 +3,40 @@ Author: Harry, Thomas, Ibrahima, Perrin
 Description: This file contains the definition of the ArgusV3 class and its associated interfaces and components.
 """
 
+import time
 from sys import path
 
 import board
 import digitalio
-import neopixel
 from busio import I2C, SPI, UART
 from hal.cubesat import CubeSat
 from hal.drivers.errors import Errors
 from micropython import const
 from sdcardio import SDCard
 from storage import VfsFat, mount
+
+
+class ArgusV3Power:
+    #########
+    # eFUSE #
+    #########
+
+    # PERIPHERALS 3.3V
+    PERIPH_PWR_EN = digitalio.DigitalInOut(board.PERIPH_PWR_EN)
+    PERIPH_PWR_EN.direction = digitalio.Direction.OUTPUT
+    PERIPH_PWR_EN.value = True
+
+    PERIPH_PWR_OVC = digitalio.DigitalInOut(board.PERIPH_PWR_FLT)
+    PERIPH_PWR_OVC.direction = digitalio.Direction.INPUT
+
+    # MAIN (MCU, WATCHDOG) 3.3V
+    MAIN_PWR_RESET = digitalio.DigitalInOut(board.MAIN_PWR_RST)
+    MAIN_PWR_RESET.direction = digitalio.Direction.OUTPUT
+
+    GPS_EN = digitalio.DigitalInOut(board.GPS_EN)
+    GPS_EN.direction = digitalio.Direction.OUTPUT
+    GPS_EN.value = True
+    time.sleep(2)  # Wait for peripherals to power up
 
 
 class ArgusV3Interfaces:
@@ -26,8 +49,9 @@ class ArgusV3Interfaces:
 
     # Line may not be connected, try except sequence
     try:
-        I2C0 = I2C(I2C0_SCL, I2C0_SDA)
+        I2C0 = I2C(I2C0_SCL, I2C0_SDA, frequency=400000)
     except Exception:
+        print("I2C0 not found")
         I2C0 = None
 
     I2C1_SDA = board.SDA1
@@ -194,7 +218,8 @@ class ArgusV3Components:
     RADIO_RX_EN = board.LORA_RX_EN
     RADIO_BUSY = board.LORA_BUSY
     RADIO_IRQ = board.LORA_INT
-    RADIO_OVC = board.LORA_FLT
+    RADIO_OVC = digitalio.DigitalInOut(board.LORA_FLT)
+    RADIO_OVC.direction = digitalio.Direction.INPUT
 
     ########
     # SPI1 #
@@ -211,7 +236,8 @@ class ArgusV3Components:
     PAYLOAD_IO2 = board.PAYLOAD_IO2
     PAYLOAD_CS = board.PAYLOAD_nCS
     PAYLOAD_EN = board.PAYLOAD_EN
-    PAYLOAD_OVC = board.PAYLOAD_FLT
+    PAYLOAD_FLT = digitalio.DigitalInOut(board.PAYLOAD_FLT)
+    PAYLOAD_FLT.direction = digitalio.Direction.INPUT
 
     #########
     # UART0 #
@@ -220,7 +246,8 @@ class ArgusV3Components:
     # GPS
     GPS_UART = ArgusV3Interfaces.UART0
     GPS_ENABLE = board.GPS_EN
-    GPS_OVC = board.GPS_FLT
+    GPS_OVC = digitalio.DigitalInOut(board.GPS_FLT)
+    GPS_OVC.direction = digitalio.Direction.INPUT
 
     #########
     # UART1 #
@@ -228,30 +255,24 @@ class ArgusV3Components:
 
     # JETSON
     JETSON_UART = ArgusV3Interfaces.JETSON_UART
-    JETSON_ENABLE = board.JETSON_EN
-
-    #########
-    # eFUSE #
-    #########
-
-    # PERIPHERALS 3.3V
-    PERIPH_PWR_EN = board.PERIPH_PWR_EN
-    PERIPH_PWR_OVC = board.PERIPH_PWR_FLT
-
-    # MAIN (MCU, WATCHDOG) 3.3V
-    MAIN_PWR_RESET = board.MAIN_PWR_RST
+    JETSON_ENABLE = digitalio.DigitalInOut(board.JETSON_EN)
+    JETSON_ENABLE.direction = digitalio.Direction.OUTPUT
 
     ########
     # MISC #
     ########
 
     # TORQUE COILS ENABLE
-    COIL_EN = board.COIL_EN
+    COIL_EN = digitalio.DigitalInOut(board.COIL_EN)
+    COIL_EN.direction = digitalio.Direction.OUTPUT
 
     # BATTERY HEATERS
-    BATT_HEATER0_ON = board.HEAT0_ON
-    BATT_HEATER1_ON = board.HEAT1_ON
-    BATT_HEAT_EN = board.HEAT_EN
+    BATT_HEATER0_ON = digitalio.DigitalInOut(board.HEAT0_ON)
+    BATT_HEATER0_ON.direction = digitalio.Direction.OUTPUT
+    BATT_HEATER1_ON = digitalio.DigitalInOut(board.HEAT1_ON)
+    BATT_HEATER1_ON.direction = digitalio.Direction.OUTPUT
+    BATT_HEAT_EN = digitalio.DigitalInOut(board.HEAT_EN)
+    BATT_HEAT_EN.direction = digitalio.Direction.OUTPUT
 
     # NEOPIXEL
     NEOPIXEL_SDA = board.NEOPIXEL
@@ -274,12 +295,14 @@ class ArgusV3(CubeSat):
         """__init__: Initializes the Argus V3 CubeSat."""
         self.__debug = debug
 
+        # TODO: maybe make this nicer or something
+        ArgusV3Components.COIL_EN.value = True
+
         super().__init__()
 
-        self.append_device("NEOPIXEL", self.__neopixel_boot)
         self.append_device("REACTION_WHEEL", self.__reaction_wheel_boot)
 
-        self.__payload_uart = ArgusV3Interfaces.PAYLOAD_UART
+        self.__payload_uart = ArgusV3Interfaces.JETSON_UART
 
     ######################## BOOT SEQUENCE ########################
 
@@ -299,7 +322,7 @@ class ArgusV3(CubeSat):
         from hal.drivers.gps import GPS
 
         try:
-            gps = GPS(ArgusV3Components.GPS_UART, ArgusV3Components.GPS_ENABLE)
+            gps = GPS(ArgusV3Components.GPS_UART, None, False, False)
 
             return [gps, Errors.NO_ERROR]
         except Exception as e:
@@ -373,6 +396,7 @@ class ArgusV3(CubeSat):
 
             return [imu, Errors.NO_ERROR]
         except Exception as e:
+            print(e)
             if self.__debug:
                 raise e
             return [None, Errors.DEVICE_NOT_INITIALISED]
@@ -458,7 +482,7 @@ class ArgusV3(CubeSat):
             radioEn.value = True
 
             radio = SX1262(
-                spi_bus=ArgusV3Interfaces.SPI,
+                spi_bus=ArgusV3Components.RADIO_SPI,
                 cs=ArgusV3Components.RADIO_CS,
                 irq=ArgusV3Components.RADIO_IRQ,
                 rst=ArgusV3Components.RADIO_RESET,
@@ -559,8 +583,10 @@ class ArgusV3(CubeSat):
                 raise e
             return [None, Errors.DEVICE_NOT_INITIALISED]
 
-    def __neopixel_boot(self) -> list[object, int]:
+    def __neopixel_boot(self, _) -> list[object, int]:
         """neopixel_boot: Boot sequence for the neopixel"""
+        import neopixel
+
         try:
             np = neopixel.NeoPixel(
                 ArgusV3Components.NEOPIXEL_SDA,
@@ -568,6 +594,7 @@ class ArgusV3(CubeSat):
                 brightness=ArgusV3Components.NEOPIXEL_BRIGHTNESS,
                 pixel_order=neopixel.GRB,
             )
+            np.fill((128, 128, 128))
             return [np, Errors.DEVICE_NOT_INITIALISED]
         except Exception as e:
             if self.__debug:

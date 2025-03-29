@@ -4,10 +4,10 @@ import time
 import supervisor
 from hal.configuration import SATELLITE
 
-print("Booting ARGUS-1...")
-boot_errors = SATELLITE.boot_sequence()
-print("ARGUS-1 booted.")
-print(f"Boot Errors: {boot_errors}")
+print("Booting ARGUS...")
+SATELLITE.boot_sequence()
+print("ARGUS booted.")
+print(f"Boot Errors: {SATELLITE.ERRORS}")
 data = []
 
 current_time = time.localtime()
