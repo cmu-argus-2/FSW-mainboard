@@ -40,8 +40,8 @@ class TimeProcessor:
     (on boot) if the RTC has failed.
     """
 
-    # Initialize to initial value for time.time()
-    time_reference = time.time()
+    # Initialize to initial value for Jan 1st 2025
+    time_reference = 1735689600
 
     """
     time_offset: Offset between time.time() and

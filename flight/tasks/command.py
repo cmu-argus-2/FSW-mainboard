@@ -76,8 +76,7 @@ class Task(TemplateTask):
 
                 if cdh_data:
                     # Found an old timestamp reference
-                    TPM.time_reference = cdh_data[CDH_IDX.TIME]
-                    TPM.calc_time_offset()
+                    TPM.set_time(cdh_data[CDH_IDX.TIME])
                     self.time_ref_set = True
                     self.log_info(f"Updated time reference for TPM: {TPM.time()}")
 
@@ -87,6 +86,10 @@ class Task(TemplateTask):
             else:
                 # If no RTC or old time reference available, TPM goes back to init for time.time()
                 self.log_warning("Cannot set time reference as CDH process does not exist")
+
+            if time_since_boot == _TPM_INIT_TIMEOUT - 1:
+                # Failed in initializing TPM, just initialize offset calculation
+                TPM.calc_time_offset()
 
         else:
             # If the DH successfully scanned the SD card, and it has been 5 secs since FSW boot
