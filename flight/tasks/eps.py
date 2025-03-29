@@ -108,27 +108,27 @@ class Task(TemplateTask):
         self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE] = int(fuel_gauge.read_temperature())
 
     # Update MAV and set alert to indicate that resource is consuming too much power
-    # TODO: add torque coil alerts?
+    # TODO: for v3 mainboard, add alert for peripheral power consumption
     def set_power_alert(self, voltage, current, idx, threshold):
         power = voltage * current * 0.001  # mW
         alert, power_avg = GET_POWER_STATUS(self.power_buffer_dict[idx], power, threshold, self.frequency)
         self.warning_log_data[idx] = int(alert) & 0xFF
         if (alert):
             if (idx == EPS_WARNING_IDX.MAINBOARD_POWER_ALERT):
-                self.log_warning(f"Mainboard Avg Power Consumption Warning: {power_avg} mW with threshold {threshold}")
+                self.log_warning(f"Mainboard Avg Power Consumption Warning: {power_avg} mW with threshold {threshold} mW")
             elif (idx == EPS_WARNING_IDX.RADIO_POWER_ALERT):
-                self.log_warning(f"Radio Avg Power Consumption Warning: {power_avg} mW with threshold {threshold}")
+                self.log_warning(f"Radio Avg Power Consumption Warning: {power_avg} mW with threshold {threshold}  mW")
             elif (idx == EPS_WARNING_IDX.JETSON_POWER_ALERT):
-                self.log_warning(f"Jetson Avg Power Consumption Warning: {power_avg} mW with threshold {threshold}")
+                self.log_warning(f"Jetson Avg Power Consumption Warning: {power_avg} mW with threshold {threshold} mW")
             # TODO: uncomment to add torque coil alerts
             # elif (idx == EPS_WARNING_IDX.XP_COIL_POWER_ALERT):
-            #     self.log_warning(f"XP Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold}")
+            #     self.log_warning(f"XP Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold} mW")
             # elif (idx == EPS_WARNING_IDX.XM_COIL_POWER_ALERT):
-            #    self.log_warning(f"XM Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold}")
+            #    self.log_warning(f"XM Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold} mW")
             # elif (idx == EPS_WARNING_IDX.YP_COIL_POWER_ALERT):
-            #     self.log_warning(f"YP Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold}")
+            #     self.log_warning(f"YP Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold} mW")
             # elif (idx == EPS_WARNING_IDX.YM_COIL_POWER_ALERT):
-            #    self.log_warning(f"YM Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold}")
+            #    self.log_warning(f"YM Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold} mW")
 
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:

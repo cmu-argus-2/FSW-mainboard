@@ -55,13 +55,13 @@ def test_low_power_exit_range(state, soc):
 @pytest.mark.parametrize(
     "power_values, threshold, expected_status",
     [
-        ([200, 400, 600, 800, 1000], EPS_POWER_THRESHOLD.RADIO, False),  # Below threshold
-        ([700, 800, 900, 800, 1000], EPS_POWER_THRESHOLD.MAINBOARD, True),  # Above threshold
+        ([1000, 2000, 3000, 4000, 5000], EPS_POWER_THRESHOLD.RADIO, False),  # Below threshold
+        ([900, 1000, 900, 1200, 1000], EPS_POWER_THRESHOLD.MAINBOARD, True),  # Above threshold
         ([10000, 15000, 16000, 17000, 18000], EPS_POWER_THRESHOLD.JETSON, False),  # Below
         ([15000, 18000, 17000, 17000, 18000], EPS_POWER_THRESHOLD.JETSON, True),  # Above
         ([100, 200, 300, 400, 500], EPS_POWER_THRESHOLD.MAINBOARD, False),  # Below
         ([1000, 1200, 1700, 1600, 2000], EPS_POWER_THRESHOLD.TORQUE_COIL, True),  # Just at threshold
-        ([600, 700, 750, 800, 850], EPS_POWER_THRESHOLD.RADIO, True),  # Just above
+        ([3000, 3500, 3750, 4000, 4250], EPS_POWER_THRESHOLD.RADIO, True),  # Just above
         ([100, 1000], EPS_POWER_THRESHOLD.MAINBOARD, False),  # Below
     ],
 )
