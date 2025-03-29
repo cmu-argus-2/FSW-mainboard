@@ -110,6 +110,7 @@ class AttitudeDetermination:
 
         if SATELLITE.IMU_AVAILABLE:
             mag = 1e-6 * np.array(SATELLITE.IMU.mag())  # Convert field from uT to T
+
             query_time = TPM.time()
 
             # Sensor validity check
