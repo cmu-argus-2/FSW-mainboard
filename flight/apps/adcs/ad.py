@@ -17,7 +17,6 @@ from apps.adcs.math import R_to_quat, quat_to_R, quaternion_multiply, skew
 from apps.adcs.orbit_propagation import OrbitPropagator
 from apps.adcs.sun import approx_sun_position_ECI, compute_body_sun_vector_from_lux, read_light_sensors
 from apps.adcs.utils import is_valid_gyro_reading, is_valid_mag_reading
-from core import DataHandler as DH
 from hal.configuration import SATELLITE
 from ulab import numpy as np
 

@@ -25,7 +25,19 @@ class OrbitPropagator:
 
     @classmethod
     def update_position(cls, current_time: int) -> np.ndarray:
+        gps_status, gps_record_time, gps_pos_eci, gps_vel_eci = cls.read_gps()
 
+        if gps_status != StatusConst.OK:
+            status, pos_eci, vel_eci = cls.propagate_orbit(current_time, None, None)
+        else:
+            status, pos_eci, vel_eci = cls.propagate_orbit(
+                current_time, gps_record_time, np.concatenate((gps_pos_eci, gps_vel_eci))
+            )
+
+        return status, pos_eci, vel_eci
+
+    @classmethod
+    def read_gps(cls):
         # Read GPS process
         if DH.data_process_exists("gps") and SATELLITE.GPS_AVAILABLE:
             # Get last GPS update time and position at that time
@@ -42,21 +54,16 @@ class OrbitPropagator:
 
                 # Sensor validity check
                 if not is_valid_gps_state(gps_pos_ecef, gps_vel_ecef):
-                    return StatusConst.GPS_FAIL, np.zeros((3,)), np.zeros((3,))
+                    return StatusConst.GPS_FAIL, 90, np.zeros((3,)), np.zeros((3,))
                 else:
                     # Convert ECEF to ECI
                     gps_pos_eci, gps_vel_eci = convert_ecef_state_to_eci(gps_pos_ecef, gps_vel_ecef, gps_record_time)
 
-                    # Propagate Orbit
-                    status, pos_eci, vel_eci = cls.propagate_orbit(
-                        current_time, gps_record_time, np.concatenate((gps_pos_eci, gps_vel_eci))
-                    )
-
-                    return status, pos_eci, vel_eci
+                    return StatusConst.OK, gps_record_time, gps_pos_eci, gps_vel_eci
             else:
-                return StatusConst.GPS_FAIL, np.zeros((3,)), np.zeros((3,))
+                return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
         else:
-            return StatusConst.GPS_FAIL, np.zeros((3,)), np.zeros((3,))
+            return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
 
     @classmethod
     def propagate_orbit(cls, current_time: int, last_gps_time: int = None, last_gps_state_eci: np.ndarray = None):
