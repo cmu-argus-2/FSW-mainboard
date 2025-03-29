@@ -19,7 +19,7 @@ class EPS_SOC_THRESHOLD:
 # Power threshold in mW
 class EPS_POWER_THRESHOLD:
     MAINBOARD = const(800)
-    RADIO = const(350)
+    RADIO = const(640)
     JETSON = const(16000)
     TORQUE_COIL = const(1500)
 
@@ -61,4 +61,4 @@ def GET_POWER_STATUS(buf, power, threshold, window):
     if (len(buf) > window):
         buf.pop(0)
     power_avg = sum(buf) / len(buf)
-    return (power_avg > threshold), power_avg
+    return (power_avg >= threshold), power_avg
