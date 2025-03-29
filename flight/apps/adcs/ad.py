@@ -142,7 +142,6 @@ class AttitudeDetermination:
         if status != StatusConst.OK:
             return StatusConst.MEKF_INIT_FAIL, status
 
-
         # Get a valid sun position
         sun_status, sun_pos_body, lux_readings = self.read_sun_position()
 
