@@ -15,23 +15,27 @@ both for the mode transitions, sun pointing controller accuracy, and attitude de
 """
 
 from apps.adcs.consts import PhysicalConst, StatusConst
-from apps.adcs.math import invert_3x3_psd
 from core import logger
 from hal.configuration import SATELLITE
 from micropython import const
 from ulab import numpy as np
 
-MAX_RANGE = const(117000)  # OPT4001
-THRESHOLD_ILLUMINATION_LUX = const(3000)
-NUM_LIGHT_SENSORS = const(9)
-ERROR_LUX = const(-1)
+_MAX_RANGE = const(140000)  # OPT4001
+_THRESHOLD_ILLUMINATION_LUX = const(3000)
+_NUM_LIGHT_SENSORS = const(9)
+_ERROR_LUX = const(-1)
+
+ACTIVE_LIGHT_SENSORS = np.ones((_NUM_LIGHT_SENSORS,))
+ACTIVE_LIGHT_NORMALS = PhysicalConst.LIGHT_SENSOR_NORMALS
+ACTIVE_LIGHT_NORMALS_INV = ACTIVE_LIGHT_NORMALS
+ACTIVE_LIGHT_READINGS = np.zeros((_NUM_LIGHT_SENSORS,))
 
 
 def _read_light_sensor(face):
     if SATELLITE.LIGHT_SENSOR_AVAILABLE(face):
         return SATELLITE.LIGHT_SENSORS[face].lux()
     else:
-        return ERROR_LUX
+        return _ERROR_LUX
 
 
 def read_light_sensors():
@@ -50,7 +54,7 @@ def read_light_sensors():
             lux_readings.append(_read_light_sensor(face))
         except Exception as e:
             logger.warning(f"Error reading {face}: {e}")
-            lux_readings.append(ERROR_LUX)
+            lux_readings.append(_ERROR_LUX)
 
     return lux_readings
 
@@ -71,48 +75,37 @@ def compute_body_sun_vector_from_lux(I_vec):
     sun_body = np.zeros(3)
 
     # Determine Sun Status
-    num_valid_readings = NUM_LIGHT_SENSORS - I_vec.count(ERROR_LUX)
+    num_valid_readings = _NUM_LIGHT_SENSORS - I_vec.count(_ERROR_LUX)
     if num_valid_readings == 0:
         status = StatusConst.SUN_NO_READINGS
         return status, sun_body
     elif num_valid_readings < 3:
         status = StatusConst.SUN_NOT_ENOUGH_READINGS
-    elif in_eclipse(I_vec, THRESHOLD_ILLUMINATION_LUX):
+    elif in_eclipse(I_vec, _THRESHOLD_ILLUMINATION_LUX):
         status = StatusConst.SUN_ECLIPSE
         return status, sun_body
     else:
         status = StatusConst.OK
 
     # Extract body vectors and lux readings where the sensor readings are valid
-    valid_sensor_idxs = [
-        idx for idx in range(len(I_vec)) if I_vec[idx] != ERROR_LUX and I_vec[idx] >= THRESHOLD_ILLUMINATION_LUX
-    ]
-    N_valid = PhysicalConst.LIGHT_SENSOR_NORMALS[valid_sensor_idxs, :]
-    I_valid = [I_vec[idx] for idx in valid_sensor_idxs]
-    print(N_valid)
+    ACTIVE_LIGHT_SENSORS = np.array(I_vec) > _THRESHOLD_ILLUMINATION_LUX
+    ACTIVE_LIGHT_NORMALS = np.array(
+        [PhysicalConst.LIGHT_SENSOR_NORMALS[i] for i in range(_NUM_LIGHT_SENSORS) if ACTIVE_LIGHT_SENSORS[i]]
+    )
+    ACTIVE_LIGHT_READINGS = np.array([I_vec[i] for i in range(_NUM_LIGHT_SENSORS) if ACTIVE_LIGHT_SENSORS[i]])
+    ACTIVE_LIGHT_NORMALS_INV = np.dot(ACTIVE_LIGHT_NORMALS.transpose(), ACTIVE_LIGHT_NORMALS)
 
-    # Compute the Inverse of the valid light sensor normals using the Moore-Penrose pseudo-inverse
-    oprod_sun_inv = invert_3x3_psd(np.dot(N_valid.transpose(), N_valid))
-    if oprod_sun_inv is None:  # If the inverse is not possible, sun positioning is not uniquely determinable
-        status = StatusConst.SUN_NOT_ENOUGH_READINGS
-        return status, sun_body
+    if np.linalg.det(ACTIVE_LIGHT_NORMALS_INV) <= 1e-4:
+        return StatusConst.SUN_NOT_ENOUGH_READINGS, sun_body
     else:
-        oprod_sun_inv = np.dot(oprod_sun_inv, N_valid.transpose())
-
-    # Extract the sun body vector
-    sun_body = np.dot(oprod_sun_inv, I_valid)
-    norm = (sun_body[0] ** 2 + sun_body[1] ** 2 + sun_body[2] ** 2) ** 0.5
-
-    if norm == 0:  # Avoid division by zero - not perfect
-        status = StatusConst.ZERO_NORM
-        return status, sun_body
-
-    sun_body = sun_body / norm
-
-    return status, sun_body
+        sun_body = np.dot(np.linalg.inv(ACTIVE_LIGHT_NORMALS_INV), ACTIVE_LIGHT_READINGS)
+        if np.linalg.norm(sun_body) == 0:
+            return StatusConst.ZERO_NORM, sun_body
+        else:
+            return StatusConst.OK, sun_body / np.linalg.norm(sun_body)
 
 
-def in_eclipse(raw_readings, threshold_lux_illumination=THRESHOLD_ILLUMINATION_LUX):
+def in_eclipse(raw_readings, threshold_lux_illumination=_THRESHOLD_ILLUMINATION_LUX):
     """
     Check the eclipse conditions based on the lux readings
 
@@ -125,12 +118,12 @@ def in_eclipse(raw_readings, threshold_lux_illumination=THRESHOLD_ILLUMINATION_L
     """
     eclipse = False
 
-    if raw_readings.count(ERROR_LUX) == NUM_LIGHT_SENSORS:
+    if raw_readings.count(_ERROR_LUX) == _NUM_LIGHT_SENSORS:
         return eclipse
 
     # Check if all readings are below the threshold
     for reading in raw_readings:
-        if reading != ERROR_LUX and reading >= threshold_lux_illumination:
+        if reading != _ERROR_LUX and reading >= threshold_lux_illumination:
             return eclipse
 
     eclipse = True

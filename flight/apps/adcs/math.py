@@ -76,38 +76,3 @@ def quaternion_multiply(q1: np.ndarray, q2: np.ndarray) -> np.ndarray:
     q[3] = q1[0] * q2[3] + q1[1] * q2[2] - q1[2] * q2[1] + q1[3] * q2[0]
 
     return q
-
-
-def invert_3x3_psd(matrix):
-    """
-    Inverts a 3x3 symmetric matrix using the classical adjoint (cofactor) method.
-    Returns a new 3x3 matrix that is the inverse of 'matrix' or none if it is not invertible.
-    About twice faster than np.linalg.inv
-    """
-    if matrix.shape != (3, 3):
-        raise ValueError("Matrix must be 3x3.")
-
-    # Helper aliases for clarity
-    a, b, c = matrix[0]
-    _, e, f = matrix[1]
-    _, _, i = matrix[2]
-
-    # Calculate the determinant
-    det = a * (e * i - f * f) - b * (b * i - 2 * f * c) - e * c * c
-
-    if abs(det) < 1e-12:  # If determinant is (near) zero, it's not invertible
-        return None
-
-    # Calculate cofactors (matrix of minors with alternating signs)
-    # Cofactor matrix (not yet transposed):
-    adjugate = np.array(
-        [
-            [(e * i - f * f), -(b * i - f * c), (b * f - e * c)],
-            [-(b * i - c * f), (a * i - c * c), -(a * f - b * c)],
-            [(b * f - c * e), -(a * f - c * b), (a * e - b * b)],
-        ]
-    )
-
-    # Multiply adjugate by 1/det to get the inverse
-    inv = adjugate / det
-    return inv
