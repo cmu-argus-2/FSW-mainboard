@@ -165,6 +165,19 @@ class Task(TemplateTask):
                         voltage, current = self.read_vc(sensor)
                         self.set_power_alert(voltage, current, EPS_WARNING_IDX.RADIO_POWER_ALERT, EPS_POWER_THRESHOLD.RADIO)
                         self.log_vc("Radio", EPS_IDX.RF_LDO_OUTPUT_VOLTAGE, EPS_IDX.RF_LDO_OUTPUT_CURRENT, voltage, current)
+                    # Power production monitors
+                    elif location == "XP":
+                        voltage, current = self.read_vc(sensor)
+                        self.log_vc("XP", EPS_IDX.XP_SOLAR_CHARGE_VOLTAGE, EPS_IDX.XP_SOLAR_CHARGE_CURRENT, voltage, current)
+                    elif location == "XM":
+                        voltage, current = self.read_vc(sensor)
+                        self.log_vc("XM", EPS_IDX.XM_SOLAR_CHARGE_VOLTAGE, EPS_IDX.XM_SOLAR_CHARGE_CURRENT, voltage, current)
+                    elif location == "YP":
+                        voltage, current = self.read_vc(sensor)
+                        self.log_vc("YP", EPS_IDX.YP_SOLAR_CHARGE_VOLTAGE, EPS_IDX.YP_SOLAR_CHARGE_CURRENT, voltage, current)
+                    elif location == "YM":
+                        voltage, current = self.read_vc(sensor)
+                        self.log_vc("YM", EPS_IDX.YM_SOLAR_CHARGE_VOLTAGE, EPS_IDX.YM_SOLAR_CHARGE_CURRENT, voltage, current)
             # TODO: Uncomment when DRV8235 driver is in
             # for location, sensor in SATELLITE.TORQUE_DRIVERS:
             #     if SATELLITE.TORQUE_DRIVERS_AVAILABLE(location):
