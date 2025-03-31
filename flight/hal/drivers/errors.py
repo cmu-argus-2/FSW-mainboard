@@ -3,22 +3,24 @@ from micropython import const
 
 class Errors:
 
-    # SD Card/VFS Errors
-    SD_CARD_NO_ERROR = const(0x10)
-    SD_CARD_NOT_INITIALIZED = const(0x11)
-    VFS_NOT_INITIALIZED = const(0x12)
+    # Non-Device Specific Errors
+    NO_ERROR = const(0x0)
+    DEVICE_NOT_INITIALISED = const(0x1)
 
-    # IMU Errors
-    IMU_NOT_INITIALIZED = const(0x20)
+    # Reboot Errors
+    INVALID_DEVICE_NAME = const(0x99)  # placeholder value
 
-    # RTC Errors
-    RTC_NOT_INITIALIZED = const(0x30)
 
-    # GPS Errors
-    GPS_NOT_INITIALIZED = const(0x40)
+# IMU Errors
 
-    # Radio Errors
-    RADIO_NOT_INITIALIZED = const(0x50)
 
-    # Power Monitor Errors
-    POWER_MONITOR_NOT_INITIALIZED = const(0x160)
+# RTC Errors
+
+
+# GPS Errors
+
+
+# Radio Errors
+
+
+# Power Monitor Errors

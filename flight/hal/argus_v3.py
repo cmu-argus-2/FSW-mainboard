@@ -9,7 +9,7 @@ from sys import path
 import board
 import digitalio
 from busio import I2C, SPI, UART
-from hal.cubesat import CubeSat
+from hal.cubesat import ASIL1, ASIL2, ASIL3, ASIL4, CubeSat
 from hal.drivers.errors import Errors
 from micropython import const
 from sdcardio import SDCard
@@ -33,9 +33,15 @@ class ArgusV3Power:
     MAIN_PWR_RESET = digitalio.DigitalInOut(board.MAIN_PWR_RST)
     MAIN_PWR_RESET.direction = digitalio.Direction.OUTPUT
 
+    # GPS
     GPS_EN = digitalio.DigitalInOut(board.GPS_EN)
     GPS_EN.direction = digitalio.Direction.OUTPUT
     GPS_EN.value = True
+
+    # RADIO
+    RADIO_EN = digitalio.DigitalInOut(board.LORA_EN)
+    RADIO_EN.direction = digitalio.Direction.OUTPUT
+    RADIO_EN.value = True
     time.sleep(2)  # Wait for peripherals to power up
 
 
@@ -51,7 +57,6 @@ class ArgusV3Interfaces:
     try:
         I2C0 = I2C(I2C0_SCL, I2C0_SDA, frequency=400000)
     except Exception:
-        print("I2C0 not found")
         I2C0 = None
 
     I2C1_SDA = board.SDA1
@@ -59,7 +64,7 @@ class ArgusV3Interfaces:
 
     # Line may not be connected, try except sequence
     try:
-        I2C1 = I2C(I2C1_SCL, I2C1_SDA)
+        I2C1 = I2C(I2C1_SCL, I2C1_SDA, frequency=400000)
     except Exception:
         I2C1 = None
 
@@ -213,7 +218,6 @@ class ArgusV3Components:
     RADIO_SPI = ArgusV3Interfaces.SPI0
     RADIO_CS = board.LORA_nCS
     RADIO_RESET = board.LORA_nRST
-    RADIO_ENABLE = board.LORA_EN
     RADIO_TX_EN = board.LORA_TX_EN
     RADIO_RX_EN = board.LORA_RX_EN
     RADIO_BUSY = board.LORA_BUSY
@@ -245,7 +249,6 @@ class ArgusV3Components:
 
     # GPS
     GPS_UART = ArgusV3Interfaces.UART0
-    GPS_ENABLE = board.GPS_EN
     GPS_OVC = digitalio.DigitalInOut(board.GPS_FLT)
     GPS_OVC.direction = digitalio.Direction.INPUT
 
@@ -306,12 +309,15 @@ class ArgusV3(CubeSat):
 
     ######################## BOOT SEQUENCE ########################
 
+    def __boot_device(self, name: str, device: object):
+        func = device.boot_fn
+        device.device, device.error = func(name)
+
     def boot_sequence(self):
         """boot_sequence: Boot sequence for the CubeSat."""
 
         for name, device in self.__device_list.items():
-            func = device.boot_fn
-            device.device, device.error = func(name)
+            self.__boot_device(name, device)
 
     def __gps_boot(self, _) -> list[object, int]:
         """GPS_boot: Boot sequence for the GPS
@@ -476,11 +482,6 @@ class ArgusV3(CubeSat):
         from hal.drivers.sx126x import SX1262
 
         try:
-            # Enable power to the radio
-            radioEn = digitalio.DigitalInOut(ArgusV3Components.RADIO_ENABLE)
-            radioEn.direction = digitalio.Direction.OUTPUT
-            radioEn.value = True
-
             radio = SX1262(
                 spi_bus=ArgusV3Components.RADIO_SPI,
                 cs=ArgusV3Components.RADIO_CS,
@@ -595,7 +596,7 @@ class ArgusV3(CubeSat):
                 pixel_order=neopixel.GRB,
             )
             np.fill((128, 128, 128))
-            return [np, Errors.DEVICE_NOT_INITIALISED]
+            return [np, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
@@ -613,9 +614,39 @@ class ArgusV3(CubeSat):
             # TODO: reaction wheel errors
             return [None, Errors.DEVICE_NOT_INITIALISED]
 
-    def reboot_device(self, device_name: str):
+    def __restart_power_line(self, power_line):
+        power_line.value = False
+        time.sleep(0.5)
+        power_line.value = True
+
+    def __reboot_device(self, device_name: str):
+        device = self.__device_list[device_name]
+        if device_name == "RADIO":
+            device.deinit()
+            self.__restart_power_line(ArgusV3Power.RADIO_EN)
+            self.__boot_device(device_name, device)
+        elif device_name == "GPS":
+            device.deinit()
+            self.__restart_power_line(ArgusV3Power.GPS_EN)
+            self.__boot_device(device_name, device)
+        else:
+            self.__restart_power_line(ArgusV3Power.PERIPH_PWR_EN)
+        # TODO: Implement reboot logic
+
+    def handle_error(self, device_name: str) -> int:
         if device_name not in self.__device_list:
             return Errors.INVALID_DEVICE_NAME
-        device = self.__device_list[device_name]
-        device.deinit()
-        # TODO: Implement reboot logic
+        self.__device_list[device_name].error_count += 1
+        ASIL = self.__device_list[device_name].ASIL
+        if ASIL == ASIL4:
+            self.__reboot_device(device_name)
+        elif ASIL == ASIL3:
+            return Errors.DEVICE_NOT_INITIALISED
+        elif ASIL == "ASIL_C":
+            return Errors.DEVICE_NOT_INITIALISED
+        else:
+            return Errors.DEVICE_NOT_INITIALISED
+
+    def REBOOT(self):
+        """Reboot the satellite by resetting the main power."""
+        ArgusV3Power.MAIN_PWR_RESET.value = True
