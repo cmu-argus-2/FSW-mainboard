@@ -307,8 +307,6 @@ class ArgusV3(CubeSat):
 
         super().__init__()
 
-        self.append_device("REACTION_WHEEL", self.__reaction_wheel_boot)
-
         self.__payload_uart = ArgusV3Interfaces.JETSON_UART
 
     ######################## BOOT SEQUENCE ########################
@@ -604,17 +602,6 @@ class ArgusV3(CubeSat):
                 raise e
 
             return [None, Errors.NEOPIXEL_NOT_INITIALIZED]
-
-    def __reaction_wheel_boot(self, _) -> list[object, int]:
-        try:
-            # TODO: reaction wheel driver + boot sequence
-            rw = None
-            return [rw, Errors.NOERROR]
-        except Exception as e:
-            if self.__debug:
-                raise e
-            # TODO: reaction wheel errors
-            return [None, Errors.NOERROR]
 
     def reboot_device(self, device_name: str):
         if device_name not in self.__device_list:

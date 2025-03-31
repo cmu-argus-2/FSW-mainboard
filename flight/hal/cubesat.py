@@ -29,7 +29,7 @@ class CubeSat:
         self.__device_list = OrderedDict(
             [
                 ("NEOPIXEL", Device(self.__neopixel_boot)),
-                ("SDCARD", Device(self.__sd_card_boot)),
+                ("SDCARD", Device(self.__sd_card_boot)),  # SD Card must enabled before other devices
                 ("RTC", Device(self.__rtc_boot)),
                 ("GPS", Device(self.__gps_boot)),
                 ("RADIO", Device(self.__radio_boot)),
