@@ -557,9 +557,13 @@ class ArgusV3(CubeSat):
 
     def __burn_wire_boot(self, _) -> list[object, int]:
         """burn_wire_boot: Boot sequence for the burn wires"""
+        from hal.drivers.pca9633 import PCA9633
+
         try:
-            # TODO: Burnwire driver
-            burn_wires = None
+            burn_wires = PCA9633(
+                ArgusV3Components.BURN_WIRE_I2C,
+                ArgusV3Components.BURN_WIRE_I2C_ADDRESS,
+            )
             return [burn_wires, Errors.NOERROR]
         except Exception as e:
             if self.__debug:
