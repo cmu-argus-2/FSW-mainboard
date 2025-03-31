@@ -16,6 +16,14 @@ class EPS_SOC_THRESHOLD:
     EXPERIMENT_EXIT = const(60)
 
 
+# Power threshold in mW
+class EPS_POWER_THRESHOLD:
+    MAINBOARD = const(1000)  # TODO: this threshold makes sense for v2 mainboards, but change to 400 for v3
+    RADIO = const(3300)
+    JETSON = const(16000)
+    TORQUE_COIL = const(1500)
+
+
 def GET_EPS_POWER_FLAG(curr_flag, soc):
     """returns current EPS state based on SOC"""
     flag = EPS_POWER_FLAG.NONE
@@ -46,3 +54,17 @@ def GET_EPS_POWER_FLAG(curr_flag, soc):
             flag = EPS_POWER_FLAG.EXPERIMENT
 
     return flag
+
+
+def GET_POWER_STATUS(buf, power, threshold, window):
+    """returns whether MAV power is above provided threshold"""
+    # Add this power value to provided MAV buffer
+    buf.append(power)
+    # If the length of the buffer is now greater than the window size,
+    # Pop the first (oldest) element of the buffer
+    if (len(buf) > window):
+        buf.pop(0)
+    # Obtain the moving average
+    power_avg = sum(buf) / len(buf)
+    # Return the moving average value & the power status
+    return (power_avg >= threshold), power_avg
