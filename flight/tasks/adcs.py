@@ -264,10 +264,10 @@ class Task(TemplateTask):
         self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = int(self.AD.state[25]) & 0xFFFF
         self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = int(self.AD.state[26]) & 0xFFFF
         self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(self.AD.state[27]) & 0xFFFF
-        # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP1] = self.AD.state[28]
-        # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP2] = self.AD.state[29]
-        # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP3] = self.AD.state[30]
-        # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP4] = self.AD.state[31]
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP1] = int(self.AD.state[28]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP2] = int(self.AD.state[29]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP3] = int(self.AD.state[30]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP4] = int(self.AD.state[31]) & 0xFFFF
         self.log_data[ADCS_IDX.XP_COIL_STATUS] = int(self.coil_status[0])
         self.log_data[ADCS_IDX.XM_COIL_STATUS] = int(self.coil_status[1])
         self.log_data[ADCS_IDX.YP_COIL_STATUS] = int(self.coil_status[2])
@@ -286,5 +286,9 @@ class Task(TemplateTask):
                 self.log_warning(msg)
             self.failure_messages = []
 
+            # Force read light sensors
+            self.AD.read_sun_position()
+
             # Log Gyro Angular Velocities
             self.log_info(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z + 1]}")
+            self.log_info(f"Sun Sensors : {self.log_data[ADCS_IDX.LIGHT_SENSOR_XP:ADCS_IDX.LIGHT_SENSOR_ZM + 1]}")
