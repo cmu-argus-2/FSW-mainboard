@@ -276,6 +276,17 @@ class GPS:
     def _signed_32bit(self, value: int) -> int:
         return value if value < 0x80000000 else value - 0x100000000
 
+    """
+    Fix Modes in GPS NMEA Message:
+
+    0 - No fix: The GPS receiver has not obtained a valid fix or has lost the fix.
+    1 - GPS fix: A 2D fix is available (latitude and longitude, but altitude is not necessarily reliable).
+    2 - Differential GPS fix: A 2D fix is available, with differential corrections applied for improved accuracy.
+    3 - 3D fix: A 3D fix is available (latitude, longitude, and altitude are all valid and reliable).
+    4 - GNSS fix: A fix using signals from multiple GNSS systems (e.g., GPS, GLONASS, Galileo, BeiDou).
+    5 - Time fix: A fix based on time synchronization, typically used in high-precision or timing applications.
+    """
+
     def has_fix(self) -> bool:
         """True if a current fix for location information is available."""
         if self.fix_mode is not None and self.fix_mode >= 1:

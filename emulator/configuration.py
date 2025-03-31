@@ -1,10 +1,12 @@
 import os
 
-from core import DataHandler as DH
 from hal.cubesat import CubeSat
 from hal.emulator import EmulatedSatellite
 
-DH.sd_path = "sd"
+# from core import DataHandler as DH
+
+
+# DH.sd_path = "sd"
 
 DEBUG_MODE = True
 SIMULATION = bool(int(os.getenv("ARGUS_SIMULATION_FLAG", 0)))
