@@ -608,22 +608,34 @@ class ArgusV3(CubeSat):
 
             return [None, Errors.DEVICE_NOT_INITIALISED]
 
+    ######################## ERROR HANDLING ########################
+
     def __restart_power_line(self, power_line):
         power_line.value = False
         time.sleep(0.5)
         power_line.value = True
+        time.sleep(2)
 
     def __reboot_device(self, device_name: str):
-
         device = self.__device_list[device_name]
+
         if device_name == "RADIO":
             device.deinit()
             self.__restart_power_line(ArgusV3Power.RADIO_EN)
             self.__boot_device(device_name, device)
+
         elif device_name == "GPS":
             device.deinit()
             self.__restart_power_line(ArgusV3Power.GPS_EN)
             self.__boot_device(device_name, device)
+
+        elif device_name.startswith("TORQUE"):
+            for name, device in self.TORQUE_DRIVERS.items():
+                if self.TORQUE_DRIVERS_AVAILABLE(name):
+                    device.deinit()
+            self.__restart_power_line(ArgusV3Power.COIL_EN)
+            for name, device in self.TORQUE_DRIVERS.items():
+                self.__boot_device(name, device)
         else:
             self.__restart_power_line(ArgusV3Power.PERIPH_PWR_EN)
         # TODO: Implement reboot logic
@@ -637,7 +649,7 @@ class ArgusV3(CubeSat):
             self.__reboot_device(device_name)
         elif ASIL == ASIL3:
             return Errors.DEVICE_NOT_INITIALISED
-        elif ASIL == "ASIL_C":
+        elif ASIL == ASIL2:
             return Errors.DEVICE_NOT_INITIALISED
         else:
             return Errors.DEVICE_NOT_INITIALISED
