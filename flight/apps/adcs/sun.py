@@ -98,7 +98,7 @@ def compute_body_sun_vector_from_lux(I_vec):
     if np.linalg.det(ACTIVE_LIGHT_NORMALS_INV) <= 1e-4:
         return StatusConst.SUN_NOT_ENOUGH_READINGS, sun_body
     else:
-        sun_body = np.dot(np.linalg.inv(ACTIVE_LIGHT_NORMALS_INV), ACTIVE_LIGHT_READINGS)
+        sun_body = np.dot(np.dot(np.linalg.inv(ACTIVE_LIGHT_NORMALS_INV), ACTIVE_LIGHT_NORMALS.transpose()), ACTIVE_LIGHT_READINGS)
         if np.linalg.norm(sun_body) == 0:
             return StatusConst.ZERO_NORM, sun_body
         else:
