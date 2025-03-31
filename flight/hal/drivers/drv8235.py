@@ -129,7 +129,8 @@ class DRV8235:
             return 0.0
         if self.bridge_control[0] == BridgeControl.REVERSE:
             return -1 * round(self._wset_vset / 0xFF, 3)
-        return round(self._wset_vset / 0xFF, 3)
+        if self.bridge_control[0] == BridgeControl.FORWARD:
+            return round(self._wset_vset / 0xFF, 3)
 
     def set_throttle(self, new_throttle):
         if new_throttle is None:
@@ -160,7 +161,8 @@ class DRV8235:
             return 0.0
         if self.bridge_control[0] == BridgeControl.REVERSE:
             return -1 * self.index_to_voltage(self._wset_vset)
-        return self.index_to_voltage(self._wset_vset)
+        if self.bridge_control[0] == BridgeControl.FORWARD:
+            return self.index_to_voltage(self._wset_vset)
 
     def set_throttle_volts(self, new_throttle_volts):
         if new_throttle_volts is None:
@@ -191,7 +193,8 @@ class DRV8235:
             return 0
         if self.bridge_control[0] == BridgeControl.REVERSE:
             return -1 * self._wset_vset
-        return self._wset_vset
+        if self.bridge_control[0] == BridgeControl.FORWARD:
+            return self._wset_vset
 
     def set_throttle_raw(self, new_throttle_raw):
         if new_throttle_raw is None:
