@@ -22,12 +22,17 @@ if hasattr(board, "PERIPH_PWR_EN"):
     PERIPH_PWR_EN = digitalio.DigitalInOut(board.PERIPH_PWR_EN)
     PERIPH_PWR_EN.direction = digitalio.Direction.OUTPUT
     PERIPH_PWR_EN.value = True  # Enable peripherals if applicable
+    time.sleep(2)  # Wait for peripherals to power up
 
-time.sleep(1)  # Wait for peripherals to power up
+if hasattr(board, "RADIO_EN"):
+    RADIO_EN = digitalio.DigitalInOut(board.LORA_EN)
+    RADIO_EN.direction = digitalio.Direction.OUTPUT
+    RADIO_EN.value = True
 
-RADIO_ENABLE = digitalio.DigitalInOut(board.LORA_EN)
-RADIO_ENABLE.direction = digitalio.Direction.OUTPUT
-RADIO_ENABLE.value = True
+if hasattr(board, "COIL_EN"):
+    COIL_EN = digitalio.DigitalInOut(board.COIL_EN)
+    COIL_EN.direction = digitalio.Direction.OUTPUT
+    COIL_EN.value = True
 
 # List of potential I2C busses
 try:

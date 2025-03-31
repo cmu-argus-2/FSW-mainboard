@@ -28,6 +28,7 @@ from core import logger
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
+from core.time_processor import TimeProcessor as TPM
 
 # from hal.configuration import SATELLITE
 from ulab import numpy as np
@@ -53,9 +54,7 @@ def SWITCH_TO_STATE(target_state_id, time_in_state=None):
 def UPLINK_TIME_REFERENCE(time_reference):
     """Sends a time reference to the spacecraft to update the time processing module."""
     logger.info(f"Executing UPLINK_TIME_REFERENCE with current_time: {time_reference}")
-    # TODO: Time module interfacing
-    # if SATELLITE.RTC_AVAILABLE:
-    #     SATELLITE.set_datetime(time.gmtime(time_reference))
+    TPM.set_time(time_reference)
     return []
 
 

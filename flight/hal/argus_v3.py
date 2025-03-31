@@ -29,6 +29,9 @@ class ArgusV3Power:
     PERIPH_PWR_OVC = digitalio.DigitalInOut(board.PERIPH_PWR_FLT)
     PERIPH_PWR_OVC.direction = digitalio.Direction.INPUT
 
+    # DO NOT MOVE
+    time.sleep(2)  # Wait for peripherals to power up
+
     # MAIN (MCU, WATCHDOG) 3.3V
     MAIN_PWR_RESET = digitalio.DigitalInOut(board.MAIN_PWR_RST)
     MAIN_PWR_RESET.direction = digitalio.Direction.OUTPUT
@@ -36,7 +39,26 @@ class ArgusV3Power:
     GPS_EN = digitalio.DigitalInOut(board.GPS_EN)
     GPS_EN.direction = digitalio.Direction.OUTPUT
     GPS_EN.value = True
-    time.sleep(2)  # Wait for peripherals to power up
+
+    RADIO_EN = digitalio.DigitalInOut(board.LORA_EN)
+    RADIO_EN.direction = digitalio.Direction.OUTPUT
+    RADIO_EN.value = True
+
+    COIL_EN = digitalio.DigitalInOut(board.COIL_EN)
+    COIL_EN.direction = digitalio.Direction.OUTPUT
+    COIL_EN.value = True
+
+    BATT_HEAT_EN = digitalio.DigitalInOut(board.HEAT_EN)
+    BATT_HEAT_EN.direction = digitalio.Direction.OUTPUT
+    BATT_HEAT_EN.value = False
+
+    BATT_HEATER0_ON = digitalio.DigitalInOut(board.HEAT0_ON)
+    BATT_HEATER0_ON.direction = digitalio.Direction.OUTPUT
+    BATT_HEATER0_ON.value = False
+
+    BATT_HEATER1_ON = digitalio.DigitalInOut(board.HEAT1_ON)
+    BATT_HEATER1_ON.direction = digitalio.Direction.OUTPUT
+    BATT_HEATER1_ON.value = False
 
 
 class ArgusV3Interfaces:
@@ -187,7 +209,7 @@ class ArgusV3Components:
 
     # ZP TORQUE COILS
     TORQUE_COILS_ZP_I2C = ArgusV3Interfaces.I2C1
-    TORQUE_ZP_I2C_ADDRESS = const(0x10)
+    TORQUE_ZP_I2C_ADDRESS = const(0x12)
 
     # ZP SOLAR CHARGING POWER MONITOR
     SOLAR_CHARGING_ZP_POWER_MONITOR_I2C = ArgusV3Interfaces.I2C1
@@ -262,18 +284,6 @@ class ArgusV3Components:
     # MISC #
     ########
 
-    # TORQUE COILS ENABLE
-    COIL_EN = digitalio.DigitalInOut(board.COIL_EN)
-    COIL_EN.direction = digitalio.Direction.OUTPUT
-
-    # BATTERY HEATERS
-    BATT_HEATER0_ON = digitalio.DigitalInOut(board.HEAT0_ON)
-    BATT_HEATER0_ON.direction = digitalio.Direction.OUTPUT
-    BATT_HEATER1_ON = digitalio.DigitalInOut(board.HEAT1_ON)
-    BATT_HEATER1_ON.direction = digitalio.Direction.OUTPUT
-    BATT_HEAT_EN = digitalio.DigitalInOut(board.HEAT_EN)
-    BATT_HEAT_EN.direction = digitalio.Direction.OUTPUT
-
     # NEOPIXEL
     NEOPIXEL_SDA = board.NEOPIXEL
     NEOPIXEL_N = const(1)
@@ -295,12 +305,7 @@ class ArgusV3(CubeSat):
         """__init__: Initializes the Argus V3 CubeSat."""
         self.__debug = debug
 
-        # TODO: maybe make this nicer or something
-        ArgusV3Components.COIL_EN.value = True
-
         super().__init__()
-
-        self.append_device("REACTION_WHEEL", self.__reaction_wheel_boot)
 
         self.__payload_uart = ArgusV3Interfaces.JETSON_UART
 
@@ -463,6 +468,7 @@ class ArgusV3(CubeSat):
             return [light_sensor, Errors.NO_ERROR]
 
         except Exception as e:
+            print(e)
             if self.__debug:
                 raise e
             return [None, Errors.DEVICE_NOT_INITIALISED]
@@ -476,11 +482,6 @@ class ArgusV3(CubeSat):
         from hal.drivers.sx126x import SX1262
 
         try:
-            # Enable power to the radio
-            radioEn = digitalio.DigitalInOut(ArgusV3Components.RADIO_ENABLE)
-            radioEn.direction = digitalio.Direction.OUTPUT
-            radioEn.value = True
-
             radio = SX1262(
                 spi_bus=ArgusV3Components.RADIO_SPI,
                 cs=ArgusV3Components.RADIO_CS,
@@ -556,10 +557,14 @@ class ArgusV3(CubeSat):
 
     def __burn_wire_boot(self, _) -> list[object, int]:
         """burn_wire_boot: Boot sequence for the burn wires"""
+        from hal.drivers.pca9633 import PCA9633
+
         try:
-            # TODO: Burnwire driver
-            burn_wires = None
-            return [burn_wires, Errors.NO_ERROR]
+            burn_wires = PCA9633(
+                ArgusV3Components.BURN_WIRE_I2C,
+                ArgusV3Components.BURN_WIRE_I2C_ADDRESS,
+            )
+            return [burn_wires, Errors.NOERROR]
         except Exception as e:
             if self.__debug:
                 raise e
@@ -600,17 +605,6 @@ class ArgusV3(CubeSat):
             if self.__debug:
                 raise e
 
-            return [None, Errors.DEVICE_NOT_INITIALISED]
-
-    def __reaction_wheel_boot(self, _) -> list[object, int]:
-        try:
-            # TODO: reaction wheel driver + boot sequence
-            rw = None
-            return [rw, Errors.NO_ERROR]
-        except Exception as e:
-            if self.__debug:
-                raise e
-            # TODO: reaction wheel errors
             return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def reboot_device(self, device_name: str):

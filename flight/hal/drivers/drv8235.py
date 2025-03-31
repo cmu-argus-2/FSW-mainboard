@@ -25,16 +25,24 @@ _RC_CTRL7 = const(0x18)  # RW
 _RC_CTRL8 = const(0x19)  # RW
 
 
-class VoltageAdapter:
-    """Output voltage calculator."""
-
-    def index_to_voltage(self, index):
-        """Convert an index value to nearest voltage value."""
-        return index * (42.67 / 255)
-
-    def voltage_to_index(self, volts):
-        """Convert a voltage to nearest index value."""
-        return round(volts * (255 / 42.67))
+"""Fault Register Flag Descriptors
+    FAULT  Any fault condition
+    STALL  Stall event;
+        device disabled, clear fault to reactivate
+    OCP    Overcurrent event;
+        device disabled, clear fault to reactivate
+    OVP    Overvoltage event
+    TSD    Overtemperature condition;
+        device disabled, resumes with lower temperature
+    NPOR   Undervoltage lockout; device disabled,
+        resumes with voltage restoration
+    """
+_FAULT = const(0x01)
+_STALL = const(0x02)
+_OCP = const(0x03)
+_OVP = const(0x04)
+_TSD = const(0x05)
+_NPOR = const(0x06)
 
 
 class BridgeControl:
@@ -48,48 +56,12 @@ class BridgeControl:
     DESCRIPTOR = ["COAST", "REVERSE", "FORWARD", "BRAKE"]
 
 
-class Faults:
-    """Fault Register Flag Descriptors
-    FAULT  Any fault condition
-    STALL  Stall event;
-           device disabled, clear fault to reactivate
-    OCP    Overcurrent event;
-           device disabled, clear fault to reactivate
-    OVP    Overvoltage event
-    TSD    Overtemperature condition;
-           device disabled, resumes with lower temperature
-    NPOR   Undervoltage lockout; device disabled,
-           resumes with voltage restoration
-    """
-
-    DESCRIPTOR = ["FAULT", "OCP", "OVP", "UVLO", "TSD"]
-
-
 class DRV8235:
     # class DRV8235(Driver):
     """DC motor driver with I2C interface.
 
     :param i2c_bus: The microcontroller I2C interface bus pins.
     :param address: The I2C address of the DRV8235 motor controller."""
-
-    def __init__(self, i2c_bus, address):
-        """Instantiate DRV8235. Set output voltage to 0.0, place into STANDBY
-        mode, and reset all fault status flags."""
-        self.i2c_device = I2CDevice(i2c_bus, address)
-        self._i2c_bc = True
-        self._pmode = True
-        self._dir = BridgeControl.COAST
-        self._reg_ctrl = 0x3  # Sets to voltage regulation
-        self._wset_vset = 0  # Sets initial voltage to 0
-        self._int_vref = True
-        self._inv_r_scale = 0x3
-        self._inv_r = 82
-        self._en_out = True
-        # Clear all fault status flags
-        self.clear_faults()
-
-        super().__init__()
-
     # DEFINE I2C DEVICE BITS AND REGISTERS
     _clear = RWBit(_CONFIG0, 1, 1, False)  # Clears fault status flag bits
     _i2c_bc = RWBit(_CONFIG4, 2, 1, False)  # Sets Bridge Control to I2C
@@ -111,6 +83,38 @@ class DRV8235:
     _inv_r = RWBits(8, _RC_CTRL3, 0, 1, False)
     _inv_r_scale = RWBits(2, _RC_CTRL2, 6, 1, False)
 
+    def __init__(self, i2c_bus, address):
+        """Instantiate DRV8235. Set output voltage to 0.0, place into STANDBY
+        mode, and reset all fault status flags."""
+        self.i2c_device = I2CDevice(i2c_bus, address)
+        self._i2c_bc = True
+        self._pmode = True
+        self._dir = BridgeControl.COAST
+        self._reg_ctrl = 0x3  # Sets to voltage regulation
+        self._wset_vset = 0  # Sets initial voltage to 0
+        self._int_vref = True
+        # TODO: check inv_r_scale and inv_r values
+        self._inv_r_scale = 0x3
+        self._inv_r = 82
+        self._en_out = True
+        # Clear all fault status flags
+        self.clear_faults()
+
+    def index_to_voltage(self, index):
+        """Convert an index value to nearest voltage value.
+        Scale by 42.67 / 255 = 0.16733 (max output voltage range) precomputed"""
+        return index * (0.16733)
+
+    def voltage_to_index(self, volts):
+        """Convert a voltage to nearest index value.
+        Scale by 255 / 42.67 = 5.9761 precomputed"""
+        return round(volts * 5.9761)
+
+    def index_to_current(self, index):
+        """Convert an index value to current value.
+        Scale by 3.7 / 255 = 0.01451 (max output current range) precomputed"""
+        return index * (0.01451)
+
     def throttle(self):
         """Current motor voltage, ranging from -1.0 (full speed reverse) to
         +1.0 (full speed forward), or ``None`` (controller off). If ``None``,
@@ -122,7 +126,8 @@ class DRV8235:
             return 0.0
         if self.bridge_control[0] == BridgeControl.REVERSE:
             return -1 * round(self._wset_vset / 0xFF, 3)
-        return round(self._wset_vset / 0xFF, 3)
+        if self.bridge_control[0] == BridgeControl.FORWARD:
+            return round(self._wset_vset / 0xFF, 3)
 
     def set_throttle(self, new_throttle):
         if new_throttle is None:
@@ -152,8 +157,9 @@ class DRV8235:
         if self.bridge_control[0] == BridgeControl.BRAKE:
             return 0.0
         if self.bridge_control[0] == BridgeControl.REVERSE:
-            return -1 * VoltageAdapter.index_to_voltage(self, self._wset_vset)
-        return VoltageAdapter.index_to_voltage(self, self._wset_vset)
+            return -1 * self.index_to_voltage(self._wset_vset)
+        if self.bridge_control[0] == BridgeControl.FORWARD:
+            return self.index_to_voltage(self._wset_vset)
 
     def set_throttle_volts(self, new_throttle_volts):
         if new_throttle_volts is None:
@@ -163,10 +169,10 @@ class DRV8235:
         # Constrain throttle voltage value
         new_throttle_volts = min(max(new_throttle_volts, -42.7), +42.7)
         if new_throttle_volts < 0:
-            self._wset_vset = VoltageAdapter.voltage_to_index(self, abs(new_throttle_volts))
+            self._wset_vset = self.voltage_to_index(abs(new_throttle_volts))
             self._dir = BridgeControl.REVERSE
         elif new_throttle_volts > 0:
-            self._wset_vset = VoltageAdapter.voltage_to_index(self, new_throttle_volts)
+            self._wset_vset = self.voltage_to_index(new_throttle_volts)
             self._dir = BridgeControl.FORWARD
         else:
             self._wset_vset = 0
@@ -184,7 +190,8 @@ class DRV8235:
             return 0
         if self.bridge_control[0] == BridgeControl.REVERSE:
             return -1 * self._wset_vset
-        return self._wset_vset
+        if self.bridge_control[0] == BridgeControl.FORWARD:
+            return self._wset_vset
 
     def set_throttle_raw(self, new_throttle_raw):
         if new_throttle_raw is None:
@@ -204,6 +211,16 @@ class DRV8235:
             self._dir = BridgeControl.BRAKE
         return
 
+    def read_voltage(self):
+        voltage_index = self._vmtr
+        voltage = self.index_to_voltage(voltage_index)
+        return voltage
+
+    def read_current(self):
+        current_index = self._imtr
+        current = self.index_to_current(current_index)
+        return current
+
     @property
     def bridge_control(self):
         """Motor driver bridge status. Returns the 2-bit bridge control integer
@@ -217,15 +234,17 @@ class DRV8235:
         one or more fault register flags are ``True``."""
         faults = []
         if self._fault:
-            faults.append(Faults.DESCRIPTOR[0])
+            faults.append(_FAULT)
+            if self._stall:
+                faults.append(_STALL)
             if self._ocp:
-                faults.append(Faults.DESCRIPTOR[1])
-            if self._uvlo:
-                faults.append(Faults.DESCRIPTOR[2])
-            if self._ots:
-                faults.append(Faults.DESCRIPTOR[3])
-            if self._ilimit:
-                faults.append(Faults.DESCRIPTOR[4])
+                faults.append(_OCP)
+            if self._ovp:
+                faults.append(_OVP)
+            if self._tsd:
+                faults.append(_TSD)
+            if self._npor:
+                faults.append(_NPOR)
         return self._fault, faults
 
     def clear_faults(self):
@@ -237,7 +256,7 @@ class DRV8235:
 
     def __exit__(self, exception_type, exception_value, traceback):
         self._wset_vset = 0
-        self._dir = BridgeControl.STANDBY
+        self._dir = BridgeControl.COAST
 
     def deinit(self):
         return

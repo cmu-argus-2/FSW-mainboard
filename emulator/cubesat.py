@@ -59,7 +59,7 @@ class CubeSat:
         )
 
         # Debugging
-        self._time_ref_boot = int(time.time())
+        self._time_ref_boot = int(time.monotonic())
 
     # ABSTRACT METHOD #
     def boot_sequence(self) -> List[int]:
@@ -241,6 +241,20 @@ class CubeSat:
         :return: bool
         """
         return self.key_in_device_list("SDCARD") and self._device_list["SDCARD"].device is not None
+
+    @property
+    def NEOPIXEL(self):
+        """NEOPIXEL: Returns the neopixel object
+        :return: object or None
+        """
+        return None
+
+    @property
+    def NEOPIXEL_AVAILABLE(self) -> bool:
+        """NEOPIXEL_AVAILABLE: Returns True if the neopixel is available
+        :return: bool
+        """
+        return False
 
     @property
     def BOOTTIME(self):
