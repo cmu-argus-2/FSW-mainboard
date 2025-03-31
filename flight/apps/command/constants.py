@@ -48,6 +48,7 @@ file_tags_str = {
     8: "thermal",
     9: "gps",
     10: "img",
+    11: "eps_warning"
 }
 
 file_ids_str = {
@@ -61,4 +62,5 @@ file_ids_str = {
     "thermal": 8,
     "gps": 9,
     "img": 10,
+    "eps_warning": 11,
 }

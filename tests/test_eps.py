@@ -1,6 +1,6 @@
 import pytest
 
-from flight.apps.eps.eps import EPS_POWER_FLAG, EPS_SOC_THRESHOLD, GET_EPS_POWER_FLAG
+from flight.apps.eps.eps import EPS_POWER_FLAG, EPS_POWER_THRESHOLD, EPS_SOC_THRESHOLD, GET_EPS_POWER_FLAG, GET_POWER_STATUS
 
 
 # Invalid SOC values
@@ -50,3 +50,25 @@ def test_low_power_entry_exit_range(soc):
 @pytest.mark.parametrize("state", [EPS_POWER_FLAG.NONE, EPS_POWER_FLAG.LOW_POWER, EPS_POWER_FLAG.NOMINAL])
 def test_low_power_exit_range(state, soc):
     assert GET_EPS_POWER_FLAG(state, soc) != EPS_POWER_FLAG.LOW_POWER
+
+
+@pytest.mark.parametrize(
+    "power_values, threshold, expected_status",
+    [
+        ([1000, 2000, 3000, 4000, 5000], EPS_POWER_THRESHOLD.RADIO, False),  # Below threshold
+        ([900, 1000, 900, 1200, 1000], EPS_POWER_THRESHOLD.MAINBOARD, True),  # Above threshold
+        ([10000, 15000, 16000, 17000, 18000], EPS_POWER_THRESHOLD.JETSON, False),  # Below
+        ([15000, 18000, 17000, 17000, 18000], EPS_POWER_THRESHOLD.JETSON, True),  # Above
+        ([100, 200, 300, 400, 500], EPS_POWER_THRESHOLD.MAINBOARD, False),  # Below
+        ([1000, 1200, 1700, 1600, 2000], EPS_POWER_THRESHOLD.TORQUE_COIL, True),  # Just at threshold
+        ([3000, 3500, 3750, 4000, 4250], EPS_POWER_THRESHOLD.RADIO, True),  # Just above
+        ([100, 1000], EPS_POWER_THRESHOLD.MAINBOARD, False),  # Below
+    ],
+)
+def test_get_power_status(power_values, threshold, expected_status):
+    buf = []
+    for power in power_values[:-1]:  # Fill buffer except last value
+        GET_POWER_STATUS(buf, power, threshold, 5)
+
+    final_status, avg_power = GET_POWER_STATUS(buf, power_values[-1], threshold, 5)
+    assert final_status == expected_status
