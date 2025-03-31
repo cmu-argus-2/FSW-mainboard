@@ -720,6 +720,25 @@ class DataHandler:
     # Keep track of all file processes
     data_process_registry = dict()
 
+    def __can_write_to_path(path: str) -> bool:
+        """
+        Check if the given path is writable by attempting to create a temporary file.
+
+        Args:
+            path (str): The path to check.
+
+        Returns:
+            bool: True if the path is writable, False otherwise.
+        """
+        try:
+            test_file = join_path(path, ".write_test")
+            with open(test_file, "w") as f:
+                f.write("test")
+            os.remove(test_file)
+            return True
+        except OSError:
+            return False
+
     @classmethod
     def scan_SD_card(cls) -> None:
         """
@@ -737,7 +756,7 @@ class DataHandler:
         Example:
             DataHandler.scan_SD_card()
         """
-        if not path_exist(_HOME_PATH):
+        if not cls.__can_write_to_path(_HOME_PATH):
             # The SD card path has an issue
             cls.SD_ERROR_FLAG = True
         else:
