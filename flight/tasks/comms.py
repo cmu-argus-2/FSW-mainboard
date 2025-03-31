@@ -76,56 +76,61 @@ class Task(TemplateTask):
         self.log_info(f"Heartbeat frequency threshold set to {self.TX_COUNT_THRESHOLD}")
         self.log_info(f"RX timeout threshold set to {self.RX_COUNT_THRESHOLD}")
 
+    def cls_get_command_response(self):
+        if ResponseQueue.response_available():
+            # The response to the current GS command is ready, downlink it
+            (response_id, response_args), queue_error_code = ResponseQueue.pop_response()
+
+            # Receive response based on comms state
+            if self.comms_state == COMMS_STATE.TX_ACK:
+                # Downlinking an ACK to the GS
+                if queue_error_code == QUEUE_STATUS.OK:
+                    self.log_info(f"Response: {response_id}, with args: {response_args}")
+                    SATELLITE_RADIO.set_tx_ack(response_id)
+
+            elif self.comms_state == COMMS_STATE.TX_FRAME:
+                # Downlinking telemetry to the GS
+                if queue_error_code == QUEUE_STATUS.OK:
+                    self.log_info(f"Response: {response_id}, with args: {response_args}")
+
+                    # Assume we have telemetry packed
+                    if TelemetryPacker.TM_AVAILABLE:
+                        SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
+
+            elif self.comms_state == COMMS_STATE.TX_METADATA:
+                # Starting a file transfer to the GS
+                if queue_error_code == QUEUE_STATUS.OK:
+                    self.log_info(f"Response: {response_id}, with args: {response_args}")
+
+                    # Filepath present in response_args
+                    SATELLITE_RADIO.set_filepath(response_args[1])
+
+            else:
+                # Unknown state is a very concerning error
+                self.log_error(f"Unknown comms state {self.comms_state}")
+
+        else:
+            # The response to the current GS command not ready, return
+            self.RP_COUNTER += 1
+
+            if self.RP_COUNTER >= self.RP_COUNT_THRESHOLD:
+                # Timeout in response from commanding
+                # Transition state to RX and hope for the best (RX count values not checked)
+                SATELLITE_RADIO.transition_state(0, 0)
+                self.comms_state = SATELLITE_RADIO.get_state()
+                self.log_error("Commanding response timed out, transitioning to RX")
+
+            return
+
     def cls_transmit_message(self):
         if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD or self.ground_pass:
             # If heartbeat TX counter has elapsed, or currently in an active ground pass
 
-            # Set frame / filepath here based on the active GS command
+            # NOTE: A response is only expected from commanding for an ACK, frame, or file metadata
+            # Heartbeats and file packets are handled internally by comms
             if not (self.comms_state == COMMS_STATE.TX_HEARTBEAT or self.comms_state == COMMS_STATE.TX_FILEPKT):
-                if ResponseQueue.response_available():
-                    # The response to the current GS command is ready, downlink it
-                    (response_id, response_args), queue_error_code = ResponseQueue.pop_response()
-
-                    # TODO: Receive response based on comms state
-                    if self.comms_state == COMMS_STATE.TX_ACK:
-                        # Downlinking an ACK to the GS
-                        if queue_error_code == QUEUE_STATUS.OK:
-                            self.log_info(f"Response: {response_id}, with args: {response_args}")
-                            SATELLITE_RADIO.set_tx_ack(response_id)
-
-                    elif self.comms_state == COMMS_STATE.TX_FRAME:
-                        # Downlinking telemetry to the GS
-                        if queue_error_code == QUEUE_STATUS.OK:
-                            self.log_info(f"Response: {response_id}, with args: {response_args}")
-
-                            # Assume we have telemetry packed
-                            if TelemetryPacker.TM_AVAILABLE:
-                                SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
-
-                    elif self.comms_state == COMMS_STATE.TX_METADATA:
-                        # Starting a file transfer to the GS
-                        if queue_error_code == QUEUE_STATUS.OK:
-                            self.log_info(f"Response: {response_id}, with args: {response_args}")
-
-                            # Filepath present in response_args
-                            SATELLITE_RADIO.set_filepath(response_args[1])
-
-                    else:
-                        # What state is this
-                        self.log_error(f"Unknown comms state {self.comms_state}")
-
-                else:
-                    # The response to the current GS command not ready, return
-                    self.RP_COUNTER += 1
-
-                    if self.RP_COUNTER >= self.RP_COUNT_THRESHOLD:
-                        # Timeout in response from commanding
-                        # Transition state to RX and hope for the best (RX count values not checked)
-                        SATELLITE_RADIO.transition_state(0, 0)
-                        self.comms_state = SATELLITE_RADIO.get_state()
-                        self.log_error("Commanding response timed out, transitioning to RX")
-
-                    return
+                # Get response from commanding based on the active GS command
+                self.cls_get_command_response()
 
             else:
                 # Heartbeat or file packet TX, do nothing
