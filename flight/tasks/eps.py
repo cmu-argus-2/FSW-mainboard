@@ -65,9 +65,9 @@ class Task(TemplateTask):
     log_data = [0] * 43  # - use mV for voltage and mA for current (h = short integer 2 bytes)
     warning_log_data = [0] * 4
     power_buffer_dict = {
-        EPS_WARNING_IDX.MAINBOARD_POWER_ALERT : [],
-        EPS_WARNING_IDX.RADIO_POWER_ALERT : [],
-        EPS_WARNING_IDX.JETSON_POWER_ALERT : []
+        EPS_WARNING_IDX.MAINBOARD_POWER_ALERT: [],
+        EPS_WARNING_IDX.RADIO_POWER_ALERT: [],
+        EPS_WARNING_IDX.JETSON_POWER_ALERT: []
         # EPS_WARNING_IDX.XP_COIL_POWER_ALERT : [],
         # EPS_WARNING_IDX.XM_COIL_POWER_ALERT : [],
         # EPS_WARNING_IDX.YP_COIL_POWER_ALERT : [],
@@ -86,12 +86,11 @@ class Task(TemplateTask):
 
     def log_vc(self, key, voltage_idx, current_idx, voltage, current):
         # log power monitor voltage and current
-        if (self.log_counter % self.frequency == 0):
+        if self.log_counter % self.frequency == 0:
             self.log_data[voltage_idx] = voltage
             self.log_data[current_idx] = current
             self.log_info(
-                f"{key} Voltage: {self.log_data[voltage_idx]} mV, "
-                + f"{key} Current: {self.log_data[current_idx]} mA "
+                f"{key} Voltage: {self.log_data[voltage_idx]} mV, " + f"{key} Current: {self.log_data[current_idx]} mA "
             )
 
     def read_fuel_gauge(self):
@@ -112,12 +111,12 @@ class Task(TemplateTask):
         power = voltage * current * 0.001  # mW
         alert, power_avg = GET_POWER_STATUS(self.power_buffer_dict[idx], power, threshold, self.frequency)
         self.warning_log_data[idx] = int(alert) & 0xFF
-        if (alert):
-            if (idx == EPS_WARNING_IDX.MAINBOARD_POWER_ALERT):
+        if alert:
+            if idx == EPS_WARNING_IDX.MAINBOARD_POWER_ALERT:
                 self.log_warning(f"Mainboard Avg Power Consumption Warning: {power_avg} mW with threshold {threshold} mW")
-            elif (idx == EPS_WARNING_IDX.RADIO_POWER_ALERT):
+            elif idx == EPS_WARNING_IDX.RADIO_POWER_ALERT:
                 self.log_warning(f"Radio Avg Power Consumption Warning: {power_avg} mW with threshold {threshold}  mW")
-            elif (idx == EPS_WARNING_IDX.JETSON_POWER_ALERT):
+            elif idx == EPS_WARNING_IDX.JETSON_POWER_ALERT:
                 self.log_warning(f"Jetson Avg Power Consumption Warning: {power_avg} mW with threshold {threshold} mW")
             # TODO: uncomment to add torque coil alerts
             # elif (idx == EPS_WARNING_IDX.XP_COIL_POWER_ALERT):
@@ -141,9 +140,7 @@ class Task(TemplateTask):
                 DH.register_data_process("eps", data_format, True, data_limit=100000)
 
             if not DH.data_process_exists("eps_warning"):
-                data_format = (
-                    "L" + "b" * 3
-                )
+                data_format = "L" + "b" * 3
                 DH.register_data_process("eps_warning", data_format, True, data_limit=10000)
 
             # Get power system readings
@@ -155,7 +152,9 @@ class Task(TemplateTask):
                 if SATELLITE.POWER_MONITOR_AVAILABLE(location):
                     if location == "BOARD":
                         voltage, current = self.read_vc(sensor)
-                        self.set_power_alert(voltage, current, EPS_WARNING_IDX.MAINBOARD_POWER_ALERT, EPS_POWER_THRESHOLD.MAINBOARD)
+                        self.set_power_alert(
+                            voltage, current, EPS_WARNING_IDX.MAINBOARD_POWER_ALERT, EPS_POWER_THRESHOLD.MAINBOARD
+                        )
                         self.log_vc("Board", EPS_IDX.MAINBOARD_VOLTAGE, EPS_IDX.MAINBOARD_CURRENT, voltage, current)
                     elif location == "JETSON":
                         voltage, current = self.read_vc(sensor)
@@ -193,7 +192,9 @@ class Task(TemplateTask):
                     self.read_fuel_gauge()
                     self.log_info(f"Battery Pack Temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]}°cC")
                     self.log_info(f"Battery Pack Reported SOC: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]}% ")
-                    self.log_info(f"Battery Pack Reported Capacity: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY]} mAh ")
+                    self.log_info(
+                        f"Battery Pack Reported Capacity: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY]} mAh "
+                    )
                     self.log_info(f"Battery Pack Current: {self.log_data[EPS_IDX.BATTERY_PACK_CURRENT]} mA ")
                     self.log_info(f"Battery Pack Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_VOLTAGE]} mV ")
                     self.log_info(f"Battery Pack Midpoint Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE]} mV ")
