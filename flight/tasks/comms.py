@@ -102,6 +102,9 @@ class Task(TemplateTask):
                     if TelemetryPacker.TM_AVAILABLE():
                         SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
 
+                        # This frame is now old, indicate this to the packer
+                        TelemetryPacker.TM_EXHAUSTED()
+
             elif self.comms_state == COMMS_STATE.TX_METADATA:
                 # Starting a file transfer to the GS
                 if queue_error_code == QUEUE_STATUS.OK:
@@ -160,6 +163,9 @@ class Task(TemplateTask):
             # Set current TM frame
             if TelemetryPacker.TM_AVAILABLE():
                 SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
+
+                # This frame is now old, indicate this to the packer
+                TelemetryPacker.TM_EXHAUSTED()
 
             # Transmit a message from the satellite
             self.tx_msg_id = SATELLITE_RADIO.transmit_message()
