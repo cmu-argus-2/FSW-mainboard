@@ -286,9 +286,5 @@ class Task(TemplateTask):
                 self.log_warning(msg)
             self.failure_messages = []
 
-            # Force read light sensors
-            self.AD.read_sun_position()
-
             # Log Gyro Angular Velocities
             self.log_info(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z + 1]}")
-            self.log_info(f"Sun Sensors : {self.log_data[ADCS_IDX.LIGHT_SENSOR_XP:ADCS_IDX.LIGHT_SENSOR_ZM + 1]}")

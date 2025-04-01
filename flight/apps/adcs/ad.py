@@ -81,7 +81,6 @@ class AttitudeDetermination:
         """
         light_sensor_lux_readings = read_light_sensors()
         status, sun_pos_body = compute_body_sun_vector_from_lux(light_sensor_lux_readings)
-        self.state[self.sun_lux_idx] = light_sensor_lux_readings
 
         return status, sun_pos_body, light_sensor_lux_readings
 
