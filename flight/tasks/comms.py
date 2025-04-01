@@ -6,6 +6,11 @@ from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STATES
+from micropython import const
+
+# Constants
+_CMD_RESPONSE_OK = const(0)
+_CMD_RESPONSE_NONE = const(1)
 
 
 class Task(TemplateTask):
@@ -43,7 +48,7 @@ class Task(TemplateTask):
         # Counter for ground pass timeout
         self.ground_pass = False
 
-    def cls_change_counter_frequency(self):
+    def change_counter_frequency(self):
         # Reset counter
         self.TX_COUNTER = 0
         self.RX_COUNTER = 0
@@ -76,7 +81,7 @@ class Task(TemplateTask):
         self.log_info(f"Heartbeat frequency threshold set to {self.TX_COUNT_THRESHOLD}")
         self.log_info(f"RX timeout threshold set to {self.RX_COUNT_THRESHOLD}")
 
-    def cls_get_command_response(self):
+    def get_command_response(self):
         if ResponseQueue.response_available():
             # The response to the current GS command is ready, downlink it
             (response_id, response_args), queue_error_code = ResponseQueue.pop_response()
@@ -94,7 +99,7 @@ class Task(TemplateTask):
                     self.log_info(f"Response: {response_id}, with args: {response_args}")
 
                     # Assume we have telemetry packed
-                    if TelemetryPacker.TM_AVAILABLE:
+                    if TelemetryPacker.TM_AVAILABLE():
                         SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
 
             elif self.comms_state == COMMS_STATE.TX_METADATA:
@@ -109,6 +114,8 @@ class Task(TemplateTask):
                 # Unknown state is a very concerning error
                 self.log_error(f"Unknown comms state {self.comms_state}")
 
+            return _CMD_RESPONSE_OK
+
         else:
             # The response to the current GS command not ready, return
             self.RP_COUNTER += 1
@@ -120,9 +127,9 @@ class Task(TemplateTask):
                 self.comms_state = SATELLITE_RADIO.get_state()
                 self.log_error("Commanding response timed out, transitioning to RX")
 
-            return
+            return _CMD_RESPONSE_NONE
 
-    def cls_transmit_message(self):
+    def transmit_message(self):
         if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD or self.ground_pass:
             # If heartbeat TX counter has elapsed, or currently in an active ground pass
 
@@ -130,7 +137,15 @@ class Task(TemplateTask):
             # Heartbeats and file packets are handled internally by comms
             if not (self.comms_state == COMMS_STATE.TX_HEARTBEAT or self.comms_state == COMMS_STATE.TX_FILEPKT):
                 # Get response from commanding based on the active GS command
-                self.cls_get_command_response()
+                cmd_response_state = self.get_command_response()
+
+                if cmd_response_state == _CMD_RESPONSE_NONE:
+                    # The response to the current GS command not ready, return
+                    return
+
+                else:
+                    # The response was received and comms application was updated
+                    pass
 
             else:
                 # Heartbeat or file packet TX, do nothing
@@ -143,13 +158,14 @@ class Task(TemplateTask):
                     self.log_info("Telemetry heartbeat packed")
 
             # Set current TM frame
-            if TelemetryPacker.TM_AVAILABLE:
+            if TelemetryPacker.TM_AVAILABLE():
                 SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
 
             # Transmit a message from the satellite
             self.tx_msg_id = SATELLITE_RADIO.transmit_message()
             self.TX_COUNTER = 0
             self.RX_COUNTER = 0
+            self.RP_COUNTER = 0
 
             # State transition to RX state, values for RX counter not checked
             SATELLITE_RADIO.transition_state(0, 0)
@@ -161,7 +177,7 @@ class Task(TemplateTask):
             # If not, do nothing
             return
 
-    def cls_receive_message(self):
+    def receive_message(self):
         if SATELLITE_RADIO.data_available():
             # Read packet present in the RX buffer
             self.rq_cmd = SATELLITE_RADIO.receive_message()
@@ -182,9 +198,11 @@ class Task(TemplateTask):
                 # Log RSSI
                 DH.log_data("comms", [SATELLITE_RADIO.get_rssi()])
 
-                # Set ground pass true, reset timeout counter
+                # Set ground pass true, reset counters
                 self.ground_pass = True
+                self.TX_COUNTER = 0
                 self.RX_COUNTER = 0
+                self.RP_COUNTER = 0
 
             else:
                 # GS requested invalid message ID
@@ -220,7 +238,7 @@ class Task(TemplateTask):
         else:
             # Check if TX and RX frequencies are set
             if not self.frequency_set:
-                self.cls_change_counter_frequency()
+                self.change_counter_frequency()
 
             # Register comms process for logging RX RSSI
             if not DH.data_process_exists("comms"):
@@ -234,7 +252,7 @@ class Task(TemplateTask):
 
             if self.comms_state != COMMS_STATE.RX:
                 # Current state is TX state, transmit message
-                self.cls_transmit_message()
+                self.transmit_message()
             else:
                 # Current state is RX, receive message
-                self.cls_receive_message()
+                self.receive_message()
