@@ -132,12 +132,12 @@ def pack_unsigned_long_int(data, idx):
     """
 
     # Check for None and NaN
-    if data is None or data != data:
+    if data[idx] is None or data[idx] != data[idx]:
         logger.error("Tried packing None / NaN")
         return bytearray([0x00, 0x00, 0x00, 0x00])
 
     # Unsigned int range is 0 to 4294967295
-    if data > 4294967295:
+    if data[idx] > 4294967295:
         logger.warning("Unsigned int: Data outside of range")
 
     return bytearray([(data[idx] >> 24) & 0xFF, (data[idx] >> 16) & 0xFF, (data[idx] >> 8) & 0xFF, data[idx] & 0xFF])
@@ -153,12 +153,12 @@ def pack_signed_long_int(data, idx):
     """
 
     # Check for None and NaN
-    if data is None or data != data:
+    if data[idx] is None or data[idx] != data[idx]:
         logger.error("Tried packing None / NaN")
         return bytearray([0x00, 0x00, 0x00, 0x00])
 
     # Signed int range is -2147483648 to 2147483647
-    if data > 2147483647 or data < -2147483648:
+    if data[idx] > 2147483647 or data[idx] < -2147483648:
         logger.warning("Signed int: Data outside of range")
 
     # Handle signed integers by converting to unsigned before packing
@@ -201,12 +201,12 @@ def pack_unsigned_short_int(data, idx):
     """
 
     # Check for None and NaN
-    if data is None or data != data:
+    if data[idx] is None or data[idx] != data[idx]:
         logger.error("Tried packing None / NaN")
         return bytearray([0x00, 0x00])
 
     # Unsigned int range is 0 to 65535
-    if data > 65535:
+    if data[idx] > 65535:
         logger.warning("Unsigned short int: Data outside of range")
 
     return bytearray([(data[idx] >> 8) & 0xFF, data[idx] & 0xFF])
@@ -232,12 +232,12 @@ def pack_signed_short_int(data, idx):
     """
 
     # Check for None and NaN
-    if data is None or data != data:
+    if data[idx] is None or data[idx] != data[idx]:
         logger.error("Tried packing None / NaN")
         return bytearray([0x00, 0x00])
 
     # Unsigned int range is -32768 to 32767
-    if data > 32767 or data < -32768:
+    if data[idx] > 32767 or data[idx] < -32768:
         logger.warning("Unsigned short int: Data outside of range")
 
     val = data[idx] & 0xFFFF
