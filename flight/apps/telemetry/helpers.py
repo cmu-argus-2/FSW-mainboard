@@ -19,6 +19,10 @@ def convert_float_to_fixed_point_lp(val):
         logger.error("Tried packing None / NaN")
         return bytearray([0x00, 0x00, 0x00, 0x00])
 
+    # Fixed-point LP range is -32768 to 32767
+    if int(val) > 32767 or int(val) < -32768:
+        logger.warning("Fixed point LP: Data outside of range")
+
     # Handle sign and absolute value
     neg_bit_flag = 1 if val < 0 else 0
     val = abs(val)
@@ -74,6 +78,10 @@ def convert_float_to_fixed_point_hp(val):
         logger.error("Tried packing None / NaN")
         return bytearray([0x00, 0x00, 0x00, 0x00])
 
+    # Fixed-point HP range is -128 to 127
+    if int(val) > 127 or int(val) < -128:
+        logger.warning("Fixed point HP: Data outside of range")
+
     # Handle negative flag and convert to positive if necessary
     neg_bit_flag = 1 if val < 0 else 0
     val = abs(val)
@@ -128,6 +136,10 @@ def pack_unsigned_long_int(data, idx):
         logger.error("Tried packing None / NaN")
         return bytearray([0x00, 0x00, 0x00, 0x00])
 
+    # Unsigned int range is 0 to 4294967295
+    if data > 4294967295:
+        logger.warning("Unsigned int: Data outside of range")
+
     return bytearray([(data[idx] >> 24) & 0xFF, (data[idx] >> 16) & 0xFF, (data[idx] >> 8) & 0xFF, data[idx] & 0xFF])
 
 
@@ -144,6 +156,10 @@ def pack_signed_long_int(data, idx):
     if data is None or data != data:
         logger.error("Tried packing None / NaN")
         return bytearray([0x00, 0x00, 0x00, 0x00])
+
+    # Signed int range is -2147483648 to 2147483647
+    if data > 2147483647 or data < -2147483648:
+        logger.warning("Signed int: Data outside of range")
 
     # Handle signed integers by converting to unsigned before packing
     val = data[idx] & 0xFFFFFFFF
@@ -189,6 +205,10 @@ def pack_unsigned_short_int(data, idx):
         logger.error("Tried packing None / NaN")
         return bytearray([0x00, 0x00])
 
+    # Unsigned int range is 0 to 65535
+    if data > 65535:
+        logger.warning("Unsigned short int: Data outside of range")
+
     return bytearray([(data[idx] >> 8) & 0xFF, data[idx] & 0xFF])
 
 
@@ -215,6 +235,10 @@ def pack_signed_short_int(data, idx):
     if data is None or data != data:
         logger.error("Tried packing None / NaN")
         return bytearray([0x00, 0x00])
+
+    # Unsigned int range is -32768 to 32767
+    if data > 32767 or data < -32768:
+        logger.warning("Unsigned short int: Data outside of range")
 
     val = data[idx] & 0xFFFF
     return bytearray([(val >> 8) & 0xFF, val & 0xFF])
