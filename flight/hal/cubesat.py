@@ -33,7 +33,6 @@ class CubeSat:
                 ("RTC", Device(self.__rtc_boot)),
                 ("GPS", Device(self.__gps_boot)),
                 ("RADIO", Device(self.__radio_boot)),
-                ("IMU", Device(self.__imu_boot)),
                 ("FUEL_GAUGE", Device(self.__fuel_gauge_boot)),
                 # ("BURN_WIRE", Device(self.__burn_wire_boot)),
                 ("BOARD_PWR", Device(self.__power_monitor_boot)),
@@ -60,6 +59,7 @@ class CubeSat:
                 # ("LIGHT_ZP_2", Device(self.__light_sensor_boot)),
                 # ("LIGHT_ZP_3", Device(self.__light_sensor_boot)),
                 # ("LIGHT_ZP_4", Device(self.__light_sensor_boot)),
+                ("IMU", Device(self.__imu_boot)),
             ]
         )
 

@@ -730,14 +730,19 @@ class DataHandler:
         Returns:
             bool: True if the path is writable, False otherwise.
         """
+        test_file = join_path(path, ".write_test")
         try:
-            test_file = join_path(path, ".write_test")
             with open(test_file, "w") as f:
                 f.write("test")
-            os.remove(test_file)
             return True
         except OSError:
             return False
+        finally:
+            if path_exist(test_file):
+                try:
+                    os.remove(test_file)
+                except Exception:
+                    pass
 
     @classmethod
     def scan_SD_card(cls) -> None:

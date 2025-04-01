@@ -30,7 +30,7 @@ class ArgusV3Power:
     PERIPH_PWR_OVC.direction = digitalio.Direction.INPUT
 
     # DO NOT MOVE
-    time.sleep(2)  # Wait for peripherals to power up
+    time.sleep(0.1)  # Wait for peripherals to power up
 
     # MAIN (MCU, WATCHDOG) 3.3V
     MAIN_PWR_RESET = digitalio.DigitalInOut(board.MAIN_PWR_RST)
@@ -419,7 +419,6 @@ class ArgusV3(CubeSat):
             "TORQUE_ZP": [ArgusV3Components.TORQUE_ZP_I2C_ADDRESS, ArgusV3Components.TORQUE_COILS_ZP_I2C],
             "TORQUE_ZM": [ArgusV3Components.TORQUE_ZM_I2C_ADDRESS, ArgusV3Components.TORQUE_COILS_ZM_I2C],
         }
-        # TODO: verify this driver actually works
         from hal.drivers.drv8235 import DRV8235
 
         data = directions[direction]
