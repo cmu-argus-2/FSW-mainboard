@@ -160,7 +160,7 @@ class Task(TemplateTask):
 
         else:
             # Run command processor
-            # self.command_processor_execution()
+            self.command_processor_execution()
 
             # Execute state machine
             self.state_machine_execution()
