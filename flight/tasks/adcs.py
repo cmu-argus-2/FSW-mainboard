@@ -110,6 +110,7 @@ class Task(TemplateTask):
                     and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
                     and self.AD.current_mode() == Modes.TUMBLING
                 ):
+                    # Do not allow a switch to Detumbling from Low power
                     self.MODE = Modes.TUMBLING
 
                 else:
