@@ -24,9 +24,9 @@ setup_logger(level="INFO")
 
 print_memory_stats(call_gc=True)
 
-print("Booting ARGUS-1...")
+print("Booting ARGUS...")
 SATELLITE.boot_sequence()
-print("ARGUS-1 booted.")
+print("ARGUS booted.")
 print(f"Boot Errors: {SATELLITE.ERRORS}")
 
 

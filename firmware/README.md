@@ -6,6 +6,7 @@ CircuitPython Compilation & Flashing Guide for Argus
 | Argus 1.0  | ATSAMD51 | 8 |
 | Argus 1.1  | ATSAMD51 | 8, 9 |
 | Argus 2  | RP2040 | 8, 9 |
+| Argus 3  | RP2350 | 9 |
 ## Compilation
 This guide is specific to Argus, for additional information refer to the [official Adafruit CircuitPython Guide](https://learn.adafruit.com/how-to-add-a-new-board-to-circuitpython/get-setup-to-add-your-board)
 
@@ -19,7 +20,10 @@ CircuitPython has been cloned and avilable to all users on the FSW FlatSat machi
 Run the following commands to prepare your environment.
 ```
 source /home/Shared/venv/bin/activate # Python Virtual Environment with all necessary libraries
+# this directory contain circuitpython 9
 cd /home/Shared/circuitpython
+# this directory contain circuitpython 8
+# cd /home/Shared/circuitpython8
 ```
 
 **2. Create/Copy Board Definitions**
@@ -63,18 +67,19 @@ Navigate one level up (i.e. circuitpython/ports/[vendor]).
 Ensure that build-ArgusX folder does not exist in this directory, or else the compilation might fail.
 Run the following command to compile the target firmware
 ```
-make BOARD=ArgusX # ArgusX is the folder name in the boards folder
+# ArgusX is the folder name in the boards folder
+make BOARD=ArgusX -j$(nproc)
 ```
 If the compilation is successful, a build-ArgusX folder will be be created. A firmware.uf2 file will be created in this folder. Please upload this to the FSW repo and all relevant files for future development.
 
 ## Flashing
 
 ### Raspberry Pi
-To enter bootloader, turn off the board and hold the RESET button. Drag and drop the uf2 file to the board, it will restart with the new firmware.
+To enter bootloader, turn off the board and hold the BOOT button. Drag and drop the uf2 file to the board, it will restart with the new firmware.
 
 ### ATSAMD
 
-To enter bootloader, double tap the RESET button. Drag and drop the uf2 file to the board, it will restart with the new firmware.
+To enter bootloader, double tap the BOOT button. Drag and drop the uf2 file to the board, it will restart with the new firmware.
 
 
 

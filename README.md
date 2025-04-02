@@ -10,8 +10,9 @@ See [High-Level Architecture](docs/architecture.md)
 
 The flight software currently supports:
 - Argus v1 (ATSAMD51J20)
-- Argus v1.1
-- Argus v2 (RP2040, in testing)
+- Argus v1.1 (ATSAMD51J20)
+- Argus v2 (RP2040)
+- Argus v3 (RP2350, in testing)
 
 ## Installation
 NOTE : The simulation only supports Ubuntu systems with a version >= 22.04
@@ -26,12 +27,6 @@ sh install.sh
 ## Build and Execution
 
 ### With mainboard
-
-Before building the current file, select the correct CircuitPython Version in build_tools/build.py by uncommenting it.
-```
-CPY_VERSION = 8
-# CPY_VERSION = 9
-```
 
 Building current files and moving them to the board can be handled by the run.sh script which can be run via:
 ```bash
