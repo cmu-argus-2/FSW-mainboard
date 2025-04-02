@@ -7,6 +7,7 @@ import tests.cp_mock  # noqa: F401
 import flight.core.data_handler as dh
 from flight.core.data_handler import DataProcess as DP
 from flight.core.data_handler import extract_time_from_filename, get_closest_file_time
+from time import perf_counter
 
 DH = dh.DataHandler
 
@@ -174,6 +175,36 @@ def test_image_edge_case_log(sd_root):
     DH.log_image(bytearray(1))  # This should push buffer to 512, triggering a write
     assert img_process.img_buf_index == 0  # Buffer resets
     assert os.stat(img_process.current_path).st_size == 2048  # New block written
+
+
+def test_computing_total_size_files(sd_root):
+    sub_system = ["img", "cdh", "cmd_logs", "adcs", "eps", "comms"]
+    file_mock_time = [1700001234, 1739719846, 1739720168, 1699900000, 1589387500]
+    # Fill sd_root with test files
+    for i in range(len(sub_system)):
+        subdir = sd_root / f"{sub_system[i]}"
+        subdir.mkdir()
+        for j in range(5):
+            (subdir / f"{sub_system[i]}_{file_mock_time[j]}.bin").write_bytes(b"1234567890" * 100)  # ~1KB
+
+    dh._HOME_PATH = str(sd_root)  # temporary SD card
+    time_start = perf_counter()
+    total_size = DH.compute_total_size_files(str(sd_root))
+    time_end = perf_counter()
+
+    # Sanity check: 6 subsystems * 5 files * 1000 bytes = 30,000 bytes
+    assert total_size == 6 * 5 * 1000
+
+    print(f"Time: {time_end - time_start}, Size: {total_size}")
+
+    DH.delete_all_files(str(sd_root))
+    time_start = perf_counter()
+    total_size = DH.compute_total_size_files(str(sd_root))
+    time_end = perf_counter()
+
+    print(f"Time: {time_end - time_start}, Size: {total_size}")
+
+    assert total_size == 0
 
 
 if __name__ == "__main__":

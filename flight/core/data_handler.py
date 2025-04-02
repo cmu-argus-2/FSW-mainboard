@@ -1167,20 +1167,28 @@ class DataHandler:
         Returns:
         - The total size in bytes.
         """
-        # TODO Remove recursion, really bad
         if root_path is None:
             root_path = _HOME_PATH
-        total_size: int = 0
-        for entry in os.listdir(root_path):
-            file_path: str = join_path(root_path, entry)
-            if os.stat(file_path)[0] & 0x4000:  # Check if entry is a directory
-                total_size += cls.compute_total_size_files(
-                    file_path
-                )  # Recursively compute total size of files in subdirectories
-            else:
-                total_size += os.stat(file_path)[6]
-            pass
-        return int(total_size)
+        total_size = 0
+        stack = [root_path]
+
+        while stack:
+            current = stack.pop()
+
+            try:
+                with os.scandir(current) as it:
+                    for entry in it:
+                        try:
+                            if entry.is_file(follow_symlinks=False):
+                                total_size += entry.stat(follow_symlinks=False).st_size
+                            elif entry.is_dir(follow_symlinks=False):
+                                stack.append(entry.path)
+                        except OSError:
+                            logger.info("Error compute_total_size_files: broken symlinks or permission issues")
+            except OSError:
+                logger.info("Error compute_total_size_files: unreadable directories")
+
+        return total_size
 
     @classmethod
     def update_SD_usage(cls) -> None:
