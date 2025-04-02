@@ -87,9 +87,9 @@ class DRV8235:
     _inv_r_scale = RWBits(2, _RC_CTRL2, 6, 1, False)
 
     # Define Motor Voltage Scaling
-    _DRV_MAX_VOLT = 38.00 # Volts
-    _COIL_MAX_VOLT = 6.0 # Volts
-    _THROTTLE_MAX = _COIL_MAX_VOLT/_DRV_MAX_VOLT
+    _DRV_MAX_VOLT = 38.00  # Volts
+    _COIL_MAX_VOLT = 6.0  # Volts
+    _THROTTLE_MAX = _COIL_MAX_VOLT / _DRV_MAX_VOLT
 
     def __init__(self, i2c_bus, address):
         """Instantiate DRV8235. Set output voltage to 0.0, place into STANDBY
@@ -133,9 +133,9 @@ class DRV8235:
         if self.bridge_control[0] == BridgeControl.BRAKE:
             return 0.0
         if self.bridge_control[0] == BridgeControl.REVERSE:
-            return -1 * round(self._wset_vset / 0xFF, 3)/self._THROTTLE_MAX
+            return -1 * round(self._wset_vset / 0xFF, 3) / self._THROTTLE_MAX
         if self.bridge_control[0] == BridgeControl.FORWARD:
-            return round(self._wset_vset / 0xFF, 3)/self._THROTTLE_MAX
+            return round(self._wset_vset / 0xFF, 3) / self._THROTTLE_MAX
 
     def set_throttle(self, new_throttle):
         if new_throttle is None:
@@ -143,7 +143,7 @@ class DRV8235:
             self._dir = BridgeControl.COAST
             return
         # Constrain throttle value
-        self._throttle_normalized = min(max(new_throttle*self._THROTTLE_MAX, -self._THROTTLE_MAX), self._THROTTLE_MAX)
+        self._throttle_normalized = min(max(new_throttle * self._THROTTLE_MAX, -self._THROTTLE_MAX), self._THROTTLE_MAX)
         if new_throttle < 0:
             self._wset_vset = int(abs(self._throttle_normalized * 0xFF))
             self._dir = BridgeControl.REVERSE

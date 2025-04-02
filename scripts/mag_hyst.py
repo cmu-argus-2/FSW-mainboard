@@ -86,7 +86,24 @@ while idx < len(strengths):
     current_yp = SATELLITE.TORQUE_DRIVERS["YP"].read_current()
     current_ym = SATELLITE.TORQUE_DRIVERS["YM"].read_current()
 
-    data.append([curr_time, strength_xp, strength_xm, strength_yp, strength_ym, voltage_xp, voltage_xm, voltage_yp, voltage_ym, current_xp, current_xm, current_yp, current_ym] + list(mag))
+    data.append(
+        [
+            curr_time,
+            strength_xp,
+            strength_xm,
+            strength_yp,
+            strength_ym,
+            voltage_xp,
+            voltage_xm,
+            voltage_yp,
+            voltage_ym,
+            current_xp,
+            current_xm,
+            current_yp,
+            current_ym,
+        ]
+        + list(mag)
+    )
 
     if (curr_time - start_time) > SWITCH_PERIOD:
         print(f"Done with strength {strengths[idx]}")
