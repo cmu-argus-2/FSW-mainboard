@@ -137,6 +137,11 @@ def pack_unsigned_long_int(data, idx):
         return bytearray([0x00, 0x00, 0x00, 0x00])
 
     # Unsigned int range is 0 to 4294967295
+    if data[idx] < 0:
+        logger.error("Unsigned int: Data outside range (-ve)")
+        return bytearray([0x00, 0x00, 0x00, 0x00])
+
+    # Unsigned int range is 0 to 4294967295
     if data[idx] > 4294967295:
         logger.warning("Unsigned int: Data outside of range")
 
@@ -203,6 +208,11 @@ def pack_unsigned_short_int(data, idx):
     # Check for None and NaN
     if data[idx] is None or data[idx] != data[idx]:
         logger.error("Tried packing None / NaN")
+        return bytearray([0x00, 0x00])
+
+        # Unsigned int range is 0 to 4294967295
+    if data[idx] < 0:
+        logger.error("Unsigned int: Data outside range (-ve)")
         return bytearray([0x00, 0x00])
 
     # Unsigned int range is 0 to 65535
