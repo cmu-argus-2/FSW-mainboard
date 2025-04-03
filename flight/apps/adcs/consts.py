@@ -111,6 +111,7 @@ class PhysicalConst:
     if INERTIA_MAJOR_DIR[np.argmax(inertia_major_dir_abs)] < 0:
         INERTIA_MAJOR_DIR = -INERTIA_MAJOR_DIR
 
+    # map from light sensors to body vector
     LIGHT_SENSOR_NORMALS = np.array(
         [
             [1, 0, 0],
@@ -124,7 +125,9 @@ class PhysicalConst:
             [0, 0, -1],
         ]
     )
-    # map from light sensors to body vector
+
+    # Logging only allows for a max value of 65535. Since OPT4003 has a max value of 140k, scale log data down by 3
+    LIGHT_SENSOR_LOG_FACTOR = 3
 
 
 class ControllerConst:
