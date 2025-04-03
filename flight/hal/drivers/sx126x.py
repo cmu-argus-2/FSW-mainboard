@@ -881,9 +881,7 @@ class SX126X:
         return state
 
     def readData(self, data, len_):
-        # Sus
-        # state = self.standby()
-        # ASSERT(state)
+        # Read data from the buffer on the radio module
 
         irq = self.getIrqStatus()
         crcState = _ERR_NONE
@@ -1605,7 +1603,7 @@ class SX1262(SX126X):
         except AssertionError as e:
             state = list(ERROR.keys())[list(ERROR.values()).index(str(e))]
 
-        # TODO: CRC checks
+        # NOTE: CRC check is returned as a state
         if state == _ERR_NONE or state == _ERR_CRC_MISMATCH:
             if len_ == 0:
                 length = super().getPacketLength(False)

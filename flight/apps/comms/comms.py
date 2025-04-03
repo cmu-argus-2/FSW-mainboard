@@ -12,8 +12,14 @@ from apps.command.constants import file_ids_str
 from core import logger
 from core.data_handler import extract_time_from_filename
 from hal.configuration import SATELLITE
+from micropython import const
 
-FILE_PKTSIZE = 240
+# File packet size for downlinking
+_FILE_PKTSIZE = const(240)
+
+# Internal error definitions from driver
+_ERR_NONE = const(0)
+_ERR_CRC_MISMATCH = const(-7)
 
 
 # Internal comms states for statechart
@@ -294,10 +300,10 @@ class SATELLITE_RADIO:
             cls.file_time = extract_time_from_filename(cls.filepath)
 
             cls.file_size = int(file_stat[6])
-            cls.file_message_count = int(cls.file_size / FILE_PKTSIZE)
+            cls.file_message_count = int(cls.file_size / _FILE_PKTSIZE)
 
             # Increment 1 to message count to account for division floor
-            if (cls.file_size % FILE_PKTSIZE) > 0:
+            if (cls.file_size % _FILE_PKTSIZE) > 0:
                 cls.file_message_count += 1
 
     """
@@ -327,16 +333,16 @@ class SATELLITE_RADIO:
 
         # Seek to the correct sq_cnt
         if sq_cnt != cls.file_message_count - 1:
-            cls.file_obj.seek(sq_cnt * FILE_PKTSIZE)
-            cls.file_array = cls.file_obj.read(FILE_PKTSIZE)
+            cls.file_obj.seek(sq_cnt * _FILE_PKTSIZE)
+            cls.file_array = cls.file_obj.read(_FILE_PKTSIZE)
             cls.file_obj.close()
 
-            return FILE_PKTSIZE
+            return _FILE_PKTSIZE
 
         else:
-            last_pkt_size = cls.file_size - (cls.file_message_count - 1) * FILE_PKTSIZE
+            last_pkt_size = cls.file_size - (cls.file_message_count - 1) * _FILE_PKTSIZE
 
-            cls.file_obj.seek(sq_cnt * FILE_PKTSIZE)
+            cls.file_obj.seek(sq_cnt * _FILE_PKTSIZE)
             cls.file_array = cls.file_obj.read(last_pkt_size)
             cls.file_obj.close()
 
@@ -457,6 +463,23 @@ class SATELLITE_RADIO:
             packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
         else:
             logger.error("[COMMS ERROR] RADIO no longer active on SAT")
+
+        # Checks on err returned by driver
+        if err == _ERR_CRC_MISMATCH:
+            # CRC error, packet likely corrupted
+            logger.warning("[COMMS ERROR] CRC error occured on incoming packet")
+            cls.rx_gs_cmd = 0x00
+            cls.rx_sq_cnt = 0
+            cls.rx_gs_len = 0
+            return cls.rx_gs_cmd
+
+        elif err != _ERR_NONE:
+            # Undefined error, packet should never have gotten to comms task
+            logger.error("[COMMS ERROR] Undefined error from radio driver")
+            cls.rx_gs_cmd = 0x00
+            cls.rx_sq_cnt = 0
+            cls.rx_gs_len = 0
+            return cls.rx_gs_cmd
 
         # Check if packet exists
         if packet is None:
