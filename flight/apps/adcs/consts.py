@@ -111,17 +111,19 @@ class PhysicalConst:
     if INERTIA_MAJOR_DIR[np.argmax(inertia_major_dir_abs)] < 0:
         INERTIA_MAJOR_DIR = -INERTIA_MAJOR_DIR
 
-    LIGHT_SENSOR_NORMALS = [
-        [1, 0, 0],
-        [-1, 0, 0],
-        [0, 1, 0],
-        [0, -1, 0],
-        [0, 0, -1],
-        [0.7071, 0, 0.7071],
-        [0, 0.7071, 0.7071],
-        [-0.7071, 0, 0.7071],
-        [0, -0.7071, 0.7071],
-    ]
+    LIGHT_SENSOR_NORMALS = np.array(
+        [
+            [1, 0, 0],
+            [-1, 0, 0],
+            [0, 1, 0],
+            [0, -1, 0],
+            [0.7071, 0, 0.7071],
+            [0, 0.7071, 0.7071],
+            [-0.7071, 0, 0.7071],
+            [0, -0.7071, 0.7071],
+            [0, 0, -1],
+        ]
+    )
     # map from light sensors to body vector
 
 
