@@ -6,6 +6,7 @@ from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STATES
+from core.time_processor import TimeProcessor as TPM
 from micropython import const
 
 # Constants
@@ -202,7 +203,7 @@ class Task(TemplateTask):
                     CommandQueue.overwrite_command(self.rq_cmd, self.rx_payload)
 
                 # Log RSSI
-                DH.log_data("comms", [SATELLITE_RADIO.get_rssi()])
+                DH.log_data("comms", [TPM.time(), SATELLITE_RADIO.get_rssi()])
 
                 # Set ground pass true, reset counters
                 self.ground_pass = True
@@ -248,7 +249,7 @@ class Task(TemplateTask):
 
             # Register comms process for logging RX RSSI
             if not DH.data_process_exists("comms"):
-                DH.register_data_process("comms", "f", True, 100000)
+                DH.register_data_process("comms", "Lf", True, 100000)
 
             # Increment counter
             self.TX_COUNTER += 1

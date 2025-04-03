@@ -5,7 +5,9 @@ from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
+from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
+from micropython import const
 
 """
     Fix Modes in GPS NMEA Message:
@@ -16,7 +18,14 @@ from hal.configuration import SATELLITE
     3 - 3D fix: A 3D fix is available (latitude, longitude, and altitude are all valid and reliable).
     4 - GNSS fix: A fix using signals from multiple GNSS systems (e.g., GPS, GLONASS, Galileo, BeiDou).
     5 - Time fix: A fix based on time synchronization, typically used in high-precision or timing applications.
+
+    For updating the RTC's time reference, a fix mode of at least 3 should be used, to guarantee accurate time setting.
+    The RTC does not have a very high drift over time, so unnecessary updates from bad GPS fixes should be avoided.
+
+    However, if the RTC is inactive, the TPM time reference should be updated for any valid fix, since it will always be
+    better than the TPM's best-effort timekeeping.
 """
+_FIX_MODE_THR = const(3)
 
 
 class Task(TemplateTask):
@@ -57,7 +66,7 @@ class Task(TemplateTask):
         else:
             if SATELLITE.GPS_AVAILABLE:
                 if not DH.data_process_exists("gps"):
-                    data_format = "fBBBHLllllHHHHHllllll"
+                    data_format = "LBBBHLllllHHHHHllllll"
                     DH.register_data_process("gps", data_format, True, data_limit=100000, write_interval=1)
 
                 # Check if the module sent a valid nav data message
@@ -67,7 +76,8 @@ class Task(TemplateTask):
                         # If a valid message and a fix, update GPS log info
                         self.log_info("GPS module got a valid fix")
                         self.log_info(f"GPS ECEF: {self.log_data[GPS_IDX.GPS_ECEF_X:]}")
-                        self.log_data[GPS_IDX.TIME_GPS] = SATELLITE.GPS.unix_time
+
+                        self.log_data[GPS_IDX.TIME_GPS] = int(SATELLITE.GPS.unix_time)
                         self.log_data[GPS_IDX.GPS_MESSAGE_ID] = SATELLITE.GPS.message_id
                         self.log_data[GPS_IDX.GPS_FIX_MODE] = SATELLITE.GPS.fix_mode
                         self.log_data[GPS_IDX.GPS_NUMBER_OF_SV] = SATELLITE.GPS.number_of_sv
@@ -91,11 +101,18 @@ class Task(TemplateTask):
 
                         DH.log_data("gps", self.log_data)
 
+                        # Internal reference update for TPM, regardless of fix quality
+                        TPM.set_time_reference(SATELLITE.GPS.unix_time)
+
+                        # Only update RTC time if the fix is better than _FIX_MODE_THR
+                        if SATELLITE.GPS.fix_mode > _FIX_MODE_THR:
+                            TPM.set_time(SATELLITE.GPS.unix_time)
+
                     else:
                         self.log_info("GPS module did not get a valid fix")
 
                     # Log info
-                    self.log_info(f"GPS Time: {int(self.log_data[GPS_IDX.TIME_GPS])}")
+                    self.log_info(f"GPS Time: {self.log_data[GPS_IDX.TIME_GPS]}")
                     self.log_info(f"GPS Fix Mode: {self.log_data[GPS_IDX.GPS_FIX_MODE]}")
                     self.log_info(f"Number of SV: {self.log_data[GPS_IDX.GPS_NUMBER_OF_SV]}")
 
