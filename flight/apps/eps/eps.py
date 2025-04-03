@@ -62,7 +62,7 @@ def GET_POWER_STATUS(buf, power, threshold, window):
     buf.append(power)
     # If the length of the buffer is now greater than the window size,
     # Pop the first (oldest) element of the buffer
-    if (len(buf) > window):
+    if len(buf) > window:
         buf.pop(0)
     # Obtain the moving average
     power_avg = sum(buf) / len(buf)

@@ -48,7 +48,7 @@ file_tags_str = {
     8: "thermal",
     9: "gps",
     10: "img",
-    11: "eps_warning"
+    11: "eps_warning",
 }
 
 file_ids_str = {
