@@ -101,8 +101,9 @@ class Task(TemplateTask):
 
                         DH.log_data("gps", self.log_data)
 
-                        # Internal reference update for TPM, regardless of fix quality
-                        TPM.set_time_reference(SATELLITE.GPS.unix_time)
+                        # If RTC is inactive, set the TPM time reference regardless of fix quality
+                        if SATELLITE.RTC_AVAILABLE is False:
+                            TPM.set_time_reference(SATELLITE.GPS.unix_time)
 
                         # Only update RTC time if the fix is better than _FIX_MODE_THR
                         if SATELLITE.GPS.fix_mode > _FIX_MODE_THR:
