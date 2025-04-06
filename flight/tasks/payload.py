@@ -11,6 +11,8 @@ from hal.configuration import SATELLITE
 
 PACKET_SIZE = 512  # num bytes
 CRC5_SIZE = 1  # num bytes for crc5 (5 bits will be used)
+START_BYTE = 0xAA
+START_BYTE_COUNT = 8
 
 
 def create_crc5_packet(data_bytes):
@@ -54,9 +56,17 @@ class MainBoard:
         # without crc5
         while True:
             if self.uart.in_waiting:
-                packet.extend(self.uart.read(self.uart.in_waiting))
-                if len(packet) == (PACKET_SIZE):  # Ensure full packet received
-                    return packet[:(PACKET_SIZE)]  # Only return the first packet size + CRC
+                byte = self.uart.read(1)
+                if byte:
+                    byte = byte[0]
+                    if byte == START_BYTE:
+                        start_byte_count += 1
+                    if start_byte_count >= START_BYTE_COUNT:
+                        packet.append(byte)
+                        if len(packet) == PACKET_SIZE:
+                            return packet
+                
+        return None 
 
     def transmit(self, data):
         """Transmit data over UART within 1 second."""
