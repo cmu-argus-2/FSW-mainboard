@@ -62,6 +62,17 @@ class TimeProcessor:
         cls.time_offset = cls.time_reference - time.time()
 
     """
+        Name: set_time_reference
+        Description: Only updates time_reference, not RTC
+    """
+
+    @classmethod
+    def set_time_reference(cls, unix_timestamp):
+        # Update TPM time reference and offset
+        cls.time_reference = unix_timestamp
+        cls.calc_time_offset()
+
+    """
         Name: set_time
         Description: Set RTC time
     """
@@ -81,8 +92,7 @@ class TimeProcessor:
             pass
 
         # Update TPM time reference and offset, regardless of RTC status
-        cls.time_reference = unix_timestamp
-        cls.calc_time_offset()
+        cls.set_time_reference(unix_timestamp)
 
     """
         Name: time
