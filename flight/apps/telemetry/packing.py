@@ -87,6 +87,10 @@ class TelemetryPacker:
         return cls._TM_AVAILABLE
 
     @classmethod
+    def TM_EXHAUSTED(cls):
+        cls._TM_AVAILABLE = False
+
+    @classmethod
     def pack_tm_heartbeat(cls):
         if not cls._TM_AVAILABLE:
             cls._TM_AVAILABLE = True

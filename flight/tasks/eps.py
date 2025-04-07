@@ -2,13 +2,16 @@
 
 import microcontroller
 from apps.eps.eps import EPS_POWER_FLAG, EPS_POWER_THRESHOLD, GET_EPS_POWER_FLAG, GET_POWER_STATUS
-from apps.telemetry.constants import EPS_IDX, EPS_WARNING_IDX
+from apps.telemetry.constants import EPS_IDX, EPS_WARNING_IDX, class_length
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
+
+IDX_LENGTH = class_length(EPS_IDX)
+WARNING_IDX_LENGTH = class_length(EPS_WARNING_IDX)
 
 
 class Task(TemplateTask):
@@ -62,16 +65,18 @@ class Task(TemplateTask):
         "ZM_SOLAR_CHARGE_CURRENT",
     ]"""
 
-    log_data = [0] * 43  # - use mV for voltage and mA for current (h = short integer 2 bytes)
-    warning_log_data = [0] * 4
+    log_data = [0] * IDX_LENGTH  # - use mV for voltage and mA for current (h = short integer 2 bytes)
+    warning_log_data = [0] * WARNING_IDX_LENGTH
     power_buffer_dict = {
         EPS_WARNING_IDX.MAINBOARD_POWER_ALERT: [],
         EPS_WARNING_IDX.RADIO_POWER_ALERT: [],
-        EPS_WARNING_IDX.JETSON_POWER_ALERT: []
-        # EPS_WARNING_IDX.XP_COIL_POWER_ALERT : [],
-        # EPS_WARNING_IDX.XM_COIL_POWER_ALERT : [],
-        # EPS_WARNING_IDX.YP_COIL_POWER_ALERT : [],
-        # EPS_WARNING_IDX.YM_COIL_POWER_ALERT : []
+        EPS_WARNING_IDX.JETSON_POWER_ALERT: [],
+        EPS_WARNING_IDX.XP_COIL_POWER_ALERT: [],
+        EPS_WARNING_IDX.XM_COIL_POWER_ALERT: [],
+        EPS_WARNING_IDX.YP_COIL_POWER_ALERT: [],
+        EPS_WARNING_IDX.YM_COIL_POWER_ALERT: [],
+        EPS_WARNING_IDX.ZP_COIL_POWER_ALERT: [],
+        EPS_WARNING_IDX.ZM_COIL_POWER_ALERT: [],
     }
     log_counter = 0
 
@@ -126,6 +131,10 @@ class Task(TemplateTask):
                 self.log_warning(f"YP Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold} mW")
             elif idx == EPS_WARNING_IDX.YM_COIL_POWER_ALERT:
                 self.log_warning(f"YM Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold} mW")
+            elif idx == EPS_WARNING_IDX.ZP_COIL_POWER_ALERT:
+                self.log_warning(f"ZP Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold} mW")
+            elif idx == EPS_WARNING_IDX.ZM_COIL_POWER_ALERT:
+                self.log_warning(f"ZM Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold} mW")
 
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:
@@ -139,7 +148,7 @@ class Task(TemplateTask):
                 DH.register_data_process("eps", data_format, True, data_limit=100000)
 
             if not DH.data_process_exists("eps_warning"):
-                data_format = "L" + "b" * 3
+                data_format = "L" + "b" * (WARNING_IDX_LENGTH - 1)
                 DH.register_data_process("eps_warning", data_format, True, data_limit=10000)
 
             # Get power system readings
@@ -176,7 +185,8 @@ class Task(TemplateTask):
                     elif location == "YM":
                         voltage, current = self.read_vc(sensor)
                         self.log_vc("YM", EPS_IDX.YM_SOLAR_CHARGE_VOLTAGE, EPS_IDX.YM_SOLAR_CHARGE_CURRENT, voltage, current)
-            for location, sensor in SATELLITE.TORQUE_DRIVERS:
+
+            for location, sensor in SATELLITE.TORQUE_DRIVERS.items():
                 if SATELLITE.TORQUE_DRIVERS_AVAILABLE(location):
                     if location == "XP":
                         voltage, current = self.read_vc(sensor)
@@ -202,6 +212,18 @@ class Task(TemplateTask):
                             voltage, current, EPS_WARNING_IDX.YM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL
                         )
                         self.log_vc("YM Coil", EPS_IDX.YM_COIL_VOLTAGE, EPS_IDX.YM_COIL_CURRENT, voltage, current)
+                    elif location == "ZP":
+                        voltage, current = self.read_vc(sensor)
+                        self.set_power_alert(
+                            voltage, current, EPS_WARNING_IDX.ZP_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL
+                        )
+                        self.log_vc("ZP Coil", EPS_IDX.ZP_COIL_VOLTAGE, EPS_IDX.ZP_COIL_CURRENT, voltage, current)
+                    elif location == "ZM":
+                        voltage, current = self.read_vc(sensor)
+                        self.set_power_alert(
+                            voltage, current, EPS_WARNING_IDX.ZM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL
+                        )
+                        self.log_vc("ZM Coil", EPS_IDX.ZM_COIL_VOLTAGE, EPS_IDX.ZM_COIL_CURRENT, voltage, current)
 
             if self.log_counter % self.frequency == 0:
                 self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
