@@ -1,12 +1,9 @@
 # Architecture
 
-The onboard flight software for Argus-1 follows a hierarchical architecture, structured into distinct layers that isolate hardware interfacing, fault handling, core functionalities, and mission-specific applications.
+The onboard flight software for Argus follows a hierarchical architecture, structured into distinct layers that isolate hardware interfacing, fault handling, core functionalities, and mission-specific applications.
 
 ## Hardware Abstraction Layer (HAL)
 The HAL interfaces directly with the spacecraft’s hardware, managing initialization, communication, and status reporting for all hardware components across the spacecraft bus (excluding payload elements). This layer ensures consistent, low-level access to the hardware, abstracting specific details to provide a standardized interface for higher software layers.
-
-## Middleware
-The middleware layer acts as a wrapper around the HAL, adding local fault-handling capabilities based on defined drivers and associated handling functions. It enables safe and reliable interactions with hardware components and manages fault conditions at the HAL level.
 
 ## Core Framework
 The core framework layer is responsible for essential system services such as data handling (telemetry, onboard mass storage), task scheduling, state management, and command processing. This layer forms the backbone of the flight software, managing the flow of data and commands within the system.

@@ -40,9 +40,9 @@ import json
 import os
 import re
 import struct
-import time
 
 from core.logging import logger
+from core.time_processor import TimeProcessor as TPM
 from micropython import const
 
 try:
@@ -309,7 +309,7 @@ class DataProcess:
             str: The new filename.
         """
         # Keeping the tag name in the filename for identification in debugging
-        return join_path(self.dir_path, self.tag_name) + "_" + str(int(time.time())) + ".bin"
+        return join_path(self.dir_path, self.tag_name) + "_" + str(TPM.time()) + ".bin"
 
     def try_to_reuse_latest_file(self) -> bool:
         """
@@ -510,7 +510,11 @@ class DataProcess:
         """
         files = os.listdir(self.dir_path)
         # TODO - implement the rest of the function
-        total_size = (len(files) - 2) * self.size_limit + self.get_current_file_size()
+        if self.get_current_file_size() is not None:
+            total_size = (len(files) - 2) * self.size_limit + self.get_current_file_size()
+        else:
+            total_size = 0
+
         return (len(files) - 1), total_size
 
     def get_current_file_size(self) -> Optional[int]:
@@ -609,7 +613,7 @@ class ImageProcess(DataProcess):
             str: The new filename.
         """
         # Keeping the tag name in the filename for identification
-        return join_path(self.dir_path, self.tag_name) + "_" + str(int(time.time())) + ".jpg"
+        return join_path(self.dir_path, self.tag_name) + "_" + str(TPM.time()) + ".jpg"
 
     def log(self, data: bytearray) -> None:
         """
@@ -716,6 +720,30 @@ class DataHandler:
     # Keep track of all file processes
     data_process_registry = dict()
 
+    def __can_write_to_path(path: str) -> bool:
+        """
+        Check if the given path is writable by attempting to create a temporary file.
+
+        Args:
+            path (str): The path to check.
+
+        Returns:
+            bool: True if the path is writable, False otherwise.
+        """
+        test_file = join_path(path, ".write_test")
+        try:
+            with open(test_file, "w") as f:
+                f.write("test")
+            return True
+        except OSError:
+            return False
+        finally:
+            if path_exist(test_file):
+                try:
+                    os.remove(test_file)
+                except Exception:
+                    pass
+
     @classmethod
     def scan_SD_card(cls) -> None:
         """
@@ -733,7 +761,7 @@ class DataHandler:
         Example:
             DataHandler.scan_SD_card()
         """
-        if not path_exist(_HOME_PATH):
+        if not cls.__can_write_to_path(_HOME_PATH):
             # The SD card path has an issue
             cls.SD_ERROR_FLAG = True
         else:

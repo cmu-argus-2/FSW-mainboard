@@ -20,47 +20,53 @@ class CubeSat:
         "_time_ref_boot",
     )
 
+    def __new__(cls, *args, **kwargs):
+        if cls is CubeSat:
+            raise TypeError(f"{cls.__name__} is a static base class and cannot be instantiated.")
+        return super().__new__(cls)
+
     def __init__(self):
         self.__device_list = OrderedDict(
             [
-                ("SDCARD", Device(self.__sd_card_boot)),
-                ("IMU", Device(self.__imu_boot)),
+                ("NEOPIXEL", Device(self.__neopixel_boot)),
+                ("SDCARD", Device(self.__sd_card_boot)),  # SD Card must enabled before other devices
                 ("RTC", Device(self.__rtc_boot)),
                 # ("GPS", Device(self.__gps_boot)),
                 ("RADIO", Device(self.__radio_boot)),
-                # ("FUEL_GAUGE", Device(self.__fuel_gauge_boot)),
+                ("FUEL_GAUGE", Device(self.__fuel_gauge_boot)),
                 # ("BURN_WIRE", Device(self.__burn_wire_boot)),
                 ("BOARD_PWR", Device(self.__power_monitor_boot)),
                 ("RADIO_PWR", Device(self.__power_monitor_boot)),
                 # ("GPS_PWR", Device(self.__power_monitor_boot)),
                 # ("JETSON_PWR", Device(self.__power_monitor_boot)),
-                # ("XP_PWR", Device(self.__power_monitor_boot)),
-                # ("XM_PWR", Device(self.__power_monitor_boot)),
-                # ("YP_PWR", Device(self.__power_monitor_boot)),
-                # ("YM_PWR", Device(self.__power_monitor_boot)),
-                # ("ZP_PWR", Device(self.__power_monitor_boot)),
-                # ("TORQUE_XP", Device(self.__torque_driver_boot)),
-                # ("TORQUE_XM", Device(self.__torque_driver_boot)),
-                # ("TORQUE_YP", Device(self.__torque_driver_boot)),
-                # ("TORQUE_YM", Device(self.__torque_driver_boot)),
-                # ("TORQUE_ZP", Device(self.__torque_driver_boot)),
-                # ("TORQUE_ZM", Device(self.__torque_driver_boot)),
-                # ("LIGHT_XP", Device(self.__light_sensor_boot)),
-                # ("LIGHT_XM", Device(self.__light_sensor_boot)),
-                # ("LIGHT_YP", Device(self.__light_sensor_boot)),
-                # ("LIGHT_YM", Device(self.__light_sensor_boot)),
-                # ("LIGHT_ZM", Device(self.__light_sensor_boot)),
+                ("XP_PWR", Device(self.__power_monitor_boot)),
+                ("XM_PWR", Device(self.__power_monitor_boot)),
+                ("YP_PWR", Device(self.__power_monitor_boot)),
+                ("YM_PWR", Device(self.__power_monitor_boot)),
+                ("ZP_PWR", Device(self.__power_monitor_boot)),
+                ("TORQUE_XP", Device(self.__torque_driver_boot)),
+                ("TORQUE_XM", Device(self.__torque_driver_boot)),
+                ("TORQUE_YP", Device(self.__torque_driver_boot)),
+                ("TORQUE_YM", Device(self.__torque_driver_boot)),
+                ("TORQUE_ZP", Device(self.__torque_driver_boot)),
+                ("TORQUE_ZM", Device(self.__torque_driver_boot)),
+                ("LIGHT_XP", Device(self.__light_sensor_boot)),
+                ("LIGHT_XM", Device(self.__light_sensor_boot)),
+                ("LIGHT_YP", Device(self.__light_sensor_boot)),
+                ("LIGHT_YM", Device(self.__light_sensor_boot)),
+                ("LIGHT_ZM", Device(self.__light_sensor_boot)),
                 # ("LIGHT_ZP_1", Device(self.__light_sensor_boot)),
                 # ("LIGHT_ZP_2", Device(self.__light_sensor_boot)),
                 # ("LIGHT_ZP_3", Device(self.__light_sensor_boot)),
                 # ("LIGHT_ZP_4", Device(self.__light_sensor_boot)),
+                ("IMU", Device(self.__imu_boot)),
             ]
         )
 
         self.__imu_temp_flag = False
 
-        # Debugging
-        self._time_ref_boot = int(time.time())
+        # Get boot time from time.monotonic()
+        self._time_ref_boot = int(time.monotonic())
 
     # ABSTRACT METHOD #
     def boot_sequence(self) -> list[int]:
@@ -157,6 +163,28 @@ class CubeSat:
         """
         return self.key_in_device_list("TORQUE_" + dir) and self.__device_list["TORQUE_" + dir].device is not None
 
+    def TORQUE_DRIVERS_CURRENT(self, dir: str) -> float:
+        """Returns the coil current for the specific magnetorquer if available and returns -1 otherwise
+
+        :param dir: The direction key (e.g., 'XP', 'XM', etc.)
+        :return: float - current value in amps if the coil is available else -1
+        """
+        if self.TORQUE_DRIVERS_AVAILABLE(dir):
+            self.__device_list["TORQUE_" + dir].device.read_current()
+        else:
+            return -1.0
+
+    def TORQUE_DRIVERS_VOLTAGE(self, dir: str) -> float:
+        """Returns the coil voltage for the specific magnetorquer if available and returns -1 otherwise
+
+        :param dir: The direction key (e.g., 'XP', 'XM', etc.)
+        :return: float - voltage value in volts if the coil is available else -1
+        """
+        if self.TORQUE_DRIVERS_AVAILABLE(dir):
+            self.__device_list["TORQUE_" + dir].device.read_voltage()
+        else:
+            return -1.0
+
     # ABSTRACT METHOD #
     def APPLY_MAGNETIC_CONTROL(self, dir: str, throttle: float) -> None:
         """CONTROL_COILS: Control the coils on the CubeSat, depending on the control mode (identiical for all coils)."""
@@ -249,6 +277,20 @@ class CubeSat:
         :return: bool
         """
         return self.key_in_device_list("SDCARD") and self.__device_list["SDCARD"].device is not None
+
+    @property
+    def NEOPIXEL(self):
+        """NEOPIXEL: Returns the neopixel object
+        :return: object or None
+        """
+        return self.__device_list["NEOPIXEL"].device
+
+    @property
+    def NEOPIXEL_AVAILABLE(self) -> bool:
+        """NEOPIXEL_AVAILABLE: Returns True if the neopixel is available
+        :return: bool
+        """
+        return self.key_in_device_list("NEOPIXEL") and self.__device_list["NEOPIXEL"].device is not None
 
     @property
     def PAYLOADUART(self):
