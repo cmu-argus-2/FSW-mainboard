@@ -407,7 +407,6 @@ class ArgusV3(CubeSat):
 
             return [imu, Errors.NOERROR]
         except Exception as e:
-            print(e)
             if self.__debug:
                 raise e
             return [None, Errors.IMU_NOT_INITIALIZED]
@@ -473,7 +472,6 @@ class ArgusV3(CubeSat):
             return [light_sensor, Errors.NOERROR]
 
         except Exception as e:
-            print(e)
             if self.__debug:
                 raise e
             return [None, Errors.OPT4001_NOT_INITIALIZED]
