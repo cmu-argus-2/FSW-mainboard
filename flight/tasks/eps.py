@@ -10,8 +10,8 @@ from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 
-__IDX_LENGTH = class_length(EPS_IDX)
-__WARNING_IDX_LENGTH = class_length(EPS_WARNING_IDX)
+IDX_LENGTH = class_length(EPS_IDX)
+WARNING_IDX_LENGTH = class_length(EPS_WARNING_IDX)
 
 
 class Task(TemplateTask):
@@ -65,8 +65,8 @@ class Task(TemplateTask):
         "ZM_SOLAR_CHARGE_CURRENT",
     ]"""
 
-    log_data = [0] * __IDX_LENGTH  # - use mV for voltage and mA for current (h = short integer 2 bytes)
-    warning_log_data = [0] * __WARNING_IDX_LENGTH
+    log_data = [0] * IDX_LENGTH  # - use mV for voltage and mA for current (h = short integer 2 bytes)
+    warning_log_data = [0] * WARNING_IDX_LENGTH
     power_buffer_dict = {
         EPS_WARNING_IDX.MAINBOARD_POWER_ALERT: [],
         EPS_WARNING_IDX.RADIO_POWER_ALERT: [],
@@ -148,7 +148,7 @@ class Task(TemplateTask):
                 DH.register_data_process("eps", data_format, True, data_limit=100000)
 
             if not DH.data_process_exists("eps_warning"):
-                data_format = "L" + "b" * (__WARNING_IDX_LENGTH - 1)
+                data_format = "L" + "b" * (WARNING_IDX_LENGTH - 1)
                 DH.register_data_process("eps_warning", data_format, True, data_limit=10000)
 
             # Get power system readings
