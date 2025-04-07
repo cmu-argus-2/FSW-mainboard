@@ -50,11 +50,12 @@ class MainBoard:
 
     def receive(self):
         """Receive full packet over UART within 1 second"""
-        # start_time = time.time()
+        start_time = time.time()
         packet = bytearray()
+        start_byte_count = 0
 
         # without crc5
-        while True:
+        while (time.time() - start_time) < 1.5:
             if self.uart.in_waiting:
                 byte = self.uart.read(1)
                 if byte:
@@ -65,8 +66,8 @@ class MainBoard:
                         packet.append(byte)
                         if len(packet) == PACKET_SIZE:
                             return packet
-                
-        return None 
+
+        return None
 
     def transmit(self, data):
         """Transmit data over UART within 1 second."""
