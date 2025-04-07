@@ -247,7 +247,29 @@ class ArgusV2(CubeSat):
         """__init__: Initializes the Argus V2 CubeSat."""
         self.__debug = debug
 
+        # v2 mainboards have no NEOPIXEL, and limited RAM
+        # So, remove all components that do not exist on MB itself
         super().__init__()
+        del self.__device_list["NEOPIXEL"]
+
+        del self.__device_list["TORQUE_XP"]
+        del self.__device_list["TORQUE_XM"]
+        del self.__device_list["TORQUE_YP"]
+        del self.__device_list["TORQUE_YM"]
+        del self.__device_list["TORQUE_ZP"]
+        del self.__device_list["TORQUE_ZM"]
+
+        del self.__device_list["LIGHT_XP"]
+        del self.__device_list["LIGHT_XM"]
+        del self.__device_list["LIGHT_YP"]
+        del self.__device_list["LIGHT_YM"]
+        del self.__device_list["LIGHT_ZM"]
+
+        del self.__device_list["XP_PWR"]
+        del self.__device_list["XM_PWR"]
+        del self.__device_list["YP_PWR"]
+        del self.__device_list["YM_PWR"]
+        del self.__device_list["ZP_PWR"]
 
     ######################## BOOT SEQUENCE ########################
 
@@ -257,6 +279,10 @@ class ArgusV2(CubeSat):
         for name, device in self.__device_list.items():
             func = device.boot_fn
             device.device, device.error = func(name)
+
+    def __neopixel_boot(self, _) -> list[object, int]:
+        """Mock for neopixel boot from ArgusV3"""
+        pass
 
     def __gps_boot(self, _) -> list[object, int]:
 

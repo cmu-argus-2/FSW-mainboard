@@ -7,7 +7,8 @@ import gc
 import apps.command.processor as processor
 from apps.adcs.consts import Modes
 from apps.command import QUEUE_STATUS, CommandQueue
-from apps.telemetry.constants import ADCS_IDX, CDH_IDX
+from apps.eps.eps import EPS_POWER_FLAG
+from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
@@ -38,6 +39,10 @@ class Task(TemplateTask):
         super().__init__(id)
         self.name = "COMMAND"
         self.time_ref_set = False
+
+        # Transition status from ADCS and EPS
+        self.ADCS_MODE = Modes.STABLE
+        self.EPS_MODE = EPS_POWER_FLAG.NOMINAL
 
     def get_memory_usage(self):
         return int(gc.mem_alloc() / self.total_memory * 100)
@@ -105,6 +110,7 @@ class Task(TemplateTask):
                 if not DH.data_process_exists("cmd_logs"):
                     DH.register_data_process("cmd_logs", "LBB", True, data_limit=100000)
 
+                # T0: Boot over and deployment complete
                 SM.switch_to(STATES.DETUMBLING)
                 self.log_info("Switching to DETUMBLING state.")
 
@@ -113,40 +119,115 @@ class Task(TemplateTask):
         # STATE MACHINE
         # ------------------------------------------------------------------------------------------------------------------------------------
 
+        # Get ADCS mode (hysteresis management done in ADCS application)
+        if DH.data_process_exists("adcs"):
+            adcs_data = DH.get_latest_data("adcs")
+
+            if adcs_data:
+                self.ADCS_MODE = adcs_data[ADCS_IDX.MODE]
+            else:
+                self.log_warning("No latest ADCS data available, assuming STABLE ADCS mode")
+                self.ADCS_MODE = Modes.STABLE
+        else:
+            self.log_warning("ADCS task not available, assuming STABLE ADCS mode")
+            self.ADCS_MODE = Modes.STABLE
+
+        # Get EPS mode (hysteresis management done in EPS application)
+        if DH.data_process_exists("eps"):
+            eps_data = DH.get_latest_data("eps")
+
+            if eps_data:
+                self.EPS_MODE = eps_data[EPS_IDX.EPS_POWER_FLAG]
+            else:
+                self.log_warning("No latest EPS data available, assuming NOMINAL EPS mode")
+                self.EPS_MODE = EPS_POWER_FLAG.NOMINAL
+        else:
+            self.log_warning("EPS task not available, assuming NOMINAL EPS mode")
+            self.EPS_MODE = EPS_POWER_FLAG.NOMINAL
+
+        # ------------------------------------------------------------------------------------------------------------------------------------
+        # DETUMBLING
+        # ------------------------------------------------------------------------------------------------------------------------------------
+
         if SM.current_state == STATES.DETUMBLING:
             # Neopixel for DETUMBLING (orange)
             if SATELLITE.NEOPIXEL_AVAILABLE:
                 SATELLITE.NEOPIXEL.fill([255, 165, 0])
-
-            # Check detumbling status from the ADCS
-            if DH.data_process_exists("adcs"):
-                if DH.get_latest_data("adcs")[ADCS_IDX.MODE] != Modes.TUMBLING:
-                    self.log_info("Detumbling complete - Switching to NOMINAL state.")
-                    SM.switch_to(STATES.NOMINAL)
 
             # Detumbling timeout in case the ADCS is not working
             if SM.time_since_last_state_change > STATES.DETUMBLING_TIMEOUT_DURATION:
                 self.log_info("DETUMBLING timeout - Setting Detumbling Error Flag.")
                 # Set the detumbling issue flag in the NVM
                 self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1
-                self.log_info("Switching to NOMINAL state after DETUMBLING timeout.")
+
+            if self.ADCS_MODE != Modes.TUMBLING or self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] == 1:
+                # T1.1: Out of tumbling OR detumbling error flag is set (detumbling timeout)
+                self.log_info("T1.1: Transition from DETUMBLING to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
 
+            if self.EPS_MODE == EPS_POWER_FLAG.LOW_POWER:
+                # T1.2: Low SoC, transition to low power
+                self.log_info("T1.2: Transition from DETUMBLING to LOW POWER")
+                SM.switch_to(STATES.NOMINAL)
+
+        # ------------------------------------------------------------------------------------------------------------------------------------
+        # NOMINAL
+        # ------------------------------------------------------------------------------------------------------------------------------------
+
         elif SM.current_state == STATES.NOMINAL:
-            # Neopixel for NOMINAL (orange)
+            # Neopixel for NOMINAL (green)
             if SATELLITE.NEOPIXEL_AVAILABLE:
                 SATELLITE.NEOPIXEL.fill([0, 255, 0])
-            pass
-        elif SM.current_state == STATES.EXPERIMENT:
-            # Neopixel for EXPERIMENT (purple)
-            if SATELLITE.NEOPIXEL_AVAILABLE:
-                SATELLITE.NEOPIXEL.fill([255, 0, 255])
-            pass
+
+            if self.EPS_MODE == EPS_POWER_FLAG.EXPERIMENT:
+                # T2.1: High SoC, engage the payload
+                self.log_info("T2.1: Transition from NOMINAL to EXPERIMENT")
+                SM.switch_to(STATES.EXPERIMENT)
+
+            if self.EPS_MODE == EPS_POWER_FLAG.LOW_POWER:
+                # T2.2: Low SoC, transition to low power
+                self.log_info("T2.2: Transition from NOMINAL to LOW POWER")
+                SM.switch_to(STATES.LOW_POWER)
+
+            if self.ADCS_MODE == Modes.TUMBLING and self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] != 1:
+                # T2.3: Tumbling again AND detumbling error flag is not set
+                self.log_info("T2.3: Transition from NOMINAL to DETUMBLING")
+                SM.switch_to(STATES.DETUMBLING)
+
+        # ------------------------------------------------------------------------------------------------------------------------------------
+        # LOW POWER
+        # ------------------------------------------------------------------------------------------------------------------------------------
+
         elif SM.current_state == STATES.LOW_POWER:
             # Neopixel for LOW_POWER (red)
             if SATELLITE.NEOPIXEL_AVAILABLE:
                 SATELLITE.NEOPIXEL.fill([255, 0, 0])
-            pass
+
+            if self.EPS_MODE != EPS_POWER_FLAG.LOW_POWER:
+                # T3.1: Nominal SoC, transition out of low power
+                self.log_info("T3.1: Transition from LOW POWER to NOMINAL")
+                SM.switch_to(STATES.NOMINAL)
+
+        # ------------------------------------------------------------------------------------------------------------------------------------
+        # PAYLOAD / EXPERIMENT
+        # ------------------------------------------------------------------------------------------------------------------------------------
+
+        elif SM.current_state == STATES.EXPERIMENT:
+            # Neopixel for PAYLOAD / EXPERIMENT (purple)
+            if SATELLITE.NEOPIXEL_AVAILABLE:
+                SATELLITE.NEOPIXEL.fill([255, 0, 255])
+
+            if self.EPS_MODE != EPS_POWER_FLAG.EXPERIMENT:
+                # T4.1: Nominal SoC, transition back to nominal
+                self.log_info("T4.1: Transition from LOW POWER to NOMINAL")
+                SM.switch_to(STATES.NOMINAL)
+
+        # ------------------------------------------------------------------------------------------------------------------------------------
+        # CRITICAL ERROR - UNKNOWN STATE
+        # ------------------------------------------------------------------------------------------------------------------------------------
+
+        else:
+            self.log_error("CRITICAL: Argus is in an unknown state")
 
         SM.update_time_in_state()
 
