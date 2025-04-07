@@ -54,6 +54,10 @@ class Task(TemplateTask):
         # Errors must be localized and not affect other tasks
         # Boot errors and system diagnostics must be logged
 
+        # Neopixel for STARTUP (white)
+        if SATELLITE.NEOPIXEL_AVAILABLE:
+            SATELLITE.NEOPIXEL.fill([255, 255, 255])
+
         # TODO: Deployment
 
         # Check time_since_boot
@@ -110,6 +114,10 @@ class Task(TemplateTask):
         # ------------------------------------------------------------------------------------------------------------------------------------
 
         if SM.current_state == STATES.DETUMBLING:
+            # Neopixel for DETUMBLING (orange)
+            if SATELLITE.NEOPIXEL_AVAILABLE:
+                SATELLITE.NEOPIXEL.fill([255, 165, 0])
+
             # Check detumbling status from the ADCS
             if DH.data_process_exists("adcs"):
                 if DH.get_latest_data("adcs")[ADCS_IDX.MODE] != Modes.TUMBLING:
@@ -125,10 +133,19 @@ class Task(TemplateTask):
                 SM.switch_to(STATES.NOMINAL)
 
         elif SM.current_state == STATES.NOMINAL:
+            # Neopixel for NOMINAL (orange)
+            if SATELLITE.NEOPIXEL_AVAILABLE:
+                SATELLITE.NEOPIXEL.fill([0, 255, 0])
             pass
         elif SM.current_state == STATES.EXPERIMENT:
+            # Neopixel for EXPERIMENT (purple)
+            if SATELLITE.NEOPIXEL_AVAILABLE:
+                SATELLITE.NEOPIXEL.fill([255, 0, 255])
             pass
         elif SM.current_state == STATES.LOW_POWER:
+            # Neopixel for LOW_POWER (red)
+            if SATELLITE.NEOPIXEL_AVAILABLE:
+                SATELLITE.NEOPIXEL.fill([255, 0, 0])
             pass
 
         SM.update_time_in_state()

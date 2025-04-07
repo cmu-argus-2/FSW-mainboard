@@ -4,9 +4,9 @@ import time
 import supervisor
 from hal.configuration import SATELLITE
 
-print("Booting ARGUS-1...")
+print("Booting ARGUS...")
 SATELLITE.boot_sequence()
-print("ARGUS-1 booted.")
+print("ARGUS booted.")
 print(f"Boot Errors: {SATELLITE.ERRORS}")
 
 supervisor.runtime.autoreload = False
@@ -19,6 +19,14 @@ file_headers = [
     "Coil Strength XM",
     "Coil Strength YP",
     "Coil Strength YM",
+    "Voltage XP",
+    "Voltage XM",
+    "Voltage YP",
+    "Voltage YM",
+    "Current XP",
+    "Current XM",
+    "Current YP",
+    "Current YM",
     "MAG_X",
     "MAG_Y",
     "MAG_Z",
@@ -29,7 +37,7 @@ with open(filename, "w") as file:
 # Logging Details
 data = []
 last_update_time = 0
-UPDATE_PERIOD = 2e9  # 5s
+UPDATE_PERIOD = 5e9  # 5s
 
 # Test Configuration
 start_time = int(1e9 * time.monotonic())
@@ -68,7 +76,34 @@ while idx < len(strengths):
     strength_yp = SATELLITE.TORQUE_DRIVERS["YP"].throttle()
     strength_ym = SATELLITE.TORQUE_DRIVERS["YM"].throttle()
 
-    data.append([curr_time, strength_xp, strength_xm, strength_yp, strength_ym] + list(mag))
+    voltage_xp = SATELLITE.TORQUE_DRIVERS["XP"].read_voltage()
+    voltage_xm = SATELLITE.TORQUE_DRIVERS["XM"].read_voltage()
+    voltage_yp = SATELLITE.TORQUE_DRIVERS["YP"].read_voltage()
+    voltage_ym = SATELLITE.TORQUE_DRIVERS["YM"].read_voltage()
+
+    current_xp = SATELLITE.TORQUE_DRIVERS["XP"].read_current()
+    current_xm = SATELLITE.TORQUE_DRIVERS["XM"].read_current()
+    current_yp = SATELLITE.TORQUE_DRIVERS["YP"].read_current()
+    current_ym = SATELLITE.TORQUE_DRIVERS["YM"].read_current()
+
+    data.append(
+        [
+            curr_time,
+            strength_xp,
+            strength_xm,
+            strength_yp,
+            strength_ym,
+            voltage_xp,
+            voltage_xm,
+            voltage_yp,
+            voltage_ym,
+            current_xp,
+            current_xm,
+            current_yp,
+            current_ym,
+        ]
+        + list(mag)
+    )
 
     if (curr_time - start_time) > SWITCH_PERIOD:
         print(f"Done with strength {strengths[idx]}")

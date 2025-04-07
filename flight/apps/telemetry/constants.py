@@ -69,6 +69,8 @@ class EPS_WARNING_IDX:
     XM_COIL_POWER_ALERT = const(5)
     YP_COIL_POWER_ALERT = const(6)
     YM_COIL_POWER_ALERT = const(7)
+    ZP_COIL_POWER_ALERT = const(8)
+    ZM_COIL_POWER_ALERT = const(9)
 
 
 class ADCS_IDX:
@@ -149,3 +151,13 @@ class PAYLOAD_IDX:
 class STORAGE_IDX:
     NUM_FILES = const(0)
     DIR_SIZE = const(1)
+
+
+"""
+Helper function to get the number of attributes in a class
+This result should be static
+"""
+
+
+def class_length(cls):
+    return len([attr for attr in dir(cls) if not callable(getattr(cls, attr)) and not attr.startswith("__")])

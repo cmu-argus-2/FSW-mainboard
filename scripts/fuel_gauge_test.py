@@ -1,6 +1,7 @@
 import time
 
 import board
+import digitalio
 from busio import I2C
 from hal.drivers.max17205 import MAX17205
 from micropython import const
@@ -14,6 +15,11 @@ try:
 except Exception as e:
     print("Error:", e)
     I2C0 = None
+
+if hasattr(board, "PERIPH_PWR_EN"):
+    PERIPH_PWR_EN = digitalio.DigitalInOut(board.PERIPH_PWR_EN)
+    PERIPH_PWR_EN.direction = digitalio.Direction.OUTPUT
+    PERIPH_PWR_EN.value = True  # Enable peripherals if applicable
 
 FUEL_GAUGE_I2C = I2C0
 FUEL_GAUGE_I2C_ADDRESS = const(0x36)
