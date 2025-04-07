@@ -219,12 +219,17 @@ class DRV8235:
             self._dir = BridgeControl.BRAKE
         return
 
-    def read_voltage(self):
+    def read_voltage_current(self) -> tuple[float, float]:
+        _voltage = self.__read_voltage()
+        _current = self.__read_current()
+        return (_voltage, _current)
+
+    def __read_voltage(self):
         voltage_index = self._vmtr
         voltage = self.index_to_voltage(voltage_index)
         return voltage
 
-    def read_current(self):
+    def __read_current(self):
         current_index = self._imtr
         current = self.index_to_current(current_index)
         return current

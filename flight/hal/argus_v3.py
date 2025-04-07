@@ -1,5 +1,5 @@
 """
-Author: Harry, Thomas, Ibrahima, Perrin
+Author: Perrin
 Description: This file contains the definition of the ArgusV3 class and its associated interfaces and components.
 """
 
@@ -29,7 +29,10 @@ class ArgusV3Power:
     PERIPH_PWR_OVC = digitalio.DigitalInOut(board.PERIPH_PWR_FLT)
     PERIPH_PWR_OVC.direction = digitalio.Direction.INPUT
 
-    # DO NOT MOVE
+    """
+    Peripherlas 3.3V must be enabled before accessing I2C devices
+    to ensure addresses are correct as we have different address configurations
+    """
     time.sleep(0.1)  # Wait for peripherals to power up
 
     # MAIN (MCU, WATCHDOG) 3.3V
@@ -40,9 +43,15 @@ class ArgusV3Power:
     GPS_EN.direction = digitalio.Direction.OUTPUT
     GPS_EN.value = True
 
+    GPS_OVC = digitalio.DigitalInOut(board.GPS_FLT)
+    GPS_OVC.direction = digitalio.Direction.INPUT
+
     RADIO_EN = digitalio.DigitalInOut(board.LORA_EN)
     RADIO_EN.direction = digitalio.Direction.OUTPUT
     RADIO_EN.value = True
+
+    RADIO_OVC = digitalio.DigitalInOut(board.LORA_FLT)
+    RADIO_OVC.direction = digitalio.Direction.INPUT
 
     COIL_EN = digitalio.DigitalInOut(board.COIL_EN)
     COIL_EN.direction = digitalio.Direction.OUTPUT
@@ -59,6 +68,9 @@ class ArgusV3Power:
     BATT_HEATER1_ON = digitalio.DigitalInOut(board.HEAT1_ON)
     BATT_HEATER1_ON.direction = digitalio.Direction.OUTPUT
     BATT_HEATER1_ON.value = False
+
+    PAYLOAD_OVC = digitalio.DigitalInOut(board.PAYLOAD_FLT)
+    PAYLOAD_OVC.direction = digitalio.Direction.INPUT
 
 
 class ArgusV3Interfaces:
@@ -240,8 +252,6 @@ class ArgusV3Components:
     RADIO_RX_EN = board.LORA_RX_EN
     RADIO_BUSY = board.LORA_BUSY
     RADIO_IRQ = board.LORA_INT
-    RADIO_OVC = digitalio.DigitalInOut(board.LORA_FLT)
-    RADIO_OVC.direction = digitalio.Direction.INPUT
 
     ########
     # SPI1 #
@@ -258,8 +268,6 @@ class ArgusV3Components:
     PAYLOAD_IO2 = board.PAYLOAD_IO2
     PAYLOAD_CS = board.PAYLOAD_nCS
     PAYLOAD_EN = board.PAYLOAD_EN
-    PAYLOAD_FLT = digitalio.DigitalInOut(board.PAYLOAD_FLT)
-    PAYLOAD_FLT.direction = digitalio.Direction.INPUT
 
     #########
     # UART0 #
@@ -268,8 +276,6 @@ class ArgusV3Components:
     # GPS
     GPS_UART = ArgusV3Interfaces.UART0
     GPS_ENABLE = board.GPS_EN
-    GPS_OVC = digitalio.DigitalInOut(board.GPS_FLT)
-    GPS_OVC.direction = digitalio.Direction.INPUT
 
     #########
     # UART1 #
