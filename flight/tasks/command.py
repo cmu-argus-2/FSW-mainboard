@@ -161,7 +161,7 @@ class Task(TemplateTask):
                 self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1
 
             if self.ADCS_MODE != Modes.TUMBLING or self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] == 1:
-                # T1.1: Out of tumbling OR detumbling error flag is set (detumbling timeout)
+                # T1.1: Spin stabilized OR detumbling error flag is set (detumbling timeout)
                 self.log_info("T1.1: Transition from DETUMBLING to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
 
@@ -204,7 +204,7 @@ class Task(TemplateTask):
                 SATELLITE.NEOPIXEL.fill([255, 0, 0])
 
             if self.EPS_MODE != EPS_POWER_FLAG.LOW_POWER:
-                # T3.1: Nominal SoC, transition out of low power
+                # T3.1: Nominal or high SoC, transition out of low power
                 self.log_info("T3.1: Transition from LOW POWER to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
 
@@ -218,7 +218,7 @@ class Task(TemplateTask):
                 SATELLITE.NEOPIXEL.fill([255, 0, 255])
 
             if self.EPS_MODE != EPS_POWER_FLAG.EXPERIMENT:
-                # T4.1: Nominal SoC, transition back to nominal
+                # T4.1: Nominal or low SoC, transition back to nominal
                 self.log_info("T4.1: Transition from LOW POWER to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
 
