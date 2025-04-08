@@ -39,7 +39,7 @@ class BatteryHeaters:
             self.__enable.value = False
 
     def heater0_enabled(self):
-        return self.__heater0_en.value & self.__enable.value
+        return self.__heater0_en.value and self.__enable.value
 
     def heater1_enabled(self):
-        return self.__heater1_en.value & self.__enable.value
+        return self.__heater1_en.value and self.__enable.value
