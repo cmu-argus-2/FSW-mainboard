@@ -25,7 +25,7 @@ Author: Ibrahima Sory Sow
 
 """
 
-from definitions import ACK, CommandID, ErrorCodes, PayloadTM
+from definitions import ACK, CommandID, ErrorCodes, PayloadTM, Resp_DisableCameras, Resp_EnableCameras
 
 # Asymmetric sizes for send and receive buffers
 _RECV_PCKT_BUF_SIZE = 256
@@ -186,9 +186,11 @@ class Decoder:
         cls._recv_buffer = data
 
         # header processing
-        cls._curr_id = cls._recv_buffer[0]
+        cls._curr_id = int(cls._recv_buffer[0])
         # TODO: Seq count
-        cls._curr_data_length = cls._recv_buffer[cls._data_length_idx]
+        cls._curr_data_length = int(cls._recv_buffer[cls._data_length_idx])
+        # print("[INFO] Current ID: ", cls._curr_id)
+        # print("[INFO] Current data length: ", cls._curr_data_length)
 
         if cls._curr_id == CommandID.PING_ACK:
             return cls.decode_ping()
@@ -196,6 +198,10 @@ class Decoder:
             return cls.decode_shutdown()
         elif cls._curr_id == CommandID.REQUEST_TELEMETRY:
             return cls.decode_request_telemetry()
+        elif cls._curr_id == CommandID.ENABLE_CAMERAS:
+            return cls.decode_enable_cameras()
+        elif cls._curr_id == CommandID.DISABLE_CAMERAS:
+            return cls.decode_disable_cameras()
         # rest is coming
 
     @classmethod
@@ -271,3 +277,41 @@ class Decoder:
         PayloadTM.VDD_SOC = int.from_bytes(cls._recv_buffer[cls._data_idx][44:46], byteorder=_BYTE_ORDER, signed=False)
 
         return ErrorCodes.OK
+
+    @classmethod
+    def decode_enable_cameras(cls):
+        if cls._curr_data_length <= 1:
+            return ErrorCodes.INVALID_PACKET
+
+        if cls._curr_data_length == 5:
+            Resp_EnableCameras.reset()
+            Resp_EnableCameras.num_activated_cameras = int(cls._recv_buffer[cls._data_idx][0])
+            Resp_EnableCameras.cam_status[0] = int(cls._recv_buffer[cls._data_idx][1])
+            Resp_EnableCameras.cam_status[1] = int(cls._recv_buffer[cls._data_idx][2])
+            Resp_EnableCameras.cam_status[2] = int(cls._recv_buffer[cls._data_idx][3])
+            Resp_EnableCameras.cam_status[3] = int(cls._recv_buffer[cls._data_idx][4])
+            return ErrorCodes.OK
+        else:
+            if int(cls._recv_buffer[cls._data_idx][0]) == ACK.ERROR:
+                return int(cls._recv_buffer[cls._data_idx][1])
+
+            return ErrorCodes.INVALID_PACKET
+
+    @classmethod
+    def decode_disable_cameras(cls):
+        if cls._curr_data_length <= 1:
+            return ErrorCodes.INVALID_PACKET
+
+        if cls._curr_data_length == 5:
+            Resp_DisableCameras.reset()
+            Resp_DisableCameras.num_deactivated_cameras = int(cls._recv_buffer[cls._data_idx][0])
+            Resp_DisableCameras.cam_status[0] = int(cls._recv_buffer[cls._data_idx][1])
+            Resp_DisableCameras.cam_status[1] = int(cls._recv_buffer[cls._data_idx][2])
+            Resp_DisableCameras.cam_status[2] = int(cls._recv_buffer[cls._data_idx][3])
+            Resp_DisableCameras.cam_status[3] = int(cls._recv_buffer[cls._data_idx][4])
+            return ErrorCodes.OK
+        else:
+            if int(cls._recv_buffer[cls._data_idx][0]) == ACK.ERROR:
+                return int(cls._recv_buffer[cls._data_idx][1])
+
+            return ErrorCodes.INVALID_PACKET

@@ -5,6 +5,23 @@ Author: Ibrahima Sory Sow
 """
 
 
+class ExternalRequest:
+    """
+    Represents a collection of external request codes used by the payload controller
+    to perform specific tasks. These request codes serve as an abstraction
+    layer, simplifying the interaction between the payload controller and
+    the rest of the system.
+    """
+
+    NO_ACTION = 0x21
+    TURN_ON = 0x22
+    TURN_OFF = 0x23
+    FORCE_POWER_OFF = 0x24
+    REQUEST_IMAGE = 0x25
+    CLEAR_STORAGE = 0x26
+    INVALID = 0x27
+
+
 class CommandID:
     PING_ACK = 0x00
     SHUTDOWN = 0x01
@@ -90,3 +107,24 @@ class PayloadTM:  # Simple data structure holder
         print(f"VDD_IN: {cls.VDD_IN}")
         print(f"VDD_CPU_GPU_CV: {cls.VDD_CPU_GPU_CV}")
         print(f"VDD_SOC: {cls.VDD_SOC}")
+
+
+# Decoder will fill those buffers
+class Resp_EnableCameras:
+    num_cam_activated = 0
+    cam_status = [0, 0, 0, 0]
+
+    @classmethod
+    def reset(cls):
+        cls.num_cam_activated = 0
+        cls.cam_status = [0, 0, 0, 0]
+
+
+class Resp_DisableCameras:
+    num_cam_deactivated = 0
+    cam_status = [0, 0, 0, 0]
+
+    @classmethod
+    def reset(cls):
+        cls.num_cam_deactivated = 0
+        cls.cam_status = [0, 0, 0, 0]
