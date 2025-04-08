@@ -1,18 +1,14 @@
-from time import struct_time
+from time import gmtime, struct_time
 
 
 class RTC:
     def __init__(self, date_input: struct_time) -> None:
-        self.datetime = date_input
+        self.current_datetime = date_input
 
+    @property
     def datetime(self):
-        return self.datetime
+        self.current_datetime = gmtime()
+        return self.current_datetime
 
     def set_datetime(self, date_input: struct_time):
         self.datetime = date_input
-
-    def run_diagnostics(self):
-        return []
-
-    def get_flags(self) -> dict:
-        return {}

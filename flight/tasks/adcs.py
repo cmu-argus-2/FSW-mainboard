@@ -1,8 +1,6 @@
 # Attitude Determination and Control (ADC) task
 
-import time
-
-from apps.adcs.acs import spin_stabilizing_controller, sun_pointed_controller, zero_all_coils
+from apps.adcs.acs import mcm_coil_allocator, spin_stabilizing_controller, sun_pointing_controller, zero_all_coils
 from apps.adcs.ad import AttitudeDetermination
 from apps.adcs.consts import Modes, StatusConst
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX
@@ -10,6 +8,7 @@ from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.states import STATES
+from core.time_processor import TimeProcessor as TPM
 
 """
     ASSUMPTIONS :
@@ -78,19 +77,17 @@ class Task(TemplateTask):
             pass
 
         else:
-
             if not DH.data_process_exists("adcs"):
                 data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f"
                 DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
 
-            self.time = int(time.time())
+            self.time = TPM.time()
             self.log_data[ADCS_IDX.TIME_ADCS] = self.time
 
             # ------------------------------------------------------------------------------------------------------------------------------------
             # DETUMBLING
             # ------------------------------------------------------------------------------------------------------------------------------------
             if SM.current_state == STATES.DETUMBLING:
-
                 # Query the Gyro
                 self.AD.gyro_update(self.time, update_covariance=False)
 
@@ -108,7 +105,6 @@ class Task(TemplateTask):
             # LOW POWER
             # ------------------------------------------------------------------------------------------------------------------------------------
             elif SM.current_state == STATES.LOW_POWER:
-
                 # Turn coils off to conserve power
                 zero_all_coils()
 
@@ -120,7 +116,7 @@ class Task(TemplateTask):
                 else:
                     if not self.AD.initialized:
                         status_1, status_2 = self.AD.initialize_mekf()
-                        if status_1 != StatusConst.OK:
+                        if status_1 != StatusConst.OK or status_2 != StatusConst.OK:
                             self.failure_messages.append(
                                 StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
                             )
@@ -155,7 +151,6 @@ class Task(TemplateTask):
             # NOMINAL & EXPERIMENT
             # ------------------------------------------------------------------------------------------------------------------------------------
             else:
-
                 if (
                     SM.current_state == STATES.NOMINAL
                     and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
@@ -176,7 +171,7 @@ class Task(TemplateTask):
                     else:
                         if not self.AD.initialized:
                             status_1, status_2 = self.AD.initialize_mekf()
-                            if status_1 != StatusConst.OK:
+                            if status_1 != StatusConst.OK or status_2 != StatusConst.OK:
                                 self.failure_messages.append(
                                     StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
                                 )
@@ -217,6 +212,7 @@ class Task(TemplateTask):
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ Attitude Control Auxiliary Functions """
+
     # ------------------------------------------------------------------------------------------------------------------------------------
     def attitude_control(self):
         """
@@ -225,26 +221,27 @@ class Task(TemplateTask):
 
         # Decide which controller to choose
         if self.MODE in [Modes.TUMBLING, Modes.STABLE]:  # B-cross controller
-
             # Get sensor measurements
             omega_unbiased = self.AD.state[self.AD.omega_idx] - self.AD.state[self.AD.bias_idx]
             mag_field_body = self.AD.state[self.AD.mag_field_idx]
 
             # Control MCMs and obtain coil statuses
-            self.coil_status = spin_stabilizing_controller(omega_unbiased, mag_field_body)
+            dipole_moment = spin_stabilizing_controller(omega_unbiased, mag_field_body)
 
         else:  # Sun-pointed controller
-
             # Get measurements
             sun_pos_body = self.AD.state[self.AD.sun_pos_idx]
             omega_unbiased = self.AD.state[self.AD.omega_idx] - self.AD.state[self.AD.omega_idx]
             mag_field_body = self.AD.state[self.AD.mag_field_idx]
 
             # Control MCMs and obtain coil statuses
-            self.coil_status = sun_pointed_controller(sun_pos_body, omega_unbiased, mag_field_body)
+            dipole_moment = sun_pointing_controller(sun_pos_body, omega_unbiased, mag_field_body)
+
+        self.coil_status = mcm_coil_allocator(dipole_moment)
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ LOGGING """
+
     # ------------------------------------------------------------------------------------------------------------------------------------
     def log(self):
         """
@@ -267,10 +264,10 @@ class Task(TemplateTask):
         self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = int(self.AD.state[25]) & 0xFFFF
         self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = int(self.AD.state[26]) & 0xFFFF
         self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(self.AD.state[27]) & 0xFFFF
-        # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP1] = self.AD.state[28]
-        # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP2] = self.AD.state[29]
-        # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP3] = self.AD.state[30]
-        # self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP4] = self.AD.state[31]
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP1] = int(self.AD.state[28]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP2] = int(self.AD.state[29]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP3] = int(self.AD.state[30]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP4] = int(self.AD.state[31]) & 0xFFFF
         self.log_data[ADCS_IDX.XP_COIL_STATUS] = int(self.coil_status[0])
         self.log_data[ADCS_IDX.XM_COIL_STATUS] = int(self.coil_status[1])
         self.log_data[ADCS_IDX.YP_COIL_STATUS] = int(self.coil_status[2])
@@ -284,7 +281,6 @@ class Task(TemplateTask):
         DH.log_data("adcs", self.log_data)
 
         if self.execution_counter == 0:
-
             # Empty failure message buffers
             for msg in self.failure_messages:
                 self.log_warning(msg)

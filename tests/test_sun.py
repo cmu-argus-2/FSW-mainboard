@@ -1,7 +1,8 @@
 import pytest
 
 import tests.cp_mock  # noqa: F401
-from flight.apps.adcs.sun import ERROR_LUX, SUN_VECTOR_STATUS, compute_body_sun_vector_from_lux, in_eclipse
+from flight.apps.adcs.consts import StatusConst
+from flight.apps.adcs.sun import ERROR_LUX, compute_body_sun_vector_from_lux, in_eclipse
 
 
 @pytest.mark.parametrize(
@@ -10,45 +11,37 @@ from flight.apps.adcs.sun import ERROR_LUX, SUN_VECTOR_STATUS, compute_body_sun_
         (
             [80000, 0, 30000, 0, 0],
             (
-                SUN_VECTOR_STATUS.UNIQUE_DETERMINATION,
+                StatusConst.OK,
                 [0.93632918, 0.35112344, 0.0],
             ),
         ),
         (
             [117000, 0, 0, 0, 0],
-            (SUN_VECTOR_STATUS.UNIQUE_DETERMINATION, [1.0, 0.0, 0.0]),
+            (StatusConst.OK, [1.0, 0.0, 0.0]),
         ),
         (
             [0, 117000, 0, 0, 0],
-            (SUN_VECTOR_STATUS.UNIQUE_DETERMINATION, [-1.0, 0.0, 0.0]),
+            (StatusConst.OK, [-1.0, 0.0, 0.0]),
         ),
         (
             [0, 0, 117000, 0, 0],
-            (SUN_VECTOR_STATUS.UNIQUE_DETERMINATION, [0.0, 1.0, 0.0]),
+            (StatusConst.OK, [0.0, 1.0, 0.0]),
         ),
         (
             [0, 0, 0, 117000, 0],
-            (SUN_VECTOR_STATUS.UNIQUE_DETERMINATION, [0.0, -1.0, 0.0]),
+            (StatusConst.OK, [0.0, -1.0, 0.0]),
         ),
         (
             [0, 0, 0, 0, 117000],
-            (SUN_VECTOR_STATUS.UNIQUE_DETERMINATION, [0.0, 0.0, 1.0]),
-        ),
-        (
-            [ERROR_LUX, 117000, 0, 0, 0],
-            (SUN_VECTOR_STATUS.MISSING_XP_READING, [-1.0, 0, 0]),
-        ),
-        (
-            [0, ERROR_LUX, 0, 117000, 0],
-            (SUN_VECTOR_STATUS.MISSING_XM_READING, [0.0, -1.0, 0.0]),
+            (StatusConst.OK, [0.0, 0.0, 1.0]),
         ),
         (
             [ERROR_LUX, 20000, 0, ERROR_LUX, ERROR_LUX],
-            (SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS, [-1.0, 0.0, 0.0]),
+            (StatusConst.SUN_NOT_ENOUGH_READINGS, [-1.0, 0.0, 0.0]),
         ),
         (
             [ERROR_LUX, ERROR_LUX, ERROR_LUX, ERROR_LUX, ERROR_LUX],
-            (SUN_VECTOR_STATUS.NO_READINGS, [0.0, 0.0, 0.0]),
+            (StatusConst.SUN_NO_READINGS, [0.0, 0.0, 0.0]),
         ),
     ],
 )

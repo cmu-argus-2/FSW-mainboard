@@ -40,9 +40,9 @@ import json
 import os
 import re
 import struct
-import time
 
 from core.logging import logger
+from core.time_processor import TimeProcessor as TPM
 from micropython import const
 
 try:
@@ -309,7 +309,7 @@ class DataProcess:
             str: The new filename.
         """
         # Keeping the tag name in the filename for identification in debugging
-        return join_path(self.dir_path, self.tag_name) + "_" + str(int(time.time())) + ".bin"
+        return join_path(self.dir_path, self.tag_name) + "_" + str(TPM.time()) + ".bin"
 
     def try_to_reuse_latest_file(self) -> bool:
         """
@@ -395,7 +395,7 @@ class DataProcess:
         else:
             return None
 
-    def request_TM_path(self, latest: bool = False) -> Optional[str]:
+    def request_TM_path(self, latest: bool = False, file_time=None) -> Optional[str]:
         """
         Returns the path of a designated file available for transmission.
         If no file is available, the function returns None.
@@ -406,7 +406,9 @@ class DataProcess:
         """
         files = self.get_sorted_file_list()
         if len(files) > 1:  # Ignore process configuration file
-            if latest:
+            if latest or (
+                file_time is not None and file_time == 0
+            ):  # Edge case for when time = 0 we want to return the latest
                 transmit_file = files[-1]
                 if transmit_file == _PROCESS_CONFIG_FILENAME:
                     transmit_file = files[-2]
@@ -414,6 +416,10 @@ class DataProcess:
                 transmit_file = files[0]
                 if transmit_file == _PROCESS_CONFIG_FILENAME:
                     transmit_file = files[1]
+
+                if file_time is not None:
+                    result_file = get_closest_file_time(file_time, files)
+                    transmit_file = result_file if result_file is not None else transmit_file
 
             tm_path = join_path(self.dir_path, transmit_file)
 
@@ -504,8 +510,12 @@ class DataProcess:
         """
         files = os.listdir(self.dir_path)
         # TODO - implement the rest of the function
-        total_size = len(files) * self.size_limit + self.get_current_file_size()
-        return len(files), total_size
+        if self.get_current_file_size() is not None:
+            total_size = (len(files) - 2) * self.size_limit + self.get_current_file_size()
+        else:
+            total_size = 0
+
+        return (len(files) - 1), total_size
 
     def get_current_file_size(self) -> Optional[int]:
         """
@@ -571,6 +581,9 @@ class ImageProcess(DataProcess):
         self.delete_paths = []  # Paths that are flagged for deletion
         self.excluded_paths = []  # Paths that are currently being transmitted
         self.circular_buffer_size = 20  # Default size of the circular buffer for the files in the directory
+        self.img_buf_size = 512  # Default size of the circular buffer for image data logs
+        self.img_buf = bytearray(self.img_buf_size)  # Pre-allocated static buffer for image process
+        self.img_buf_index = 0  # index to track position in buffer
 
         config_file_path = join_path(self.dir_path, _PROCESS_CONFIG_FILENAME)
         if not path_exist(config_file_path):
@@ -600,11 +613,11 @@ class ImageProcess(DataProcess):
             str: The new filename.
         """
         # Keeping the tag name in the filename for identification
-        return join_path(self.dir_path, self.tag_name) + "_" + str(int(time.time())) + ".jpg"
+        return join_path(self.dir_path, self.tag_name) + "_" + str(TPM.time()) + ".jpg"
 
     def log(self, data: bytearray) -> None:
         """
-        Logs the given image data.
+        Logs the given image data. Stores into a buffer and write in blocks of 512 Bytes
 
         Args:
             data (List[bytes]): The bytes of image data to be logged.
@@ -612,13 +625,39 @@ class ImageProcess(DataProcess):
         Returns:
             None
         """
-        self.resolve_current_file()
-        self.last_data = data
 
-        self.file.write(data)
-        self.file.flush()
+        if not DataHandler.SD_ERROR_FLAG:
+            # Add to image buffer and transmit only when multiples of 512 Bytes have been attained
+            data_len = len(data)
+            data_offset = 0  # Keeps track of processed data
 
-    def request_TM_path(self, latest: bool = False) -> Optional[str]:
+            while data_offset < data_len:
+                space_remaining = self.img_buf_size - self.img_buf_index
+                chunk_size = min(data_len - data_offset, space_remaining)  # Fill as much as possible
+
+                # Copy data into buffer
+                self.img_buf[self.img_buf_index : self.img_buf_index + chunk_size] = data[
+                    data_offset : data_offset + chunk_size
+                ]
+                self.img_buf_index += chunk_size
+                data_offset += chunk_size  # Move data offset
+
+                if self.img_buf_index == self.img_buf_size:
+                    # Buffer is full, write to SD card
+                    self.resolve_current_file()
+                    self.file.write(self.img_buf[: self.img_buf_size])  # Write full 512-byte block
+                    self.file.flush()
+                    self.img_buf_index = 0  # Reset buffer index
+
+        else:
+            # Transmit each time without adding to a buf
+            self.resolve_current_file()
+            self.last_data = data
+
+            self.file.write(data)
+            self.file.flush()
+
+    def request_TM_path(self, latest: bool = False, file_time=None) -> Optional[str]:
         """
         MODIFIED FOR IMAGES as we need complete images to be transmitted.
 
@@ -639,6 +678,10 @@ class ImageProcess(DataProcess):
                 transmit_file = files[0]
                 if transmit_file == _PROCESS_CONFIG_FILENAME:
                     transmit_file = files[1]
+
+                if file_time is not None:
+                    result_file = get_closest_file_time(file_time, files)
+                    transmit_file = result_file if result_file is not None else transmit_file
 
             tm_path = join_path(self.dir_path, transmit_file)
 
@@ -677,6 +720,30 @@ class DataHandler:
     # Keep track of all file processes
     data_process_registry = dict()
 
+    def __can_write_to_path(path: str) -> bool:
+        """
+        Check if the given path is writable by attempting to create a temporary file.
+
+        Args:
+            path (str): The path to check.
+
+        Returns:
+            bool: True if the path is writable, False otherwise.
+        """
+        test_file = join_path(path, ".write_test")
+        try:
+            with open(test_file, "w") as f:
+                f.write("test")
+            return True
+        except OSError:
+            return False
+        finally:
+            if path_exist(test_file):
+                try:
+                    os.remove(test_file)
+                except Exception:
+                    pass
+
     @classmethod
     def scan_SD_card(cls) -> None:
         """
@@ -694,7 +761,7 @@ class DataHandler:
         Example:
             DataHandler.scan_SD_card()
         """
-        if not path_exist(_HOME_PATH):
+        if not cls.__can_write_to_path(_HOME_PATH):
             # The SD card path has an issue
             cls.SD_ERROR_FLAG = True
         else:
@@ -976,7 +1043,7 @@ class DataHandler:
         return list(cls.data_process_registry.values())
 
     @classmethod
-    def get_storage_info(cls, tag_name: str) -> None:
+    def get_storage_info(cls, tag_name: str):
         """
         Prints the storage information for the specified data process.
 
@@ -987,14 +1054,14 @@ class DataHandler:
             KeyError: If the provided tag name is not registered in the data process registry.
 
         Returns:
-            None
+            Tuple containing storage information for the tag name if it exists
 
         Example:
             DataHandler.get_storage_info('tag_name')
         """
         try:
             if tag_name in cls.data_process_registry:
-                cls.data_process_registry[tag_name].get_storage_info()
+                return cls.data_process_registry[tag_name].get_storage_info()
             else:
                 raise KeyError("File process not registered.")
         except KeyError as e:
@@ -1024,7 +1091,7 @@ class DataHandler:
         return _IMG_TAG_NAME in cls.data_process_registry
 
     @classmethod
-    def request_TM_path(cls, tag_name, latest=False):
+    def request_TM_path(cls, tag_name, latest=False, file_time=None):
         """
         Returns the path of a designated file available for transmission.
         If no file is available, the function returns None.
@@ -1035,14 +1102,14 @@ class DataHandler:
         """
         try:
             if tag_name in cls.data_process_registry:
-                return cls.data_process_registry[tag_name].request_TM_path(latest=latest)
+                return cls.data_process_registry[tag_name].request_TM_path(latest=latest, file_time=file_time)
             else:
                 raise KeyError("Data  process not registered!")
         except KeyError as e:
             logger.critical(f"Error: {e}")
 
     @classmethod
-    def request_TM_path_image(cls, latest=False):
+    def request_TM_path_image(cls, latest=False, file_time=None):
         """
         Returns the path of a designated image available for transmission.
         If no file is available, the function returns None.
@@ -1053,7 +1120,7 @@ class DataHandler:
         """
         try:
             if "img" in cls.data_process_registry:
-                return cls.data_process_registry["img"].request_TM_path(latest=latest)
+                return cls.data_process_registry["img"].request_TM_path(latest=latest, file_time=file_time)
             else:
                 raise KeyError("Image process not registered!")
         except KeyError as e:
@@ -1258,4 +1325,24 @@ def extract_time_from_filename(filename: str) -> int:
         return int(match.group(1))
     else:
         logger.warning(f"Invalid filename format for {filename}")
+        return None
+
+
+def get_closest_file_time(file_time: int, files: List[str]):
+    """
+    Search through all the files to find the file name with the closest file time requested.
+    Used for requesting file paths
+
+    Args:
+        file_time(int): The requested file time
+        files(List[str]): A List of all the files for that data process
+
+    Returns:
+        str: file path with the closest file time to the one requested
+    """
+    # Search for the specific file with closest time to requested file time
+    try:
+        return min(files, key=lambda f: abs(extract_time_from_filename(f) - file_time))
+    except TypeError as e:
+        logger.warning(f"Could not find closest file time: {e}")
         return None

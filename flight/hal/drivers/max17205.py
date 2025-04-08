@@ -77,7 +77,7 @@ class MAX17205:
             i2c.readinto(self.rx_buffer)
 
         # Convert readback bytes to pack capacity
-        self.capacity = int.from_bytes(self.rx_buffer, "little", signed=False) / 0.01
+        self.capacity = int.from_bytes(self.rx_buffer, "little", signed=False) * 0.5
 
         return self.capacity
 
@@ -226,3 +226,6 @@ class MAX17205:
         with self.i2c_device as i2c:
             # Write to _MAX1720X_CONFIG2_ADDR
             i2c.write(bytes([_MAX1720X_CONFIG2_ADDR, 0x01, 0x00]))
+
+    def deinit(self):
+        return

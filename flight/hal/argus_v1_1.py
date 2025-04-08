@@ -162,10 +162,10 @@ class ArgusV1Components:
 
     # ZP SUN SENSOR
     SUN_SENSOR_ZP_I2C = ArgusV1Interfaces.I2C3
-    SUN_SENSOR_ZP1_I2C_ADDRESS = const(0x44)  # Conflict with ZM
-    SUN_SENSOR_ZP2_I2C_ADDRESS = const(0x45)
-    SUN_SENSOR_ZP3_I2C_ADDRESS = const(0x46)
-    SUN_SENSOR_ZP4_I2C_ADDRESS = const(0x47)
+    LIGHT_SENSOR_ZP1_I2C_ADDRESS = const(0x44)  # Conflict with ZM
+    LIGHT_SENSOR_ZP2_I2C_ADDRESS = const(0x45)
+    LIGHT_SENSOR_ZP3_I2C_ADDRESS = const(0x46)
+    LIGHT_SENSOR_ZP4_I2C_ADDRESS = const(0x47)
 
     # GPS
     GPS_UART = ArgusV1Interfaces.UART1
@@ -213,55 +213,18 @@ class ArgusV1(CubeSat):
         self.__debug = debug
 
         super().__init__()
+        self.append_device("NEOPIXEL", self.__neopixel_boot)
 
     ######################## BOOT SEQUENCE ########################
 
     def boot_sequence(self) -> list[int]:
         """boot_sequence: Boot sequence for the CubeSat."""
-        error_list: list[int] = []
 
-        # Create individual torque coil driver instances
-        self.__torque_xp_driver = None
-        self.__torque_xm_driver = None
-        self.__torque_yp_driver = None
-        self.__torque_ym_driver = None
-        self.__torque_z_driver = None
+        for name, device in self.__device_list.items():
+            func = device.boot_fn
+            device.device, device.error = func(name)
 
-        self.__state_flags_boot()  # Does not require error checking
-
-        error_list.append(self.__sd_card_boot())
-        error_list.append(self.__vfs_boot())
-        error_list.append(self.__imu_boot())
-        error_list.append(self.__rtc_boot())
-        # error_list.append(self.__gps_boot())
-        error_list.append(self.__power_monitor_boot())
-        error_list.append(self.__charger_boot())
-        # error_list.append(self.__torque_drivers_boot())
-        # error_list.append(self.__light_sensors_boot())  # light + sun sensors
-        # error_list.append(self.__radio_boot())
-        error_list.append(self.__neopixel_boot())
-        # error_list.append(self.__burn_wire_boot())
-
-        error_list = [error for error in error_list if error != Errors.NOERROR]
-
-        if self.__debug:
-            print("Boot Errors:")
-            print()
-            for error in error_list:
-                print(f"{Errors.diagnostic_to_string(error)}")
-            print()
-
-        self.__recent_errors = error_list
-
-        return error_list
-
-    def __state_flags_boot(self) -> None:
-        """state_flags_boot: Boot sequence for the state flags"""
-        from hal.drivers.stateflags import StateFlags
-
-        self.__state_flags = StateFlags()
-
-    def __gps_boot(self) -> list[int]:
+    def __gps_boot(self, _) -> list[int]:
         """GPS_boot: Boot sequence for the GPS
 
         :return: Error code if the GPS failed to initialize
@@ -269,96 +232,62 @@ class ArgusV1(CubeSat):
         try:
             from hal.drivers.gps import GPS
 
-            gps1 = GPS(ArgusV1Components.GPS_UART, ArgusV1Components.GPS_ENABLE)
+            gps = GPS(ArgusV1Components.GPS_UART, ArgusV1Components.GPS_ENABLE)
 
-            self.__gps = gps1
-            self.__device_list.append(gps1)
+            return [gps, Errors.NOERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return Errors.GPS_NOT_INITIALIZED
+            return [None, Errors.GPS_NOT_INITIALIZED]
 
-        return Errors.NOERROR
-
-    def __power_monitor_boot(self) -> list[int]:
+    def __power_monitor_boot(self, location) -> list[int]:
         """power_monitor_boot: Boot sequence for the power monitor
 
         :return: Error code if the power monitor failed to initialize
         """
 
-        locations = {
-            "BOARD": [ArgusV1Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV1Components.BOARD_POWER_MONITOR_I2C],
-            # "JETSON": [ArgusV1Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV1Components.JETSON_POWER_MONITOR_I2C],
-            # "TORQUE_XP": [
-            #     ArgusV1Components.TORQUE_XP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV1Components.TORQUE_X_POWER_MONITOR_I2C,
-            # ],
-            # "TORQUE_XM": [
-            #     ArgusV1Components.TORQUE_XM_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV1Components.TORQUE_X_POWER_MONITOR_I2C,
-            # ],
-            # "TORQUE_YP": [
-            #     ArgusV1Components.TORQUE_YP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV1Components.TORQUE_Y_POWER_MONITOR_I2C,
-            # ],
-            # "TORQUE_YM": [
-            #     ArgusV1Components.TORQUE_YM_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV1Components.TORQUE_Y_POWER_MONITOR_I2C,
-            # ],
-            # "TORQUE_ZP": [
-            #     ArgusV1Components.TORQUE_ZP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV1Components.TORQUE_Z_POWER_MONITOR_I2C,
-            # ],
-            # "TORQUE_ZM": [
-            #     ArgusV1Components.TORQUE_ZM_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV1Components.TORQUE_Z_POWER_MONITOR_I2C,
-            # ],
-            # "SOLAR_XP": [
-            #     ArgusV1Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV1Components.SOLAR_CHARGING_X_POWER_MONITOR_I2C,
-            # ],
-            # "SOLAR_XM": [
-            #     ArgusV1Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV1Components.SOLAR_CHARGING_X_POWER_MONITOR_I2C,
-            # ],
-            # "SOLAR_YP": [
-            #     ArgusV1Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV1Components.SOLAR_CHARGING_Y_POWER_MONITOR_I2C,
-            # ],
-            # "SOLAR_YM": [
-            #     ArgusV1Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV1Components.SOLAR_CHARGING_Y_POWER_MONITOR_I2C,
-            # ],
-            # "SOLAR_ZP": [
-            #     ArgusV1Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS,
-            #     ArgusV1Components.SOLAR_CHARGING_Z_POWER_MONITOR_I2C,
-            # ],
-        }
-
         from hal.drivers.adm1176 import ADM1176
 
-        error_codes = []
+        locations = {
+            "BOARD_PWR": [ArgusV1Components.BOARD_POWER_MONITOR_I2C_ADDRESS, ArgusV1Components.BOARD_POWER_MONITOR_I2C],
+            "JETSON_PWR": [ArgusV1Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV1Components.JETSON_POWER_MONITOR_I2C],
+            "XP_PWR": [
+                ArgusV1Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV1Components.SOLAR_CHARGING_X_POWER_MONITOR_I2C,
+            ],
+            "XM_PWR": [
+                ArgusV1Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV1Components.SOLAR_CHARGING_X_POWER_MONITOR_I2C,
+            ],
+            "YP_PWR": [
+                ArgusV1Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV1Components.SOLAR_CHARGING_Y_POWER_MONITOR_I2C,
+            ],
+            "YM_PWR": [
+                ArgusV1Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV1Components.SOLAR_CHARGING_Y_POWER_MONITOR_I2C,
+            ],
+            "ZP_PWR": [
+                ArgusV1Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS,
+                ArgusV1Components.SOLAR_CHARGING_Z_POWER_MONITOR_I2C,
+            ],
+        }
+        data = locations[location]
+        try:
+            address = data[0]
+            bus = data[1]
+            power_monitor = ADM1176(bus, address)
 
-        for location, busAndAddress in locations.items():
-            try:
-                address = busAndAddress[0]
-                bus = busAndAddress[1]
-                power_monitor = ADM1176(bus, address)
+            return [power_monitor, Errors.NOERROR]
 
-                self.__power_monitors[location] = power_monitor
-                self.__device_list.append(power_monitor)
-                error_codes.append(Errors.NOERROR)  # Append success code if no error
-            except Exception as e:
-                self.__power_monitors[location] = None
-                if self.__debug:
-                    print(f"Failed to initialize {location} power driver: {e}")
-                    raise e
-                return Errors.ADM1176_NOT_INITIALIZED
+        except Exception as e:
+            print(f"Failed to initialize {location}: {e}")
+            if self.__debug:
+                raise e
+            return [None, Errors.ADM1176_NOT_INITIALIZED]
 
-        return error_codes
-
-    def __imu_boot(self) -> list[int]:
+    def __imu_boot(self, _) -> list[int]:
         """imu_boot: Boot sequence for the IMU
 
         :return: Error code if the IMU failed to initialize
@@ -371,122 +300,82 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.IMU_I2C_ADDRESS,
             )
 
-            self.__imu = imu
-            self.__imu_temp_flag = True
-            self.__device_list.append(imu)
+            return [imu, Errors.NOERROR]
         except Exception as e:
+            print(f"Failed to initialize IMU: {e}")
             if self.__debug:
                 raise e
+            return [None, Errors.IMU_NOT_INITIALIZED]
 
-            return Errors.IMU_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __charger_boot(self) -> list[int]:
-        """charger_boot: Boot sequence for the charger
-
-        :return: Error code if the charger failed to initialize
-        """
-        try:
-            from hal.drivers.bq25883 import BQ25883
-
-            charger = BQ25883(
-                ArgusV1Components.CHARGER_I2C,
-                ArgusV1Components.CHARGER_I2C_ADDRESS,
-            )
-
-            self.__charger = charger
-            self.__device_list.append(charger)
-        except Exception as e:
-            if self.__debug:
-                raise e
-
-            return Errors.BQ25883_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __torque_drivers_boot(self) -> list[int]:
+    def __torque_drivers_boot(self, direction) -> list[int]:
         """Boot sequence for all torque drivers in predefined directions.
 
         :return: List of error codes for each torque driver in the order of directions
         """
         directions = {
-            "XP": [ArgusV1Components.TORQUE_XP_I2C_ADDRESS, ArgusV1Components.TORQUE_COILS_X_I2C],
-            "XM": [ArgusV1Components.TORQUE_XM_I2C_ADDRESS, ArgusV1Components.TORQUE_COILS_X_I2C],
-            "YP": [ArgusV1Components.TORQUE_YP_I2C_ADDRESS, ArgusV1Components.TORQUE_COILS_Y_I2C],
-            "YM": [ArgusV1Components.TORQUE_YM_I2C_ADDRESS, ArgusV1Components.TORQUE_COILS_Y_I2C],
-            "ZP": [ArgusV1Components.TORQUE_ZP_I2C_ADDRESS, ArgusV1Components.TORQUE_COILS_Z_I2C],
-            "ZM": [ArgusV1Components.TORQUE_ZM_I2C_ADDRESS, ArgusV1Components.TORQUE_COILS_Z_I2C],
+            "TORQUE_XP": [ArgusV1Components.TORQUE_XP_I2C_ADDRESS, ArgusV1Components.TORQUE_COILS_X_I2C],
+            "TORQUE_XM": [ArgusV1Components.TORQUE_XM_I2C_ADDRESS, ArgusV1Components.TORQUE_COILS_X_I2C],
+            "TORQUE_YP": [ArgusV1Components.TORQUE_YP_I2C_ADDRESS, ArgusV1Components.TORQUE_COILS_Y_I2C],
+            "TORQUE_YM": [ArgusV1Components.TORQUE_YM_I2C_ADDRESS, ArgusV1Components.TORQUE_COILS_Y_I2C],
+            "TORQUE_ZP": [ArgusV1Components.TORQUE_ZP_I2C_ADDRESS, ArgusV1Components.TORQUE_COILS_Z_I2C],
+            "TORQUE_ZM": [ArgusV1Components.TORQUE_ZM_I2C_ADDRESS, ArgusV1Components.TORQUE_COILS_Z_I2C],
         }
 
         from hal.drivers.drv8830 import DRV8830
 
-        error_codes = []
+        data = directions[direction]
 
-        for direction, busAndAddress in directions.items():
-            try:
-                address = busAndAddress[0]
-                bus = busAndAddress[1]
-                torque_driver = DRV8830(bus, address)
+        try:
+            address = data[0]
+            bus = data[1]
+            torque_driver = DRV8830(bus, address)
 
-                self.__torque_drivers[direction] = torque_driver
-                self.__device_list.append(torque_driver)
-                error_codes.append(Errors.NOERROR)  # Append success code if no error
+            return [torque_driver, Errors.NOERROR]
 
-            except Exception as e:
-                self.__torque_drivers[direction] = None
-                if self.__debug:
-                    print(f"Failed to initialize {direction} torque driver: {e}")
-                    raise e
-                error_codes.append(Errors.DRV8830_NOT_INITIALIZED)  # Append failure code
+        except Exception as e:
+            if self.__debug:
+                print(f"Failed to initialize {direction} torque driver: {e}")
+                raise e
+            return [None, Errors.DRV8830_NOT_INITIALIZED]
 
-        return error_codes
-
-    def __light_sensors_boot(self) -> list[int]:
+    def __light_sensors_boot(self, direction) -> list[int]:
         """Boot sequence for all light sensors in predefined directions.
 
         :return: List of error codes for each sensor in the order of directions
         """
         directions = {
-            "XP": [ArgusV1Components.LIGHT_SENSOR_XP_I2C_ADDRESS, ArgusV1Components.LIGHT_SENSOR_X_I2C],
-            "XM": [ArgusV1Components.LIGHT_SENSOR_XM_I2C_ADDRESS, ArgusV1Components.LIGHT_SENSOR_X_I2C],
-            "YP": [ArgusV1Components.LIGHT_SENSOR_YP_I2C_ADDRESS, ArgusV1Components.LIGHT_SENSOR_Y_I2C],
-            "YM": [ArgusV1Components.LIGHT_SENSOR_YM_I2C_ADDRESS, ArgusV1Components.LIGHT_SENSOR_Y_I2C],
-            "ZM": [ArgusV1Components.LIGHT_SENSOR_ZM_I2C_ADDRESS, ArgusV1Components.LIGHT_SENSOR_Z_I2C],
-            "ZP1": [ArgusV1Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
-            "ZP2": [ArgusV1Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
-            "ZP3": [ArgusV1Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
-            "ZP4": [ArgusV1Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_XP": [ArgusV1Components.LIGHT_SENSOR_XP_I2C_ADDRESS, ArgusV1Components.LIGHT_SENSOR_X_I2C],
+            "LIGHT_XM": [ArgusV1Components.LIGHT_SENSOR_XM_I2C_ADDRESS, ArgusV1Components.LIGHT_SENSOR_X_I2C],
+            "LIGHT_YP": [ArgusV1Components.LIGHT_SENSOR_YP_I2C_ADDRESS, ArgusV1Components.LIGHT_SENSOR_Y_I2C],
+            "LIGHT_YM": [ArgusV1Components.LIGHT_SENSOR_YM_I2C_ADDRESS, ArgusV1Components.LIGHT_SENSOR_Y_I2C],
+            "LIGHT_ZM": [ArgusV1Components.LIGHT_SENSOR_ZM_I2C_ADDRESS, ArgusV1Components.LIGHT_SENSOR_Z_I2C],
+            "LIGHT_ZP_1": [ArgusV1Components.LIGHT_SENSOR_ZP1_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_2": [ArgusV1Components.LIGHT_SENSOR_ZP2_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_3": [ArgusV1Components.LIGHT_SENSOR_ZP3_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_4": [ArgusV1Components.LIGHT_SENSOR_ZP4_I2C_ADDRESS, ArgusV1Components.SUN_SENSOR_ZP_I2C],
         }
 
         from hal.drivers.opt4001 import OPT4001
 
-        error_codes = []  # List to store error codes per sensor
+        data = directions[direction]
 
-        for direction, busAndAddress in directions.items():
-            try:
-                address = busAndAddress[0]
-                bus = busAndAddress[1]
-                light_sensor = OPT4001(
-                    bus,
-                    address,
-                    conversion_time=ArgusV1Components.LIGHT_SENSOR_CONVERSION_TIME,
-                )
+        try:
+            address = data[0]
+            bus = data[1]
+            light_sensor = OPT4001(
+                bus,
+                address,
+                conversion_time=ArgusV1Components.LIGHT_SENSOR_CONVERSION_TIME,
+            )
+            return [light_sensor, Errors.NOERROR]
 
-                self.__light_sensors[direction] = light_sensor
-                self.__device_list.append(light_sensor)
-                error_codes.append(Errors.NOERROR)  # Append success code if no error
+        except Exception as e:
+            if self.__debug:
+                print(f"Failed to initialize {direction} light sensor: {e}")
+                raise e
+            return [None, Errors.OPT4001_NOT_INITIALIZED]
 
-            except Exception as e:
-                self.__light_sensors[direction] = None
-                if self.__debug:
-                    print(f"Failed to initialize {direction} light sensor: {e}")
-                    raise e
-                error_codes.append(Errors.OPT4001_NOT_INITIALIZED)  # Append failure code
-
-        return error_codes
-
-    def __radio_boot(self) -> list[int]:
+    def __radio_boot(self, _) -> list[int]:
         """radio_boot: Boot sequence for the radio
 
         :return: Error code if the radio failed to initialize
@@ -503,35 +392,29 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.RADIO_FREQ,
             )
 
-            self.__radio = radio
-            self.__device_list.append(radio)
+            return [radio, Errors.NOERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return Errors.RFM9X_NOT_INITIALIZED
+            return [None, Errors.RFM9X_NOT_INITIALIZED]
 
-        return Errors.NOERROR
-
-    def __rtc_boot(self) -> list[int]:
+    def __rtc_boot(self, _) -> list[int]:
         """rtc_boot: Boot sequence for the RTC
 
         :return: Error code if the RTC failed to initialize
         """
+
+        from hal.drivers.pcf8523 import PCF8523
+
         try:
-            from hal.drivers.pcf8523 import PCF8523
-
             rtc = PCF8523(ArgusV1Components.RTC_I2C, ArgusV1Components.RTC_I2C_ADDRESS)
-
-            self.__rtc = rtc
-            self.__device_list.append(rtc)
+            return [rtc, Errors.NOERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return Errors.PCF8523_NOT_INITIALIZED
-
-        return Errors.NOERROR
+            return [None, Errors.PCF8523_NOT_INITIALIZED]
 
     def __neopixel_boot(self) -> list[int]:
         """neopixel_boot: Boot sequence for the neopixel"""
@@ -542,18 +425,14 @@ class ArgusV1(CubeSat):
                 brightness=ArgusV1Components.NEOPIXEL_BRIGHTNESS,
                 pixel_order=neopixel.GRB,
             )
-            self.__neopixel = np
-            self.__device_list.append(neopixel)
-            self.append_device(neopixel)
+            return [np, Errors.NOERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return Errors.NEOPIXEL_NOT_INITIALIZED
+            return [None, Errors.NEOPIXEL_NOT_INITIALIZED]
 
-        return Errors.NOERROR
-
-    def __sd_card_boot(self) -> list[int]:
+    def __sd_card_boot(self, _) -> list[object, int]:
         """sd_card_boot: Boot sequence for the SD card"""
         try:
             sd_card = SDCard(
@@ -561,37 +440,16 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.SD_CARD_CS,
                 ArgusV1Components.SD_BAUD,
             )
-            self.__sd_card = sd_card
-            self.append_device(sd_card)
-        except Exception as e:
-            if self.__debug:
-                raise e
 
-            return Errors.SDCARD_NOT_INITIALIZED
-
-        return Errors.NOERROR
-
-    def __vfs_boot(self) -> list[int]:
-        """vfs_boot: Boot sequence for the VFS"""
-        if self.__sd_card is None:
-            return Errors.SDCARD_NOT_INITIALIZED
-
-        try:
-            vfs = VfsFat(self.__sd_card)
-
+            vfs = VfsFat(sd_card)
             mount(vfs, ArgusV1Components.VFS_MOUNT_POINT)
             path.append(ArgusV1Components.VFS_MOUNT_POINT)
-
-            path.append(ArgusV1Components.VFS_MOUNT_POINT)
-            self.__vfs = vfs
+            return [vfs, Errors.NOERROR]
         except Exception as e:
             if self.__debug:
                 raise e
-            raise e
 
-            return Errors.VFS_NOT_INITIALIZED
-
-        return Errors.NOERROR
+            return [None, Errors.SDCARD_NOT_INITIALIZED]
 
     def __burn_wire_boot(self) -> list[int]:
         """burn_wire_boot: Boot sequence for the burn wires"""
@@ -606,15 +464,12 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.BURN_WIRE_YM,
             )
 
-            self.__burn_wires = burn_wires
-            self.append_device(burn_wires)
+            return [burn_wires, Errors.NOERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return Errors.BURNWIRES_NOT_INITIALIZED
-
-        return Errors.NOERROR
+            return [None, Errors.BURNWIRES_NOT_INITIALIZED]
 
     def __fuel_gauge_boot(self) -> list[int]:
         """fuel_gauge_boot: Boot sequence for the fuel gauge"""
@@ -625,13 +480,16 @@ class ArgusV1(CubeSat):
                 ArgusV1Components.FUEL_GAUGE_I2C,
                 ArgusV1Components.FUEL_GAUGE_I2C_ADDRESS,
             )
-
-            self.__fuel_gauge = fuel_gauge
-            self.append_device(fuel_gauge)
+            return [fuel_gauge, Errors.NOERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return Errors.MAX17205_NOT_INITIALIZED
+            return [None, Errors.MAX17205_NOT_INITIALIZED]
 
-        return Errors.NOERROR
+    def reboot_device(self, device_name: str):
+        if device_name not in self.__device_list:
+            return Errors.INVALID_DEVICE_NAME
+        device = self.__device_list[device_name]
+        device.deinit()
+        # TODO: Implement reboot logic

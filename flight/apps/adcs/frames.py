@@ -6,6 +6,7 @@ JD2000 = 2451545.0  # Reference epoch (J2000.0), Julian Date
 MJD2000 = 51544.5  # MJD at J2000.0
 PI2 = 6.283185307179586
 EQUATORIAL_RADIUS = 6378.137  # Equatorial raduis of the Earth (km)
+OMEGA_E = 7.29211585275553e-005  # Rotation rate of the Earth (rad/s)
 
 
 def mjd(utime):
@@ -118,3 +119,15 @@ def convert_ecef_to_geoc(ecef, degrees=False):
         lon = lon * 180.0 / np.pi
 
     return np.array([lon, lat, alt])
+
+
+def convert_ecef_state_to_eci(r: np.ndarray, v: np.ndarray, utime: int):
+    R_ecef2eci = ecef_to_eci(utime)  # Transformation matrix from ECEF to ECI
+
+    # Transform Position
+    r_eci = np.dot(R_ecef2eci, r)
+
+    # Transform Velocity
+    v_eci = np.dot(R_ecef2eci, v + np.cross(np.array([0, 0, OMEGA_E]), r))
+
+    return r_eci, v_eci

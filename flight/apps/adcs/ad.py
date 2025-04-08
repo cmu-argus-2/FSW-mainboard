@@ -9,16 +9,16 @@ magnetic field data on the mainboard.
 
 """
 
-import time
-
 from apps.adcs.consts import Modes, StatusConst
-from apps.adcs.frames import ecef_to_eci
+from apps.adcs.frames import convert_ecef_state_to_eci
 from apps.adcs.igrf import igrf_eci
 from apps.adcs.math import R_to_quat, quat_to_R, quaternion_multiply, skew
 from apps.adcs.orbit_propagation import OrbitPropagator
-from apps.adcs.sun import SUN_VECTOR_STATUS, approx_sun_position_ECI, compute_body_sun_vector_from_lux, read_light_sensors
+from apps.adcs.sun import approx_sun_position_ECI, compute_body_sun_vector_from_lux, read_light_sensors
+from apps.adcs.utils import is_valid_gps_state, is_valid_gyro_reading, is_valid_mag_reading
 from apps.telemetry.constants import GPS_IDX
 from core import DataHandler as DH
+from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 from ulab import numpy as np
 
@@ -32,7 +32,6 @@ from ulab import numpy as np
 
 
 class AttitudeDetermination:
-
     # Initialized Flag to retry initialization
     initialized = False
 
@@ -40,7 +39,7 @@ class AttitudeDetermination:
         STATE DEFINITION : [position_eci (3x1), velocity_eci (3x1), attitude_body2eci (4x1), angular_rate_body (3x1),
                             gyro_bias (3x1), magnetic_field_body (3x1), sun_pos_body (3x1), sun_status (1x1)]
     """
-    state = np.zeros((28,))  # TODO : only coded for non-pyramid light sensors
+    state = np.zeros((32,))  # TODO : only coded for non-pyramid light sensors
     position_idx = slice(0, 3)
     velocity_idx = slice(3, 6)
     attitude_idx = slice(6, 10)
@@ -49,13 +48,15 @@ class AttitudeDetermination:
     mag_field_idx = slice(16, 19)
     sun_pos_idx = slice(19, 22)
     sun_status_idx = slice(22, 23)
-    sun_lux_idx = slice(23, 28)
+    sun_lux_idx = slice(23, 32)
 
     # Time storage
     position_update_frequency = 1  # Hz ~8km
     last_position_update_time = 0
     last_gyro_update_time = 0
     last_gyro_cov_update_time = 0
+    mekf_init_start_time = None
+    mekf_timeout = 30  # seconds TODO: Decide a timeout and change
 
     # Sensor noise covariances (Decide if these numbers should be hardcoded here or placed in adcs/consts.py)
     gyro_white_noise_sigma = 0.01  # TODO : characetrize sensor and update
@@ -71,6 +72,7 @@ class AttitudeDetermination:
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ SENSOR READ FUNCTIONS """
+
     # ------------------------------------------------------------------------------------------------------------------------------------
     def read_sun_position(self) -> tuple[int, np.ndarray, np.ndarray]:
         """
@@ -90,15 +92,13 @@ class AttitudeDetermination:
 
         if SATELLITE.IMU_AVAILABLE:
             gyro = np.array(SATELLITE.IMU.gyro())
-            query_time = int(time.time())
+            query_time = TPM.time()
 
             # Sensor validity check
-            if gyro is None or len(gyro) != 3:
+            if not is_valid_gyro_reading(gyro):
                 return StatusConst.GYRO_FAIL, 0, np.zeros((3,))
-            elif not (0 <= np.linalg.norm(gyro) <= 1000):  # Setting a very (VERY) large upper bound
-                return StatusConst.GYRO_FAIL, 0, np.zeros((3,))
-
-            return StatusConst.OK, query_time, gyro
+            else:
+                return StatusConst.OK, query_time, gyro
         else:
             return StatusConst.GYRO_FAIL, 0, np.zeros((3,))
 
@@ -109,16 +109,14 @@ class AttitudeDetermination:
         """
 
         if SATELLITE.IMU_AVAILABLE:
-            mag = np.array(SATELLITE.IMU.mag())
-            query_time = int(time.time())
+            mag = 1e-6 * np.array(SATELLITE.IMU.mag())  # Convert field from uT to T
+            query_time = TPM.time()
 
             # Sensor validity check
-            if mag is None or len(mag) != 3:
+            if not is_valid_mag_reading(mag):
                 return StatusConst.MAG_FAIL, 0, np.zeros((3,))
-            elif not (10 <= np.linalg.norm(mag) <= 100):  # Allowed between 10 and 100 uT (MSL : 58 uT, 600km : 37uT)
-                return StatusConst.MAG_FAIL, 0, np.zeros((3,))
-
-            return StatusConst.OK, query_time, mag * 1e-6
+            else:
+                return StatusConst.OK, query_time, mag
 
         else:
             return StatusConst.MAG_FAIL, 0, np.zeros((3,))
@@ -129,28 +127,25 @@ class AttitudeDetermination:
         - NOTE: Since GPS is a task, this function will read values from C&DH
         """
         if DH.data_process_exists("gps") and SATELLITE.GPS_AVAILABLE:
-
             # Get last GPS update time and position at that time
             gps_data = DH.get_latest_data("gps")
 
             if gps_data is not None:
-                gps_record_time = [GPS_IDX.TIME_GPS]
-                gps_pos_ecef = 1e-2 * (
-                    np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape((3,))
-                )
-                gps_vel_ecef = 1e-2 * (
-                    np.array(DH.get_latest_data("gps")[GPS_IDX.GPS_ECEF_VX : GPS_IDX.GPS_ECEF_VZ + 1]).reshape((3,))
-                )
+                gps_record_time = gps_data[GPS_IDX.TIME_GPS]
+                gps_pos_ecef = 1e-2 * np.array(gps_data[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape(
+                    (3,)
+                )  # Convert from cm to m
+                gps_vel_ecef = 1e-2 * np.array(gps_data[GPS_IDX.GPS_ECEF_VX : GPS_IDX.GPS_ECEF_VZ + 1]).reshape(
+                    (3,)
+                )  # Convert from cm/s to m/s
 
                 # Sensor validity check
-                if gps_pos_ecef is None or gps_vel_ecef is None or len(gps_pos_ecef) != 3 or len(gps_vel_ecef) != 3:
+                if not is_valid_gps_state(gps_pos_ecef, gps_vel_ecef):
                     return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
-                elif not (6.0e6 <= np.linalg.norm(gps_pos_ecef) <= 7.5e6) or not (
-                    3.0e3 <= np.linalg.norm(gps_vel_ecef) <= 1.0e4
-                ):
-                    return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
-
-                return StatusConst.OK, gps_record_time, gps_pos_ecef, gps_vel_ecef
+                else:
+                    # Convert ECEF to ECI
+                    gps_pos_eci, gps_vel_eci = convert_ecef_state_to_eci(gps_pos_ecef, gps_vel_ecef, gps_record_time)
+                    return StatusConst.OK, gps_record_time, gps_pos_eci, gps_vel_eci
 
             else:
                 return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
@@ -159,6 +154,7 @@ class AttitudeDetermination:
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ MEKF INITIALIZATION """
+
     # ------------------------------------------------------------------------------------------------------------------------------------
     def initialize_mekf(self) -> int:
         """
@@ -166,30 +162,33 @@ class AttitudeDetermination:
         - This function is not directly written into init to allow multiple retires of initialization
         - Sets the initialized attribute of the class once done
         """
+        current_time = TPM.time()
+
+        if self.mekf_init_start_time is None:
+            self.mekf_init_start_time = current_time
+        elif abs(current_time - self.mekf_init_start_time) >= self.mekf_timeout:
+            # Ignore MEKF initialization
+            self.state[self.attitude_idx] = np.array([1, 0, 0, 0])
+            self.initialized = True
+            return StatusConst.OK, StatusConst.MEKF_INIT_FORCE
+
         # Get a valid GPS position
-        gps_status, gps_record_time, gps_pos_ecef, gps_vel_ecef = self.read_gps()
+        _, gps_record_time, gps_pos_eci, gps_vel_eci = self.read_gps()
 
-        if gps_status == StatusConst.GPS_FAIL:
-            return StatusConst.MEKF_INIT_FAIL, StatusConst.GPS_FAIL
-        else:
-            # Propagate from GPS measurement record
-            current_time = int(time.time())
-            R_ecef2eci = ecef_to_eci(current_time)
-            gps_pos_eci = np.dot(R_ecef2eci, gps_pos_ecef)
-            gps_vel_eci = np.dot(R_ecef2eci, gps_vel_ecef)
-            gps_state_eci = np.concatenate((gps_pos_eci, gps_vel_eci))
-            status, true_pos_eci, true_vel_eci = OrbitPropagator.propagate_orbit(current_time, gps_record_time, gps_state_eci)
+        current_time = TPM.time()
+        gps_state_eci = np.concatenate((gps_pos_eci, gps_vel_eci))
+        status, true_pos_eci, true_vel_eci = OrbitPropagator.propagate_orbit(current_time, gps_record_time, gps_state_eci)
 
-            if status == StatusConst.OPROP_INIT_FAIL:
-                return StatusConst.MEKF_INIT_FAIL, StatusConst.OPROP_INIT_FAIL
+        if status == StatusConst.OPROP_INIT_FAIL:
+            return StatusConst.MEKF_INIT_FAIL, StatusConst.OPROP_INIT_FAIL
 
         # Get a valid sun position
         sun_status, sun_pos_body, lux_readings = self.read_sun_position()
 
         if (
-            sun_status == SUN_VECTOR_STATUS.NO_READINGS
-            or sun_status == SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS
-            or sun_status == SUN_VECTOR_STATUS.ECLIPSE
+            sun_status == StatusConst.SUN_NO_READINGS
+            or sun_status == StatusConst.SUN_NOT_ENOUGH_READINGS
+            or sun_status == StatusConst.SUN_ECLIPSE
         ):
             return StatusConst.MEKF_INIT_FAIL, sun_status
 
@@ -200,7 +199,7 @@ class AttitudeDetermination:
             return StatusConst.MEKF_INIT_FAIL, StatusConst.MAG_FAIL
 
         # Get a gyro reading (just to store in state)
-        gyro_status, _, omega_body = self.read_gyro()
+        _, _, omega_body = self.read_gyro()
 
         # Inertial sun position
         true_sun_pos_eci = approx_sun_position_ECI(current_time)
@@ -214,6 +213,7 @@ class AttitudeDetermination:
         if triad_status == StatusConst.TRIAD_FAIL:  # If TRIAD fails, do not initialize
             return StatusConst.MEKF_INIT_FAIL, StatusConst.TRIAD_FAIL
 
+        # Log variables to state
         self.state[self.position_idx] = true_pos_eci
         self.state[self.velocity_idx] = true_vel_eci
         self.state[self.attitude_idx] = attitude
@@ -266,6 +266,7 @@ class AttitudeDetermination:
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ MEKF PROPAGATION """
+
     # ------------------------------------------------------------------------------------------------------------------------------------
     def position_update(self, current_time: int) -> None:
         """
@@ -274,7 +275,7 @@ class AttitudeDetermination:
         - Updates the last_position_update time attribute
         - NOTE: This is not an MEKF update. We assume that the estimated position is true
         """
-        gps_status, gps_record_time, gps_pos_ecef, gps_vel_ecef = self.read_gps()
+        gps_status, gps_record_time, gps_pos_eci, gps_vel_eci = self.read_gps()
 
         if gps_status == StatusConst.GPS_FAIL:
             # Update GPS based on past estimate of state
@@ -287,15 +288,13 @@ class AttitudeDetermination:
         else:
             if abs(current_time - gps_record_time) < (1 / self.position_update_frequency):
                 # Use current GPS measurement without propagation
-                R_ecef2eci = ecef_to_eci(current_time)
-                self.state[self.position_idx] = np.dot(R_ecef2eci, gps_pos_ecef)
-                self.state[self.velocity_idx] = np.dot(R_ecef2eci, gps_vel_ecef)
+                self.state[self.position_idx] = gps_pos_eci
+                self.state[self.velocity_idx] = gps_vel_eci
 
             else:
                 # Propagate from GPS measurement record
-                R_ecef2eci = ecef_to_eci(current_time)
-                gps_pos_eci = np.dot(R_ecef2eci, gps_pos_ecef)
-                gps_vel_eci = np.dot(R_ecef2eci, gps_vel_ecef)
+                gps_pos_eci = gps_pos_eci
+                gps_vel_eci = gps_vel_eci
                 gps_state_eci = np.concatenate((gps_pos_eci, gps_vel_eci))
                 status, self.state[self.position_idx], self.state[self.velocity_idx] = OrbitPropagator.propagate_orbit(
                     current_time, gps_record_time, gps_state_eci
@@ -322,19 +321,27 @@ class AttitudeDetermination:
         if (
             self.initialized
             and update_covariance
-            and status not in [SUN_VECTOR_STATUS.NO_READINGS, SUN_VECTOR_STATUS.NOT_ENOUGH_READINGS, SUN_VECTOR_STATUS.ECLIPSE]
-        ):
+            and status
+            not in [
+                StatusConst.SUN_NO_READINGS,
+                StatusConst.SUN_NOT_ENOUGH_READINGS,
+                StatusConst.SUN_ECLIPSE,
+            ]
+        ):  # Only run an update if MEKF is initialized and valid readings were obtained
+
+            # Extract true sun position based on a map
             true_sun_pos_eci = approx_sun_position_ECI(current_time)
             true_sun_pos_eci_norm = np.linalg.norm(true_sun_pos_eci)
             if true_sun_pos_eci_norm == 0:
-                return  # End update if true position is absent
+                return StatusConst.SUN_UPDATE_FAIL, StatusConst.TRUE_SUN_MAP_FAIL  # End update if true position is absent
             else:
                 true_sun_pos_eci = true_sun_pos_eci / true_sun_pos_eci_norm
 
+            # Convert the measured position to ECI
             measured_sun_pos_eci = np.dot(quat_to_R(self.state[self.attitude_idx]), sun_pos_body)
             measured_sun_pos_eci_norm = np.linalg.norm(measured_sun_pos_eci)
             if measured_sun_pos_eci_norm == 0:
-                return  # End update if measured position is absent
+                return StatusConst.SUN_UPDATE_FAIL, StatusConst.ZERO_NORM  # End update if measured position is absent
             else:
                 measured_sun_pos_eci = measured_sun_pos_eci / measured_sun_pos_eci_norm
 
@@ -345,11 +352,14 @@ class AttitudeDetermination:
             H = np.zeros((3, 6))
             H[0:3, 0:3] = -s_cross
 
+            # Log status based on EKF update
             update_status = self.EKF_update(H, innovation, Cov_sunsensor)
             if update_status != StatusConst.OK:
                 return StatusConst.SUN_UPDATE_FAIL, update_status
             else:
                 return StatusConst.OK, StatusConst.OK
+        else:
+            return StatusConst.SUN_UPDATE_FAIL, status
 
     def gyro_update(self, current_time: int, update_covariance: bool = True) -> None:
         """
@@ -362,7 +372,6 @@ class AttitudeDetermination:
         self.state[self.omega_idx] = omega_body  # save omega to state
 
         if status == StatusConst.OK:
-
             if self.initialized:  # If initialized, also update attitude via propagation
                 bias = self.state[self.bias_idx]
                 dt = current_time - self.last_gyro_update_time
@@ -383,7 +392,6 @@ class AttitudeDetermination:
                 self.last_gyro_update_time = current_time
 
                 if update_covariance:  # if update covariance, update covariance matrices
-
                     F = np.zeros((6, 6))
                     F[0:3, 3:6] = -R_q_next
 
@@ -410,19 +418,25 @@ class AttitudeDetermination:
 
         status, _, mag_field_body = self.read_magnetometer()
 
-        if self.initialized and update_covariance and status == StatusConst.OK:  # Update EKF
+        if status == StatusConst.OK:  # store magnetic field reading even if update fails to use for ACS
+            self.state[self.mag_field_idx] = mag_field_body
 
+        # Perform an update only if MEKF initialized and valid field reading obtained
+        if self.initialized and update_covariance and status == StatusConst.OK:
+
+            # Obtain true mag field in ECI from IGRF
             true_mag_field_eci = igrf_eci(current_time, self.state[self.position_idx] / 1000)
             true_mag_field_eci_norm = np.linalg.norm(true_mag_field_eci)
             if true_mag_field_eci_norm == 0:
-                return  # End update if true mag field is zeros
+                return StatusConst.MAG_UPDATE_FAIL, StatusConst.TRUE_MAG_MAP_FAIL  # End update if true mag field is zeros
             else:
                 true_mag_field_eci = true_mag_field_eci / true_mag_field_eci_norm
 
+            # Convert measured mag field into ECI
             measured_mag_field_eci = np.dot(quat_to_R(self.state[self.attitude_idx]), mag_field_body)
             measured_mag_field_eci_norm = np.linalg.norm(measured_mag_field_eci)
             if measured_mag_field_eci_norm == 0:
-                return  # End update if measured mag field is zeros
+                return StatusConst.MAG_UPDATE_FAIL, StatusConst.ZERO_NORM  # End update if measured mag field is zeros
             else:
                 measured_mag_field_eci = measured_mag_field_eci / measured_mag_field_eci_norm
 
@@ -433,14 +447,15 @@ class AttitudeDetermination:
             H = np.zeros((3, 6))
             H[0:3, 0:3] = -s_cross
 
+            # Update log based on EKF status
             update_status = self.EKF_update(H, innovation, Cov_mag_field)
             if update_status != StatusConst.OK:
                 return StatusConst.MAG_UPDATE_FAIL, update_status
             else:
                 return StatusConst.OK, StatusConst.OK
 
-        if status == StatusConst.OK:
-            self.state[self.mag_field_idx] = mag_field_body  # store magnetic field reading
+        else:
+            return StatusConst.MAG_UPDATE_FAIL, status
 
     def EKF_update(self, H: np.ndarray, innovation: np.ndarray, R_noise: np.ndarray) -> None:
         """
@@ -477,6 +492,8 @@ class AttitudeDetermination:
             np.dot(K, R_noise), K.transpose()
         )
 
+        return StatusConst.OK
+
     def current_mode(self) -> int:
         """
         - Returns the current mode of the ADCS
@@ -484,7 +501,7 @@ class AttitudeDetermination:
         if np.linalg.norm(self.state[self.omega_idx]) >= Modes.STABLE_TOL:
             return Modes.TUMBLING
         else:
-            if self.state[self.sun_status_idx] == SUN_VECTOR_STATUS.ECLIPSE:
+            if self.state[self.sun_status_idx] == StatusConst.SUN_ECLIPSE:
                 return Modes.STABLE
             else:
                 sun_vector_error = Modes.SUN_VECTOR_REF - self.state[self.sun_pos_idx]

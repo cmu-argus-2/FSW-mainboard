@@ -278,6 +278,17 @@ class GPS:
     def _signed_32bit(self, value: int) -> int:
         return value if value < 0x80000000 else value - 0x100000000
 
+    """
+    Fix Modes in GPS NMEA Message:
+
+    0 - No fix: The GPS receiver has not obtained a valid fix or has lost the fix.
+    1 - GPS fix: A 2D fix is available (latitude and longitude, but altitude is not necessarily reliable).
+    2 - Differential GPS fix: A 2D fix is available, with differential corrections applied for improved accuracy.
+    3 - 3D fix: A 3D fix is available (latitude, longitude, and altitude are all valid and reliable).
+    4 - GNSS fix: A fix using signals from multiple GNSS systems (e.g., GPS, GLONASS, Galileo, BeiDou).
+    5 - Time fix: A fix based on time synchronization, typically used in high-precision or timing applications.
+    """
+
     def has_fix(self) -> bool:
         """True if a current fix for location information is available."""
         if self.fix_mode is not None and self.fix_mode >= 1:
@@ -597,7 +608,7 @@ class GPS:
 
     # TODO : Change this so that it always sends the binary message rather than needing set on each run
     def set_to_binary(self) -> None:
-        self.write(b"\xA0\xA1\x00\x03\x09\x02\x00\x0B\x0D\x0A")
+        self.write(b"\xa0\xa1\x00\x03\x09\x02\x00\x0b\x0d\x0a")
 
     @property
     def in_waiting(self) -> int:
@@ -651,18 +662,8 @@ class GPS:
 
         return Errors.GPS_UPDATE_CHECK_FAILED
 
-    def run_diagnostics(self) -> list[int] | None:
-        """run_diagnostic_test: Run all tests for the component
-
-        :return: List of error codes
-        """
-        error_list = []
-
-        error_list.append(self.__check_for_updates())
-
-        error_list = list(set(error_list))
-
-        if Errors.NOERROR not in error_list:
-            self.errors_present = True
-
-        return error_list
+    def deinit(self):
+        if self._enable is not None:
+            self._enable.deinit()
+            self._enable = None
+        return

@@ -17,7 +17,7 @@ class CDH_IDX:
 class EPS_IDX:
     TIME_EPS = const(0)
     EPS_POWER_FLAG = const(1)
-    CPU_TEMPERATURE = const(2)
+    MAINBOARD_TEMPERATURE = const(2)
     MAINBOARD_VOLTAGE = const(3)
     MAINBOARD_CURRENT = const(4)
     BATTERY_PACK_TEMPERATURE = const(5)
@@ -58,6 +58,19 @@ class EPS_IDX:
     ZP_SOLAR_CHARGE_CURRENT = const(40)
     ZM_SOLAR_CHARGE_VOLTAGE = const(41)
     ZM_SOLAR_CHARGE_CURRENT = const(42)
+
+
+class EPS_WARNING_IDX:
+    TIME_EPS_WARNING = const(0)
+    MAINBOARD_POWER_ALERT = const(1)
+    RADIO_POWER_ALERT = const(2)
+    JETSON_POWER_ALERT = const(3)
+    XP_COIL_POWER_ALERT = const(4)
+    XM_COIL_POWER_ALERT = const(5)
+    YP_COIL_POWER_ALERT = const(6)
+    YM_COIL_POWER_ALERT = const(7)
+    ZP_COIL_POWER_ALERT = const(8)
+    ZM_COIL_POWER_ALERT = const(9)
 
 
 class ADCS_IDX:
@@ -133,3 +146,18 @@ class GPS_IDX:
 
 class PAYLOAD_IDX:
     pass
+
+
+class STORAGE_IDX:
+    NUM_FILES = const(0)
+    DIR_SIZE = const(1)
+
+
+"""
+Helper function to get the number of attributes in a class
+This result should be static
+"""
+
+
+def class_length(cls):
+    return len([attr for attr in dir(cls) if not callable(getattr(cls, attr)) and not attr.startswith("__")])

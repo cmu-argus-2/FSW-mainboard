@@ -26,7 +26,7 @@ For struct module format strings:
 
 import gc
 
-from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX
+from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, STORAGE_IDX
 from apps.telemetry.helpers import (
     convert_float_to_fixed_point_hp,
     pack_signed_long_int,
@@ -39,6 +39,14 @@ from core import DataHandler as DH
 from core import logger
 from micropython import const
 
+# TM frame sizes as defined in message database
+# TODO: TM HAL
+# TODO: TM PAYLOAD
+_TM_NOMINAL_SIZE = const(227)
+_TM_HAL_SIZE = const(46)
+_TM_STORAGE_SIZE = const(74)
+_TM_PAYLOAD_SIZE = const(0)
+
 
 # No instantiation, the class acts as a namespace for the shared state
 # Avoid global scope pollution and maintain consistency with the rest of the codebase
@@ -49,12 +57,14 @@ class TelemetryPacker:
 
     _TM_AVAILABLE = False
 
-    _TM_FRAME_SIZE = const(248)  # size of the telemetry frame
+    # Maximum allowed size of the telemetry frame
+    _TM_FRAME_SIZE = const(248)
 
+    # Frame size and packet length SHALL be updated for every TM frame definition
     _FRAME = bytearray(_TM_FRAME_SIZE)  # pre-allocated buffer for packing
     _FRAME[0] = const(0x01) & 0xFF  # message ID
     _FRAME[1:3] = pack_unsigned_short_int([const(0x00)], 0)  # sequence count
-    _FRAME[3] = const(229) & 0xFF  # packet length
+    _FRAME[3] = const(_TM_FRAME_SIZE) & 0xFF  # packet length
 
     @classmethod
     def FRAME(cls):
@@ -77,9 +87,18 @@ class TelemetryPacker:
         return cls._TM_AVAILABLE
 
     @classmethod
+    def TM_EXHAUSTED(cls):
+        cls._TM_AVAILABLE = False
+
+    @classmethod
     def pack_tm_heartbeat(cls):
         if not cls._TM_AVAILABLE:
             cls._TM_AVAILABLE = True
+
+        cls._FRAME = bytearray(_TM_NOMINAL_SIZE + 4)  # pre-allocated buffer for packing
+        cls._FRAME[0] = const(0x01) & 0xFF  # message ID
+        cls._FRAME[1:3] = pack_unsigned_short_int([const(0x00)], 0)  # sequence count
+        cls._FRAME[3] = const(_TM_NOMINAL_SIZE) & 0xFF  # packet length
 
         ############ CDH fields ############
         if DH.data_process_exists("cdh"):
@@ -118,7 +137,7 @@ class TelemetryPacker:
                 # Low power flag
                 cls._FRAME[18] = eps_data[EPS_IDX.EPS_POWER_FLAG] & 0xFF
                 # CPU temperature
-                cls._FRAME[19:21] = pack_signed_short_int(eps_data, EPS_IDX.CPU_TEMPERATURE)
+                cls._FRAME[19:21] = pack_signed_short_int(eps_data, EPS_IDX.MAINBOARD_TEMPERATURE)
                 # Mainboard voltage
                 cls._FRAME[21:23] = pack_signed_short_int(eps_data, EPS_IDX.MAINBOARD_VOLTAGE)
                 # Mainboard current
@@ -128,7 +147,7 @@ class TelemetryPacker:
                 # Battery pack SOC
                 cls._FRAME[27] = eps_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] & 0xFF
                 # Battery pack capacity
-                cls._FRAME[28:30] = pack_signed_short_int(eps_data, EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY)
+                cls._FRAME[28:30] = pack_unsigned_short_int(eps_data, EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY)
                 # Battery pack current
                 cls._FRAME[30:32] = pack_signed_short_int(eps_data, EPS_IDX.BATTERY_PACK_CURRENT)
                 # Battery pack voltage
@@ -204,11 +223,6 @@ class TelemetryPacker:
                 cls._FRAME[100:102] = pack_signed_short_int(eps_data, EPS_IDX.ZM_SOLAR_CHARGE_VOLTAGE)
                 # ZM solar charge current
                 cls._FRAME[102:104] = pack_signed_short_int(eps_data, EPS_IDX.ZM_SOLAR_CHARGE_CURRENT)
-
-            else:
-                logger.warning("No latest EPS data available")
-        else:
-            logger.warning("No EPS data available")
 
         ############ ADCS fields ############
         if DH.data_process_exists("adcs"):
@@ -336,14 +350,165 @@ class TelemetryPacker:
 
     @classmethod
     def pack_tm_hal(cls):
-        # TODO: CDH, HAL status, error codes, EPS
+        # TODO: HAL status, error codes, EPS
+        if not cls._TM_AVAILABLE:
+            cls._TM_AVAILABLE = True
+
+        # TODO: Frame definition for TM_HAL
+        cls._FRAME = bytearray(_TM_HAL_SIZE + 4)  # pre-allocated buffer for packing
+        cls._FRAME[0] = const(0x02) & 0xFF  # message ID
+        cls._FRAME[1:3] = pack_unsigned_short_int([const(0x00)], 0)  # sequence count
+        cls._FRAME[3] = const(_TM_HAL_SIZE) & 0xFF  # packet length
+
+        ############ CDH fields ############
+        if DH.data_process_exists("cdh"):
+            cdh_data = DH.get_latest_data("cdh")
+
+            if cdh_data:
+                # Time
+                cls._FRAME[4:8] = pack_unsigned_long_int(cdh_data, CDH_IDX.TIME)
+                # SC State
+                cls._FRAME[8] = cdh_data[CDH_IDX.SC_STATE] & 0xFF
+                # SD Usage
+                cls._FRAME[9:13] = pack_unsigned_long_int(cdh_data, CDH_IDX.SD_USAGE)
+                # Current RAM Usage
+                cls._FRAME[13] = cdh_data[CDH_IDX.CURRENT_RAM_USAGE] & 0xFF
+                # Reboot count
+                cls._FRAME[14] = cdh_data[CDH_IDX.REBOOT_COUNT] & 0xFF
+                # Watchdog Timer
+                cls._FRAME[15] = cdh_data[CDH_IDX.WATCHDOG_TIMER] & 0xFF
+                # HAL Bitflags
+                cls._FRAME[16] = cdh_data[CDH_IDX.HAL_BITFLAGS] & 0xFF
+                # Detumbling Error Flag
+                cls._FRAME[17] = cdh_data[CDH_IDX.DETUMBLING_ERROR_FLAG] & 0xFF
+
+            else:
+                logger.warning("No latest CDH data available")
+
+        else:
+            logger.warning("No CDH data available")
         pass
 
     @classmethod
     def pack_tm_storage(cls):
-        # TODO: CDH, DH snapshot
-        pass
+        if not cls._TM_AVAILABLE:
+            cls._TM_AVAILABLE = True
+
+        cls._FRAME = bytearray(_TM_STORAGE_SIZE + 4)  # pre-allocated buffer for packing
+        cls._FRAME[0] = const(0x03) & 0xFF  # message ID
+        cls._FRAME[1:3] = pack_unsigned_short_int([const(0x00)], 0)  # sequence count
+        cls._FRAME[3] = const(_TM_STORAGE_SIZE) & 0xFF  # packet length
+
+        ############ CDH fields ############
+        if DH.data_process_exists("cdh"):
+            cdh_data = DH.get_latest_data("cdh")
+
+            if cdh_data:
+                # Time
+                cls._FRAME[4:8] = pack_unsigned_long_int(cdh_data, CDH_IDX.TIME)
+                # SC State
+                cls._FRAME[8] = cdh_data[CDH_IDX.SC_STATE] & 0xFF
+                # SD Usage
+                cls._FRAME[9:13] = pack_unsigned_long_int(cdh_data, CDH_IDX.SD_USAGE)
+                # Current RAM Usage
+                cls._FRAME[13] = cdh_data[CDH_IDX.CURRENT_RAM_USAGE] & 0xFF
+                # Reboot count
+                cls._FRAME[14] = cdh_data[CDH_IDX.REBOOT_COUNT] & 0xFF
+                # Watchdog Timer
+                cls._FRAME[15] = cdh_data[CDH_IDX.WATCHDOG_TIMER] & 0xFF
+                # HAL Bitflags
+                cls._FRAME[16] = cdh_data[CDH_IDX.HAL_BITFLAGS] & 0xFF
+                # Detumbling Error Flag
+                cls._FRAME[17] = cdh_data[CDH_IDX.DETUMBLING_ERROR_FLAG] & 0xFF
+
+            else:
+                logger.warning("No latest CDH data available")
+
+        else:
+            logger.warning("No CDH data available")
+
+        # Total SD card usage
+        cls._FRAME[18:22] = pack_unsigned_long_int([DH.SD_usage()], 0)
+
+        ############ CDH fields ###########
+        if DH.data_process_exists("cdh"):
+            cdh_storage_info = DH.get_storage_info("cdh")
+            # CDH number of files
+            cls._FRAME[22:26] = pack_unsigned_long_int(cdh_storage_info, STORAGE_IDX.NUM_FILES)
+            # CDH directory size
+            cls._FRAME[26:30] = pack_unsigned_long_int(cdh_storage_info, STORAGE_IDX.DIR_SIZE)
+        else:
+            logger.warning("CDH Data process does not exist")
+
+        ############ EPS fields ###########
+        if DH.data_process_exists("eps"):
+            eps_storage_info = DH.get_storage_info("eps")
+            # EPS number of files
+            cls._FRAME[30:34] = pack_unsigned_long_int(eps_storage_info, STORAGE_IDX.NUM_FILES)
+            # EPS directory size
+            cls._FRAME[34:38] = pack_unsigned_long_int(eps_storage_info, STORAGE_IDX.DIR_SIZE)
+        else:
+            logger.warning("EPS Data process does not exist")
+
+        ############ ADCS fields ###########
+        if DH.data_process_exists("adcs"):
+            adcs_storage_info = DH.get_storage_info("adcs")
+            # ADCS number of files
+            cls._FRAME[38:42] = pack_unsigned_long_int(adcs_storage_info, STORAGE_IDX.NUM_FILES)
+            # ADCS directory size
+            cls._FRAME[42:46] = pack_unsigned_long_int(adcs_storage_info, STORAGE_IDX.DIR_SIZE)
+        else:
+            logger.warning("ADCS Data process does not exist")
+
+        ############ COMMS fields ###########
+        if DH.data_process_exists("comms"):
+            comms_storage_info = DH.get_storage_info("comms")
+            # COMMS number of files
+            cls._FRAME[46:50] = pack_unsigned_long_int(comms_storage_info, STORAGE_IDX.NUM_FILES)
+            # COMMS directory size
+            cls._FRAME[50:54] = pack_unsigned_long_int(comms_storage_info, STORAGE_IDX.DIR_SIZE)
+        else:
+            logger.warning("Comms Data process does not exist")
+
+        ############ GPS fields ###########
+        if DH.data_process_exists("gps"):
+            gps_storage_info = DH.get_storage_info("gps")
+            # GPS number of files
+            cls._FRAME[54:58] = pack_unsigned_long_int(gps_storage_info, STORAGE_IDX.NUM_FILES)
+            # GPS directory size
+            cls._FRAME[58:62] = pack_unsigned_long_int(gps_storage_info, STORAGE_IDX.DIR_SIZE)
+        else:
+            logger.warning("GPS Data process does not exist")
+
+        ############ Payload fields ###########
+        if DH.data_process_exists("payload"):
+            payload_storage_info = DH.get_storage_info("payload")
+            # PAYLOAD number of files
+            cls._FRAME[62:66] = pack_unsigned_long_int(payload_storage_info, STORAGE_IDX.NUM_FILES)
+            # PAYLOAD directory size
+            cls._FRAME[66:70] = pack_unsigned_long_int(payload_storage_info, STORAGE_IDX.DIR_SIZE)
+        else:
+            logger.warning("Payload Data process does not exist")
+
+        ############ Command fields ###########
+        if DH.data_process_exists("cmd_logs"):
+            cmd_logs_storage_info = DH.get_storage_info("cmd_logs")
+            # Command logs number of files
+            cls._FRAME[70:74] = pack_unsigned_long_int(cmd_logs_storage_info, STORAGE_IDX.NUM_FILES)
+            # Command logs directory size
+            cls._FRAME[74:78] = pack_unsigned_long_int(cmd_logs_storage_info, STORAGE_IDX.DIR_SIZE)
+        else:
+            logger.warning("Command logs Data process does not exist")
 
     @classmethod
     def pack_tm_payload(cls):
         pass
+
+    @classmethod
+    def change_tm_id_nominal(cls):
+        """
+        This will change the pack_tm_heartbeat() frame message ID to nominal.
+        This is to help differentiate between a SAT_HEARTBEAT (nominally sent down)
+        and one that was from REQUEST_TM_NOMINAL (requested by command)
+        """
+        cls._FRAME[0] = const(0x05) & 0xFF  # message ID

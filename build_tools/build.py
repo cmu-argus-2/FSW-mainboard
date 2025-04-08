@@ -5,16 +5,42 @@ import platform
 import shutil
 import sys
 
-ROOT_PATH = os.getcwd()
+system = platform.system()
 
-MPY_CROSS_NAME = "mpy-cross"
-if platform.system() == "Darwin":
-    MPY_CROSS_NAME = "mpy-cross-macos"
+
+def get_board_path():
+    if system == "Windows":
+        BOARD_PATH = "D:\\"
+    elif system == "Linux":
+        username = os.getlogin()
+        BOARD_PATH = f"/media/{username}/ARGUS"
+    elif system == "Darwin":
+        BOARD_PATH = "/Volumes/ARGUS"
+    elif platform.node() == "raspberrypi":
+        BOARD_PATH = "/mnt/mainboard"
+    return BOARD_PATH
+
+
+def get_circuitpython_version(BOARD_PATH):
+    with open(os.path.join(BOARD_PATH, "boot_out.txt")) as boot:
+        circuit_python, _ = boot.read().split(";")
+    return int(circuit_python.split(" ")[-3][0])
+
+
+BOARD_PATH = get_board_path()
+CPY_VERSION = 8  # Default to CPY 8
+if os.path.exists(BOARD_PATH):
+    CPY_VERSION = get_circuitpython_version(BOARD_PATH)
+print(f"CircuitPython version: {CPY_VERSION}")
+
+MPY_CROSS_NAME = "mpy-cross-cpy9" if CPY_VERSION == 9 else "mpy-cross"
+if system == "Darwin":
+    MPY_CROSS_NAME = "mpy-cross-macos-cpy9" if CPY_VERSION == 9 else "mpy-cross-macos"
 if platform.node() == "raspberrypi":
     MPY_CROSS_NAME = "mpy-cross-rpi"
 MPY_CROSS_PATH = f"{os.getcwd()}/build_tools/{MPY_CROSS_NAME}"
 
-if platform.system() == "Windows":
+if system == "Windows":
     MPY_CROSS_PATH = shutil.which("mpy-cross")
     if MPY_CROSS_PATH:
         print(f"mpy-cross found at {MPY_CROSS_PATH}")
