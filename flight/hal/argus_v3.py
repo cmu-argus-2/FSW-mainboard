@@ -289,7 +289,7 @@ class ArgusV3Components:
 
     # WATCHDAWG
     WATCHDOG_ENABLE = board.WDT_EN
-    WATCHDOG_INTERRUPT = board.WDT_WDI
+    WATCHDOG_INPUT = board.WDT_WDI
 
     # REACTION WHEEL
     RW_ENABLE = board.RW_EN
@@ -630,7 +630,7 @@ class ArgusV3(CubeSat):
         try:
             watchdog = Watchdog(
                 ArgusV3Components.WATCHDOG_ENABLE,
-                ArgusV3Components.WATCHDOG_INTERRUPT,
+                ArgusV3Components.WATCHDOG_INPUT,
             )
             return [watchdog, Errors.NOERROR]
         except Exception as e:

@@ -2,14 +2,14 @@ import digitalio
 
 
 class Watchdog:
-    def __init__(self, enable_pin: object, interrupt: object):
+    def __init__(self, enable_pin: object, input: object):
         self.__enable = digitalio.DigitalInOut(enable_pin)
         self.__enable.direction = digitalio.Direction.OUTPUT
         self.__enable.value = False
 
-        self.__interrupt = digitalio.DigitalInOut(interrupt)
-        self.__interrupt.direction = digitalio.Direction.OUTPUT
-        self.__interrupt.value = False
+        self.__input = digitalio.DigitalInOut(input)
+        self.__input.direction = digitalio.Direction.OUTPUT
+        self.__input.value = False
 
     def enable(self):
         self.__enable.value = True
@@ -17,8 +17,8 @@ class Watchdog:
     def disable(self):
         self.__enable.value = False
 
-    def interrupt_high(self):
-        self.__interrupt.value = True
+    def input_high(self):
+        self.__input.value = True
 
-    def interrupt_low(self):
-        self.__interrupt.value = False
+    def input_low(self):
+        self.__input.value = False

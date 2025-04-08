@@ -26,7 +26,8 @@ class BatteryHeaters:
     def enable_heater1(self):
         if not self.__enable.value:
             self.__enable.value = True
-        self.__heater1_en.value = True
+        if self.__heater1_en is not None:
+            self.__heater1_en.value = True
 
     def disable_heater0(self):
         self.__heater0_en.value = False
@@ -42,4 +43,4 @@ class BatteryHeaters:
         return self.__heater0_en.value and self.__enable.value
 
     def heater1_enabled(self):
-        return self.__heater1_en.value and self.__enable.value
+        return self.__heater1_en.value and self.__enable.value if self.__heater1_en is not None else False
