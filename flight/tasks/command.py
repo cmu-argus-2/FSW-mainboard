@@ -168,7 +168,7 @@ class Task(TemplateTask):
             if self.EPS_MODE == EPS_POWER_FLAG.LOW_POWER:
                 # T1.2: Low SoC, transition to low power
                 self.log_info("T1.2: Transition from DETUMBLING to LOW POWER")
-                SM.switch_to(STATES.NOMINAL)
+                SM.switch_to(STATES.LOW_POWER)
 
         # ------------------------------------------------------------------------------------------------------------------------------------
         # NOMINAL
