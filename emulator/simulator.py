@@ -51,19 +51,23 @@ class Simulator:  # will be passed by reference to the emulated HAL
         return self.measurement[9:12] * 1e6  # IMU obtains magnetic field readings in uT
 
     def sun_lux(self):
-        self.advance_to_time()
+        self.advance_to_time() # XP, XM, YP, YM, ZP1, ZP2, ZP3, ZP4, ZM
         return self.measurement[12:]
 
     def gps(self):
         self.advance_to_time()
         gps_state = np.array([time.time()] + list(self.measurement[0:6] * 1e2))
         return gps_state  # GPS returns data in cm
+    
+    def coil_power(self, idx):
+        self.advance_to_time()
+        return self.measurement[21+idx]
 
     def set_control_input(self, dir, input):
         """
-        Sets the control input to the simulation
+        Sets the control input to the simulation XP, XM, YP, YM, ZP, ZM
         """
-        dir_2_idx_map = {"XM": 0, "YM": 1, "ZM": 2, "XP": 3, "YP": 4, "ZP": 5}
+        dir_2_idx_map = {"XP": 0, "XM": 1, "YP": 2, "YM": 3, "ZP": 4, "ZM": 5}
         self.cppsim.control_input[dir_2_idx_map[dir]] = input * 5
 
     def get_time_diff_since_last(self):
