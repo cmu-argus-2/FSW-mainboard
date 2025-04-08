@@ -537,6 +537,12 @@ class ArgusV2(CubeSat):
                 raise e
             return [None, Errors.MAX17205_NOT_INITIALIZED]
 
+    def __battery_heaters_boot(self, _) -> list[object, int]:
+        return [None, Errors.NOERROR]
+
+    def __watchdog_boot(self, _) -> list[object, int]:
+        return [None, Errors.NOERROR]
+
     def reboot_device(self, device_name: str):
         if device_name not in self.__device_list:
             return Errors.INVALID_DEVICE_NAME

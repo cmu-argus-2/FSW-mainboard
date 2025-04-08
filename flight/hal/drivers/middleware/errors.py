@@ -73,6 +73,9 @@ class Errors:
     # Fuel Gauge errors
     MAX17205_NOT_INITIALIZED = const(63)
 
+    # Battery Heaters errors
+    BATTERY_HEATERS_NOT_INITIALIZED = const(38)
+
     # Diagnostics errors - occur when running diagnostics on the system fails
     DIAGNOSTICS_ERROR_GPS = const(41)
     DIAGNOSTICS_ERROR_BOARD_POWER_MONITOR = const(42)

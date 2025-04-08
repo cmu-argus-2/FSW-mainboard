@@ -34,6 +34,8 @@ class CubeSat:
                 ("GPS", Device(self.__gps_boot)),
                 ("RADIO", Device(self.__radio_boot)),
                 ("FUEL_GAUGE", Device(self.__fuel_gauge_boot)),
+                ("BATT_HEATERS", Device(self.__battery_heaters_boot)),
+                ("WATCHDOG", Device(self.__watchdog_boot)),
                 # ("BURN_WIRE", Device(self.__burn_wire_boot)),
                 ("BOARD_PWR", Device(self.__power_monitor_boot)),
                 ("RADIO_PWR", Device(self.__power_monitor_boot)),
@@ -291,6 +293,13 @@ class CubeSat:
         :return: bool
         """
         return self.key_in_device_list("NEOPIXEL") and self.__device_list["NEOPIXEL"].device is not None
+
+    @property
+    def BATT_HEATERS(self):
+        """BATT_HEATERS: Returns the battery heaters object
+        :return: object or None
+        """
+        return self.__device_list["BATT_HEATERS"].device
 
     # @property
     # def PAYLOADUART(self):

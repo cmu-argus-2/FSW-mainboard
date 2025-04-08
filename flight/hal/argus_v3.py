@@ -57,17 +57,9 @@ class ArgusV3Power:
     COIL_EN.direction = digitalio.Direction.OUTPUT
     COIL_EN.value = True
 
-    BATT_HEAT_EN = digitalio.DigitalInOut(board.HEAT_EN)
-    BATT_HEAT_EN.direction = digitalio.Direction.OUTPUT
-    BATT_HEAT_EN.value = False
-
-    BATT_HEATER0_ON = digitalio.DigitalInOut(board.HEAT0_ON)
-    BATT_HEATER0_ON.direction = digitalio.Direction.OUTPUT
-    BATT_HEATER0_ON.value = False
-
-    BATT_HEATER1_ON = digitalio.DigitalInOut(board.HEAT1_ON)
-    BATT_HEATER1_ON.direction = digitalio.Direction.OUTPUT
-    BATT_HEATER1_ON.value = False
+    BATT_HEAT_EN = board.HEAT_EN
+    BATT_HEATER0_EN = board.HEAT0_ON
+    BATT_HEATER1_EN = board.HEAT1_ON
 
     PAYLOAD_OVC = digitalio.DigitalInOut(board.PAYLOAD_FLT)
     PAYLOAD_OVC.direction = digitalio.Direction.INPUT
@@ -294,6 +286,10 @@ class ArgusV3Components:
     NEOPIXEL_SDA = board.NEOPIXEL
     NEOPIXEL_N = const(1)
     NEOPIXEL_BRIGHTNESS = 0.2
+
+    # WATCHDAWG
+    WATCHDOG_ENABLE = board.WDT_EN
+    WATCHDOG_INTERRUPT = board.WDT_WDI
 
     # REACTION WHEEL
     RW_ENABLE = board.RW_EN
@@ -609,6 +605,39 @@ class ArgusV3(CubeSat):
                 raise e
 
             return [None, Errors.NEOPIXEL_NOT_INITIALIZED]
+
+    def __battery_heaters_boot(self, _) -> list[object, int]:
+        """battery_heaters_boot: Boot sequence for the battery heaters"""
+        from hal.drivers.batteryheaters import BatteryHeaters
+
+        try:
+            battery_heaters = BatteryHeaters(
+                ArgusV3Power.BATT_HEAT_EN,
+                ArgusV3Power.BATT_HEATER0_EN,
+                ArgusV3Power.BATT_HEATER1_EN,
+            )
+            return [battery_heaters, Errors.NOERROR]
+        except Exception as e:
+            if self.__debug:
+                raise e
+
+            return [None, Errors.BATTERY_HEATERS_NOT_INITIALIZED]
+
+    def __watchdog_boot(self, _) -> list[object, int]:
+        """watchdog_boot: Boot sequence for the watchdog"""
+        from hal.drivers.watchdog import Watchdog
+
+        try:
+            watchdog = Watchdog(
+                ArgusV3Components.WATCHDOG_ENABLE,
+                ArgusV3Components.WATCHDOG_INTERRUPT,
+            )
+            return [watchdog, Errors.NOERROR]
+        except Exception as e:
+            if self.__debug:
+                raise e
+
+            return [None, Errors.WATCHDOG_NOT_INITIALIZED]
 
     def reboot_device(self, device_name: str):
         if device_name not in self.__device_list:
