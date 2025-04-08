@@ -119,6 +119,20 @@ class Task(TemplateTask):
         # STATE MACHINE
         # ------------------------------------------------------------------------------------------------------------------------------------
 
+        """
+        For both the ADCS_MODE and EPS_MODE, hysteresis management is done
+        in the respective applications rather than this state machine.
+
+        The thresholds for entry and exit out of both these modes are different
+        to avoid hysteresis. Additionally, both subsystems use filtering (on hardware
+        in the EPS fuel gauge, in software inside the ADCS) to further remove the
+        possibility of hysteresis.
+
+        If either subsystem fails critically (no data process or latest data) this state
+        machine assumes a stable / nominal mode as a last resort "Hail Mary", to get
+        as much use out of the spacecraft as possible before it stops operation.
+        """
+
         # Get ADCS mode (hysteresis management done in ADCS application)
         if DH.data_process_exists("adcs"):
             adcs_data = DH.get_latest_data("adcs")
@@ -157,18 +171,23 @@ class Task(TemplateTask):
             # Detumbling timeout in case the ADCS is not working
             if SM.time_since_last_state_change > STATES.DETUMBLING_TIMEOUT_DURATION:
                 self.log_info("DETUMBLING timeout - Setting Detumbling Error Flag.")
-                # Set the detumbling issue flag in the NVM
+                # Set the detumbling error flag in the NVM
                 self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1
 
+            """Transitions out of DETUMBLING"""
             if self.ADCS_MODE != Modes.TUMBLING or self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] == 1:
-                # T1.1: Spin stabilized OR detumbling error flag is set (detumbling timeout)
+                # T1.1: Spin stabilized OR detumbling error flag is set, transition to NOMINAL
                 self.log_info("T1.1: Transition from DETUMBLING to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
 
-            if self.EPS_MODE == EPS_POWER_FLAG.LOW_POWER:
+            elif self.EPS_MODE == EPS_POWER_FLAG.LOW_POWER:
                 # T1.2: Low SoC, transition to low power
                 self.log_info("T1.2: Transition from DETUMBLING to LOW POWER")
                 SM.switch_to(STATES.LOW_POWER)
+
+            else:
+                # No transition, stay in DETUMBLING
+                pass
 
         # ------------------------------------------------------------------------------------------------------------------------------------
         # NOMINAL
@@ -179,20 +198,25 @@ class Task(TemplateTask):
             if SATELLITE.NEOPIXEL_AVAILABLE:
                 SATELLITE.NEOPIXEL.fill([0, 255, 0])
 
-            if self.EPS_MODE == EPS_POWER_FLAG.EXPERIMENT:
-                # T2.1: High SoC, engage the payload
-                self.log_info("T2.1: Transition from NOMINAL to EXPERIMENT")
-                SM.switch_to(STATES.EXPERIMENT)
+            """Transitions out of NOMINAL"""
+            if self.ADCS_MODE == Modes.TUMBLING and self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] != 1:
+                # T2.1: Tumbling again AND detumbling error flag is not set, transition to DETUMBLING
+                self.log_info("T2.1: Transition from NOMINAL to DETUMBLING")
+                SM.switch_to(STATES.DETUMBLING)
 
-            if self.EPS_MODE == EPS_POWER_FLAG.LOW_POWER:
+            elif self.EPS_MODE == EPS_POWER_FLAG.LOW_POWER:
                 # T2.2: Low SoC, transition to low power
                 self.log_info("T2.2: Transition from NOMINAL to LOW POWER")
                 SM.switch_to(STATES.LOW_POWER)
 
-            if self.ADCS_MODE == Modes.TUMBLING and self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] != 1:
-                # T2.3: Tumbling again AND detumbling error flag is not set
-                self.log_info("T2.3: Transition from NOMINAL to DETUMBLING")
-                SM.switch_to(STATES.DETUMBLING)
+            elif self.EPS_MODE == EPS_POWER_FLAG.EXPERIMENT:
+                # T2.3: High SoC, engage the payload
+                self.log_info("T2.3: Transition from NOMINAL to EXPERIMENT")
+                SM.switch_to(STATES.EXPERIMENT)
+
+            else:
+                # No transition, stay in NOMINAL
+                pass
 
         # ------------------------------------------------------------------------------------------------------------------------------------
         # LOW POWER
@@ -203,10 +227,15 @@ class Task(TemplateTask):
             if SATELLITE.NEOPIXEL_AVAILABLE:
                 SATELLITE.NEOPIXEL.fill([255, 0, 0])
 
+            """Transitions out of LOW_POWER"""
             if self.EPS_MODE != EPS_POWER_FLAG.LOW_POWER:
                 # T3.1: Nominal or high SoC, transition out of low power
                 self.log_info("T3.1: Transition from LOW POWER to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
+
+            else:
+                # No transition, stay in LOW_POWER
+                pass
 
         # ------------------------------------------------------------------------------------------------------------------------------------
         # PAYLOAD / EXPERIMENT
@@ -217,10 +246,15 @@ class Task(TemplateTask):
             if SATELLITE.NEOPIXEL_AVAILABLE:
                 SATELLITE.NEOPIXEL.fill([255, 0, 255])
 
+            """Transitions out of EXPERIMENT"""
             if self.EPS_MODE != EPS_POWER_FLAG.EXPERIMENT:
                 # T4.1: Nominal or low SoC, transition back to nominal
                 self.log_info("T4.1: Transition from LOW POWER to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
+
+            else:
+                # No transition, stay in EXPERIMENT
+                pass
 
         # ------------------------------------------------------------------------------------------------------------------------------------
         # CRITICAL ERROR - UNKNOWN STATE
