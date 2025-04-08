@@ -11,37 +11,6 @@ from hal.configuration import SATELLITE
 
 PACKET_SIZE = 512  # num bytes
 CRC5_SIZE = 1  # num bytes for crc5 (5 bits will be used)
-START_BYTE = 0xAA
-START_BYTE_COUNT = 8
-
-
-def create_crc5_packet(data_bytes):
-    """Calculate CRC5 for a full 64-bit (8-byte) block."""
-    num_bytes = PACKET_SIZE
-    num_bits = num_bytes * 8
-    polynomial = 0x05  # CRC5 polynomial (x^5 + x^2 + 1)
-    crc = 0x1F  # initial CRC value
-
-    data_int = int.from_bytes(data_bytes, "big")  # bytes to int to do ops
-    for i in range(num_bits):
-        if (crc & 0x10) ^ (data_int & (1 << (num_bits - 1))):
-            crc = ((crc << 1) ^ polynomial) & 0x1F
-        else:
-            crc = (crc << 1) & 0x1F
-        data_int <<= 1
-
-    return (data_bytes << 8) | bytes([crc])  # Append 5-bit CRC to data
-
-
-def verify_crc5_packet(packet):
-    """Verify CRC5 for an 8-byte (64-bit) block."""
-    # data_bytes = packet[:-1]  # data minus crc
-    # received_crc = packet[-1] >> 3  # crc is the whole byte shifted by 3
-    # computed_packet = create_crc5_packet(data_bytes)
-    # computed_crc = computed_packet[-1] >> 3  # get only crc
-    # return packet == computed_packet
-    return True
-
 
 class MainBoard:
     def __init__(self):
@@ -52,20 +21,16 @@ class MainBoard:
         """Receive full packet over UART within 1 second"""
         start_time = time.time()
         packet = bytearray()
-        start_byte_count = 0
 
         # without crc5
-        while (time.time() - start_time) < 1.5:
+        while (time.time() - start_time) < 1:
             if self.uart.in_waiting:
                 byte = self.uart.read(1)
                 if byte:
                     byte = byte[0]
-                    if byte == START_BYTE:
-                        start_byte_count += 1
-                    if start_byte_count >= START_BYTE_COUNT:
-                        packet.append(byte)
-                        if len(packet) == PACKET_SIZE:
-                            return packet
+                    packet.append(byte)
+                    if len(packet) == PACKET_SIZE:
+                        return packet
 
         return None
 
@@ -95,12 +60,15 @@ class Task(TemplateTask):
             self.log_info("Payload task started")
             if not DH.data_process_exists("img"):
                 DH.register_image_process()  # WARNING: Image process from DH is different from regular data processes!
+            
+            # send a "READY" byte
+            self.mainboard.transmit("RDDY")
 
-            # TODO: uart integration
+            # prepare to receive data from jetson
             received_data = self.mainboard.receive()
 
             if received_data:
-                if verify_crc5_packet(received_data):
+                if True:
                     # self.mainboard.save_to_file(received_data[:-1])  # Save data without CRC
                     self.log_info(f"ACK: Received {len(received_data)} bytes")
                     self.mainboard.transmit("AACK")  # Send ACK after successful receipt
