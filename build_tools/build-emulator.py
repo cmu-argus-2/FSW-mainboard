@@ -1,5 +1,4 @@
 import argparse
-import filecmp
 import os
 import shutil
 
