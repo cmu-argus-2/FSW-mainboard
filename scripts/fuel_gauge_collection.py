@@ -1,7 +1,6 @@
 import time
 
 import board
-import circuitpython_csv as csv
 import digitalio
 import supervisor
 from busio import I2C
@@ -30,7 +29,7 @@ fuel_gauge = MAX17205(FUEL_GAUGE_I2C, FUEL_GAUGE_I2C_ADDRESS)
 last_flush_time = time.monotonic()
 supervisor.runtime.autoreload = False
 fg_data = []
-fg_file_path = f"/sd/fg_data_{last_flush_time}.csv"
+fg_file_path = f"/sd/fg_data_{last_flush_time}.txt"
 
 
 def flush_to_sd_card():
@@ -38,8 +37,8 @@ def flush_to_sd_card():
     global fg_file_path
 
     with open(fg_file_path, "a") as fg_file:
-        fg_writer = csv.writer(fg_file)
-        fg_writer.writerows(fg_data)
+        for row in fg_data:
+            fg_file.write(",".join(map(str, row)) + "\n")
 
     fg_data.clear()
     print("Data flushed to SD card")
@@ -59,8 +58,7 @@ def log_data(fg_info):
 header = ["timestamp_s", "soc", "capacity", "voltage", "vcell", "ocv"]
 
 with open(fg_file_path, "a") as fg_file:
-    fg_writer = csv.writer(fg_file)
-    fg_writer.writerow(header)
+    fg_file.write(",".join(header) + "\n")
 
 while True:
     soc = fuel_gauge.read_soc()
