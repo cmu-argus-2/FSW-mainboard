@@ -68,15 +68,16 @@ class Task(TemplateTask):
         # Check time_since_boot
         time_since_boot = TPM.monotonic() - SATELLITE.BOOTTIME
 
-        # NOTE: TPM time reference initialization
-        # In case the RTC has died, TPM uses time reference for time keeping
-        # The time reference is used to get offset from time.time()
+        """
+        In case the RTC has died, the TPM uses a time reference for time keeping
+        The time reference is used to get offset from time.time() in CPy.
 
-        # If an old time reference is not available, we depend on state correction
-        # from GPS or uplinked commands, and until then the time will be egregiously wrong
+        If an old time reference is not available, we depend on state correction
+        from GPS or uplinked commands, and until then the time will be egregiously wrong.
 
-        # This will not work until OBDH initializes CDH data process, so try for 10 seconds
-        # since the SC has booted
+        This will not work until the OBDH initializes CDH data process, so we try this
+        for _TPM_INIT_TIMEOUT seconds since the SC has booted.
+        """
 
         if time_since_boot < _TPM_INIT_TIMEOUT and SATELLITE.RTC_AVAILABLE is False and self.time_ref_set is False:
             # Only worth it if the RTC is dead
@@ -112,7 +113,7 @@ class Task(TemplateTask):
 
                 # T0: Boot over and deployment complete
                 SM.switch_to(STATES.DETUMBLING)
-                self.log_info("Switching to DETUMBLING state.")
+                self.log_info("T0: Transition from STARTUP to DETUMBLING")
 
     def state_machine_execution(self):
         # ------------------------------------------------------------------------------------------------------------------------------------
