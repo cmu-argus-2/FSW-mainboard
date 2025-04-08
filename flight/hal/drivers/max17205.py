@@ -13,6 +13,7 @@ _MAX1720X_VBAT_ADDR = const(0xDA)  # Battery pack voltage
 _MAX1720X_AVCELL_ADDR = const(0x17)  # Battery cycles
 _MAX1720X_TIMERH_ADDR = const(0xBE)  # Time since power up
 _MAX1720X_TEMP_ADDR = const(0x08)  # Temp register
+_MAX1720X_VFOCV_ADDR = const(0xFB)
 
 _MAX1720X_COMMAND_ADDR = const(0x60)  # Command register
 _MAX1720X_CONFIG2_ADDR = const(0xBB)  # Command register
@@ -40,6 +41,7 @@ class MAX17205:
         self.voltage = 0.0
         self.current = 0.0
         self.midvoltage = 0.0
+        self.vfocv = 0.0
 
         self.soc = 0
         self.capacity = 0
@@ -137,6 +139,19 @@ class MAX17205:
         self.midvoltage = float(midvoltage_raw) * 0.078125
 
         return self.midvoltage
+    
+    def read_ocv(self):
+        with self.i2c_device as i2c:
+            # Read 2 bytes from _MAX1720X_VCELL_ADDR
+            i2c.write(bytes([_MAX1720X_VFOCV_ADDR]))
+            i2c.readinto(self.rx_buffer)
+        # Convert readback bytes to a uint16
+        voltage_raw = int.from_bytes(self.rx_buffer, "little", signed=False)
+
+        # Cast uint16 to a float and scale for mV voltage
+        self.vfocv = float(voltage_raw) * 0.078125
+
+        return self.vfocv
 
     def read_cycles(self):
         """
