@@ -618,7 +618,7 @@ class ArgusV3(CubeSat):
         power_line.value = False
         time.sleep(0.5)
         power_line.value = True
-        time.sleep(2)
+        time.sleep(0.5)
 
     def __reboot_device(self, device_name: str):
         device = self.__device_list[device_name]
@@ -634,30 +634,56 @@ class ArgusV3(CubeSat):
             self.__boot_device(device_name, device)
 
         elif device_name.startswith("TORQUE"):
-            for name, device in self.TORQUE_DRIVERS.items():
-                if self.TORQUE_DRIVERS_AVAILABLE(name):
+            for location, device in self.TORQUE_DRIVERS.items():
+                if self.TORQUE_DRIVERS_AVAILABLE(location):
                     device.deinit()
+
             self.__restart_power_line(ArgusV3Power.COIL_EN)
-            for name, device in self.TORQUE_DRIVERS.items():
-                self.__boot_device(name, device)
+
+            for location, device in self.__boot_devices.items():
+                if location.startswith("TORQUE"):
+                    self.__boot_device(location, device)
+
         else:
+            for _, device in self.__boot_devices.items():
+                if device.peripheral_line:
+                    device.deinit()
+
             self.__restart_power_line(ArgusV3Power.PERIPH_PWR_EN)
-        # TODO: Implement reboot logic
+
+            for _, device in self.__boot_devices.items():
+                if device.peripheral_line:
+                    self.__boot_device(_, device)
 
     def handle_error(self, device_name: str) -> int:
         if device_name not in self.__device_list:
             return Errors.INVALID_DEVICE_NAME
+
         self.__device_list[device_name].error_count += 1
         ASIL = self.__device_list[device_name].ASIL
+
         if ASIL == ASIL4:
             self.__reboot_device(device_name)
-        elif ASIL == ASIL3:
-            return Errors.DEVICE_NOT_INITIALISED
-        elif ASIL == ASIL2:
-            return Errors.DEVICE_NOT_INITIALISED
         else:
-            return Errors.DEVICE_NOT_INITIALISED
+            ArgusV3Error.ASIL_ERRORS[ASIL] += 1
+            if ArgusV3Error.ASIL_ERRORS[ASIL] >= ArgusV3Error.ASIL_THRESHOLDS[ASIL]:
+                self.__reboot_device(device_name)
+                ArgusV3Error.ASIL_ERRORS[ASIL] = 0
 
     def REBOOT(self):
         """Reboot the satellite by resetting the main power."""
         ArgusV3Power.MAIN_PWR_RESET.value = True
+
+
+class ArgusV3Error:
+    ASIL_ERRORS = {
+        ASIL1: 0,
+        ASIL2: 0,
+        ASIL3: 0,
+    }
+
+    ASIL_THRESHOLDS = {
+        ASIL1: 5,  # ASIL 1: Reboot after 5 errors
+        ASIL2: 3,  # ASIL 2: Reboot after 3 errors
+        ASIL3: 2,  # ASIL 3: Reboot after 2 errors
+    }

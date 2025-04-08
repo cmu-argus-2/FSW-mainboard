@@ -11,12 +11,20 @@ ASIL4 = 4
 
 
 class Device:
-    def __init__(self, boot_fn: object, ASIL: int = ASIL1, device: object = None, error: int = Errors.NO_ERROR) -> None:
+    def __init__(
+        self,
+        boot_fn: object,
+        ASIL: int = ASIL1,
+        peripheral_line: bool = True,
+        device: object = None,
+        error: int = Errors.NO_ERROR,
+    ) -> None:
         self.device = device
         self.error = error
         self.boot_fn = boot_fn
         self.ASIL = ASIL
         self.error_count = 0
+        self.peripheral_line = peripheral_line
 
 
 class CubeSat:
@@ -39,8 +47,8 @@ class CubeSat:
                 ("NEOPIXEL", Device(self.__neopixel_boot)),
                 ("SDCARD", Device(self.__sd_card_boot)),
                 ("RTC", Device(self.__rtc_boot, ASIL2)),
-                ("GPS", Device(self.__gps_boot, ASIL2)),
-                ("RADIO", Device(self.__radio_boot, ASIL4)),
+                ("GPS", Device(self.__gps_boot, ASIL2, peripheral_line=False)),
+                ("RADIO", Device(self.__radio_boot, ASIL4, peripheral_line=False)),
                 ("IMU", Device(self.__imu_boot, ASIL3)),
                 ("FUEL_GAUGE", Device(self.__fuel_gauge_boot, ASIL2)),
                 ("BURN_WIRE", Device(self.__burn_wire_boot)),
@@ -53,12 +61,12 @@ class CubeSat:
                 ("YP_PWR", Device(self.__power_monitor_boot)),
                 ("YM_PWR", Device(self.__power_monitor_boot)),
                 ("ZP_PWR", Device(self.__power_monitor_boot)),
-                ("TORQUE_XP", Device(self.__torque_driver_boot, ASIL3)),
-                ("TORQUE_XM", Device(self.__torque_driver_boot, ASIL3)),
-                ("TORQUE_YP", Device(self.__torque_driver_boot, ASIL3)),
-                ("TORQUE_YM", Device(self.__torque_driver_boot, ASIL3)),
-                ("TORQUE_ZP", Device(self.__torque_driver_boot, ASIL3)),
-                ("TORQUE_ZM", Device(self.__torque_driver_boot, ASIL3)),
+                ("TORQUE_XP", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
+                ("TORQUE_XM", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
+                ("TORQUE_YP", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
+                ("TORQUE_YM", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
+                ("TORQUE_ZP", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
+                ("TORQUE_ZM", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
                 ("LIGHT_XP", Device(self.__light_sensor_boot, ASIL2)),
                 ("LIGHT_XM", Device(self.__light_sensor_boot, ASIL2)),
                 ("LIGHT_YP", Device(self.__light_sensor_boot, ASIL2)),
