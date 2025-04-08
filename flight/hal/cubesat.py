@@ -295,11 +295,32 @@ class CubeSat:
         return self.key_in_device_list("NEOPIXEL") and self.__device_list["NEOPIXEL"].device is not None
 
     @property
-    def BATT_HEATERS(self):
+    def BATTERY_HEATERS(self):
         """BATT_HEATERS: Returns the battery heaters object
         :return: object or None
         """
         return self.__device_list["BATT_HEATERS"].device
+
+    @property
+    def BATTERY_HEATERS_AVAILABLE(self) -> bool:
+        """BATT_HEATERS_AVAILABLE: Returns True if the battery heaters are available
+        :return: bool
+        """
+        return self.key_in_device_list("BATT_HEATERS") and self.__device_list["BATT_HEATERS"].device is not None
+
+    @property
+    def WATCHDOG(self):
+        """WATCHDOG: Returns the watchdog object
+        :return: object or None
+        """
+        return self.__device_list["WATCHDOG"].device
+
+    @property
+    def WATCHDOG_AVAILABLE(self) -> bool:
+        """WATCHDOG_AVAILABLE: Returns True if the watchdog is available
+        :return: bool
+        """
+        return self.key_in_device_list("WATCHDOG") and self.__device_list["WATCHDOG"].device is not None
 
     # @property
     # def PAYLOADUART(self):
