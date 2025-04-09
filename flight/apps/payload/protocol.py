@@ -64,13 +64,6 @@ class Encoder:
         return cls._send_buffer
 
     @classmethod
-    def encode_synchronize_time(cls):
-        cls.clear_buffer()
-        cls._send_buffer[0] = CommandID.SYNCHRONIZE_TIME
-        cls._bytes_set_last_time = 1
-        return cls._send_buffer
-
-    @classmethod
     def encode_request_telemetry(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.REQUEST_TELEMETRY
@@ -102,48 +95,76 @@ class Encoder:
     def encode_start_capture_images_periodically(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.START_CAPTURE_IMAGES_PERIODICALLY
-        cls._bytes_set_last_time = 1  # TODO: Add arguments
+        cls._bytes_set_last_time = 1
         return cls._send_buffer
 
     @classmethod
     def encode_stop_capture_images(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.STOP_CAPTURE_IMAGES
-        cls._bytes_set_last_time = 1  # TODO: Add arguments
+        cls._bytes_set_last_time = 1
         return cls._send_buffer
 
     @classmethod
-    def encode_stored_images(cls):
+    def encode_request_storage_info(cls):
         cls.clear_buffer()
-        cls._send_buffer[0] = CommandID.STORED_IMAGES
-        cls._bytes_set_last_time = 1  # TODO: Add arguments
+        cls._send_buffer[0] = CommandID.REQUEST_STORAGE_INFO
+        cls._bytes_set_last_time = 1
         return cls._send_buffer
 
     @classmethod
     def encode_request_image(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.REQUEST_IMAGE
-        cls._bytes_set_last_time = 1  # TODO: Add arguments
+        cls._bytes_set_last_time = 1
         return cls._send_buffer
 
     @classmethod
-    def encode_delete_images(cls):
+    def encode_request_next_file_packet(cls):
         cls.clear_buffer()
-        cls._send_buffer[0] = CommandID.DELETE_IMAGES
-        cls._bytes_set_last_time = 1  # TODO: Add arguments
+        cls._send_buffer[0] = CommandID.REQUEST_NEXT_FILE_PACKET
+        cls._bytes_set_last_time = 1
         return cls._send_buffer
 
     @classmethod
-    def encode_run_od(cls):
+    def encode_clear_storage(cls):
         cls.clear_buffer()
-        cls._send_buffer[0] = CommandID.RUN_OD
-        cls._bytes_set_last_time = 1  # TODO: Add arguments
+        cls._send_buffer[0] = CommandID.CLEAR_STORAGE
+        cls._bytes_set_last_time = 1
         return cls._send_buffer
 
     @classmethod
     def encode_ping_od_status(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.PING_OD_STATUS
+        cls._bytes_set_last_time = 1
+        return cls._send_buffer
+
+    @classmethod
+    def encode_run_od(cls):
+        cls.clear_buffer()
+        cls._send_buffer[0] = CommandID.RUN_OD
+        cls._bytes_set_last_time = 1
+        return cls._send_buffer
+
+    @classmethod
+    def encode_request_od_result(cls):
+        cls.clear_buffer()
+        cls._send_buffer[0] = CommandID.REQUEST_OD_RESULT
+        cls._bytes_set_last_time = 1
+        return cls._send_buffer
+
+    @classmethod
+    def encode_synchronize_time(cls):
+        cls.clear_buffer()
+        cls._send_buffer[0] = CommandID.SYNCHRONIZE_TIME
+        cls._bytes_set_last_time = 1
+        return cls._send_buffer
+
+    @classmethod
+    def encode_full_reset(cls):
+        cls.clear_buffer()
+        cls._send_buffer[0] = CommandID.FULL_RESET
         cls._bytes_set_last_time = 1
         return cls._send_buffer
 
