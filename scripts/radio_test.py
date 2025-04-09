@@ -10,6 +10,7 @@ print(f"Boot Errors: {SATELLITE.ERRORS}")
 
 while True:
     # Send a fake message
+    print("Sending message")
     tx_msg = bytearray([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07])
     SATELLITE.RADIO.send(tx_msg)
 
