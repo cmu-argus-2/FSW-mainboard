@@ -12,8 +12,7 @@ from busio import I2C, SPI, UART
 from hal.cubesat import ASIL1, ASIL2, ASIL3, ASIL4, CubeSat
 from hal.drivers.errors import Errors
 from micropython import const
-from sdcardio import SDCard
-from storage import VfsFat, mount
+from storage import mount
 
 
 class ArgusV3Power:
@@ -543,18 +542,22 @@ class ArgusV3(CubeSat):
 
     def __sd_card_boot(self, _) -> list[object, int]:
         """sd_card_boot: Boot sequence for the SD card"""
+
+        from hal.drivers.sdcard import CustomSDCard, CustomVfsFat
+
         try:
-            sd_card = SDCard(
+            sd_card = CustomSDCard(
                 ArgusV3Components.SD_CARD_SPI,
                 ArgusV3Components.SD_CARD_CS,
                 ArgusV3Components.SD_BAUD,
             )
 
-            vfs = VfsFat(sd_card)
+            vfs = CustomVfsFat(sd_card)
             mount(vfs, ArgusV3Components.VFS_MOUNT_POINT)
             path.append(ArgusV3Components.VFS_MOUNT_POINT)
             return [vfs, Errors.NO_ERROR]
         except Exception as e:
+            print(e)
             if self.__debug:
                 raise e
 
@@ -640,19 +643,19 @@ class ArgusV3(CubeSat):
 
             self.__restart_power_line(ArgusV3Power.COIL_EN)
 
-            for location, device_cls in self.__boot_devices.items():
+            for location, device_cls in self.__device_list.items():
                 if location.startswith("TORQUE"):
                     self.__boot_device(location, device_cls)
 
         else:
-            for _, device_cls in self.__boot_devices.items():
-                if device_cls.peripheral_line:
+            for location, device_cls in self.__device_list.items():
+                if device_cls.peripheral_line and device_cls.device is not None and not device_cls.dead:
                     device_cls.device.deinit()
 
             self.__restart_power_line(ArgusV3Power.PERIPH_PWR_EN)
 
-            for _, device_cls in self.__boot_devices.items():
-                if device_cls.peripheral_line:
+            for _, device_cls in self.__device_list.items():
+                if device_cls.peripheral_line and not device_cls.dead:
                     self.__boot_device(_, device_cls)
 
     def handle_error(self, device_name: str) -> int:
@@ -662,16 +665,20 @@ class ArgusV3(CubeSat):
         self.__device_list[device_name].error_count += 1
         if self.__device_list[device_name].error_count > ArgusV3Error.MAX_DEVICE_ERROR:
             self.__device_list[device_name].dead = True
+            self.__device_list[device_name].device = None
             return Errors.DEVICE_DEAD
-        ASIL = self.__device_list[device_name].ASIL
 
+        ASIL = self.__device_list[device_name].ASIL
         if ASIL == ASIL4:
             self.__reboot_device(device_name)
+            return Errors.REBOOT_DEVICE
         else:
             ArgusV3Error.ASIL_ERRORS[ASIL] += 1
             if ArgusV3Error.ASIL_ERRORS[ASIL] >= ArgusV3Error.ASIL_THRESHOLDS[ASIL]:
                 self.__reboot_device(device_name)
                 ArgusV3Error.ASIL_ERRORS[ASIL] = 0
+                return Errors.REBOOT_DEVICE
+        return Errors.NO_REBOOT
 
     def reboot(self):
         """Reboot the satellite by resetting the main power."""

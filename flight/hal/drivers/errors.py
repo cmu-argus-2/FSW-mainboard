@@ -9,7 +9,9 @@ class Errors:
 
     # Error Handling
     INVALID_DEVICE_NAME = const(0x99)  # placeholder value
-    DEAD = const(0xFF)  # placeholder value
+    DEVICE_DEAD = const(0xFF)  # placeholder value
+    REBOOT_DEVICE = const(0xFE)  # placeholder value
+    NO_REBOOT = const(0xFD)  # placeholder value
 
 
 # IMU Errors

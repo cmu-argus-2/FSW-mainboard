@@ -48,7 +48,7 @@ class CubeSat:
                 ("NEOPIXEL", Device(self.__neopixel_boot)),
                 ("SDCARD", Device(self.__sd_card_boot)),
                 ("RTC", Device(self.__rtc_boot, ASIL2)),
-                ("GPS", Device(self.__gps_boot, ASIL2, peripheral_line=False)),
+                ("GPS", Device(self.__gps_boot, ASIL3, peripheral_line=False)),
                 ("RADIO", Device(self.__radio_boot, ASIL4, peripheral_line=False)),
                 ("IMU", Device(self.__imu_boot, ASIL3)),
                 ("FUEL_GAUGE", Device(self.__fuel_gauge_boot, ASIL2)),
@@ -97,6 +97,11 @@ class CubeSat:
     def handle_error(self, device_name: str) -> int:
         """handle_error: Handle the error for the given device."""
         raise NotImplementedError("CubeSats must implement handle_error method")
+
+    def print_device_list(self) -> None:
+        """print_device_list: Print the device list."""
+        for name, device in self.__device_list.items():
+            print(f"{name}: {device.device}")
 
     @property
     def ERRORS(self):
