@@ -2,20 +2,20 @@ from sdcardio import SDCard
 from storage import VfsFat
 
 
-class CustomSDCard(SDCard):
+class CustomSDCard:
     def __init__(self, spi, cs, baud):
         self.sd_card = SDCard(spi, cs, baud)
 
     def deinit(self):
-        self.cs.deinit()
-        self.cs = None
+        self.sd_card.cs.deinit()
+        self.sd_card.cs = None
         return
 
     def __getattr__(self, name):
         return getattr(self.sd_card, name)
 
 
-class CustomVfsFat(VfsFat):
+class CustomVfsFat:
     def __init__(self, sd_card):
         self.vfs = VfsFat(sd_card)
 

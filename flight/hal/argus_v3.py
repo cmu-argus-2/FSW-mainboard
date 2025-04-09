@@ -12,7 +12,8 @@ from busio import I2C, SPI, UART
 from hal.cubesat import ASIL1, ASIL2, ASIL3, ASIL4, CubeSat
 from hal.drivers.errors import Errors
 from micropython import const
-from storage import mount
+from sdcardio import SDCard
+from storage import VfsFat, mount
 
 
 class ArgusV3Power:
@@ -552,8 +553,8 @@ class ArgusV3(CubeSat):
                 ArgusV3Components.SD_BAUD,
             )
 
-            vfs = CustomVfsFat(sd_card)
-            mount(vfs, ArgusV3Components.VFS_MOUNT_POINT)
+            vfs = CustomVfsFat(sd_card.sd_card)
+            mount(vfs.vfs, ArgusV3Components.VFS_MOUNT_POINT)
             path.append(ArgusV3Components.VFS_MOUNT_POINT)
             return [vfs, Errors.NO_ERROR]
         except Exception as e:
