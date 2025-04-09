@@ -63,8 +63,6 @@ class BurnWires:
         self.__burn_yp = self.__configure_burn_pin(burn_yp)
         self.__burn_ym = self.__configure_burn_pin(burn_ym)
 
-        super().__init__(self.__enable)
-
     def frequency_hz(self):
         """
         Get the current frequency in Hz for the PWM signal.

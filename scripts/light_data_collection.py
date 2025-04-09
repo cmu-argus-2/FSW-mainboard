@@ -4,9 +4,9 @@ import supervisor
 from apps.adcs.sun import read_light_sensors
 from hal.configuration import SATELLITE
 
-print("Booting ARGUS-1...")
+print("Booting ARGUS...")
 SATELLITE.boot_sequence()
-print("ARGUS-1 booted.")
+print("ARGUS booted.")
 print(f"Boot Errors: {SATELLITE.ERRORS}")
 light_data = []
 

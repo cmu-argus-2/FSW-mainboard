@@ -86,6 +86,11 @@ class DRV8235:
     _inv_r = RWBits(8, _RC_CTRL3, 0, 1, False)
     _inv_r_scale = RWBits(2, _RC_CTRL2, 6, 1, False)
 
+    # Define Motor Voltage Scaling
+    _DRV_MAX_VOLT = 38.00  # Volts
+    _COIL_MAX_VOLT = 6.0  # Volts
+    _THROTTLE_MAX = _COIL_MAX_VOLT / _DRV_MAX_VOLT
+
     def __init__(self, i2c_bus, address):
         """Instantiate DRV8235. Set output voltage to 0.0, place into STANDBY
         mode, and reset all fault status flags."""
@@ -128,9 +133,9 @@ class DRV8235:
         if self.bridge_control[0] == BridgeControl.BRAKE:
             return 0.0
         if self.bridge_control[0] == BridgeControl.REVERSE:
-            return -1 * round(self._wset_vset / 0xFF, 3)
+            return -1 * round(self._wset_vset / 0xFF, 3) / self._THROTTLE_MAX
         if self.bridge_control[0] == BridgeControl.FORWARD:
-            return round(self._wset_vset / 0xFF, 3)
+            return round(self._wset_vset / 0xFF, 3) / self._THROTTLE_MAX
 
     def set_throttle(self, new_throttle):
         if new_throttle is None:
@@ -138,12 +143,12 @@ class DRV8235:
             self._dir = BridgeControl.COAST
             return
         # Constrain throttle value
-        self._throttle_normalized = min(max(new_throttle, -1.0), +1.0)
+        self._throttle_normalized = min(max(new_throttle * self._THROTTLE_MAX, -self._THROTTLE_MAX), self._THROTTLE_MAX)
         if new_throttle < 0:
-            self._wset_vset = int(abs(new_throttle * 0xFF))
+            self._wset_vset = int(abs(self._throttle_normalized * 0xFF))
             self._dir = BridgeControl.REVERSE
         elif new_throttle > 0:
-            self._wset_vset = int(new_throttle * 0xFF)
+            self._wset_vset = int(self._throttle_normalized * 0xFF)
             self._dir = BridgeControl.FORWARD
         else:
             self._wset_vset = 0
@@ -214,12 +219,17 @@ class DRV8235:
             self._dir = BridgeControl.BRAKE
         return
 
-    def read_voltage(self):
+    def read_voltage_current(self) -> tuple[float, float]:
+        _voltage = self.__read_voltage()
+        _current = self.__read_current()
+        return (_voltage, _current)
+
+    def __read_voltage(self):
         voltage_index = self._vmtr
         voltage = self.index_to_voltage(voltage_index)
         return voltage
 
-    def read_current(self):
+    def __read_current(self):
         current_index = self._imtr
         current = self.index_to_current(current_index)
         return current
