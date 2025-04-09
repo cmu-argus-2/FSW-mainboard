@@ -621,39 +621,39 @@ class ArgusV3(CubeSat):
         time.sleep(0.5)
 
     def __reboot_device(self, device_name: str):
-        device = self.__device_list[device_name]
+        device_cls = self.__device_list[device_name]
 
         if device_name == "RADIO":
-            device.deinit()
+            device_cls.device.deinit()
             self.__restart_power_line(ArgusV3Power.RADIO_EN)
-            self.__boot_device(device_name, device)
+            self.__boot_device(device_name, device_cls)
 
         elif device_name == "GPS":
-            device.deinit()
+            device_cls.device.deinit()
             self.__restart_power_line(ArgusV3Power.GPS_EN)
-            self.__boot_device(device_name, device)
+            self.__boot_device(device_name, device_cls)
 
         elif device_name.startswith("TORQUE"):
-            for location, device in self.TORQUE_DRIVERS.items():
+            for location, device_cls in self.TORQUE_DRIVERS.items():
                 if self.TORQUE_DRIVERS_AVAILABLE(location):
-                    device.deinit()
+                    device_cls.device.deinit()
 
             self.__restart_power_line(ArgusV3Power.COIL_EN)
 
-            for location, device in self.__boot_devices.items():
+            for location, device_cls in self.__boot_devices.items():
                 if location.startswith("TORQUE"):
-                    self.__boot_device(location, device)
+                    self.__boot_device(location, device_cls)
 
         else:
-            for _, device in self.__boot_devices.items():
-                if device.peripheral_line:
-                    device.deinit()
+            for _, device_cls in self.__boot_devices.items():
+                if device_cls.peripheral_line:
+                    device_cls.device.deinit()
 
             self.__restart_power_line(ArgusV3Power.PERIPH_PWR_EN)
 
-            for _, device in self.__boot_devices.items():
-                if device.peripheral_line:
-                    self.__boot_device(_, device)
+            for _, device_cls in self.__boot_devices.items():
+                if device_cls.peripheral_line:
+                    self.__boot_device(_, device_cls)
 
     def handle_error(self, device_name: str) -> int:
         if device_name not in self.__device_list:
@@ -673,7 +673,7 @@ class ArgusV3(CubeSat):
                 self.__reboot_device(device_name)
                 ArgusV3Error.ASIL_ERRORS[ASIL] = 0
 
-    def REBOOT(self):
+    def reboot(self):
         """Reboot the satellite by resetting the main power."""
         ArgusV3Power.MAIN_PWR_RESET.value = True
 

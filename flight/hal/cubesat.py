@@ -90,6 +90,14 @@ class CubeSat:
         """boot_sequence: Boot sequence for the CubeSat."""
         raise NotImplementedError("CubeSats must implement boot method")
 
+    def reboot(self) -> None:
+        """reboot: Reboot the CubeSat."""
+        raise NotImplementedError("CubeSats must implement reboot method")
+
+    def handle_error(self, device_name: str) -> int:
+        """handle_error: Handle the error for the given device."""
+        raise NotImplementedError("CubeSats must implement handle_error method")
+
     @property
     def ERRORS(self):
         """ERRORS: Returns the errors object

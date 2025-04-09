@@ -522,3 +522,13 @@ class ArgusV1(CubeSat):
         for direction, value in ctrl.items():
             if direction in self.__torque_drivers:
                 self.__torque_drivers[direction].set_throttle_volts(value)
+
+    ######################## ERROR HANDLING ########################
+
+    def handle_error(self, _: str) -> int:
+        pass
+
+    def reboot(self):
+        import supervisor
+
+        supervisor.reload()

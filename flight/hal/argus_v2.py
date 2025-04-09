@@ -563,9 +563,12 @@ class ArgusV2(CubeSat):
                 raise e
             return [None, Errors.DEVICE_NOT_INITIALISED]
 
-    def reboot_device(self, device_name: str):
-        if device_name not in self.__device_list:
-            return Errors.INVALID_DEVICE_NAME
-        device = self.__device_list[device_name]
-        device.deinit()
-        # TODO: Implement reboot logic
+    ######################## ERROR HANDLING ########################
+
+    def handle_error(self, _: str) -> int:
+        pass
+
+    def reboot(self):
+        import supervisor
+
+        supervisor.reload()
