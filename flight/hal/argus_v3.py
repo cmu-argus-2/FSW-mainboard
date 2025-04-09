@@ -660,6 +660,9 @@ class ArgusV3(CubeSat):
             return Errors.INVALID_DEVICE_NAME
 
         self.__device_list[device_name].error_count += 1
+        if self.__device_list[device_name].error_count > ArgusV3Error.MAX_DEVICE_ERROR:
+            self.__device_list[device_name].dead = True
+            return Errors.DEVICE_DEAD
         ASIL = self.__device_list[device_name].ASIL
 
         if ASIL == ASIL4:
@@ -687,3 +690,5 @@ class ArgusV3Error:
         ASIL2: 3,  # ASIL 2: Reboot after 3 errors
         ASIL3: 2,  # ASIL 3: Reboot after 2 errors
     }
+
+    MAX_DEVICE_ERROR = 10

@@ -25,6 +25,7 @@ class Device:
         self.ASIL = ASIL
         self.error_count = 0
         self.peripheral_line = peripheral_line
+        self.dead = False
 
 
 class CubeSat:
