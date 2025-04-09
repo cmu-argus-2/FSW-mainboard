@@ -288,8 +288,8 @@ class ArgusV3Components:
     NEOPIXEL_BRIGHTNESS = 0.2
 
     # WATCHDAWG
-    WATCHDOG_ENABLE = board.WDT_EN
-    WATCHDOG_INPUT = board.WDT_WDI
+    WATCHDAWG_ENABLE = board.WDT_EN
+    WATCHDAWG_INPUT = board.WDT_WDI
 
     # REACTION WHEEL
     RW_ENABLE = board.RW_EN
@@ -625,14 +625,14 @@ class ArgusV3(CubeSat):
 
     def __watchdog_boot(self, _) -> list[object, int]:
         """watchdog_boot: Boot sequence for the watchdog"""
-        from hal.drivers.watchdog import Watchdog
+        from hal.drivers.watchdog import Watchdog as Watchdawg
 
         try:
-            watchdog = Watchdog(
-                ArgusV3Components.WATCHDOG_ENABLE,
-                ArgusV3Components.WATCHDOG_INPUT,
+            watchdawg = Watchdawg(
+                ArgusV3Components.WATCHDAWG_ENABLE,
+                ArgusV3Components.WATCHDAWG_INPUT,
             )
-            return [watchdog, Errors.NOERROR]
+            return [watchdawg, Errors.NOERROR]
         except Exception as e:
             if self.__debug:
                 raise e
