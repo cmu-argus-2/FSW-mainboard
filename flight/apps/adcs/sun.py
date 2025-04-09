@@ -25,8 +25,6 @@ _THRESHOLD_ILLUMINATION_LUX = const(3000)
 _NUM_LIGHT_SENSORS = const(9)
 _ERROR_LUX = const(-1)
 
-ACTIVE_LIGHT_SENSORS = np.ones((_NUM_LIGHT_SENSORS,))
-
 
 def _read_light_sensor(face):
     if SATELLITE.LIGHT_SENSOR_AVAILABLE(face):
@@ -76,8 +74,9 @@ def compute_body_sun_vector_from_lux(I_vec):
     if num_valid_readings == 0:
         status = StatusConst.SUN_NO_READINGS
         return status, sun_body
-    elif num_valid_readings < 3:
+    elif num_valid_readings < 3 or missing_axis_reading(I_vec):
         status = StatusConst.SUN_NOT_ENOUGH_READINGS
+        return status, sun_body
     elif in_eclipse(I_vec, _THRESHOLD_ILLUMINATION_LUX):
         status = StatusConst.SUN_ECLIPSE
         return status, sun_body
@@ -85,93 +84,20 @@ def compute_body_sun_vector_from_lux(I_vec):
         status = StatusConst.OK
 
     # Extract body vectors and lux readings where the sensor readings are valid
-    ACTIVE_LIGHT_SENSORS = np.array(I_vec) > _THRESHOLD_ILLUMINATION_LUX
+    ACTIVE_LIGHT_READINGS = [I_vec[i] for i in range(_NUM_LIGHT_SENSORS) if I_vec[i] > _THRESHOLD_ILLUMINATION_LUX]
+    ACTIVE_LIGHT_NORMALS = np.array(
+        [PhysicalConst.LIGHT_SENSOR_NORMALS[i] for i in range(_NUM_LIGHT_SENSORS) if I_vec[i] > _THRESHOLD_ILLUMINATION_LUX]
+    )
 
-    # X sun position (initial estimate)
-    if I_vec[0] > I_vec[1]:
-        if ACTIVE_LIGHT_SENSORS[0]:
-            sun_body[0] = I_vec[0] / PhysicalConst.LIGHT_SENSOR_NORMALS[0, 0]
-        else:
-            sun_body[0] = 0
-    else:
-        if ACTIVE_LIGHT_SENSORS[1]:
-            sun_body[0] = I_vec[1] / PhysicalConst.LIGHT_SENSOR_NORMALS[1, 0]
-        else:
-            sun_body[0] = 0
-
-    # Y sun position (initial estimate)
-    if I_vec[2] > I_vec[3]:
-        if ACTIVE_LIGHT_SENSORS[2]:
-            sun_body[1] = I_vec[2] / PhysicalConst.LIGHT_SENSOR_NORMALS[2, 1]
-        else:
-            sun_body[1] = 0
-    else:
-        if ACTIVE_LIGHT_SENSORS[3]:
-            sun_body[1] = I_vec[3] / PhysicalConst.LIGHT_SENSOR_NORMALS[3, 1]
-        else:
-            sun_body[1] = 0
-
-    # Z position (initial estimate)
-    sun_body[2] = I_vec[8] / PhysicalConst.LIGHT_SENSOR_NORMALS[8, 2] if ACTIVE_LIGHT_SENSORS[8] else 0
-
-    # Refine Estimates
-    if sun_body[2] != 0:  # Sun illuminates the ZM face
-        if sun_body[0] == 0:  # XP / XM faces are dead
-            sun_body[0] = (
-                ACTIVE_LIGHT_SENSORS[4] * I_vec[4] / PhysicalConst.LIGHT_SENSOR_NORMALS[4, 0]
-                + ACTIVE_LIGHT_SENSORS[6] * I_vec[6] / PhysicalConst.LIGHT_SENSOR_NORMALS[6, 0]
-            )
-
-        if sun_body[1] == 0:  # YP / YM faces are dead
-            sun_body[1] = (
-                ACTIVE_LIGHT_SENSORS[5] * I_vec[5] / PhysicalConst.LIGHT_SENSOR_NORMALS[5, 1]
-                + ACTIVE_LIGHT_SENSORS[7] * I_vec[7] / PhysicalConst.LIGHT_SENSOR_NORMALS[7, 1]
-            )
-
-    else:  # ZM face is either dead or not illuminated
-
-        if sun_body[0] != 0:
-            if sun_body[0] > 0:  # XP face is illuminated
-                if ACTIVE_LIGHT_SENSORS[4]:  # Use ZP1 and remove X component to infer Z
-                    sun_body[2] = (
-                        I_vec[4] - sun_body[0] * PhysicalConst.LIGHT_SENSOR_NORMALS[4, 0]
-                    ) / PhysicalConst.LIGHT_SENSOR_NORMALS[4, 2]
-                else:  # Use the ZP3 sensor to directly get Z (this will not work if the rays are over 45 deg to Z)
-                    sun_body[2] = ACTIVE_LIGHT_SENSORS[6] * I_vec[6] / PhysicalConst.LIGHT_SENSOR_NORMALS[6, 2]
-            else:
-                if ACTIVE_LIGHT_SENSORS[6]:  # Use ZP3 and subtract X influence to get Z
-                    sun_body[2] = (
-                        I_vec[6] - sun_body[0] * PhysicalConst.LIGHT_SENSOR_NORMALS[6, 0]
-                    ) / PhysicalConst.LIGHT_SENSOR_NORMALS[6, 2]
-                else:  # Use ZP1 to directly get Z (as long as rays are less than 45 deg to Z)
-                    sun_body[2] = ACTIVE_LIGHT_SENSORS[6] * I_vec[4] / PhysicalConst.LIGHT_SENSOR_NORMALS[4, 2]
-
-        else:  # At this point, we have no X axis readings
-            return StatusConst.SUN_NOT_ENOUGH_READINGS, np.zeros((3,))
-
-        if sun_body[1] != 0:
-            if sun_body[1] > 0:  # YP face is illuminated
-                if ACTIVE_LIGHT_SENSORS[5]:  # Use ZP2 and subtract effect of Y to get Z
-                    sun_body[2] = (
-                        I_vec[5] - sun_body[1] * PhysicalConst.LIGHT_SENSOR_NORMALS[5, 1]
-                    ) / PhysicalConst.LIGHT_SENSOR_NORMALS[5, 2]
-                else:  # use ZP4 to get Z (as long as rays are less than 45 deg to Z)
-                    sun_body[2] = ACTIVE_LIGHT_SENSORS[7] * I_vec[7] / PhysicalConst.LIGHT_SENSOR_NORMALS[7, 2]
-
-            else:
-                if ACTIVE_LIGHT_SENSORS[7]:  # Use ZP4 and subtract effect of Y to get Z
-                    z_est = (
-                        I_vec[7] - sun_body[1] * PhysicalConst.LIGHT_SENSOR_NORMALS[7, 1]
-                    ) / PhysicalConst.LIGHT_SENSOR_NORMALS[7, 2]
-                else:  # Use ZP2 to directly get Z (as long as rays are less than 45 deg to Z)
-                    z_est = ACTIVE_LIGHT_SENSORS[5] * I_vec[5] / PhysicalConst.LIGHT_SENSOR_NORMALS[5, 2]
-
-                if sun_body[2] == 0:
-                    sun_body[2] = z_est
-                else:
-                    sun_body[2] = (sun_body[2] + z_est) / 2  # Average estimates from X and Y axes
-        else:  # At this point, we have no Y axis readings
-            return StatusConst.SUN_NOT_ENOUGH_READINGS, np.zeros((3,))
+    try:
+        sun_body = np.dot(
+            np.dot(
+                np.linalg.inv(np.dot(ACTIVE_LIGHT_NORMALS.transpose(), ACTIVE_LIGHT_NORMALS)), ACTIVE_LIGHT_NORMALS.transpose()
+            ),
+            ACTIVE_LIGHT_READINGS,
+        )
+    except ValueError:
+        return StatusConst.SUN_NOT_ENOUGH_READINGS, sun_body
 
     if np.linalg.norm(sun_body) == 0:
         return StatusConst.ZERO_NORM, sun_body
@@ -204,6 +130,23 @@ def in_eclipse(raw_readings, threshold_lux_illumination=_THRESHOLD_ILLUMINATION_
     eclipse = True
 
     return eclipse
+
+
+def missing_axis_reading(I_vec):
+    missing_x = True
+    missing_y = True
+    missing_z = True
+    for (i, lux) in enumerate(I_vec):
+        if missing_x and lux != _ERROR_LUX and i in PhysicalConst.LIGHT_X_IDXS:
+            missing_x = False
+        if missing_y and lux != _ERROR_LUX and i in PhysicalConst.LIGHT_Y_IDXS:
+            missing_y = False
+        if missing_z and lux != _ERROR_LUX and i in PhysicalConst.LIGHT_Z_IDXS:
+            missing_z = False
+
+        if not (missing_x or missing_y or missing_z):
+            return False
+    return True
 
 
 def unix_time_to_julian_day(unix_time):
