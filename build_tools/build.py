@@ -1,3 +1,8 @@
+"""
+Build script for Argus
+This script is only used for compiling .py files to .mpy files
+"""
+
 import argparse
 import os
 import platform
@@ -33,13 +38,13 @@ def get_board_id(BOARD_PATH):
             second_line = lines[1].strip()
             board_id = second_line.split(":")[1].strip()
             return board_id
-    # Default to Argus 3
-    return "Argus3"
+    # Default to compiling for Argus
+    return "Argus"
 
 
 BOARD_PATH = get_board_path()
 CPY_VERSION = 8  # Default to CPY 8
-BOARD_ID = "Argus3"  # Default to Argus 3
+BOARD_ID = "Argus"  # Default to compiling for Argus
 if os.path.exists(BOARD_PATH):
     CPY_VERSION = get_circuitpython_version(BOARD_PATH)
     BOARD_ID = get_board_id(BOARD_PATH)
