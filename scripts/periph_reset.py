@@ -21,17 +21,14 @@ def test_device(device_name, run_time=1):
 # ASIL 4 test
 print("ASIL 4 test")
 test_device("RADIO")
-SATELLITE.print_device_list()
 
 # ASIL 3 test
 print("ASIL 3 test")
 test_device("GPS", 2)
-SATELLITE.print_device_list()
 
 # ASIL 2 test
 print("ASIL 2 test")
 test_device("FUEL_GAUGE", 3)
-SATELLITE.print_device_list()
 
 # ASIL 1 test
 print("ASIL 1 test")

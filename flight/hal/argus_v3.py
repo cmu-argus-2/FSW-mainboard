@@ -297,9 +297,6 @@ class ArgusV3Components:
     # REACTION WHEEL
     RW_ENABLE = board.RW_EN
 
-    # VFS
-    VFS_MOUNT_POINT = "/sd"
-
     LIGHT_SENSOR_CONVERSION_TIME = 0b0000
 
 
@@ -544,18 +541,16 @@ class ArgusV3(CubeSat):
     def __sd_card_boot(self, _) -> list[object, int]:
         """sd_card_boot: Boot sequence for the SD card"""
 
-        from hal.drivers.sdcard import CustomSDCard, CustomVfsFat
+        from hal.drivers.sdcard import CustomVfsFat
 
         try:
-            sd_card = CustomSDCard(
+            sd_card = SDCard(
                 ArgusV3Components.SD_CARD_SPI,
                 ArgusV3Components.SD_CARD_CS,
                 ArgusV3Components.SD_BAUD,
             )
 
-            vfs = CustomVfsFat(sd_card.sd_card)
-            mount(vfs.vfs, ArgusV3Components.VFS_MOUNT_POINT)
-            path.append(ArgusV3Components.VFS_MOUNT_POINT)
+            vfs = CustomVfsFat(sd_card)
             return [vfs, Errors.NO_ERROR]
         except Exception as e:
             print(e)
