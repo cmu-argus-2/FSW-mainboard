@@ -1,4 +1,5 @@
 # Onboard Data Handling (OBDH) Task
+import gc
 
 from core import DataHandler as DH
 from core import TemplateTask
@@ -9,12 +10,15 @@ from core.states import STATES
 class Task(TemplateTask):
     frequency_set = False
     cleanup_frequency = 0.1  # 10 seconds
+    gc_frequency = 0.0025  # 400 seconds
 
     def __init__(self, id):
         super().__init__(id)
         self.name = "OBDH"
         self.CLEANUP_COUNT_THRESHOLD = 0
         self.CLEANUP_COUNTER = 0
+        self.GC_COUNTER = 0
+        self.GC_COUNT_THRESHOLD = 0
 
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:
@@ -25,18 +29,30 @@ class Task(TemplateTask):
         else:  # Run for all other states
             if not self.frequency_set:
                 self.CLEANUP_COUNTER = 0
+
                 if self.cleanup_frequency > self.frequency:
                     self.log_error("Clean-up frequency faster than task frequency. Defaulting to task frequency.")
                     self.cleanup_frequency = self.frequency
                 self.CLEANUP_COUNT_THRESHOLD = int(self.frequency / self.cleanup_frequency)
+
+                if self.gc_frequency > self.frequency:
+                    self.log_error("Garbage collection frequency faster than task frequency. Defaulting to task frequency.")
+                    self.gc_frequency = self.frequency
+                self.GC_COUNT_THRESHOLD = int(self.frequency / self.gc_frequency)
+
                 self.frequency_set = True
 
             self.CLEANUP_COUNTER += 1
+            self.GC_COUNTER += 1
 
             if self.CLEANUP_COUNTER >= self.CLEANUP_COUNT_THRESHOLD:
                 DH.check_circular_buffers()
                 DH.clean_up()  # Clean up path that have been marked for deletion
                 self.CLEANUP_COUNTER = 0
+
+            if self.GC_COUNTER >= self.GC_COUNT_THRESHOLD:
+                gc.collect()
+                self.GC_COUNTER = 0
 
             if SM.current_state == STATES.NOMINAL:
                 pass
