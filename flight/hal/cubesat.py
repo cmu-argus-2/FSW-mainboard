@@ -2,19 +2,21 @@ import time
 from collections import OrderedDict
 
 from hal.drivers.errors import Errors
+from micropython import const
 
 # Argus Safety Integrity Level
-ASIL1 = 1
-ASIL2 = 2
-ASIL3 = 3
-ASIL4 = 4
+ASIL0 = const(0)  # debug components, should not be in flight and do not care if error
+ASIL1 = const(1)
+ASIL2 = const(2)
+ASIL3 = const(3)
+ASIL4 = const(4)
 
 
 class Device:
     def __init__(
         self,
         boot_fn: object,
-        ASIL: int = ASIL1,
+        ASIL: int,
         peripheral_line: bool = True,
         device: object = None,
         error: int = Errors.NO_ERROR,
@@ -45,25 +47,25 @@ class CubeSat:
     def __init__(self):
         self.__device_list = OrderedDict(
             [
-                ("NEOPIXEL", Device(self.__neopixel_boot)),
-                ("SDCARD", Device(self.__sd_card_boot)),  # SD Card must enabled before other devices
+                ("NEOPIXEL", Device(self.__neopixel_boot, ASIL0)),
+                ("SDCARD", Device(self.__sd_card_boot, ASIL1)),  # SD Card must enabled before other devices
                 ("RTC", Device(self.__rtc_boot, ASIL2)),
                 ("GPS", Device(self.__gps_boot, ASIL3, peripheral_line=False)),
                 ("RADIO", Device(self.__radio_boot, ASIL4, peripheral_line=False)),
                 ("IMU", Device(self.__imu_boot, ASIL3)),
                 ("FUEL_GAUGE", Device(self.__fuel_gauge_boot, ASIL2)),
                 ("BATT_HEATERS", Device(self.__battery_heaters_boot)),
-                ("WATCHDOG", Device(self.__watchdog_boot, ASIL3)),
-                ("BURN_WIRE", Device(self.__burn_wire_boot, ASIL3)),
+                ("WATCHDOG", Device(self.__watchdog_boot, ASIL2)),
+                ("BURN_WIRE", Device(self.__burn_wire_boot, ASIL4)),
                 ("BOARD_PWR", Device(self.__power_monitor_boot)),
                 ("RADIO_PWR", Device(self.__power_monitor_boot)),
-                ("GPS_PWR", Device(self.__power_monitor_boot)),
-                ("JETSON_PWR", Device(self.__power_monitor_boot)),
-                ("XP_PWR", Device(self.__power_monitor_boot)),
-                ("XM_PWR", Device(self.__power_monitor_boot)),
-                ("YP_PWR", Device(self.__power_monitor_boot)),
-                ("YM_PWR", Device(self.__power_monitor_boot)),
-                ("ZP_PWR", Device(self.__power_monitor_boot)),
+                ("GPS_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                ("JETSON_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                ("XP_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                ("XM_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                ("YP_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                ("YM_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                ("ZP_PWR", Device(self.__power_monitor_boot, ASIL1)),
                 ("TORQUE_XP", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
                 ("TORQUE_XM", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
                 ("TORQUE_YP", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),

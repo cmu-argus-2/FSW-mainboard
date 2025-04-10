@@ -8,7 +8,7 @@ import time
 import board
 import digitalio
 from busio import I2C, SPI, UART
-from hal.cubesat import ASIL1, ASIL2, ASIL3, ASIL4, CubeSat
+from hal.cubesat import ASIL0, ASIL1, ASIL2, ASIL3, ASIL4, CubeSat
 from hal.drivers.errors import Errors
 from micropython import const
 from sdcardio import SDCard
@@ -695,7 +695,7 @@ class ArgusV3(CubeSat):
         if ASIL == ASIL4:
             self.__reboot_device(device_name)
             return Errors.REBOOT_DEVICE
-        else:
+        elif ASIL != ASIL0:
             ArgusV3Error.ASIL_ERRORS[ASIL] += 1
             if ArgusV3Error.ASIL_ERRORS[ASIL] >= ArgusV3Error.ASIL_THRESHOLDS[ASIL]:
                 self.__reboot_device(device_name)
@@ -716,9 +716,9 @@ class ArgusV3Error:
     }
 
     ASIL_THRESHOLDS = {
-        ASIL1: 5,  # ASIL 1: Reboot after 5 errors
-        ASIL2: 3,  # ASIL 2: Reboot after 3 errors
-        ASIL3: 2,  # ASIL 3: Reboot after 2 errors
+        ASIL1: const(5),  # ASIL 1: Reboot after 5 errors
+        ASIL2: const(3),  # ASIL 2: Reboot after 3 errors
+        ASIL3: const(2),  # ASIL 3: Reboot after 2 errors
     }
 
-    MAX_DEVICE_ERROR = 10
+    MAX_DEVICE_ERROR = const(10)
