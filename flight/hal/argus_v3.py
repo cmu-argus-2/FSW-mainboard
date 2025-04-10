@@ -4,7 +4,6 @@ Description: This file contains the definition of the ArgusV3 class and its asso
 """
 
 import time
-from sys import path
 
 import board
 import digitalio
@@ -13,7 +12,6 @@ from hal.cubesat import ASIL1, ASIL2, ASIL3, ASIL4, CubeSat
 from hal.drivers.errors import Errors
 from micropython import const
 from sdcardio import SDCard
-from storage import VfsFat, mount
 
 
 class ArgusV3Power:

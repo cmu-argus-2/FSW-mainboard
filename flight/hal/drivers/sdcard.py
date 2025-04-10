@@ -1,6 +1,5 @@
 from sys import path
 
-from sdcardio import SDCard
 from storage import VfsFat, mount, umount
 
 VFS_MOUNT_POINT = "/sd"
