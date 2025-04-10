@@ -10,6 +10,8 @@ CircuitPython Compilation & Flashing Guide for Argus
 ## Compilation
 This guide is specific to Argus, for additional information refer to the [official Adafruit CircuitPython Guide](https://learn.adafruit.com/how-to-add-a-new-board-to-circuitpython/get-setup-to-add-your-board)
 
+For Argus, **esepcially Argus 3**, please ensure you are using the [Argus CircuitPython Fork](https://github.com/cmu-argus-2/circuitpython)
+
 **1. Setup Environment**
 
 **For CircuitPython 9, you will need to compile on Ubuntu 24.04**
