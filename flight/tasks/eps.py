@@ -266,9 +266,11 @@ class Task(TemplateTask):
                     if SHOULD_ENABLE_HEATERS(enabled, temp, flag):
                         battery_heaters.heater0_enable()
                         battery_heaters.heater1_enable()
+                        self.log_info("Enabled battery heaters")
                     if SHOULD_DISABLE_HEATERS(enabled, temp, flag):
                         battery_heaters.heater0_disable()
                         battery_heaters.heater1_disable()
+                        self.log_info("Disabled battery heaters")
 
                 DH.log_data("eps", self.log_data)
             DH.log_data("eps_warning", self.warning_log_data)
