@@ -1,7 +1,14 @@
 # Electrical Power Subsystem Task
 
 import microcontroller
-from apps.eps.eps import EPS_POWER_FLAG, EPS_POWER_THRESHOLD, GET_EPS_POWER_FLAG, GET_POWER_STATUS
+from apps.eps.eps import (
+    EPS_POWER_FLAG,
+    EPS_POWER_THRESHOLD,
+    GET_EPS_POWER_FLAG,
+    GET_POWER_STATUS,
+    SHOULD_DISABLE_HEATERS,
+    SHOULD_ENABLE_HEATERS,
+)
 from apps.telemetry.constants import EPS_IDX, EPS_WARNING_IDX, class_length
 from core import DataHandler as DH
 from core import TemplateTask
@@ -250,6 +257,18 @@ class Task(TemplateTask):
                         self.log_info(f"EPS state: {self.log_data[EPS_IDX.EPS_POWER_FLAG]} ")
                     else:
                         self.log_error("EPS state invalid; SOC or power flag may be corrupted")
+
+                if SATELLITE.BATTERY_HEATERS_AVAILABLE:
+                    battery_heaters = SATELLITE.BATTERY_HEATERS
+                    enabled = battery_heaters.heater0_enabled() or battery_heaters.heater1_enabled
+                    temp = self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]
+                    flag = self.log_data[EPS_IDX.EPS_POWER_FLAG]
+                    if SHOULD_ENABLE_HEATERS(enabled, temp, flag):
+                        battery_heaters.heater0_enable()
+                        battery_heaters.heater1_enable()
+                    if SHOULD_DISABLE_HEATERS(enabled, temp, flag):
+                        battery_heaters.heater0_disable()
+                        battery_heaters.heater1_disable()
 
                 DH.log_data("eps", self.log_data)
             DH.log_data("eps_warning", self.warning_log_data)

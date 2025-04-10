@@ -8,6 +8,7 @@ class EPS_POWER_FLAG:
     NOMINAL = const(0x2)
     EXPERIMENT = const(0x3)
 
+
 # SOC thresholds in percentage
 class EPS_SOC_THRESHOLD:
     LOW_POWER_ENTRY = const(30)
@@ -15,10 +16,11 @@ class EPS_SOC_THRESHOLD:
     EXPERIMENT_ENTRY = const(80)
     EXPERIMENT_EXIT = const(60)
 
+
 # Temperature thresholds in cC (centi-Celsius)
 class EPS_TEMP_THRESHOLD:
-    BATTERY_HEAT_ENABLE = const(1000)
-    BATTERY_HEAT_DISABLE = const(2000)
+    BATTERY_HEAT_ENABLE = const(0)
+    BATTERY_HEAT_DISABLE = const(500)
 
 
 # Power threshold in mW
@@ -42,10 +44,6 @@ def GET_EPS_POWER_FLAG(curr_flag, soc):
             else:
                 flag = EPS_POWER_FLAG.NOMINAL
 
-        # TODO:
-        # add logic to take discharge rate into account
-        # when determining experiment state enter/exit thresholds;
-        # the current approach is probably too simple
         elif EPS_SOC_THRESHOLD.LOW_POWER_EXIT <= soc < EPS_SOC_THRESHOLD.EXPERIMENT_EXIT:
             flag = EPS_POWER_FLAG.NOMINAL
 
@@ -73,3 +71,13 @@ def GET_POWER_STATUS(buf, power, threshold, window):
     power_avg = sum(buf) / len(buf)
     # Return the moving average value & the power status
     return (power_avg >= threshold), power_avg
+
+
+def SHOULD_ENABLE_HEATERS(enabled, temp, flag):
+    """returns whether battery heaters should be enabled in current conditions"""
+    return not enabled and flag != EPS_POWER_FLAG.LOW_POWER and flag != EPS_POWER_FLAG.NONE and (temp <= EPS_TEMP_THRESHOLD.BATTERY_HEAT_ENABLE)
+
+
+def SHOULD_DISABLE_HEATERS(enabled, temp, flag):
+    """returns whether battery heaters should be disabled in current conditions"""
+    return enabled and ((flag == EPS_POWER_FLAG.LOW_POWER) or (temp >= EPS_TEMP_THRESHOLD.BATTERY_HEAT_DISABLE))
