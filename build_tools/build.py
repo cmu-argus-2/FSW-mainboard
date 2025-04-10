@@ -1,5 +1,9 @@
+"""
+Build script for Argus
+This script is only used for compiling .py files to .mpy files
+"""
+
 import argparse
-import filecmp
 import os
 import platform
 import shutil
@@ -27,11 +31,25 @@ def get_circuitpython_version(BOARD_PATH):
     return int(circuit_python.split(" ")[-3][0])
 
 
+def get_board_id(BOARD_PATH):
+    with open(os.path.join(BOARD_PATH, "boot_out.txt")) as boot:
+        lines = boot.readlines()
+        if len(lines) > 1:
+            second_line = lines[1].strip()
+            board_id = second_line.split(":")[1].strip()
+            return board_id
+    # Default to compiling for Argus
+    return "Argus"
+
+
 BOARD_PATH = get_board_path()
 CPY_VERSION = 8  # Default to CPY 8
+BOARD_ID = "Argus"  # Default to compiling for Argus
 if os.path.exists(BOARD_PATH):
     CPY_VERSION = get_circuitpython_version(BOARD_PATH)
+    BOARD_ID = get_board_id(BOARD_PATH)
 print(f"CircuitPython version: {CPY_VERSION}")
+print(f"Board ID: {BOARD_ID}")
 
 MPY_CROSS_NAME = "mpy-cross-cpy9" if CPY_VERSION == 9 else "mpy-cross"
 if system == "Darwin":
@@ -66,12 +84,16 @@ def create_build(source_folder):
 
     os.makedirs(build_folder)
 
-    for root, dirs, files in os.walk(source_folder):
-        for file in files:
-            # Exclude files in build folder
-            if os.path.relpath(root, source_folder).startswith("build/"):
-                continue
+    for root, _, files in os.walk(source_folder):
+        # only include drivers or drivers_PYC_V05
+        if BOARD_ID.startswith("Argus") and os.path.relpath(root, source_folder).startswith("hal/drivers_PYC_V05"):
+            print(f"Skipping {os.path.relpath(root, source_folder)}")
+            continue
+        elif BOARD_ID.startswith("PyCubed") and os.path.relpath(root, source_folder).startswith("hal/drivers"):
+            print(f"Skipping {os.path.relpath(root, source_folder)}")
+            continue
 
+        for file in files:
             if file.endswith(".py") or file.endswith(".mpy"):
                 source_path = os.path.join(root, file)
 
@@ -113,39 +135,6 @@ def create_build(source_folder):
     # Create SD folder
     os.makedirs(os.path.join(build_folder, "sd/"), exist_ok=True)
     return build_folder
-
-
-def copy_folder(build_folder, destination_folder, show_identical_files=True):
-    for root, dirs, files in os.walk(build_folder):
-        for file in files:
-            source_path = os.path.join(root, file)
-            relative_path = os.path.relpath(source_path, build_folder)
-            destination_path = os.path.join(destination_folder, relative_path)
-
-            if not os.path.exists(os.path.dirname(destination_path)):
-                os.makedirs(os.path.dirname(destination_path))
-
-            if not os.path.exists(destination_path):
-                shutil.copy2(source_path, destination_path)
-                print(f"Copied {source_path} to {destination_path}")
-            else:
-                if filecmp.cmp(source_path, destination_path):
-                    if show_identical_files:
-                        print(f"File {source_path} already exists and is identical.")
-                else:
-                    shutil.copy2(source_path, destination_path)
-                    print(f"Overwrote {destination_path} with {source_path}")
-
-    # Delete files in destination folder that are not in the new copy
-    for root, dirs, files in os.walk(destination_folder):
-        for file in files:
-            destination_path = os.path.join(root, file)
-            relative_path = os.path.relpath(destination_path, destination_folder)
-            source_path = os.path.join(build_folder, relative_path)
-
-            if not os.path.exists(source_path):
-                os.remove(destination_path)
-                print(f"Deleted {destination_path}")
 
 
 if __name__ == "__main__":
