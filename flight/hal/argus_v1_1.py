@@ -487,6 +487,12 @@ class ArgusV1(CubeSat):
 
             return [None, Errors.DEVICE_NOT_INITIALISED]
 
+    def __battery_heaters_boot(self, _) -> list[object, int]:
+        return [None, Errors.NO_ERROR]
+
+    def __watchdog_boot(self, _) -> list[object, int]:
+        return [None, Errors.NO_ERROR]
+
     ######################## ERROR HANDLING ########################
 
     def handle_error(self, _: str) -> int:

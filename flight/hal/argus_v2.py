@@ -285,7 +285,6 @@ class ArgusV2(CubeSat):
         pass
 
     def __gps_boot(self, _) -> list[object, int]:
-
         """GPS_boot: Boot sequence for the GPS
 
         :return: Error code if the GPS failed to initialize
@@ -562,6 +561,12 @@ class ArgusV2(CubeSat):
             if self.__debug:
                 raise e
             return [None, Errors.DEVICE_NOT_INITIALISED]
+
+    def __battery_heaters_boot(self, _) -> list[object, int]:
+        return [None, Errors.NO_ERROR]
+
+    def __watchdog_boot(self, _) -> list[object, int]:
+        return [None, Errors.NO_ERROR]
 
     ######################## ERROR HANDLING ########################
 

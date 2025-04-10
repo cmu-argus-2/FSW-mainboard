@@ -46,13 +46,15 @@ class CubeSat:
         self.__device_list = OrderedDict(
             [
                 ("NEOPIXEL", Device(self.__neopixel_boot)),
-                ("SDCARD", Device(self.__sd_card_boot)),
+                ("SDCARD", Device(self.__sd_card_boot)),  # SD Card must enabled before other devices
                 ("RTC", Device(self.__rtc_boot, ASIL2)),
                 ("GPS", Device(self.__gps_boot, ASIL3, peripheral_line=False)),
                 ("RADIO", Device(self.__radio_boot, ASIL4, peripheral_line=False)),
                 ("IMU", Device(self.__imu_boot, ASIL3)),
                 ("FUEL_GAUGE", Device(self.__fuel_gauge_boot, ASIL2)),
-                ("BURN_WIRE", Device(self.__burn_wire_boot)),
+                ("BATT_HEATERS", Device(self.__battery_heaters_boot)),
+                ("WATCHDOG", Device(self.__watchdog_boot), ASIL3),
+                ("BURN_WIRE", Device(self.__burn_wire_boot), ASIL3),
                 ("BOARD_PWR", Device(self.__power_monitor_boot)),
                 ("RADIO_PWR", Device(self.__power_monitor_boot)),
                 ("GPS_PWR", Device(self.__power_monitor_boot)),
@@ -317,6 +319,34 @@ class CubeSat:
         :return: bool
         """
         return self.key_in_device_list("NEOPIXEL") and self.__device_list["NEOPIXEL"].device is not None
+
+    @property
+    def BATTERY_HEATERS(self):
+        """BATT_HEATERS: Returns the battery heaters object
+        :return: object or None
+        """
+        return self.__device_list["BATT_HEATERS"].device
+
+    @property
+    def BATTERY_HEATERS_AVAILABLE(self) -> bool:
+        """BATT_HEATERS_AVAILABLE: Returns True if the battery heaters are available
+        :return: bool
+        """
+        return self.key_in_device_list("BATT_HEATERS") and self.__device_list["BATT_HEATERS"].device is not None
+
+    @property
+    def WATCHDOG(self):
+        """WATCHDOG: Returns the watchdog object
+        :return: object or None
+        """
+        return self.__device_list["WATCHDOG"].device
+
+    @property
+    def WATCHDOG_AVAILABLE(self) -> bool:
+        """WATCHDOG_AVAILABLE: Returns True if the watchdog is available
+        :return: bool
+        """
+        return self.key_in_device_list("WATCHDOG") and self.__device_list["WATCHDOG"].device is not None
 
     # @property
     # def PAYLOADUART(self):
