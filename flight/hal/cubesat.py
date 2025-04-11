@@ -57,10 +57,10 @@ class CubeSat:
                 ("LIGHT_YP", Device(self.__light_sensor_boot)),
                 ("LIGHT_YM", Device(self.__light_sensor_boot)),
                 ("LIGHT_ZM", Device(self.__light_sensor_boot)),
-                # ("LIGHT_ZP_1", Device(self.__light_sensor_boot)),
-                # ("LIGHT_ZP_2", Device(self.__light_sensor_boot)),
-                # ("LIGHT_ZP_3", Device(self.__light_sensor_boot)),
-                # ("LIGHT_ZP_4", Device(self.__light_sensor_boot)),
+                ("LIGHT_ZP_1", Device(self.__light_sensor_boot)),
+                ("LIGHT_ZP_2", Device(self.__light_sensor_boot)),
+                ("LIGHT_ZP_3", Device(self.__light_sensor_boot)),
+                ("LIGHT_ZP_4", Device(self.__light_sensor_boot)),
                 ("IMU", Device(self.__imu_boot)),
             ]
         )
