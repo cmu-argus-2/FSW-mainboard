@@ -300,7 +300,7 @@ class ArgusV2(CubeSat):
             if self.__debug:
                 raise e
 
-            return [None, Errors.GPS_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __power_monitor_boot(self, location) -> list[object, int]:
         """power_monitor_boot: Boot sequence for the power monitor

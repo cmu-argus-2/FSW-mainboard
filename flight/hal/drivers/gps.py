@@ -4,7 +4,7 @@ try:
 
     from busio import UART
     from digitalio import DigitalInOut
-    from hal.drivers.middleware.errors import Errors
+    from hal.drivers.errors import Errors
     from micropython import const
 except ImportError:
     pass
@@ -654,7 +654,7 @@ class GPS:
 
             success = self.update()
             if success:
-                return Errors.NOERROR
+                return Errors.NO_ERROR
 
             time.sleep(1)
 

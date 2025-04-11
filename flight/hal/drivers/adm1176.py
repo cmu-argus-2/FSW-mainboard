@@ -242,13 +242,13 @@ class ADM1176:
                     " Current: ",
                     rCurrent,
                 )
-                return Errors.ADM1176_NOT_CONNECTED_TO_POWER
+                return Errors.PWR_MON_NOT_CONNECTED_TO_POWER
             elif rVoltage > V_MAX or rVoltage < V_MIN:
                 print(
                     "Error: Voltage out of typical range!! Voltage Reading: ",
                     rVoltage,
                 )
-                return Errors.ADM1176_VOLTAGE_OUT_OF_RANGE
+                return Errors.PWR_MON_VOLTAGE_OUT_OF_RANGE
 
         return Errors.NO_ERROR
 
@@ -262,19 +262,19 @@ class ADM1176:
         self.set_device_on(True)
         if not self.device_on():
             print("Error: Could not turn on device")
-            return Errors.ADM1176_COULD_NOT_TURN_ON
+            return Errors.PWR_MON_COULD_NOT_TURN_ON
 
         # Turn the device off
         self.set_device_on(False)
         if self.device_on():
             print("Error: Could not turn off device")
-            return Errors.ADM1176_COULD_NOT_TURN_OFF
+            return Errors.PWR_MON_COULD_NOT_TURN_ON
 
         # Turn the device on again
         self.set_device_on(True)
         if not self.device_on():
             print("Error: Could not turn on device after turning off")
-            return Errors.ADM1176_COULD_NOT_TURN_ON
+            return Errors.PWR_MON_COULD_NOT_TURN_ON
 
         return Errors.NO_ERROR
 
@@ -291,10 +291,10 @@ class ADM1176:
         status = self.status()
         if (status & _STATUS_ADC_OC) == _STATUS_ADC_OC:
             print("Error: ADC OC was triggered at overcurrent max")
-            return Errors.ADM1176_ADC_OC_OVERCURRENT_MAX
+            return Errors.PWR_MON_ADC_OC_OVERCURRENT_MAX
         elif (status & _STATUS_ADC_ALERT) == _STATUS_ADC_ALERT:
             print("Error: ADC Alert was triggered at overcurrent max")
-            return Errors.ADM1176_ADC_ALERT_OVERCURRENT_MAX
+            return Errors.PWR_MON_ADC_ALERT_OVERCURRENT_MAX
 
         return Errors.NO_ERROR
 
