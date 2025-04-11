@@ -677,9 +677,9 @@ class ArgusV3(CubeSat):
 
             self.__restart_power_line(ArgusV3Power.PERIPH_PWR_EN)
 
-            for _, device_cls in self.__device_list.items():
+            for location, device_cls in self.__device_list.items():
                 if device_cls.peripheral_line and not device_cls.dead:
-                    self.__boot_device(_, device_cls)
+                    self.__boot_device(location, device_cls)
 
     def handle_error(self, device_name: str) -> int:
         if device_name not in self.__device_list:

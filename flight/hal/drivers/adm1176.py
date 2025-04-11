@@ -268,7 +268,7 @@ class ADM1176:
         self.set_device_on(False)
         if self.device_on():
             print("Error: Could not turn off device")
-            return Errors.PWR_MON_COULD_NOT_TURN_ON
+            return Errors.PWR_MON_COULD_NOT_TURN_OFF
 
         # Turn the device on again
         self.set_device_on(True)
