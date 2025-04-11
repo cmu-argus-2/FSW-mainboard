@@ -1,3 +1,7 @@
+"""
+Move files from build folder to mainboard
+"""
+
 import argparse
 import filecmp
 import os
