@@ -69,6 +69,7 @@ class PayloadTM:  # Simple data structure holder
     ACTIVE_CAMERAS: int = 0
     CAPTURE_MODE: int = 0
     CAM_STATUS: list = [0] * 4
+    IMU_STATUS: int = 0
     TASKS_IN_EXECUTION: int = 0
     DISK_USAGE: int = 0
     LATEST_ERROR: int = 0
@@ -84,6 +85,9 @@ class PayloadTM:  # Simple data structure holder
     VDD_IN: int = 0
     VDD_CPU_GPU_CV: int = 0
     VDD_SOC: int = 0
+
+    # utils var
+    DATA_LENGTH_SIZE: int = 47
 
     @classmethod
     def print(cls):
