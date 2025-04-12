@@ -45,3 +45,12 @@ class BatteryHeaters:
 
     def heater1_enabled(self):
         return self.__heater1_en.value and self.__enable.value if self.__heater1_en is not None else False
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return []
+
+    def deinit(self):
+        return

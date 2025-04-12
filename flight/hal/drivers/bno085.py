@@ -885,6 +885,13 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
     def _get_report_seq_id(self, report_id: int) -> int:
         return self._two_ended_sequence_numbers.get(report_id, 0)
 
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        results = []
+        return results
+
     def deinit(self):
         if self._reset is not None:
             self._reset.deinit()

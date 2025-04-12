@@ -14,6 +14,7 @@ Implementation Notes
 from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register.i2c_bit import RWBit
 from adafruit_register.i2c_bits import ROBits, RWBits
+from hal.drivers.errors import Errors
 from micropython import const
 
 # Registers
@@ -132,6 +133,21 @@ class BQ25883:
 
     def led(self, value: bool) -> None:
         self._stat_dis = not value
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        results = []
+        if self._fault_status & 0x05:
+            results.append(Errors.BOOST_CHARGER_CHARGE_SAFETY_EXPIRED)
+        if self._fault_status & 0x06:
+            results.append(Errors.BOOST_CHARGER_BATT_OVP)
+        if self._fault_status & 0x07:
+            results.append(Errors.BOOST_CHARGER_THERMAL_SHUTDOWN)
+        if self._fault_status & 0x08:
+            results.append(Errors.BOOST_CHARGER_VBUS_OVP)
+        return results
 
     def deinit(self):
         return

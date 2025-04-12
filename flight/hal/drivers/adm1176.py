@@ -30,7 +30,7 @@ _STATUS = bytearray(1)
 
 # Status register
 _STATUS_READ = const(0x1 << 6)
-_STATUS_ADC_OC = const(0x1 << 0)
+# _STATUS_ADC_OC = const(0x1 << 0)
 _STATUS_ADC_ALERT = const(0x1 << 1)
 # _STATUS_HS_OC = const(0x1 << 2)
 # STATUS_HS_ALERT = const(0x1 << 3)
@@ -39,10 +39,7 @@ _STATUS_OFF_STATUS = const(0x1 << 4)
 
 # Extended registers
 _ALERT_EN_EXT_REG_ADDR = const(0x81)
-# ALERT_EN_EN_ADC_OC1 = const(0x1 << 0)
 _ALERT_EN_EN_ADC_OC4 = const(0x1 << 1)
-# ALERT_EN_EN_HS_ALERT = const(0x1 << 2)
-# ALERT_EN_EN_OFF_ALERT = const(0x1 << 3)
 _ALERT_EN_CLEAR = const(0x1 << 4)
 
 _ALERT_TH_EN_REG_ADDR = const(0x82)
@@ -201,102 +198,16 @@ class ADM1176:
             i2c.write(_cmd)
         return _STATUS[0]
 
-    """
-    ----------------------- HANDLER METHODS -----------------------
-    """
+    ######################## ERROR HANDLING ########################
 
-    def get_flags(self):
-        flags = {}
+    @property
+    def device_errors(self):
+        results = []
         status = self.status()
-        if status & 0b1:
-            flags["ADC_OC"] = None
-        if status & 0b10:
-            flags["ADC_ALERT"] = None
-        if status & 0b100:
-            flags["HS_OC"] = None
-        if status & 0b1000:
-            flags["HS_ALERT"] = None
-        if status & 0b10000:
-            flags["OFF_STATUS"] = None
-        if status & 0b100000:
-            flags["OFF_ALERT"] = None
-        return flags
-
-    ######################### DIAGNOSTICS #########################
-
-    def __simple_vi_read(self) -> int:
-        """_simple_volt_read: Reads the voltage ten times, ensures that it
-        does not fluctuate too much.
-
-        :return: true if test passes, false if fails
-        """
-        V_MAX = 9.0
-        V_MIN = 6.0
-
-        for i in range(10):
-            (rVoltage, rCurrent) = self.read_voltage_current()
-            if rVoltage == 0 or rCurrent == 0:
-                print(
-                    "Error: Not connected to power!! Voltage: ",
-                    rVoltage,
-                    " Current: ",
-                    rCurrent,
-                )
-                return Errors.PWR_MON_NOT_CONNECTED_TO_POWER
-            elif rVoltage > V_MAX or rVoltage < V_MIN:
-                print(
-                    "Error: Voltage out of typical range!! Voltage Reading: ",
-                    rVoltage,
-                )
-                return Errors.PWR_MON_VOLTAGE_OUT_OF_RANGE
-
-        return Errors.NO_ERROR
-
-    def __on_off_test(self) -> int:
-        """_on_off_test: Turns the device on, off, and on
-        again and ensures corresponding register set
-
-        :return: true if test passes, false if fails
-        """
-        # Turn the device on
-        self.set_device_on(True)
-        if not self.device_on():
-            print("Error: Could not turn on device")
-            return Errors.PWR_MON_COULD_NOT_TURN_ON
-
-        # Turn the device off
-        self.set_device_on(False)
-        if self.device_on():
-            print("Error: Could not turn off device")
-            return Errors.PWR_MON_COULD_NOT_TURN_OFF
-
-        # Turn the device on again
-        self.set_device_on(True)
-        if not self.device_on():
-            print("Error: Could not turn on device after turning off")
-            return Errors.PWR_MON_COULD_NOT_TURN_ON
-
-        return Errors.NO_ERROR
-
-    def __overcurrent_test(self) -> bool:
-        """_overcurrent_test: Tests that the threshold is triggering
-        correctly.
-
-        :return: true if test passes, false if fails
-        """
-        # Set the overcurrent threshold to max
-        self.set_overcurrent_level(0xFF)
-        self.clear()
-
-        status = self.status()
-        if (status & _STATUS_ADC_OC) == _STATUS_ADC_OC:
-            print("Error: ADC OC was triggered at overcurrent max")
-            return Errors.PWR_MON_ADC_OC_OVERCURRENT_MAX
-        elif (status & _STATUS_ADC_ALERT) == _STATUS_ADC_ALERT:
-            print("Error: ADC Alert was triggered at overcurrent max")
-            return Errors.PWR_MON_ADC_ALERT_OVERCURRENT_MAX
-
-        return Errors.NO_ERROR
+        if status & _STATUS_ADC_ALERT:
+            results.append(Errors.PWR_MON_ADC_ALERT_OVERCURRENT)
+            self.clear()
+        return results
 
     def deinit(self):
         return

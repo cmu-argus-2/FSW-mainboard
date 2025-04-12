@@ -5,6 +5,7 @@ from adafruit_register.i2c_bit import ROBit
 from adafruit_register.i2c_bits import ROBits, RWBits
 from adafruit_register.i2c_struct import Struct
 from digitalio import DigitalInOut
+from hal.drivers.errors import Errors
 from micropython import const
 
 # Chip ID
@@ -178,7 +179,7 @@ BMX160_MAG_ODR_25HZ = const(0x06)
 
 
 # Error related
-# BMX160_OK = const(0)
+BMX160_OK = const(0)
 # BMX160_ERROR = -1
 BMX160_ERROR_CODES = [0x1, 0x2, 0x3, 0x6, 0x7]
 
@@ -666,6 +667,18 @@ class BMX160:
         else:
             settingswarning(warning_interp)
     """
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        results = []
+        if self.error_code != BMX160_OK:
+            results.append(Errors.IMU_ERROR_CODE)
+        if self.drop_cmd_err:
+            results.append(Errors.IMU_DROP_COMMAND_ERROR)
+        if self.fatal_err:
+            results.append(Errors.IMU_FATAL_ERROR)
+        return results
 
     def deinit(self):
         if self._enable is not None:

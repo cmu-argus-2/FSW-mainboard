@@ -207,6 +207,12 @@ class BurnWires:
         """
         self.__burn(self.__burn_ym)
 
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return []
+
     def deinit(self):
         self.__enable.deinit()
         self.__enable = None

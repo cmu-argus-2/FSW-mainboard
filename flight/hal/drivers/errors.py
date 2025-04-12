@@ -14,6 +14,9 @@ class Errors:
     NO_REBOOT = const(0xFD)  # placeholder value
 
     # IMU Errors
+    IMU_ERROR_CODE = const(0x2)  # placeholder value
+    IMU_DROP_COMMAND_ERROR = const(0x3)  # placeholder value
+    IMU_FATAL_ERROR = const(0x4)  # placeholder value
 
     # RTC Errors
     RTC_LOST_POWER = const(0x10)  # placeholder value
@@ -25,12 +28,7 @@ class Errors:
     # Radio Errors
 
     # Power Monitor Errors
-    PWR_MON_COULD_NOT_TURN_ON = const(0xA1)  # placeholder value
-    PWR_MON_COULD_NOT_TURN_OFF = const(0xA2)  # placeholder value
-    PWR_MON_VOLTAGE_OUT_OF_RANGE = const(0xA3)  # placeholder value
-    PWR_MON_ADC_OC_OVERCURRENT_MAX = const(0xA4)  # placeholder value
-    PWR_MON_ADC_ALERT_OVERCURRENT_MAX = const(0xA5)  # placeholder value
-    PWR_MON_NOT_CONNECTED_TO_POWER = const(0xA6)  # placeholder value
+    PWR_MON_ADC_ALERT_OVERCURRENT = const(0xA5)  # placeholder value
 
     # TORQUE COIL ERRORS
     TORQUE_COIL_OVERCURRENT_EVENT = const(0xB0)  # placeholder value
@@ -42,3 +40,9 @@ class Errors:
     # LIGHT SENSOR ERRORS
     LIGHT_SENSOR_ID_CHECK_FAILED = const(0xC0)  # placeholder value
     LIGHT_SENSOR_CRC_COUNTER_TEST_FAILED = const(0xC1)  # placeholder value
+
+    # BOOST CHARGER ERRORS
+    BOOST_CHARGER_CHARGE_SAFETY_EXPIRED = const(0xD0)  # placeholder value
+    BOOST_CHARGER_BATT_OVP = const(0xD1)  # placeholder value
+    BOOST_CHARGER_THERMAL_SHUTDOWN = const(0xD2)  # placeholder value
+    BOOST_CHARGER_VBUS_OVP = const(0xD3)  # placeholder value
