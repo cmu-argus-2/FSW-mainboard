@@ -135,3 +135,47 @@ class Resp_DisableCameras:
     def reset(cls):
         cls.num_cam_deactivated = 0
         cls.cam_status = [0, 0, 0, 0]
+
+
+class RespCaptureImages:
+    pass
+
+
+class Resp_StartCaptureImagesPeriodically:
+    pass
+
+
+class Resp_StopCaptureImages:
+    pass
+
+
+class Resp_RequestStorageInfo:
+    pass
+
+
+class Resp_RequestImage:
+    pass
+
+
+class Resp_RequestNextFilePacket:
+    pass
+
+
+class Resp_ClearStorage:
+    pass
+
+
+class Resp_PingODStatus:
+    pass
+
+
+class Resp_RunOD:
+    pass
+
+
+class Resp_RequestODResult:
+    pass
+
+
+class Resp_SynchronizeTime:
+    pass
