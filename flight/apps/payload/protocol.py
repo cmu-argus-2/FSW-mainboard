@@ -120,10 +120,11 @@ class Encoder:
         return cls._send_buffer
 
     @classmethod
-    def encode_request_next_file_packet(cls):
+    def encode_request_next_file_packet(cls, packet_number):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.REQUEST_NEXT_FILE_PACKET
-        cls._bytes_set_last_time = 1
+        cls._send_buffer[1:3] = packet_number.to_bytes(2, byteorder=_BYTE_ORDER)
+        cls._bytes_set_last_time = 3
         return cls._send_buffer
 
     @classmethod
