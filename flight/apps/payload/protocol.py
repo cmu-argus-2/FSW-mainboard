@@ -254,7 +254,7 @@ class Decoder:
 
     @classmethod
     def decode_request_telemetry(cls):
-        if cls._curr_data_length != 46:  # should be a constant in definitions.py
+        if cls._curr_data_length != PayloadTM.DATA_LENGTH_SIZE:
             return ErrorCodes.INVALID_PACKET
 
         if int(cls._recv_buffer[cls._data_idx][0]) == ACK.ERROR:
@@ -276,26 +276,27 @@ class Decoder:
         PayloadTM.CAM_STATUS[1] = cls._recv_buffer[cls._data_idx][21]
         PayloadTM.CAM_STATUS[2] = cls._recv_buffer[cls._data_idx][22]
         PayloadTM.CAM_STATUS[3] = cls._recv_buffer[cls._data_idx][23]
-        PayloadTM.TASKS_IN_EXECUTION = cls._recv_buffer[cls._data_idx][24]
-        PayloadTM.DISK_USAGE = cls._recv_buffer[cls._data_idx][25]
-        PayloadTM.LATEST_ERROR = cls._recv_buffer[cls._data_idx][26]
+        PayloadTM.IMU_STATUS = cls._recv_buffer[cls._data_idx][24]
+        PayloadTM.TASKS_IN_EXECUTION = cls._recv_buffer[cls._data_idx][25]
+        PayloadTM.DISK_USAGE = cls._recv_buffer[cls._data_idx][26]
+        PayloadTM.LATEST_ERROR = cls._recv_buffer[cls._data_idx][27]
         # Tegrastats part
-        PayloadTM.TEGRASTATS_PROCESS_STATUS = bool(cls._recv_buffer[cls._data_idx][27])
-        PayloadTM.RAM_USAGE = cls._recv_buffer[cls._data_idx][28]
-        PayloadTM.SWAP_USAGE = cls._recv_buffer[cls._data_idx][29]
-        PayloadTM.ACTIVE_CORES = cls._recv_buffer[cls._data_idx][30]
-        PayloadTM.CPU_LOAD[0] = cls._recv_buffer[cls._data_idx][31]
-        PayloadTM.CPU_LOAD[1] = cls._recv_buffer[cls._data_idx][32]
-        PayloadTM.CPU_LOAD[2] = cls._recv_buffer[cls._data_idx][33]
-        PayloadTM.CPU_LOAD[3] = cls._recv_buffer[cls._data_idx][34]
-        PayloadTM.CPU_LOAD[4] = cls._recv_buffer[cls._data_idx][35]
-        PayloadTM.CPU_LOAD[5] = cls._recv_buffer[cls._data_idx][36]
-        PayloadTM.GPU_FREQ = cls._recv_buffer[cls._data_idx][37]
-        PayloadTM.CPU_TEMP = cls._recv_buffer[cls._data_idx][38]
-        PayloadTM.GPU_TEMP = cls._recv_buffer[cls._data_idx][39]
-        PayloadTM.VDD_IN = int.from_bytes(cls._recv_buffer[cls._data_idx][40:42], byteorder=_BYTE_ORDER, signed=False)
-        PayloadTM.VDD_CPU_GPU_CV = int.from_bytes(cls._recv_buffer[cls._data_idx][42:44], byteorder=_BYTE_ORDER, signed=False)
-        PayloadTM.VDD_SOC = int.from_bytes(cls._recv_buffer[cls._data_idx][44:46], byteorder=_BYTE_ORDER, signed=False)
+        PayloadTM.TEGRASTATS_PROCESS_STATUS = bool(cls._recv_buffer[cls._data_idx][28])
+        PayloadTM.RAM_USAGE = cls._recv_buffer[cls._data_idx][29]
+        PayloadTM.SWAP_USAGE = cls._recv_buffer[cls._data_idx][30]
+        PayloadTM.ACTIVE_CORES = cls._recv_buffer[cls._data_idx][31]
+        PayloadTM.CPU_LOAD[0] = cls._recv_buffer[cls._data_idx][32]
+        PayloadTM.CPU_LOAD[1] = cls._recv_buffer[cls._data_idx][33]
+        PayloadTM.CPU_LOAD[2] = cls._recv_buffer[cls._data_idx][34]
+        PayloadTM.CPU_LOAD[3] = cls._recv_buffer[cls._data_idx][35]
+        PayloadTM.CPU_LOAD[4] = cls._recv_buffer[cls._data_idx][36]
+        PayloadTM.CPU_LOAD[5] = cls._recv_buffer[cls._data_idx][37]
+        PayloadTM.GPU_FREQ = cls._recv_buffer[cls._data_idx][38]
+        PayloadTM.CPU_TEMP = cls._recv_buffer[cls._data_idx][39]
+        PayloadTM.GPU_TEMP = cls._recv_buffer[cls._data_idx][40]
+        PayloadTM.VDD_IN = int.from_bytes(cls._recv_buffer[cls._data_idx][41:43], byteorder=_BYTE_ORDER, signed=False)
+        PayloadTM.VDD_CPU_GPU_CV = int.from_bytes(cls._recv_buffer[cls._data_idx][43:45], byteorder=_BYTE_ORDER, signed=False)
+        PayloadTM.VDD_SOC = int.from_bytes(cls._recv_buffer[cls._data_idx][45:47], byteorder=_BYTE_ORDER, signed=False)
 
         return ErrorCodes.OK
 
