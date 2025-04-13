@@ -70,7 +70,7 @@ class FileTransferType:
 
 class PayloadErrorCodes:
     NONE = 0
-    NO_MORE_FILE_PACKET = 5
+    NO_MORE_PACKET_FOR_FILE = 5
     FILE_NOT_AVAILABLE = 7
 
 
