@@ -79,7 +79,6 @@ class FileTransfer:
     in_progress = False
     transfer_type = FileTransferType.NONE
     last_transfer_type = FileTransferType.NONE
-    requested_next_packet = False
 
     @classmethod
     def reset(cls):
@@ -91,10 +90,14 @@ class FileTransfer:
     def start_transfer(cls, transfer_type: FileTransferType):
         cls.in_progress = True
         cls.transfer_type = transfer_type
+        cls.packet_nb = 1  # INFO: Payload expect the first packet to be 1
 
     @classmethod
     def ack_packet(cls):
-        cls.packet_nb += 1
+        if cls.in_progress:
+            cls.packet_nb += 1
+        else:
+            print("[ERROR] No transfer in progress. Cannot acknowledge packet.")
 
     @classmethod
     def stop_transfer(cls):
