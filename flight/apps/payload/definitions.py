@@ -60,6 +60,8 @@ class ErrorCodes:
     TIMEOUT_SHUTDOWN = 6
     FILE_NOT_AVAILABLE = 7
     NO_MORE_FILE_PACKET = 8
+    TIMEOUT_BOOT = 9
+    TIMEOUT_SHUTDOWN = 10
 
 
 class FileTransferType:
@@ -105,6 +107,18 @@ class FileTransfer:
         cls.in_progress = False
         cls.transfer_type = FileTransferType.NONE
         cls.packet_nb = 0
+
+
+class ODStatusType:
+    IDLE = 0
+    DATA_COLLECTION = 1
+    BATCH_OPT_IN_PROGRESS = 2
+    RESULT_AVAILABLE = 3
+
+
+class ODStatus:
+    status = ODStatusType.IDLE
+    continue_od_at_next_boot = False
 
 
 class PayloadTM:  # Simple data structure holder
