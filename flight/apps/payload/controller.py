@@ -29,6 +29,7 @@ class PayloadController:
 
     # Bi-directional communication interface
     communication_interface = None
+    interface_injected = False
 
     # State of the Payload from the host perspective
     state = PayloadState.OFF
@@ -67,9 +68,16 @@ class PayloadController:
     od_status: ODStatus = None
 
     @classmethod
-    def initialize(cls, communication_interface):
+    def inject_communication_interface(cls, communication_interface):
         cls.communication_interface = communication_interface
-        cls.communication_interface.connect()
+        cls.interface_injected = True
+
+    @classmethod
+    def initialize(cls):
+        if not cls.interface_injected:
+            print("[ERROR] Communication interface not injected. Cannot initialize controller.")
+            return False
+        return cls.communication_interface.connect()
 
     @classmethod
     def deinitialize(cls):
@@ -163,19 +171,28 @@ class PayloadController:
             if cls.time_we_started_booting == 0:
                 cls.time_we_started_booting = cls._now
 
-            # The serial link will be purged by the payload when it opens its channel
-            # so we ping to check until it is ready, i.e. the ping response is received
-            if cls.ping():
-                cls._switch_to_state(PayloadState.READY)
-                print(f"[INFO] Payload is ready. Full boot in  {cls._now - cls.time_we_started_booting} seconds.")
-                cls.time_we_started_booting = 0  # Reset the boot time
-            elif cls._now - cls.time_we_started_booting > cls.TIMEOUT_BOOT:
-                pass
-            else:  # we failed
-                cls.turn_off_power()  # turn off the power line, just in case
-                cls.last_error = ErrorCodes.TIMEOUT_BOOT  # Log error
-                cls.time_we_started_booting = 0  # Reset the boot time
-                # CDH / HAL notification
+            if not cls.communication_interface.is_connected():
+                if cls.injected_communication_interface:
+                    # Initialize the communication interface
+                    cls.communication_interface.initialize()
+                else:
+                    print("[ERROR] Communication interface not injected yet.")
+            else:
+                print("[INFO] Communication interface is connected.")
+
+                # The serial link will be purged by the payload when it opens its channel
+                # so we ping to check until it is ready, i.e. the ping response is received
+                if cls.ping():
+                    cls._switch_to_state(PayloadState.READY)
+                    print(f"[INFO] Payload is ready. Full boot in  {cls._now - cls.time_we_started_booting} seconds.")
+                    cls.time_we_started_booting = 0  # Reset the boot time
+                elif cls._now - cls.time_we_started_booting > cls.TIMEOUT_BOOT:
+                    pass
+                else:  # we failed
+                    cls.turn_off_power()  # turn off the power line, just in case
+                    cls.last_error = ErrorCodes.TIMEOUT_BOOT  # Log error
+                    cls.time_we_started_booting = 0  # Reset the boot time
+                    # CDH / HAL notification
 
         elif cls.state == PayloadState.READY:
 
