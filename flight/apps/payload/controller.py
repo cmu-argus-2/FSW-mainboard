@@ -55,6 +55,10 @@ class PayloadController:
     _now = time.monotonic()
     telemetry_period = 1 / _TELEMETRY_FREQUENCY  # seconds
 
+    # File transfer
+    no_more_file_packet_to_receive = False
+    just_requested_file_packet = False
+
     @classmethod
     def initialize(cls, communication_interface):
         cls.communication_interface = communication_interface
@@ -176,24 +180,37 @@ class PayloadController:
     def request_image_transfer(cls):
         # This starts the process for image transfer which will be executed in the background by the controller at each cycle
         cls.communication_interface.send(Encoder.encode_request_image())
+        cls.no_more_file_packet_to_receive = False
 
     @classmethod
     def _continue_file_transfer_logic(cls):
         if FileTransfer.in_progress:
             # TODO
-            cls.communication_interface.send(Encoder.encode_request_next_file_packet(FileTransfer.packet_nb))
+            if not cls.just_requested_file_packet:
+                cls.communication_interface.send(Encoder.encode_request_next_file_packet(FileTransfer.packet_nb))
+                cls.just_requested_file_packet = True
+                print(f"[INFO] Requesting next file packet {FileTransfer.packet_nb}...")
+
             resp = cls.communication_interface.receive()
+            print(resp)
             if resp:
                 # Decode the response
+                cls.just_requested_file_packet = False
                 decoded_resp = Decoder.decode(resp)
-                if decoded_resp:  # all good
+                if decoded_resp == ErrorCodes.OK:
                     # grab the data and store
                     FileTransfer.ack_packet()  # increment the counter
-                    pass
-                else:  # Error
-                    pass
+                    return True
+                elif decoded_resp == ErrorCodes.NO_MORE_FILE_PACKET:
+                    cls.no_more_file_packet_to_receive = True
+                    print("[INFO] No more file packet to receive.")
+                    FileTransfer.stop_transfer()
+                    return False
+            else:
+                # No response
+                return False
         else:
-            return
+            return False
 
     @classmethod
     def turn_on_power(cls):
