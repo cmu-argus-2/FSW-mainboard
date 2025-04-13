@@ -236,6 +236,10 @@ class Decoder:
             return cls.decode_enable_cameras()
         elif cls._curr_id == CommandID.DISABLE_CAMERAS:
             return cls.decode_disable_cameras()
+        elif cls._curr_id == CommandID.REQUEST_IMAGE:
+            return cls.decode_request_image()
+        elif cls._curr_id == CommandID.REQUEST_NEXT_FILE_PACKET:
+            return cls.decode_request_next_file()
         # rest is coming
 
     @classmethod
@@ -327,7 +331,7 @@ class Decoder:
             return ErrorCodes.INVALID_PACKET
 
         if cls._curr_data_length == 5:
-            Resp_EnableCameras.num_activated_cameras = int(cls._recv_buffer[cls._data_idx][0])
+            Resp_EnableCameras.num_cam_activated = int(cls._recv_buffer[cls._data_idx][0])
             Resp_EnableCameras.cam_status[0] = int(cls._recv_buffer[cls._data_idx][1])
             Resp_EnableCameras.cam_status[1] = int(cls._recv_buffer[cls._data_idx][2])
             Resp_EnableCameras.cam_status[2] = int(cls._recv_buffer[cls._data_idx][3])
@@ -337,7 +341,7 @@ class Decoder:
             if int(cls._recv_buffer[cls._data_idx][0]) == ACK.ERROR:
                 return int(cls._recv_buffer[cls._data_idx][1])
 
-            return ErrorCodes.INVALID_PACKET
+            return ErrorCodes.INVALID_RESPONSE
 
     @classmethod
     def decode_disable_cameras(cls):
@@ -348,7 +352,7 @@ class Decoder:
             return ErrorCodes.INVALID_PACKET
 
         if cls._curr_data_length == 5:
-            Resp_DisableCameras.num_deactivated_cameras = int(cls._recv_buffer[cls._data_idx][0])
+            Resp_DisableCameras.num_cam_deactivated = int(cls._recv_buffer[cls._data_idx][0])
             Resp_DisableCameras.cam_status[0] = int(cls._recv_buffer[cls._data_idx][1])
             Resp_DisableCameras.cam_status[1] = int(cls._recv_buffer[cls._data_idx][2])
             Resp_DisableCameras.cam_status[2] = int(cls._recv_buffer[cls._data_idx][3])
@@ -358,7 +362,22 @@ class Decoder:
             if int(cls._recv_buffer[cls._data_idx][0]) == ACK.ERROR:
                 return int(cls._recv_buffer[cls._data_idx][1])
 
+            return ErrorCodes.INVALID_RESPONSE
+
+    @classmethod
+    def decode_request_image(cls):
+        if cls._curr_data_length <= 1:
             return ErrorCodes.INVALID_PACKET
+
+        resp = int(cls._recv_buffer[cls._data_idx][0])
+        err = int(cls._recv_buffer[cls._data_idx][1])
+        if resp == ACK.ERROR:
+            if err == PayloadErrorCodes.FILE_NOT_AVAILABLE:
+                return ErrorCodes.FILE_NOT_AVAILABLE
+            else:
+                return ErrorCodes.INVALID_RESPONSE
+        elif resp == ACK.SUCCESS:
+            return ErrorCodes.OK
 
     @classmethod
     def decode_request_next_file(cls):

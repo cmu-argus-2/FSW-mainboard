@@ -101,7 +101,7 @@ class PayloadIPC(PayloadCommunicationInterface):  # needed for local testing and
         try:
             rlist, _, _ = select.select([cls._pipe_out], [], [], 0.5)  # 500ms timeout
             if cls._pipe_out in rlist:
-                data = os.read(cls._pipe_out, 512).strip()  # Read from FIFO
+                data = os.read(cls._pipe_out, 1024).strip()  # Read from FIFO
                 if data:
                     try:
                         # NOTE: This handling is only for the specific IPC. The actual UART communication

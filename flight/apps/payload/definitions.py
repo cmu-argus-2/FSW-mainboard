@@ -58,7 +58,8 @@ class ErrorCodes:
     INVALID_PACKET = 4
     INVALID_RESPONSE = 5
     TIMEOUT_SHUTDOWN = 6
-    NO_MORE_FILE_PACKET = 7
+    FILE_NOT_AVAILABLE = 7
+    NO_MORE_FILE_PACKET = 8
 
 
 class FileTransferType:
@@ -70,6 +71,7 @@ class FileTransferType:
 class PayloadErrorCodes:
     NONE = 0
     NO_MORE_FILE_PACKET = 5
+    FILE_NOT_AVAILABLE = 7
 
 
 class FileTransfer:
@@ -193,10 +195,6 @@ class Resp_StopCaptureImages:
 
 
 class Resp_RequestStorageInfo:
-    pass
-
-
-class Resp_RequestImage:
     pass
 
 
