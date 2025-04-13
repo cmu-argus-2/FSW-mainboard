@@ -1,6 +1,7 @@
 # Payload Control Task
 
 from apps.payload.controller import PayloadController as PC
+from apps.payload.definitions import ExternalRequest
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
@@ -9,7 +10,7 @@ from core.states import STATES
 
 class Task(TemplateTask):
 
-    # TODO: request queue
+    current_request = ExternalRequest.NO_ACTION
 
     def __init__(self, id):
         super().__init__(id)
@@ -29,9 +30,22 @@ class Task(TemplateTask):
         if not DH.data_process_exists("payload/od"):
             pass
 
+        # Data process for runtime external requests from the CDH
+        if not DH.data_process_exists("payload/requests"):
+            DH.register_data_process(tag_name="payload/requests", data_format="B", persistent=False)
+
     async def main_task(self):
-        if SM.current_state == STATES.STARTUP:
-            # Grab the communication interface from SATELLITE
+        if SM.current_state == STATES.STARTUP or SM.current_state == STATES.DETUMBLING:
+
+            # Need to inject the communication interface and the power control interface from the HAL
             pass
+
         else:
             self.init_all_data_processes()
+
+            if DH.data_process_exists("payload/requests"):
+                candidate_request = DH.get_latest_data("payload/requests")[0]
+                if candidate_request != ExternalRequest.NO_ACTION:
+                    PC.add_request(candidate_request)
+
+            PC.run_control_logic()
