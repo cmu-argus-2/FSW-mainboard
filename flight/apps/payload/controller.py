@@ -10,7 +10,7 @@ Author: Ibrahima Sory Sow
 
 import time
 
-from definitions import CommandID, ErrorCodes, ExternalRequest, PayloadTM
+from definitions import CommandID, ErrorCodes, ExternalRequest, FileTransfer, FileTransferType, PayloadTM
 from protocol import Decoder, Encoder
 
 _PING_RESP_VALUE = 0x60
@@ -170,6 +170,27 @@ class PayloadController:
     @classmethod
     def disable_cameras(cls):
         cls.communication_interface.send(Encoder.encode_disable_cameras())
+
+    @classmethod
+    def request_image_transfer(cls):
+        # This starts the process for image transfer which will be executed in the background by the controller at each cycle
+        cls.communication_interface.send(Encoder.encode_request_image())
+
+    @classmethod
+    def _file_transfer_logic(cls):
+        if FileTransfer.in_progress:
+
+            cls.communication_interface.send(Encoder.encode_request_next_file_packet(FileTransfer.packet_nb))
+            resp = cls.communication_interface.receive()
+            if resp:
+                # Decode the response
+                decoded_resp = Decoder.decode(resp)
+                if decoded_resp:  # all good
+                    # grab the data and store
+                    FileTransfer.ack_packet()  # increment the counter
+                    pass
+                else:  # Error
+                    pass
 
     @classmethod
     def turn_on_power(cls):

@@ -17,15 +17,23 @@ The outgoing packet format is as follows:
 The incoming packet format is as follows:
 - Byte 0: Command ID
 - Byte 1-2: Sequence count
-- Byte 3: Data length
+- Byte 3: Data length.
 - Byte 4-255: Data
 
 
 Author: Ibrahima Sory Sow
 
 """
-
-from definitions import ACK, CommandID, ErrorCodes, PayloadTM, Resp_DisableCameras, Resp_EnableCameras
+from definitions import (
+    ACK,
+    CommandID,
+    ErrorCodes,
+    PayloadErrorCodes,
+    PayloadTM,
+    Resp_DisableCameras,
+    Resp_EnableCameras,
+    Resp_RequestNextFilePacket,
+)
 
 # Asymmetric sizes for send and receive buffers
 _RECV_PCKT_BUF_SIZE = 256
@@ -201,7 +209,11 @@ class Decoder:
     _data_idx = slice(4, 255)
 
     _curr_id = 0
+    _sequence_count = 0
     _curr_data_length = 0
+
+    # specific buffer for file packet to be stored there for retrieval
+    _file_recv_buffer = bytearray(_RECV_PCKT_BUF_SIZE)
 
     @classmethod
     def decode(cls, data):
@@ -209,7 +221,7 @@ class Decoder:
 
         # header processing
         cls._curr_id = int(cls._recv_buffer[0])
-        # TODO: Seq count
+        cls._sequence_count = int.from_bytes(cls._recv_buffer[cls._sequence_count_idx], byteorder=_BYTE_ORDER)
         cls._curr_data_length = int(cls._recv_buffer[cls._data_length_idx])
         # print("[INFO] Current ID: ", cls._curr_id)
         # print("[INFO] Current data length: ", cls._curr_data_length)
@@ -225,6 +237,10 @@ class Decoder:
         elif cls._curr_id == CommandID.DISABLE_CAMERAS:
             return cls.decode_disable_cameras()
         # rest is coming
+
+    @classmethod
+    def current_command_id(cls):
+        return cls._curr_id
 
     @classmethod
     def check_command_id(cls, cmd):
@@ -255,6 +271,8 @@ class Decoder:
 
     @classmethod
     def decode_request_telemetry(cls):
+        # DO NOT RESET
+
         if cls._curr_data_length != PayloadTM.DATA_LENGTH_SIZE:
             return ErrorCodes.INVALID_PACKET
 
@@ -303,11 +321,12 @@ class Decoder:
 
     @classmethod
     def decode_enable_cameras(cls):
+        Resp_EnableCameras.reset()
+
         if cls._curr_data_length <= 1:
             return ErrorCodes.INVALID_PACKET
 
         if cls._curr_data_length == 5:
-            Resp_EnableCameras.reset()
             Resp_EnableCameras.num_activated_cameras = int(cls._recv_buffer[cls._data_idx][0])
             Resp_EnableCameras.cam_status[0] = int(cls._recv_buffer[cls._data_idx][1])
             Resp_EnableCameras.cam_status[1] = int(cls._recv_buffer[cls._data_idx][2])
@@ -322,11 +341,13 @@ class Decoder:
 
     @classmethod
     def decode_disable_cameras(cls):
+
+        Resp_DisableCameras.reset()
+
         if cls._curr_data_length <= 1:
             return ErrorCodes.INVALID_PACKET
 
         if cls._curr_data_length == 5:
-            Resp_DisableCameras.reset()
             Resp_DisableCameras.num_deactivated_cameras = int(cls._recv_buffer[cls._data_idx][0])
             Resp_DisableCameras.cam_status[0] = int(cls._recv_buffer[cls._data_idx][1])
             Resp_DisableCameras.cam_status[1] = int(cls._recv_buffer[cls._data_idx][2])
@@ -338,3 +359,25 @@ class Decoder:
                 return int(cls._recv_buffer[cls._data_idx][1])
 
             return ErrorCodes.INVALID_PACKET
+
+    @classmethod
+    def decode_request_next_file(cls):
+
+        Resp_RequestNextFilePacket.reset()
+
+        if cls._curr_data_length <= 1:
+            return ErrorCodes.INVALID_PACKET
+
+        if int(cls._recv_buffer[cls._data_idx][0]) == ACK.ERROR:
+            Resp_RequestNextFilePacket.error = int(cls._recv_buffer[cls._data_idx][1])
+            if Resp_RequestNextFilePacket.error == PayloadErrorCodes.NO_MORE_PACKET_FOR_FILE:
+                Resp_RequestNextFilePacket.no_more_packet_to_receive = True
+                return ErrorCodes.NO_MORE_FILE_PACKET
+            else:
+                # TODO: maybe process other reason in the future but for now, we'll just re-ask the packet
+                return ErrorCodes.INVALID_RESPONSE
+        else:  # success
+            Resp_RequestNextFilePacket.received_data_size = cls._curr_data_length
+            Resp_RequestNextFilePacket.packet_nb = cls._sequence_count
+            Resp_RequestNextFilePacket.received_data = cls._recv_buffer[cls._data_idx]
+            return ErrorCodes.OK

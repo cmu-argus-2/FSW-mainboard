@@ -55,8 +55,51 @@ class ErrorCodes:
     OK = 1
     INVALID_COMMAND = 2
     COMMAND_ERROR_EXECUTION = 3
-    INVALID_RESPONSE = 4
-    TIMEOUT_SHUTDOWN = 5
+    INVALID_PACKET = 4
+    INVALID_RESPONSE = 5
+    TIMEOUT_SHUTDOWN = 6
+    NO_MORE_FILE_PACKET = 7
+
+
+class FileTransferType:
+    NONE = 0
+    IMAGE = 1
+    OD_RESULT = 2
+
+
+class PayloadErrorCodes:
+    NONE = 0
+    NO_MORE_FILE_PACKET = 5
+
+
+class FileTransfer:
+    packet_nb = 0
+    in_progress = False
+    transfer_type = FileTransferType.NONE
+    last_transfer_type = FileTransferType.NONE
+    requested_next_packet = False
+
+    @classmethod
+    def reset(cls):
+        cls.packet_nb = 0
+        cls.in_progress = False
+        cls.transfer_type = FileTransferType.NONE
+
+    @classmethod
+    def start_transfer(cls, transfer_type: FileTransferType):
+        cls.in_progress = True
+        cls.transfer_type = transfer_type
+
+    @classmethod
+    def ack_packet(cls):
+        cls.packet_nb += 1
+
+    @classmethod
+    def stop_transfer(cls):
+        cls.last_transfer_type = cls.transfer_type
+        cls.in_progress = False
+        cls.transfer_type = FileTransferType.NONE
+        cls.packet_nb = 0
 
 
 class PayloadTM:  # Simple data structure holder
@@ -158,7 +201,19 @@ class Resp_RequestImage:
 
 
 class Resp_RequestNextFilePacket:
-    pass
+    received_data = bytearray(246)  # make a constant instead
+    received_data_size = 0
+    packet_nb = 0
+    no_more_packet_to_receive = False
+    error = PayloadErrorCodes.NONE
+
+    @classmethod
+    def reset(cls):
+        cls.received_data = bytearray(246)
+        cls.received_data_size = 0
+        cls.no_more_packet_to_receive = False
+        cls.packet_nb = 0
+        cls.error = PayloadErrorCodes.NONE
 
 
 class Resp_ClearStorage:
