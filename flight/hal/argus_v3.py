@@ -4,16 +4,14 @@ Description: This file contains the definition of the ArgusV3 class and its asso
 """
 
 import time
-from sys import path
 
 import board
 import digitalio
 from busio import I2C, SPI, UART
-from hal.cubesat import CubeSat
-from hal.drivers.middleware.errors import Errors
+from hal.cubesat import ASIL0, ASIL1, ASIL2, ASIL3, ASIL4, CubeSat
+from hal.drivers.errors import Errors
 from micropython import const
 from sdcardio import SDCard
-from storage import VfsFat, mount
 
 
 class ArgusV3Power:
@@ -39,6 +37,7 @@ class ArgusV3Power:
     MAIN_PWR_RESET = digitalio.DigitalInOut(board.MAIN_PWR_RST)
     MAIN_PWR_RESET.direction = digitalio.Direction.OUTPUT
 
+    # GPS
     GPS_EN = digitalio.DigitalInOut(board.GPS_EN)
     GPS_EN.direction = digitalio.Direction.OUTPUT
     GPS_EN.value = True
@@ -57,17 +56,9 @@ class ArgusV3Power:
     COIL_EN.direction = digitalio.Direction.OUTPUT
     COIL_EN.value = True
 
-    BATT_HEAT_EN = digitalio.DigitalInOut(board.HEAT_EN)
-    BATT_HEAT_EN.direction = digitalio.Direction.OUTPUT
-    BATT_HEAT_EN.value = False
-
-    BATT_HEATER0_ON = digitalio.DigitalInOut(board.HEAT0_ON)
-    BATT_HEATER0_ON.direction = digitalio.Direction.OUTPUT
-    BATT_HEATER0_ON.value = False
-
-    BATT_HEATER1_ON = digitalio.DigitalInOut(board.HEAT1_ON)
-    BATT_HEATER1_ON.direction = digitalio.Direction.OUTPUT
-    BATT_HEATER1_ON.value = False
+    BATT_HEAT_EN = board.HEAT_EN
+    BATT_HEATER0_EN = board.HEAT0_ON
+    BATT_HEATER1_EN = board.HEAT1_ON
 
     PAYLOAD_OVC = digitalio.DigitalInOut(board.PAYLOAD_FLT)
     PAYLOAD_OVC.direction = digitalio.Direction.INPUT
@@ -85,7 +76,6 @@ class ArgusV3Interfaces:
     try:
         I2C0 = I2C(I2C0_SCL, I2C0_SDA, frequency=400000)
     except Exception:
-        print("I2C0 not found")
         I2C0 = None
 
     I2C1_SDA = board.SDA1
@@ -93,7 +83,7 @@ class ArgusV3Interfaces:
 
     # Line may not be connected, try except sequence
     try:
-        I2C1 = I2C(I2C1_SCL, I2C1_SDA)
+        I2C1 = I2C(I2C1_SCL, I2C1_SDA, frequency=400000)
     except Exception:
         I2C1 = None
 
@@ -247,7 +237,6 @@ class ArgusV3Components:
     RADIO_SPI = ArgusV3Interfaces.SPI0
     RADIO_CS = board.LORA_nCS
     RADIO_RESET = board.LORA_nRST
-    RADIO_ENABLE = board.LORA_EN
     RADIO_TX_EN = board.LORA_TX_EN
     RADIO_RX_EN = board.LORA_RX_EN
     RADIO_BUSY = board.LORA_BUSY
@@ -295,11 +284,12 @@ class ArgusV3Components:
     NEOPIXEL_N = const(1)
     NEOPIXEL_BRIGHTNESS = 0.2
 
+    # WATCHDAWG
+    WATCHDAWG_ENABLE = board.WDT_EN
+    WATCHDAWG_INPUT = board.WDT_WDI
+
     # REACTION WHEEL
     RW_ENABLE = board.RW_EN
-
-    # VFS
-    VFS_MOUNT_POINT = "/sd"
 
     LIGHT_SENSOR_CONVERSION_TIME = 0b0000
 
@@ -317,12 +307,15 @@ class ArgusV3(CubeSat):
 
     ######################## BOOT SEQUENCE ########################
 
+    def __boot_device(self, name: str, device: object):
+        func = device.boot_fn
+        device.device, device.error = func(name)
+
     def boot_sequence(self):
         """boot_sequence: Boot sequence for the CubeSat."""
 
         for name, device in self.__device_list.items():
-            func = device.boot_fn
-            device.device, device.error = func(name)
+            self.__boot_device(name, device)
 
     def __gps_boot(self, _) -> list[object, int]:
         """GPS_boot: Boot sequence for the GPS
@@ -335,12 +328,12 @@ class ArgusV3(CubeSat):
         try:
             gps = GPS(ArgusV3Components.GPS_UART, None, False, False)
 
-            return [gps, Errors.NOERROR]
+            return [gps, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return [None, Errors.GPS_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __power_monitor_boot(self, location) -> list[object, int]:
         """power_monitor_boot: Boot sequence for the power monitor
@@ -382,12 +375,12 @@ class ArgusV3(CubeSat):
             bus = data[1]
             power_monitor = ADM1176(bus, address)
 
-            return [power_monitor, Errors.NOERROR]
+            return [power_monitor, Errors.NO_ERROR]
 
         except Exception as e:
             if self.__debug:
                 raise e
-            return [None, Errors.ADM1176_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __imu_boot(self, _) -> list[object, int]:
         """imu_boot: Boot sequence for the IMU
@@ -405,11 +398,11 @@ class ArgusV3(CubeSat):
             imu.enable_feature(BNO_REPORT_UNCAL_MAGNETOMETER)
             imu.enable_feature(BNO_REPORT_UNCAL_GYROSCOPE)
 
-            return [imu, Errors.NOERROR]
+            return [imu, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
-            return [None, Errors.IMU_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __torque_driver_boot(self, direction) -> list[int]:
         """Boot sequence for all torque drivers in predefined directions.
@@ -433,12 +426,12 @@ class ArgusV3(CubeSat):
             bus = data[1]
             torque_driver = DRV8235(bus, address)
 
-            return [torque_driver, Errors.NOERROR]
+            return [torque_driver, Errors.NO_ERROR]
 
         except Exception as e:
             if self.__debug:
                 raise e
-            return [None, Errors.DRV8830_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __light_sensor_boot(self, direction) -> list[object, int]:
         """Boot sequence for all light sensors in predefined directions.
@@ -469,12 +462,12 @@ class ArgusV3(CubeSat):
                 address,
                 conversion_time=ArgusV3Components.LIGHT_SENSOR_CONVERSION_TIME,
             )
-            return [light_sensor, Errors.NOERROR]
+            return [light_sensor, Errors.NO_ERROR]
 
         except Exception as e:
             if self.__debug:
                 raise e
-            return [None, Errors.OPT4001_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __radio_boot(self, _) -> list[object, int]:
         """radio_boot: Boot sequence for the radio
@@ -514,13 +507,13 @@ class ArgusV3(CubeSat):
                 blocking=True,
             )
 
-            return [radio, Errors.NOERROR]
+            return [radio, Errors.NO_ERROR]
 
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return [None, Errors.SX1262_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __rtc_boot(self, _) -> list[object, int]:
         """rtc_boot: Boot sequence for the RTC
@@ -532,15 +525,18 @@ class ArgusV3(CubeSat):
 
         try:
             rtc = DS3231(ArgusV3Components.RTC_I2C, ArgusV3Components.RTC_I2C_ADDRESS)
-            return [rtc, Errors.NOERROR]
+            return [rtc, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return [None, Errors.PCF8523_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __sd_card_boot(self, _) -> list[object, int]:
         """sd_card_boot: Boot sequence for the SD card"""
+
+        from hal.drivers.sdcard import CustomVfsFat
+
         try:
             sd_card = SDCard(
                 ArgusV3Components.SD_CARD_SPI,
@@ -548,15 +544,14 @@ class ArgusV3(CubeSat):
                 ArgusV3Components.SD_BAUD,
             )
 
-            vfs = VfsFat(sd_card)
-            mount(vfs, ArgusV3Components.VFS_MOUNT_POINT)
-            path.append(ArgusV3Components.VFS_MOUNT_POINT)
-            return [vfs, Errors.NOERROR]
+            vfs = CustomVfsFat(sd_card)
+            return [vfs, Errors.NO_ERROR]
         except Exception as e:
+            print(e)
             if self.__debug:
                 raise e
 
-            return [None, Errors.SDCARD_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __burn_wire_boot(self, _) -> list[object, int]:
         """burn_wire_boot: Boot sequence for the burn wires"""
@@ -572,7 +567,7 @@ class ArgusV3(CubeSat):
             if self.__debug:
                 raise e
 
-            return [None, Errors.BURNWIRES_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __fuel_gauge_boot(self, _) -> list[object, int]:
         """fuel_gauge_boot: Boot sequence for the fuel gauge"""
@@ -585,11 +580,11 @@ class ArgusV3(CubeSat):
                 ArgusV3Components.FUEL_GAUGE_I2C_ADDRESS,
             )
 
-            return [fuel_gauge, Errors.NOERROR]
+            return [fuel_gauge, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
-            return [None, Errors.MAX17205_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
     def __neopixel_boot(self, _) -> list[object, int]:
         """neopixel_boot: Boot sequence for the neopixel"""
@@ -603,16 +598,127 @@ class ArgusV3(CubeSat):
                 pixel_order=neopixel.GRB,
             )
             np.fill((128, 128, 128))
-            return [np, Errors.NOERROR]
+            return [np, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
 
-            return [None, Errors.NEOPIXEL_NOT_INITIALIZED]
+            return [None, Errors.DEVICE_NOT_INITIALISED]
 
-    def reboot_device(self, device_name: str):
+    def __battery_heaters_boot(self, _) -> list[object, int]:
+        """battery_heaters_boot: Boot sequence for the battery heaters"""
+        from hal.drivers.batteryheaters import BatteryHeaters
+
+        try:
+            battery_heaters = BatteryHeaters(
+                ArgusV3Power.BATT_HEAT_EN,
+                ArgusV3Power.BATT_HEATER0_EN,
+                ArgusV3Power.BATT_HEATER1_EN,
+            )
+            return [battery_heaters, Errors.NO_ERROR]
+        except Exception as e:
+            if self.__debug:
+                raise e
+
+            return [None, Errors.DEVICE_NOT_INITIALISED]
+
+    def __watchdog_boot(self, _) -> list[object, int]:
+        """watchdog_boot: Boot sequence for the watchdog"""
+        from hal.drivers.watchdog import Watchdog as Watchdawg
+
+        try:
+            watchdawg = Watchdawg(
+                ArgusV3Components.WATCHDAWG_ENABLE,
+                ArgusV3Components.WATCHDAWG_INPUT,
+            )
+            return [watchdawg, Errors.NO_ERROR]
+        except Exception as e:
+            if self.__debug:
+                raise e
+
+            return [None, Errors.DEVICE_NOT_INITIALISED]
+
+    ######################## ERROR HANDLING ########################
+
+    def __restart_power_line(self, power_line):
+        power_line.value = False
+        time.sleep(0.5)
+        power_line.value = True
+        time.sleep(0.5)
+
+    def __reboot_device(self, device_name: str):
+        device_cls = self.__device_list[device_name]
+
+        if device_name == "RADIO":
+            device_cls.device.deinit()
+            self.__restart_power_line(ArgusV3Power.RADIO_EN)
+            self.__boot_device(device_name, device_cls)
+
+        elif device_name == "GPS":
+            device_cls.device.deinit()
+            self.__restart_power_line(ArgusV3Power.GPS_EN)
+            self.__boot_device(device_name, device_cls)
+
+        elif device_name.startswith("TORQUE"):
+            for location, device_cls in self.TORQUE_DRIVERS.items():
+                if self.TORQUE_DRIVERS_AVAILABLE(location):
+                    device_cls.device.deinit()
+
+            self.__restart_power_line(ArgusV3Power.COIL_EN)
+
+            for location, device_cls in self.__device_list.items():
+                if location.startswith("TORQUE"):
+                    self.__boot_device(location, device_cls)
+
+        else:
+            for location, device_cls in self.__device_list.items():
+                if device_cls.peripheral_line and device_cls.device is not None and not device_cls.dead:
+                    device_cls.device.deinit()
+
+            self.__restart_power_line(ArgusV3Power.PERIPH_PWR_EN)
+
+            for location, device_cls in self.__device_list.items():
+                if device_cls.peripheral_line and not device_cls.dead:
+                    self.__boot_device(location, device_cls)
+
+    def handle_error(self, device_name: str) -> int:
         if device_name not in self.__device_list:
             return Errors.INVALID_DEVICE_NAME
-        device = self.__device_list[device_name]
-        device.deinit()
-        # TODO: Implement reboot logic
+
+        self.__device_list[device_name].error_count += 1
+        if self.__device_list[device_name].error_count > ArgusV3Error.MAX_DEVICE_ERROR:
+            self.__device_list[device_name].dead = True
+            self.__device_list[device_name].device = None
+            return Errors.DEVICE_DEAD
+
+        ASIL = self.__device_list[device_name].ASIL
+        if ASIL == ASIL4:
+            self.__reboot_device(device_name)
+            return Errors.REBOOT_DEVICE
+        elif ASIL != ASIL0:
+            ArgusV3Error.ASIL_ERRORS[ASIL] += 1
+            if ArgusV3Error.ASIL_ERRORS[ASIL] >= ArgusV3Error.ASIL_THRESHOLDS[ASIL]:
+                self.__reboot_device(device_name)
+                ArgusV3Error.ASIL_ERRORS[ASIL] = 0
+                return Errors.REBOOT_DEVICE
+        return Errors.NO_REBOOT
+
+    def reboot(self):
+        """Reboot the satellite by resetting the main power."""
+        ArgusV3Power.MAIN_PWR_RESET.value = True
+
+
+class ArgusV3Error:
+    ASIL_ERRORS = {
+        ASIL1: 0,
+        ASIL2: 0,
+        ASIL3: 0,
+    }
+
+    ASIL_THRESHOLDS = {
+        ASIL1: const(5),  # ASIL 1: Reboot after 5 errors
+        ASIL2: const(3),  # ASIL 2: Reboot after 3 errors
+        ASIL3: const(2),  # ASIL 3: Reboot after 2 errors
+    }
+
+    MAX_DEVICE_ERROR = const(10)

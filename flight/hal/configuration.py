@@ -13,7 +13,7 @@ DEBUG_MODE = False
 
 SATELLITE: CubeSat = None
 
-if board_id == "PyCubed":
+if board_id == "PyCubedv05":
     from hal.pycubed import PyCubed
 
     SATELLITE = PyCubed()

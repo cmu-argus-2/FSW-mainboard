@@ -48,7 +48,7 @@ Implementation Notes
 from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register.i2c_bit import ROBit, RWBit
 from adafruit_register.i2c_bits import RWBits
-from hal.drivers.middleware.errors import Errors
+from hal.drivers.errors import Errors
 
 # DEVICE REGISTER MAP
 _CONTROL = 0x00  # Control Register      -W
@@ -292,18 +292,18 @@ class DRV8830:
         faults_flag, faults = self.fault
 
         if not faults_flag:
-            return [Errors.NOERROR]
+            return [Errors.NO_ERROR]
 
         errors: list[int] = []
 
         if "OCP" in faults:
-            errors.append(Errors.DRV8830_OVERCURRENT_EVENT)
+            errors.append(Errors.TORQUE_COIL_OVERCURRENT_EVENT)
         if "UVLO" in faults:
-            errors.append(Errors.DRV8830_UNDERVOLTAGE_LOCKOUT)
+            errors.append(Errors.TORQUE_COIL_UNDERVOLTAGE_LOCKOUT)
         if "OTS" in faults:
-            errors.append(Errors.DRV8830_OVERTEMPERATURE_CONDITION)
+            errors.append(Errors.TORQUE_COIL_OVERTEMP_EVENT)
         if "ILIMIT" in faults:
-            errors.append(Errors.DRV8830_EXTENDED_CURRENT_LIMIT_EVENT)
+            errors.append(Errors.TORQUE_COIL_EXTENDED_CURRENT_LIMIT_EVENT)
 
         self.clear_faults()
 
@@ -318,14 +318,14 @@ class DRV8830:
         throttle_volts_val = self.throttle_volts()
         if throttle_volts_val is not None:
             if (throttle_volts_val < -5.06) or (throttle_volts_val > 5.06):
-                return Errors.DRV8830_THROTTLE_OUTSIDE_RANGE
+                return Errors.TORQUE_COIL_THROTTLE_OUTSIDE_RANGE
 
         throttle_raw_val = self.throttle_raw()
         if throttle_raw_val is not None:
             if (throttle_raw_val < -63) or (throttle_raw_val > 63):
-                return Errors.DRV8830_THROTTLE_OUTSIDE_RANGE
+                return Errors.TORQUE_COIL_THROTTLE_OUTSIDE_RANGE
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     def deinit(self):
         return
