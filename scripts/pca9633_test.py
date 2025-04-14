@@ -8,9 +8,13 @@ PERIPH_PWR_EN = digitalio.DigitalInOut(board.PERIPH_PWR_EN)
 PERIPH_PWR_EN.direction = digitalio.Direction.OUTPUT
 PERIPH_PWR_EN.value = True  # Enable peripherals if applicable
 
-print("Burn")
+print("Enabled 3.3V peripheral line")
+
+# Wait for a bit to allow PCA9633 to boot
 time.sleep(3)
 
+# For mainboard v2s, use I2C1
+# For mainboard v3s (default) use I2C0
 I2C0 = busio.I2C(board.SCL0, board.SDA0)
 
 while True:
@@ -23,7 +27,6 @@ while True:
     Driver strength is the power level for the burn-wires.
     CAUTION: if the strength is too high the board might brown-out
     """
-
     driver_strength = 0
 
     # Set to Totem Pole Mode
