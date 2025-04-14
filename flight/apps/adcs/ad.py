@@ -9,7 +9,7 @@ magnetic field data on the mainboard.
 
 """
 
-from apps.adcs.consts import Modes, StatusConst
+from apps.adcs.consts import Modes, PhysicalConst, StatusConst
 from apps.adcs.frames import convert_ecef_state_to_eci
 from apps.adcs.igrf import igrf_eci
 from apps.adcs.math import R_to_quat, quat_to_R, quaternion_multiply, skew
@@ -39,7 +39,7 @@ class AttitudeDetermination:
         STATE DEFINITION : [position_eci (3x1), velocity_eci (3x1), attitude_body2eci (4x1), angular_rate_body (3x1),
                             gyro_bias (3x1), magnetic_field_body (3x1), sun_pos_body (3x1), sun_status (1x1)]
     """
-    state = np.zeros((32,))  # TODO : only coded for non-pyramid light sensors
+    state = np.zeros((32,))
     position_idx = slice(0, 3)
     velocity_idx = slice(3, 6)
     attitude_idx = slice(6, 10)
@@ -82,7 +82,7 @@ class AttitudeDetermination:
         light_sensor_lux_readings = read_light_sensors()
         status, sun_pos_body = compute_body_sun_vector_from_lux(light_sensor_lux_readings)
 
-        return status, sun_pos_body, light_sensor_lux_readings
+        return status, sun_pos_body, np.array(light_sensor_lux_readings) / PhysicalConst.LIGHT_SENSOR_LOG_FACTOR
 
     def read_gyro(self) -> tuple[int, int, np.ndarray]:
         """
