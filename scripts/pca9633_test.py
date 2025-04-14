@@ -4,9 +4,10 @@ import board
 import busio
 import digitalio
 
-PERIPH_PWR_EN = digitalio.DigitalInOut(board.PERIPH_PWR_EN)
-PERIPH_PWR_EN.direction = digitalio.Direction.OUTPUT
-PERIPH_PWR_EN.value = True  # Enable peripherals if applicable
+if hasattr(board, "PERIPH_PWR_EN"):
+    PERIPH_PWR_EN = digitalio.DigitalInOut(board.PERIPH_PWR_EN)
+    PERIPH_PWR_EN.direction = digitalio.Direction.OUTPUT
+    PERIPH_PWR_EN.value = True  # Enable peripherals if applicable
 
 print("Enabled 3.3V peripheral line")
 
@@ -15,7 +16,15 @@ time.sleep(3)
 
 # For mainboard v2s, use I2C1
 # For mainboard v3s (default) use I2C0
-I2C0 = busio.I2C(board.SCL0, board.SDA0)
+I2C0_SDA = board.SDA0  # GPIO0
+I2C0_SCL = board.SCL0  # GPIO1
+
+# Line may not be connected, try except sequence
+try:
+    I2C0 = busio.I2C(I2C0_SCL, I2C0_SDA)
+except Exception as e:
+    print("Error:", e)
+    I2C0 = None
 
 while True:
     while not I2C0.try_lock():
