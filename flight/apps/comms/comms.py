@@ -106,11 +106,11 @@ class SATELLITE_RADIO:
     # Init TM frame for preallocating memory
     tm_frame = bytearray(248)
 
-    # Parameters for file downlinking (Message ID temporarily hardcoded)
+    # Parameters for file downlinking
     filepath = None
-    file_ID = 0x01
+    file_ID = 0x00
     file_size = 0
-    file_time = 1738351687
+    file_time = 0
     file_message_count = 0
 
     # Data for file downlinking
@@ -130,8 +130,11 @@ class SATELLITE_RADIO:
     # RX'd ID is the latest GS command
     rx_gs_cmd = 0x00
 
-    # RX'd SQ cnt used for packetized file TX
+    # RQ'd SQ cnt used for packetized file downlinking
     rx_sq_cnt = 0
+
+    # RX SQ cnt, currently unused but in packet structure
+    # Can potentially be used for file uplinking....
     rq_sq_cnt = 0
 
     # RX'd len used for argument unpacking
@@ -400,11 +403,14 @@ class SATELLITE_RADIO:
         pkt_size = cls.file_get_packet(cls.rq_sq_cnt)
 
         # Pack header
+
+        # pkt_size + 5 is to accomodate 5 bytes of file info (file_ID, 1 byte; file_time, 4 bytes) w/ pkt_size bytes of
+        # file data
         tx_header = (
             (MSG_ID.SAT_FILE_PKT).to_bytes(1, "big") + (cls.rq_sq_cnt).to_bytes(2, "big") + (pkt_size + 5).to_bytes(1, "big")
         )
 
-        # Pack entire message
+        # Pack entire message, file_array contains file info
         cls.tx_message = tx_header + cls.file_ID.to_bytes(1, "big") + cls.file_time.to_bytes(4, "big") + cls.file_array
 
     """
