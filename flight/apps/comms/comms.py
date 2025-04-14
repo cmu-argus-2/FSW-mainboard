@@ -119,6 +119,9 @@ class SATELLITE_RADIO:
     file_time = 0
     file_message_count = 0
 
+    # Downlink all flag
+    dlink_all = False
+
     # Data for file downlinking
     file_obj = []
     file_md = []
@@ -129,9 +132,6 @@ class SATELLITE_RADIO:
     tx_message = []
     tx_ack = 0x04
 
-    # Downlink all flag
-    dlink_all = False
-
     # Source header parameters
     rx_src_id = 0x00
     rx_dst_id = 0x00
@@ -139,20 +139,19 @@ class SATELLITE_RADIO:
     # RX'd ID is the latest GS command
     rx_gs_cmd = 0x00
 
-    # RQ'd SQ cnt used for packetized file downlinking
-    rx_sq_cnt = 0
-
     # RX SQ cnt, currently unused but in packet structure
     # Can potentially be used for file uplinking....
+    rx_sq_cnt = 0
+
+    # RQ'd SQ cnt used for packetized file downlinking
     rq_sq_cnt = 0
 
-    # RX'd len used for argument unpacking
+    # Internal SQ cnt for a file, used in DOWNLINK_ALL
+    int_sq_cnt = 0
+
+    # RX'd packet parameters
     rx_gs_len = 0
-
-    # RX'd payload contains GS arguments
     rx_payload = bytearray()
-
-    # RX'd RSSI logged for error checking
     rx_message_rssi = 0
 
     # CRC error count
@@ -423,7 +422,7 @@ class SATELLITE_RADIO:
         cls.tx_message = tx_header + cls.file_ID.to_bytes(1, "big") + cls.file_time.to_bytes(4, "big") + cls.file_array
 
     """
-        Name: trasmit_downlink_all
+        Name: transmit_downlink_all
         Description: As a Hail Mary, downlink all
         packets for a requested file
 
@@ -432,9 +431,22 @@ class SATELLITE_RADIO:
     """
 
     @classmethod
-    def trasmit_downlink_all(cls):
-        # TODO: Run transmit_file_packet with a custom rq_sq_cnt
-        pass
+    def transmit_downlink_all(cls):
+        # Run transmit_file_packet with int_sq_cnt
+
+        # Get bytes from file (stored in file_array)
+        pkt_size = cls.file_get_packet(cls.int_sq_cnt)
+
+        # Pack header
+
+        # pkt_size + 5 is to accomodate 5 bytes of file info (file_ID, 1 byte; file_time, 4 bytes) w/ pkt_size bytes of
+        # file data
+        tx_header = (
+            (MSG_ID.SAT_FILE_PKT).to_bytes(1, "big") + (cls.int_sq_cnt).to_bytes(2, "big") + (pkt_size + 5).to_bytes(1, "big")
+        )
+
+        # Pack entire message, file_array contains file info
+        cls.tx_message = tx_header + cls.file_ID.to_bytes(1, "big") + cls.file_time.to_bytes(4, "big") + cls.file_array
 
     """
         Name: check_rq_file_params
@@ -652,6 +664,10 @@ class SATELLITE_RADIO:
         elif cls.state == COMMS_STATE.TX_FILEPKT:
             # Transmit file packets with requested sequence count
             cls.transmit_file_packet()
+
+        elif cls.state == COMMS_STATE.TX_DOWNLINK_ALL:
+            # Transmit file packets with the internal sequence count
+            cls.transmit_downlink_all()
 
         else:
             # Unknown state, just send
