@@ -19,7 +19,13 @@ while True:
 
     print("I2C0 unlocked")
 
+    """
+    Driver strength is the power level for the burn-wires.
+    CAUTION: if the strength is too high the board might brown-out
+    """
+
     driver_strength = 0
+
     # Set to Totem Pole Mode
     I2C0.writeto(0x60, bytes([0x01, 0b00000001]))
 
