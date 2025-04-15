@@ -31,10 +31,18 @@ class Simulator:  # will be passed by reference to the emulated HAL
         os.mkdir(RESULTS_FOLDER)
         self.cppsim = cppSim(trial, RESULTS_FOLDER, CONFIG_FILE)
 
-        self.measurement = np.zeros((18,))
+        self.measurement = np.zeros((35,))
         self.starting_real_epoch = datetime.fromtimestamp(time.time())
         self.base_dt = self.cppsim.params.dt
         self.sim_time = 0
+
+        # Measurement labels
+        self.gps_idx = slice(0,6)
+        self.gyro_idx = slice(6,9)
+        self.mag_idx = slice(9,12)
+        self.lux_idx = slice(12,21)
+        self.mtb_idx = slice(21,27)
+        self.power_idx = slice(27,35)
 
     """
         SENSOR CALLBACKS
@@ -44,24 +52,24 @@ class Simulator:  # will be passed by reference to the emulated HAL
 
     def gyro(self):
         self.advance_to_time()
-        return self.measurement[6:9]
+        return self.measurement[self.gyro_idx]
 
     def mag(self):
         self.advance_to_time()
-        return self.measurement[9:12] * 1e6  # IMU obtains magnetic field readings in uT
+        return self.measurement[self.mag_idx] * 1e6  # IMU obtains magnetic field readings in uT
 
     def sun_lux(self):
         self.advance_to_time() # XP, XM, YP, YM, ZP1, ZP2, ZP3, ZP4, ZM
-        return self.measurement[12:]
+        return self.measurement[self.lux_idx]
 
     def gps(self):
         self.advance_to_time()
-        gps_state = np.array([time.time()] + list(self.measurement[0:6] * 1e2))
+        gps_state = np.array([time.time()] + list(self.measurement[self.gps_idx] * 1e2))
         return gps_state  # GPS returns data in cm
     
     def coil_power(self, idx):
         self.advance_to_time()
-        return self.measurement[21+idx]
+        return self.measurement[self.mtb_idx][idx]
 
     def set_control_input(self, dir, input):
         """
