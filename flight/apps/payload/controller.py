@@ -218,15 +218,15 @@ class PayloadController:
                     # Initialize the communication interface
                     cls.communication_interface.initialize()
                 else:
-                    print("[ERROR] Communication interface not injected yet.")
+                    logger.error("Communication interface not injected yet.")
             else:
-                print("[INFO] Communication interface is connected.")
+                logger.info("Communication interface is connected.")
 
                 # The serial link will be purged by the payload when it opens its channel
                 # so we ping to check until it is ready, i.e. the ping response is received
                 if cls.ping():
                     cls._switch_to_state(PayloadState.READY)
-                    print(f"[INFO] Payload is ready. Full boot in  {cls._now - cls.time_we_started_booting} seconds.")
+                    logger.info(f"Payload is ready. Full boot in  {cls._now - cls.time_we_started_booting} seconds.")
                     cls.time_we_started_booting = 0  # Reset the boot time
                 elif cls._now - cls.time_we_started_booting > cls.TIMEOUT_BOOT:
                     pass
@@ -315,7 +315,7 @@ class PayloadController:
         # This starts the process for image transfer which will be executed in the background by the controller at each cycle
         if cls.state != PayloadState.READY:
             # Log error
-            print("[ERROR] Cannot request image transfer. Payload is not ready.")
+            logger.error("Cannot request image transfer. Payload is not ready.")
             return False
         cls.communication_interface.send(Encoder.encode_request_image())
         cls.no_more_file_packet_to_receive = False
@@ -328,7 +328,7 @@ class PayloadController:
             if not cls.just_requested_file_packet:
                 cls.communication_interface.send(Encoder.encode_request_next_file_packet(FileTransfer.packet_nb))
                 cls.just_requested_file_packet = True
-                print(f"[INFO] Requesting next file packet {FileTransfer.packet_nb}...")
+                logger.info(f"Requesting next file packet {FileTransfer.packet_nb}...")
 
             resp = cls.communication_interface.receive()
             if resp:
@@ -342,7 +342,7 @@ class PayloadController:
                     return True
                 elif decoded_resp == ErrorCodes.NO_MORE_FILE_PACKET:
                     cls.no_more_file_packet_to_receive = True
-                    print("[INFO] No more file packet to receive.")
+                    logger.info("No more file packet to receive.")
                     FileTransfer.stop_transfer()
                     return False
             else:

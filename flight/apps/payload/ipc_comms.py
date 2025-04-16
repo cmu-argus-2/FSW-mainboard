@@ -12,6 +12,7 @@ import os
 import select
 
 from apps.payload.communication import PayloadCommunicationInterface
+from core import logger
 
 # Named pipe paths (make sure this corresponds to the CMAKE compile definitions)
 FIFO_IN = "/tmp/payload_fifo_in"  # Payload reads from this, external process writes to it
@@ -36,7 +37,7 @@ class PayloadIPC(PayloadCommunicationInterface):  # needed for local testing and
                 try:
                     os.mkfifo(fifo, 0o666)
                 except OSError as e:
-                    print(f"Error creating FIFO {fifo}: {e}")
+                    logger.error(f"Error creating FIFO {fifo}: {e}")
                     return
 
         # Open FIFOs
@@ -44,9 +45,9 @@ class PayloadIPC(PayloadCommunicationInterface):  # needed for local testing and
             cls._pipe_in = open(FIFO_IN, "w", buffering=1)  # Line-buffered write
             cls._pipe_out = os.open(FIFO_OUT, os.O_RDONLY | os.O_NONBLOCK)  # Non-blocking read
             cls._connected = True
-            print("[INFO] PayloadIPC connected.")
+            logger.info("[INFO] PayloadIPC connected.")
         except OSError as e:
-            print(f"[ERROR] Failed to open FIFOs: {e}")
+            logger.error(f"Failed to open FIFOs: {e}")
             cls.disconnect()
 
     @classmethod
@@ -64,13 +65,13 @@ class PayloadIPC(PayloadCommunicationInterface):  # needed for local testing and
             cls._pipe_out = None
 
         cls._connected = False
-        print("[INFO] PayloadIPC disconnected.")
+        logger.info("PayloadIPC disconnected.")
 
     @classmethod
     def send(cls, pckt: bytearray):
         """Sends a packet (bytearray) via the named pipe."""
         if not cls._connected or cls._pipe_in is None:
-            print("[ERROR] Attempt to send while not connected.")
+            logger.error("Attempt to send while not connected.")
             return False
 
         try:
@@ -88,14 +89,14 @@ class PayloadIPC(PayloadCommunicationInterface):  # needed for local testing and
 
             return True
         except OSError as e:
-            print(f"[ERROR] Failed to write to FIFO: {e}")
+            logger.error(f"Failed to write to FIFO: {e}")
             return False
 
     @classmethod
     def receive(cls) -> bytearray:
         """Receives a packet from the named pipe (FIFO_OUT)."""
         if not cls._connected or cls._pipe_out is None:
-            print("[ERROR] Attempt to receive while not connected.")
+            logger.error("Attempt to receive while not connected.")
             return b""
 
         try:
@@ -115,9 +116,9 @@ class PayloadIPC(PayloadCommunicationInterface):  # needed for local testing and
 
                         return byte_values
                     except ValueError:
-                        print(f"[ERROR] Invalid ASCII numeric data received: {data}")
+                        logger.error(f"Invalid ASCII numeric data received: {data}")
         except OSError as e:
-            print(f"[ERROR] Failed to read from FIFO: {e}")
+            logger.error(f"Failed to read from FIFO: {e}")
 
         return bytearray()  # No data available
 
@@ -135,7 +136,7 @@ class PayloadIPC(PayloadCommunicationInterface):  # needed for local testing and
             rlist, _, _ = select.select([cls._pipe_out], [], [], 0)  # Non-blocking
             return cls._pipe_out in rlist
         except OSError as e:
-            print(f"[ERROR] Failed to check FIFO: {e}")
+            logger.error(f"Failed to check FIFO: {e}")
             return False
 
 
