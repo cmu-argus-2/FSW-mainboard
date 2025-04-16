@@ -20,21 +20,21 @@ class Task(TemplateTask):
 
     def init_all_data_processes(self):
         # Image process
-        if not DH.data_process_exists("payload/img"):
+        if not DH.data_process_exists("img"):
             DH.register_image_process()  # WARNING: Image process from DH is different from regular data processes!
 
         # Telemetry process
-        if not DH.data_process_exists("payload/tm"):
+        if not DH.data_process_exists("payload_tm"):
             data_format = 3 * "L" + 4 * "B" + 4 * "B" + 4 * "B" + 8 * "B" + 3 * "H"
-            DH.register_data_process(tag_name="payload/tm", data_format=data_format, persistent=True, data_limit=100000)
+            DH.register_data_process(tag_name="payload_tm", data_format=data_format, persistent=True, data_limit=100000)
 
         # OD process (should be a separate data process)
-        if not DH.data_process_exists("payload/od"):
+        if not DH.data_process_exists("payload_od"):
             pass
 
         # Data process for runtime external requests from the CDH
-        if not DH.data_process_exists("payload/requests"):
-            DH.register_data_process(tag_name="payload/requests", data_format="B", persistent=False)
+        if not DH.data_process_exists("payload_requests"):
+            DH.register_data_process(tag_name="payload_requests", data_format="B", persistent=False)
 
     async def main_task(self):
         if SM.current_state == STATES.STARTUP or SM.current_state == STATES.DETUMBLING:
