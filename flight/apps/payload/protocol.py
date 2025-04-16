@@ -223,8 +223,8 @@ class Decoder:
         cls._curr_id = int(cls._recv_buffer[0])
         cls._sequence_count = int.from_bytes(cls._recv_buffer[cls._sequence_count_idx], byteorder=_BYTE_ORDER)
         cls._curr_data_length = int(cls._recv_buffer[cls._data_length_idx])
-        # print("[INFO] Current ID: ", cls._curr_id)
-        # print("[INFO] Current data length: ", cls._curr_data_length)
+        # logger.info("Current ID: ", cls._curr_id)
+        # logger.info("Current data length: ", cls._curr_data_length)
 
         if cls._curr_id == CommandID.PING_ACK:
             return cls.decode_ping()
