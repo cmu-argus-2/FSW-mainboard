@@ -150,3 +150,6 @@ class Simulator:  # will be passed by reference to the emulated HAL
         for _ in range(iters):
             self.measurement = self.cppsim.step(self.sim_time, self.base_dt)
         self.sim_time += iters * self.base_dt
+
+    def get_sim_time(self):
+        return 946746000 + self.cppsim.get_time()

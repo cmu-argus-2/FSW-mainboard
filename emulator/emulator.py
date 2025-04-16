@@ -48,19 +48,19 @@ class EmulatedSatellite(CubeSat):
 
         super().__init__()
 
-        # self._radio = Radio(self.__use_socket)
+        # Radio
         self.append_device("RADIO", None, Radio(self.__use_socket))
-        # self._sd_card = SD()
-        self.append_device("SD", None, SD())
-        # self._burnwires = self.init_device(BurnWires())
-        self.append_device("BURNWIRES", None, BurnWires())
-        self._payload_uart = self.init_device(Payload())
-        self.append_device("PAYLOAD_UART", None, self._payload_uart)
 
-        # self._vfs = None
-        self._gps = self.init_device(GPS(simulator=self.__simulated_spacecraft))
-        self.append_device("GPS", None, self._gps)
-        # self._charger = None
+        # SD Card
+        self.append_device("SD", None, SD())
+
+        # Burn-wires
+        self.append_device("BURNWIRES", None, BurnWires())
+
+        self.append_device("PAYLOAD_UART", None, self.init_device(Payload()))
+
+        # GPS
+        self.append_device("GPS", None, GPS(simulator=self.__simulated_spacecraft))
 
         self._light_sensors = LightSensorArray(simulator=self.__simulated_spacecraft)
         self.append_device("LIGHT_XP", None, self._light_sensors["XP"])
@@ -81,13 +81,6 @@ class EmulatedSatellite(CubeSat):
         self._imu.enable()
         self.append_device("IMU", None, self._imu)
 
-        # self._jetson_power_monitor = self.init_device(PowerMonitor(4, 0.05))
-        # self._board_power_monitor = self.init_device(PowerMonitor(7.6, 0.1))
-        # self._power_monitors["BOARD"] = self._board_power_monitor
-        # self._power_monitors["JETSON"] = self._jetson_power_monitor
-        # self.append_device("BOARD_PWR", None, self._board_power_monitor)
-        # self.append_device("JETSON_PWR", None, self._jetson_power_monitor)
-
         # Solar Power monitors
         self.append_device("XP_PWR", None, PowerMonitor("XP", simulator=self.__simulated_spacecraft))
         self.append_device("XM_PWR", None, PowerMonitor("XM", simulator=self.__simulated_spacecraft))
@@ -98,11 +91,11 @@ class EmulatedSatellite(CubeSat):
         # Jetson Power Monitor
         self.append_device("JETSON_PWR", None, PowerMonitor("JETSON", simulator=self.__simulated_spacecraft))
 
-        # self._fuel_gauge = self.init_device(FuelGauge())
+        # Fuel Gauge
         self.append_device("FUEL_GAUGE", None, FuelGauge(simulator=self.__simulated_spacecraft))
 
-        # self._rtc = self.init_device(RTC(time.gmtime()))
-        self.append_device("RTC", None, RTC(time.gmtime()))
+        # RTC
+        self.append_device("RTC", None, RTC(time.gmtime(), simulator=self.__simulated_spacecraft))
 
         # self.ERRORS = []
 
