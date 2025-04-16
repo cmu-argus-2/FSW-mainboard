@@ -436,8 +436,9 @@ class SATELLITE_RADIO:
 
     """
         Name: transmit_downlink_all
-        Description: As a Hail Mary, downlink all
-        packets for a requested file
+        Description: Packet downlinking for a file
+        that is decoupled from GS commands for each
+        packet request
 
         This will force Argus to stay in TX mode for
         a certain period (depending on file size)
