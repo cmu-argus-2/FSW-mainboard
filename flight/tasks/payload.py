@@ -7,8 +7,6 @@ from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STATES
 
-# from hal.configuration import SATELLITE
-
 
 class Task(TemplateTask):
 
@@ -17,8 +15,6 @@ class Task(TemplateTask):
     def __init__(self, id):
         super().__init__(id)
         self.name = "PAYLOAD"
-        self.dp_initialized = False
-        self.pins_injected = False
 
     def init_all_data_processes(self):
         # Image process
@@ -41,11 +37,8 @@ class Task(TemplateTask):
     async def main_task(self):
         if SM.current_state == STATES.STARTUP or SM.current_state == STATES.DETUMBLING:
             # Need to inject the communication interface and the power control interface from the HAL here
-
-            if not self.pins_injected:
-                # Get the communication interface
-                # Get the power control interface
-                self.pins_injected = True
+            # Check the status from the controller
+            pass
 
         else:
             self.init_all_data_processes()  # Not running payload in detumbling
@@ -55,5 +48,5 @@ class Task(TemplateTask):
                 if candidate_request != ExternalRequest.NO_ACTION:
                     PC.add_request(candidate_request)
 
-            # DO NOT EXPOSE THE LOGIC IN THE TASK
+            # DO NOT EXPOSE THE LOGIC IN THE TASK and KEEP IT INTERNAL
             PC.run_control_logic()
