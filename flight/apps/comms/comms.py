@@ -509,6 +509,38 @@ class SATELLITE_RADIO:
                 return True
 
     """
+        Name: handle_downlink_all_rq
+        Description: On CMD, start request for DOWNLINK_ALL
+    """
+
+    @classmethod
+    def handle_downlink_all_rq(cls, packet):
+        # Extract file ID and time from the request
+        file_id = packet[0]
+        file_time = packet[1:5]
+
+        # Sidestep commanding and get the filepath directly from the DH
+        logger.info(f"Executing GS_CMD_DOWNLINK_ALL with file_id: {file_id} and file_time: {file_time}")
+        cls.filepath = None
+        file_tag = file_tags_str[file_id]
+
+        if file_time is None:
+            cls.filepath = DH.request_TM_path(file_tag)
+        else:
+            cls.filepath = DH.request_TM_path(file_tag, file_time)
+
+        # If valid filepath, set downlink all flag to True for state machine
+        if not (cls.filepath):
+            # File does not match
+            logger.warning("[COMMS ERROR] Undefined TX filepath")
+            cls.dlink_all = False
+
+        else:
+            # Generate internal metadata for this filepath
+            cls.file_get_metadata()
+            cls.dlink_all = True
+
+    """
         Name: receive_message
         Description: Receive and unpack message from GS
     """
@@ -632,22 +664,7 @@ class SATELLITE_RADIO:
 
         # GS_CMD_DOWNLINK_ALL is also handled internally in the comms task
         elif cls.rx_gs_cmd == MSG_ID.GS_CMD_DOWNLINK_ALL:
-            # Extract file ID and time from the request
-            file_id = packet[4]
-            file_time = packet[5:9]
-
-            # Sidestep commanding and get the filepath directly from the DH
-            logger.info(f"Executing GS_CMD_DOWNLINK_ALL with file_id: {file_id} and file_time: {file_time}")
-            cls.filepath = None
-            file_tag = file_tags_str[file_id]
-
-            if file_time is None:
-                cls.filepath = DH.request_TM_path(file_tag)
-            else:
-                cls.filepath = DH.request_TM_path(file_tag, file_time)
-
-            # Set downlink all flag to True for state machine
-            cls.dlink_all = True
+            cls.handle_downlink_all_rq(packet[4:])
 
         else:
             # Not a file request, do nothing
