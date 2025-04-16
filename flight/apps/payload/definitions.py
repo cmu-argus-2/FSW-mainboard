@@ -1,8 +1,14 @@
 """
-Payload Commands and Responses Definitions
+Payload General Definitions
+- Commands
+- Requests
+- Errors
+- Data structures
 
 Author: Ibrahima Sory Sow
 """
+
+from core import logger
 
 
 class ExternalRequest:
@@ -99,7 +105,7 @@ class FileTransfer:
         if cls.in_progress:
             cls.packet_nb += 1
         else:
-            print("[ERROR] No transfer in progress. Cannot acknowledge packet.")
+            logger.error("No transfer in progress. Cannot acknowledge packet.")
 
     @classmethod
     def stop_transfer(cls):
