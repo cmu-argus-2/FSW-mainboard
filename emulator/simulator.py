@@ -29,10 +29,10 @@ class Simulator:  # will be passed by reference to the emulated HAL
         trial = random.randint(0, 100)
         RESULTS_FOLDER = os.path.join(RESULTS_ROOT_FOLDER, datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         os.mkdir(RESULTS_FOLDER)
-        self.cppsim = cppSim(trial, RESULTS_FOLDER, CONFIG_FILE)
+        self.cppsim = cppSim(trial, RESULTS_FOLDER, CONFIG_FILE, log=False)
 
-        self.measurement = np.zeros((49,))
-        self.starting_real_epoch = time.monotonic_ns()
+        self.measurement = np.zeros((18,))
+        self.starting_real_epoch = time.time_ns() / 1.0e9
         self.base_dt = self.cppsim.params.dt
         self.sim_time = 0
 
@@ -130,9 +130,10 @@ class Simulator:  # will be passed by reference to the emulated HAL
         """
         Time since last simulation advance
         """
-        self.starting_real_epoch = time.monotonic_ns()
+        self.starting_real_epoch = self.base_dt * ((time.time_ns() / 1.0e9) // self.base_dt)
         if not hasattr(self, "latest_real_epoch"):
             self.latest_real_epoch = self.starting_real_epoch
+
         return self.starting_real_epoch - self.latest_real_epoch
 
     def advance_to_time(self):
@@ -140,13 +141,11 @@ class Simulator:  # will be passed by reference to the emulated HAL
         Advance in steps of 'dt' to rech the current FSW time
         """
         time_diff = self.get_time_diff_since_last()
-        # TODO Handle granularity
-        iters = int(time_diff * 1e-9 / self.base_dt)
+        iters = int(time_diff / self.base_dt)
 
         if iters != 0:
-            self.latest_real_epoch = self.latest_real_epoch + iters * self.base_dt * 1e9
+            self.latest_real_epoch = self.latest_real_epoch + iters * self.base_dt
 
-        # print(f"Advancing {iters} iterations")
         for _ in range(iters):
             self.measurement = self.cppsim.step(self.sim_time, self.base_dt)
         self.sim_time += iters * self.base_dt
