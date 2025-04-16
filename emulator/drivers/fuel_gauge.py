@@ -34,9 +34,7 @@ class FuelGauge:
             voltage = self.simulator.battery_diagnostics("voltage")
             if voltage != 0:
 
-                self.capacity = self.simulator.battery_diagnostics("capacity") / (
-                   voltage * 3.6
-                )  # in mAh
+                self.capacity = self.simulator.battery_diagnostics("capacity") / (voltage * 3.6)  # in mAh
             else:
                 self.capacity = 0
         return self.capacity
