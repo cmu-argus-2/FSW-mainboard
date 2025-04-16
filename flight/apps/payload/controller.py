@@ -20,8 +20,11 @@ from apps.payload.definitions import (
     PayloadTM,
 )
 from apps.payload.protocol import Decoder, Encoder
+from core import logger
+from hal.configuration import SATELLITE
+from micropython import const
 
-_PING_RESP_VALUE = 0x60  # DO NOT CHANGE THIS VALUE
+_PING_RESP_VALUE = const(0x60)  # DO NOT CHANGE THIS VALUE
 _TELEMETRY_FREQUENCY = 0.1  # seconds
 
 
@@ -78,17 +81,27 @@ class PayloadController:
     # Reboot variables
     attempting_reboot = False
 
-    @classmethod
-    def inject_communication_interface(cls, communication_interface):
-        cls.communication_interface = communication_interface
-        cls.interface_injected = True
+    # Power control
+    # en_pin = None
 
     @classmethod
     def initialize(cls):
-        if not cls.interface_injected:
-            print("[ERROR] Communication interface not injected. Cannot initialize controller.")
+        # Using build flag
+        if SATELLITE.BUILD == "FLIGHT":
+            from apps.payload.uart_comms import PayloadUART
+
+            cls.communication_interface = PayloadUART
+            cls.interface_injected = True
+            return cls.communication_interface.connect()
+        elif SATELLITE.BUILD == "SIL":
+            from apps.payload.ipc_comms import PayloadIPC
+
+            cls.communication_interface = PayloadIPC
+            cls.interface_injected = True
+            return cls.communication_interface.connect()
+        else:
+            print("[ERROR] No communication interface injected. Cannot initialize controller.")
             return False
-        return cls.communication_interface.connect()
 
     @classmethod
     def deinitialize(cls):
