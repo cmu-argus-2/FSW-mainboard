@@ -27,6 +27,7 @@ class EPS_POWER_THRESHOLD:
 def GET_EPS_POWER_FLAG(curr_flag, soc):
     """returns current EPS state based on SOC"""
     flag = EPS_POWER_FLAG.NONE
+    print(soc)
     if EPS_POWER_FLAG.NONE <= curr_flag <= EPS_POWER_FLAG.EXPERIMENT:
         if 0 <= soc <= EPS_SOC_THRESHOLD.LOW_POWER_ENTRY:  # below low power threshold
             flag = EPS_POWER_FLAG.LOW_POWER
