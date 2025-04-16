@@ -24,7 +24,7 @@ The incoming packet format is as follows:
 Author: Ibrahima Sory Sow
 
 """
-from definitions import (
+from apps.payload.definitions import (
     ACK,
     CommandID,
     ErrorCodes,

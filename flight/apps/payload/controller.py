@@ -10,8 +10,16 @@ Author: Ibrahima Sory Sow
 
 import time
 
-from definitions import CommandID, ErrorCodes, ExternalRequest, FileTransfer, FileTransferType, ODStatus, PayloadTM
-from protocol import Decoder, Encoder
+from apps.payload.definitions import (
+    CommandID,
+    ErrorCodes,
+    ExternalRequest,
+    FileTransfer,
+    FileTransferType,
+    ODStatus,
+    PayloadTM,
+)
+from apps.payload.protocol import Decoder, Encoder
 
 _PING_RESP_VALUE = 0x60  # DO NOT CHANGE THIS VALUE
 _TELEMETRY_FREQUENCY = 0.1  # seconds
@@ -67,6 +75,9 @@ class PayloadController:
     # OD variables
     od_status: ODStatus = None
 
+    # Reboot variables
+    attempting_reboot = False
+
     @classmethod
     def inject_communication_interface(cls, communication_interface):
         cls.communication_interface = communication_interface
@@ -106,8 +117,7 @@ class PayloadController:
     @classmethod
     def cancel_current_request(cls):
         if cls.state != PayloadState.READY:
-            cls.current_request = ExternalRequest.NO_ACTION
-            cls.timestamp_request = 0
+            cls._clear_request()
             # TODO: need to add a specific logic to cancel the request
             # This should be used only when the payload is is not READY.
             # If in READY, it would have already been executing the request
@@ -123,16 +133,16 @@ class PayloadController:
             pass
 
         elif cls.current_request == ExternalRequest.TURN_ON:
-            cls._clear_request()
             cls._switch_to_state(PayloadState.POWERING_ON)
+            cls._clear_request()
 
         elif cls.current_request == ExternalRequest.TURN_OFF:
-            cls._clear_request()
             cls._switch_to_state(PayloadState.SHUTTING_DOWN)
+            cls._clear_request()
 
         elif cls.current_request == ExternalRequest.REBOOT:
-            cls._clear_request()
             cls._switch_to_state(PayloadState.REBOOTING)
+            cls._clear_request()
 
         elif cls.current_request == ExternalRequest.CLEAR_STORAGE:
             pass
@@ -142,9 +152,9 @@ class PayloadController:
 
         elif cls.current_request == ExternalRequest.FORCE_POWER_OFF:
             # This is a last resort
-            cls._clear_request()
             cls.turn_off_power()
             cls._switch_to_state(PayloadState.OFF)
+            cls._clear_request()
 
     @classmethod
     def _switch_to_state(cls, new_state: PayloadState):
