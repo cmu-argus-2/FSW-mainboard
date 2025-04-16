@@ -350,19 +350,19 @@ class CubeSat:
         """
         return self.key_in_device_list("WATCHDOG") and self.__device_list["WATCHDOG"].device is not None
 
-    # @property
-    # def PAYLOADUART(self):
-    #     """PAYLOAD_EN: Returns the payload enable object
-    #     :return: object or None
-    #     """
-    #     return self.__payload_uart
+    @property
+    def PAYLOADUART(self):
+        """PAYLOAD_EN: Returns the payload enable object
+        :return: object or None
+        """
+        return self.__payload_uart
 
-    # @property
-    # def PAYLOADUART_AVAILABLE(self) -> bool:
-    #     """PAYLOADUART_AVAILABLE: Returns True if the payload UART is available
-    #     :return: bool
-    #     """
-    #     return self.__payload_uart is not None
+    @property
+    def PAYLOADUART_AVAILABLE(self) -> bool:
+        """PAYLOADUART_AVAILABLE: Returns True if the payload UART is available
+        :return: bool
+        """
+        return self.__payload_uart is not None
 
     @property
     def BOOTTIME(self):
@@ -370,3 +370,10 @@ class CubeSat:
         :return: object or None
         """
         return self._time_ref_boot
+
+    @property
+    def BUILD(self):
+        """BUILD: Returns the build type
+        :return: FLIGHT string
+        """
+        return "FLIGHT"
