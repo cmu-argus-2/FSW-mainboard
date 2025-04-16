@@ -119,6 +119,14 @@ class SATELLITE_RADIO:
     file_time = 0
     file_message_count = 0
 
+    """
+    NOTE: This flag can be set to force comms into DOWLINK_ALL.
+
+    Whenever done, ensure that filepath for the desired file is also
+    set. When GS_CMD_DOWNLINK_ALL is received, the command contains
+    file_ID and file_time, which are used for getting the filepath
+    from the DH.
+    """
     # Downlink all flag
     dlink_all = False
 
@@ -174,9 +182,14 @@ class SATELLITE_RADIO:
 
     @classmethod
     def transition_state(cls, rx_count, rx_threshold):
+        # Check flag and stay in TX_DOWNLINK_ALL if file TX not done
+        if cls.dlink_all is True:
+            cls.state = COMMS_STATE.TX_DOWNLINK_ALL
+
         # Check current state
-        if cls.state == COMMS_STATE.RX:
+        elif cls.state == COMMS_STATE.RX:
             # State transitions to TX states only occur from RX state
+            # Only exception to this is TX_DOWNLINK_ALL
 
             if rx_count >= rx_threshold:
                 # Lost contact with GS, return to default state
@@ -447,6 +460,11 @@ class SATELLITE_RADIO:
 
         # Pack entire message, file_array contains file info
         cls.tx_message = tx_header + cls.file_ID.to_bytes(1, "big") + cls.file_time.to_bytes(4, "big") + cls.file_array
+
+        # Check for last packet
+        if cls.int_sq_cnt == cls.file_message_count - 1:
+            # File downlink is over, set flag to not go back into TX_DOWNLINK_ALL state
+            cls.dlink_all = False
 
     """
         Name: check_rq_file_params
