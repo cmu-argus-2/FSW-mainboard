@@ -13,7 +13,7 @@ Author(s): Karthik Karumanchi, Ibrahima S. Sow
 import os
 import random
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import numpy as np
 from argusim.simulation_manager.sim import Simulator as cppSim
@@ -32,7 +32,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
         self.cppsim = cppSim(trial, RESULTS_FOLDER, CONFIG_FILE)
 
         self.measurement = np.zeros((49,))
-        self.starting_real_epoch = datetime.fromtimestamp(time.time())
+        self.starting_real_epoch = time.monotonic_ns()
         self.base_dt = self.cppsim.params.dt
         self.sim_time = 0
 
@@ -85,7 +85,10 @@ class Simulator:  # will be passed by reference to the emulated HAL
 
         if attr in power_idx_map.keys():
             voltage = self.measurement[self.power_idx][3]
-            current = sum(self.measurement[self.solar_idx][power_idx_map[attr]]) / voltage
+            if voltage != 0:
+                current = sum(self.measurement[self.solar_idx][power_idx_map[attr]]) / voltage
+            else:
+                current = 0
 
             return voltage, current
         else:
@@ -94,7 +97,10 @@ class Simulator:  # will be passed by reference to the emulated HAL
     def jetson_power(self):
         self.advance_to_time()
         voltage = self.measurement[self.power_idx][3]
-        current = self.measurement[self.jetson_idx] / voltage
+        if voltage != 0:
+            current = self.measurement[self.jetson_idx] / voltage
+        else:
+            current = 0
         return (voltage, current)
 
     def battery_diagnostics(self, attr: str):
@@ -124,8 +130,9 @@ class Simulator:  # will be passed by reference to the emulated HAL
         """
         Time since last simulation advance
         """
-        self.latest_real_epoch = self.starting_real_epoch
-        self.starting_real_epoch = datetime.fromtimestamp(time.time())
+        self.starting_real_epoch = time.monotonic_ns()
+        if not hasattr(self, 'latest_real_epoch'):
+            self.latest_real_epoch = self.starting_real_epoch
         return self.starting_real_epoch - self.latest_real_epoch
 
     def advance_to_time(self):
@@ -134,7 +141,11 @@ class Simulator:  # will be passed by reference to the emulated HAL
         """
         time_diff = self.get_time_diff_since_last()
         # TODO Handle granularity
-        iters = int(time_diff.total_seconds() / self.base_dt)
+        iters = int(time_diff * 1e-9 / self.base_dt)
+
+        if iters != 0:
+            self.latest_real_epoch = self.latest_real_epoch + iters*self.base_dt*1e9
+        
         # print(f"Advancing {iters} iterations")
         for _ in range(iters):
             self.measurement = self.cppsim.step(self.sim_time, self.base_dt)

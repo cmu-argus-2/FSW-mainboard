@@ -31,9 +31,14 @@ class FuelGauge:
         :return: Capacity in mAh.
         """
         if self.simulator is not None:
-            self.capacity = self.simulator.battery_diagnostics("capacity") / (
-                self.simulator.battery_diagnostics("voltage") * 3.6
-            )  # in mAh
+            voltage = self.simulator.battery_diagnostics("voltage")
+            if voltage != 0:
+
+                self.capacity = self.simulator.battery_diagnostics("capacity") / (
+                   voltage * 3.6
+                )  # in mAh
+            else:
+                self.capacity = 0
         return self.capacity
 
     def read_current(self):
