@@ -29,7 +29,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
         trial = random.randint(0, 100)
         RESULTS_FOLDER = os.path.join(RESULTS_ROOT_FOLDER, datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         os.mkdir(RESULTS_FOLDER)
-        self.cppsim = cppSim(trial, RESULTS_FOLDER, CONFIG_FILE, log=False)
+        self.cppsim = cppSim(trial, RESULTS_FOLDER, CONFIG_FILE, log=True)
 
         self.measurement = np.zeros((18,))
         self.starting_real_epoch = time.time_ns() / 1.0e9

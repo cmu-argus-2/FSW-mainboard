@@ -468,7 +468,7 @@ class AttitudeDetermination:
         # S is scaled up by 1000 and then down to remove this error
         # If the singularity persists, we stop the covariance update
         try:
-            S_inv = 1000 * np.linalg.inv(1000 * S)
+            S_inv = np.linalg.inv(S)
         except ValueError:
             return StatusConst.EKF_UPDATE_FAIL
         K = np.dot(np.dot(self.P, H.transpose()), S_inv)
