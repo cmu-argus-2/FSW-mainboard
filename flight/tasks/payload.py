@@ -15,6 +15,8 @@ class Task(TemplateTask):
     def __init__(self, id):
         super().__init__(id)
         self.name = "PAYLOAD"
+        self.dp_initialized = False
+        self.pins_injected = False
 
     def init_all_data_processes(self):
         # Image process
@@ -36,16 +38,20 @@ class Task(TemplateTask):
 
     async def main_task(self):
         if SM.current_state == STATES.STARTUP or SM.current_state == STATES.DETUMBLING:
+            # Need to inject the communication interface and the power control interface from the HAL here
 
-            # Need to inject the communication interface and the power control interface from the HAL
-            pass
+            if not self.pins_injected:
+                # Get the communication interface
+                # Get the power control interface
+                self.pins_injected = True
 
         else:
-            self.init_all_data_processes()
+            self.init_all_data_processes()  # Not running payload in detumbling
 
             if DH.data_process_exists("payload/requests"):
                 candidate_request = DH.get_latest_data("payload/requests")[0]
                 if candidate_request != ExternalRequest.NO_ACTION:
                     PC.add_request(candidate_request)
 
+            # DO NOT EXPOSE THE LOGIC IN THE TASK
             PC.run_control_logic()
