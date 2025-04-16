@@ -32,10 +32,12 @@ class Errors:
 
     # TORQUE COIL ERRORS
     TORQUE_COIL_OVERCURRENT_EVENT = const(0xB0)  # placeholder value
+    TORQUE_COIL_OVERVOLTAGE_EVENT = const(0xB5)  # placeholder value
     TORQUE_COIL_UNDERVOLTAGE_LOCKOUT = const(0xB1)  # placeholder value
-    TORQUE_COIL_OVERTEMP_EVENT = const(0xB2)  # placeholder value
+    TORQUE_COIL_THERMAL_SHUTDOWN = const(0xB2)  # placeholder value
     TORQUE_COIL_EXTENDED_CURRENT_LIMIT_EVENT = const(0xB3)  # placeholder value
     TORQUE_COIL_THROTTLE_OUTSIDE_RANGE = const(0xB4)  # placeholder value
+    TORQUE_COIL_STALL_EVENT = const(0xB6)  # placeholder value
 
     # LIGHT SENSOR ERRORS
     LIGHT_SENSOR_ID_CHECK_FAILED = const(0xC0)  # placeholder value

@@ -4,6 +4,8 @@ from adafruit_register.i2c_bit import ROBit, RWBit
 from adafruit_register.i2c_bits import ROBits, RWBits
 from micropython import const
 
+from flight.hal.drivers.errors import Errors
+
 # DEVICE REGISTER MAP
 _FAULT_STATUS = const(0x00)  # Fault Status Register R-
 _RC_STATUS1 = const(0x01)  # Motor Speed status R-
@@ -37,12 +39,12 @@ _RC_CTRL8 = const(0x19)  # RW
     NPOR   Undervoltage lockout; device disabled,
         resumes with voltage restoration
     """
-_FAULT = const(0x01)
-_STALL = const(0x02)
-_OCP = const(0x03)
-_OVP = const(0x04)
-_TSD = const(0x05)
-_NPOR = const(0x06)
+# _FAULT = const(0x01)
+# _STALL = const(0x02)
+# _OCP = const(0x03)
+# _OVP = const(0x04)
+# _TSD = const(0x05)
+# _NPOR = const(0x06)
 
 
 class BridgeControl:
@@ -237,26 +239,6 @@ class DRV8235:
         value and corresponding description string."""
         return self._dir, BridgeControl.DESCRIPTOR[self._dir]
 
-    @property
-    def fault(self):
-        """Motor driver fault register status. Returns state of FAULT flag and
-        a list of activated fault flag descriptors. FAULT flag is ``True`` if
-        one or more fault register flags are ``True``."""
-        faults = []
-        if self._fault:
-            faults.append(_FAULT)
-            if self._stall:
-                faults.append(_STALL)
-            if self._ocp:
-                faults.append(_OCP)
-            if self._ovp:
-                faults.append(_OVP)
-            if self._tsd:
-                faults.append(_TSD)
-            if self._npor:
-                faults.append(_NPOR)
-        return self._fault, faults
-
     def clear_faults(self):
         """Clears all fault conditions."""
         self._clear = True  # Clear all fault status flags
@@ -267,6 +249,25 @@ class DRV8235:
     def __exit__(self, exception_type, exception_value, traceback):
         self._wset_vset = 0
         self._dir = BridgeControl.COAST
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        results = []
+        if self._fault:
+            if self._stall:
+                results.append(Errors.TORQUE_COIL_STALL_EVENT)
+            if self._ocp:
+                results.append(Errors.TORQUE_COIL_OVERCURRENT_EVENT)
+            if self._ovp:
+                results.append(Errors.TORQUE_COIL_OVERVOLTAGE_EVENT)
+            if self._tsd:
+                results.append(Errors.TORQUE_COIL_THERMAL_SHUTDOWN)
+            if self._npor:
+                results.append(Errors.TORQUE_COIL_UNDERVOLTAGE_LOCKOUT)
+            self.clear_faults()
+        return results
 
     def deinit(self):
         return
