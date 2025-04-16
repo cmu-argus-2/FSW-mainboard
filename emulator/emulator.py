@@ -95,6 +95,9 @@ class EmulatedSatellite(CubeSat):
         self.append_device("YM_PWR", None, PowerMonitor("YM", simulator=self.__simulated_spacecraft))
         self.append_device("ZP_PWR", None, PowerMonitor("ZP", simulator=self.__simulated_spacecraft))
 
+        # Jetson Power Monitor
+        self.append_device("JETSON_PWR", None, PowerMonitor("JETSON", simulator=self.__simulated_spacecraft))
+
         # self._fuel_gauge = self.init_device(FuelGauge())
         self.append_device("FUEL_GAUGE", None, FuelGauge(simulator=self.__simulated_spacecraft))
 

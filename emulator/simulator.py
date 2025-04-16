@@ -31,7 +31,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
         os.mkdir(RESULTS_FOLDER)
         self.cppsim = cppSim(trial, RESULTS_FOLDER, CONFIG_FILE)
 
-        self.measurement = np.zeros((48,))
+        self.measurement = np.zeros((49,))
         self.starting_real_epoch = datetime.fromtimestamp(time.time())
         self.base_dt = self.cppsim.params.dt
         self.sim_time = 0
@@ -44,6 +44,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
         self.mtb_idx = slice(21, 27)
         self.solar_idx = slice(27, 40)
         self.power_idx = slice(40, 48)
+        self.jetson_idx = slice(48, 49)
 
     """
         SENSOR CALLBACKS
@@ -89,6 +90,12 @@ class Simulator:  # will be passed by reference to the emulated HAL
             return voltage, current
         else:
             raise Exception("Invalid Solar power monitor key")
+
+    def jetson_power(self):
+        self.advance_to_time()
+        voltage = self.measurement[self.power_idx][3]
+        current = self.measurement[self.jetson_idx] / voltage
+        return (voltage, current)
 
     def battery_diagnostics(self, attr: str):
         self.advance_to_time()
