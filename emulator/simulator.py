@@ -37,12 +37,12 @@ class Simulator:  # will be passed by reference to the emulated HAL
         self.sim_time = 0
 
         # Measurement labels
-        self.gps_idx = slice(0,6)
-        self.gyro_idx = slice(6,9)
-        self.mag_idx = slice(9,12)
-        self.lux_idx = slice(12,21)
-        self.mtb_idx = slice(21,27)
-        self.power_idx = slice(27,35)
+        self.gps_idx = slice(0, 6)
+        self.gyro_idx = slice(6, 9)
+        self.mag_idx = slice(9, 12)
+        self.lux_idx = slice(12, 21)
+        self.mtb_idx = slice(21, 27)
+        self.power_idx = slice(27, 35)
 
     """
         SENSOR CALLBACKS
@@ -59,17 +59,33 @@ class Simulator:  # will be passed by reference to the emulated HAL
         return self.measurement[self.mag_idx] * 1e6  # IMU obtains magnetic field readings in uT
 
     def sun_lux(self):
-        self.advance_to_time() # XP, XM, YP, YM, ZP1, ZP2, ZP3, ZP4, ZM
+        self.advance_to_time()  # XP, XM, YP, YM, ZP1, ZP2, ZP3, ZP4, ZM
         return self.measurement[self.lux_idx]
 
     def gps(self):
         self.advance_to_time()
         gps_state = np.array([time.time()] + list(self.measurement[self.gps_idx] * 1e2))
         return gps_state  # GPS returns data in cm
-    
+
     def coil_power(self, idx):
         self.advance_to_time()
         return self.measurement[self.mtb_idx][idx]
+
+    def battery_diagnostics(self, attr: str):
+        self.advance_to_time()
+        attr2idx = dict(
+            zip(["soc", "capacity", "current", "voltage", "midvoltage", "tte", "ttf", "temperature"], [i for i in range(8)])
+        )
+
+        if self.measurement[self.power_idx][attr2idx["tte"]] > 1e7 or self.measurement[self.power_idx][attr2idx["tte"]] < 0:
+            self.measurement[self.power_idx][attr2idx["tte"]] = 0
+        if self.measurement[self.power_idx][attr2idx["ttf"]] > 1e7 or self.measurement[self.power_idx][attr2idx["ttf"]] < 0:
+            self.measurement[self.power_idx][attr2idx["ttf"]] = 0
+
+        if attr in attr2idx.keys():
+            return self.measurement[self.power_idx][attr2idx[attr]]
+        else:
+            raise Exception("Invalid Battery diagnostic attribute")
 
     def set_control_input(self, dir, input):
         """

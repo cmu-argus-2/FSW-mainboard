@@ -89,7 +89,7 @@ class EmulatedSatellite(CubeSat):
         self.append_device("JETSON_PWR", None, self._jetson_power_monitor)
 
         # self._fuel_gauge = self.init_device(FuelGauge())
-        self.append_device("FUEL_GAUGE", None, FuelGauge())
+        self.append_device("FUEL_GAUGE", None, FuelGauge(simulator=self.__simulated_spacecraft))
 
         # self._rtc = self.init_device(RTC(time.gmtime()))
         self.append_device("RTC", None, RTC(time.gmtime()))

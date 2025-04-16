@@ -154,7 +154,7 @@ class CubeSat:
         :return: bool - True if the driver exists and is not None, False otherwise.
         """
         return self.key_in_device_list("TORQUE_" + dir) and self._device_list["TORQUE_" + dir].device is not None
-    
+
     def TORQUE_DRIVERS_CURRENT(self, dir: str) -> float:
         """Returns the coil current for the specific magnetorquer if available and returns -1 otherwise
 
