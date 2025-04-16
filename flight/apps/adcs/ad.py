@@ -74,7 +74,7 @@ class AttitudeDetermination:
     """ SENSOR READ FUNCTIONS """
 
     # ------------------------------------------------------------------------------------------------------------------------------------
-    def read_sun_position(self) -> tuple[int, np.ndarray, np.ndarray]:
+    def read_sun_position(self):  # -> tuple[int, np.ndarray, np.ndarray]:
         """
         - Gets the measured sun vector from light sensor measurements
         - Accesses functions inside sun.py which in turn call HAL
@@ -84,7 +84,7 @@ class AttitudeDetermination:
 
         return status, sun_pos_body, np.array(light_sensor_lux_readings) / PhysicalConst.LIGHT_SENSOR_LOG_FACTOR
 
-    def read_gyro(self) -> tuple[int, int, np.ndarray]:
+    def read_gyro(self):  # -> tuple[int, int, np.ndarray]:
         """
         - Reads the angular velocity from the gyro
         - NOTE : This replaces the data querying portion of the IMU task. Data logging still happens within the ADCS task
@@ -102,7 +102,7 @@ class AttitudeDetermination:
         else:
             return StatusConst.GYRO_FAIL, 0, np.zeros((3,))
 
-    def read_magnetometer(self) -> tuple[int, int, np.ndarray]:
+    def read_magnetometer(self):  #: -> tuple[int, int, np.ndarray]:
         """
         - Reads the magnetic field reading from the IMU
         - This is separate from the gyro measurement to allow gyro to be read faster than magnetometer
@@ -121,7 +121,7 @@ class AttitudeDetermination:
         else:
             return StatusConst.MAG_FAIL, 0, np.zeros((3,))
 
-    def read_gps(self) -> tuple[int, int, np.ndarray, np.ndarray]:
+    def read_gps(self):  # -> tuple[int, int, np.ndarray, np.ndarray]:
         """
         - Get the current position from GPS
         - NOTE: Since GPS is a task, this function will read values from C&DH
@@ -228,7 +228,7 @@ class AttitudeDetermination:
 
         return StatusConst.OK, StatusConst.OK
 
-    def TRIAD(self, n1, n2, b1, b2) -> tuple[int, np.ndarray]:
+    def TRIAD(self, n1, n2, b1, b2):  # -> tuple[int, np.ndarray]:
         """
         Computes the attitude of the spacecraft based on two independent vectors provided in the body and inertial frames
         """
