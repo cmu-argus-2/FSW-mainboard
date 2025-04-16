@@ -11,7 +11,7 @@ Author: Ibrahima Sory Sow
 import os
 import select
 
-from communication import PayloadCommunicationInterface
+from apps.payload.communication import PayloadCommunicationInterface
 
 # Named pipe paths (make sure this corresponds to the CMAKE compile definitions)
 FIFO_IN = "/tmp/payload_fifo_in"  # Payload reads from this, external process writes to it
