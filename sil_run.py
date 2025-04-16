@@ -4,7 +4,7 @@ import signal
 import subprocess
 import time
 
-DEFAULT_RUNTIME = 10 * 60  # 10 minutes
+DEFAULT_RUNTIME = 5 * 60  # 5 minutes
 DEFAULT_OUTFILE = "sil_logs.log"
 
 # KEYWORD SEARCHES:
