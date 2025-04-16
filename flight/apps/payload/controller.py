@@ -40,7 +40,7 @@ class PayloadController:
 
     # Bi-directional communication interface
     communication_interface = None
-    interface_injected = False
+    _interface_injected = False
 
     # State of the Payload from the host perspective
     state = PayloadState.OFF
@@ -85,27 +85,45 @@ class PayloadController:
     # en_pin = None
 
     @classmethod
-    def initialize(cls):
+    def load_communication_interface(cls):
+        # This function is called from the HAL to load the communication interface
+        # This is done only once at startup
+        if cls._interface_injected:
+            logger.info("Communication interface already injected. Skipping injection.")
+            return
+
         # Using build flag
         if SATELLITE.BUILD == "FLIGHT":
             from apps.payload.uart_comms import PayloadUART
 
             cls.communication_interface = PayloadUART
-            cls.interface_injected = True
-            return cls.communication_interface.connect()
+            cls._interface_injected = True
+            logger.info("Payload UART communication interface injected.")
+
         elif SATELLITE.BUILD == "SIL":
             from apps.payload.ipc_comms import PayloadIPC
 
             cls.communication_interface = PayloadIPC
-            cls.interface_injected = True
+            cls._interface_injected = True
+            logger.info("Payload IPC communication interface injected.")
+
+        assert cls.communication_interface is not None, "Communication interface not injected. Cannot initialize controller."
+
+    @classmethod
+    def initialize(cls):
+        if cls._interface_injected:
             return cls.communication_interface.connect()
         else:
-            print("[ERROR] No communication interface injected. Cannot initialize controller.")
+            logger.error("Communication interface not injected yet.")
             return False
 
     @classmethod
     def deinitialize(cls):
         cls.communication_interface.disconnect()
+
+    @classmethod
+    def interface_injected(cls):
+        return cls._interface_injected
 
     @classmethod
     def _did_we_send_a_command(cls):
@@ -158,6 +176,7 @@ class PayloadController:
             cls._clear_request()
 
         elif cls.current_request == ExternalRequest.CLEAR_STORAGE:
+            # coming soon, after payload updates
             pass
 
         elif cls.current_request == ExternalRequest.REQUEST_IMAGE:
