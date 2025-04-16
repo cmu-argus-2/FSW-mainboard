@@ -31,7 +31,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
         os.mkdir(RESULTS_FOLDER)
         self.cppsim = cppSim(trial, RESULTS_FOLDER, CONFIG_FILE)
 
-        self.measurement = np.zeros((35,))
+        self.measurement = np.zeros((48,))
         self.starting_real_epoch = datetime.fromtimestamp(time.time())
         self.base_dt = self.cppsim.params.dt
         self.sim_time = 0
@@ -42,7 +42,8 @@ class Simulator:  # will be passed by reference to the emulated HAL
         self.mag_idx = slice(9, 12)
         self.lux_idx = slice(12, 21)
         self.mtb_idx = slice(21, 27)
-        self.power_idx = slice(27, 35)
+        self.solar_idx = slice(27, 40)
+        self.power_idx = slice(40, 48)
 
     """
         SENSOR CALLBACKS
@@ -70,6 +71,24 @@ class Simulator:  # will be passed by reference to the emulated HAL
     def coil_power(self, idx):
         self.advance_to_time()
         return self.measurement[self.mtb_idx][idx]
+
+    def solar_power(self, attr):
+        self.advance_to_time()
+        power_idx_map = {
+            "XP": [0, 5, 6],
+            "XM": [1, 7, 8],
+            "YP": [2, 9, 10],
+            "YM": [3, 11, 12],
+            "ZP": [4],
+        }  # power monitors not on deployables
+
+        if attr in power_idx_map.keys():
+            voltage = self.measurement[self.power_idx][3]
+            current = sum(self.measurement[self.solar_idx][power_idx_map[attr]]) / voltage
+
+            return voltage, current
+        else:
+            raise Exception("Invalid Solar power monitor key")
 
     def battery_diagnostics(self, attr: str):
         self.advance_to_time()

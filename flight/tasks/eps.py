@@ -155,7 +155,6 @@ class Task(TemplateTask):
 
             self.log_data[EPS_IDX.TIME_EPS] = TPM.time()
             self.warning_log_data[EPS_WARNING_IDX.TIME_EPS_WARNING] = TPM.time()
-
             for location, sensor in SATELLITE.POWER_MONITORS.items():
                 if SATELLITE.POWER_MONITOR_AVAILABLE(location):
                     if location == "BOARD":

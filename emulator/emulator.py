@@ -81,12 +81,19 @@ class EmulatedSatellite(CubeSat):
         self._imu.enable()
         self.append_device("IMU", None, self._imu)
 
-        self._jetson_power_monitor = self.init_device(PowerMonitor(4, 0.05))
-        self._board_power_monitor = self.init_device(PowerMonitor(7.6, 0.1))
+        # self._jetson_power_monitor = self.init_device(PowerMonitor(4, 0.05))
+        # self._board_power_monitor = self.init_device(PowerMonitor(7.6, 0.1))
         # self._power_monitors["BOARD"] = self._board_power_monitor
         # self._power_monitors["JETSON"] = self._jetson_power_monitor
-        self.append_device("BOARD_PWR", None, self._board_power_monitor)
-        self.append_device("JETSON_PWR", None, self._jetson_power_monitor)
+        # self.append_device("BOARD_PWR", None, self._board_power_monitor)
+        # self.append_device("JETSON_PWR", None, self._jetson_power_monitor)
+
+        # Solar Power monitors
+        self.append_device("XP_PWR", None, PowerMonitor("XP", simulator=self.__simulated_spacecraft))
+        self.append_device("XM_PWR", None, PowerMonitor("XM", simulator=self.__simulated_spacecraft))
+        self.append_device("YP_PWR", None, PowerMonitor("YP", simulator=self.__simulated_spacecraft))
+        self.append_device("YM_PWR", None, PowerMonitor("YM", simulator=self.__simulated_spacecraft))
+        self.append_device("ZP_PWR", None, PowerMonitor("ZP", simulator=self.__simulated_spacecraft))
 
         # self._fuel_gauge = self.init_device(FuelGauge())
         self.append_device("FUEL_GAUGE", None, FuelGauge(simulator=self.__simulated_spacecraft))
