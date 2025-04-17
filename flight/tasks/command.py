@@ -9,6 +9,8 @@ from apps.adcs.consts import Modes
 from apps.command import QUEUE_STATUS, CommandQueue
 from apps.eps.eps import EPS_POWER_FLAG
 from apps.payload.controller import PayloadController as PC
+from apps.payload.controller import PayloadState
+from apps.payload.definitions import ExternalRequest
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX
 from core import DataHandler as DH
 from core import TemplateTask
@@ -19,7 +21,7 @@ from hal.configuration import SATELLITE
 from micropython import const
 
 _TPM_INIT_TIMEOUT = const(10)  # seconds
-_EXIT_STARTUP_TIMEOUT = const(5)  # seconds
+_EXIT_STARTUP_TIMEOUT = const(3)  # seconds
 
 
 class Task(TemplateTask):
@@ -268,7 +270,9 @@ class Task(TemplateTask):
 
             # TODO: check to make sure the payload started running (afterwards since this execution cycle needs to finish)
 
-            # TODO: Inject any file requests (image of od) from the commands if any
+            # Note all ground commands related to the payload are executed in the command processor
+            if PC.state == PayloadState.READY:
+                pass
 
             """Transitions out of EXPERIMENT"""
             if self.EPS_MODE != EPS_POWER_FLAG.EXPERIMENT:
