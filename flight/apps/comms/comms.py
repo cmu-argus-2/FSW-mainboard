@@ -85,6 +85,7 @@ class MSG_ID:
     # SAT file metadata and file content messages
     SAT_FILE_METADATA = 0x10
     SAT_FILE_PKT = 0x20
+    SAT_DOWNLINK_ALL = 0x24
 
     """
     Comms internal state management uses ranges of GS command IDs
@@ -457,7 +458,9 @@ class SATELLITE_RADIO:
         # pkt_size + 5 is to accomodate 5 bytes of file info (file_ID, 1 byte; file_time, 4 bytes) w/ pkt_size bytes of
         # file data
         tx_header = (
-            (MSG_ID.SAT_FILE_PKT).to_bytes(1, "big") + (cls.int_sq_cnt).to_bytes(2, "big") + (pkt_size + 5).to_bytes(1, "big")
+            (MSG_ID.SAT_DOWNLINK_ALL).to_bytes(1, "big")
+            + (cls.int_sq_cnt).to_bytes(2, "big")
+            + (pkt_size + 5).to_bytes(1, "big")
         )
 
         # Pack entire message, file_array contains file info
