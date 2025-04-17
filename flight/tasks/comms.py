@@ -139,7 +139,11 @@ class Task(TemplateTask):
 
             # NOTE: A response is only expected from commanding for an ACK, frame, or file metadata
             # Heartbeats and file packets are handled internally by comms
-            if not (self.comms_state == COMMS_STATE.TX_HEARTBEAT or self.comms_state == COMMS_STATE.TX_FILEPKT):
+            if not (
+                self.comms_state == COMMS_STATE.TX_HEARTBEAT
+                or self.comms_state == COMMS_STATE.TX_FILEPKT
+                or self.comms_state == COMMS_STATE.TX_DOWNLINK_ALL
+            ):
                 # Get response from commanding based on the active GS command
                 cmd_response_state = self.get_command_response()
 
