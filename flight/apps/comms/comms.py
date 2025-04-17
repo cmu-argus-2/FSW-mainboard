@@ -517,6 +517,7 @@ class SATELLITE_RADIO:
     @classmethod
     def handle_downlink_all_rq(cls, packet):
         # Extract file ID and time from the request
+        print(packet)
         file_id = packet[0]
         file_time = packet[1:5]
 
@@ -540,6 +541,7 @@ class SATELLITE_RADIO:
             # Generate internal metadata for this filepath
             cls.file_get_metadata()
             cls.dlink_all = True
+            cls.int_sq_cnt = 0
 
     """
         Name: receive_message
@@ -551,8 +553,14 @@ class SATELLITE_RADIO:
         # Get packet from radio over SPI
         # Assumes packet is in FIFO buffer
 
+        packet = None
+        err = -1  # _ERR_NONE is 0
+
         if SATELLITE.RADIO_AVAILABLE:
             packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
+            import binascii
+
+            print(binascii.hexlify(packet).decode("ascii"))
         else:
             logger.error("[COMMS ERROR] RADIO no longer active on SAT")
 
@@ -624,7 +632,7 @@ class SATELLITE_RADIO:
         cls.rx_gs_len = int.from_bytes(packet[3:4], "big")
 
         # Check packet integrity based on CMD_ID
-        if (cls.rx_gs_cmd < MSG_ID.GS_CMD_ACK_L) or (cls.rx_gs_cmd > MSG_ID.GS_CMD_FILE_PKT):
+        if (cls.rx_gs_cmd < MSG_ID.GS_CMD_ACK_L) or (cls.rx_gs_cmd > MSG_ID.GS_CMD_DOWNLINK_ALL):
             # Packet does not contain valid CMD_ID
             logger.warning("[COMMS ERROR] RX'd packet has invalid CMD")
             cls.rx_gs_cmd = 0x00
