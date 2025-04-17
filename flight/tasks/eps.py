@@ -150,7 +150,7 @@ class Task(TemplateTask):
         else:
             if not DH.data_process_exists("eps"):
                 data_format = (
-                    "Lbhhhhb" + "h" * 4 + "L" * 2 + "h" * 30
+                    "Lbhhhhb" + "h" * 4 + "L" * 2 + "h" * 30 + "b"
                 )  # - use mV for voltage and mA for current (h = short integer 2 bytes, L = 4 bytes)
                 DH.register_data_process("eps", data_format, True, data_limit=100000)
 
@@ -266,11 +266,14 @@ class Task(TemplateTask):
                     if SHOULD_ENABLE_HEATERS(enabled, temp, flag):
                         battery_heaters.heater0_enable()
                         battery_heaters.heater1_enable()
+                        self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED] = 1
                         self.log_info("Enabled battery heaters")
                     if SHOULD_DISABLE_HEATERS(enabled, temp, flag):
                         battery_heaters.heater0_disable()
                         battery_heaters.heater1_disable()
+                        self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED] = 0
                         self.log_info("Disabled battery heaters")
+                    self.log_info(f"Battery Heaters Enabled: {self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED]}")
 
                 DH.log_data("eps", self.log_data)
             DH.log_data("eps_warning", self.warning_log_data)
