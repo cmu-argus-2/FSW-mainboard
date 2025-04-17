@@ -260,17 +260,17 @@ class Task(TemplateTask):
 
                 if SATELLITE.BATTERY_HEATERS_AVAILABLE:
                     battery_heaters = SATELLITE.BATTERY_HEATERS
-                    enabled = battery_heaters.heater0_enabled() or battery_heaters.heater1_enabled
+                    enabled = battery_heaters.heater0_enabled() or battery_heaters.heater1_enabled()
                     temp = self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]
                     flag = self.log_data[EPS_IDX.EPS_POWER_FLAG]
                     if SHOULD_ENABLE_HEATERS(enabled, temp, flag):
-                        battery_heaters.heater0_enable()
-                        battery_heaters.heater1_enable()
+                        battery_heaters.enable_heater0()
+                        battery_heaters.enable_heater1()
                         self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED] = 1
                         self.log_info("Enabled battery heaters")
                     if SHOULD_DISABLE_HEATERS(enabled, temp, flag):
-                        battery_heaters.heater0_disable()
-                        battery_heaters.heater1_disable()
+                        battery_heaters.disable_heater0()
+                        battery_heaters.disable_heater1()
                         self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED] = 0
                         self.log_info("Disabled battery heaters")
                     self.log_info(f"Battery Heaters Enabled: {self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED]}")
