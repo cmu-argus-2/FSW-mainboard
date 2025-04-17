@@ -1,3 +1,11 @@
+"""
+
+Argus Battery Heaters Wrapper Driver
+
+* Author(s): Perrin Tong
+
+"""
+
 import digitalio
 
 

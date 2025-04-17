@@ -1,7 +1,7 @@
 """
 This module contains the BurnWires class which provides functionality for controlling burn wires.
 
-Author: Harry Rosmann
+Author: Harry Rosmann, Perrin Tong
 Date: March 28, 2024
 """
 

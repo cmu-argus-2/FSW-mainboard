@@ -26,6 +26,7 @@ CircuitPython driver for the OPT4001 ALS
 
 **Authors**
 Thomas Damiani
+Perrin Tong
 
 **Sofware Requirements**
 
@@ -489,45 +490,20 @@ class OPT4001:
         res = self.overload_flag << 3 | (not self.conversion_ready_flag) << 2 | self.flag_h << 1 | self.flag_L
         return res
 
-    """
-    ----------------------- HANDLER METHODS -----------------------
-    """
+    ######################## ERROR HANDLING ########################
 
-    def get_flags(self):
-        flags = {}
+    @property
+    def device_errors(self):
+        results = []
         if self.flag_h:
-            flags["flag_H"] = None
+            results.append(Errors.LIGHT_SENSOR_HIGHER_THAN_THRESHOLD)
         if self.flag_L:
-            flags["flag_L"] = None
+            results.append(Errors.LIGHT_SENSOR_LOWER_THAN_THRESHOLD)
         if self.overload_flag:
-            flags["overload_flag"] = None
+            results.append(Errors.LIGHT_SENSOR_OVERFLOW)
         if self.conversion_ready_flag:
-            flags["conversion_ready_flag"] = None
-        return flags
-
-    ######################### DIAGNOSTICS #########################
-
-    def __check_id_test(self) -> int:
-        """
-        Checks the opt4001 id to ensure that we can interface with the devices
-
-        :return: True if read successful, otherwise false
-        """
-        if not self.check_id():
-            return Errors.LIGHT_SENSOR_ID_CHECK_FAILED
-
-        return Errors.NO_ERROR
-
-    def __read_counter_crc_test(self) -> int:
-        """_read_counter_crc_test: Checks if the crc counter functions properly
-
-        :return: True if pass, otherwise false
-        """
-        _, counter, _ = self.get_lsb_counter_crc(self.RESULT_L)  # looking at register 1
-        if not ((0 <= counter) and (counter <= 15)):
-            return Errors.LIGHT_SENSOR_CRC_COUNTER_TEST_FAILED
-
-        return Errors.NO_ERROR
+            results.append(Errors.LIGHT_SENSOR_COVERSION_READY)
+        return results
 
     def deinit(self):
         return

@@ -40,8 +40,10 @@ class Errors:
     TORQUE_COIL_STALL_EVENT = const(0xB6)  # placeholder value
 
     # LIGHT SENSOR ERRORS
-    LIGHT_SENSOR_ID_CHECK_FAILED = const(0xC0)  # placeholder value
-    LIGHT_SENSOR_CRC_COUNTER_TEST_FAILED = const(0xC1)  # placeholder value
+    LIGHT_SENSOR_HIGHER_THAN_THRESHOLD = const(0xC0)  # placeholder value
+    LIGHT_SENSOR_LOWER_THAN_THRESHOLD = const(0xC1)  # placeholder value
+    LIGHT_SENSOR_OVERFLOW = const(0xC2)  # placeholder value
+    LIGHT_SENSOR_COVERSION_READY = const(0xC3)  # placeholder value
 
     # BOOST CHARGER ERRORS
     BOOST_CHARGER_CHARGE_SAFETY_EXPIRED = const(0xD0)  # placeholder value

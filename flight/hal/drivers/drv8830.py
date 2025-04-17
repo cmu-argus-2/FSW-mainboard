@@ -26,7 +26,7 @@
 A CircuitPython driver class for the DRV8830 motor controller.
 
 
-* Author(s): JG
+* Author(s): JG, Perrin Tong
 
 Adapted from Cedar Grove Maker Studio
 https://github.com/CedarGroveStudios/CircuitPython_DRV8830/tree/2b0f39ef261291129dab4d1aefb06f3385fa0ade

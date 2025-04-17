@@ -4,6 +4,7 @@ CircuitPython driver for the OPT4003 ALS
 **Authors**
 Thomas Damiani
 Neil Khera
+Perrin Tong
 
 **Sofware Requirements**
 
@@ -20,9 +21,7 @@ import time
 from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register.i2c_bit import ROBit, RWBit
 from adafruit_register.i2c_bits import RWBits
-
-# from micropython import const
-
+from hal.drivers.errors import Errors
 
 try:
     from busio import I2C
@@ -383,6 +382,21 @@ class OPT4003:
             XOR ( R[3], R[11], R[19])
         """
         return self.result_of_addr(False)
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        results = []
+        if self.flag_h:
+            results.append(Errors.LIGHT_SENSOR_HIGHER_THAN_THRESHOLD)
+        if self.flag_L:
+            results.append(Errors.LIGHT_SENSOR_LOWER_THAN_THRESHOLD)
+        if self.overload_flag:
+            results.append(Errors.LIGHT_SENSOR_OVERFLOW)
+        if self.conversion_ready_flag:
+            results.append(Errors.LIGHT_SENSOR_COVERSION_READY)
+        return results
 
     def deinit(self):
         return

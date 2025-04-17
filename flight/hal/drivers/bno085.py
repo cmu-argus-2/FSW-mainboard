@@ -9,7 +9,7 @@
 Helper library for the Hillcrest Laboratories BNO08x IMUs
 
 
-* Author(s): Bryan Siepert
+* Author(s): Bryan Siepert, Perrin Tong
 
 Implementation Notes
 --------------------

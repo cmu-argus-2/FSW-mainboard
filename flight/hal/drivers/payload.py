@@ -34,6 +34,12 @@ class PayloadUART:
     def reset_input_buffer(self) -> None:
         self.__uart.reset_input_buffer()
 
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return []
+
     def deinit(self):
         self.__enable.deinit()
         self.__enable = None
