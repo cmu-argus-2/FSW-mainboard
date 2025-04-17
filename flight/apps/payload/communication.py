@@ -1,5 +1,4 @@
 # Low-Level Communication layer
-import os
 
 
 class PayloadCommunicationInterface:

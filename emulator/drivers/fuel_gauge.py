@@ -4,7 +4,7 @@ class FuelGauge:
         self.current = 10.0
         self.midvoltage = 0.0
 
-        self.soc = 70
+        self.soc = 90
         self.capacity = 0
         self.cycles = 0
         self.tte = 10000

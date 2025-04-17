@@ -7,6 +7,9 @@ from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STATES
+from micropython import const
+
+_NUM_IMG_TO_MAINTAIN_READY = 5  # Number of images to maintain in memory at least
 
 
 class Task(TemplateTask):
@@ -41,8 +44,8 @@ class Task(TemplateTask):
             return
 
         # Check if any external requests were received irrespective of state
-        if DH.data_process_exists("payload/requests"):
-            candidate_request = DH.get_latest_data("payload/requests")[0]
+        if DH.data_process_exists("payload_requests") and DH.data_available("payload_requests"):
+            candidate_request = DH.get_latest_data("payload_requests")[0]
             if candidate_request != ExternalRequest.NO_ACTION:  # TODO: add timeout in-between requests
                 PC.add_request(candidate_request)
 
@@ -76,6 +79,16 @@ class Task(TemplateTask):
 
             if PC.state == PayloadState.OFF:
                 PC.add_request(ExternalRequest.TURN_ON)
+
+            elif PC.state == PayloadState.READY:
+                if DH.data_process_exists("img"):
+                    # Check how many images we have collected in memory
+                    if (
+                        DH.how_many_complete_images() < _NUM_IMG_TO_MAINTAIN_READY and not PC.file_transfer_in_progress()
+                    ):  # Handle this properly..
+                        # TODO: add DH check on the size to clean-up non-image stuff (that can arise in bootup)
+                        self.log_info("Not enough images in memory, requesting new image")
+                        PC.add_request(ExternalRequest.REQUEST_IMAGE)
 
         # DO NOT EXPOSE THE LOGIC IN THE TASK and KEEP IT INTERNAL
         PC.run_control_logic()

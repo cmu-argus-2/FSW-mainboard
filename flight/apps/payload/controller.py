@@ -18,14 +18,15 @@ from apps.payload.definitions import (
     FileTransferType,
     ODStatus,
     PayloadTM,
+    Resp_RequestNextFilePacket,
 )
 from apps.payload.protocol import Decoder, Encoder
+from core import DataHandler as DH
 from core import logger
 from hal.configuration import SATELLITE
 from micropython import const
 
 _PING_RESP_VALUE = const(0x60)  # DO NOT CHANGE THIS VALUE
-_TELEMETRY_FREQUENCY = 0.1  # seconds
 
 
 class PayloadState:  # Only from the host perspective
@@ -49,7 +50,8 @@ class PayloadController:
     last_error = None
 
     # Contains the last command IDs sent to the Payload
-    last_cmds_sent = []
+    cmd_sent = 0
+    timestamp_cmd_sent = 0
 
     # No response counter
     no_resp_counter = 0
@@ -69,7 +71,8 @@ class PayloadController:
     # Last telemetry received
     _prev_tm_time = time.monotonic()
     _now = time.monotonic()
-    telemetry_period = 1 / _TELEMETRY_FREQUENCY  # seconds
+    telemetry_period = const(10)  # seconds
+    _not_waiting_tm_response = False
 
     # File transfer
     no_more_file_packet_to_receive = False
@@ -127,7 +130,8 @@ class PayloadController:
 
     @classmethod
     def _did_we_send_a_command(cls):
-        return len(cls.last_cmds_sent) > 0
+        # TODO: add logic for retry here
+        return cls.cmd_sent > 0
 
     @classmethod
     def add_request(cls, request: ExternalRequest) -> bool:
@@ -180,7 +184,16 @@ class PayloadController:
             pass
 
         elif cls.current_request == ExternalRequest.REQUEST_IMAGE:
-            pass
+            logger.info("An image has been requested...")
+            if cls.file_transfer_in_progress():
+                logger.error("File transfer already in progress. Cannot request image.")
+                return
+
+            if not DH.data_process_exists("img"):
+                logger.error("Image data process not found. Cannot request image.")
+                return
+            cls.request_image_transfer()
+            cls._clear_request()
 
         elif cls.current_request == ExternalRequest.FORCE_POWER_OFF:
             # This is a last resort
@@ -214,9 +227,8 @@ class PayloadController:
                 cls.time_we_started_booting = cls._now
 
             if not cls.communication_interface.is_connected():
-                if cls.injected_communication_interface:
-                    # Initialize the communication interface
-                    cls.communication_interface.initialize()
+                if cls._interface_injected:
+                    cls.initialize()
                 else:
                     logger.error("Communication interface not injected yet.")
             else:
@@ -238,25 +250,27 @@ class PayloadController:
 
         elif cls.state == PayloadState.READY:
 
-            # Check for telemetry
-            if cls._now - cls._prev_tm_time > cls.telemetry_period:
-                # Request telemetry
-                cls.request_telemetry()
+            # logger.info(f"Is a command pending? {cls._did_we_send_a_command()}")
+            # logger.info(f"Cmd sent: {cls.cmd_sent}")
 
-                resp = cls.receive_response()
-                if resp:
-                    # print("[INFO] Telemetry received.")
-                    PayloadTM.print()
-                    cls._prev_tm_time = cls._now
+            if not cls._did_we_send_a_command():  # Add timeout for retry
+                # Check for telemetry
+                if cls._now - cls._prev_tm_time > cls.telemetry_period and not cls._not_waiting_tm_response:
+                    cls.request_telemetry()
 
-            # Continue any file transfer
-            res_ft = cls._continue_file_transfer_logic()
-            if res_ft:
-                # Log in DH. Data is in Resp_RequestNextFilePacket.received_data
+            if not cls._did_we_send_a_command():  # Add timeout for retry
+                if FileTransfer.in_progress:
+                    # Check if we need to request the next file packet
+                    if not cls.just_requested_file_packet:
+                        cls.request_next_file_packet()
+
+                # Check OD states
+                # For now, just ping the OD status
+
+            success = cls.receive_response()
+            if not success:
+                # Need to add to timeout / retry logic
                 pass
-
-            # Check OD states
-            # For now, just ping the OD status
 
             # Fault management
             # TODO
@@ -277,11 +291,57 @@ class PayloadController:
 
     @classmethod
     def receive_response(cls):
-        resp = cls.communication_interface.receive()
-        print(resp)
-        if resp:
-            return Decoder.decode(resp)
-        return ErrorCodes.NO_RESPONSE
+        recv = cls.communication_interface.receive()
+        print(recv)
+        if recv:
+            res = Decoder.decode(recv)
+            cls.cmd_sent -= 1
+        else:
+            res = ErrorCodes.NO_RESPONSE
+        return cls.handle_responses(res)
+
+    @classmethod
+    def handle_responses(cls, resp):
+        """
+        Handle the status of the responses received from the Payload.
+        """
+        if resp:  # there is a response
+            sent_cmd_id = Decoder.current_command_id()
+
+            if sent_cmd_id == CommandID.REQUEST_TELEMETRY and resp == ErrorCodes.OK:
+                PayloadTM.print()
+                cls._prev_tm_time = cls._now
+                cls._not_waiting_tm_response = False
+                return True
+
+            elif sent_cmd_id == CommandID.REQUEST_IMAGE and resp == ErrorCodes.OK:
+                # Start the file transfer
+                FileTransfer.start_transfer(FileTransferType.IMAGE)
+                logger.info("File transfer started.")
+                cls.just_requested_file_packet = False
+                return True
+
+            elif sent_cmd_id == CommandID.REQUEST_NEXT_FILE_PACKET and resp == ErrorCodes.OK:
+                # Continue the file transfer
+                cls.just_requested_file_packet = False
+                DH.log_image(Resp_RequestNextFilePacket.received_data)
+                FileTransfer.ack_packet()  # increment the counter
+                # if FileTransfer.packet_nb == 2:
+                #    FileTransfer.packet_nb = 3129
+                return True
+
+            elif sent_cmd_id == CommandID.REQUEST_NEXT_FILE_PACKET and resp == ErrorCodes.NO_MORE_FILE_PACKET:
+                cls.no_more_file_packet_to_receive = True
+                FileTransfer.stop_transfer()
+                DH.image_completed()
+                logger.info("Completed image transfer. No more file packet to receive.")
+                return True
+
+            else:
+                logger.error(f"Command error received: {resp}")  # TODO: map to good string for logging purposes
+                cls.last_error = resp
+                return False
+        return False
 
     @classmethod
     def ping(cls):
@@ -295,61 +355,55 @@ class PayloadController:
     def shutdown(cls):
         # Simply send the shutdown command
         cls.communication_interface.send(Encoder.encode_shutdown())
+        cls.cmd_sent += 1
         cls.state = PayloadState.SHUTTING_DOWN
         cls.time_we_sent_shutdown = time.monotonic()
 
     @classmethod
     def request_telemetry(cls):
+        logger.info("Requesting telemetry...")
         cls.communication_interface.send(Encoder.encode_request_telemetry())
+        cls.cmd_sent += 1
+        cls._not_waiting_tm_response = True
 
     @classmethod
     def enable_cameras(cls):
         cls.communication_interface.send(Encoder.encode_enable_cameras())
+        cls.cmd_sent += 1
 
     @classmethod
     def disable_cameras(cls):
         cls.communication_interface.send(Encoder.encode_disable_cameras())
+        cls.cmd_sent += 1
 
     @classmethod
     def request_image_transfer(cls):
         # This starts the process for image transfer which will be executed in the background by the controller at each cycle
         if cls.state != PayloadState.READY:
-            # Log error
             logger.error("Cannot request image transfer. Payload is not ready.")
             return False
+
         cls.communication_interface.send(Encoder.encode_request_image())
+        cls.cmd_sent += 1
         cls.no_more_file_packet_to_receive = False
         return True
 
     @classmethod
-    def _continue_file_transfer_logic(cls):
-        if FileTransfer.in_progress:
-            # TODO
-            if not cls.just_requested_file_packet:
-                cls.communication_interface.send(Encoder.encode_request_next_file_packet(FileTransfer.packet_nb))
-                cls.just_requested_file_packet = True
-                logger.info(f"Requesting next file packet {FileTransfer.packet_nb}...")
-
-            resp = cls.communication_interface.receive()
-            if resp:
-                # Decode the response
-                cls.just_requested_file_packet = False
-                decoded_resp = Decoder.decode(resp)
-                if decoded_resp == ErrorCodes.OK:
-                    # grab the data and store
-                    FileTransfer.ack_packet()  # increment the counter
-                    # Data is in Resp_RequestNextFilePacket.received_data
-                    return True
-                elif decoded_resp == ErrorCodes.NO_MORE_FILE_PACKET:
-                    cls.no_more_file_packet_to_receive = True
-                    logger.info("No more file packet to receive.")
-                    FileTransfer.stop_transfer()
-                    return False
-            else:
-                # No response
-                return False
-        else:
+    def request_next_file_packet(cls):
+        if cls.state != PayloadState.READY:
+            logger.error("Cannot request next file packet. Payload is not ready.")
             return False
+
+        if not cls.just_requested_file_packet:
+            cls.communication_interface.send(Encoder.encode_request_next_file_packet(FileTransfer.packet_nb))
+            cls.cmd_sent += 1
+            cls.just_requested_file_packet = True
+            logger.info(f"Requesting next file packet {FileTransfer.packet_nb}...")
+            return True
+
+    @classmethod
+    def file_transfer_in_progress(cls):
+        return FileTransfer.in_progress
 
     @classmethod
     def turn_on_power(cls):

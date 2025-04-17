@@ -25,7 +25,8 @@ class ExternalRequest:
     FORCE_POWER_OFF = 0x24
     REQUEST_IMAGE = 0x25
     CLEAR_STORAGE = 0x26
-    INVALID = 0x27
+    REBOOT = 0x27
+    INVALID = 0x28
 
 
 class CommandID:
@@ -110,9 +111,7 @@ class FileTransfer:
     @classmethod
     def stop_transfer(cls):
         cls.last_transfer_type = cls.transfer_type
-        cls.in_progress = False
-        cls.transfer_type = FileTransferType.NONE
-        cls.packet_nb = 0
+        cls.reset()
 
 
 class ODStatusType:

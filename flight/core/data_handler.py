@@ -473,20 +473,21 @@ class DataProcess:
         Returns:
             None
         """
-        files = self.get_sorted_file_list()[1:]  # Ignore process configuration file
-        # Actual overflow of the buffer
-        diff = len(files) - (self.circular_buffer_size + len(self.excluded_paths) + len(self.delete_paths) - 1)
-        # -1 for the current file
-        mark_counter = 0
-        if diff > 0:
-            # diff files to mark for deletion
-            for file in files:
-                file = join_path(self.dir_path, file)
-                if file not in self.excluded_paths and file not in self.delete_paths and file != self.current_path:
-                    self.delete_paths.append(file)  # mark for deletion
-                    mark_counter += 1
-                if mark_counter == diff:
-                    break
+        if self.persistent:
+            files = self.get_sorted_file_list()[1:]  # Ignore process configuration file
+            # Actual overflow of the buffer
+            diff = len(files) - (self.circular_buffer_size + len(self.excluded_paths) + len(self.delete_paths) - 1)
+            # -1 for the current file
+            mark_counter = 0
+            if diff > 0:
+                # diff files to mark for deletion
+                for file in files:
+                    file = join_path(self.dir_path, file)
+                    if file not in self.excluded_paths and file not in self.delete_paths and file != self.current_path:
+                        self.delete_paths.append(file)  # mark for deletion
+                        mark_counter += 1
+                    if mark_counter == diff:
+                        break
 
     def get_sorted_file_list(self) -> List[str]:
         """
@@ -502,13 +503,11 @@ class DataProcess:
         Returns storage information for the current file process which includes:
         - Number of files in the directory
         - Total directory size in bytes
-        - TODO
 
         Returns:
             A tuple containing the number of files and the total directory size.
         """
         files = os.listdir(self.dir_path)
-        # TODO - implement the rest of the function
         if self.get_current_file_size() is not None:
             total_size = (len(files) - 2) * self.data_limit + self.get_current_file_size()
         else:
@@ -575,6 +574,7 @@ class ImageProcess(DataProcess):
         self.create_folder()
 
         self.data_limit = _IMG_DATA_LIMIT
+        self.persistent = True
 
         self.current_path = self.create_new_path()
         self.delete_paths = []  # Paths that are flagged for deletion
@@ -707,6 +707,18 @@ class ImageProcess(DataProcess):
         """
         self.close()
         self.resolve_current_file()
+
+    def how_many_complete_images(self) -> int:
+        """
+        Returns the number of complete images in the directory, ignoring the current one
+
+        Returns:
+            int: The number of complete images.
+        """
+        files = self.get_sorted_file_list()
+        if self.current_path in files:
+            files.remove(self.current_path)
+        return len(files) - 1  # Ignore process configuration file
 
 
 class DataHandler:
@@ -1265,6 +1277,20 @@ class DataHandler:
         else:
             logger.critical("Data process '{}' not registered!".format(tag_name))
             return False
+
+    @classmethod
+    def how_many_complete_images(cls) -> int:
+        """
+        Returns the number of complete images in the directory, ignoring the current one
+
+        Returns:
+            int: The number of complete images.
+        """
+        if _IMG_TAG_NAME in cls.data_process_registry:
+            return cls.data_process_registry[_IMG_TAG_NAME].how_many_complete_images()
+        else:
+            logger.warning("Image process not registered!")
+            return 0
 
 
 def path_exist(path: str) -> bool:
