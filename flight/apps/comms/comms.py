@@ -8,6 +8,7 @@ Authors: Akshat Sahay, Ibrahima S. Sow
 
 import os
 
+import apps.telemetry.helpers as tm_helper
 from apps.command.constants import file_ids_str, file_tags_str
 from core import logger
 from core.data_handler import DataHandler as DH
@@ -465,7 +466,11 @@ class SATELLITE_RADIO:
         # Check for last packet
         if cls.int_sq_cnt == cls.file_message_count - 1:
             # File downlink is over, set flag to not go back into TX_DOWNLINK_ALL state
+            logger.info(f"Finished downlinking file at {cls.int_sq_cnt}'th packet")
             cls.dlink_all = False
+
+        # Increment internal sequence count
+        cls.int_sq_cnt += 1
 
     """
         Name: check_rq_file_params
@@ -517,9 +522,8 @@ class SATELLITE_RADIO:
     @classmethod
     def handle_downlink_all_rq(cls, packet):
         # Extract file ID and time from the request
-        print(packet)
         file_id = packet[0]
-        file_time = packet[1:5]
+        file_time = tm_helper.unpack_unsigned_long_int(packet[1:5])
 
         # Sidestep commanding and get the filepath directly from the DH
         logger.info(f"Executing GS_CMD_DOWNLINK_ALL with file_id: {file_id} and file_time: {file_time}")
@@ -543,6 +547,8 @@ class SATELLITE_RADIO:
             cls.dlink_all = True
             cls.int_sq_cnt = 0
 
+            logger.info(f"Starting downlink of file for {cls.file_message_count} packets")
+
     """
         Name: receive_message
         Description: Receive and unpack message from GS
@@ -558,9 +564,6 @@ class SATELLITE_RADIO:
 
         if SATELLITE.RADIO_AVAILABLE:
             packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
-            import binascii
-
-            print(binascii.hexlify(packet).decode("ascii"))
         else:
             logger.error("[COMMS ERROR] RADIO no longer active on SAT")
 
