@@ -61,4 +61,11 @@ class BatteryHeaters:
         return []
 
     def deinit(self):
+        self.__enable.deinit()
+        self.__enable = None
+        self.__heater0_en.deinit()
+        self.__heater0_en = None
+        if self.__heater1_en is not None:
+            self.__heater1_en.deinit()
+            self.__heater1_en = None
         return

@@ -26,6 +26,13 @@ class Errors:
     GPS_UPDATE_CHECK_FAILED = const(0x20)  # placeholder value
 
     # Radio Errors
+    RADIO_RC64K_CALIBRATION_FAILED = const(0x30)  # placeholder value
+    RADIO_RC13M_CALIBRATION_FAILED = const(0x31)  # placeholder value
+    RADIO_PLL_CALIBRATION_FAILED = const(0x32)  # placeholder value
+    RADIO_ADC_CALIBRATION_FAILED = const(0x33)  # placeholder value
+    RADIO_IMG_CALIBRATION_FAILED = const(0x34)  # placeholder value
+    RADIO_XOSC_START_FAILED = const(0x35)  # placeholder value
+    RADIO_PA_RAMPING_FAILED = const(0x36)  # placeholder value
 
     # Power Monitor Errors
     PWR_MON_ADC_ALERT_OVERCURRENT = const(0xA5)  # placeholder value

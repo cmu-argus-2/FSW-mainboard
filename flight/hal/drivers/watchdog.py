@@ -22,3 +22,16 @@ class Watchdog:
 
     def input_low(self):
         self.__input.value = False
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return []
+
+    def deinit(self):
+        self.__enable.deinit()
+        self.__enable = None
+        self.__input.deinit()
+        self.__input = None
+        return
