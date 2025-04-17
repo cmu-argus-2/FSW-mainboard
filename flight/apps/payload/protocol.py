@@ -366,7 +366,7 @@ class Decoder:
 
     @classmethod
     def decode_request_image(cls):
-        if cls._curr_data_length <= 1:
+        if cls._curr_data_length < 1:
             return ErrorCodes.INVALID_PACKET
 
         resp = int(cls._recv_buffer[cls._data_idx][0])
