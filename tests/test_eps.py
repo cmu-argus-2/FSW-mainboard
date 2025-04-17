@@ -1,6 +1,14 @@
 import pytest
 
-from flight.apps.eps.eps import EPS_POWER_FLAG, EPS_POWER_THRESHOLD, EPS_SOC_THRESHOLD, GET_EPS_POWER_FLAG, GET_POWER_STATUS
+from flight.apps.eps.eps import (
+    EPS_POWER_FLAG,
+    EPS_POWER_THRESHOLD,
+    EPS_SOC_THRESHOLD,
+    GET_EPS_POWER_FLAG,
+    GET_POWER_STATUS,
+    SHOULD_DISABLE_HEATERS,
+    SHOULD_ENABLE_HEATERS,
+)
 
 
 # Invalid SOC values
@@ -72,3 +80,26 @@ def test_get_power_status(power_values, threshold, expected_status):
 
     final_status, avg_power = GET_POWER_STATUS(buf, power_values[-1], threshold, 5)
     assert final_status == expected_status
+
+
+@pytest.mark.parametrize("enabled, temp, flag, expected", [
+    (False, 0, EPS_POWER_FLAG.NOMINAL, True),
+    (False, 500, EPS_POWER_FLAG.NOMINAL, False),
+    (True, 0, EPS_POWER_FLAG.NOMINAL, False),
+    (False, 0, EPS_POWER_FLAG.NONE, False),
+    (False, 0, EPS_POWER_FLAG.LOW_POWER, False),
+    (False, -200, EPS_POWER_FLAG.LOW_POWER, False),
+])
+def test_should_enable_heaters(enabled, temp, flag, expected):
+    assert SHOULD_ENABLE_HEATERS(enabled, temp, flag) == expected
+
+
+@pytest.mark.parametrize("enabled, temp, flag, expected", [
+    (True, 1200, EPS_POWER_FLAG.NOMINAL, True),
+    (True, 500, EPS_POWER_FLAG.NOMINAL, True),
+    (True, -200, EPS_POWER_FLAG.LOW_POWER, True),
+    (True, 0, EPS_POWER_FLAG.NOMINAL, False),
+    (False, 500, EPS_POWER_FLAG.NOMINAL, False),
+])
+def test_should_disable_heaters(enabled, temp, flag, expected):
+    assert SHOULD_DISABLE_HEATERS(enabled, temp, flag) == expected
