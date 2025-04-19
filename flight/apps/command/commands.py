@@ -145,8 +145,7 @@ def REQUEST_FILE_METADATA(file_id, file_time=None):
     return [file_path]
 
 
-# TODO: Remove REQUEST_FILE_PKT REQUEST_IMAGE and DOWNLINK_ALL
-# These are handled internally in comms
+# NOTE: REQUEST_FILE_PKT REQUEST_IMAGE and DOWNLINK_ALL are handled internally in comms
 def REQUEST_FILE_PKT(file_id, file_time):
     """Requests a specific file packet from the spacecraft."""
     logger.info(f"Executing REQUEST_FILE_PKT with file_tag: {file_id}, file_tim: {file_time}")
