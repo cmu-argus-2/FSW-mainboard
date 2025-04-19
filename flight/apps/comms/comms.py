@@ -469,7 +469,7 @@ class SATELLITE_RADIO:
         # Check for last packet
         if cls.int_sq_cnt == cls.file_message_count - 1:
             # File downlink is over, set flag to not go back into TX_DOWNLINK_ALL state
-            logger.info(f"Finished downlinking file at {cls.int_sq_cnt}'th packet")
+            logger.info(f"Finished downlinking file at packet {cls.int_sq_cnt}")
             cls.dlink_all = False
 
         # Increment internal sequence count
