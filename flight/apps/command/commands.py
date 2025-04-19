@@ -139,11 +139,14 @@ def REQUEST_FILE_METADATA(file_id, file_time=None):
     if file_time is None:
         file_path = DH.request_TM_path(file_tag)
     else:
-        file_path = DH.request_TM_path(file_tag, file_time)
+        # Specify file_tag, latest = False and file_time
+        file_path = DH.request_TM_path(file_tag, False, file_time)
 
     return [file_path]
 
 
+# TODO: Remove REQUEST_FILE_PKT REQUEST_IMAGE and DOWNLINK_ALL
+# These are handled internally in comms
 def REQUEST_FILE_PKT(file_id, file_time):
     """Requests a specific file packet from the spacecraft."""
     logger.info(f"Executing REQUEST_FILE_PKT with file_tag: {file_id}, file_tim: {file_time}")

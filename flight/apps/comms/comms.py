@@ -536,7 +536,8 @@ class SATELLITE_RADIO:
         if file_time is None:
             cls.filepath = DH.request_TM_path(file_tag)
         else:
-            cls.filepath = DH.request_TM_path(file_tag, file_time)
+            # Specify file_tag, latest = False and file_time
+            cls.filepath = DH.request_TM_path(file_tag, False, file_time)
 
         # If valid filepath, set downlink all flag to True for state machine
         if not (cls.filepath):
