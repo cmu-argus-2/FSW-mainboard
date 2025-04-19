@@ -113,4 +113,7 @@ class EmulatedSatellite(CubeSat):
         """CONTROL_COILS: Control the coils on the CubeSat, depending on the control mode (identical for all coils)."""
         # self._torque_drivers.apply_control(dir, ctrl)
         if self.TORQUE_DRIVERS_AVAILABLE(dir):
+            if ctrl != ctrl:
+                print(f"[WARNING] [6][ADCS] Trying to set a NaN input to {dir} coil")
+                return
             self._device_list["TORQUE_" + dir].device.set_throttle(dir, ctrl)

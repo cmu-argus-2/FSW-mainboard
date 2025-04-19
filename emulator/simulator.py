@@ -31,8 +31,9 @@ class Simulator:  # will be passed by reference to the emulated HAL
         os.mkdir(RESULTS_FOLDER)
         self.cppsim = cppSim(trial, RESULTS_FOLDER, CONFIG_FILE, log=True)
 
-        self.measurement = np.zeros((18,))
-        self.starting_real_epoch = time.time_ns() / 1.0e9
+        self.measurement = np.zeros((49,))
+        self.starting_real_epoch = time.monotonic_ns() / 1.0e9
+        self.latest_real_epoch = self.starting_real_epoch
         self.base_dt = self.cppsim.params.dt
         self.sim_time = 0
 
@@ -82,14 +83,12 @@ class Simulator:  # will be passed by reference to the emulated HAL
             "YM": [3, 11, 12],
             "ZP": [4],
         }  # power monitors not on deployables
-
         if attr in power_idx_map.keys():
             voltage = self.measurement[self.power_idx][3]
             if voltage != 0:
                 current = sum(self.measurement[self.solar_idx][power_idx_map[attr]]) / voltage
             else:
                 current = 0
-
             return voltage, current
         else:
             raise Exception("Invalid Solar power monitor key")
@@ -130,9 +129,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
         """
         Time since last simulation advance
         """
-        self.starting_real_epoch = self.base_dt * ((time.time_ns() / 1.0e9) // self.base_dt)
-        if not hasattr(self, "latest_real_epoch"):
-            self.latest_real_epoch = self.starting_real_epoch
+        self.starting_real_epoch = time.monotonic_ns() / 1.0e9
 
         return self.starting_real_epoch - self.latest_real_epoch
 
@@ -143,12 +140,18 @@ class Simulator:  # will be passed by reference to the emulated HAL
         time_diff = self.get_time_diff_since_last()
         iters = int(time_diff / self.base_dt)
 
+        if iters > 20:
+            iters = 20
+            dt = iters * self.base_dt / 20
+        else:
+            dt = self.base_dt
+
         if iters != 0:
-            self.latest_real_epoch = self.latest_real_epoch + iters * self.base_dt
+            self.latest_real_epoch += iters * dt
 
         for _ in range(iters):
-            self.measurement = self.cppsim.step(self.sim_time, self.base_dt)
-        self.sim_time += iters * self.base_dt
+            self.measurement = self.cppsim.step(self.sim_time, dt)
+            self.sim_time += dt
 
     def get_sim_time(self):
         return 946746000 + self.cppsim.get_time()
