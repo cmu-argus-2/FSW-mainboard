@@ -143,6 +143,21 @@ class Task(TemplateTask):
             elif idx == EPS_WARNING_IDX.ZM_COIL_POWER_ALERT:
                 self.log_warning(f"ZM Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold} mW")
 
+    def set_battery_heaters(self, heaters):
+        enabled = heaters.heater0_enabled() or heaters.heater1_enabled()
+        temp = self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]
+        flag = self.log_data[EPS_IDX.EPS_POWER_FLAG]
+        if SHOULD_ENABLE_HEATERS(enabled, temp, flag):
+            heaters.enable_heater0()
+            heaters.enable_heater1()
+            self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED] = 1
+            self.log_info("Enabled battery heaters")
+        if SHOULD_DISABLE_HEATERS(enabled, temp, flag):
+            heaters.disable_heater0()
+            heaters.disable_heater1()
+            self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED] = 0
+            self.log_info("Disabled battery heaters")
+
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:
             pass
@@ -260,19 +275,7 @@ class Task(TemplateTask):
 
                 if SATELLITE.BATTERY_HEATERS_AVAILABLE:
                     battery_heaters = SATELLITE.BATTERY_HEATERS
-                    enabled = battery_heaters.heater0_enabled() or battery_heaters.heater1_enabled()
-                    temp = self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]
-                    flag = self.log_data[EPS_IDX.EPS_POWER_FLAG]
-                    if SHOULD_ENABLE_HEATERS(enabled, temp, flag):
-                        battery_heaters.enable_heater0()
-                        battery_heaters.enable_heater1()
-                        self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED] = 1
-                        self.log_info("Enabled battery heaters")
-                    if SHOULD_DISABLE_HEATERS(enabled, temp, flag):
-                        battery_heaters.disable_heater0()
-                        battery_heaters.disable_heater1()
-                        self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED] = 0
-                        self.log_info("Disabled battery heaters")
+                    self.set_battery_heaters(battery_heaters)
                     self.log_info(f"Battery Heaters Enabled: {self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED]}")
 
                 DH.log_data("eps", self.log_data)

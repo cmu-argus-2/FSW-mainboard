@@ -70,7 +70,7 @@ def GET_POWER_STATUS(buf, power, threshold, window):
     # Obtain the moving average
     power_avg = sum(buf) / len(buf)
     # Return the moving average value & the power status
-    return (power_avg >= threshold), power_avg
+    return (power_avg >= threshold), int(power_avg)
 
 
 def SHOULD_ENABLE_HEATERS(enabled, temp, flag):
