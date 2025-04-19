@@ -562,7 +562,7 @@ class ArgusV3(CubeSat):
                 ArgusV3Components.BURN_WIRE_I2C,
                 ArgusV3Components.BURN_WIRE_I2C_ADDRESS,
             )
-            return [burn_wires, Errors.NOERROR]
+            return [burn_wires, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
