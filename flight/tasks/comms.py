@@ -139,7 +139,11 @@ class Task(TemplateTask):
 
             # NOTE: A response is only expected from commanding for an ACK, frame, or file metadata
             # Heartbeats and file packets are handled internally by comms
-            if not (self.comms_state == COMMS_STATE.TX_HEARTBEAT or self.comms_state == COMMS_STATE.TX_FILEPKT):
+            if not (
+                self.comms_state == COMMS_STATE.TX_HEARTBEAT
+                or self.comms_state == COMMS_STATE.TX_FILEPKT
+                or self.comms_state == COMMS_STATE.TX_DOWNLINK_ALL
+            ):
                 # Get response from commanding based on the active GS command
                 cmd_response_state = self.get_command_response()
 
@@ -198,7 +202,7 @@ class Task(TemplateTask):
                 # Get most recent payload
                 self.rx_payload = SATELLITE_RADIO.get_rx_payload()
 
-                if self.rq_cmd != MSG_ID.GS_CMD_FILE_PKT:
+                if self.rq_cmd != MSG_ID.GS_CMD_FILE_PKT and self.rq_cmd != MSG_ID.GS_CMD_DOWNLINK_ALL:
                     # Push rq_cmd onto CommandQueue along with all its arguments
                     CommandQueue.overwrite_command(self.rq_cmd, self.rx_payload)
 

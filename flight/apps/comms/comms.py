@@ -8,8 +8,10 @@ Authors: Akshat Sahay, Ibrahima S. Sow
 
 import os
 
-from apps.command.constants import file_ids_str
+import apps.telemetry.helpers as tm_helper
+from apps.command.constants import file_ids_str, file_tags_str
 from core import logger
+from core.data_handler import DataHandler as DH
 from core.data_handler import extract_time_from_filename
 from hal.configuration import SATELLITE
 from micropython import const
@@ -34,6 +36,8 @@ class COMMS_STATE:
 
     TX_FILEPKT = 0x05
     TX_METADATA = 0x06
+
+    TX_DOWNLINK_ALL = 0x07
 
 
 # Message ID database for communication protocol
@@ -81,6 +85,7 @@ class MSG_ID:
     # SAT file metadata and file content messages
     SAT_FILE_METADATA = 0x10
     SAT_FILE_PKT = 0x20
+    SAT_DOWNLINK_ALL = 0x24
 
     """
     Comms internal state management uses ranges of GS command IDs
@@ -98,6 +103,9 @@ class MSG_ID:
     GS_CMD_FILE_METADATA = 0x4A
     GS_CMD_FILE_PKT = 0x4B
 
+    # GS command for downlinking all packets for a file, no protocol
+    GS_CMD_DOWNLINK_ALL = 0x50
+
 
 class SATELLITE_RADIO:
     # Comms state
@@ -106,12 +114,23 @@ class SATELLITE_RADIO:
     # Init TM frame for preallocating memory
     tm_frame = bytearray(248)
 
-    # Parameters for file downlinking (Message ID temporarily hardcoded)
+    # Parameters for file downlinking
     filepath = None
-    file_ID = 0x01
+    file_ID = 0x00
     file_size = 0
-    file_time = 1738351687
+    file_time = 0
     file_message_count = 0
+
+    """
+    NOTE: This flag can be set to force comms into DOWLINK_ALL.
+
+    Whenever done, ensure that filepath for the desired file is also
+    set. When GS_CMD_DOWNLINK_ALL is received, the command contains
+    file_ID and file_time, which are used for getting the filepath
+    from the DH.
+    """
+    # Downlink all flag
+    dlink_all = False
 
     # Data for file downlinking
     file_obj = []
@@ -130,17 +149,19 @@ class SATELLITE_RADIO:
     # RX'd ID is the latest GS command
     rx_gs_cmd = 0x00
 
-    # RX'd SQ cnt used for packetized file TX
+    # RX SQ cnt, currently unused but in packet structure
+    # Can potentially be used for file uplinking....
     rx_sq_cnt = 0
+
+    # RQ'd SQ cnt used for packetized file downlinking
     rq_sq_cnt = 0
 
-    # RX'd len used for argument unpacking
+    # Internal SQ cnt for a file, used in DOWNLINK_ALL
+    int_sq_cnt = 0
+
+    # RX'd packet parameters
     rx_gs_len = 0
-
-    # RX'd payload contains GS arguments
     rx_payload = bytearray()
-
-    # RX'd RSSI logged for error checking
     rx_message_rssi = 0
 
     # CRC error count
@@ -163,9 +184,14 @@ class SATELLITE_RADIO:
 
     @classmethod
     def transition_state(cls, rx_count, rx_threshold):
+        # Check flag and stay in TX_DOWNLINK_ALL if file TX not done
+        if cls.dlink_all is True:
+            cls.state = COMMS_STATE.TX_DOWNLINK_ALL
+
         # Check current state
-        if cls.state == COMMS_STATE.RX:
+        elif cls.state == COMMS_STATE.RX:
             # State transitions to TX states only occur from RX state
+            # Only exception to this is TX_DOWNLINK_ALL
 
             if rx_count >= rx_threshold:
                 # Lost contact with GS, return to default state
@@ -400,12 +426,54 @@ class SATELLITE_RADIO:
         pkt_size = cls.file_get_packet(cls.rq_sq_cnt)
 
         # Pack header
+
+        # pkt_size + 5 is to accomodate 5 bytes of file info (file_ID, 1 byte; file_time, 4 bytes) w/ pkt_size bytes of
+        # file data
         tx_header = (
             (MSG_ID.SAT_FILE_PKT).to_bytes(1, "big") + (cls.rq_sq_cnt).to_bytes(2, "big") + (pkt_size + 5).to_bytes(1, "big")
         )
 
-        # Pack entire message
+        # Pack entire message, file_array contains file info
         cls.tx_message = tx_header + cls.file_ID.to_bytes(1, "big") + cls.file_time.to_bytes(4, "big") + cls.file_array
+
+    """
+        Name: transmit_downlink_all
+        Description: Packet downlinking for a file
+        that is decoupled from GS commands for each
+        packet request
+
+        This will force Argus to stay in TX mode for
+        a certain period (depending on file size)
+    """
+
+    @classmethod
+    def transmit_downlink_all(cls):
+        # Run transmit_file_packet with int_sq_cnt
+
+        # Get bytes from file (stored in file_array)
+        pkt_size = cls.file_get_packet(cls.int_sq_cnt)
+
+        # Pack header
+
+        # pkt_size + 5 is to accomodate 5 bytes of file info (file_ID, 1 byte; file_time, 4 bytes) w/ pkt_size bytes of
+        # file data
+        tx_header = (
+            (MSG_ID.SAT_DOWNLINK_ALL).to_bytes(1, "big")
+            + (cls.int_sq_cnt).to_bytes(2, "big")
+            + (pkt_size + 5).to_bytes(1, "big")
+        )
+
+        # Pack entire message, file_array contains file info
+        cls.tx_message = tx_header + cls.file_ID.to_bytes(1, "big") + cls.file_time.to_bytes(4, "big") + cls.file_array
+
+        # Check for last packet
+        if cls.int_sq_cnt == cls.file_message_count - 1:
+            # File downlink is over, set flag to not go back into TX_DOWNLINK_ALL state
+            logger.info(f"Finished downlinking file at {cls.int_sq_cnt}'th packet")
+            cls.dlink_all = False
+
+        # Increment internal sequence count
+        cls.int_sq_cnt += 1
 
     """
         Name: check_rq_file_params
@@ -450,6 +518,41 @@ class SATELLITE_RADIO:
                 return True
 
     """
+        Name: handle_downlink_all_rq
+        Description: On CMD, start request for DOWNLINK_ALL
+    """
+
+    @classmethod
+    def handle_downlink_all_rq(cls, packet):
+        # Extract file ID and time from the request
+        file_id = packet[0]
+        file_time = tm_helper.unpack_unsigned_long_int(packet[1:5])
+
+        # Sidestep commanding and get the filepath directly from the DH
+        logger.info(f"Executing GS_CMD_DOWNLINK_ALL with file_id: {file_id} and file_time: {file_time}")
+        cls.filepath = None
+        file_tag = file_tags_str[file_id]
+
+        if file_time is None:
+            cls.filepath = DH.request_TM_path(file_tag)
+        else:
+            cls.filepath = DH.request_TM_path(file_tag, file_time)
+
+        # If valid filepath, set downlink all flag to True for state machine
+        if not (cls.filepath):
+            # File does not match
+            logger.warning("[COMMS ERROR] Undefined TX filepath")
+            cls.dlink_all = False
+
+        else:
+            # Generate internal metadata for this filepath
+            cls.file_get_metadata()
+            cls.dlink_all = True
+            cls.int_sq_cnt = 0
+
+            logger.info(f"Starting downlink of file for {cls.file_message_count} packets")
+
+    """
         Name: receive_message
         Description: Receive and unpack message from GS
     """
@@ -458,6 +561,9 @@ class SATELLITE_RADIO:
     def receive_message(cls):
         # Get packet from radio over SPI
         # Assumes packet is in FIFO buffer
+
+        packet = None
+        err = -1  # _ERR_NONE is 0
 
         if SATELLITE.RADIO_AVAILABLE:
             packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
@@ -532,7 +638,7 @@ class SATELLITE_RADIO:
         cls.rx_gs_len = int.from_bytes(packet[3:4], "big")
 
         # Check packet integrity based on CMD_ID
-        if (cls.rx_gs_cmd < MSG_ID.GS_CMD_ACK_L) or (cls.rx_gs_cmd > MSG_ID.GS_CMD_FILE_PKT):
+        if (cls.rx_gs_cmd < MSG_ID.GS_CMD_ACK_L) or (cls.rx_gs_cmd > MSG_ID.GS_CMD_DOWNLINK_ALL):
             # Packet does not contain valid CMD_ID
             logger.warning("[COMMS ERROR] RX'd packet has invalid CMD")
             cls.rx_gs_cmd = 0x00
@@ -555,6 +661,7 @@ class SATELLITE_RADIO:
         else:
             cls.rx_payload = bytearray()
 
+        # GS_CMD_FILE_PKT is handled internally in the comms task
         if cls.rx_gs_cmd == MSG_ID.GS_CMD_FILE_PKT:
             if cls.check_rq_file_params(packet[4:]) is False:
                 # Filepath does not match
@@ -569,6 +676,10 @@ class SATELLITE_RADIO:
 
                 # Get sq_cnt for the PKT
                 cls.rq_sq_cnt = int.from_bytes(packet[9:11], "big")
+
+        # GS_CMD_DOWNLINK_ALL is also handled internally in the comms task
+        elif cls.rx_gs_cmd == MSG_ID.GS_CMD_DOWNLINK_ALL:
+            cls.handle_downlink_all_rq(packet[4:])
 
         else:
             # Not a file request, do nothing
@@ -603,6 +714,10 @@ class SATELLITE_RADIO:
         elif cls.state == COMMS_STATE.TX_FILEPKT:
             # Transmit file packets with requested sequence count
             cls.transmit_file_packet()
+
+        elif cls.state == COMMS_STATE.TX_DOWNLINK_ALL:
+            # Transmit file packets with the internal sequence count
+            cls.transmit_downlink_all()
 
         else:
             # Unknown state, just send
