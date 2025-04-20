@@ -10,7 +10,6 @@ from apps.command import QUEUE_STATUS, CommandQueue
 from apps.eps.eps import EPS_POWER_FLAG
 from apps.payload.controller import PayloadController as PC
 from apps.payload.controller import PayloadState
-from apps.payload.definitions import ExternalRequest
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX
 from core import DataHandler as DH
 from core import TemplateTask
@@ -309,11 +308,9 @@ class Task(TemplateTask):
             if SATELLITE.NEOPIXEL_AVAILABLE:
                 SATELLITE.NEOPIXEL.fill([255, 0, 255])
 
-            # The Payload controller should be kept as autonomous as possible, as it has access to the global state.
-            # External requests exists as a last resort to control the payload from the CDH
-            # (and Payload task itself =/= Payload Controller)
-
-            # TODO: check to make sure the payload started running (afterwards since this execution cycle needs to finish)
+            # The Payload controller should be kept as autonomous as possible, since the payload task
+            # has access to the global state. External requests exists as a last resort to control the
+            # payload from the CDH (and Payload task itself =/= Payload Controller)
 
             # Note all ground commands related to the payload are executed in the command processor
             if PC.state == PayloadState.READY:

@@ -99,7 +99,8 @@ class PayloadController:
     # OD variables
     od_status: ODStatus = None
 
-    # Reboot variables
+    # (re-)boot variables
+    must_re_attempt_boot = False
     attempting_reboot = False
 
     # Power control
@@ -155,7 +156,7 @@ class PayloadController:
     def add_request(cls, request: ExternalRequest) -> bool:
         if not isinstance(request, int) or request < ExternalRequest.NO_ACTION or request >= ExternalRequest.INVALID:
             # Invalid request
-            # log error
+            logger.error(f"Invalid request: {request}")
             # TODO: add if a request is already being processed
             return False
         cls.current_request = request
@@ -224,6 +225,11 @@ class PayloadController:
         if new_state != cls.state:
             cls.state = new_state
             logger.info(f"[PAYLOAD] Switching to state {map_state(new_state)}...")
+            if new_state == PayloadState.READY:
+                # clearing variables
+                cls.must_re_attempt_boot = False
+                cls.attempting_reboot = False
+                cls.time_we_started_booting = 0
 
     @classmethod
     def run_control_logic(cls):
@@ -237,6 +243,12 @@ class PayloadController:
             # Do nothing
             # Make sure the power line is off
             cls.turn_off_power()
+
+            if cls.must_re_attempt_boot:
+                # We have timed out while booting
+                # Log error and reset the state
+                logger.error("Timeout booting. Resetting state.")
+                cls._switch_to_state(PayloadState.POWERING_ON)
 
         elif cls.state == PayloadState.POWERING_ON:
             # Wait for the Payload to be ready
@@ -259,13 +271,15 @@ class PayloadController:
                     cls._switch_to_state(PayloadState.READY)
                     logger.info(f"Payload is ready. Full boot in  {cls._now - cls.time_we_started_booting} seconds.")
                     cls.time_we_started_booting = 0  # Reset the boot time
-                elif cls._now - cls.time_we_started_booting > cls.TIMEOUT_BOOT:
-                    pass
-                else:  # we failed
+                elif (
+                    cls._now - cls.time_we_started_booting > cls.TIMEOUT_BOOT
+                ):  # we seemingly failed --> attempt again to turn on
                     cls.turn_off_power()  # turn off the power line, just in case
                     cls.last_error = ErrorCodes.TIMEOUT_BOOT  # Log error
                     cls.time_we_started_booting = 0  # Reset the boot time
                     # CDH / HAL notification
+                    cls._switch_to_state(PayloadState.OFF)  # Switch to OFF state
+                    cls.must_re_attempt_boot = True  # Set the flag to re-attempt booting
 
         elif cls.state == PayloadState.READY:
 
@@ -283,7 +297,7 @@ class PayloadController:
                     if not cls.just_requested_file_packet:
                         cls.request_next_file_packet()
 
-            # Coming soon
+            # Coming soon :)
             # Check OD states
             # For now, just ping the OD status
 
@@ -302,7 +316,7 @@ class PayloadController:
                 # We have waited too long
                 # Force the shutdown by cutting the power
                 cls.turn_off_power()
-                # Log and report error
+                logger.error("Timeout while shutting down. Force shutdown.")
                 cls.last_error = ErrorCodes.TIMEOUT_SHUTDOWN
 
         elif cls.state == PayloadState.REBOOTING:
