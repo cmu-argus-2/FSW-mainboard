@@ -34,7 +34,6 @@ class PayloadState:  # Only from the host perspective
     POWERING_ON = 1  # Power and boot sequence started
     READY = 2  # Fully operational
     SHUTTING_DOWN = 3  # Graceful shutdown in progress
-    REBOOTING = 4  # Going through shutdown + boot
 
 
 def map_state(state):
@@ -49,8 +48,6 @@ def map_state(state):
         return "READY"
     elif state == PayloadState.SHUTTING_DOWN:
         return "SHUTTING_DOWN"
-    elif state == PayloadState.REBOOTING:
-        return "REBOOTING"
     else:
         return "UNKNOWN"
 
@@ -81,6 +78,7 @@ class PayloadController:
     # Timeout for the shutdown process
     TIMEOUT_SHUTDOWN = 10  # 10 seconds
     time_we_sent_shutdown = 0
+    need_shutdown = False
 
     # Current request
     current_request = ExternalRequest.NO_ACTION
@@ -192,10 +190,14 @@ class PayloadController:
 
         elif cls.current_request == ExternalRequest.TURN_OFF:
             cls._switch_to_state(PayloadState.SHUTTING_DOWN)
+            cls.shutdown()
             cls._clear_request()
 
         elif cls.current_request == ExternalRequest.REBOOT:
-            cls._switch_to_state(PayloadState.REBOOTING)
+            logger.info("Rebooting the Payload...")
+            cls.attempting_reboot = True
+            cls.shutdown()
+            cls._switch_to_state(PayloadState.SHUTTING_DOWN)
             cls._clear_request()
 
         elif cls.current_request == ExternalRequest.CLEAR_STORAGE:
@@ -275,10 +277,10 @@ class PayloadController:
                     cls._now - cls.time_we_started_booting > cls.TIMEOUT_BOOT
                 ):  # we seemingly failed --> attempt again to turn on
                     cls.turn_off_power()  # turn off the power line, just in case
+                    cls._switch_to_state(PayloadState.OFF)  # Switch to OFF state
                     cls.last_error = ErrorCodes.TIMEOUT_BOOT  # Log error
                     cls.time_we_started_booting = 0  # Reset the boot time
                     # CDH / HAL notification
-                    cls._switch_to_state(PayloadState.OFF)  # Switch to OFF state
                     cls.must_re_attempt_boot = True  # Set the flag to re-attempt booting
 
         elif cls.state == PayloadState.READY:
@@ -302,8 +304,7 @@ class PayloadController:
             # For now, just ping the OD status
 
             success = cls.receive_response()
-            if not success:
-                # Need to add to timeout / retry logic
+            if not success:  # Need to add to timeout / retry logic
                 pass
 
             # Fault management
@@ -312,16 +313,16 @@ class PayloadController:
         elif cls.state == PayloadState.SHUTTING_DOWN:
             # Wait for the Payload to shutdown
 
+            success = cls.receive_response()
+            if not success:  # Need to add to timeout / retry logic
+                pass
+
             if cls.time_we_sent_shutdown + cls.TIMEOUT_SHUTDOWN < time.monotonic():
                 # We have waited too long
                 # Force the shutdown by cutting the power
                 cls.turn_off_power()
-                logger.error("Timeout while shutting down. Force shutdown.")
+                logger.warning("Timeout while shutting down. Force shutdown.")
                 cls.last_error = ErrorCodes.TIMEOUT_SHUTDOWN
-
-        elif cls.state == PayloadState.REBOOTING:
-            # Wait for the Payload to reboot
-            pass
 
     @classmethod
     def receive_response(cls):
@@ -371,6 +372,8 @@ class PayloadController:
                 logger.info("Completed image transfer. No more file packet to receive.")
                 return True
 
+            ## TODO: Add shutdown response handling - straightforward
+
             else:
                 logger.error(f"Command error received: {resp}")  # TODO: map to good string for logging purposes
                 cls.last_error = resp
@@ -390,7 +393,6 @@ class PayloadController:
         # Simply send the shutdown command
         cls.communication_interface.send(Encoder.encode_shutdown())
         cls.cmd_sent += 1
-        cls.state = PayloadState.SHUTTING_DOWN
         cls.time_we_sent_shutdown = time.monotonic()
 
     @classmethod
