@@ -151,6 +151,9 @@ class ControllerConst:
 
     # Sun Pointing Constants
 
+    # Tolerances
+    OMEGA_TOLERANCE = 0.02  # rad/s (~1.2 deg/s)
+
 
 class MCMConst:
     """

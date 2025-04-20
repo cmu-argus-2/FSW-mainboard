@@ -10,14 +10,11 @@ magnetic field data on the mainboard.
 """
 
 from apps.adcs.consts import Modes, PhysicalConst, StatusConst
-from apps.adcs.frames import convert_ecef_state_to_eci
 from apps.adcs.igrf import igrf_eci
 from apps.adcs.math import R_to_quat, quat_to_R, quaternion_multiply, skew
 from apps.adcs.orbit_propagation import OrbitPropagator
 from apps.adcs.sun import approx_sun_position_ECI, compute_body_sun_vector_from_lux, read_light_sensors
-from apps.adcs.utils import is_valid_gps_state, is_valid_gyro_reading, is_valid_mag_reading
-from apps.telemetry.constants import GPS_IDX
-from core import DataHandler as DH
+from apps.adcs.utils import is_valid_gyro_reading, is_valid_mag_reading
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 from ulab import numpy as np
@@ -51,8 +48,6 @@ class AttitudeDetermination:
     sun_lux_idx = slice(23, 32)
 
     # Time storage
-    position_update_frequency = 1  # Hz ~8km
-    last_position_update_time = 0
     last_gyro_update_time = 0
     last_gyro_cov_update_time = 0
     mekf_init_start_time = None
@@ -122,37 +117,6 @@ class AttitudeDetermination:
         else:
             return StatusConst.MAG_FAIL, 0, np.zeros((3,))
 
-    def read_gps(self) -> tuple[int, int, np.ndarray, np.ndarray]:
-        """
-        - Get the current position from GPS
-        - NOTE: Since GPS is a task, this function will read values from C&DH
-        """
-        if DH.data_process_exists("gps") and SATELLITE.GPS_AVAILABLE:
-            # Get last GPS update time and position at that time
-            gps_data = DH.get_latest_data("gps")
-
-            if gps_data is not None:
-                gps_record_time = gps_data[GPS_IDX.TIME_GPS]
-                gps_pos_ecef = 1e-2 * np.array(gps_data[GPS_IDX.GPS_ECEF_X : GPS_IDX.GPS_ECEF_Z + 1]).reshape(
-                    (3,)
-                )  # Convert from cm to m
-                gps_vel_ecef = 1e-2 * np.array(gps_data[GPS_IDX.GPS_ECEF_VX : GPS_IDX.GPS_ECEF_VZ + 1]).reshape(
-                    (3,)
-                )  # Convert from cm/s to m/s
-
-                # Sensor validity check
-                if not is_valid_gps_state(gps_pos_ecef, gps_vel_ecef):
-                    return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
-                else:
-                    # Convert ECEF to ECI
-                    gps_pos_eci, gps_vel_eci = convert_ecef_state_to_eci(gps_pos_ecef, gps_vel_ecef, gps_record_time)
-                    return StatusConst.OK, gps_record_time, gps_pos_eci, gps_vel_eci
-
-            else:
-                return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
-        else:
-            return StatusConst.GPS_FAIL, 0, np.zeros((3,)), np.zeros((3,))
-
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ MEKF INITIALIZATION """
 
@@ -173,15 +137,11 @@ class AttitudeDetermination:
             self.initialized = True
             return StatusConst.OK, StatusConst.MEKF_INIT_FORCE
 
-        # Get a valid GPS position
-        _, gps_record_time, gps_pos_eci, gps_vel_eci = self.read_gps()
+        # Get a valid position from OrbitProp
+        status, true_pos_eci, true_vel_eci = OrbitPropagator.update_position(current_time)
 
-        current_time = TPM.time()
-        gps_state_eci = np.concatenate((gps_pos_eci, gps_vel_eci))
-        status, true_pos_eci, true_vel_eci = OrbitPropagator.propagate_orbit(current_time, gps_record_time, gps_state_eci)
-
-        if status == StatusConst.OPROP_INIT_FAIL:
-            return StatusConst.MEKF_INIT_FAIL, StatusConst.OPROP_INIT_FAIL
+        if status != StatusConst.OK:
+            return StatusConst.MEKF_INIT_FAIL, status
 
         # Get a valid sun position
         sun_status, sun_pos_body, lux_readings = self.read_sun_position()
@@ -276,36 +236,16 @@ class AttitudeDetermination:
         - Updates the last_position_update time attribute
         - NOTE: This is not an MEKF update. We assume that the estimated position is true
         """
-        gps_status, gps_record_time, gps_pos_eci, gps_vel_eci = self.read_gps()
 
-        if gps_status == StatusConst.GPS_FAIL:
-            # Update GPS based on past estimate of state
-            status, self.state[self.position_idx], self.state[self.velocity_idx] = OrbitPropagator.propagate_orbit(
-                current_time
-            )
+        # Get a valid position from OrbitProp
+        status, true_pos_eci, true_vel_eci = OrbitPropagator.update_position(current_time)
 
-            if status == StatusConst.OPROP_INIT_FAIL:
-                return StatusConst.POS_UPDATE_FAIL, StatusConst.OPROP_INIT_FAIL
+        if status != StatusConst.OK:
+            return StatusConst.POS_UPDATE_FAIL, status
         else:
-            if abs(current_time - gps_record_time) < (1 / self.position_update_frequency):
-                # Use current GPS measurement without propagation
-                self.state[self.position_idx] = gps_pos_eci
-                self.state[self.velocity_idx] = gps_vel_eci
+            self.state[self.position_idx] = true_pos_eci
+            self.state[self.velocity_idx] = true_vel_eci
 
-            else:
-                # Propagate from GPS measurement record
-                gps_pos_eci = gps_pos_eci
-                gps_vel_eci = gps_vel_eci
-                gps_state_eci = np.concatenate((gps_pos_eci, gps_vel_eci))
-                status, self.state[self.position_idx], self.state[self.velocity_idx] = OrbitPropagator.propagate_orbit(
-                    current_time, gps_record_time, gps_state_eci
-                )
-
-                if status == StatusConst.OPROP_INIT_FAIL:
-                    return StatusConst.POS_UPDATE_FAIL, StatusConst.OPROP_INIT_FAIL
-
-        # Update last update time
-        self.last_position_update_time = current_time
         return StatusConst.OK, StatusConst.OK
 
     def sun_position_update(self, current_time: int, update_covariance: bool = True) -> None:
@@ -362,6 +302,52 @@ class AttitudeDetermination:
         else:
             return StatusConst.SUN_UPDATE_FAIL, status
 
+    def magnetometer_update(self, current_time=int, update_covariance: bool = True) -> None:
+        """
+        Performs an MEKF update step for magnetometer
+        """
+
+        status, _, mag_field_body = self.read_magnetometer()
+
+        if status == StatusConst.OK:  # store magnetic field reading even if update fails to use for ACS
+            self.state[self.mag_field_idx] = mag_field_body
+
+        # Perform an update only if MEKF initialized and valid field reading obtained
+        if self.initialized and update_covariance and status == StatusConst.OK:
+
+            # Obtain true mag field in ECI from IGRF
+            true_mag_field_eci = igrf_eci(current_time, self.state[self.position_idx] / 1000)
+            true_mag_field_eci_norm = np.linalg.norm(true_mag_field_eci)
+            if true_mag_field_eci_norm == 0:
+                return StatusConst.MAG_UPDATE_FAIL, StatusConst.TRUE_MAG_MAP_FAIL  # End update if true mag field is zeros
+            else:
+                true_mag_field_eci = true_mag_field_eci / true_mag_field_eci_norm
+
+            # Convert measured mag field into ECI
+            measured_mag_field_eci = np.dot(quat_to_R(self.state[self.attitude_idx]), mag_field_body)
+            measured_mag_field_eci_norm = np.linalg.norm(measured_mag_field_eci)
+            if measured_mag_field_eci_norm == 0:
+                return StatusConst.MAG_UPDATE_FAIL, StatusConst.ZERO_NORM  # End update if measured mag field is zeros
+            else:
+                measured_mag_field_eci = measured_mag_field_eci / measured_mag_field_eci_norm
+
+            # EKF update
+            innovation = true_mag_field_eci - measured_mag_field_eci
+            s_cross = skew(true_mag_field_eci)
+            Cov_mag_field = self.magnetometer_sigma**2 * np.dot(np.dot(s_cross, np.eye(3)), s_cross.transpose())
+            H = np.zeros((3, 6))
+            H[0:3, 0:3] = -s_cross
+
+            # Update log based on EKF status
+            update_status = self.EKF_update(H, innovation, Cov_mag_field)
+            if update_status != StatusConst.OK:
+                return StatusConst.MAG_UPDATE_FAIL, update_status
+            else:
+                return StatusConst.OK, StatusConst.OK
+
+        else:
+            return StatusConst.MAG_UPDATE_FAIL, status
+
     def gyro_update(self, current_time: int, update_covariance: bool = True) -> None:
         """
         Performs an MEKF update step for Gyro
@@ -411,52 +397,6 @@ class AttitudeDetermination:
                     Qdk = np.dot(Phi, Aexp[0:6, 6:12])
                     Qdk = np.dot(np.dot(Phi, self.P), Phi.transpose()) + Qdk
                     self.P = np.dot(np.dot(Phi, self.P), Phi.transpose()) + Qdk
-
-    def magnetometer_update(self, current_time=int, update_covariance: bool = True) -> None:
-        """
-        Performs an MEKF update step for magnetometer
-        """
-
-        status, _, mag_field_body = self.read_magnetometer()
-
-        if status == StatusConst.OK:  # store magnetic field reading even if update fails to use for ACS
-            self.state[self.mag_field_idx] = mag_field_body
-
-        # Perform an update only if MEKF initialized and valid field reading obtained
-        if self.initialized and update_covariance and status == StatusConst.OK:
-
-            # Obtain true mag field in ECI from IGRF
-            true_mag_field_eci = igrf_eci(current_time, self.state[self.position_idx] / 1000)
-            true_mag_field_eci_norm = np.linalg.norm(true_mag_field_eci)
-            if true_mag_field_eci_norm == 0:
-                return StatusConst.MAG_UPDATE_FAIL, StatusConst.TRUE_MAG_MAP_FAIL  # End update if true mag field is zeros
-            else:
-                true_mag_field_eci = true_mag_field_eci / true_mag_field_eci_norm
-
-            # Convert measured mag field into ECI
-            measured_mag_field_eci = np.dot(quat_to_R(self.state[self.attitude_idx]), mag_field_body)
-            measured_mag_field_eci_norm = np.linalg.norm(measured_mag_field_eci)
-            if measured_mag_field_eci_norm == 0:
-                return StatusConst.MAG_UPDATE_FAIL, StatusConst.ZERO_NORM  # End update if measured mag field is zeros
-            else:
-                measured_mag_field_eci = measured_mag_field_eci / measured_mag_field_eci_norm
-
-            # EKF update
-            innovation = true_mag_field_eci - measured_mag_field_eci
-            s_cross = skew(true_mag_field_eci)
-            Cov_mag_field = self.magnetometer_sigma**2 * np.dot(np.dot(s_cross, np.eye(3)), s_cross.transpose())
-            H = np.zeros((3, 6))
-            H[0:3, 0:3] = -s_cross
-
-            # Update log based on EKF status
-            update_status = self.EKF_update(H, innovation, Cov_mag_field)
-            if update_status != StatusConst.OK:
-                return StatusConst.MAG_UPDATE_FAIL, update_status
-            else:
-                return StatusConst.OK, StatusConst.OK
-
-        else:
-            return StatusConst.MAG_UPDATE_FAIL, status
 
     def EKF_update(self, H: np.ndarray, innovation: np.ndarray, R_noise: np.ndarray) -> None:
         """
