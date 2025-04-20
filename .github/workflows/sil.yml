@@ -69,10 +69,17 @@ jobs:
       - name: Run flight software
         run: python3 sil_run.py --duration ${{env.RUNTIME}} --outfile ${{env.OUTFILE}}
       
-      - name: Upload log file
+      - name: Upload FSW log file
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.TIMESTAMP }}-sil-logs
           path: ${{env.OUTFILE}}
+
+      - name: Upload SIM log file
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.TIMESTAMP }}-sim-logs
+          path: "results/*"
       
