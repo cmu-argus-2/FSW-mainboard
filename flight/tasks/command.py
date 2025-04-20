@@ -3,6 +3,7 @@
 # It also executes commands received from the ground station (TBD)
 
 import gc
+import time
 
 import apps.command.processor as processor
 from apps.adcs.consts import Modes
@@ -19,7 +20,7 @@ from micropython import const
 
 _TPM_INIT_TIMEOUT = const(10)  # seconds
 _EXIT_STARTUP_TIMEOUT = const(5)  # seconds
-_BURN_WIRE_STRENGTH = const(0)  # 0-255
+_BURN_WIRE_STRENGTH = const(1)  # 0-255
 
 
 class Task(TemplateTask):
@@ -53,11 +54,14 @@ class Task(TemplateTask):
         # DEPLOYMENT SEQUENCE
         # ------------------------------------------------------------------------------------------------------------------------------------
         if SATELLITE.BURN_WIRES_AVAILABLE:
+            self.log_info("Burn wires available, deploying...")
             burn_wires = SATELLITE.BURN_WIRES
             burn_wires.set_pwm(0, _BURN_WIRE_STRENGTH)
             burn_wires.set_pwm(1, _BURN_WIRE_STRENGTH)
             burn_wires.set_pwm(2, _BURN_WIRE_STRENGTH)
             burn_wires.enable_driver()
+            TPM.sleep(5)
+            burn_wires.disable_driver()
         return
 
     def startup(self):
