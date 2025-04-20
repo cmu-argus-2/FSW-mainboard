@@ -1,7 +1,7 @@
 # Payload Control Task
 
 from apps.payload.controller import PayloadController as PC
-from apps.payload.controller import PayloadState
+from apps.payload.controller import PayloadState, map_state
 from apps.payload.definitions import ExternalRequest
 from core import TemplateTask
 from core import state_manager as SM
@@ -90,5 +90,6 @@ class Task(TemplateTask):
                         self.log_info("Not enough images in memory, requesting new image")
                         PC.add_request(ExternalRequest.REQUEST_IMAGE)
 
-        # DO NOT EXPOSE THE LOGIC IN THE TASK and KEEP IT INTERNAL
+        # DO NOT EXPOSE THE LOGIC IN THE TASK and KEEP EVERYTHING INTERNAL
         PC.run_control_logic()
+        self.log_info(f"Payload state: {map_state(PC.state)}")
