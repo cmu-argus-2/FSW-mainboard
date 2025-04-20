@@ -6,8 +6,8 @@ from hal.configuration import SATELLITE
 
 class PayloadUART(PayloadCommunicationInterface):
     _connected = False
-    _pckt_available = False
     _uart = None
+    _PCKT_SIZE = 250
 
     @classmethod
     def connect(cls):
@@ -24,8 +24,22 @@ class PayloadUART(PayloadCommunicationInterface):
 
     @classmethod
     def send(cls, pckt):
-        pass
+        cls.uart.write(pckt)
 
     @classmethod
     def receive(cls):
-        pass
+        if cls.packet_available():
+            pckt = cls._uart.read(cls._PCKT_SIZE)
+            return pckt
+        return bytearray()
+
+    @classmethod
+    def is_connected(cls) -> bool:
+        return cls._connected
+
+    @classmethod
+    def packet_available(cls) -> bool:
+        """Checks if a packet is available to read."""
+        if not cls._connected or cls._uart is None:
+            return False
+        return cls._uart.in_waiting >= cls._PCKT_SIZE

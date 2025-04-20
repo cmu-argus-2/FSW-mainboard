@@ -21,7 +21,6 @@ FIFO_OUT = "/tmp/payload_fifo_out"  # Payload writes to this, external process r
 
 class PayloadIPC(PayloadCommunicationInterface):  # needed for local testing and SIL
     _connected = False
-    _pckt_available = False
     _pipe_in = None  # File descriptor for writing
     _pipe_out = None  # File descriptor for reading
 
@@ -100,7 +99,7 @@ class PayloadIPC(PayloadCommunicationInterface):  # needed for local testing and
             return b""
 
         try:
-            rlist, _, _ = select.select([cls._pipe_out], [], [], 0.5)  # 500ms timeout
+            rlist, _, _ = select.select([cls._pipe_out], [], [], 0.2)  # 200ms timeout
             if cls._pipe_out in rlist:
                 data = os.read(cls._pipe_out, 1024).strip()  # Read from FIFO
                 if data:
