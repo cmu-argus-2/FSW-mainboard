@@ -409,7 +409,6 @@ class AttitudeDetermination:
                     Aexp = np.eye(12) + A
                     Phi = Aexp[6:12, 6:12].transpose()
                     Qdk = np.dot(Phi, Aexp[0:6, 6:12])
-                    Qdk = np.dot(np.dot(Phi, self.P), Phi.transpose()) + Qdk
                     self.P = np.dot(np.dot(Phi, self.P), Phi.transpose()) + Qdk
 
     def magnetometer_update(self, current_time=int, update_covariance: bool = True) -> None:
