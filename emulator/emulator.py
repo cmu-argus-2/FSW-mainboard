@@ -11,7 +11,7 @@ from hal.drivers.power_monitor import PowerMonitor
 from hal.drivers.radio import Radio
 from hal.drivers.rtc import RTC
 from hal.drivers.sd import SD
-from hal.drivers.sun_sensor import LightSensorArray
+from hal.drivers.sun_sensor import LightSensor
 from hal.drivers.torque_coil import TorqueCoilArray
 
 
@@ -62,12 +62,15 @@ class EmulatedSatellite(CubeSat):
         # GPS
         self.append_device("GPS", None, GPS(simulator=self.__simulated_spacecraft))
 
-        self._light_sensors = LightSensorArray(simulator=self.__simulated_spacecraft)
-        self.append_device("LIGHT_XP", None, self._light_sensors["XP"])
-        self.append_device("LIGHT_XM", None, self._light_sensors["XM"])
-        self.append_device("LIGHT_YP", None, self._light_sensors["YP"])
-        self.append_device("LIGHT_YM", None, self._light_sensors["YM"])
-        self.append_device("LIGHT_ZM", None, self._light_sensors["ZM"])
+        self.append_device("LIGHT_XP", None, LightSensor("XP", simulator=self.__simulated_spacecraft))
+        self.append_device("LIGHT_XM", None, LightSensor("XM", simulator=self.__simulated_spacecraft))
+        self.append_device("LIGHT_YP", None, LightSensor("YP", simulator=self.__simulated_spacecraft))
+        self.append_device("LIGHT_YM", None, LightSensor("YM", simulator=self.__simulated_spacecraft))
+        self.append_device("LIGHT_ZP1", None, LightSensor("ZP1", simulator=self.__simulated_spacecraft))
+        self.append_device("LIGHT_ZP2", None, LightSensor("ZP2", simulator=self.__simulated_spacecraft))
+        self.append_device("LIGHT_ZP3", None, LightSensor("ZP3", simulator=self.__simulated_spacecraft))
+        self.append_device("LIGHT_ZP4", None, LightSensor("ZP4", simulator=self.__simulated_spacecraft))
+        self.append_device("LIGHT_ZM", None, LightSensor("ZM", simulator=self.__simulated_spacecraft))
 
         self._torque_drivers = TorqueCoilArray(simulator=self.__simulated_spacecraft)
         self.append_device("TORQUE_XP", None, self._torque_drivers["XP"])
