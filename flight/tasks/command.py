@@ -3,7 +3,6 @@
 # It also executes commands received from the ground station (TBD)
 
 import gc
-import time
 
 import apps.command.processor as processor
 from apps.adcs.consts import Modes
