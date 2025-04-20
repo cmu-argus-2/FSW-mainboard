@@ -19,6 +19,7 @@ from micropython import const
 
 _TPM_INIT_TIMEOUT = const(10)  # seconds
 _EXIT_STARTUP_TIMEOUT = const(5)  # seconds
+_BURN_WIRE_STRENGTH = const(0)  # 0-255
 
 
 class Task(TemplateTask):
@@ -46,6 +47,18 @@ class Task(TemplateTask):
 
     def get_memory_usage(self):
         return int(gc.mem_alloc() / self.total_memory * 100)
+
+    def deployment_sequence(self):
+        # ------------------------------------------------------------------------------------------------------------------------------------
+        # DEPLOYMENT SEQUENCE
+        # ------------------------------------------------------------------------------------------------------------------------------------
+        if SATELLITE.BURN_WIRES_AVAILABLE:
+            burn_wires = SATELLITE.BURN_WIRES
+            burn_wires.set_pwm(0, _BURN_WIRE_STRENGTH)
+            burn_wires.set_pwm(1, _BURN_WIRE_STRENGTH)
+            burn_wires.set_pwm(2, _BURN_WIRE_STRENGTH)
+            burn_wires.enable_driver()
+        return
 
     def startup(self):
         # ------------------------------------------------------------------------------------------------------------------------------------
@@ -112,6 +125,7 @@ class Task(TemplateTask):
                     DH.register_data_process("cmd_logs", "LBB", True, data_limit=100000)
 
                 # T0: Boot over and deployment complete
+                self.deployment_sequence()
                 SM.switch_to(STATES.DETUMBLING)
                 self.log_info("T0: Transition from STARTUP to DETUMBLING")
 
