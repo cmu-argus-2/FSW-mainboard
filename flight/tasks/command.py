@@ -128,8 +128,9 @@ class Task(TemplateTask):
                 if not DH.data_process_exists("cmd_logs"):
                     DH.register_data_process("cmd_logs", "LBB", True, data_limit=100000)
 
+                self.deployment_sequence()  # TODO: add deployment flag and time condition
+
                 # T0: Boot over and deployment complete
-                self.deployment_sequence()
                 SM.switch_to(STATES.DETUMBLING)
                 self.log_info("T0: Transition from STARTUP to DETUMBLING")
 
