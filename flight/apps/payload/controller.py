@@ -37,6 +37,24 @@ class PayloadState:  # Only from the host perspective
     REBOOTING = 4  # Going through shutdown + boot
 
 
+def map_state(state):
+    """
+    Maps the state to its string representation.
+    """
+    if state == PayloadState.OFF:
+        return "OFF"
+    elif state == PayloadState.POWERING_ON:
+        return "POWERING_ON"
+    elif state == PayloadState.READY:
+        return "READY"
+    elif state == PayloadState.SHUTTING_DOWN:
+        return "SHUTTING_DOWN"
+    elif state == PayloadState.REBOOTING:
+        return "REBOOTING"
+    else:
+        return "UNKNOWN"
+
+
 class PayloadController:
 
     # Bi-directional communication interface
@@ -205,7 +223,7 @@ class PayloadController:
     def _switch_to_state(cls, new_state: PayloadState):
         if new_state != cls.state:
             cls.state = new_state
-            # Log state change
+            logger.info(f"[PAYLOAD] Switching to state {map_state(new_state)}...")
 
     @classmethod
     def run_control_logic(cls):
@@ -216,8 +234,9 @@ class PayloadController:
         cls.handle_external_requests()
 
         if cls.state == PayloadState.OFF:
-            # Do nothing unless it's time to power on
-            pass
+            # Do nothing
+            # Make sure the power line is off
+            cls.turn_off_power()
 
         elif cls.state == PayloadState.POWERING_ON:
             # Wait for the Payload to be ready
@@ -264,6 +283,7 @@ class PayloadController:
                     if not cls.just_requested_file_packet:
                         cls.request_next_file_packet()
 
+            # Coming soon
             # Check OD states
             # For now, just ping the OD status
 
