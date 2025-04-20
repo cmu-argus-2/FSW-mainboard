@@ -264,8 +264,8 @@ class PayloadController:
                     if not cls.just_requested_file_packet:
                         cls.request_next_file_packet()
 
-                # Check OD states
-                # For now, just ping the OD status
+            # Check OD states
+            # For now, just ping the OD status
 
             success = cls.receive_response()
             if not success:
