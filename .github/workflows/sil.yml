@@ -62,7 +62,7 @@ jobs:
       - name: Set timestamp
         run: echo "TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_ENV
       - name: Define Runtime
-        run: echo "RUNTIME=600" >> $GITHUB_ENV
+        run: echo "RUNTIME=300" >> $GITHUB_ENV
       - name: Define Log file name
         run: echo "OUTFILE=sil_logs.log" >> $GITHUB_ENV
       
