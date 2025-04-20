@@ -64,7 +64,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
     def sun_lux(self, attr):
         self.advance_to_time()  # XP, XM, YP, YM, ZP1, ZP2, ZP3, ZP4, ZM
 
-        attr2idx = {'XP': 0, 'XM': 1, 'YP': 2, 'YM': 3, 'ZP1': 4, 'ZP2': 5, 'ZP3': 6, 'ZP4': 7, 'ZM': 8}
+        attr2idx = {"XP": 0, "XM": 1, "YP": 2, "YM": 3, "ZP1": 4, "ZP2": 5, "ZP3": 6, "ZP4": 7, "ZM": 8}
         if attr not in attr2idx.keys():
             raise Exception(f"Invalid Sun Sensor dir {attr}")
         return self.measurement[self.lux_idx][attr2idx[attr]]
