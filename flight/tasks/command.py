@@ -20,7 +20,7 @@ from hal.configuration import SATELLITE
 from micropython import const
 
 _TPM_INIT_TIMEOUT = const(10)  # seconds
-_EXIT_STARTUP_TIMEOUT = const(3)  # seconds
+_EXIT_STARTUP_TIMEOUT = const(5)  # seconds
 
 
 class Task(TemplateTask):
