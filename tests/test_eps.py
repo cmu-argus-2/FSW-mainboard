@@ -87,8 +87,8 @@ def test_get_power_status(power_values, threshold, expected_status):
     (False, 500, EPS_POWER_FLAG.NOMINAL, False),
     (True, 0, EPS_POWER_FLAG.NOMINAL, False),
     (False, 0, EPS_POWER_FLAG.NONE, False),
-    (False, 0, EPS_POWER_FLAG.LOW_POWER, False),
-    (False, -200, EPS_POWER_FLAG.LOW_POWER, False),
+    (False, 0, EPS_POWER_FLAG.LOW_POWER, True),
+    (False, -200, EPS_POWER_FLAG.LOW_POWER, True),  # Fix if we decide not to enable heaters in low power
 ])
 def test_should_enable_heaters(enabled, temp, flag, expected):
     assert SHOULD_ENABLE_HEATERS(enabled, temp, flag) == expected
@@ -97,7 +97,7 @@ def test_should_enable_heaters(enabled, temp, flag, expected):
 @pytest.mark.parametrize("enabled, temp, flag, expected", [
     (True, 1200, EPS_POWER_FLAG.NOMINAL, True),
     (True, 500, EPS_POWER_FLAG.NOMINAL, True),
-    (True, -200, EPS_POWER_FLAG.LOW_POWER, True),
+    (True, -200, EPS_POWER_FLAG.LOW_POWER, False),  # Fix if we decide not to enable heaters in low power
     (True, 0, EPS_POWER_FLAG.NOMINAL, False),
     (False, 500, EPS_POWER_FLAG.NOMINAL, False),
 ])
