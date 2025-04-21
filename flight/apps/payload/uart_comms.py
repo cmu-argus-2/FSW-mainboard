@@ -24,7 +24,7 @@ class PayloadUART(PayloadCommunicationInterface):
 
     @classmethod
     def send(cls, pckt):
-        cls.uart.write(pckt)
+        cls._uart.write(pckt)
 
     @classmethod
     def receive(cls):
@@ -43,3 +43,8 @@ class PayloadUART(PayloadCommunicationInterface):
         if not cls._connected or cls._uart is None:
             return False
         return cls._uart.in_waiting >= cls._PCKT_SIZE
+
+    @classmethod
+    def get_id(cls):
+        """Returns the ID of the UART interface."""
+        return 0x20
