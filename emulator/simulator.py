@@ -127,7 +127,10 @@ class Simulator:  # will be passed by reference to the emulated HAL
         Sets the control input to the simulation XP, XM, YP, YM, ZP, ZM
         """
         dir_2_idx_map = {"XP": 0, "XM": 1, "YP": 2, "YM": 3, "ZP": 4, "ZM": 5}
-        self.cppsim.control_input[dir_2_idx_map[dir]] = input * 5
+        dir_factor = 1
+        if 'M' in dir:
+            dir_factor = -1
+        self.cppsim.control_input[dir_2_idx_map[dir]] = input * 5 * dir_factor
 
     def get_time_diff_since_last(self):
         """
