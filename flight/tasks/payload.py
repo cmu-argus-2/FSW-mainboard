@@ -26,10 +26,15 @@ class Task(TemplateTask):
 
         # Telemetry process
         if not DH.data_process_exists("payload_tm"):
-            data_format = 3 * "L" + 4 * "B" + 4 * "B" + 4 * "B" + 8 * "B" + 3 * "H"
-            DH.register_data_process(tag_name="payload_tm", data_format=data_format, persistent=True, data_limit=100000)
+            DH.register_data_process(
+                tag_name="payload_tm",
+                data_format=PC.tm_process_data_format,
+                persistent=True,
+                data_limit=100000,
+                circular_buffer_size=200,
+            )
 
-        # OD process (should be a separate data process)
+        # OD process (should be a separate file process)
         if not DH.data_process_exists("payload_od"):
             pass
 
