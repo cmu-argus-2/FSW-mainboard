@@ -43,6 +43,6 @@ class Task(TemplateTask):
 
         if SM.current_state == STATES.STARTUP:
             self.sample_error_list(errors)
-            pass
+            self.log_device_status()
         else:
             pass
