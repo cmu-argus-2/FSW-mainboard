@@ -8,9 +8,7 @@ from hal.emulator import EmulatedSatellite
 
 # DH.sd_path = "sd"
 
-# Enable for Middleware
 DEBUG_MODE = True
-EN_MIDDLEWARE = True
 SIMULATION = bool(int(os.getenv("ARGUS_SIMULATION_FLAG", 0)))
 SOCKET_RADIO = False
 

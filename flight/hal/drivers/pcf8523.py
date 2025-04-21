@@ -48,7 +48,7 @@ __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_PCF8523.git"
 
 from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register import i2c_bcd_alarm, i2c_bcd_datetime, i2c_bit, i2c_bits
-from hal.drivers.middleware.errors import Errors
+from hal.drivers.errors import Errors
 
 try:
     import typing  # noqa: F401
@@ -199,9 +199,9 @@ class PCF8523:
         :return: True if power was lost, otherwise true
         """
         if self.lost_power:
-            return Errors.PCF8523_LOST_POWER
+            return Errors.RTC_LOST_POWER
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     def __check_battery_status(self) -> int:
         """_check_battery_status: Checks if the battery status is low.
@@ -209,9 +209,9 @@ class PCF8523:
         :return: False if the battery is low, otherwise true
         """
         if self.battery_low:
-            return Errors.PCF8523_BATTERY_LOW
+            return Errors.RTC_BATTERY_LOW
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     def deinit(self):
         return

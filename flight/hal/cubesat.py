@@ -1,14 +1,33 @@
 import time
 from collections import OrderedDict
 
-from hal.drivers.middleware.errors import Errors
+from hal.drivers.errors import Errors
+from micropython import const
+
+# Argus Safety Integrity Level
+ASIL0 = const(0)  # debug components, should not be in flight and do not care if error
+ASIL1 = const(1)
+ASIL2 = const(2)
+ASIL3 = const(3)
+ASIL4 = const(4)
 
 
 class Device:
-    def __init__(self, boot_fn: object, device: object = None, error: int = 0):
+    def __init__(
+        self,
+        boot_fn: object,
+        ASIL: int,
+        peripheral_line: bool = True,
+        device: object = None,
+        error: int = Errors.NO_ERROR,
+    ) -> None:
         self.device = device
         self.error = error
         self.boot_fn = boot_fn
+        self.ASIL = ASIL
+        self.error_count = 0
+        self.peripheral_line = peripheral_line
+        self.dead = False
 
 
 class CubeSat:
@@ -28,40 +47,40 @@ class CubeSat:
     def __init__(self):
         self.__device_list = OrderedDict(
             [
-                ("NEOPIXEL", Device(self.__neopixel_boot)),
-                ("SDCARD", Device(self.__sd_card_boot)),  # SD Card must enabled before other devices
-                ("RTC", Device(self.__rtc_boot)),
-                ("GPS", Device(self.__gps_boot)),
-                ("RADIO", Device(self.__radio_boot)),
-                ("FUEL_GAUGE", Device(self.__fuel_gauge_boot)),
-                ("BATT_HEATERS", Device(self.__battery_heaters_boot)),
-                ("WATCHDOG", Device(self.__watchdog_boot)),
-                # ("BURN_WIRE", Device(self.__burn_wire_boot)),
-                ("BOARD_PWR", Device(self.__power_monitor_boot)),
-                ("RADIO_PWR", Device(self.__power_monitor_boot)),
-                ("GPS_PWR", Device(self.__power_monitor_boot)),
-                # ("JETSON_PWR", Device(self.__power_monitor_boot)),
-                ("XP_PWR", Device(self.__power_monitor_boot)),
-                ("XM_PWR", Device(self.__power_monitor_boot)),
-                ("YP_PWR", Device(self.__power_monitor_boot)),
-                ("YM_PWR", Device(self.__power_monitor_boot)),
-                ("ZP_PWR", Device(self.__power_monitor_boot)),
-                ("TORQUE_XP", Device(self.__torque_driver_boot)),
-                ("TORQUE_XM", Device(self.__torque_driver_boot)),
-                ("TORQUE_YP", Device(self.__torque_driver_boot)),
-                ("TORQUE_YM", Device(self.__torque_driver_boot)),
-                ("TORQUE_ZP", Device(self.__torque_driver_boot)),
-                ("TORQUE_ZM", Device(self.__torque_driver_boot)),
-                ("LIGHT_XP", Device(self.__light_sensor_boot)),
-                ("LIGHT_XM", Device(self.__light_sensor_boot)),
-                ("LIGHT_YP", Device(self.__light_sensor_boot)),
-                ("LIGHT_YM", Device(self.__light_sensor_boot)),
-                ("LIGHT_ZM", Device(self.__light_sensor_boot)),
-                # ("LIGHT_ZP_1", Device(self.__light_sensor_boot)),
-                # ("LIGHT_ZP_2", Device(self.__light_sensor_boot)),
-                # ("LIGHT_ZP_3", Device(self.__light_sensor_boot)),
-                # ("LIGHT_ZP_4", Device(self.__light_sensor_boot)),
-                ("IMU", Device(self.__imu_boot)),
+                ("NEOPIXEL", Device(self.__neopixel_boot, ASIL0)),
+                ("SDCARD", Device(self.__sd_card_boot, ASIL1)),  # SD Card must enabled before other devices
+                ("RTC", Device(self.__rtc_boot, ASIL2)),
+                ("GPS", Device(self.__gps_boot, ASIL3, peripheral_line=False)),
+                ("RADIO", Device(self.__radio_boot, ASIL4, peripheral_line=False)),
+                ("IMU", Device(self.__imu_boot, ASIL3)),
+                ("FUEL_GAUGE", Device(self.__fuel_gauge_boot, ASIL2)),
+                ("BATT_HEATERS", Device(self.__battery_heaters_boot, ASIL1)),
+                ("WATCHDOG", Device(self.__watchdog_boot, ASIL2)),
+                ("BURN_WIRE", Device(self.__burn_wire_boot, ASIL4)),
+                ("BOARD_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                ("RADIO_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                ("GPS_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                ("JETSON_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                ("XP_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                ("XM_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                ("YP_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                ("YM_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                ("ZP_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                ("TORQUE_XP", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
+                ("TORQUE_XM", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
+                ("TORQUE_YP", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
+                ("TORQUE_YM", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
+                ("TORQUE_ZP", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
+                ("TORQUE_ZM", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
+                ("LIGHT_XP", Device(self.__light_sensor_boot, ASIL2)),
+                ("LIGHT_XM", Device(self.__light_sensor_boot, ASIL2)),
+                ("LIGHT_YP", Device(self.__light_sensor_boot, ASIL2)),
+                ("LIGHT_YM", Device(self.__light_sensor_boot, ASIL2)),
+                ("LIGHT_ZM", Device(self.__light_sensor_boot, ASIL2)),
+                ("LIGHT_ZP_1", Device(self.__light_sensor_boot, ASIL2)),
+                ("LIGHT_ZP_2", Device(self.__light_sensor_boot, ASIL2)),
+                ("LIGHT_ZP_3", Device(self.__light_sensor_boot, ASIL2)),
+                ("LIGHT_ZP_4", Device(self.__light_sensor_boot, ASIL2)),
             ]
         )
 
@@ -75,9 +94,18 @@ class CubeSat:
         """boot_sequence: Boot sequence for the CubeSat."""
         raise NotImplementedError("CubeSats must implement boot method")
 
-    def append_device(self, device_name: str, boot_fn: object, device: object = None, error: int = 0) -> None:
-        """append_device: Append a device to the device list"""
-        self.__device_list[device_name] = Device(boot_fn, device, error)
+    def reboot(self) -> None:
+        """reboot: Reboot the CubeSat."""
+        raise NotImplementedError("CubeSats must implement reboot method")
+
+    def handle_error(self, device_name: str) -> int:
+        """handle_error: Handle the error for the given device."""
+        raise NotImplementedError("CubeSats must implement handle_error method")
+
+    def print_device_list(self) -> None:
+        """print_device_list: Print the device list."""
+        for name, device in self.__device_list.items():
+            print(f"{name}: {device.device}")
 
     @property
     def ERRORS(self):
@@ -86,7 +114,7 @@ class CubeSat:
         """
         error_list = {}
         for name, device in self.__device_list.items():
-            if device.error != Errors.NOERROR:
+            if device.error != Errors.NO_ERROR:
                 error_list[name] = device.error
         return error_list
 

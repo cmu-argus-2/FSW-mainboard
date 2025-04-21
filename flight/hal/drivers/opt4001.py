@@ -43,7 +43,7 @@ from time import monotonic, sleep
 from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register.i2c_bit import ROBit, RWBit
 from adafruit_register.i2c_bits import RWBits
-from hal.drivers.middleware.errors import Errors
+from hal.drivers.errors import Errors
 from micropython import const
 
 try:
@@ -514,9 +514,9 @@ class OPT4001:
         :return: True if read successful, otherwise false
         """
         if not self.check_id():
-            return Errors.OPT4001_ID_CHECK_FAILED
+            return Errors.LIGHT_SENSOR_ID_CHECK_FAILED
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     def __read_counter_crc_test(self) -> int:
         """_read_counter_crc_test: Checks if the crc counter functions properly
@@ -525,9 +525,9 @@ class OPT4001:
         """
         _, counter, _ = self.get_lsb_counter_crc(self.RESULT_L)  # looking at register 1
         if not ((0 <= counter) and (counter <= 15)):
-            return Errors.OPT4001_CRC_COUNTER_TEST_FAILED
+            return Errors.LIGHT_SENSOR_CRC_COUNTER_TEST_FAILED
 
-        return Errors.NOERROR
+        return Errors.NO_ERROR
 
     def deinit(self):
         return

@@ -6,9 +6,9 @@ from hal.configuration import SATELLITE
 unix_timestamp = 1742166255
 
 # Boot up SC
-print("Booting ARGUS-1...")
+print("Booting ARGUS...")
 SATELLITE.boot_sequence()
-print("ARGUS-1 booted.")
+print("ARGUS booted.")
 print(f"Boot Errors: {SATELLITE.ERRORS}")
 
 # Set up RTC clock
