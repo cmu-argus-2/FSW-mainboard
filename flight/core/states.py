@@ -36,6 +36,7 @@ class TASK:
     THERMAL = const(0x07)
     GPS = const(0x08)
     PAYLOAD = const(0x09)
+    HAL_MONITOR = const(0x0A)
 
 
 class STATES:

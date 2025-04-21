@@ -1,4 +1,4 @@
-# Hardware watchdog and HAL monitor task
+# Hardware watchdog task
 # This task is responsible for monitoring the health of the hardware abstraction layer (HAL),
 # performing diagnostics in case of failure, and reporting/logging HAL status.
 

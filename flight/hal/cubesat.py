@@ -114,9 +114,16 @@ class CubeSat:
         """
         error_list = {}
         for name, device in self.__device_list.items():
-            if device.error != Errors.NO_ERROR:
+            if device.error != Errors.NO_ERROR and device.dead is False:
                 error_list[name] = device.error
         return error_list
+
+    def DEVICES_STATUS(self):
+        """DEVICES_STATUS: Returns the status of the devices"""
+        status = {}
+        for name, device in self.__device_list.items():
+            status[name] = [device.error, device.error_count, device.dead]
+        return status
 
     def key_in_device_list(self, key: str) -> bool:
         """key_in_device_list: Check if the key is in the device list"""

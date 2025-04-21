@@ -489,10 +489,10 @@ class ArgusV3(CubeSat):
             )
 
             radio.begin(
-                freq=433,
+                freq=435,
                 bw=125,
                 sf=7,
-                cr=8,
+                cr=5,
                 syncWord=0x12,
                 power=22,
                 currentLimit=140.0,
@@ -562,7 +562,7 @@ class ArgusV3(CubeSat):
                 ArgusV3Components.BURN_WIRE_I2C,
                 ArgusV3Components.BURN_WIRE_I2C_ADDRESS,
             )
-            return [burn_wires, Errors.NOERROR]
+            return [burn_wires, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
