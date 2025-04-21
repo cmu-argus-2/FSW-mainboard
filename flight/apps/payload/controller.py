@@ -79,6 +79,7 @@ class PayloadController:
     TIMEOUT_SHUTDOWN = 10  # 10 seconds
     time_we_sent_shutdown = 0
     need_shutdown = False
+    payload_sw_has_shutdown = False  # Flag to check if the payload has shutdown properly
 
     # Current request
     current_request = ExternalRequest.NO_ACTION
@@ -213,6 +214,7 @@ class PayloadController:
             if not DH.data_process_exists("img"):
                 logger.error("Image data process not found. Cannot request image.")
                 return
+
             cls.request_image_transfer()
             cls._clear_request()
 
@@ -232,6 +234,7 @@ class PayloadController:
                 cls.must_re_attempt_boot = False
                 cls.attempting_reboot = False
                 cls.time_we_started_booting = 0
+                cls.payload_sw_has_shutdown = False
 
     @classmethod
     def run_control_logic(cls):
@@ -303,19 +306,17 @@ class PayloadController:
             # Check OD states
             # For now, just ping the OD status
 
-            success = cls.receive_response()
-            if not success:  # Need to add to timeout / retry logic
-                pass
-
-            # Fault management
-            # TODO
+            cls.receive_response()
 
         elif cls.state == PayloadState.SHUTTING_DOWN:
             # Wait for the Payload to shutdown
 
-            success = cls.receive_response()
-            if not success:  # Need to add to timeout / retry logic
-                pass
+            cls.receive_response()
+
+            if cls.payload_sw_has_shutdown:
+                logger.info("Payload SW has shutdown properly.")
+                cls.turn_off_power()
+                cls._switch_to_state(PayloadState.OFF)
 
             if cls.time_we_sent_shutdown + cls.TIMEOUT_SHUTDOWN < time.monotonic():
                 # We have waited too long
@@ -327,7 +328,7 @@ class PayloadController:
     @classmethod
     def receive_response(cls):
         recv = cls.communication_interface.receive()
-        print(recv)
+        # logger.info(recv)
         if recv:
             res = Decoder.decode(recv)
             cls.cmd_sent -= 1
@@ -372,7 +373,10 @@ class PayloadController:
                 logger.info("Completed image transfer. No more file packet to receive.")
                 return True
 
-            ## TODO: Add shutdown response handling - straightforward
+            elif sent_cmd_id == CommandID.SHUTDOWN and resp == ErrorCodes.OK:
+                # Paylaod has confirmed that we have properly shutdown
+                # Now we can safely turn off the power line, which we will do in the main run logic
+                cls.payload_sw_has_shutdown = True
 
             else:
                 logger.error(f"Command error received: {resp}")  # TODO: map to good string for logging purposes
@@ -446,16 +450,12 @@ class PayloadController:
         # This should enable the power line
         # If the function is called again and the power line is already on, it SHOULD do nothing
         # This will be called multiple times in a row
+        logger.debug("[PAYLOAD] Turning on power...")
         pass
 
     @classmethod
     def turn_off_power(cls):
         # This is an expensive and drastic operation on the HW so must be limited to strict necessity
         # Preferable after a shutdown command
-        pass
-
-    @classmethod
-    def force_reboot(cls):
-        # This is an expensive and drastic operation on the HW so must be limited to strict necessity
-        # Preferable after a shutdown command
+        logger.debug("[PAYLOAD] Turning off power...")
         pass
