@@ -85,7 +85,15 @@ class Modes:
     SUN_POINTED = 2  # Satellite is generally pointed towards the sun.
 
     SUN_VECTOR_REF = np.array([0.0, 0.0, 1.0])
-    STABLE_TOL = 0.14  # 0.05  # "stable" if ang vel < 0.05 rad/s = 2.86 deg/s.
+
+    # Detumbling
+    TUMBLING_LO = 0.07  # Exit detumbling into stable if ω < 0.07 rad/s (4 deg/s)
+    TUMBLING_HI = 0.087  # Re-enter detumbling if ω > 0.08 rad/s (5 deg/s)
+
+    # STABLE MODE
+    STABLE_TOL_LO = 0.01  # Exit into sun_pointing if angular momentum error norm < 0.01
+    STABLE_TOL_HI = 0.04  # Re-enter stable state if angular momentum error norm > 0.04
+
     SUN_POINTED_TOL = 0.1  # "sun-pointed" if att err < 0.09 rad = 5 deg.
 
 
@@ -95,6 +103,7 @@ class PhysicalConst:
     """
 
     INERTIA_MAT = np.array([[0.00251, 0, 0], [0, 0.0026, 0], [0, 0, 0.002786]])
+    INERTIA_DET = np.linalg.det(INERTIA_MAT)
 
     # Compute Major axis of inertia
     _eigvals, _eigvecs = np.linalg.eig(INERTIA_MAT)
@@ -139,9 +148,9 @@ class ControllerConst:
     FALLBACK_CONTROL = np.zeros(CONTROL_DIM)
 
     # Spin-stabilized Constants
-    OMEGA_MAG_TARGET = 0.1125  # Target angular velocity along major axis
+    OMEGA_MAG_TARGET = Modes.TUMBLING_LO  # Target angular velocity along major axis -> Required ω for stable confn
     MOMENTUM_TARGET = np.linalg.norm(np.dot(PhysicalConst.INERTIA_MAT, PhysicalConst.INERTIA_MAJOR_DIR * OMEGA_MAG_TARGET))
-    SPIN_STABILIZING_GAIN = 1.0e06
+    SPIN_STABILIZING_GAIN = 2.0e07
 
     # Sun Pointing Constants
 
@@ -158,10 +167,10 @@ class MCMConst:
     ALLOC_MAT = np.array(
         [
             [0.5, 0.0, 0.0],
-            [0.5, 0.0, 0.0],
+            [-0.5, 0.0, 0.0],
             [0.0, 0.5, 0.0],
-            [0.0, 0.5, 0.0],
+            [0.0, -0.5, 0.0],
             [0.0, 0.0, 0.5],
-            [0.0, 0.0, 0.5],
+            [0.0, 0.0, -0.5],
         ]
     )

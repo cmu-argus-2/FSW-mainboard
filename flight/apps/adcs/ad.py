@@ -9,7 +9,7 @@ magnetic field data on the mainboard.
 
 """
 
-from apps.adcs.consts import Modes, PhysicalConst, StatusConst
+from apps.adcs.consts import ControllerConst, Modes, PhysicalConst, StatusConst
 from apps.adcs.frames import convert_ecef_state_to_eci
 from apps.adcs.igrf import igrf_eci
 from apps.adcs.math import R_to_quat, quat_to_R, quaternion_multiply, skew
@@ -494,19 +494,43 @@ class AttitudeDetermination:
 
         return StatusConst.OK
 
-    def current_mode(self) -> int:
+    def current_mode(self, current_mode) -> int:
         """
         - Returns the current mode of the ADCS
         """
-        if np.linalg.norm(self.state[self.omega_idx]) >= Modes.STABLE_TOL:
-            return Modes.TUMBLING
-        else:
-            if self.state[self.sun_status_idx] == StatusConst.SUN_ECLIPSE:
+        omega = np.linalg.norm(self.state[self.omega_idx])
+        if current_mode == Modes.TUMBLING:
+            if omega <= Modes.TUMBLING_LO:
                 return Modes.STABLE
             else:
-                sun_vector_error = Modes.SUN_VECTOR_REF - self.state[self.sun_pos_idx]
+                return Modes.TUMBLING
+        elif current_mode == Modes.STABLE:
+            momentum_error = np.linalg.norm(
+                np.dot(PhysicalConst.INERTIA_MAT, (self.state[self.omega_idx] - self.state[self.bias_idx]))
+                / ControllerConst.MOMENTUM_TARGET
+                - PhysicalConst.INERTIA_MAJOR_DIR
+            )
 
-                if np.linalg.norm(sun_vector_error) >= Modes.SUN_POINTED_TOL:
-                    return Modes.STABLE
-                else:
-                    return Modes.SUN_POINTED
+            if omega >= Modes.TUMBLING_HI:
+                return Modes.TUMBLING
+
+            elif momentum_error <= Modes.STABLE_TOL_LO:
+                return Modes.SUN_POINTED
+
+            else:
+                return Modes.STABLE
+
+        elif current_mode == Modes.SUN_POINTED:
+            momentum_error = np.linalg.norm(
+                np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx]) / ControllerConst.MOMENTUM_TARGET
+                - PhysicalConst.INERTIA_MAJOR_DIR
+            )
+
+            if self.state[self.sun_status_idx] == StatusConst.SUN_ECLIPSE or momentum_error >= Modes.STABLE_TOL_HI:
+                return Modes.STABLE
+
+            else:
+                return Modes.SUN_POINTED
+
+        else:
+            raise Exception(f"Invalid Current Mode {current_mode}")

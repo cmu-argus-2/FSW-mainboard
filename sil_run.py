@@ -64,9 +64,9 @@ if __name__ == "__main__":
     # Run script
     FSW_simulate(int(args.duration), args.outfile)
 
-    # Parse Logs
-    parse_FSW_logs(args.outfile)
-
     # Run Plotting
     result_folder_path = os.path.join("results", max(os.listdir("results")))
     plot_all(result_folder_path=result_folder_path)
+
+    # Parse Logs
+    parse_FSW_logs(args.outfile)

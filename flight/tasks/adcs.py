@@ -98,13 +98,14 @@ class Task(TemplateTask):
                 self.attitude_control()
 
                 # Check if detumbling has been completed
-                if self.AD.current_mode() != Modes.TUMBLING:
+                if self.AD.current_mode(self.MODE) != Modes.TUMBLING:
+                    zero_all_coils()
                     self.MODE = Modes.STABLE
 
             # ------------------------------------------------------------------------------------------------------------------------------------
             # LOW POWER
             # ------------------------------------------------------------------------------------------------------------------------------------
-            elif SM.current_state == STATES.LOW_POWER:
+            elif SM.current_state == STATES.LOW_POWER or SM.current_state == STATES.EXPERIMENT:
                 # Turn coils off to conserve power
                 zero_all_coils()
 
@@ -142,19 +143,25 @@ class Task(TemplateTask):
                                     StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
                                 )
 
-                    # No Attitude Control in Low-power mode
+                    # No Attitude Control in Low-power mode or Experiment
+
+                    # Determine Mode
+                    new_mode = self.AD.current_mode(self.MODE)
+                    if new_mode != self.MODE:
+                        zero_all_coils()
+                        self.MODE = new_mode
 
                     # Reset Execution counter
                     self.execution_counter = 0
 
             # ------------------------------------------------------------------------------------------------------------------------------------
-            # NOMINAL & EXPERIMENT
+            # NOMINAL
             # ------------------------------------------------------------------------------------------------------------------------------------
             else:
                 if (
                     SM.current_state == STATES.NOMINAL
                     and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
-                    and self.AD.current_mode() == Modes.TUMBLING
+                    and self.AD.current_mode(self.MODE) == Modes.TUMBLING
                 ):
                     self.MODE = Modes.TUMBLING
 
@@ -198,7 +205,10 @@ class Task(TemplateTask):
                                     )
 
                         # identify Mode based on current sensor readings
-                        self.MODE = self.AD.current_mode()
+                        new_mode = self.AD.current_mode(self.MODE)
+                        if new_mode != self.MODE:
+                            zero_all_coils()
+                            self.MODE = new_mode
 
                         # Run attitude control
                         self.attitude_control()
@@ -222,7 +232,7 @@ class Task(TemplateTask):
         # Decide which controller to choose
         if self.MODE in [Modes.TUMBLING, Modes.STABLE]:  # B-cross controller
             # Get sensor measurements
-            omega_unbiased = self.AD.state[self.AD.omega_idx] - self.AD.state[self.AD.bias_idx]
+            omega_unbiased = self.AD.state[self.AD.omega_idx]  # - self.AD.state[self.AD.bias_idx]
             mag_field_body = self.AD.state[self.AD.mag_field_idx]
 
             # Control MCMs and obtain coil statuses
@@ -287,4 +297,5 @@ class Task(TemplateTask):
             self.failure_messages = []
 
             # Log Gyro Angular Velocities
+            self.log_info(f"ADCS Mode : {self.MODE}")
             self.log_info(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z + 1]}")
