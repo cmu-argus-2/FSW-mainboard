@@ -77,6 +77,7 @@ class Task(TemplateTask):
     warning_log_data = [0] * WARNING_IDX_LENGTH
     power_buffer_dict = {
         EPS_WARNING_IDX.MAINBOARD_POWER_ALERT: [],
+        EPS_WARNING_IDX.PERIPH_POWER_ALERT: [],
         EPS_WARNING_IDX.RADIO_POWER_ALERT: [],
         EPS_WARNING_IDX.JETSON_POWER_ALERT: [],
         EPS_WARNING_IDX.XP_COIL_POWER_ALERT: [],
