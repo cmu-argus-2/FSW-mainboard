@@ -24,8 +24,14 @@ class Task(TemplateTask):
             if device_error == Error.DEVICE_NOT_INITIALISED:
                 SATELLITE.handle_error(device_name)
 
-    def log_device_status(self, device_name, device_status):
-        pass
+    def log_device_status(self):
+        for device_name, error_list in SATELLITE.DEVICES_STATUS:
+            error_idx = getattr(HAL_IDX, f"{device_name}_ERROR")
+            error_count_idx = getattr(HAL_IDX, f"{device_name}_ERROR_COUNT")
+            dead_idx = getattr(HAL_IDX, f"{device_name}_DEAD")
+            self.log_data[error_idx] = error_list[0]
+            self.log_data[error_count_idx] = error_list[1]
+            self.log_data[dead_idx] = error_list[2]
 
     async def main_task(self):
         errors = SATELLITE.ERRORS

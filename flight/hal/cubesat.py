@@ -118,6 +118,7 @@ class CubeSat:
                 error_list[name] = device.error
         return error_list
 
+    @property
     def DEVICES_STATUS(self):
         """DEVICES_STATUS: Returns the status of the devices"""
         status = {}
