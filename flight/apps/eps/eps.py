@@ -76,14 +76,9 @@ def GET_POWER_STATUS(buf, power, threshold, window):
 
 def SHOULD_ENABLE_HEATERS(enabled, temp, flag):
     """returns whether battery heaters should be enabled in current conditions"""
-    return (
-        not enabled
-        and flag != EPS_POWER_FLAG.LOW_POWER
-        and flag != EPS_POWER_FLAG.NONE
-        and (temp <= EPS_TEMP_THRESHOLD.BATTERY_HEAT_ENABLE)
-    )
+    return not enabled and flag != EPS_POWER_FLAG.NONE and (temp <= EPS_TEMP_THRESHOLD.BATTERY_HEAT_ENABLE)
 
 
 def SHOULD_DISABLE_HEATERS(enabled, temp, flag):
     """returns whether battery heaters should be disabled in current conditions"""
-    return enabled and ((flag == EPS_POWER_FLAG.LOW_POWER) or (temp >= EPS_TEMP_THRESHOLD.BATTERY_HEAT_DISABLE))
+    return enabled and (temp >= EPS_TEMP_THRESHOLD.BATTERY_HEAT_DISABLE)
