@@ -81,4 +81,4 @@ def SHOULD_ENABLE_HEATERS(enabled, temp, flag):
 
 def SHOULD_DISABLE_HEATERS(enabled, temp, flag):
     """returns whether battery heaters should be disabled in current conditions"""
-    return enabled and (temp >= EPS_TEMP_THRESHOLD.BATTERY_HEAT_DISABLE)
+    return temp >= EPS_TEMP_THRESHOLD.BATTERY_HEAT_DISABLE
