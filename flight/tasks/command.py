@@ -19,7 +19,7 @@ from micropython import const
 
 _TPM_INIT_TIMEOUT = const(10)  # seconds
 _EXIT_STARTUP_TIMEOUT = const(5)  # seconds
-_BURN_WIRE_STRENGTH = const(1)  # 0-255
+_BURN_WIRE_STRENGTH = const(7)  # 0-255
 
 
 class Task(TemplateTask):
@@ -56,9 +56,13 @@ class Task(TemplateTask):
             self.log_info("Burn wires available, deploying...")
             burn_wires = SATELLITE.BURN_WIRES
             burn_wires.set_pwm(0, _BURN_WIRE_STRENGTH)
-            burn_wires.set_pwm(1, _BURN_WIRE_STRENGTH)
-            burn_wires.set_pwm(2, _BURN_WIRE_STRENGTH)
             burn_wires.enable_driver()
+            TPM.sleep(5)
+            burn_wires.set_pwm(0, 0)
+            burn_wires.set_pwm(1, _BURN_WIRE_STRENGTH)
+            TPM.sleep(5)
+            burn_wires.set_pwm(1, 0)
+            burn_wires.set_pwm(2, _BURN_WIRE_STRENGTH)
             TPM.sleep(5)
             burn_wires.disable_driver()
         return
