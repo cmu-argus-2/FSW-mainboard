@@ -18,7 +18,7 @@ The incoming packet format is as follows:
 - Byte 0: Command ID
 - Byte 1-2: Sequence count
 - Byte 3: Data length.
-- Byte 4-255: Data
+- Byte 4-249: Data
 
 
 Author: Ibrahima Sory Sow
@@ -36,7 +36,7 @@ from apps.payload.definitions import (
 )
 
 # Asymmetric sizes for send and receive buffers
-_RECV_PCKT_BUF_SIZE = 256
+_RECV_PCKT_BUF_SIZE = 256  # buffer a bit bigger on purpose
 _SEND_PCKT_BUF_SIZE = 32
 
 # Byte order
@@ -260,7 +260,7 @@ class Decoder:
 
     @classmethod
     def decode_shutdown(cls):
-        if cls._curr_data_length != 0:
+        if cls._curr_data_length == 0:
             return ErrorCodes.INVALID_PACKET
 
         resp = int(cls._recv_buffer[cls._data_idx][0])
