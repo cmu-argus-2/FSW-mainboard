@@ -64,14 +64,15 @@ class EPS_IDX:
 class EPS_WARNING_IDX:
     TIME_EPS_WARNING = const(0)
     MAINBOARD_POWER_ALERT = const(1)
-    RADIO_POWER_ALERT = const(2)
-    JETSON_POWER_ALERT = const(3)
-    XP_COIL_POWER_ALERT = const(4)
-    XM_COIL_POWER_ALERT = const(5)
-    YP_COIL_POWER_ALERT = const(6)
-    YM_COIL_POWER_ALERT = const(7)
-    ZP_COIL_POWER_ALERT = const(8)
-    ZM_COIL_POWER_ALERT = const(9)
+    PERIPH_POWER_ALERT = const(2)
+    RADIO_POWER_ALERT = const(3)
+    JETSON_POWER_ALERT = const(4)
+    XP_COIL_POWER_ALERT = const(5)
+    XM_COIL_POWER_ALERT = const(6)
+    YP_COIL_POWER_ALERT = const(7)
+    YM_COIL_POWER_ALERT = const(8)
+    ZP_COIL_POWER_ALERT = const(9)
+    ZM_COIL_POWER_ALERT = const(10)
 
 
 class ADCS_IDX:

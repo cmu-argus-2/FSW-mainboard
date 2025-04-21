@@ -162,14 +162,16 @@ class Task(TemplateTask):
     def process_pm_readings(self, location, sensor):
         if location == "BOARD":
             voltage, current = self.read_vc(sensor)
-            self.set_power_alert(
-                voltage, current, EPS_WARNING_IDX.MAINBOARD_POWER_ALERT, EPS_POWER_THRESHOLD.MAINBOARD
-            )
-            self.log_vc("Board", EPS_IDX.MAINBOARD_VOLTAGE, EPS_IDX.MAINBOARD_CURRENT, voltage, current)
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.MAINBOARD_POWER_ALERT, EPS_POWER_THRESHOLD.MAINBOARD)
+            self.log_vc("Main 3.3V", EPS_IDX.MAINBOARD_VOLTAGE, EPS_IDX.MAINBOARD_CURRENT, voltage, current)
         elif location == "JETSON":
             voltage, current = self.read_vc(sensor)
             self.set_power_alert(voltage, current, EPS_WARNING_IDX.JETSON_POWER_ALERT, EPS_POWER_THRESHOLD.JETSON)
             self.log_vc("Jetson", EPS_IDX.JETSON_INPUT_VOLTAGE, EPS_IDX.JETSON_INPUT_CURRENT, voltage, current)
+        elif location == "GPS":
+            voltage, current = self.read_vc(sensor)
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.PERIPH_POWER_ALERT, EPS_POWER_THRESHOLD.PERIPH)
+            self.log_vc("Peripheral 3.3V", EPS_IDX.GPS_VOLTAGE, EPS_IDX.GPS_CURRENT, voltage, current)
         elif location == "RADIO":
             voltage, current = self.read_vc(sensor)
             self.set_power_alert(voltage, current, EPS_WARNING_IDX.RADIO_POWER_ALERT, EPS_POWER_THRESHOLD.RADIO)
@@ -191,47 +193,33 @@ class Task(TemplateTask):
     def process_torque_coil_readings(self, location, sensor):
         if location == "XP":
             voltage, current = self.read_vc(sensor)
-            self.set_power_alert(
-                voltage, current, EPS_WARNING_IDX.XP_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL
-            )
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.XP_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
             self.log_vc("XP Coil", EPS_IDX.XP_COIL_VOLTAGE, EPS_IDX.XP_COIL_CURRENT, voltage, current)
         elif location == "XM":
             voltage, current = self.read_vc(sensor)
-            self.set_power_alert(
-                voltage, current, EPS_WARNING_IDX.XM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL
-            )
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.XM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
             self.log_vc("XM Coil", EPS_IDX.XM_COIL_VOLTAGE, EPS_IDX.XM_COIL_CURRENT, voltage, current)
         elif location == "YP":
             voltage, current = self.read_vc(sensor)
-            self.set_power_alert(
-                voltage, current, EPS_WARNING_IDX.YP_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL
-            )
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.YP_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
             self.log_vc("YP Coil", EPS_IDX.YP_COIL_VOLTAGE, EPS_IDX.YP_COIL_CURRENT, voltage, current)
         elif location == "YM":
             voltage, current = self.read_vc(sensor)
-            self.set_power_alert(
-                voltage, current, EPS_WARNING_IDX.YM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL
-            )
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.YM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
             self.log_vc("YM Coil", EPS_IDX.YM_COIL_VOLTAGE, EPS_IDX.YM_COIL_CURRENT, voltage, current)
         elif location == "ZP":
             voltage, current = self.read_vc(sensor)
-            self.set_power_alert(
-                voltage, current, EPS_WARNING_IDX.ZP_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL
-            )
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.ZP_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
             self.log_vc("ZP Coil", EPS_IDX.ZP_COIL_VOLTAGE, EPS_IDX.ZP_COIL_CURRENT, voltage, current)
         elif location == "ZM":
             voltage, current = self.read_vc(sensor)
-            self.set_power_alert(
-                voltage, current, EPS_WARNING_IDX.ZM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL
-            )
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.ZM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
             self.log_vc("ZM Coil", EPS_IDX.ZM_COIL_VOLTAGE, EPS_IDX.ZM_COIL_CURRENT, voltage, current)
 
     def process_fuel_gauge_readings(self):
         self.log_info(f"Battery Pack Temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]}°cC")
         self.log_info(f"Battery Pack Reported SOC: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]}% ")
-        self.log_info(
-            f"Battery Pack Reported Capacity: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY]} mAh "
-        )
+        self.log_info(f"Battery Pack Reported Capacity: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY]} mAh ")
         self.log_info(f"Battery Pack Current: {self.log_data[EPS_IDX.BATTERY_PACK_CURRENT]} mA ")
         self.log_info(f"Battery Pack Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_VOLTAGE]} mV ")
         self.log_info(f"Battery Pack Midpoint Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE]} mV ")
