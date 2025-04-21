@@ -164,7 +164,7 @@ class Task(TemplateTask):
         if location == "BOARD":
             voltage, current = self.read_vc(sensor)
             self.set_power_alert(voltage, current, EPS_WARNING_IDX.MAINBOARD_POWER_ALERT, EPS_POWER_THRESHOLD.MAINBOARD)
-            self.log_vc("Main 3.3V", EPS_IDX.MAINBOARD_VOLTAGE, EPS_IDX.MAINBOARD_CURRENT, voltage, current)
+            self.log_vc("Main", EPS_IDX.MAINBOARD_VOLTAGE, EPS_IDX.MAINBOARD_CURRENT, voltage, current)
         elif location == "JETSON":
             voltage, current = self.read_vc(sensor)
             self.set_power_alert(voltage, current, EPS_WARNING_IDX.JETSON_POWER_ALERT, EPS_POWER_THRESHOLD.JETSON)
@@ -172,7 +172,7 @@ class Task(TemplateTask):
         elif location == "GPS":
             voltage, current = self.read_vc(sensor)
             self.set_power_alert(voltage, current, EPS_WARNING_IDX.PERIPH_POWER_ALERT, EPS_POWER_THRESHOLD.PERIPH)
-            self.log_vc("Peripheral 3.3V", EPS_IDX.GPS_VOLTAGE, EPS_IDX.GPS_CURRENT, voltage, current)
+            self.log_vc("Peripheral", EPS_IDX.GPS_VOLTAGE, EPS_IDX.GPS_CURRENT, voltage, current)
         elif location == "RADIO":
             voltage, current = self.read_vc(sensor)
             self.set_power_alert(voltage, current, EPS_WARNING_IDX.RADIO_POWER_ALERT, EPS_POWER_THRESHOLD.RADIO)
