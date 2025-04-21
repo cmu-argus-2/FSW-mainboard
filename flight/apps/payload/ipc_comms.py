@@ -138,6 +138,11 @@ class PayloadIPC(PayloadCommunicationInterface):  # needed for local testing and
             logger.error(f"Failed to check FIFO: {e}")
             return False
 
+    @classmethod
+    def get_id(cls):
+        """Returns the ID of the IPC interface."""
+        return 0x40
+
 
 if __name__ == "__main__":
 

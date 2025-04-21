@@ -129,7 +129,7 @@ class DataProcess:
         persistent: bool = True,
         data_limit: int = 100000,
         write_interval: int = 1,
-        circular_buffer_size: int = 50,
+        circular_buffer_size: int = 100,
         retrieve_latest_data: bool = True,
         append_to_current: bool = True,
         new_config_file: bool = False,

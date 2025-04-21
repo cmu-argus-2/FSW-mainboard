@@ -45,7 +45,7 @@ from micropython import const
 _TM_NOMINAL_SIZE = const(227)
 _TM_HAL_SIZE = const(46)
 _TM_STORAGE_SIZE = const(74)
-_TM_PAYLOAD_SIZE = const(0)
+_TM_PAYLOAD_SIZE = const(47)  # for now
 
 
 # No instantiation, the class acts as a namespace for the shared state
@@ -481,14 +481,7 @@ class TelemetryPacker:
             logger.warning("GPS Data process does not exist")
 
         ############ Payload fields ###########
-        if DH.data_process_exists("payload"):
-            payload_storage_info = DH.get_storage_info("payload")
-            # PAYLOAD number of files
-            cls._FRAME[62:66] = pack_unsigned_long_int(payload_storage_info, STORAGE_IDX.NUM_FILES)
-            # PAYLOAD directory size
-            cls._FRAME[66:70] = pack_unsigned_long_int(payload_storage_info, STORAGE_IDX.DIR_SIZE)
-        else:
-            logger.warning("Payload Data process does not exist")
+        # Nothing for now
 
         ############ Command fields ###########
         if DH.data_process_exists("cmd_logs"):
@@ -502,7 +495,22 @@ class TelemetryPacker:
 
     @classmethod
     def pack_tm_payload(cls):
-        pass
+        if not cls._TM_AVAILABLE:
+            cls._TM_AVAILABLE = True
+
+        cls._FRAME = bytearray(_TM_PAYLOAD_SIZE + 4)  # pre-allocated buffer for packing
+        cls._FRAME[0] = const(0x04) & 0xFF  # message ID
+        cls._FRAME[1:3] = pack_unsigned_short_int([const(0x00)], 0)  # sequence count
+        cls._FRAME[3] = const(_TM_PAYLOAD_SIZE) & 0xFF  # packet length
+
+        if DH.data_process_exists("payload_tm"):
+            # payload_tm = DH.get_latest_data("payload_tm")
+
+            ############ Payload device fields ###########
+
+            ############ Payload controller fields ###########
+
+            pass
 
     @classmethod
     def change_tm_id_nominal(cls):

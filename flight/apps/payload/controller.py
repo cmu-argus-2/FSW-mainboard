@@ -8,8 +8,6 @@ Author: Ibrahima Sory Sow
 
 """
 
-import time
-
 from apps.payload.definitions import (
     CommandID,
     ErrorCodes,
@@ -21,8 +19,10 @@ from apps.payload.definitions import (
     Resp_RequestNextFilePacket,
 )
 from apps.payload.protocol import Decoder, Encoder
+from apps.telemetry.constants import PAYLOAD_IDX
 from core import DataHandler as DH
 from core import logger
+from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 from micropython import const
 
@@ -62,7 +62,7 @@ class PayloadController:
     state = PayloadState.OFF
 
     # Last error (from the host perspective)
-    last_error = None
+    last_error = ErrorCodes.OK
 
     # Contains the last command IDs sent to the Payload
     cmd_sent = 0
@@ -85,9 +85,12 @@ class PayloadController:
     current_request = ExternalRequest.NO_ACTION
     timestamp_request = 0
 
-    # Last telemetry received
-    _prev_tm_time = time.monotonic()
-    _now = time.monotonic()
+    # Telemetry variables
+    payload_tm_data_format = "QQQ" + 12 * "B" + 13 * "B" + 3 * "H"
+    tm_process_data_format = payload_tm_data_format + "LBBBB"
+    log_data = [0] * len(tm_process_data_format)
+    _prev_tm_time = TPM.monotonic()
+    _now = TPM.monotonic()
     telemetry_period = const(10)  # seconds
     _not_waiting_tm_response = False
 
@@ -159,7 +162,7 @@ class PayloadController:
             # TODO: add if a request is already being processed
             return False
         cls.current_request = request
-        cls.timestamp_request = time.monotonic()
+        cls.timestamp_request = TPM.monotonic()
         return True
 
     @classmethod
@@ -239,7 +242,7 @@ class PayloadController:
     @classmethod
     def run_control_logic(cls):
         # Move this potentially at the task level
-        cls._now = time.monotonic()
+        cls._now = TPM.monotonic()
 
         # Check for requests
         cls.handle_external_requests()
@@ -318,7 +321,7 @@ class PayloadController:
                 cls.turn_off_power()
                 cls._switch_to_state(PayloadState.OFF)
 
-            if cls.time_we_sent_shutdown + cls.TIMEOUT_SHUTDOWN < time.monotonic():
+            if cls.time_we_sent_shutdown + cls.TIMEOUT_SHUTDOWN < TPM.monotonic():
                 # We have waited too long
                 # Force the shutdown by cutting the power
                 cls.turn_off_power()
@@ -345,9 +348,9 @@ class PayloadController:
             sent_cmd_id = Decoder.current_command_id()
 
             if sent_cmd_id == CommandID.REQUEST_TELEMETRY and resp == ErrorCodes.OK:
-                PayloadTM.print()
                 cls._prev_tm_time = cls._now
                 cls._not_waiting_tm_response = False
+                cls.log_telemetry()
                 return True
 
             elif sent_cmd_id == CommandID.REQUEST_IMAGE and resp == ErrorCodes.OK:
@@ -397,7 +400,7 @@ class PayloadController:
         # Simply send the shutdown command
         cls.communication_interface.send(Encoder.encode_shutdown())
         cls.cmd_sent += 1
-        cls.time_we_sent_shutdown = time.monotonic()
+        cls.time_we_sent_shutdown = TPM.monotonic()
 
     @classmethod
     def request_telemetry(cls):
@@ -405,6 +408,62 @@ class PayloadController:
         cls.communication_interface.send(Encoder.encode_request_telemetry())
         cls.cmd_sent += 1
         cls._not_waiting_tm_response = True
+
+    @classmethod
+    def log_telemetry(cls):
+        PayloadTM.print()
+        if DH.data_process_exists("payload_tm"):
+            cls.log_data[PAYLOAD_IDX.SYSTEM_TIME] = int(PayloadTM.SYSTEM_TIME)
+            cls.log_data[PAYLOAD_IDX.SYSTEM_UPTIME] = int(PayloadTM.SYSTEM_UPTIME)
+            cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME] = int(PayloadTM.LAST_EXECUTED_CMD_TIME)
+            cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_ID] = int(PayloadTM.LAST_EXECUTED_CMD_ID)
+            cls.log_data[PAYLOAD_IDX.PAYLOAD_STATE] = int(PayloadTM.PAYLOAD_STATE)
+            cls.log_data[PAYLOAD_IDX.ACTIVE_CAMERAS] = int(PayloadTM.ACTIVE_CAMERAS)
+            cls.log_data[PAYLOAD_IDX.CAPTURE_MODE] = int(PayloadTM.CAPTURE_MODE)
+            cls.log_data[PAYLOAD_IDX.CAM_STATUS_0] = int(PayloadTM.CAM_STATUS[0])
+            cls.log_data[PAYLOAD_IDX.CAM_STATUS_1] = int(PayloadTM.CAM_STATUS[1])
+            cls.log_data[PAYLOAD_IDX.CAM_STATUS_2] = int(PayloadTM.CAM_STATUS[2])
+            cls.log_data[PAYLOAD_IDX.CAM_STATUS_3] = int(PayloadTM.CAM_STATUS[3])
+            cls.log_data[PAYLOAD_IDX.IMU_STATUS] = int(PayloadTM.IMU_STATUS)
+            cls.log_data[PAYLOAD_IDX.TASKS_IN_EXECUTION] = int(PayloadTM.TASKS_IN_EXECUTION)
+            cls.log_data[PAYLOAD_IDX.DISK_USAGE] = int(PayloadTM.DISK_USAGE)
+            cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = int(cls.last_error)
+            cls.log_data[PAYLOAD_IDX.TEGRASTATS_PROCESS_STATUS] = int(PayloadTM.TEGRASTATS_PROCESS_STATUS)
+            cls.log_data[PAYLOAD_IDX.RAM_USAGE] = int(PayloadTM.RAM_USAGE)
+            cls.log_data[PAYLOAD_IDX.SWAP_USAGE] = int(PayloadTM.SWAP_USAGE)
+            cls.log_data[PAYLOAD_IDX.ACTIVE_CORES] = int(PayloadTM.ACTIVE_CORES)
+            cls.log_data[PAYLOAD_IDX.CPU_LOAD_0] = int(PayloadTM.CPU_LOAD[0])
+            cls.log_data[PAYLOAD_IDX.CPU_LOAD_1] = int(PayloadTM.CPU_LOAD[1])
+            cls.log_data[PAYLOAD_IDX.CPU_LOAD_2] = int(PayloadTM.CPU_LOAD[2])
+            cls.log_data[PAYLOAD_IDX.CPU_LOAD_3] = int(PayloadTM.CPU_LOAD[3])
+            cls.log_data[PAYLOAD_IDX.CPU_LOAD_4] = int(PayloadTM.CPU_LOAD[4])
+            cls.log_data[PAYLOAD_IDX.CPU_LOAD_5] = int(PayloadTM.CPU_LOAD[5])
+            cls.log_data[PAYLOAD_IDX.GPU_FREQ] = int(PayloadTM.GPU_FREQ)
+            cls.log_data[PAYLOAD_IDX.CPU_TEMP] = int(PayloadTM.CPU_TEMP)
+            cls.log_data[PAYLOAD_IDX.GPU_TEMP] = int(PayloadTM.GPU_TEMP)
+            cls.log_data[PAYLOAD_IDX.VDD_IN] = int(PayloadTM.VDD_IN)
+            cls.log_data[PAYLOAD_IDX.VDD_CPU_GPU_CV] = int(PayloadTM.VDD_CPU_GPU_CV)
+            cls.log_data[PAYLOAD_IDX.VDD_SOC] = int(PayloadTM.VDD_SOC)
+
+            cls.log_data[PAYLOAD_IDX.TIME_PAYLOAD_CONTROLLER] = TPM.time()
+            cls.log_data[PAYLOAD_IDX.PAYLOAD_CONTROLLER_STATE] = int(cls.state)
+            cls.log_data[PAYLOAD_IDX.PAYLOAD_CONTROLLER_COMMUNICATION_INTERFACE_ID] = (
+                cls._return_communication_interface_id() if cls._interface_injected else 0
+            )
+            cls.log_data[PAYLOAD_IDX.PAYLOAD_CONTROLLER_COMMUNICATION_INTERFACE_CONNECTED] = int(
+                cls.communication_interface.is_connected()
+            )
+            cls.log_data[PAYLOAD_IDX.PAYLOAD_CONTROLLER_LAST_ERROR] = int(cls.last_error) if cls.last_error else 0
+
+            DH.log_data("payload_tm", cls.log_data)
+
+    @classmethod
+    def _return_communication_interface_id(cls):
+        if cls._interface_injected:
+            return int(cls.communication_interface.get_id())
+        else:
+            logger.error("Communication interface not injected yet.")
+            return None
 
     @classmethod
     def enable_cameras(cls):
