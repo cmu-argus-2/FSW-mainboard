@@ -131,6 +131,16 @@ class CubeSat:
         if device_name in self.__device_list:
             self.__device_list[device_name].error = error
 
+    def update_device_error_count(self, device_name: str, error_count: int):
+        """update_device_error_count: Update the error count for the given device."""
+        if device_name in self.__device_list:
+            self.__device_list[device_name].error_count = error_count
+
+    def update_device_dead(self, device_name: str, dead: bool):
+        """update_device_dead: Update the dead status for the given device."""
+        if device_name in self.__device_list:
+            self.__device_list[device_name].dead = dead
+
     def key_in_device_list(self, key: str) -> bool:
         """key_in_device_list: Check if the key is in the device list"""
         return key in self.__device_list
