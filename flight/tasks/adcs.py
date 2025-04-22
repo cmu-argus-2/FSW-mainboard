@@ -163,6 +163,7 @@ class Task(TemplateTask):
                     and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
                     and self.AD.current_mode(self.MODE) == Modes.TUMBLING
                 ):
+                    # Do not allow a switch to Detumbling from Low power
                     self.MODE = Modes.TUMBLING
 
                 else:
@@ -210,8 +211,9 @@ class Task(TemplateTask):
                             zero_all_coils()
                             self.MODE = new_mode
 
-                        # Run attitude control
-                        self.attitude_control()
+                        # Run attitude control if not in Low-power
+                        if SM.current_state != STATES.LOW_POWER:
+                            self.attitude_control()
 
                         # Reset Execution counter
                         self.execution_counter = 0
