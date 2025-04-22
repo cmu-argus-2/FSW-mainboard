@@ -19,6 +19,9 @@ from micropython import const
 # File packet size for downlinking
 _FILE_PKTSIZE = const(240)
 
+# Additional file size in file MD/PKT requests for file ID and time
+_FILE_ID_TIME_SIZE = const(5)
+
 # Internal error definitions from driver
 _ERR_NONE = const(0)
 _ERR_CRC_MISMATCH = const(-7)
@@ -427,10 +430,12 @@ class SATELLITE_RADIO:
 
         # Pack header
 
-        # pkt_size + 5 is to accomodate 5 bytes of file info (file_ID, 1 byte; file_time, 4 bytes) w/ pkt_size bytes of
-        # file data
+        # pkt_size + _FILE_ID_TIME_SIZE is to accomodate 5 bytes of file info
+        # (file_ID, 1 byte; file_time, 4 bytes) w/ pkt_size bytes of file data
         tx_header = (
-            (MSG_ID.SAT_FILE_PKT).to_bytes(1, "big") + (cls.rq_sq_cnt).to_bytes(2, "big") + (pkt_size + 5).to_bytes(1, "big")
+            (MSG_ID.SAT_FILE_PKT).to_bytes(1, "big")
+            + (cls.rq_sq_cnt).to_bytes(2, "big")
+            + (pkt_size + _FILE_ID_TIME_SIZE).to_bytes(1, "big")
         )
 
         # Pack entire message, file_array contains file info
@@ -455,12 +460,12 @@ class SATELLITE_RADIO:
 
         # Pack header
 
-        # pkt_size + 5 is to accomodate 5 bytes of file info (file_ID, 1 byte; file_time, 4 bytes) w/ pkt_size bytes of
-        # file data
+        # pkt_size + _FILE_ID_TIME_SIZE is to accomodate 5 bytes of file info
+        # (file_ID, 1 byte; file_time, 4 bytes) w/ pkt_size bytes of file data
         tx_header = (
             (MSG_ID.SAT_DOWNLINK_ALL).to_bytes(1, "big")
             + (cls.int_sq_cnt).to_bytes(2, "big")
-            + (pkt_size + 5).to_bytes(1, "big")
+            + (pkt_size + _FILE_ID_TIME_SIZE).to_bytes(1, "big")
         )
 
         # Pack entire message, file_array contains file info
