@@ -43,9 +43,8 @@ Implementation Notes
 from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register.i2c_bit import ROBit, RWBit
 from adafruit_register.i2c_bits import ROBits, RWBits
+from hal.drivers.errors import Errors
 from micropython import const
-
-from flight.hal.drivers.errors import Errors
 
 # DEVICE REGISTER MAP
 _FAULT_STATUS = const(0x00)  # Fault Status Register R-
