@@ -418,7 +418,7 @@ class DataProcess:
                     transmit_file = files[1]
 
                 if file_time is not None:
-                    result_file = get_closest_file_time(file_time, files)
+                    result_file = get_closest_file_time(file_time, files[1:])
                     transmit_file = result_file if result_file is not None else transmit_file
 
             tm_path = join_path(self.dir_path, transmit_file)
@@ -680,7 +680,7 @@ class ImageProcess(DataProcess):
                     transmit_file = files[1]
 
                 if file_time is not None:
-                    result_file = get_closest_file_time(file_time, files)
+                    result_file = get_closest_file_time(file_time, files[1:])
                     transmit_file = result_file if result_file is not None else transmit_file
 
             tm_path = join_path(self.dir_path, transmit_file)
@@ -1343,7 +1343,7 @@ def get_closest_file_time(file_time: int, files: List[str]):
     # Search for the specific file with closest time to requested file time
     # Do not consider the process configuration file (file[0] in file list)
     try:
-        return min(files[1:], key=lambda f: abs(extract_time_from_filename(f) - file_time))
+        return min(files, key=lambda f: abs(extract_time_from_filename(f) - file_time))
     except TypeError as e:
         logger.warning(f"Could not find closest file time: {e}")
         return None

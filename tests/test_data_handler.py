@@ -82,7 +82,6 @@ def test_extract_time_from_filename(input_filename, expected_output):
 )
 def test_get_closest_file_time(file_time, expected_output):
     files = [
-        ".data_process_configuration.json",
         "imu_1700001234.bin",
         "cdh_1739719847.bin",
         "thermal_1739720103.bin",
