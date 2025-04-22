@@ -26,6 +26,9 @@ _FILE_ID_TIME_SIZE = const(5)
 _ERR_NONE = const(0)
 _ERR_CRC_MISMATCH = const(-7)
 
+# Endianness for all file packing
+_ENDIANNESS = "big"
+
 
 # Internal comms states for statechart
 class COMMS_STATE:
@@ -389,10 +392,10 @@ class SATELLITE_RADIO:
 
         # Write the file metadata to class array for metadata
         cls.file_md = (
-            cls.file_ID.to_bytes(1, "big")
-            + cls.file_time.to_bytes(4, "big")
-            + cls.file_size.to_bytes(4, "big")
-            + cls.file_message_count.to_bytes(2, "big")
+            cls.file_ID.to_bytes(1, _ENDIANNESS)
+            + cls.file_time.to_bytes(4, _ENDIANNESS)
+            + cls.file_size.to_bytes(4, _ENDIANNESS)
+            + cls.file_message_count.to_bytes(2, _ENDIANNESS)
         )
 
     """
@@ -433,13 +436,15 @@ class SATELLITE_RADIO:
         # pkt_size + _FILE_ID_TIME_SIZE is to accomodate 5 bytes of file info
         # (file_ID, 1 byte; file_time, 4 bytes) w/ pkt_size bytes of file data
         tx_header = (
-            (MSG_ID.SAT_FILE_PKT).to_bytes(1, "big")
-            + (cls.rq_sq_cnt).to_bytes(2, "big")
-            + (pkt_size + _FILE_ID_TIME_SIZE).to_bytes(1, "big")
+            (MSG_ID.SAT_FILE_PKT).to_bytes(1, _ENDIANNESS)
+            + (cls.rq_sq_cnt).to_bytes(2, _ENDIANNESS)
+            + (pkt_size + _FILE_ID_TIME_SIZE).to_bytes(1, _ENDIANNESS)
         )
 
         # Pack entire message, file_array contains file info
-        cls.tx_message = tx_header + cls.file_ID.to_bytes(1, "big") + cls.file_time.to_bytes(4, "big") + cls.file_array
+        cls.tx_message = (
+            tx_header + cls.file_ID.to_bytes(1, _ENDIANNESS) + cls.file_time.to_bytes(4, _ENDIANNESS) + cls.file_array
+        )
 
     """
         Name: transmit_downlink_all
@@ -463,13 +468,15 @@ class SATELLITE_RADIO:
         # pkt_size + _FILE_ID_TIME_SIZE is to accomodate 5 bytes of file info
         # (file_ID, 1 byte; file_time, 4 bytes) w/ pkt_size bytes of file data
         tx_header = (
-            (MSG_ID.SAT_DOWNLINK_ALL).to_bytes(1, "big")
-            + (cls.int_sq_cnt).to_bytes(2, "big")
-            + (pkt_size + _FILE_ID_TIME_SIZE).to_bytes(1, "big")
+            (MSG_ID.SAT_DOWNLINK_ALL).to_bytes(1, _ENDIANNESS)
+            + (cls.int_sq_cnt).to_bytes(2, _ENDIANNESS)
+            + (pkt_size + _FILE_ID_TIME_SIZE).to_bytes(1, _ENDIANNESS)
         )
 
         # Pack entire message, file_array contains file info
-        cls.tx_message = tx_header + cls.file_ID.to_bytes(1, "big") + cls.file_time.to_bytes(4, "big") + cls.file_array
+        cls.tx_message = (
+            tx_header + cls.file_ID.to_bytes(1, _ENDIANNESS) + cls.file_time.to_bytes(4, _ENDIANNESS) + cls.file_array
+        )
 
         # Check for last packet
         if cls.int_sq_cnt == cls.file_message_count - 1:
@@ -505,16 +512,16 @@ class SATELLITE_RADIO:
             return False
         else:
             # Check if request matches stored filepath
-            if cls.file_ID != int.from_bytes(packet[0:1], "big"):
+            if cls.file_ID != int.from_bytes(packet[0:1], _ENDIANNESS):
                 # File does not match
-                bad_id = int.from_bytes(packet[0:1], "big")
+                bad_id = int.from_bytes(packet[0:1], _ENDIANNESS)
                 logger.warning(f"[COMMS ERROR] File ID does not match {cls.file_ID}, {bad_id}")
                 return False
 
             # Check if request matches stored file time
-            elif cls.file_time != int.from_bytes(packet[1:5], "big"):
+            elif cls.file_time != int.from_bytes(packet[1:5], _ENDIANNESS):
                 # File does not match
-                bad_time = int.from_bytes(packet[1:5], "big")
+                bad_time = int.from_bytes(packet[1:5], _ENDIANNESS)
                 logger.warning(f"[COMMS ERROR] File time does not match {cls.file_time}, {bad_time}")
                 return False
 
@@ -616,8 +623,8 @@ class SATELLITE_RADIO:
             logger.error("[COMMS ERROR] RADIO no longer active on SAT")
 
         # Unpack source header
-        cls.rx_src_id = int.from_bytes(packet[0:1], "big")
-        cls.rx_dst_id = int.from_bytes(packet[1:2], "big")
+        cls.rx_src_id = int.from_bytes(packet[0:1], _ENDIANNESS)
+        cls.rx_dst_id = int.from_bytes(packet[1:2], _ENDIANNESS)
         packet = packet[2:]
 
         # Check packet integrity based on rx_src_id
@@ -639,9 +646,9 @@ class SATELLITE_RADIO:
             return cls.rx_gs_cmd
 
         # Unpack RX message header
-        cls.rx_gs_cmd = int.from_bytes(packet[0:1], "big")
-        cls.rx_sq_cnt = int.from_bytes(packet[1:3], "big")
-        cls.rx_gs_len = int.from_bytes(packet[3:4], "big")
+        cls.rx_gs_cmd = int.from_bytes(packet[0:1], _ENDIANNESS)
+        cls.rx_sq_cnt = int.from_bytes(packet[1:3], _ENDIANNESS)
+        cls.rx_gs_len = int.from_bytes(packet[3:4], _ENDIANNESS)
 
         # Check packet integrity based on CMD_ID
         if (cls.rx_gs_cmd < MSG_ID.GS_CMD_ACK_L) or (cls.rx_gs_cmd > MSG_ID.GS_CMD_DOWNLINK_ALL):
@@ -681,7 +688,7 @@ class SATELLITE_RADIO:
                 # Filepath matches, move forward with request
 
                 # Get sq_cnt for the PKT
-                cls.rq_sq_cnt = int.from_bytes(packet[9:11], "big")
+                cls.rq_sq_cnt = int.from_bytes(packet[9:11], _ENDIANNESS)
 
         # GS_CMD_DOWNLINK_ALL is also handled internally in the comms task
         elif cls.rx_gs_cmd == MSG_ID.GS_CMD_DOWNLINK_ALL:
@@ -741,5 +748,5 @@ class SATELLITE_RADIO:
             logger.error("[COMMS ERROR] RADIO no longer active on SAT")
 
         # Return TX message header
-        cls.tx_message_ID = int.from_bytes(cls.tx_message[2:3], "big")
+        cls.tx_message_ID = int.from_bytes(cls.tx_message[2:3], _ENDIANNESS)
         return cls.tx_message_ID
