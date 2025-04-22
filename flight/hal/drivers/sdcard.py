@@ -13,10 +13,16 @@ class CustomVfsFat:
         if VFS_MOUNT_POINT not in path:
             path.append(VFS_MOUNT_POINT)
 
+    def __getattr__(self, name):
+        return getattr(self.vfs, name)
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return self.sd_card.device_errors
+
     def deinit(self):
         self.sd_card.deinit()
         umount(self.vfs)
         return
-
-    def __getattr__(self, name):
-        return getattr(self.vfs, name)
