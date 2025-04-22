@@ -88,11 +88,11 @@ class Modes:
 
     # Detumbling
     TUMBLING_LO = 0.07  # Exit detumbling into stable if ω < 0.07 rad/s (4 deg/s)
-    TUMBLING_HI = 0.087  # Re-enter detumbling if ω > 0.08 rad/s (5 deg/s)
+    TUMBLING_HI = 0.122  # Re-enter detumbling if ω > 0.12 rad/s (7 deg/s)
 
     # STABLE MODE
-    STABLE_TOL_LO = 0.01  # Exit into sun_pointing if angular momentum error norm < 0.01
-    STABLE_TOL_HI = 0.04  # Re-enter stable state if angular momentum error norm > 0.04
+    STABLE_TOL_LO = 0.02  # Exit into sun_pointing if angular momentum error norm < 0.02
+    STABLE_TOL_HI = 0.07  # Re-enter stable state if angular momentum error norm > 0.07
 
     SUN_POINTED_TOL = 0.1  # "sun-pointed" if att err < 0.09 rad = 5 deg.
 

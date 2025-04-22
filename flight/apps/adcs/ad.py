@@ -51,18 +51,15 @@ class AttitudeDetermination:
     sun_lux_idx = slice(23, 32)
 
     # Time storage
-    position_update_frequency = 1  # Hz ~8km
-    last_position_update_time = 0
     last_gyro_update_time = 0
-    last_gyro_cov_update_time = 0
     mekf_init_start_time = None
-    mekf_timeout = 30  # seconds TODO: Decide a timeout and change
+    mekf_timeout = 300  # seconds TODO: Decide a timeout and change
 
     # Sensor noise covariances (Decide if these numbers should be hardcoded here or placed in adcs/consts.py)
-    gyro_white_noise_sigma = 0.01  # TODO : characetrize sensor and update
-    gyro_bias_sigma = 0.01  # TODO : characetrize sensor and update
-    sun_sensor_sigma = 0.01  # TODO : characetrize sensor and update
-    magnetometer_sigma = 0.01  # TODO : characetrize sensor and update
+    gyro_white_noise_sigma = 1.5e-4  # TODO : characetrize sensor and update
+    gyro_bias_sigma = 1.5e-4  # TODO : characetrize sensor and update
+    sun_sensor_sigma = 1e-4  # TODO : characetrize sensor and update
+    magnetometer_sigma = 1e-3  # TODO : characetrize sensor and update
 
     # EKF Covariances
     P = 10 * np.ones((6, 6))  # TODO : characterize process noise
@@ -171,6 +168,7 @@ class AttitudeDetermination:
             # Ignore MEKF initialization
             self.state[self.attitude_idx] = np.array([1, 0, 0, 0])
             self.initialized = True
+            self.last_gyro_update_time = current_time
             return StatusConst.OK, StatusConst.MEKF_INIT_FORCE
 
         # Get a valid GPS position
@@ -226,6 +224,7 @@ class AttitudeDetermination:
         self.state[self.sun_lux_idx] = lux_readings
 
         self.initialized = True
+        self.last_gyro_update_time = current_time
 
         return StatusConst.OK, StatusConst.OK
 
@@ -287,7 +286,7 @@ class AttitudeDetermination:
             if status == StatusConst.OPROP_INIT_FAIL:
                 return StatusConst.POS_UPDATE_FAIL, StatusConst.OPROP_INIT_FAIL
         else:
-            if abs(current_time - gps_record_time) < (1 / self.position_update_frequency):
+            if abs(current_time - gps_record_time) < 1:
                 # Use current GPS measurement without propagation
                 self.state[self.position_idx] = gps_pos_eci
                 self.state[self.velocity_idx] = gps_vel_eci
@@ -304,8 +303,6 @@ class AttitudeDetermination:
                 if status == StatusConst.OPROP_INIT_FAIL:
                     return StatusConst.POS_UPDATE_FAIL, StatusConst.OPROP_INIT_FAIL
 
-        # Update last update time
-        self.last_position_update_time = current_time
         return StatusConst.OK, StatusConst.OK
 
     def sun_position_update(self, current_time: int, update_covariance: bool = True) -> None:
@@ -401,7 +398,7 @@ class AttitudeDetermination:
                     G[3:6, 3:6] = np.eye(3)
 
                     A = np.zeros((12, 12))
-                    A[0:6, 0:6] = F
+                    A[0:6, 0:6] = -F
                     A[0:6, 6:12] = np.dot(np.dot(G, self.Q), G.transpose())
                     A[6:12, 6:12] = F.transpose()
                     A = A * dt
@@ -467,10 +464,10 @@ class AttitudeDetermination:
         # S is scaled up by 1000 and then down to remove this error
         # If the singularity persists, we stop the covariance update
         try:
-            S_inv = np.linalg.inv(S)
+            K = np.dot(np.dot(self.P, H.transpose()), 1000 * np.linalg.inv(1000 * S))
         except ValueError:
             return StatusConst.EKF_UPDATE_FAIL
-        K = np.dot(np.dot(self.P, H.transpose()), S_inv)
+
         dx = np.dot(K, innovation)
 
         dq_norm = np.linalg.norm(dx[0:3])
@@ -481,10 +478,9 @@ class AttitudeDetermination:
             attitude_correction[0] = np.cos(dq_norm / 2)
             attitude_correction[1:4] = np.sin(dq_norm / 2) * dx[0:3] / dq_norm
 
+        # Update State
         self.state[self.attitude_idx] = quaternion_multiply(self.state[self.attitude_idx], attitude_correction)
-
-        gyro_bias_correction = dx[3:]
-        self.state[self.bias_idx] = self.state[self.bias_idx] + gyro_bias_correction
+        self.state[self.bias_idx] = self.state[self.bias_idx] + dx[3:]
 
         # Symmetric Joseph update
         Identity = np.eye(6)

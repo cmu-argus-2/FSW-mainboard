@@ -32,14 +32,10 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
     # Do spin stabilization
     else:
         # Compute angular momentum error
-        error = ControllerConst.MOMENTUM_TARGET * PhysicalConst.INERTIA_MAJOR_DIR - np.dot(
-            PhysicalConst.INERTIA_MAT, omega
-        )  # / PhysicalConst.INERTIA_DET
+        error = ControllerConst.MOMENTUM_TARGET * PhysicalConst.INERTIA_MAJOR_DIR - np.dot(PhysicalConst.INERTIA_MAT, omega)
 
         # Compute B-cross dipole moment
         u = ControllerConst.SPIN_STABILIZING_GAIN * np.cross(mag_field, error)
-
-        print(f"Error {error}, Control Input {u}")
 
         # Smoothly normalize the control input
         return np.tanh(u)
