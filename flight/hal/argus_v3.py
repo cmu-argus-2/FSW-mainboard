@@ -650,12 +650,14 @@ class ArgusV3(CubeSat):
         device_cls = self.__device_list[device_name]
 
         if device_name == "RADIO":
-            device_cls.device.deinit()
+            if device_cls.device is not None:
+                device_cls.device.deinit()
             self.__restart_power_line(ArgusV3Power.RADIO_EN)
             self.__boot_device(device_name, device_cls)
 
         elif device_name == "GPS":
-            device_cls.device.deinit()
+            if device_cls.device is not None:
+                device_cls.device.deinit()
             self.__restart_power_line(ArgusV3Power.GPS_EN)
             self.__boot_device(device_name, device_cls)
 

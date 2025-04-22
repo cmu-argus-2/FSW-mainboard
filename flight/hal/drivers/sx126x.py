@@ -413,7 +413,8 @@ ERROR = {
 
 
 def ASSERT(state):
-    assert state == _ERR_NONE, ERROR[state]
+    if state != _ERR_NONE:
+        raise RuntimeError(ERROR[state])
 
 
 # TODO: Characterize latency and potentially tweak sleep time
@@ -1372,6 +1373,7 @@ class SX126X:
             if abs(ticks_diff(start, ticks_ms())) >= timeout:
                 self.cs.value = True
                 self.spi.unlock()
+                # raise RuntimeError("GPIO not low, timeout")
                 return _ERR_SPI_CMD_TIMEOUT
 
         for i in range(cmdLen):
@@ -1480,6 +1482,7 @@ class SX1262(SX126X):
         ASSERT(state)
 
         state = self.setOutputPower(power)
+        print(state)
         ASSERT(state)
 
         state = super().fixPaClamping()

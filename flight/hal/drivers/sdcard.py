@@ -20,7 +20,7 @@ class CustomVfsFat:
 
     @property
     def device_errors(self):
-        return self.sd_card.device_errors
+        return []
 
     def deinit(self):
         self.sd_card.deinit()
