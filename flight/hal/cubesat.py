@@ -126,6 +126,11 @@ class CubeSat:
             status[name] = [device.error, device.error_count, device.dead]
         return status
 
+    def update_device_error(self, device_name: str, error: int):
+        """update_device_error: Update the error for the given device."""
+        if device_name in self.__device_list:
+            self.__device_list[device_name].error = error
+
     def key_in_device_list(self, key: str) -> bool:
         """key_in_device_list: Check if the key is in the device list"""
         return key in self.__device_list
@@ -371,6 +376,15 @@ class CubeSat:
     #     :return: bool
     #     """
     #     return self.__payload_uart is not None
+
+    @property
+    def SAMPLE_DEVICE_ERRORS(self):
+        """SAMPLE_DEVICE_ERRORS: Sample the device errors"""
+        errors = {}
+        for name, device in self.__device_list.items():
+            if device.device is not None and device.dead is False:
+                errors[name] = device.device.device_errors
+        return errors
 
     @property
     def BOOTTIME(self):

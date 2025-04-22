@@ -1,5 +1,4 @@
 try:
-    import time
     from typing import Optional
 
     from busio import UART
