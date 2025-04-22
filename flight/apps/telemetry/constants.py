@@ -142,9 +142,9 @@ class STORAGE_IDX:
 
 class HAL_IDX:
     TIME_HAL = const(0)
-    SD_ERROR = const(1)
-    SD_ERROR_COUNT = const(2)
-    SD_DEAD = const(3)
+    SDCARD_ERROR = const(1)
+    SDCARD_ERROR_COUNT = const(2)
+    SDCARD_DEAD = const(3)
     RTC_ERROR = const(4)
     RTC_ERROR_COUNT = const(5)
     RTC_DEAD = const(6)
@@ -238,6 +238,9 @@ class HAL_IDX:
     LIGHT_ZP_4_ERROR = const(94)
     LIGHT_ZP_4_ERROR_COUNT = const(95)
     LIGHT_ZP_4_DEAD = const(96)
+    NEOPIXEL_ERROR = const(97)
+    NEOPIXEL_ERROR_COUNT = const(98)
+    NEOPIXEL_DEAD = const(99)
 
 
 """

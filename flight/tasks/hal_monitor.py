@@ -22,7 +22,7 @@ class Task(TemplateTask):
         super().__init__(id)
         self.name = "HAL_MONITOR"
 
-    def idx_to_hal_name(idx: int):
+    def idx_to_hal_name(self, idx: int):
         """Return the HAL_IDX field name for a given index, or None if not found."""
         return _HAL_IDX_INV.get(idx)
 
@@ -31,7 +31,7 @@ class Task(TemplateTask):
             return SATELLITE.handle_error(device_name)
 
     def log_device_status(self, log_data):
-        for device_name, error_list in SATELLITE.DEVICES_STATUS:
+        for device_name, error_list in SATELLITE.DEVICES_STATUS.items():
             error_idx = getattr(HAL_IDX, f"{device_name}_ERROR")
             error_count_idx = getattr(HAL_IDX, f"{device_name}_ERROR_COUNT")
             dead_idx = getattr(HAL_IDX, f"{device_name}_DEAD")
@@ -46,7 +46,7 @@ class Task(TemplateTask):
 
         if SM.current_state == STATES.STARTUP:
             if not DH.data_process_exists(self.name):
-                data_format = "L" + "B" * IDX_LENGTH
+                data_format = "L" + "B" * (IDX_LENGTH - 1)
                 DH.register_data_process(self.name, data_format, True, data_limit=10000)
             else:
                 prev_data = DH.data_process_registry[self.name].get_latest_data()
@@ -68,6 +68,7 @@ class Task(TemplateTask):
                                 self.log_error(f"Unable to parse {key_name}")
             for device_name, device_error in SATELLITE.ERRORS.items():
                 self.error_decision(device_name, device_error)
+
         else:
             for device_name, device_error_list in SATELLITE.SAMPLE_DEVICE_ERRORS.items():
                 for device_error in device_error_list:
