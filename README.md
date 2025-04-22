@@ -70,12 +70,23 @@ To move to board:
 python move_to_board.py -s <source_folder_path> -d <destination_folder_path>
 ```
 
-### Troubleshooting 
+### Common Problems
 
-If the board ever gets stuck in read-only mode, access the REPL and type 
+## Board Stuck in Read-Only Mode
+
+If the board ever gets stuck in read-only mode, access REPL and type 
 ```bash
 >>> import storage
 >>> storage.erase_filesystem()
 ```
 This will erase and reformat the filesystem.
 
+## Reflashing the board
+
+If you have access to the buttons on the board, you can enter the bootloader using buttons on-board, refer to the [firmware guide](firmware/README.md)
+If you do not have access to the buttons, access REPL and type
+```bash
+>>> import microcontroller
+>>> microcontroller.on_next_reset(microcontroller.RunMode.UF2)
+>>> microcontroller.reset()
+```
