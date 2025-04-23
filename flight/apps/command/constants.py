@@ -33,7 +33,7 @@ class CMD_ID:
         REQUEST_TM_STORAGE: 0,
         REQUEST_TM_PAYLOAD: 0,
         REQUEST_FILE_METADATA: 5,
-        REQUEST_FILE_PKT: 7,
+        REQUEST_FILE_PKT: 5,
         DOWNLINK_ALL: 5,
     }
 

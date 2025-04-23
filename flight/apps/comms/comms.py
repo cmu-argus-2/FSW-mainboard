@@ -8,10 +8,8 @@ Authors: Akshat Sahay, Ibrahima S. Sow
 
 import os
 
-import apps.telemetry.helpers as tm_helper
-from apps.command.constants import file_ids_str, file_tags_str
+from apps.command.constants import file_ids_str
 from core import logger
-from core.data_handler import DataHandler as DH
 from core.data_handler import extract_time_from_filename
 from hal.configuration import SATELLITE
 from micropython import const
