@@ -1341,7 +1341,6 @@ def get_closest_file_time(file_time: int, files: List[str]):
         str: file path with the closest file time to the one requested
     """
     # Search for the specific file with closest time to requested file time
-    # Do not consider the process configuration file (file[0] in file list)
     try:
         return min(files, key=lambda f: abs(extract_time_from_filename(f) - file_time))
     except TypeError as e:
