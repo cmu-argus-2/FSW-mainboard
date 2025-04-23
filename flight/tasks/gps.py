@@ -67,7 +67,7 @@ class Task(TemplateTask):
             if SATELLITE.GPS_AVAILABLE:
                 if not DH.data_process_exists("gps"):
                     data_format = "LBBBHLllllHHHHHllllll"
-                    DH.register_data_process("gps", data_format, True, data_limit=100000, write_interval=1)
+                    DH.register_data_process("gps", data_format, True, data_limit=1000000, write_interval=1)
 
                 # Check if the module sent a valid nav data message
                 if SATELLITE.GPS.update():
