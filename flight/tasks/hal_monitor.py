@@ -45,7 +45,10 @@ class Task(TemplateTask):
         if result == Errors.NO_REBOOT:
             self.log_info(f"Device {device_name} has {device_error}, no reboot occured")
             SATELLITE.update_device_error(device_name, device_error)
-        if result == Errors.REBOOT_DEVICE:
+        elif result == Errors.REBOOT_DEVICE:
+            for data_process in DH.get_all_data_processes():
+                data_process.force_close()
+                data_process.try_to_reuse_latest_file()
             self.log_info(f"Rebooting {device_name} due to error {device_error}")
         elif result == Errors.DEVICE_DEAD:
             self.log_critical(f"Device {device_name} is dead")
@@ -55,6 +58,7 @@ class Task(TemplateTask):
     async def main_task(self):
         log_data = [0] * IDX_LENGTH
         log_data[HAL_IDX.TIME_HAL] = TPM.time()
+        print(f"HAL Monitor: {log_data[HAL_IDX.TIME_HAL]}")
 
         if SM.current_state == STATES.STARTUP:
             if not DH.data_process_exists(self.name):
@@ -81,6 +85,7 @@ class Task(TemplateTask):
                                 self.log_error(f"Unable to parse {key_name}")
                     self.restored = True
             for device_name, device_error in SATELLITE.ERRORS.items():
+                print(f"processing {device_name} {device_error}")
                 self.log_error_handle_info(self.error_decision(device_name, device_error), device_name, device_error)
 
         else:

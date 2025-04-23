@@ -375,8 +375,11 @@ class DataProcess:
         Close the file.
         """
         if self.status == _OPEN:
+            print(f"hi{self.file}")
             self.file.close()
+            print("bye")
             self.status = _CLOSED
+            print("tf")
         else:
             logger.info("File is already closed.")
 
@@ -563,6 +566,12 @@ class DataProcess:
                 return content
         else:
             logger.warning(f"Can't read {self.current_path}: File is not closed!")
+
+    def force_close(self) -> None:
+        """
+        Force close the file.
+        """
+        self.status = _CLOSED
 
 
 class ImageProcess(DataProcess):
@@ -1028,7 +1037,6 @@ class DataHandler:
         """
         return list(cls.data_process_registry.keys())
 
-    # DEBUG ONLY
     @classmethod
     def get_all_data_processes(cls) -> List[DataProcess]:
         """
