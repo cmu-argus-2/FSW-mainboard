@@ -286,7 +286,7 @@ class CubeSat:
 
     @property
     def PAYLOADUART(self):
-        """PAYLOAD_EN: Returns the payload enable object
+        """PAYLOAD_EN: Returns the payload UART object
         :return: object or None
         """
         return self.__device_list["PAYLOADUART"].device
