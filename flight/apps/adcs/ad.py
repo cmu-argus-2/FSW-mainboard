@@ -446,9 +446,7 @@ class AttitudeDetermination:
                 return Modes.TUMBLING
         elif current_mode == Modes.STABLE:
             momentum_error = np.linalg.norm(
-                np.dot(PhysicalConst.INERTIA_MAT, (self.state[self.omega_idx] - self.state[self.bias_idx]))
-                / ControllerConst.MOMENTUM_TARGET
-                - PhysicalConst.INERTIA_MAJOR_DIR
+                ControllerConst.MOMENTUM_TARGET - np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx])
             )
 
             if omega >= Modes.TUMBLING_HI:
@@ -462,15 +460,31 @@ class AttitudeDetermination:
 
         elif current_mode == Modes.SUN_POINTED:
             momentum_error = np.linalg.norm(
-                np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx]) / ControllerConst.MOMENTUM_TARGET
-                - PhysicalConst.INERTIA_MAJOR_DIR
+                ControllerConst.MOMENTUM_TARGET - np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx])
+            )
+            sun_error = np.linalg.norm(
+                self.state[self.sun_pos_idx]
+                - np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx]) / ControllerConst.MOMENTUM_TARGET
             )
 
-            if self.state[self.sun_status_idx] == StatusConst.SUN_ECLIPSE or momentum_error >= Modes.STABLE_TOL_HI:
+            if momentum_error >= Modes.STABLE_TOL_HI:
                 return Modes.STABLE
+
+            elif sun_error <= Modes.SUN_POINTED_TOL:
+                return Modes.ACS_OFF
 
             else:
                 return Modes.SUN_POINTED
+
+        elif current_mode == Modes.ACS_OFF:
+            momentum_error = np.linalg.norm(
+                ControllerConst.MOMENTUM_TARGET - np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx])
+            )
+            if momentum_error >= Modes.STABLE_TOL_HI:
+                return Modes.STABLE
+
+            else:
+                return Modes.ACS_OFF
 
         else:
             raise Exception(f"Invalid Current Mode {current_mode}")

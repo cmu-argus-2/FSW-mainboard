@@ -212,7 +212,7 @@ class Task(TemplateTask):
                             self.MODE = new_mode
 
                         # Run attitude control if not in Low-power
-                        if SM.current_state != STATES.LOW_POWER:
+                        if SM.current_state != STATES.LOW_POWER and self.MODE != Modes.ACS_OFF:
                             self.attitude_control()
 
                         # Reset Execution counter
@@ -243,8 +243,14 @@ class Task(TemplateTask):
         else:  # Sun-pointed controller
             # Get measurements
             sun_pos_body = self.AD.state[self.AD.sun_pos_idx]
-            omega_unbiased = self.AD.state[self.AD.omega_idx] - self.AD.state[self.AD.omega_idx]
+            omega_unbiased = self.AD.state[self.AD.omega_idx]  # - self.AD.state[self.AD.omega_idx]
             mag_field_body = self.AD.state[self.AD.mag_field_idx]
+            sun_status = self.AD.state[self.AD.sun_status_idx]
+
+            # Perform ACS iff a sun vector measurement is valid
+            # i.e., ignore eclipses, insufficient readings etc.
+            if sun_status != StatusConst.OK:
+                return
 
             # Control MCMs and obtain coil statuses
             dipole_moment = sun_pointing_controller(sun_pos_body, omega_unbiased, mag_field_body)
