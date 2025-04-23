@@ -41,6 +41,17 @@ class Task(TemplateTask):
             log_data[dead_idx] = error_list[2]
         return log_data
 
+    def log_error_handle_info(self, result, device_name, device_error):
+        if result == Errors.NO_REBOOT:
+            self.log_info(f"Device {device_name} has {device_error}, no reboot occured")
+            SATELLITE.update_device_error(device_name, device_error)
+        if result == Errors.REBOOT_DEVICE:
+            self.log_info(f"Rebooting {device_name} due to error {device_error}")
+        elif result == Errors.DEVICE_DEAD:
+            self.log_critical(f"Device {device_name} is dead")
+        elif result == Errors.INVALID_DEVICE_NAME:
+            self.log_error(f"Invalid device name {device_name}")
+
     async def main_task(self):
         log_data = [0] * IDX_LENGTH
         log_data[HAL_IDX.TIME_HAL] = TPM.time()
@@ -70,20 +81,12 @@ class Task(TemplateTask):
                                 self.log_error(f"Unable to parse {key_name}")
                     self.restored = True
             for device_name, device_error in SATELLITE.ERRORS.items():
-                self.error_decision(device_name, device_error)
+                self.log_error_handle_info(self.error_decision(device_name, device_error), device_name, device_error)
 
         else:
             for device_name, device_error_list in SATELLITE.SAMPLE_DEVICE_ERRORS.items():
                 for device_error in device_error_list:
-                    result = self.error_decision(device_name, device_error)
-                    if result == Errors.NO_REBOOT:
-                        SATELLITE.update_device_error(device_name, device_error)
-                    elif result == Errors.REBOOT_DEVICE:
-                        self.log_info(f"Rebooting {device_name} due to error {device_error}")
-                    elif result == Errors.DEVICE_DEAD:
-                        self.log_critical(f"Device {device_name} is dead")
-                    elif result == Errors.INVALID_DEVICE_NAME:
-                        self.log_error(f"Invalid device name {device_name}")
+                    self.log_error_handle_info(self.error_decision(device_name, device_error), device_name, device_error)
 
         DH.log_data(self.name, self.log_device_status(log_data))
         # regular reboot every 24 hours

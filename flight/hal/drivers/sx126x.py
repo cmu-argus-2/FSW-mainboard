@@ -1,6 +1,7 @@
 from time import monotonic_ns, sleep
 
 import digitalio
+from hal.drivers.errors import Errors
 from micropython import const
 
 _MS_PER_NS = const(1000000)
@@ -1680,9 +1681,24 @@ class SX1262(SX126X):
     def device_errors(self):
         results = []
         errors = self.getDeviceErrors()
+        if errors & _SX126X_RC64K_CALIB_ERR:
+            results.append(Errors.RADIO_RC64K_CALIBRATION_FAILED)
+        if errors & _SX126X_RC13M_CALIB_ERR:
+            results.append(Errors.RADIO_RC13M_CALIBRATION_FAILED)
+        if errors & _SX126X_PLL_CALIB_ERR:
+            results.append(Errors.RADIO_PLL_CALIBRATION_FAILED)
         if errors & _SX126X_XOSC_START_ERR:
-            results.append("XOSC_START_ERR")
-        self.SPIreadCommand([_SX126X_CMD_CLEAR_DEVICE_ERRORS])
+            results.append(Errors.RADIO_XOSC_START_FAILED)
+        if errors & _SX126X_IMG_CALIB_ERR:
+            results.append(Errors.RADIO_IMG_CALIBRATION_FAILED)
+        if errors & _SX126X_ADC_CALIB_ERR:
+            results.append(Errors.RADIO_ADC_CALIBRATION_FAILED)
+        if errors & _SX126X_PLL_CALIB_ERR:
+            results.append(Errors.RADIO_PLL_CALIBRATION_FAILED)
+        if errors & _SX126X_PA_RAMP_ERR:
+            results.append(Errors.RADIO_PA_RAMP_FAILED)
+        if results != []:
+            self.clearDeviceErrors()
         return results
 
     def deinit(self):
