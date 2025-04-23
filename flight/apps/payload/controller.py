@@ -105,7 +105,7 @@ class PayloadController:
     must_re_attempt_boot = False
     attempting_reboot = False
 
-    # Power control
+    # Power control of the payload
     # en_pin = None
 
     @classmethod
