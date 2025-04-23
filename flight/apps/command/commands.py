@@ -145,7 +145,7 @@ def REQUEST_FILE_METADATA(file_id, file_time=None):
     return [file_path]
 
 
-# NOTE: REQUEST_FILE_PKT REQUEST_IMAGE and DOWNLINK_ALL are handled internally in comms
+# NOTE: REQUEST_FILE_PKT handled internally in comms
 def REQUEST_FILE_PKT(file_id, file_time):
     raise NotImplementedError("Handled internally by comms subsystem")
 
@@ -154,8 +154,19 @@ def REQUEST_IMAGE():
     raise NotImplementedError("Handled internally by comms subsystem")
 
 
-def DOWNLINK_ALL():
-    raise NotImplementedError("Handled internally by comms subsystem")
+def DOWNLINK_ALL(file_id, file_time=None):
+    """Downlinks all packets for a specific file from the spacecraft."""
+    logger.info(f"Executing DOWNLINK_ALL with file_tag: {file_id} and file_time: {file_time}")
+    file_path = None
+    file_tag = file_tags_str[file_id]
+
+    if file_time is None:
+        file_path = DH.request_TM_path(file_tag)
+    else:
+        # Specify file_tag, latest = False and file_time
+        file_path = DH.request_TM_path(file_tag, False, file_time)
+
+    return [file_path]
 
 
 def get_tx_message_header():

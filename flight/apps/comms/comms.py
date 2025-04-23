@@ -138,6 +138,10 @@ class SATELLITE_RADIO:
     # Downlink all flag
     dlink_all = False
 
+    # File setup flag for downlink all
+    # Only set after the commanding response comes in
+    dlink_init = False
+
     # Data for file downlinking
     file_obj = []
     file_md = []
@@ -290,6 +294,19 @@ class SATELLITE_RADIO:
     def get_rx_payload(cls):
         # Get most recent RX payload
         return cls.rx_payload
+
+    """
+        Name: get_downlink_init_flag
+        Description: Get downlink init flag
+
+        Flag is set after DOWNLINK_ALL response
+        from command processor (gives filepath)
+    """
+
+    @classmethod
+    def get_downlink_init_flag(cls):
+        # Get dlink_init flag
+        return cls.dlink_init
 
     """
         Name: data_available
@@ -483,6 +500,7 @@ class SATELLITE_RADIO:
             # File downlink is over, set flag to not go back into TX_DOWNLINK_ALL state
             logger.info(f"Finished downlinking file at packet {cls.int_sq_cnt}")
             cls.dlink_all = False
+            cls.dlink_init = False
 
         # Increment internal sequence count
         cls.int_sq_cnt += 1
@@ -535,32 +553,21 @@ class SATELLITE_RADIO:
     """
 
     @classmethod
-    def handle_downlink_all_rq(cls, packet):
-        # Extract file ID and time from the request
-        file_id = packet[0]
-        file_time = tm_helper.unpack_unsigned_long_int(packet[1:5])
-
-        # Sidestep commanding and get the filepath directly from the DH
-        logger.info(f"Executing GS_CMD_DOWNLINK_ALL with file_id: {file_id} and file_time: {file_time}")
-        cls.filepath = None
-        file_tag = file_tags_str[file_id]
-
-        if file_time is None:
-            cls.filepath = DH.request_TM_path(file_tag)
-        else:
-            # Specify file_tag, latest = False and file_time
-            cls.filepath = DH.request_TM_path(file_tag, False, file_time)
+    def handle_downlink_all_rq(cls):
+        # Command processor returns a filepath in response to DOWNLINK_ALL
 
         # If valid filepath, set downlink all flag to True for state machine
         if not (cls.filepath):
             # File does not match
             logger.warning("[COMMS ERROR] Undefined TX filepath")
             cls.dlink_all = False
+            cls.dlink_init = False
 
         else:
             # Generate internal metadata for this filepath
             cls.file_get_metadata()
             cls.dlink_all = True
+            cls.dlink_init = True
             cls.int_sq_cnt = 0
 
             logger.info(f"Starting downlink of file for {cls.file_message_count} packets")
@@ -692,7 +699,11 @@ class SATELLITE_RADIO:
 
         # GS_CMD_DOWNLINK_ALL is also handled internally in the comms task
         elif cls.rx_gs_cmd == MSG_ID.GS_CMD_DOWNLINK_ALL:
-            cls.handle_downlink_all_rq(packet[4:])
+            # Flag for state transition
+            cls.dlink_all = True
+
+            # Flag to indicate a wait time for commanding responses
+            cls.dlink_init = False
 
         else:
             # Not a file request, do nothing
