@@ -79,7 +79,7 @@ class Task(TemplateTask):
         else:
             if not DH.data_process_exists("adcs"):
                 data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f"
-                DH.register_data_process("adcs", data_format, True, data_limit=1000000, write_interval=5)
+                DH.register_data_process("adcs", data_format, True, data_limit=500000, write_interval=5)
 
             self.time = TPM.time()
             self.log_data[ADCS_IDX.TIME_ADCS] = self.time

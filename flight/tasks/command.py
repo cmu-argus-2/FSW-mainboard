@@ -106,10 +106,10 @@ class Task(TemplateTask):
             if DH.SD_SCANNED() and time_since_boot > _EXIT_STARTUP_TIMEOUT:
                 if not DH.data_process_exists("cdh"):
                     data_format = "LbLbbbbb"
-                    DH.register_data_process("cdh", data_format, True, data_limit=100000)
+                    DH.register_data_process("cdh", data_format, True, data_limit=500000)
 
                 if not DH.data_process_exists("cmd_logs"):
-                    DH.register_data_process("cmd_logs", "LBB", True, data_limit=100000)
+                    DH.register_data_process("cmd_logs", "LBB", True, data_limit=500000)
 
                 # T0: Boot over and deployment complete
                 SM.switch_to(STATES.DETUMBLING)

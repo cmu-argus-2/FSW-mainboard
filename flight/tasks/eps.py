@@ -145,11 +145,11 @@ class Task(TemplateTask):
                 data_format = (
                     "Lbhhhhb" + "h" * 4 + "L" * 2 + "h" * 30
                 )  # - use mV for voltage and mA for current (h = short integer 2 bytes, L = 4 bytes)
-                DH.register_data_process("eps", data_format, True, data_limit=1000000)
+                DH.register_data_process("eps", data_format, True, data_limit=500000)
 
             if not DH.data_process_exists("eps_warning"):
                 data_format = "L" + "b" * (WARNING_IDX_LENGTH - 1)
-                DH.register_data_process("eps_warning", data_format, True, data_limit=1000000)
+                DH.register_data_process("eps_warning", data_format, True, data_limit=500000)
 
             # Get power system readings
 

@@ -176,20 +176,5 @@ def test_image_edge_case_log(sd_root):
     assert img_process.img_buf_index == 0  # Buffer resets
     assert os.stat(img_process.current_path).st_size == 2048  # New block written
 
-
-# def test_file_size(sd_root):
-# dh._HOME_PATH = str(sd_root)  # temporary SD card
-# data_format = (
-#     "Lbhhhhb" + "h" * 4 + "L" * 2 + "h" * 30
-# )  # - use mV for voltage and mA for current (h = short integer 2 bytes, L = 4 bytes)
-# DH.register_data_process("eps_mock", data_format, True, data_limit=1000000)
-# mock_eps_process = DH.data_process_registry["eps_mock"]
-
-# log_data = [0] * IDX_LENGTH  # - use mV for voltage and mA for current (h = short integer 2 bytes)
-# DH.log_data(
-#     "eps_mock",
-# )
-
-
 if __name__ == "__main__":
     pytest.main()
