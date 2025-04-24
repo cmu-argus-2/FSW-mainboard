@@ -36,7 +36,7 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
     # Do spin stabilization
     else:
         # Compute angular momentum error
-        error = ControllerConst.MOMENTUM_TARGET * PhysicalConst.INERTIA_MAJOR_DIR - np.dot(PhysicalConst.INERTIA_MAT, omega)
+        error = ControllerConst.MOMENTUM_TARGET - np.dot(PhysicalConst.INERTIA_MAT, omega)
 
         # Compute B-cross dipole moment
         u = ControllerConst.SPIN_STABILIZING_GAIN * np.cross(mag_field, error)
@@ -58,13 +58,13 @@ def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field
     # Do sun pointing
     else:
         # Compute pointing error
-        error = sun_vector - np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET
+        error = sun_vector - np.dot(PhysicalConst.INERTIA_MAT, omega) / np.linalg.norm(ControllerConst.MOMENTUM_TARGET)
 
         # Compute controller using bang-bang control law
         u_dir = np.cross(mag_field, error)
         u_dir_norm = np.linalg.norm(u_dir)
 
-        if u_dir_norm < 1e-6:
+        if u_dir_norm < 1e-8:
             # Return zeros to avoid division by zero
             return ControllerConst.FALLBACK_CONTROL
         else:

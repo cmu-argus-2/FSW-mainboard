@@ -83,18 +83,21 @@ class Modes:
     TUMBLING = 0  # Satellite is spinning outside the "stable" bounds.
     STABLE = 1  # Satellite is spinning inside the "stable" bounds.
     SUN_POINTED = 2  # Satellite is generally pointed towards the sun.
+    ACS_OFF = 3  # Satellite has pointed to the sun and ACS can be turned off
 
     SUN_VECTOR_REF = np.array([0.0, 0.0, 1.0])
 
     # Detumbling
-    TUMBLING_LO = 0.07  # Exit detumbling into stable if ω < 0.07 rad/s (4 deg/s)
-    TUMBLING_HI = 0.122  # Re-enter detumbling if ω > 0.12 rad/s (7 deg/s)
+    TUMBLING_LO = 0.03  # Exit detumbling into stable if ω < 0.03 rad/s (2 deg/s)
+    TUMBLING_HI = 0.05
+
+    # Re-enter detumbling if ω > 0.09 rad/s (5 deg/s)
 
     # STABLE MODE
-    STABLE_TOL_LO = 0.02  # Exit into sun_pointing if angular momentum error norm < 0.02
-    STABLE_TOL_HI = 0.07  # Re-enter stable state if angular momentum error norm > 0.07
+    STABLE_TOL_LO = 0.01  # Exit into sun_pointing if angular momentum error norm < 0.01
+    STABLE_TOL_HI = 0.03  # Re-enter stable state if angular momentum error norm > 0.03
 
-    SUN_POINTED_TOL = 0.1  # "sun-pointed" if att err < 0.09 rad = 5 deg.
+    SUN_POINTED_TOL = 0.05  # "sun-pointed" if att err < 0.09 rad = 5 deg.
 
 
 class PhysicalConst:
@@ -102,7 +105,9 @@ class PhysicalConst:
     Constants associated with physical satellite bus parameters.
     """
 
-    INERTIA_MAT = np.array([[0.00251, 0, 0], [0, 0.0026, 0], [0, 0, 0.002786]])
+    INERTIA_MAT = np.array(
+        [[3.544e-03, -1.8729e-05, -5.2467e-06], [-1.8729e-05, 3.590e-03, 1.9134e-05], [-5.2467e-06, 1.9134e-05, 4.120e-03]]
+    )
     INERTIA_DET = np.linalg.det(INERTIA_MAT)
 
     # Compute Major axis of inertia
@@ -149,7 +154,7 @@ class ControllerConst:
 
     # Spin-stabilized Constants
     OMEGA_MAG_TARGET = Modes.TUMBLING_LO  # Target angular velocity along major axis -> Required ω for stable confn
-    MOMENTUM_TARGET = np.linalg.norm(np.dot(PhysicalConst.INERTIA_MAT, PhysicalConst.INERTIA_MAJOR_DIR * OMEGA_MAG_TARGET))
+    MOMENTUM_TARGET = np.dot(PhysicalConst.INERTIA_MAT, PhysicalConst.INERTIA_MAJOR_DIR * OMEGA_MAG_TARGET)
     SPIN_STABILIZING_GAIN = 2.0e07
 
     # Sun Pointing Constants
