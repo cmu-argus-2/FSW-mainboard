@@ -51,7 +51,7 @@ elif [ "$1" == "emulate-profile" ]; then
     cd -
 elif [ "$1" == "simulate" ]; then
     export ARGUS_SIMULATION_FLAG=1
-    export SIM_REAL_SPEEDUP=100
+    export SIM_REAL_SPEEDUP=275
     echo "ARGUS_SIMULATION_FLAG set to 1 for simulation mode."
     $PYTHON_CMD build_tools/build-emulator.py
     cd build/ && rm -rf sd && $PYTHON_CMD main.py
