@@ -375,11 +375,8 @@ class DataProcess:
         Close the file.
         """
         if self.status == _OPEN:
-            print(f"hi{self.file}")
             self.file.close()
-            print("bye")
             self.status = _CLOSED
-            print("tf")
         else:
             logger.info("File is already closed.")
 
@@ -1025,6 +1022,28 @@ class DataHandler:
         return cls.data_process_registry[tag_name]
 
     @classmethod
+    def graceful_shutdown(cls) -> None:
+        """
+        Gracefully shuts down all data processes by closing their files.
+
+        Returns:
+            None
+        """
+        for tag_name in cls.data_process_registry:
+            cls.data_process_registry[tag_name].close()
+
+    @classmethod
+    def restore_data_process_files(cls) -> None:
+        """
+        Restores the data process files by reinitializing them.
+
+        Returns:
+            None
+        """
+        for tag_name in cls.data_process_registry:
+            cls.data_process_registry[tag_name].try_to_reuse_latest_file()
+
+    @classmethod
     def get_all_data_processes_name(cls) -> List[str]:
         """
         Returns a list of all registered data process names.
@@ -1037,6 +1056,7 @@ class DataHandler:
         """
         return list(cls.data_process_registry.keys())
 
+    # DEBUG ONLY
     @classmethod
     def get_all_data_processes(cls) -> List[DataProcess]:
         """

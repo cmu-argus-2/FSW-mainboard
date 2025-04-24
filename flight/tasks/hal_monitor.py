@@ -23,9 +23,17 @@ class Task(TemplateTask):
         self.name = "HAL_MONITOR"
         self.restored = False
 
+    ######################## HELPER FUNCTIONS ########################
+
     def idx_to_hal_name(self, idx: int):
         """Return the HAL_IDX field name for a given index, or None if not found."""
         return _HAL_IDX_INV.get(idx)
+
+    def close_data_process(self):
+        for data_process in DH.get_all_data_processes():
+            data_process.close()
+
+    ######################## ERROR HANDLING ########################
 
     def error_decision(self, device_name, device_error):
         if device_error == Errors.DEVICE_NOT_INITIALISED:
@@ -46,10 +54,12 @@ class Task(TemplateTask):
             self.log_info(f"Device {device_name} has {device_error}, no reboot occured")
             SATELLITE.update_device_error(device_name, device_error)
         elif result == Errors.REBOOT_DEVICE:
-            for data_process in DH.get_all_data_processes():
-                data_process.force_close()
-                data_process.try_to_reuse_latest_file()
-            self.log_info(f"Rebooting {device_name} due to error {device_error}")
+            self.log_info(f"Rebooted {device_name} due to error {device_error}")
+        elif result == Errors.GRACEFUL_REBOOT:
+            DH.graceful_shutdown()
+            SATELLITE.graceful_reboot_devices()
+            DH.restore_data_process_files()
+            self.log_info(f"Gracefully rebooted {device_name} due to error {device_error}")
         elif result == Errors.DEVICE_DEAD:
             self.log_critical(f"Device {device_name} is dead")
         elif result == Errors.INVALID_DEVICE_NAME:
@@ -97,4 +107,5 @@ class Task(TemplateTask):
         # regular reboot every 24 hours
         if TPM.monotonic() - SATELLITE.BOOTTIME >= REGULAR_REBOOT_TIME:
             # TODO: implement graceful shutdown
+            DH.graceful_shutdown()
             SATELLITE.reboot()

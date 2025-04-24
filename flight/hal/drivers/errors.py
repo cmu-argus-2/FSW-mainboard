@@ -12,6 +12,7 @@ class Errors:
     DEVICE_DEAD = const(0xFF)  # placeholder value
     REBOOT_DEVICE = const(0xFE)  # placeholder value
     NO_REBOOT = const(0xFD)  # placeholder value
+    GRACEFUL_REBOOT = const(0xFC)  # placeholder value
 
     # IMU Errors
     IMU_ERROR_CODE = const(0x2)  # placeholder value

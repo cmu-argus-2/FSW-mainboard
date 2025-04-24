@@ -700,10 +700,15 @@ class ArgusV3(CubeSat):
         elif ASIL != ASIL0:
             ArgusV3Error.ASIL_ERRORS[ASIL] += 1
             if ArgusV3Error.ASIL_ERRORS[ASIL] >= ArgusV3Error.ASIL_THRESHOLDS[ASIL]:
-                self.__reboot_device(device_name)
                 ArgusV3Error.ASIL_ERRORS[ASIL] = 0
-                return Errors.REBOOT_DEVICE
+                return Errors.GRACEFUL_REBOOT
         return Errors.NO_REBOOT
+
+    def graceful_reboot_devices(self, device_name: str):
+        """graceful_reboot: Gracefully reboot the device."""
+        if device_name not in self.__device_list:
+            return Errors.INVALID_DEVICE_NAME
+        self.__reboot_device(device_name)
 
     def reboot(self):
         """Reboot the satellite by resetting the main power."""
