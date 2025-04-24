@@ -19,7 +19,7 @@ from hal.configuration import SATELLITE
 
 IDX_LENGTH = class_length(EPS_IDX)
 WARNING_IDX_LENGTH = class_length(EPS_WARNING_IDX)
-
+FUEL_GAUGE_LOG_FREQ = 5  # log fuel gauge readings every 5 seconds
 
 class Task(TemplateTask):
     name = "EPS"
@@ -218,14 +218,14 @@ class Task(TemplateTask):
             self.log_vc("ZM Coil", EPS_IDX.ZM_COIL_VOLTAGE, EPS_IDX.ZM_COIL_CURRENT, voltage, current)
 
     def process_fuel_gauge_readings(self):
-        self.log_info(f"Battery Pack Temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]}°cC\n \
-                        Battery Pack Reported SOC: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]}%\n \
-                        Battery Pack Reported Capacity: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY]} mAh\n \
-                        Battery Pack Current: {self.log_data[EPS_IDX.BATTERY_PACK_CURRENT]} mA\n \
-                        Battery Pack Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_VOLTAGE]} mV\n \
-                        Battery Pack Midpoint Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE]} mV\n \
-                        Battery Pack Time-to-Empty: {self.log_data[EPS_IDX.BATTERY_PACK_TTE]} seconds\n \
-                        Battery Pack Time-to-Full: {self.log_data[EPS_IDX.BATTERY_PACK_TTF]} seconds")
+        self.log_info(f"Battery Pack Temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]}°cC")
+        self.log_info(f"Battery Pack Reported SOC: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]}% ")
+        self.log_info(f"Battery Pack Reported Capacity: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY]} mAh ")
+        self.log_info(f"Battery Pack Current: {self.log_data[EPS_IDX.BATTERY_PACK_CURRENT]} mA ")
+        self.log_info(f"Battery Pack Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_VOLTAGE]} mV ")
+        self.log_info(f"Battery Pack Midpoint Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE]} mV ")
+        self.log_info(f"Battery Pack Time-to-Empty: {self.log_data[EPS_IDX.BATTERY_PACK_TTE]} seconds ")
+        self.log_info(f"Battery Pack Time-to-Full: {self.log_data[EPS_IDX.BATTERY_PACK_TTF]} seconds ")
 
         soc = self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]
         curr_flag = self.log_data[EPS_IDX.EPS_POWER_FLAG]
@@ -264,13 +264,15 @@ class Task(TemplateTask):
                 if SATELLITE.TORQUE_DRIVERS_AVAILABLE(location):
                     self.process_torque_coil_readings(location, sensor)
 
-            if self.log_counter % self.frequency == 0:
-                self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
-                self.log_info(f"CPU temperature: {self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE]} °cC ")
-
+            if self.log_counter % (FUEL_GAUGE_LOG_FREQ * self.frequency) == 0:
                 if SATELLITE.FUEL_GAUGE_AVAILABLE:
                     self.read_fuel_gauge()
                     self.process_fuel_gauge_readings()
+
+            # Log every second
+            if self.log_counter % self.frequency == 0:
+                self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
+                self.log_info(f"CPU temperature: {self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE]} °cC ")
 
                 if SATELLITE.BATTERY_HEATERS_AVAILABLE:
                     battery_heaters = SATELLITE.BATTERY_HEATERS
