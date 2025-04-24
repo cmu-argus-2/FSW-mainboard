@@ -148,14 +148,15 @@ class Task(TemplateTask):
 
     def set_battery_heaters(self, heaters):
         enabled = heaters.heater0_enabled() or heaters.heater1_enabled()
-        temp = self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]
-        flag = self.log_data[EPS_IDX.EPS_POWER_FLAG]
-        if SHOULD_ENABLE_HEATERS(enabled, temp, flag):
+        temp = self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE]
+        if SATELLITE.FUEL_GAUGE_AVAILABLE:
+            temp = self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]
+        if SHOULD_ENABLE_HEATERS(enabled, temp):
             heaters.enable_heater0()
             heaters.enable_heater1()
             self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED] = 1
             self.log_info("Enabled battery heaters")
-        if SHOULD_DISABLE_HEATERS(enabled, temp, flag):
+        if SHOULD_DISABLE_HEATERS(enabled, temp):
             heaters.disable_heater0()
             heaters.disable_heater1()
             self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED] = 0
@@ -218,7 +219,7 @@ class Task(TemplateTask):
             self.set_power_alert(voltage, current, EPS_WARNING_IDX.ZM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
             self.log_vc("ZM Coil", EPS_IDX.ZM_COIL_VOLTAGE, EPS_IDX.ZM_COIL_CURRENT, voltage, current)
 
-    def process_fuel_gauge_readings(self):
+    def log_fuel_gauge_readings(self):
         self.log_info(f"Battery Pack Temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]}°cC")
         self.log_info(f"Battery Pack Reported SOC: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]}% ")
         self.log_info(f"Battery Pack Reported Capacity: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY]} mAh ")
@@ -228,6 +229,7 @@ class Task(TemplateTask):
         self.log_info(f"Battery Pack Time-to-Empty: {self.log_data[EPS_IDX.BATTERY_PACK_TTE]} seconds ")
         self.log_info(f"Battery Pack Time-to-Full: {self.log_data[EPS_IDX.BATTERY_PACK_TTF]} seconds ")
 
+    def update_eps_state(self):
         soc = self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]
         curr_flag = self.log_data[EPS_IDX.EPS_POWER_FLAG]
         flag = GET_EPS_POWER_FLAG(curr_flag, soc)
@@ -265,15 +267,14 @@ class Task(TemplateTask):
                 if SATELLITE.TORQUE_DRIVERS_AVAILABLE(location):
                     self.process_torque_coil_readings(location, sensor)
 
-            if self.log_counter % (FUEL_GAUGE_LOG_FREQ * self.frequency) == 0:
-                if SATELLITE.FUEL_GAUGE_AVAILABLE:
-                    self.read_fuel_gauge()
-                    self.process_fuel_gauge_readings()
-
             # Log every second
             if self.log_counter % self.frequency == 0:
                 self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
                 self.log_info(f"CPU temperature: {self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE]} °cC ")
+
+                if SATELLITE.FUEL_GAUGE_AVAILABLE:
+                    self.read_fuel_gauge()
+                    self.update_eps_state()
 
                 if SATELLITE.BATTERY_HEATERS_AVAILABLE:
                     battery_heaters = SATELLITE.BATTERY_HEATERS
@@ -281,5 +282,10 @@ class Task(TemplateTask):
                     self.log_info(f"Battery Heaters Enabled: {self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED]}")
 
                 DH.log_data("eps", self.log_data)
+
+            if self.log_counter % (FUEL_GAUGE_LOG_FREQ * self.frequency) == 0:
+                if SATELLITE.FUEL_GAUGE_AVAILABLE:
+                    self.log_fuel_gauge_readings()
+
             DH.log_data("eps_warning", self.warning_log_data)
             self.log_counter += 1
