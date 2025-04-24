@@ -102,53 +102,7 @@ class Task(TemplateTask):
                     self.MODE = Modes.STABLE
 
             # ------------------------------------------------------------------------------------------------------------------------------------
-            # LOW POWER
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            elif SM.current_state == STATES.LOW_POWER:
-                # Turn coils off to conserve power
-                zero_all_coils()
-
-                if self.execution_counter < 4:
-                    # Update Gyro and attitude estimate via propagation
-                    self.AD.gyro_update(self.time, update_covariance=False)
-                    self.execution_counter += 1
-
-                else:
-                    if not self.AD.initialized:
-                        status_1, status_2 = self.AD.initialize_mekf()
-                        if status_1 != StatusConst.OK or status_2 != StatusConst.OK:
-                            self.failure_messages.append(
-                                StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
-                            )
-                    else:
-                        # Update Each sensor with covariances
-                        status_1, status_2 = self.AD.position_update(self.time)
-                        if status_1 != StatusConst.OK:
-                            self.failure_messages.append(
-                                StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
-                            )
-                        else:
-                            status_1, status_2 = self.AD.sun_position_update(self.time, update_covariance=True)
-                            if status_1 != StatusConst.OK:
-                                self.failure_messages.append(
-                                    StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
-                                )
-
-                            self.AD.gyro_update(self.time, update_covariance=True)
-
-                            status_1, status_2 = self.AD.magnetometer_update(self.time, update_covariance=True)
-                            if status_1 != StatusConst.OK:
-                                self.failure_messages.append(
-                                    StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
-                                )
-
-                    # No Attitude Control in Low-power mode
-
-                    # Reset Execution counter
-                    self.execution_counter = 0
-
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            # NOMINAL & EXPERIMENT
+            # NOMINAL and LOW-POWER
             # ------------------------------------------------------------------------------------------------------------------------------------
             else:
                 if (
@@ -156,6 +110,7 @@ class Task(TemplateTask):
                     and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
                     and self.AD.current_mode() == Modes.TUMBLING
                 ):
+                    # Do not allow a switch to Detumbling from Low power
                     self.MODE = Modes.TUMBLING
 
                 else:
@@ -200,8 +155,9 @@ class Task(TemplateTask):
                         # identify Mode based on current sensor readings
                         self.MODE = self.AD.current_mode()
 
-                        # Run attitude control
-                        self.attitude_control()
+                        # Run attitude control if not in Low-power
+                        if SM.current_state != STATES.LOW_POWER:
+                            self.attitude_control()
 
                         # Reset Execution counter
                         self.execution_counter = 0
