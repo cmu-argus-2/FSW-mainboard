@@ -21,6 +21,7 @@ IDX_LENGTH = class_length(EPS_IDX)
 WARNING_IDX_LENGTH = class_length(EPS_WARNING_IDX)
 FUEL_GAUGE_LOG_FREQ = 5  # log fuel gauge readings every 5 seconds
 
+
 class Task(TemplateTask):
     name = "EPS"
     ID = 0x01
