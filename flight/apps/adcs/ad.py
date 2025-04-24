@@ -9,8 +9,7 @@ magnetic field data on the mainboard.
 
 """
 
-from apps.adcs.consts import Modes, PhysicalConst, StatusConst
-from apps.adcs.frames import convert_ecef_state_to_eci
+from apps.adcs.consts import ControllerConst, Modes, PhysicalConst, StatusConst
 from apps.adcs.igrf import igrf_eci
 from apps.adcs.math import R_to_quat, quat_to_R, quaternion_multiply, skew
 from apps.adcs.orbit_propagation import OrbitPropagator
@@ -50,15 +49,14 @@ class AttitudeDetermination:
 
     # Time storage
     last_gyro_update_time = 0
-    last_gyro_cov_update_time = 0
     mekf_init_start_time = None
-    mekf_timeout = 30  # seconds TODO: Decide a timeout and change
+    mekf_timeout = 300  # seconds TODO: Decide a timeout and change
 
     # Sensor noise covariances (Decide if these numbers should be hardcoded here or placed in adcs/consts.py)
-    gyro_white_noise_sigma = 0.01  # TODO : characetrize sensor and update
-    gyro_bias_sigma = 0.01  # TODO : characetrize sensor and update
-    sun_sensor_sigma = 0.01  # TODO : characetrize sensor and update
-    magnetometer_sigma = 0.01  # TODO : characetrize sensor and update
+    gyro_white_noise_sigma = 1.5e-4  # TODO : characetrize sensor and update
+    gyro_bias_sigma = 1.5e-4  # TODO : characetrize sensor and update
+    sun_sensor_sigma = 1e-4  # TODO : characetrize sensor and update
+    magnetometer_sigma = 1e-3  # TODO : characetrize sensor and update
 
     # EKF Covariances
     P = 10 * np.ones((6, 6))  # TODO : characterize process noise
@@ -136,6 +134,7 @@ class AttitudeDetermination:
             # Ignore MEKF initialization
             self.state[self.attitude_idx] = np.array([1, 0, 0, 0])
             self.initialized = True
+            self.last_gyro_update_time = current_time
             return StatusConst.OK, StatusConst.MEKF_INIT_FORCE
 
         # Get a valid position from OrbitProp
@@ -187,6 +186,7 @@ class AttitudeDetermination:
         self.state[self.sun_lux_idx] = lux_readings
 
         self.initialized = True
+        self.last_gyro_update_time = current_time
 
         return StatusConst.OK, StatusConst.OK
 
@@ -388,7 +388,7 @@ class AttitudeDetermination:
                     G[3:6, 3:6] = np.eye(3)
 
                     A = np.zeros((12, 12))
-                    A[0:6, 0:6] = F
+                    A[0:6, 0:6] = -F
                     A[0:6, 6:12] = np.dot(np.dot(G, self.Q), G.transpose())
                     A[6:12, 6:12] = F.transpose()
                     A = A * dt
@@ -396,7 +396,6 @@ class AttitudeDetermination:
                     Aexp = np.eye(12) + A
                     Phi = Aexp[6:12, 6:12].transpose()
                     Qdk = np.dot(Phi, Aexp[0:6, 6:12])
-                    Qdk = np.dot(np.dot(Phi, self.P), Phi.transpose()) + Qdk
                     self.P = np.dot(np.dot(Phi, self.P), Phi.transpose()) + Qdk
 
     def EKF_update(self, H: np.ndarray, innovation: np.ndarray, R_noise: np.ndarray) -> None:
@@ -409,10 +408,10 @@ class AttitudeDetermination:
         # S is scaled up by 1000 and then down to remove this error
         # If the singularity persists, we stop the covariance update
         try:
-            S_inv = 1000 * np.linalg.inv(1000 * S)
+            K = np.dot(np.dot(self.P, H.transpose()), 1000 * np.linalg.inv(1000 * S))
         except ValueError:
             return StatusConst.EKF_UPDATE_FAIL
-        K = np.dot(np.dot(self.P, H.transpose()), S_inv)
+
         dx = np.dot(K, innovation)
 
         dq_norm = np.linalg.norm(dx[0:3])
@@ -423,10 +422,9 @@ class AttitudeDetermination:
             attitude_correction[0] = np.cos(dq_norm / 2)
             attitude_correction[1:4] = np.sin(dq_norm / 2) * dx[0:3] / dq_norm
 
+        # Update State
         self.state[self.attitude_idx] = quaternion_multiply(self.state[self.attitude_idx], attitude_correction)
-
-        gyro_bias_correction = dx[3:]
-        self.state[self.bias_idx] = self.state[self.bias_idx] + gyro_bias_correction
+        self.state[self.bias_idx] = self.state[self.bias_idx] + dx[3:]
 
         # Symmetric Joseph update
         Identity = np.eye(6)
@@ -436,19 +434,58 @@ class AttitudeDetermination:
 
         return StatusConst.OK
 
-    def current_mode(self) -> int:
+    def current_mode(self, current_mode) -> int:
         """
         - Returns the current mode of the ADCS
         """
-        if np.linalg.norm(self.state[self.omega_idx]) >= Modes.STABLE_TOL:
-            return Modes.TUMBLING
-        else:
-            if self.state[self.sun_status_idx] == StatusConst.SUN_ECLIPSE:
+        omega = np.linalg.norm(self.state[self.omega_idx])
+        if current_mode == Modes.TUMBLING:
+            if omega <= Modes.TUMBLING_LO:
                 return Modes.STABLE
             else:
-                sun_vector_error = Modes.SUN_VECTOR_REF - self.state[self.sun_pos_idx]
+                return Modes.TUMBLING
+        elif current_mode == Modes.STABLE:
+            momentum_error = np.linalg.norm(
+                ControllerConst.MOMENTUM_TARGET - np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx])
+            )
 
-                if np.linalg.norm(sun_vector_error) >= Modes.SUN_POINTED_TOL:
-                    return Modes.STABLE
-                else:
-                    return Modes.SUN_POINTED
+            if omega >= Modes.TUMBLING_HI:
+                return Modes.TUMBLING
+
+            elif momentum_error <= Modes.STABLE_TOL_LO:
+                return Modes.SUN_POINTED
+
+            else:
+                return Modes.STABLE
+
+        elif current_mode == Modes.SUN_POINTED:
+            momentum_error = np.linalg.norm(
+                ControllerConst.MOMENTUM_TARGET - np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx])
+            )
+            sun_error = np.linalg.norm(
+                self.state[self.sun_pos_idx]
+                - np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx])
+                / np.linalg.norm(ControllerConst.MOMENTUM_TARGET)
+            )
+
+            if momentum_error >= Modes.STABLE_TOL_HI:
+                return Modes.STABLE
+
+            elif self.state[self.sun_status_idx] == StatusConst.OK and sun_error <= Modes.SUN_POINTED_TOL:
+                return Modes.ACS_OFF
+
+            else:
+                return Modes.SUN_POINTED
+
+        elif current_mode == Modes.ACS_OFF:
+            momentum_error = np.linalg.norm(
+                ControllerConst.MOMENTUM_TARGET - np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx])
+            )
+            if momentum_error >= Modes.STABLE_TOL_HI:
+                return Modes.STABLE
+
+            else:
+                return Modes.ACS_OFF
+
+        else:
+            raise Exception(f"Invalid Current Mode {current_mode}")
