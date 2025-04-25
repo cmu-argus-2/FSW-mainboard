@@ -278,21 +278,20 @@ class AttitudeDetermination:
                 return StatusConst.SUN_UPDATE_FAIL, StatusConst.TRUE_SUN_MAP_FAIL  # End update if true position is absent
             else:
                 true_sun_pos_eci = true_sun_pos_eci / true_sun_pos_eci_norm
+                true_sun_pos_body = np.dot(quat_to_R(self.state[self.attitude_idx]).transpose(), true_sun_pos_eci)
 
-            # Convert the measured position to ECI
-            measured_sun_pos_eci = np.dot(quat_to_R(self.state[self.attitude_idx]), sun_pos_body)
-            measured_sun_pos_eci_norm = np.linalg.norm(measured_sun_pos_eci)
-            if measured_sun_pos_eci_norm == 0:
+            # Get measured sun position
+            measured_sun_pos_body_norm = np.linalg.norm(sun_pos_body)
+            if measured_sun_pos_body_norm == 0:
                 return StatusConst.SUN_UPDATE_FAIL, StatusConst.ZERO_NORM  # End update if measured position is absent
             else:
-                measured_sun_pos_eci = measured_sun_pos_eci / measured_sun_pos_eci_norm
+                measured_sun_pos_body = sun_pos_body / measured_sun_pos_body_norm
 
             # EKF update
-            innovation = true_sun_pos_eci - measured_sun_pos_eci
-            s_cross = skew(true_sun_pos_eci)
-            Cov_sunsensor = self.sun_sensor_sigma**2 * np.dot(np.dot(s_cross, np.eye(3)), s_cross.transpose())
+            innovation = true_sun_pos_body - measured_sun_pos_body
+            Cov_sunsensor = self.sun_sensor_sigma**2
             H = np.zeros((3, 6))
-            H[0:3, 0:3] = -s_cross
+            H[0:3, 0:3] = -skew(true_sun_pos_body)
 
             # Log status based on EKF update
             update_status = self.EKF_update(H, innovation, Cov_sunsensor)
@@ -323,21 +322,20 @@ class AttitudeDetermination:
                 return StatusConst.MAG_UPDATE_FAIL, StatusConst.TRUE_MAG_MAP_FAIL  # End update if true mag field is zeros
             else:
                 true_mag_field_eci = true_mag_field_eci / true_mag_field_eci_norm
+                true_mag_field_body = np.dot(quat_to_R(self.state[self.attitude_idx]).transpose(), true_mag_field_eci)
 
-            # Convert measured mag field into ECI
-            measured_mag_field_eci = np.dot(quat_to_R(self.state[self.attitude_idx]), mag_field_body)
-            measured_mag_field_eci_norm = np.linalg.norm(measured_mag_field_eci)
-            if measured_mag_field_eci_norm == 0:
+            # Get measured mag field
+            measured_mag_field_body_norm = np.linalg.norm(mag_field_body)
+            if measured_mag_field_body_norm == 0:
                 return StatusConst.MAG_UPDATE_FAIL, StatusConst.ZERO_NORM  # End update if measured mag field is zeros
             else:
-                measured_mag_field_eci = measured_mag_field_eci / measured_mag_field_eci_norm
+                measured_mag_field_body = mag_field_body / measured_mag_field_body_norm
 
             # EKF update
-            innovation = true_mag_field_eci - measured_mag_field_eci
-            s_cross = skew(true_mag_field_eci)
-            Cov_mag_field = self.magnetometer_sigma**2 * np.dot(np.dot(s_cross, np.eye(3)), s_cross.transpose())
+            innovation = true_mag_field_body - measured_mag_field_body
+            Cov_mag_field = self.magnetometer_sigma**2 * np.eye(3)
             H = np.zeros((3, 6))
-            H[0:3, 0:3] = -s_cross
+            H[0:3, 0:3] = -skew(true_mag_field_body)
 
             # Update log based on EKF status
             update_status = self.EKF_update(H, innovation, Cov_mag_field)
@@ -375,28 +373,20 @@ class AttitudeDetermination:
                     delta_quat[1:4] = np.sin(rotvec_norm / 2) * rotvec / rotvec_norm
 
                 self.state[self.attitude_idx] = quaternion_multiply(self.state[self.attitude_idx], delta_quat)
-                R_q_next = quat_to_R(self.state[self.attitude_idx])
 
                 self.last_gyro_update_time = current_time
 
                 if update_covariance:  # if update covariance, update covariance matrices
                     F = np.zeros((6, 6))
-                    F[0:3, 3:6] = -R_q_next
+                    F[0:3, 0:3] = -skew(unbiased_omega)
+                    F[0:3, 3:6] = -np.eye(3)
 
                     G = np.zeros((6, 6))
-                    G[0:3, 0:3] = -R_q_next
+                    G[0:3, 0:3] = -np.eye(3)
                     G[3:6, 3:6] = np.eye(3)
-
-                    A = np.zeros((12, 12))
-                    A[0:6, 0:6] = -F
-                    A[0:6, 6:12] = np.dot(np.dot(G, self.Q), G.transpose())
-                    A[6:12, 6:12] = F.transpose()
-                    A = A * dt
-
-                    Aexp = np.eye(12) + A
-                    Phi = Aexp[6:12, 6:12].transpose()
-                    Qdk = np.dot(Phi, Aexp[0:6, 6:12])
-                    self.P = np.dot(np.dot(Phi, self.P), Phi.transpose()) + Qdk
+                    
+                    Phi = np.eye(6) + F*dt
+                    self.P = np.dot(np.dot(Phi, self.P), Phi.transpose()) + np.dot(np.dot(G, self.Q), G.transpose())
 
     def EKF_update(self, H: np.ndarray, innovation: np.ndarray, R_noise: np.ndarray) -> None:
         """

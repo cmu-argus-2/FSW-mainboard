@@ -307,3 +307,4 @@ class Task(TemplateTask):
             # Log Gyro Angular Velocities
             self.log_info(f"ADCS Mode : {self.MODE}")
             self.log_info(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z + 1]}")
+            self.log_info(f"Gyro Bias : {self.AD.state[self.AD.bias_idx]}")
