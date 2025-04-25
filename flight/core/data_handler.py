@@ -418,7 +418,7 @@ class DataProcess:
                     transmit_file = files[1]
 
                 if file_time is not None:
-                    result_file = get_closest_file_time(file_time, files)
+                    result_file = get_closest_file_time(file_time, files[1:])
                     transmit_file = result_file if result_file is not None else transmit_file
 
             tm_path = join_path(self.dir_path, transmit_file)

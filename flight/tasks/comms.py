@@ -249,7 +249,8 @@ class Task(TemplateTask):
 
             # Register comms process for logging RX RSSI
             if not DH.data_process_exists("comms"):
-                DH.register_data_process("comms", "Lf", True, 500000)
+                # This is currently 4 Bytes
+                DH.register_data_process("comms", "Lf", True, 20000)
 
             # Increment counter
             self.TX_COUNTER += 1

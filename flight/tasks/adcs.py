@@ -78,8 +78,9 @@ class Task(TemplateTask):
 
         else:
             if not DH.data_process_exists("adcs"):
-                data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f"
-                DH.register_data_process("adcs", data_format, True, data_limit=500000, write_interval=5)
+                data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f"  # Currently this is 82 bytes
+                # Data limit for 2000 seconds of data in each file. File limit size is calculated as data_limit // bytesize
+                DH.register_data_process("adcs", data_format, True, data_limit=410000, write_interval=5)
 
             self.time = TPM.time()
             self.log_data[ADCS_IDX.TIME_ADCS] = self.time
