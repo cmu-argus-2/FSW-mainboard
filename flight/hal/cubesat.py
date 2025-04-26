@@ -398,12 +398,12 @@ class CubeSat:
         return NotImplementedError("CubeSats must implement reboot_devices method")
 
     @property
-    def SAMPLE_DEVICE_ERRORS(self):
+    def SAMPLE_DEVICE_ERRORS(self) -> dict[str, list[int]]:
         """SAMPLE_DEVICE_ERRORS: Sample the device errors"""
         errors = {}
         for name, device in self.__device_list.items():
             if device.device is None and device.dead is False:
-                errors[name] = Errors.DEVICE_NOT_INITIALISED
+                errors[name] = [Errors.DEVICE_NOT_INITIALISED]
             elif device.device is not None and device.dead is False:
                 errors[name] = device.device.device_errors
         return errors
