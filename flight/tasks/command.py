@@ -107,11 +107,11 @@ class Task(TemplateTask):
                 if not DH.data_process_exists("cdh"):
                     data_format = "LbLbbbbb"  # This is currently 14 Bytes
                     # Data limit for 2000 seconds of data in each file. File limit size is calculated as data_limit // bytesize
-                    DH.register_data_process("cdh", data_format, True, data_limit=70000)
+                    DH.register_data_process("cdh", data_format, True, data_limit=140000)
 
                 if not DH.data_process_exists("cmd_logs"):
                     # This is currently 6 Bytes
-                    DH.register_data_process("cmd_logs", "LBB", True, data_limit=30000)
+                    DH.register_data_process("cmd_logs", "LBB", True, data_limit=60000)
 
                 # T0: Boot over and deployment complete
                 SM.switch_to(STATES.DETUMBLING)
