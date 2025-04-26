@@ -68,7 +68,6 @@ class Task(TemplateTask):
     async def main_task(self):
         log_data = [0] * IDX_LENGTH
         log_data[HAL_IDX.TIME_HAL] = TPM.time()
-        print(f"HAL Monitor: {log_data[HAL_IDX.TIME_HAL]}")
 
         if SM.current_state == STATES.STARTUP:
             if not DH.data_process_exists(self.name):
@@ -95,7 +94,6 @@ class Task(TemplateTask):
                                 self.log_error(f"Unable to parse {key_name}")
                     self.restored = True
             for device_name, device_error in SATELLITE.ERRORS.items():
-                print(f"processing {device_name} {device_error}")
                 self.log_error_handle_info(self.error_decision(device_name, device_error), device_name, device_error)
 
         else:
@@ -106,6 +104,6 @@ class Task(TemplateTask):
         DH.log_data(self.name, self.log_device_status(log_data))
         # regular reboot every 24 hours
         if TPM.monotonic() - SATELLITE.BOOTTIME >= REGULAR_REBOOT_TIME:
-            # TODO: implement graceful shutdown
+            # TODO: graceful shutdown for payload if needed
             DH.graceful_shutdown()
             SATELLITE.reboot()
