@@ -402,8 +402,9 @@ class CubeSat:
         """SAMPLE_DEVICE_ERRORS: Sample the device errors"""
         errors = {}
         for name, device in self.__device_list.items():
-            if device.device is None and device.dead is False:
-                errors[name] = [Errors.DEVICE_NOT_INITIALISED]
-            elif device.device is not None and device.dead is False:
-                errors[name] = device.device.device_errors
+            if device.ASIL != ASIL0:
+                if device.device is None and device.dead is False and device.error == Errors.DEVICE_NOT_INITIALISED:
+                    errors[name] = [Errors.DEVICE_NOT_INITIALISED]
+                elif device.device is not None and device.dead is False:
+                    errors[name] = device.device.device_errors
         return errors

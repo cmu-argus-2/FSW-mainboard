@@ -38,7 +38,25 @@ class Task(TemplateTask):
     def error_decision(self, device_name, device_errors):
         # decide what to do with the error based, decision made on the most severe error
         if Errors.DEVICE_NOT_INITIALISED in device_errors:
-            return SATELLITE.handle_error(device_name)
+            return [SATELLITE.handle_error(device_name), Errors.DEVICE_NOT_INITIALISED]
+        elif Errors.IMU_FATAL_ERROR in device_errors:
+            return [SATELLITE.handle_error(device_name), Errors.IMU_FATAL_ERROR]
+        elif Errors.RADIO_RC64K_CALIBRATION_FAILED in device_errors:
+            return [SATELLITE.handle_error(device_name), Errors.RADIO_RC64K_CALIBRATION_FAILED]
+        elif Errors.RADIO_RC13M_CALIBRATION_FAILED in device_errors:
+            return [SATELLITE.handle_error(device_name), Errors.RADIO_RC13M_CALIBRATION_FAILED]
+        elif Errors.RADIO_PLL_CALIBRATION_FAILED in device_errors:
+            return [SATELLITE.handle_error(device_name), Errors.RADIO_PLL_CALIBRATION_FAILED]
+        elif Errors.RADIO_ADC_CALIBRATION_FAILED in device_errors:
+            return [SATELLITE.handle_error(device_name), Errors.RADIO_ADC_CALIBRATION_FAILED]
+        elif Errors.RADIO_IMG_CALIBRATION_FAILED in device_errors:
+            return [SATELLITE.handle_error(device_name), Errors.RADIO_IMG_CALIBRATION_FAILED]
+        elif Errors.RADIO_XOSC_START_FAILED in device_errors:
+            return [SATELLITE.handle_error(device_name), Errors.RADIO_XOSC_START_FAILED]
+        elif Errors.RADIO_PA_RAMPING_FAILED in device_errors:
+            return [SATELLITE.handle_error(device_name), Errors.RADIO_PA_RAMPING_FAILED]
+
+        return [Errors.NO_ERROR, Errors.NO_ERROR]
 
     def log_device_status(self, log_data):
         for device_name, error_list in SATELLITE.DEVICES_STATUS.items():
@@ -50,7 +68,8 @@ class Task(TemplateTask):
             log_data[dead_idx] = error_list[2]
         return log_data
 
-    def log_error_handle_info(self, result, device_name, device_error):
+    def log_error_handle_info(self, results, device_name):
+        result, device_error = results
         if result == Errors.NO_REBOOT:
             self.log_info(f"Device {device_name} has {device_error}, no reboot occured")
             SATELLITE.update_device_error(device_name, device_error)
@@ -58,7 +77,7 @@ class Task(TemplateTask):
             self.log_info(f"Rebooted {device_name} due to error {device_error}")
         elif result == Errors.GRACEFUL_REBOOT:
             DH.graceful_shutdown()
-            SATELLITE.graceful_reboot_devices()
+            SATELLITE.graceful_reboot_devices(device_name)
             DH.restore_data_process_files()
             self.log_info(f"Gracefully rebooted {device_name} due to error {device_error}")
         elif result == Errors.DEVICE_DEAD:
@@ -94,12 +113,9 @@ class Task(TemplateTask):
                             else:
                                 self.log_error(f"Unable to parse {key_name}")
                     self.restored = True
-            for device_name, device_error in SATELLITE.ERRORS.items():
-                self.log_error_handle_info(self.error_decision(device_name, [device_error]), device_name, device_error)
 
-        else:
-            for device_name, device_error_list in SATELLITE.SAMPLE_DEVICE_ERRORS.items():
-                self.log_error_handle_info(self.error_decision(device_name, device_error_list), device_name, device_error)
+        for device_name, device_error_list in SATELLITE.SAMPLE_DEVICE_ERRORS.items():
+            self.log_error_handle_info(self.error_decision(device_name, device_error_list), device_name)
 
         DH.log_data(self.name, self.log_device_status(log_data))
         # regular reboot every 24 hours
