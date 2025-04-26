@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from hal.cubesat import CubeSat
 from hal.drivers.burnwire import BurnWires
+from hal.drivers.errors import Errors
 from hal.drivers.fuel_gauge import FuelGauge
 from hal.drivers.gps import GPS
 from hal.drivers.imu import IMU
@@ -51,9 +52,9 @@ class EmulatedSatellite(CubeSat):
         # self._radio = Radio(self.__use_socket)
         self.append_device("RADIO", None, Radio(self.__use_socket))
         # self._sd_card = SD()
-        self.append_device("SD", None, SD())
+        self.append_device("SDCARD", None, SD())
         # self._burnwires = self.init_device(BurnWires())
-        self.append_device("BURNWIRES", None, BurnWires())
+        self.append_device("BURN_WIRES", None, BurnWires())
         self._payload_uart = self.init_device(Payload())
         self.append_device("PAYLOAD_UART", None, self._payload_uart)
 
@@ -111,3 +112,14 @@ class EmulatedSatellite(CubeSat):
         # self._torque_drivers.apply_control(dir, ctrl)
         if self.TORQUE_DRIVERS_AVAILABLE(dir):
             self._device_list["TORQUE_" + dir].device.set_throttle(dir, ctrl)
+
+    ######################## ERROR HANDLING ########################
+
+    def handle_error(self, _: str) -> int:
+        return Errors.NO_REBOOT
+
+    def graceful_reboot_devices(self, device_name):
+        pass
+
+    def reboot(self):
+        pass

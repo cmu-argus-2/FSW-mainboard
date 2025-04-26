@@ -12,3 +12,12 @@ class RTC:
 
     def set_datetime(self, date_input: struct_time):
         self.datetime = date_input
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return []
+
+    def deinit(self):
+        return

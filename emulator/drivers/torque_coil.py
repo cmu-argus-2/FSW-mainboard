@@ -16,6 +16,15 @@ class CoilDriver:
     def read_voltage_current(self):
         return (self.__voltage, self.__current)
 
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return []
+
+    def deinit(self):
+        return
+
 
 class TorqueCoilArray:
     def __init__(self, simulator=None) -> None:

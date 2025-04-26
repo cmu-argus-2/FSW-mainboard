@@ -3,13 +3,32 @@ from collections import OrderedDict
 from typing import List
 
 from hal.drivers.diagnostics.diagnostics import Diagnostics
+from hal.drivers.errors import Errors
+
+# Argus Safety Integrity Level
+ASIL0 = 0  # debug components, should not be in flight and do not care if error
+ASIL1 = 1
+ASIL2 = 2
+ASIL3 = 3
+ASIL4 = 4
 
 
 class Device:
-    def __init__(self, boot_fn: object, device: object = None, error: int = 0):
+    def __init__(
+        self,
+        boot_fn: object,
+        ASIL: int,
+        peripheral_line: bool = True,
+        device: object = None,
+        error: int = Errors.NO_ERROR,
+    ) -> None:
         self.device = device
         self.error = error
         self.boot_fn = boot_fn
+        self.ASIL = ASIL
+        self.error_count = 0
+        self.peripheral_line = peripheral_line
+        self.dead = False
 
 
 class CubeSat:
@@ -21,40 +40,42 @@ class CubeSat:
         return super().__new__(cls)
 
     def __init__(self):
-        # List of successfully initialized devices
         self._device_list = OrderedDict(
             [
-                # ("SDCARD", Device(self.__sd_card_boot)),
-                # ("IMU", Device(self.__imu_boot)),
-                # ("RTC", Device(self.__rtc_boot)),
-                # # ("GPS", Device(self.__gps_boot)),
-                # # ("RADIO", Device(self.__radio_boot)),
-                # # ("FUEL_GAUGE", Device(self.__fuel_gauge_boot)),
-                # # ("BURN_WIRE", Device(self.__burn_wire_boot)),
-                # ("BOARD_PWR", Device(self.__power_monitor_boot)),
-                # # ("RADIO_PWR", Device(self.__power_monitor_boot)),
-                # # ("GPS_PWR", Device(self.__power_monitor_boot)),
-                # # ("JETSON_PWR", Device(self.__power_monitor_boot)),
-                # # ("XP_PWR", Device(self.__power_monitor_boot)),
-                # # ("XM_PWR", Device(self.__power_monitor_boot)),
-                # # ("YP_PWR", Device(self.__power_monitor_boot)),
-                # # ("YM_PWR", Device(self.__power_monitor_boot)),
-                # # ("ZP_PWR", Device(self.__power_monitor_boot)),
-                # # ("TORQUE_XP", Device(self.__torque_driver_boot)),
-                # # ("TORQUE_XM", Device(self.__torque_driver_boot)),
-                # # ("TORQUE_YP", Device(self.__torque_driver_boot)),
-                # # ("TORQUE_YM", Device(self.__torque_driver_boot)),
-                # # ("TORQUE_ZP", Device(self.__torque_driver_boot)),
-                # # ("TORQUE_ZM", Device(self.__torque_driver_boot)),
-                # ("LIGHT_XP", Device(self.__light_sensor_boot)),
-                # ("LIGHT_XM", Device(self.__light_sensor_boot)),
-                # ("LIGHT_YP", Device(self.__light_sensor_boot)),
-                # ("LIGHT_YM", Device(self.__light_sensor_boot)),
-                # ("LIGHT_ZM", Device(self.__light_sensor_boot)),
-                # ("LIGHT_ZP_1", Device(self.__light_sensor_boot)),
-                # ("LIGHT_ZP_2", Device(self.__light_sensor_boot)),
-                # ("LIGHT_ZP_3", Device(self.__light_sensor_boot)),
-                # ("LIGHT_ZP_4", Device(self.__light_sensor_boot)),
+                # ("NEOPIXEL", Device(self.__neopixel_boot, ASIL0)),
+                # ("SDCARD", Device(self.__sd_card_boot, ASIL1)),  # SD Card must enabled before other devices
+                # ("RTC", Device(self.__rtc_boot, ASIL2)),
+                # ("GPS", Device(self.__gps_boot, ASIL3, peripheral_line=False)),
+                # ("RADIO", Device(self.__radio_boot, ASIL4, peripheral_line=False)),
+                # ("IMU", Device(self.__imu_boot, ASIL3)),
+                # ("FUEL_GAUGE", Device(self.__fuel_gauge_boot, ASIL2)),
+                # ("BATT_HEATERS", Device(self.__battery_heaters_boot, ASIL1)),
+                # ("WATCHDOG", Device(self.__watchdog_boot, ASIL2)),
+                # ("BURN_WIRES", Device(self.__burn_wire_boot, ASIL4)),
+                # ("BOARD_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                # ("RADIO_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                # ("GPS_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                # ("JETSON_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                # ("XP_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                # ("XM_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                # ("YP_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                # ("YM_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                # ("ZP_PWR", Device(self.__power_monitor_boot, ASIL1)),
+                # ("TORQUE_XP", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
+                # ("TORQUE_XM", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
+                # ("TORQUE_YP", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
+                # ("TORQUE_YM", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
+                # ("TORQUE_ZP", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
+                # ("TORQUE_ZM", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
+                # ("LIGHT_XP", Device(self.__light_sensor_boot, ASIL2)),
+                # ("LIGHT_XM", Device(self.__light_sensor_boot, ASIL2)),
+                # ("LIGHT_YP", Device(self.__light_sensor_boot, ASIL2)),
+                # ("LIGHT_YM", Device(self.__light_sensor_boot, ASIL2)),
+                # ("LIGHT_ZM", Device(self.__light_sensor_boot, ASIL2)),
+                # ("LIGHT_ZP_1", Device(self.__light_sensor_boot, ASIL2)),
+                # ("LIGHT_ZP_2", Device(self.__light_sensor_boot, ASIL2)),
+                # ("LIGHT_ZP_3", Device(self.__light_sensor_boot, ASIL2)),
+                # ("LIGHT_ZP_4", Device(self.__light_sensor_boot, ASIL2)),
             ]
         )
 
@@ -68,7 +89,7 @@ class CubeSat:
 
     def append_device(self, device_name: str, boot_fn: object, device: object = None, error: int = 0) -> None:
         """append_device: Append a device to the device list"""
-        self._device_list[device_name] = Device(boot_fn, device, error)
+        self._device_list[device_name] = Device(boot_fn=boot_fn, ASIL=ASIL0, device=device, error=error)
 
     @property
     def ERRORS(self):
@@ -80,6 +101,30 @@ class CubeSat:
             if device.error != Diagnostics.NOERROR:
                 error_list[name] = device.error
         return error_list
+
+    @property
+    def DEVICES_STATUS(self):
+        """DEVICES_STATUS: Returns the status of the devices"""
+        status = {}
+        for name, device in self._device_list.items():
+            if device.ASIL != ASIL0:
+                status[name] = [device.error, device.error_count, device.dead]
+        return status
+
+    def update_device_error(self, device_name: str, error: int):
+        """update_device_error: Update the error for the given device."""
+        if device_name in self._device_list:
+            self._device_list[device_name].error = error
+
+    def update_device_error_count(self, device_name: str, error_count: int):
+        """update_device_error_count: Update the error count for the given device."""
+        if device_name in self._device_list:
+            self._device_list[device_name].error_count = error_count
+
+    def update_device_dead(self, device_name: str, dead: bool):
+        """update_device_dead: Update the dead status for the given device."""
+        if device_name in self._device_list:
+            self._device_list[device_name].dead = dead
 
     def key_in_device_list(self, key: str) -> bool:
         """key_in_device_list: Check if the key is in the device list"""
@@ -261,28 +306,28 @@ class CubeSat:
         """BATT_HEATERS: Returns the battery heaters object
         :return: object or None
         """
-        return self.__device_list["BATT_HEATERS"].device
+        return self._device_list["BATT_HEATERS"].device
 
     @property
     def BATTERY_HEATERS_AVAILABLE(self) -> bool:
         """BATT_HEATERS_AVAILABLE: Returns True if the battery heaters are available
         :return: bool
         """
-        return self.key_in_device_list("BATT_HEATERS") and self.__device_list["BATT_HEATERS"].device is not None
+        return self.key_in_device_list("BATT_HEATERS") and self._device_list["BATT_HEATERS"].device is not None
 
     @property
     def WATCHDOG(self):
         """WATCHDOG: Returns the watchdog object
         :return: object or None
         """
-        return self.__device_list["WATCHDOG"].device
+        return self._device_list["WATCHDOG"].device
 
     @property
     def WATCHDOG_AVAILABLE(self) -> bool:
         """WATCHDOG_AVAILABLE: Returns True if the watchdog is available
         :return: bool
         """
-        return self.key_in_device_list("WATCHDOG") and self.__device_list["WATCHDOG"].device is not None
+        return self.key_in_device_list("WATCHDOG") and self._device_list["WATCHDOG"].device is not None
 
     @property
     def BOOTTIME(self):
@@ -290,3 +335,26 @@ class CubeSat:
         :return: object or None
         """
         return self._time_ref_boot
+
+    ######################## ERROR HANDLING ########################
+
+    def handle_error(self, device_name: str) -> int:
+        return NotImplementedError("CubeSats must implement handle_error method")
+
+    def graceful_reboot_devices(self, device_name: str):
+        return NotImplementedError("CubeSats must implement graceful_reboot_devices method")
+
+    def reboot(self, device_name: str):
+        return NotImplementedError("CubeSats must implement reboot_devices method")
+
+    @property
+    def SAMPLE_DEVICE_ERRORS(self) -> dict[str, list[int]]:
+        """SAMPLE_DEVICE_ERRORS: Sample the device errors"""
+        errors = {}
+        for name, device in self._device_list.items():
+            if device.ASIL != ASIL0:
+                if device.device is None and device.dead is False and device.error == Errors.DEVICE_NOT_INITIALISED:
+                    errors[name] = [Errors.DEVICE_NOT_INITIALISED]
+                elif device.device is not None and device.dead is False:
+                    errors[name] = device.device.device_errors
+        return errors

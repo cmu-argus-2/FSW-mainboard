@@ -701,7 +701,7 @@ class ArgusV3(CubeSat):
             ArgusV3Error.ASIL_ERRORS[ASIL] += 1
             if ArgusV3Error.ASIL_ERRORS[ASIL] >= ArgusV3Error.ASIL_THRESHOLDS[ASIL]:
                 ArgusV3Error.ASIL_ERRORS[ASIL] = 0
-                return Errors.GRACEFUL_REBOOT if self.__device_list[device_name].peripheral_line else Errors.REBOOT_DEVICE
+                return Errors.GRACEFUL_REBOOT
         return Errors.NO_REBOOT
 
     def graceful_reboot_devices(self, device_name: str):

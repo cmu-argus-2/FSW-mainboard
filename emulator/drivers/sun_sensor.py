@@ -9,6 +9,15 @@ class LightSensor:
             return self.__simulator.sun_lux()[self.__id]
         return self.__lux
 
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return []
+
+    def deinit(self):
+        return
+
 
 class LightSensorArray:
     def __init__(self, simulator=None) -> None:
