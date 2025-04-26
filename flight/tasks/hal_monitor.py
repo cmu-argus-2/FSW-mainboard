@@ -13,7 +13,7 @@ from hal.drivers.errors import Errors
 
 _IDX_LENGTH = class_length(HAL_IDX)
 _REGULAR_REBOOT_TIME = 60 * 60 * 24  # 24 hours
-
+_PERIPH_REBOOT_COUNT_IDX = getattr(HAL_IDX, "PERIPH_REBOOT_COUNT")
 _HAL_IDX_INV = {v: k for k, v in HAL_IDX.__dict__.items()}
 
 
@@ -22,6 +22,7 @@ class Task(TemplateTask):
         super().__init__(id)
         self.name = "HAL_MONITOR"
         self.restored = False
+        self.peripheral_reboot_count = 0
 
     ######################## HELPER FUNCTIONS ########################
 
@@ -66,6 +67,7 @@ class Task(TemplateTask):
             log_data[error_idx] = error_list[0]
             log_data[error_count_idx] = error_list[1]
             log_data[dead_idx] = error_list[2]
+        log_data[_PERIPH_REBOOT_COUNT_IDX] = self.peripheral_reboot_count
         return log_data
 
     def log_error_handle_info(self, results, device_name):
@@ -76,6 +78,7 @@ class Task(TemplateTask):
         elif result == Errors.REBOOT_DEVICE:
             self.log_info(f"Rebooted {device_name} due to error {device_error}")
         elif result == Errors.GRACEFUL_REBOOT:
+            self.peripheral_reboot_count += 1
             DH.graceful_shutdown()
             SATELLITE.graceful_reboot_devices(device_name)
             DH.restore_data_process_files()

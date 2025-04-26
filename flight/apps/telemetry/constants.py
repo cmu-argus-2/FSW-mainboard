@@ -241,6 +241,7 @@ class HAL_IDX:
     LIGHT_ZP_4_ERROR = const(97)
     LIGHT_ZP_4_ERROR_COUNT = const(98)
     LIGHT_ZP_4_DEAD = const(99)
+    PERIPH_REBOOT_COUNT = const(100)
 
 
 """
