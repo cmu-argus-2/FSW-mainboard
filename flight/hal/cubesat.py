@@ -94,14 +94,6 @@ class CubeSat:
         """boot_sequence: Boot sequence for the CubeSat."""
         raise NotImplementedError("CubeSats must implement boot method")
 
-    def reboot(self) -> None:
-        """reboot: Reboot the CubeSat."""
-        raise NotImplementedError("CubeSats must implement reboot method")
-
-    def handle_error(self, device_name: str) -> int:
-        """handle_error: Handle the error for the given device."""
-        raise NotImplementedError("CubeSats must implement handle_error method")
-
     def print_device_list(self) -> None:
         """print_device_list: Print the device list."""
         for name, device in self.__device_list.items():
@@ -388,17 +380,30 @@ class CubeSat:
     #     return self.__payload_uart is not None
 
     @property
-    def SAMPLE_DEVICE_ERRORS(self):
-        """SAMPLE_DEVICE_ERRORS: Sample the device errors"""
-        errors = {}
-        for name, device in self.__device_list.items():
-            if device.device is not None and device.dead is False:
-                errors[name] = device.device.device_errors
-        return errors
-
-    @property
     def BOOTTIME(self):
         """BOOTTIME: Returns the reference count since the board booted
         :return: object or None
         """
         return self._time_ref_boot
+
+    ######################## ERROR HANDLING ########################
+
+    def handle_error(self, device_name: str) -> int:
+        return NotImplementedError("CubeSats must implement handle_error method")
+
+    def graceful_reboot_devices(self, device_name: str):
+        return NotImplementedError("CubeSats must implement graceful_reboot_devices method")
+
+    def reboot(self, device_name: str):
+        return NotImplementedError("CubeSats must implement reboot_devices method")
+
+    @property
+    def SAMPLE_DEVICE_ERRORS(self):
+        """SAMPLE_DEVICE_ERRORS: Sample the device errors"""
+        errors = {}
+        for name, device in self.__device_list.items():
+            if device.device is None and device.dead is False:
+                errors[name] = Errors.DEVICE_NOT_INITIALISED
+            elif device.device is not None and device.dead is False:
+                errors[name] = device.device.device_errors
+        return errors

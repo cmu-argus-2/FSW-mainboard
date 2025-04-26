@@ -35,8 +35,9 @@ class Task(TemplateTask):
 
     ######################## ERROR HANDLING ########################
 
-    def error_decision(self, device_name, device_error):
-        if device_error == Errors.DEVICE_NOT_INITIALISED:
+    def error_decision(self, device_name, device_errors):
+        # decide what to do with the error based, decision made on the most severe error
+        if Errors.DEVICE_NOT_INITIALISED in device_errors:
             return SATELLITE.handle_error(device_name)
 
     def log_device_status(self, log_data):
@@ -94,12 +95,11 @@ class Task(TemplateTask):
                                 self.log_error(f"Unable to parse {key_name}")
                     self.restored = True
             for device_name, device_error in SATELLITE.ERRORS.items():
-                self.log_error_handle_info(self.error_decision(device_name, device_error), device_name, device_error)
+                self.log_error_handle_info(self.error_decision(device_name, [device_error]), device_name, device_error)
 
         else:
             for device_name, device_error_list in SATELLITE.SAMPLE_DEVICE_ERRORS.items():
-                for device_error in device_error_list:
-                    self.log_error_handle_info(self.error_decision(device_name, device_error), device_name, device_error)
+                self.log_error_handle_info(self.error_decision(device_name, device_error_list), device_name, device_error)
 
         DH.log_data(self.name, self.log_device_status(log_data))
         # regular reboot every 24 hours
