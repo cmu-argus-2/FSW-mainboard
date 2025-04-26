@@ -390,13 +390,13 @@ class CubeSat:
     ######################## ERROR HANDLING ########################
 
     def handle_error(self, device_name: str) -> int:
-        return NotImplementedError("CubeSats must implement handle_error method")
+        raise NotImplementedError("CubeSats must implement handle_error method")
 
     def graceful_reboot_devices(self, device_name: str):
-        return NotImplementedError("CubeSats must implement graceful_reboot_devices method")
+        raise NotImplementedError("CubeSats must implement graceful_reboot_devices method")
 
     def reboot(self, device_name: str):
-        return NotImplementedError("CubeSats must implement reboot_devices method")
+        raise NotImplementedError("CubeSats must implement reboot_devices method")
 
     @property
     def SAMPLE_DEVICE_ERRORS(self) -> dict[str, list[int]]:
