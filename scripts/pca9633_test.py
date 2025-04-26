@@ -45,9 +45,9 @@ while True:
     I2C0.writeto(0x60, bytes([0x08, 0b01101010]))
 
     # Set PWM drive of channels 0-2
-    I2C0.writeto(0x60, bytes([0x02, 10]))
-    I2C0.writeto(0x60, bytes([0x03, 0]))
-    I2C0.writeto(0x60, bytes([0x04, 0]))
+    I2C0.writeto(0x60, bytes([0x02, driver_strength]))
+    I2C0.writeto(0x60, bytes([0x03, driver_strength]))
+    I2C0.writeto(0x60, bytes([0x04, driver_strength]))
 
     print("Burn wires set")
 
