@@ -59,10 +59,11 @@ class Task(TemplateTask):
         # ------------------------------------------------------------------------------------------------------------------------------------
         burn_wires = SATELLITE.BURN_WIRES
         if self.deploymentPWM != 0:
+            # Disable previous PWM to prevent brown out
             burn_wires.set_pwm(self.deploymentPWM - 1, 0)
         burn_wires.set_pwm(self.deploymentPWM, _BURN_WIRE_STRENGTH)
         burn_wires.enable_driver()
-        self.deploymentPWM += 1
+        self.deploymentPWM += 1  # Increment PWM for next deployment
 
     def startup(self):
         # ------------------------------------------------------------------------------------------------------------------------------------
@@ -128,6 +129,7 @@ class Task(TemplateTask):
                 if not DH.data_process_exists("cmd_logs"):
                     DH.register_data_process("cmd_logs", "LBB", True, data_limit=100000)
 
+                # check if the deployment is ready to be performed
                 deployment_time_check = (
                     (TPM.monotonic() - self.last_deployment_time) >= _DEPLOYMENT_INTERVAL
                     if self.last_deployment_time is not None
@@ -135,6 +137,7 @@ class Task(TemplateTask):
                 )
 
                 if SATELLITE.BURN_WIRES_AVAILABLE:  # TODO: add deployment flag
+                    # Deployment finished when the deployment PWM reaches 3
                     if self.deploymentPWM == 3 and deployment_time_check:
                         self.log_info("Deployment complete")
                         self.deployment_done = True
@@ -144,7 +147,7 @@ class Task(TemplateTask):
                         self.last_deployment_time = TPM.monotonic()
                         self.deployment_sequence()
                 else:
-                    self.log_info("Skipping deployment sequence")
+                    self.log_info("Skipping deployment sequence...")
                     self.deployment_done = True
 
                 if self.deployment_done:
