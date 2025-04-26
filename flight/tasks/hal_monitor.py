@@ -97,9 +97,8 @@ class Task(TemplateTask):
             if not DH.data_process_exists(self.name):
                 data_format = "L" + "B" * (_IDX_LENGTH - 1)
                 DH.register_data_process(self.log_name, data_format, True, data_limit=10000)
-                self.restored = True
-            elif not self.restored:
-                prev_data = DH.data_process_registry[self.name].get_latest_data()
+            if not self.restored:
+                prev_data = DH.data_process_registry[self.log_name].get_latest_data()
                 if prev_data is not None:
                     for idx, value in enumerate(prev_data):
                         if idx == HAL_IDX.TIME_HAL:
@@ -112,11 +111,16 @@ class Task(TemplateTask):
                             elif "_ERROR" in key_name:
                                 pass
                             elif "_DEAD" in key_name:
-                                SATELLITE.update_device_dead(key_name.replace("_DEAD", ""), value)
+                                SATELLITE.update_device_dead(key_name.replace("_DEAD", ""), bool(value))
+                                self.log_info(f"Restored {key_name} to {value}")
+                            elif "PERIPH_REBOOT_COUNT" in key_name:
+                                self.peripheral_reboot_count = value
                                 self.log_info(f"Restored {key_name} to {value}")
                             else:
                                 self.log_error(f"Unable to parse {key_name}")
-                    self.restored = True
+                else:
+                    self.log_info("Could not restore data process, starting fresh")
+                self.restored = True
 
         for device_name, device_error_list in SATELLITE.SAMPLE_DEVICE_ERRORS.items():
             self.log_error_handle_info(self.error_decision(device_name, device_error_list), device_name)
