@@ -11,8 +11,8 @@ from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 from hal.drivers.errors import Errors
 
-IDX_LENGTH = class_length(HAL_IDX)
-REGULAR_REBOOT_TIME = 60 * 60 * 24  # 24 hours
+_IDX_LENGTH = class_length(HAL_IDX)
+_REGULAR_REBOOT_TIME = 60 * 60 * 24  # 24 hours
 
 _HAL_IDX_INV = {v: k for k, v in HAL_IDX.__dict__.items()}
 
@@ -86,12 +86,12 @@ class Task(TemplateTask):
             self.log_error(f"Invalid device name {device_name}")
 
     async def main_task(self):
-        log_data = [0] * IDX_LENGTH
+        log_data = [0] * _IDX_LENGTH
         log_data[HAL_IDX.TIME_HAL] = TPM.time()
 
         if SM.current_state == STATES.STARTUP:
             if not DH.data_process_exists(self.name):
-                data_format = "L" + "B" * (IDX_LENGTH - 1)
+                data_format = "L" + "B" * (_IDX_LENGTH - 1)
                 DH.register_data_process(self.name, data_format, True, data_limit=10000)
                 self.restored = True
             elif not self.restored:
@@ -119,7 +119,7 @@ class Task(TemplateTask):
 
         DH.log_data(self.name, self.log_device_status(log_data))
         # regular reboot every 24 hours
-        if TPM.monotonic() - SATELLITE.BOOTTIME >= REGULAR_REBOOT_TIME:
+        if TPM.monotonic() - SATELLITE.BOOTTIME >= _REGULAR_REBOOT_TIME:
             # TODO: graceful shutdown for payload if needed
             DH.graceful_shutdown()
             SATELLITE.reboot()

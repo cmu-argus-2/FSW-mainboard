@@ -241,9 +241,6 @@ class HAL_IDX:
     LIGHT_ZP_4_ERROR = const(97)
     LIGHT_ZP_4_ERROR_COUNT = const(98)
     LIGHT_ZP_4_DEAD = const(99)
-    NEOPIXEL_ERROR = const(100)
-    NEOPIXEL_ERROR_COUNT = const(101)
-    NEOPIXEL_DEAD = const(102)
 
 
 """
