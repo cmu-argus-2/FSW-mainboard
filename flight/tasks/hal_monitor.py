@@ -21,6 +21,7 @@ class Task(TemplateTask):
     def __init__(self, id):
         super().__init__(id)
         self.name = "HAL_MONITOR"
+        self.log_name = "hal"
         self.restored = False
         self.peripheral_reboot_count = 0
 
@@ -95,7 +96,7 @@ class Task(TemplateTask):
         if SM.current_state == STATES.STARTUP:
             if not DH.data_process_exists(self.name):
                 data_format = "L" + "B" * (_IDX_LENGTH - 1)
-                DH.register_data_process(self.name, data_format, True, data_limit=10000)
+                DH.register_data_process(self.log_name, data_format, True, data_limit=10000)
                 self.restored = True
             elif not self.restored:
                 prev_data = DH.data_process_registry[self.name].get_latest_data()
@@ -120,7 +121,7 @@ class Task(TemplateTask):
         for device_name, device_error_list in SATELLITE.SAMPLE_DEVICE_ERRORS.items():
             self.log_error_handle_info(self.error_decision(device_name, device_error_list), device_name)
 
-        DH.log_data(self.name, self.log_device_status(log_data))
+        DH.log_data(self.log_name, self.log_device_status(log_data))
         # regular reboot every 24 hours
         if TPM.monotonic() - SATELLITE.BOOTTIME >= _REGULAR_REBOOT_TIME:
             # TODO: graceful shutdown for payload if needed

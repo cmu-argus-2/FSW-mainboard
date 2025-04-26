@@ -115,7 +115,8 @@ class CubeSat:
         """DEVICES_STATUS: Returns the status of the devices"""
         status = {}
         for name, device in self.__device_list.items():
-            status[name] = [device.error, device.error_count, device.dead]
+            if device.ASIL != ASIL0:
+                status[name] = [device.error, device.error_count, device.dead]
         return status
 
     def update_device_error(self, device_name: str, error: int):

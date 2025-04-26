@@ -18,5 +18,5 @@ TASK_CONFIG = {
     TASK.ADCS: {"Task": adcs, "Frequency": 5, "Priority": 1},
     TASK.GPS: {"Task": gps, "Frequency": 0.025, "Priority": 3, "ScheduleLater": True},
     TASK.PAYLOAD: {"Task": payload, "Frequency": 0.1, "Priority": 3, "ScheduleLater": True},
-    TASK.HAL_MONITOR: {"Task": hal_monitor, "Frequency": 1, "Priority": 1},
+    TASK.HAL_MONITOR: {"Task": hal_monitor, "Frequency": 0.5, "Priority": 1},
 }
