@@ -59,3 +59,8 @@ class Errors:
     BOOST_CHARGER_BATT_OVP = const(0x9)
     BOOST_CHARGER_THERMAL_SHUTDOWN = const(0xA)
     BOOST_CHARGER_VBUS_OVP = const(0xB)
+
+    # Battery Heater Errors
+    BATT_HEATER_EN_GPIO_ERROR = const(0x8)
+    BATT_HEATER_HEAT0_GPIO_ERROR = const(0x9)
+    BATT_HEATER_HEAT1_GPIO_ERROR = const(0xA)
