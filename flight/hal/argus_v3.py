@@ -695,13 +695,16 @@ class ArgusV3(CubeSat):
 
         ASIL = self.__device_list[device_name].ASIL
         if ASIL == ASIL4:
-            self.__reboot_device(device_name)
-            return Errors.REBOOT_DEVICE
+            if self.__device_list[device_name].peripheral_line:
+                return Errors.GRACEFUL_REBOOT
+            else:
+                self.__reboot_device(device_name)
+                return Errors.REBOOT_DEVICE
         elif ASIL != ASIL0:
             ArgusV3Error.ASIL_ERRORS[ASIL] += 1
             if ArgusV3Error.ASIL_ERRORS[ASIL] >= ArgusV3Error.ASIL_THRESHOLDS[ASIL]:
                 ArgusV3Error.ASIL_ERRORS[ASIL] = 0
-                return Errors.GRACEFUL_REBOOT
+                return Errors.GRACEFUL_REBOOT if self.__device_list[device_name].peripheral_line else Errors.REBOOT_DEVICE
         return Errors.NO_REBOOT
 
     def graceful_reboot_devices(self, device_name: str):

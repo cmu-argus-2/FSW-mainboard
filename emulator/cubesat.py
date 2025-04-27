@@ -78,7 +78,41 @@ class CubeSat:
                 # ("LIGHT_ZP_4", Device(self.__light_sensor_boot, ASIL2)),
             ]
         )
-
+        self.__errors = {
+            "SDCARD": [],
+            "RTC": [],
+            "GPS": [],
+            "RADIO": [],
+            "IMU": [],
+            "FUEL_GAUGE": [],
+            "BATT_HEATERS": [],
+            "WATCHDOG": [],
+            "BURN_WIRES": [],
+            "BOARD_PWR": [],
+            "RADIO_PWR": [],
+            "GPS_PWR": [],
+            "JETSON_PWR": [],
+            "XP_PWR": [],
+            "XM_PWR": [],
+            "YP_PWR": [],
+            "YM_PWR": [],
+            "ZP_PWR": [],
+            "TORQUE_XP": [],
+            "TORQUE_XM": [],
+            "TORQUE_YP": [],
+            "TORQUE_YM": [],
+            "TORQUE_ZP": [],
+            "TORQUE_ZM": [],
+            "LIGHT_XP": [],
+            "LIGHT_XM": [],
+            "LIGHT_YP": [],
+            "LIGHT_YM": [],
+            "LIGHT_ZM": [],
+            "LIGHT_ZP_1": [],
+            "LIGHT_ZP_2": [],
+            "LIGHT_ZP_3": [],
+            "LIGHT_ZP_4": [],
+        }
         # Debugging
         self._time_ref_boot = int(time.monotonic())
 
@@ -350,11 +384,10 @@ class CubeSat:
     @property
     def SAMPLE_DEVICE_ERRORS(self) -> dict[str, list[int]]:
         """SAMPLE_DEVICE_ERRORS: Sample the device errors"""
-        errors = {}
-        for name, device in self._device_list.items():
+        for name, device in self.__device_list.items():
             if device.ASIL != ASIL0:
                 if device.device is None and device.dead is False and device.error == Errors.DEVICE_NOT_INITIALISED:
-                    errors[name] = [Errors.DEVICE_NOT_INITIALISED]
+                    self.__errors[name] = [Errors.DEVICE_NOT_INITIALISED]
                 elif device.device is not None and device.dead is False:
-                    errors[name] = device.device.device_errors
-        return errors
+                    self.__errors[name] = device.device.device_errors
+        return self.__errors

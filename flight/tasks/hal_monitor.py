@@ -83,6 +83,7 @@ class Task(TemplateTask):
         elif result == Errors.REBOOT_DEVICE:
             self.log_info(f"Rebooted {device_name} due to error {device_error}")
         elif result == Errors.GRACEFUL_REBOOT:
+            self.log_info(f"Device {device_name} has {device_error}, graceful rebooting")
             self.peripheral_reboot_count += 1
             DH.graceful_shutdown()
             SATELLITE.graceful_reboot_devices(device_name)
@@ -101,7 +102,7 @@ class Task(TemplateTask):
         log_data[HAL_IDX.TIME_HAL] = TPM.time()
 
         if SM.current_state == STATES.STARTUP:
-            if not DH.data_process_exists(self.name):
+            if not DH.data_process_exists(self.log_name):
                 data_format = "L" + "B" * (_IDX_LENGTH - 1)
                 DH.register_data_process(self.log_name, data_format, True, data_limit=10000)
             if not self.restored:
@@ -130,7 +131,8 @@ class Task(TemplateTask):
                 self.restored = True
 
         for device_name, device_error_list in SATELLITE.SAMPLE_DEVICE_ERRORS.items():
-            self.log_error_handle_info(self.error_decision(device_name, device_error_list), device_name)
+            if device_error_list != []:
+                self.log_error_handle_info(self.error_decision(device_name, device_error_list), device_name)
 
         DH.log_data(self.log_name, self.log_device_status(log_data))
         # regular reboot every 24 hours

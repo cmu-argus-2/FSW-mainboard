@@ -1018,6 +1018,7 @@ class DataHandler:
     @classmethod
     def graceful_shutdown(cls) -> None:
         """
+        WARNING: should not be used unless for self-driven reboot.
         Gracefully shuts down all data processes by closing their files.
 
         Returns:
