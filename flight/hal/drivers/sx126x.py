@@ -1483,7 +1483,6 @@ class SX1262(SX126X):
         ASSERT(state)
 
         state = self.setOutputPower(power)
-        print(state)
         ASSERT(state)
 
         state = super().fixPaClamping()
