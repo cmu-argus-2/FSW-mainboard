@@ -1,6 +1,10 @@
 # HAL Monitor Task
-# This task is responsible for monitoring the health of the hardware abstraction layer (HAL),
-# performing diagnostics in case of failure, and reporting/logging HAL status.
+# This task is responsible for monitoring the health of the hardware abstraction layer (HAL).
+# Every device in the HAL is monitored for errors, and if an error is detected, the task will
+# decide what to do with the error based on the type of the error. Device status is logged
+# to the data process, the task will log the error and reboot the device if necessary.
+# The task also monitors the time since the last reboot and will reboot the system if it has been
+# more than 24 hours since the last reboot.
 
 from apps.telemetry.constants import HAL_IDX, class_length
 from core import DataHandler as DH
@@ -31,10 +35,6 @@ class Task(TemplateTask):
         """Return the HAL_IDX field name for a given index, or None if not found."""
         return _HAL_IDX_INV.get(idx)
 
-    def close_data_process(self):
-        for data_process in DH.get_all_data_processes():
-            data_process.close()
-
     ######################## ERROR HANDLING ########################
 
     def error_decision(self, device_name, device_errors):
@@ -57,6 +57,10 @@ class Task(TemplateTask):
             return [SATELLITE.handle_error(device_name), Errors.RADIO_XOSC_START_FAILED]
         elif Errors.RADIO_PA_RAMPING_FAILED in device_errors:
             return [SATELLITE.handle_error(device_name), Errors.RADIO_PA_RAMPING_FAILED]
+        elif Errors.RTC_LOST_POWER in device_errors:
+            return [Errors.LOG_DATA, Errors.RTC_LOST_POWER]
+        elif Errors.RTC_BATTERY_LOW in device_errors:
+            return [Errors.LOG_DATA, Errors.RTC_BATTERY_LOW]
 
         return [Errors.NO_ERROR, Errors.NO_ERROR]
 
@@ -86,6 +90,9 @@ class Task(TemplateTask):
             self.log_info(f"Gracefully rebooted {device_name} due to error {device_error}")
         elif result == Errors.DEVICE_DEAD:
             self.log_critical(f"Device {device_name} is dead")
+        elif result == Errors.LOG_DATA:
+            self.log_info(f"Device {device_name} has {device_error}, logging data")
+            SATELLITE.update_device_error(device_name, device_error)
         elif result == Errors.INVALID_DEVICE_NAME:
             self.log_error(f"Invalid device name {device_name}")
 
