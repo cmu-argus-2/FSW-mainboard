@@ -14,6 +14,7 @@ class Errors:
     NO_REBOOT = const(0x5)
     GRACEFUL_REBOOT = const(0x6)
     LOG_DATA = const(0x7)
+    LOG_DATA_ERROR = const(0x8)
 
     # IMU Errors
     IMU_ERROR_CODE = const(0x8)

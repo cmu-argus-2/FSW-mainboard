@@ -54,8 +54,8 @@ class CubeSat:
                 ("RADIO", Device(self.__radio_boot, ASIL4, peripheral_line=False)),
                 ("IMU", Device(self.__imu_boot, ASIL3)),
                 ("FUEL_GAUGE", Device(self.__fuel_gauge_boot, ASIL2)),
-                ("BATT_HEATERS", Device(self.__battery_heaters_boot, ASIL1)),
-                ("WATCHDOG", Device(self.__watchdog_boot, ASIL2)),
+                ("BATT_HEATERS", Device(self.__battery_heaters_boot, ASIL4)),
+                ("WATCHDOG", Device(self.__watchdog_boot, ASIL4)),
                 ("BURN_WIRES", Device(self.__burn_wire_boot, ASIL4)),
                 ("BOARD_PWR", Device(self.__power_monitor_boot, ASIL1)),
                 ("RADIO_PWR", Device(self.__power_monitor_boot, ASIL1)),
@@ -163,10 +163,27 @@ class CubeSat:
         if device_name in self.__device_list:
             self.__device_list[device_name].error_count = error_count
 
+    def increment_device_error_count(self, device_name: str):
+        """increment_device_error_count: Increment the error count for the given device."""
+        if device_name in self.__device_list:
+            self.__device_list[device_name].error_count += 1
+
+    def get_error_count(self, device_name: str) -> int:
+        """get_error_count: Get the error count for the given device."""
+        if device_name in self.__device_list:
+            return self.__device_list[device_name].error_count
+        return None
+
     def update_device_dead(self, device_name: str, dead: bool):
         """update_device_dead: Update the dead status for the given device."""
         if device_name in self.__device_list:
             self.__device_list[device_name].dead = dead
+
+    def get_device_dead(self, device_name: str) -> bool:
+        """get_device_dead: Get the dead status for the given device."""
+        if device_name in self.__device_list:
+            return self.__device_list[device_name].dead
+        return True
 
     def key_in_device_list(self, key: str) -> bool:
         """key_in_device_list: Check if the key is in the device list"""
