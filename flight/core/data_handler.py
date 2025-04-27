@@ -564,12 +564,6 @@ class DataProcess:
         else:
             logger.warning(f"Can't read {self.current_path}: File is not closed!")
 
-    def force_close(self) -> None:
-        """
-        Force close the file.
-        """
-        self.status = _CLOSED
-
 
 class ImageProcess(DataProcess):
     def __init__(self, tag_name: str):
