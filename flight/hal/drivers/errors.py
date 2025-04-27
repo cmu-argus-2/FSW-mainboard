@@ -64,3 +64,7 @@ class Errors:
     BATT_HEATER_EN_GPIO_ERROR = const(0x8)
     BATT_HEATER_HEAT0_GPIO_ERROR = const(0x9)
     BATT_HEATER_HEAT1_GPIO_ERROR = const(0xA)
+
+    # Watchdawg Errors
+    WATCHDOG_EN_GPIO_ERROR = const(0x8)
+    WATCHDOG_INPUT_GPIO_ERROR = const(0x9)
