@@ -726,9 +726,9 @@ class ArgusV3Error:
     }
 
     ASIL_THRESHOLDS = {
-        ASIL1: const(5),  # ASIL 1: Reboot after 5 errors
-        ASIL2: const(3),  # ASIL 2: Reboot after 3 errors
-        ASIL3: const(2),  # ASIL 3: Reboot after 2 errors
+        ASIL1: const(15),  # ASIL 1: Reboot after 15 errors
+        ASIL2: const(9),  # ASIL 2: Reboot after 9 errors
+        ASIL3: const(6),  # ASIL 3: Reboot after 6 errors
     }
 
     MAX_DEVICE_ERROR = const(10)
