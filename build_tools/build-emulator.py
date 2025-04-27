@@ -8,6 +8,24 @@ def check_directory_location(source_folder):
         raise FileNotFoundError(f"Source folder {source_folder} not found")
 
 
+def get_commit_hash():
+    try:
+        commit_hash = os.popen("git rev-parse --short HEAD").read().strip()
+        return commit_hash
+    except Exception as e:
+        print(f"Error getting commit hash: {e}")
+        return None
+
+
+def get_branch_name():
+    try:
+        branch_name = os.popen("git rev-parse --abbrev-ref HEAD").read().strip()
+        return branch_name
+    except Exception as e:
+        print(f"Error getting branch name: {e}")
+        return None
+
+
 def create_build(source_folder, emulator_folder):
     build_folder = "build/"
     # avoid deleting the whole sd so we can simulate a proper reboot
@@ -104,5 +122,12 @@ if __name__ == "__main__":
 
     source_folder = args.source_folder
     emulator_folder = args.emulator_folder
+
+    GIT_BRANCH = get_branch_name()
+    GIT_COMMIT = get_commit_hash()
+    if GIT_BRANCH:
+        print(f"Branch: {GIT_BRANCH}")
+    if GIT_COMMIT:
+        print(f"Commit: {GIT_COMMIT}")
 
     build_folder = create_build(source_folder, emulator_folder)
