@@ -21,6 +21,7 @@ _TPM_INIT_TIMEOUT = const(10)  # seconds
 _EXIT_STARTUP_TIMEOUT = const(5)  # seconds
 _BURN_WIRE_STRENGTH = const(7)  # 0-255
 _DEPLOYMENT_INTERVAL = const(5)  # seconds
+_PWM_MAX = const(3)  # Maximum PWM value for deployment
 
 
 class Task(TemplateTask):
@@ -138,11 +139,11 @@ class Task(TemplateTask):
 
                 if SATELLITE.BURN_WIRES_AVAILABLE:  # TODO: add deployment flag
                     # Deployment finished when the deployment PWM reaches 3
-                    if self.deploymentPWM == 3 and deployment_time_check:
+                    if self.deploymentPWM == _PWM_MAX and deployment_time_check:
                         self.log_info("Deployment complete")
                         self.deployment_done = True
                         SATELLITE.BURN_WIRES.disable_driver()
-                    elif self.deploymentPWM < 3 and deployment_time_check:
+                    elif self.deploymentPWM < _PWM_MAX and deployment_time_check:
                         self.log_info(f"Deployment sequence: {self.deploymentPWM}")
                         self.last_deployment_time = TPM.monotonic()
                         self.deployment_sequence()
