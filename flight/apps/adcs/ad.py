@@ -464,8 +464,7 @@ class AttitudeDetermination:
         S = np.dot(np.dot(H, self.P), H.transpose()) + R_noise
 
         # ulab inv declares a matrix singular if det < 5E-2
-        # S is scaled up by 1000 and then down to remove this error
-        # If the singularity persists, we stop the covariance update
+        # If singular, we stop the covariance update
         try:
             S_inv = np.linalg.inv(S)
         except ValueError:
