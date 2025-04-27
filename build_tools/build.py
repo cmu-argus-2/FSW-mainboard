@@ -44,7 +44,7 @@ def get_board_id(BOARD_PATH):
 
 def get_commit_hash():
     try:
-        commit_hash = os.popen("git rev-parse --short HEAD").read().strip()
+        commit_hash = os.popen("git rev-parse HEAD").read().strip()
         return commit_hash
     except Exception as e:
         print(f"Error getting commit hash: {e}")
