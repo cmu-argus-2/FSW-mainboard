@@ -18,7 +18,7 @@ from hal.configuration import SATELLITE
 from micropython import const
 
 _TPM_INIT_TIMEOUT = const(10)  # seconds
-_EXIT_STARTUP_TIMEOUT = const(5)  # seconds
+_EXIT_STARTUP_TIMEOUT = const(30)  # seconds
 _BURN_WIRE_STRENGTH = const(7)  # 0-255
 _DEPLOYMENT_INTERVAL = const(5)  # seconds
 _PWM_MAX = const(3)  # Maximum PWM value for deployment
@@ -137,7 +137,8 @@ class Task(TemplateTask):
                     else True
                 )
 
-                if SATELLITE.BURN_WIRES_AVAILABLE:  # TODO: add deployment flag
+                # TODO: add deployment flag
+                if SATELLITE.BURN_WIRES_AVAILABLE:
                     # Deployment finished when the deployment PWM reaches 3
                     if self.deploymentPWM == _PWM_MAX and deployment_time_check:
                         self.log_info("Deployment complete")
@@ -148,7 +149,7 @@ class Task(TemplateTask):
                         self.last_deployment_time = TPM.monotonic()
                         self.deployment_sequence()
                 else:
-                    self.log_info("Skipping deployment sequence...")
+                    self.log_info("Burn wires not available, skipping deployment sequence...")
                     self.deployment_done = True
 
                 if self.deployment_done:
