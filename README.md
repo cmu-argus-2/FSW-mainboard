@@ -70,9 +70,9 @@ To move to board:
 python move_to_board.py -s <source_folder_path> -d <destination_folder_path>
 ```
 
-### Common Problems
+## Common Problems
 
-## Board Stuck in Read-Only Mode
+### Board Stuck in Read-Only Mode
 
 If the board ever gets stuck in read-only mode, access REPL and type 
 ```bash
@@ -81,7 +81,7 @@ If the board ever gets stuck in read-only mode, access REPL and type
 ```
 This will erase and reformat the filesystem.
 
-## Reflashing the board
+### Reflashing the board
 
 If you have access to the buttons on the board, you can enter the bootloader using buttons on-board, refer to the [firmware guide](firmware/README.md)
 If you do not have access to the buttons, access REPL and type
@@ -90,3 +90,24 @@ If you do not have access to the buttons, access REPL and type
 >>> microcontroller.on_next_reset(microcontroller.RunMode.UF2)
 >>> microcontroller.reset()
 ```
+**DO NOT RUN THIS AS YOUR MAIN.PY, YOUR BOARD WILL GET STUCK IN A LOOP AND CAN'T GET OUT OF BOOTLOADER.**
+
+### Nuking the board
+
+If you unfortunately get your board stuck in bootloader, or cannot explain why the board is behaving weird. As the last resort, you can "nuke" the board by flashing it with the nuke firmwares. "Nuke" firmware are in the firmware folder, make sure you use the correct nuke for the MCU. Refer to the [firmware guide](firmware/README.md) for how to flash.
+
+### Can't compile and move the code to the board
+If you see the message "Error: Destination folder '{destination_folder}' does not exist. Is the board connected?" There are a few possiblities:
+1) Make sure your board is powered. If you are powering through USB. Make sure VSYS and GND pins or the high and low side inhibitors are jumped.
+2) Is the board correctly named as ARGUS? New boards are defaulted as CIRCUITPY, rename it using your system tools and reconnect it to your computer.
+3) Check the USB connector on the mainboard.
+
+### Data Handler keeps complaining
+The data structure of the task might have changed. Wiping the SD Card using the script should solve the problem.
+
+### Mainboard keeps restarting (brown out) randomly
+If you are using USB to power your board, consider turning off some devices. Radio will not be able to run without power supply. 
+Other common devices causing brown out are burn wires, consider lowering its strength appropriately.
+
+### Do I have to change anything before compiling the code for my targetted board.
+No. Configurations are automatically detected.
