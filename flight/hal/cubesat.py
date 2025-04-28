@@ -51,7 +51,7 @@ class CubeSat:
                 ("SDCARD", Device(self.__sd_card_boot, ASIL1)),  # SD Card must enabled before other devices
                 ("RTC", Device(self.__rtc_boot, ASIL2)),
                 ("GPS", Device(self.__gps_boot, ASIL3, peripheral_line=False)),
-                ("RADIO", Device(self.__radio_boot, ASIL4, peripheral_line=False)),
+                # ("RADIO", Device(self.__radio_boot, ASIL4, peripheral_line=False)),
                 ("IMU", Device(self.__imu_boot, ASIL3)),
                 ("FUEL_GAUGE", Device(self.__fuel_gauge_boot, ASIL2)),
                 ("BATT_HEATERS", Device(self.__battery_heaters_boot, ASIL1)),
