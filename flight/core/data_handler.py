@@ -405,24 +405,27 @@ class DataProcess:
         and prepare for deletion.
         """
         files = self.get_sorted_file_list()
-        if len(files) > 1:  # Ignore process configuration file
-            if latest or (
-                file_time is not None and file_time == 0
-            ):  # Edge case for when time = 0 we want to return the latest
-                transmit_file = files[-1]
-                if transmit_file == _PROCESS_CONFIG_FILENAME:
-                    transmit_file = files[-2]
-            else:
-                transmit_file = files[0]
-                if transmit_file == _PROCESS_CONFIG_FILENAME:
-                    transmit_file = files[1]
 
-                if file_time is not None:
-                    result_file = get_closest_file_time(file_time, files)
-                    transmit_file = result_file if result_file is not None else transmit_file
+        # remove process configuration file, it will always be the first one
+        if len(files) == 0:
+            logger.warning("No process configuration file.")
+            return None
+        elif len(files) == 1:
+            # Only the process configuration file is present
+            logger.warning("Only process configuration file present.")
+            return None
+        elif len(files) > 1:
+            files = files[1:]  # Ignore process configuration file
+            transmit_file = None
+            if latest:
+                transmit_file = files[-1]
+            elif file_time is not None:
+                result_file = get_closest_file_time(file_time, files)
+                transmit_file = result_file if result_file is not None else files[0]
+            else:  # oldest file
+                transmit_file = files[0]
 
             tm_path = join_path(self.dir_path, transmit_file)
-
             if tm_path == self.current_path:
                 self.close()
                 self.resolve_current_file()
@@ -669,19 +672,25 @@ class ImageProcess(DataProcess):
         and prepare for deletion.
         """
         files = self.get_sorted_file_list()
-        if len(files) > 1:  # Ignore process configuration file
+
+        # remove process configuration file, it will always be the first one
+        if len(files) == 0:
+            logger.warning("No process configuration file.")
+            return None
+        elif len(files) == 1:
+            # Only the process configuration file is present
+            logger.warning("Only process configuration file present.")
+            return None
+        elif len(files) > 1:
+            files = files[1:]  # Ignore process configuration file
+            transmit_file = None
             if latest:
                 transmit_file = files[-1]
-                if transmit_file == _PROCESS_CONFIG_FILENAME:
-                    transmit_file = files[-2]
-            else:
+            elif file_time is not None:
+                result_file = get_closest_file_time(file_time, files)
+                transmit_file = result_file if result_file is not None else files[0]
+            else:  # oldest file
                 transmit_file = files[0]
-                if transmit_file == _PROCESS_CONFIG_FILENAME:
-                    transmit_file = files[1]
-
-                if file_time is not None:
-                    result_file = get_closest_file_time(file_time, files)
-                    transmit_file = result_file if result_file is not None else transmit_file
 
             tm_path = join_path(self.dir_path, transmit_file)
 

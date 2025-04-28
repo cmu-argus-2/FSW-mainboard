@@ -42,14 +42,32 @@ def get_board_id(BOARD_PATH):
     return "Argus"
 
 
+def get_commit_hash():
+    try:
+        commit_hash = os.popen("git rev-parse HEAD").read().strip()
+        return commit_hash
+    except Exception as e:
+        print(f"Error getting commit hash: {e}")
+        return None
+
+
+def get_branch_name():
+    try:
+        branch_name = os.popen("git rev-parse --abbrev-ref HEAD").read().strip()
+        return branch_name
+    except Exception as e:
+        print(f"Error getting branch name: {e}")
+        return None
+
+
 BOARD_PATH = get_board_path()
 CPY_VERSION = 8  # Default to CPY 8
 BOARD_ID = "Argus"  # Default to compiling for Argus
 if os.path.exists(BOARD_PATH):
     CPY_VERSION = get_circuitpython_version(BOARD_PATH)
     BOARD_ID = get_board_id(BOARD_PATH)
-print(f"CircuitPython version: {CPY_VERSION}")
-print(f"Board ID: {BOARD_ID}")
+GIT_BRANCH = get_branch_name()
+GIT_COMMIT = get_commit_hash()
 
 MPY_CROSS_NAME = "mpy-cross-cpy9" if CPY_VERSION == 9 else "mpy-cross"
 if system == "Darwin":
@@ -130,6 +148,10 @@ def create_build(source_folder):
     # Create main.py file with single import statement "import main_module"
     build_folder = os.path.join(build_folder, "..")
     with open(os.path.join(build_folder, "main.py"), "w") as f:
+        if GIT_BRANCH:
+            f.write(f'print("Branch: {GIT_BRANCH}")\n')
+        if GIT_COMMIT:
+            f.write(f'print("Commit: {GIT_COMMIT}")\n')
         f.write("import main_module\n")
 
     # Create SD folder
@@ -154,5 +176,13 @@ if __name__ == "__main__":
     source_folder = args.source_folder
 
     check_directory_location(source_folder)
+
+    if GIT_BRANCH:
+        print(f"Branch: {GIT_BRANCH}")
+    if GIT_COMMIT:
+        print(f"Commit: {GIT_COMMIT}")
+
+    print(f"CircuitPython version: {CPY_VERSION}")
+    print(f"Board ID: {BOARD_ID}")
 
     build_folder = create_build(source_folder)

@@ -137,9 +137,9 @@ def REQUEST_FILE_METADATA(file_id, file_time=None):
     file_tag = file_tags_str[file_id]
 
     if file_time is None:
-        file_path = DH.request_TM_path(file_tag)
+        file_path = DH.request_TM_path(file_tag, True)
     else:
-        file_path = DH.request_TM_path(file_tag, file_time)
+        file_path = DH.request_TM_path(file_tag, False, file_time)
 
     return [file_path]
 

@@ -1,0 +1,34 @@
+# Framework
+/flight/core @Ibrassow
+/flight/core/task_configuration.py @Akshat412 @kmkar31 @Ibrassow
+/flight/core/time_processor.py @Akshat412 @kmkar31 @Ibrassow
+
+# Apps
+/flight/apps/adcs @kmkar31 @Ibrassow
+/flight/apps/comms @Akshat412 
+/flight/apps/eps @achstar @Akshat412 
+/flight/apps/telemetry @Akshat412 @Ibrassow
+/flight/apps/payload @Ibrassow
+/flight/apps/command @Ibrassow @Akshat412 
+
+# HAL
+/flight/hal @perrintong325
+/firmware @perrintong325
+
+# Tooling
+.github/workflows @kmkar31
+/build_tools @perrintong325 
+/emulator @kmkar31 @Ibrassow
+
+# Tasks
+/flight/tasks/adcs.py @kmkar31
+/flight/tasks/comms.py @Akshat412
+/flight/tasks/command.py @Ibrassow @Akshat412
+/flight/tasks/payload.py @Ibrassow
+/flight/tasks/obdh.py @Ibrassow
+/flight/tasks/gps.py @Akshat412
+/flight/tasks/eps.py @achstar
+/flight/tasks/watchdog.py @perrintong325
+
+# Admin
+.github/CODEOWNERS @Ibrassow
