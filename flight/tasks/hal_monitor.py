@@ -23,6 +23,7 @@ _HAL_IDX_INV = {v: k for k, v in HAL_IDX.__dict__.items()}
 _WATCHDOG_GPIO_ERROR_THRESHOLD = const(2)
 _BATT_HEATER_GPIO_ERROR_THRESHOLD = const(5)
 _MAX_DEVICE_ERROR_COUNT = const(5)
+_GRACEFUL_REBOOT_INTERVAL = const(6)  # 6 intervals of task execution
 
 
 class Task(TemplateTask):
@@ -34,6 +35,8 @@ class Task(TemplateTask):
         self.peripheral_reboot_count = 0
         self.mcu_fault = False
         self.gpio_devices = ["WATCHDOG", "BATT_HEATERS"]
+        self.graceful_reboot = False
+        self.graceful_reboot_counter = 0
 
     ######################## HELPER FUNCTIONS ########################
 
@@ -99,11 +102,8 @@ class Task(TemplateTask):
         elif result == Errors.REBOOT_DEVICE:
             self.log_info(f"Rebooted {device_name} due to error {device_error}")
         elif result == Errors.GRACEFUL_REBOOT:
-            self.peripheral_reboot_count += 1
-            DH.graceful_shutdown()
-            SATELLITE.graceful_reboot_devices(device_name)
-            DH.restore_data_process_files()
-            self.log_info(f"Gracefully rebooted {device_name} due to error {device_error}")
+            self.log_info(f"Queued graceful reboot for {device_name} due to error {device_error}")
+            self.graceful_reboot = True
         elif result == Errors.DEVICE_DEAD:
             self.log_critical(f"Device {device_name} is dead")
         elif result == Errors.LOG_DATA_ERROR:
@@ -164,8 +164,21 @@ class Task(TemplateTask):
                     DH.graceful_shutdown()
                     SATELLITE.reboot()
 
+        if self.graceful_reboot_counter >= _GRACEFUL_REBOOT_INTERVAL:
+            if self.graceful_reboot:
+                self.graceful_reboot = False
+                self.peripheral_reboot_count += 1
+                DH.graceful_shutdown()
+                SATELLITE.graceful_reboot_devices("IMU")
+                DH.restore_data_process_files()
+                self.log_info("Gracefully rebooted peripheral power line.")
+            self.graceful_reboot_counter = 0
+        else:
+            self.graceful_reboot_counter += 1
+
         DH.log_data(self.log_name, self.log_device_status(log_data))
         # regular reboot every 24 hours
+        # TODO: delay this if the satellite is at a ground pass
         if TPM.monotonic() - SATELLITE.BOOTTIME >= _REGULAR_REBOOT_TIME:
             # TODO: graceful shutdown for payload if needed
             DH.graceful_shutdown()

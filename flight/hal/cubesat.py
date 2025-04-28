@@ -28,6 +28,7 @@ class Device:
         self.error_count = 0
         self.peripheral_line = peripheral_line
         self.dead = False
+        self.temp_disabled = False
 
 
 class CubeSat:
@@ -203,7 +204,11 @@ class CubeSat:
         """GPS_AVAILABLE: Returns True if the GPS is available
         :return: bool
         """
-        return self.key_in_device_list("GPS") and self.__device_list["GPS"].device is not None
+        return (
+            self.key_in_device_list("GPS")
+            and self.__device_list["GPS"].device is not None
+            and (not self.__device_list["GPS"].dead or self.__device_list["GPS"].temp_disabled)
+        )
 
     @property
     def POWER_MONITORS(self):
@@ -220,7 +225,11 @@ class CubeSat:
         """POWER_MONITOR_AVAILABLE: Returns True if the power monitor for the given direction is available
         :return: bool
         """
-        return self.key_in_device_list(dir + "_PWR") and self.__device_list[dir + "_PWR"].device is not None
+        return (
+            self.key_in_device_list(dir + "_PWR")
+            and self.__device_list[dir + "_PWR"].device is not None
+            and (not self.__device_list[dir + "_PWR"].dead or self.__device_list[dir + "_PWR"].temp_disabled)
+        )
 
     @property
     def IMU(self):
@@ -234,7 +243,11 @@ class CubeSat:
         """IMU_AVAILABLE: Returns True if the IMU is available
         :return: bool
         """
-        return self.key_in_device_list("IMU") and self.__device_list["IMU"].device is not None
+        return (
+            self.key_in_device_list("IMU")
+            and self.__device_list["IMU"].device is not None
+            and (not self.__device_list["IMU"].dead or self.__device_list["IMU"].temp_disabled)
+        )
 
     @property
     def IMU_TEMPERATURE_AVAILABLE(self) -> bool:
@@ -258,7 +271,11 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'XM', etc.)
         :return: bool - True if the driver exists and is not None, False otherwise.
         """
-        return self.key_in_device_list("TORQUE_" + dir) and self.__device_list["TORQUE_" + dir].device is not None
+        return (
+            self.key_in_device_list("TORQUE_" + dir)
+            and self.__device_list["TORQUE_" + dir].device is not None
+            and (not self.__device_list["TORQUE_" + dir].dead or self.__device_list["TORQUE_" + dir].temp_disabled)
+        )
 
     def TORQUE_DRIVERS_CURRENT(self, dir: str) -> float:
         """Returns the coil current for the specific magnetorquer if available and returns -1 otherwise
@@ -300,7 +317,11 @@ class CubeSat:
         """FUEL_GAUGE_AVAILABLE: Returns True if the fuel gauge is available
         :return: bool
         """
-        return self.key_in_device_list("FUEL_GAUGE") and self.__device_list["FUEL_GAUGE"].device is not None
+        return (
+            self.key_in_device_list("FUEL_GAUGE")
+            and self.__device_list["FUEL_GAUGE"].device is not None
+            and (not self.__device_list["FUEL_GAUGE"].dead or self.__device_list["FUEL_GAUGE"].temp_disabled)
+        )
 
     @property
     def LIGHT_SENSORS(self):
@@ -317,7 +338,11 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'XM', etc.)
         :return: bool - True if the sensor exists and is not None, False otherwise.
         """
-        return self.key_in_device_list("LIGHT_" + dir) and self.__device_list["LIGHT_" + dir].device is not None
+        return (
+            self.key_in_device_list("LIGHT_" + dir)
+            and self.__device_list["LIGHT_" + dir].device is not None
+            and (not self.__device_list["LIGHT_" + dir].dead or self.__device_list["LIGHT_" + dir].temp_disabled)
+        )
 
     @property
     def RTC(self):
@@ -331,7 +356,11 @@ class CubeSat:
         """RTC_AVAILABLE: Returns True if the RTC is available
         :return: bool
         """
-        return self.key_in_device_list("RTC") and self.__device_list["RTC"].device is not None
+        return (
+            self.key_in_device_list("RTC")
+            and self.__device_list["RTC"].device is not None
+            and (not self.__device_list["RTC"].dead or self.__device_list["RTC"].temp_disabled)
+        )
 
     @property
     def RADIO(self):
@@ -345,7 +374,11 @@ class CubeSat:
         """RADIO_AVAILABLE: Returns True if the radio is available
         :return: bool
         """
-        return self.key_in_device_list("RADIO") and self.__device_list["RADIO"].device is not None
+        return (
+            self.key_in_device_list("RADIO")
+            and self.__device_list["RADIO"].device is not None
+            and (not self.__device_list["RADIO"].dead or self.__device_list["RADIO"].temp_disabled)
+        )
 
     @property
     def BURN_WIRES(self):
@@ -359,7 +392,11 @@ class CubeSat:
         """BURN_WIRES_AVAILABLE: Returns True if the burn wires are available
         :return: bool
         """
-        return self.key_in_device_list("BURN_WIRES") and self.__device_list["BURN_WIRES"].device is not None
+        return (
+            self.key_in_device_list("BURN_WIRES")
+            and self.__device_list["BURN_WIRES"].device is not None
+            and (not self.__device_list["BURN_WIRES"].dead or self.__device_list["BURN_WIRES"].temp_disabled)
+        )
 
     @property
     def SD_CARD(self):
@@ -373,7 +410,11 @@ class CubeSat:
         """SD_CARD_AVAILABLE: Returns True if the SD card is available
         :return: bool
         """
-        return self.key_in_device_list("SDCARD") and self.__device_list["SDCARD"].device is not None
+        return (
+            self.key_in_device_list("SDCARD")
+            and self.__device_list["SDCARD"].device is not None
+            and (not self.__device_list["SDCARD"].dead or self.__device_list["SDCARD"].temp_disabled)
+        )
 
     @property
     def NEOPIXEL(self):
@@ -387,7 +428,11 @@ class CubeSat:
         """NEOPIXEL_AVAILABLE: Returns True if the neopixel is available
         :return: bool
         """
-        return self.key_in_device_list("NEOPIXEL") and self.__device_list["NEOPIXEL"].device is not None
+        return (
+            self.key_in_device_list("NEOPIXEL")
+            and self.__device_list["NEOPIXEL"].device is not None
+            and (not self.__device_list["NEOPIXEL"].dead or self.__device_list["NEOPIXEL"].temp_disabled)
+        )
 
     @property
     def BATTERY_HEATERS(self):
@@ -401,7 +446,11 @@ class CubeSat:
         """BATT_HEATERS_AVAILABLE: Returns True if the battery heaters are available
         :return: bool
         """
-        return self.key_in_device_list("BATT_HEATERS") and self.__device_list["BATT_HEATERS"].device is not None
+        return (
+            self.key_in_device_list("BATT_HEATERS")
+            and self.__device_list["BATT_HEATERS"].device is not None
+            and (not self.__device_list["BATT_HEATERS"].dead or self.__device_list["BATT_HEATERS"].temp_disabled)
+        )
 
     @property
     def WATCHDOG(self):
@@ -415,7 +464,11 @@ class CubeSat:
         """WATCHDOG_AVAILABLE: Returns True if the watchdog is available
         :return: bool
         """
-        return self.key_in_device_list("WATCHDOG") and self.__device_list["WATCHDOG"].device is not None
+        return (
+            self.key_in_device_list("WATCHDOG")
+            and self.__device_list["WATCHDOG"].device is not None
+            and (not self.__device_list["WATCHDOG"].dead or self.__device_list["WATCHDOG"].temp_disabled)
+        )
 
     # @property
     # def PAYLOADUART(self):
