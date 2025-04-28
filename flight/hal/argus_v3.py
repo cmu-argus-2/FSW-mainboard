@@ -644,7 +644,6 @@ class ArgusV3(CubeSat):
         power_line.value = False
         time.sleep(0.5)
         power_line.value = True
-        time.sleep(0.5)
 
     def __reboot_device(self, device_name: str):
         device_cls = self.__device_list[device_name]
