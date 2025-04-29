@@ -134,6 +134,11 @@ class CubeSat:
         for name, device in self.__device_list.items():
             print(f"{name}: {device.device}")
 
+    def print_device_status(self) -> None:
+        """print_device_status: Print the device status."""
+        for name, device in self.__device_list.items():
+            print(f"{name}: {device.device} - {device.error} - {device.dead} - {device.temp_disabled}")
+
     @property
     def ERRORS(self):
         """ERRORS: Returns the errors object
@@ -505,10 +510,17 @@ class CubeSat:
     @property
     def SAMPLE_DEVICE_ERRORS(self) -> dict[str, list[int]]:
         """SAMPLE_DEVICE_ERRORS: Sample the device errors"""
+        for key in self.__errors:
+            self.__errors[key] = []
         for name, device in self.__device_list.items():
             if device.ASIL != ASIL0:
-                if device.device is None and device.dead is False and device.error == Errors.DEVICE_NOT_INITIALISED:
+                if (
+                    device.device is None
+                    and not device.dead
+                    and not device.temp_disabled
+                    and device.error == Errors.DEVICE_NOT_INITIALISED
+                ):
                     self.__errors[name] = [Errors.DEVICE_NOT_INITIALISED]
-                elif device.device is not None and device.dead is False:
+                elif device.device is not None and not device.dead and not device.temp_disabled:
                     self.__errors[name] = device.device.device_errors
         return self.__errors

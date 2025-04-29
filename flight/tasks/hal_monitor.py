@@ -31,12 +31,14 @@ class Task(TemplateTask):
         super().__init__(id)
         self.name = "HAL_MONITOR"
         self.log_name = "hal"
+        self.log_data = [0] * _IDX_LENGTH
         self.restored = False
         self.peripheral_reboot_count = 0
         self.mcu_fault = False
         self.gpio_devices = ["WATCHDOG", "BATT_HEATERS"]
         self.graceful_reboot = False
         self.graceful_reboot_counter = 0
+        self.turn_on_device = {}
 
     ######################## HELPER FUNCTIONS ########################
 
@@ -83,16 +85,15 @@ class Task(TemplateTask):
 
         return [Errors.NO_ERROR, Errors.NO_ERROR]
 
-    def log_device_status(self, log_data):
+    def log_device_status(self):
         for device_name, error_list in SATELLITE.DEVICES_STATUS.items():
             error_idx = getattr(HAL_IDX, f"{device_name}_ERROR")
             error_count_idx = getattr(HAL_IDX, f"{device_name}_ERROR_COUNT")
             dead_idx = getattr(HAL_IDX, f"{device_name}_DEAD")
-            log_data[error_idx] = error_list[0]
-            log_data[error_count_idx] = error_list[1]
-            log_data[dead_idx] = error_list[2]
-        log_data[_PERIPH_REBOOT_COUNT_IDX] = self.peripheral_reboot_count
-        return log_data
+            self.log_data[error_idx] = error_list[0]
+            self.log_data[error_count_idx] = error_list[1]
+            self.log_data[dead_idx] = error_list[2]
+        self.log_data[_PERIPH_REBOOT_COUNT_IDX] = self.peripheral_reboot_count
 
     def log_error_handle_info(self, results, device_name):
         result, device_error = results
@@ -100,8 +101,11 @@ class Task(TemplateTask):
             self.log_info(f"Device {device_name} has {device_error}, no reboot occured")
             SATELLITE.update_device_error(device_name, device_error)
         elif result == Errors.REBOOT_DEVICE:
-            self.log_info(f"Rebooted {device_name} due to error {device_error}")
+            self.turn_on_device[device_name] = self.log_data[HAL_IDX.TIME_HAL]
+            SATELLITE.update_device_error(device_name, device_error)
+            self.log_info(f"Temporarily shut down {device_name} due to error {device_error}")
         elif result == Errors.GRACEFUL_REBOOT:
+            SATELLITE.update_device_error(device_name, device_error)
             self.log_info(f"Queued graceful reboot for {device_name} due to error {device_error}")
             self.graceful_reboot = True
         elif result == Errors.DEVICE_DEAD:
@@ -117,8 +121,8 @@ class Task(TemplateTask):
             self.log_error(f"Invalid device name {device_name}")
 
     async def main_task(self):
-        log_data = [0] * _IDX_LENGTH
-        log_data[HAL_IDX.TIME_HAL] = TPM.time()
+        self.log_data = [0] * _IDX_LENGTH
+        self.log_data[HAL_IDX.TIME_HAL] = TPM.time()
 
         if SM.current_state == STATES.STARTUP:
             if not DH.data_process_exists(self.log_name):
@@ -153,30 +157,43 @@ class Task(TemplateTask):
             if device_error_list != []:
                 self.log_error_handle_info(self.error_decision(device_name, device_error_list), device_name)
 
-        for device_name in self.gpio_devices:
-            if not SATELLITE.get_device_dead(device_name):
-                error_count = SATELLITE.get_error_count(device_name)
-                if error_count > _MAX_DEVICE_ERROR_COUNT:
-                    self.log_critical(f"Device {device_name} is dead")
-                    SATELLITE.update_device_dead(device_name, True)
-                elif SATELLITE.WATCHDOG_EN_GPIO_ERROR_COUNT >= _WATCHDOG_GPIO_ERROR_THRESHOLD:
-                    self.log_error("Watchdog GPIO error count exceeded threshold, rebooting")
-                    DH.graceful_shutdown()
-                    SATELLITE.reboot()
+        # for device_name in self.gpio_devices:
+        #     if not SATELLITE.get_device_dead(device_name):
+        #         error_count = SATELLITE.get_error_count(device_name)
+        #         if error_count > _MAX_DEVICE_ERROR_COUNT:
+        #             self.log_critical(f"Device {device_name} is dead")
+        #             SATELLITE.update_device_dead(device_name, True)
+        #         elif SATELLITE.WATCHDOG_EN_GPIO_ERROR_COUNT >= _WATCHDOG_GPIO_ERROR_THRESHOLD:
+        #             self.log_error("Watchdog GPIO error count exceeded threshold, rebooting")
+        #             DH.graceful_shutdown()
+        #             SATELLITE.reboot()
 
-        if self.graceful_reboot_counter >= _GRACEFUL_REBOOT_INTERVAL:
+        if self.turn_on_device != {}:
+            for device_name, time in self.turn_on_device.items():
+                if self.log_data[HAL_IDX.TIME_HAL] != time:
+                    SATELLITE.turn_on_device(device_name)
+                    self.log_info(f"Turned on {device_name}")
+                    self.turn_on_device.pop(device_name)
+
+        if self.graceful_reboot_counter == _GRACEFUL_REBOOT_INTERVAL:
             if self.graceful_reboot:
                 self.graceful_reboot = False
                 self.peripheral_reboot_count += 1
+                # SATELLITE.print_device_status()
                 DH.graceful_shutdown()
-                SATELLITE.graceful_reboot_devices("IMU")
+                SATELLITE.graceful_turn_off_periph()
                 DH.restore_data_process_files()
                 self.log_info("Gracefully rebooted peripheral power line.")
+                # SATELLITE.print_device_status()
+            self.graceful_reboot_counter = 0
+        elif self.graceful_reboot_counter > _GRACEFUL_REBOOT_INTERVAL:
+            self.log_info("Graceful reboot counter reset")
             self.graceful_reboot_counter = 0
         else:
             self.graceful_reboot_counter += 1
 
-        DH.log_data(self.log_name, self.log_device_status(log_data))
+        self.log_device_status()
+        DH.log_data(self.log_name, self.log_data)
         # regular reboot every 24 hours
         # TODO: delay this if the satellite is at a ground pass
         if TPM.monotonic() - SATELLITE.BOOTTIME >= _REGULAR_REBOOT_TIME:

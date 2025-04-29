@@ -20,7 +20,7 @@ class BatteryHeaters:
         self.__heater0_en = digitalio.DigitalInOut(HEAT0_EN)
         self.__heater0_en.direction = digitalio.Direction.OUTPUT
         self.__heater0_en.value = False
-        self.__heater1_en_val = False  # Error handling
+        self.__heater0_en_val = False  # Error handling
 
         # Heater 1 is optional, this driver supports single or dual heater configurations
         if HEAT1_EN is not None:
