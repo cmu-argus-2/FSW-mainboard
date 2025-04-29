@@ -534,5 +534,8 @@ class CubeSat:
                 ):
                     self.__errors[name] = [Errors.DEVICE_NOT_INITIALISED]
                 elif device.device is not None and not device.dead and not device.temp_disabled:
-                    self.__errors[name] = device.device.device_errors
+                    try:
+                        self.__errors[name] = device.device.device_errors
+                    except Exception:
+                        self.__errors[name] = [Errors.DEVICE_NOT_INITIALISED]
         return self.__errors
