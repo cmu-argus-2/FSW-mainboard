@@ -175,7 +175,7 @@ class Task(TemplateTask):
                     self.log_info(f"Turned on {device_name}")
                     self.turn_on_device.pop(device_name)
 
-        if self.graceful_reboot_counter == _GRACEFUL_REBOOT_INTERVAL:
+        if self.graceful_reboot_counter >= _GRACEFUL_REBOOT_INTERVAL:
             if self.graceful_reboot:
                 self.graceful_reboot = False
                 self.peripheral_reboot_count += 1
@@ -185,9 +185,6 @@ class Task(TemplateTask):
                 DH.restore_data_process_files()
                 self.log_info("Gracefully rebooted peripheral power line.")
                 # SATELLITE.print_device_status()
-            self.graceful_reboot_counter = 0
-        elif self.graceful_reboot_counter > _GRACEFUL_REBOOT_INTERVAL:
-            self.log_info("Graceful reboot counter reset")
             self.graceful_reboot_counter = 0
         else:
             self.graceful_reboot_counter += 1

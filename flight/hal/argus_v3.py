@@ -710,17 +710,15 @@ class ArgusV3(CubeSat):
             return Errors.DEVICE_DEAD
 
         ASIL = device_cls.ASIL
+        device_cls.temp_disabled = True
         if ASIL == ASIL4:
             if device_cls.peripheral_line:
-                device_cls.temp_disabled = True
                 return Errors.GRACEFUL_REBOOT
             else:
                 self.__turn_off_device(device_name)
                 return Errors.REBOOT_DEVICE
         elif ASIL != ASIL0:
             ArgusV3Error.ASIL_ERRORS[ASIL] += 1
-            if device_cls.peripheral_line:
-                device_cls.temp_disabled = True
             if ArgusV3Error.ASIL_ERRORS[ASIL] >= ArgusV3Error.ASIL_THRESHOLDS[ASIL]:
                 ArgusV3Error.ASIL_ERRORS[ASIL] = 0
                 if device_cls.peripheral_line:
@@ -734,7 +732,8 @@ class ArgusV3(CubeSat):
         """gracefully turn off: Gracefully turn off the device."""
         self.__turn_off_device("IMU")
         time.sleep(0.5)
-        self.__turn_off_device("IMU")
+        self.__turn_on_device("IMU")
+        time.sleep(0.5)
 
     def turn_on_device(self, device_name: str):
         """turn_on_device: Turn on the device."""
