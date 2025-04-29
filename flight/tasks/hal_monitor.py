@@ -20,7 +20,7 @@ _IDX_LENGTH = class_length(HAL_IDX)
 _REGULAR_REBOOT_TIME = const(60 * 60 * 24)  # 24 hours
 _PERIPH_REBOOT_COUNT_IDX = getattr(HAL_IDX, "PERIPH_REBOOT_COUNT")
 _HAL_IDX_INV = {v: k for k, v in HAL_IDX.__dict__.items()}
-_GRACEFUL_REBOOT_INTERVAL = const(6)  # 6 intervals of task execution
+_GRACEFUL_REBOOT_INTERVAL = const(6 * 50)  # 6 intervals of task execution
 
 
 class Task(TemplateTask):
