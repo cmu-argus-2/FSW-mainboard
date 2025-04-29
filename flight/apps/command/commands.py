@@ -151,7 +151,7 @@ def REQUEST_FILE_PKT(file_id, file_time):
 
 
 def REQUEST_IMAGE():
-    raise NotImplementedError("Handled internally by comms subsystem")
+    raise NotImplementedError("Not implemented")
 
 
 def DOWNLINK_ALL(file_id, file_time=None):
