@@ -31,8 +31,6 @@ class Task(TemplateTask):
         self.log_data = [0] * _IDX_LENGTH
         self.restored = False
         self.peripheral_reboot_count = 0
-        self.mcu_fault = False
-        self.gpio_devices = ["WATCHDOG", "BATT_HEATERS"]
         self.graceful_reboot = False
         self.graceful_reboot_counter = 0
         self.turn_on_device = {}
