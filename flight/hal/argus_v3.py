@@ -756,9 +756,9 @@ class ArgusV3(CubeSat):
 
     def graceful_reboot(self):
         """gracefully reboot: Gracefully reboot the device."""
-        self.__turn_off_device("PERIPH")
+        self.__turn_off_device("IMU")
         time.sleep(0.5)
-        self.__turn_on_device("PERIPH")
+        self.__turn_on_device("IMU")
         time.sleep(0.5)
 
     def turn_on_device(self, device_name: str):
