@@ -86,10 +86,8 @@ class Task(TemplateTask):
         for device_name, error_list in SATELLITE.DEVICES_STATUS.items():
             error_idx = getattr(HAL_IDX, f"{device_name}_ERROR")
             error_count_idx = getattr(HAL_IDX, f"{device_name}_ERROR_COUNT")
-            dead_idx = getattr(HAL_IDX, f"{device_name}_DEAD")
             self.log_data[error_idx] = error_list[0]
             self.log_data[error_count_idx] = error_list[1]
-            self.log_data[dead_idx] = error_list[2]
         self.log_data[_PERIPH_REBOOT_COUNT_IDX] = self.peripheral_reboot_count
 
     def log_error_handle_info(self, results, device_name):
@@ -106,6 +104,7 @@ class Task(TemplateTask):
             self.log_info(f"Queued graceful reboot for {device_name} due to error {device_error}")
             self.graceful_reboot = True
         elif result == Errors.DEVICE_DEAD:
+            SATELLITE.update_device_error(device_name, result)
             self.log_critical(f"Device {device_name} is dead")
         elif result == Errors.LOG_DATA_ERROR:
             self.log_info(f"Device {device_name} has {device_error}, logging error")
@@ -140,9 +139,6 @@ class Task(TemplateTask):
                                 self.log_info(f"Restored {key_name} to {value}")
                             elif "_ERROR" in key_name:
                                 pass
-                            elif "_DEAD" in key_name:
-                                SATELLITE.update_device_dead(key_name.replace("_DEAD", ""), bool(value))
-                                self.log_info(f"Restored {key_name} to {value}")
                             elif "PERIPH_REBOOT_COUNT" in key_name:
                                 self.peripheral_reboot_count = value
                                 self.log_info(f"Restored {key_name} to {value}")
@@ -169,12 +165,10 @@ class Task(TemplateTask):
             if self.graceful_reboot:
                 self.graceful_reboot = False
                 self.peripheral_reboot_count += 1
-                # SATELLITE.print_device_status()
                 DH.graceful_shutdown()
                 SATELLITE.graceful_reboot()
                 DH.restore_data_process_files()
                 self.log_info("Gracefully rebooted peripheral power line.")
-                # SATELLITE.print_device_status()
             self.graceful_reboot_counter = 0
         else:
             self.graceful_reboot_counter += 1
