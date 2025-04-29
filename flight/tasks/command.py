@@ -59,10 +59,13 @@ class Task(TemplateTask):
         # DEPLOYMENT SEQUENCE
         # ------------------------------------------------------------------------------------------------------------------------------------
         burn_wires = SATELLITE.BURN_WIRES
-        if self.deploymentPWM != 0:
-            # Disable previous PWM to prevent brown out
+        if self.deploymentPWM == 0:
+            # Enable the first PWM
+            burn_wires.set_pwm(self.deploymentPWM, _BURN_WIRE_STRENGTH)
+        elif self.deploymentPWM < _PWM_MAX:
+            # Disable previous PWM and enable current one
             burn_wires.set_pwm(self.deploymentPWM - 1, 0)
-        burn_wires.set_pwm(self.deploymentPWM, _BURN_WIRE_STRENGTH)
+            burn_wires.set_pwm(self.deploymentPWM, _BURN_WIRE_STRENGTH)
         burn_wires.enable_driver()
         self.deploymentPWM += 1  # Increment PWM for next deployment
 
