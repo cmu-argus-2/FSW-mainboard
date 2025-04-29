@@ -29,6 +29,7 @@
 /flight/tasks/gps.py @Akshat412
 /flight/tasks/eps.py @achstar
 /flight/tasks/watchdog.py @perrintong325
+/flight/tasks/hal_monitor.py @perrintong325
 
 # Admin
 .github/CODEOWNERS @Ibrassow
