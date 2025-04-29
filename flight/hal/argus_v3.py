@@ -716,12 +716,14 @@ class ArgusV3(CubeSat):
 
         ASIL = device_cls.ASIL
         device_cls.temp_disabled = True
+
         if ASIL == ASIL4:
             if device_cls.peripheral_line:
                 return Errors.GRACEFUL_REBOOT
             else:
                 self.__turn_off_device(device_name)
                 return Errors.REBOOT_DEVICE
+
         elif ASIL != ASIL0:
             if device_name.startswith("TORQUE"):
                 ArgusV3Error.TORQUE_ERRORS[device_name] += 1
@@ -732,6 +734,13 @@ class ArgusV3(CubeSat):
                 ):
                     for key in ArgusV3Error.TORQUE_ERRORS:
                         ArgusV3Error.TORQUE_ERRORS[key] = 0
+                    self.__turn_off_device(device_name)
+                    return Errors.REBOOT_DEVICE
+
+            elif device_name.startswith("GPS"):
+                ArgusV3Error.GPS_ERRORS += 1
+                if ArgusV3Error.GPS_ERRORS >= ArgusV3Error.ASIL_THRESHOLDS[ASIL]:
+                    ArgusV3Error.GPS_ERRORS = 0
                     self.__turn_off_device(device_name)
                     return Errors.REBOOT_DEVICE
             else:
@@ -784,5 +793,7 @@ class ArgusV3Error:
         "TORQUE_ZP": 0,
         "TORQUE_ZM": 0,
     }
+
+    GPS_ERRORS = 0
 
     MAX_DEVICE_ERROR = const(10)
