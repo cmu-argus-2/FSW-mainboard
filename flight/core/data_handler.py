@@ -1183,22 +1183,6 @@ class DataHandler:
             logger.warning(f"Error deleting files and directories: {e}")
 
     @classmethod
-    def move_all_files_to_flash(cls, path=None):
-        if path is None:
-            path = _HOME_PATH
-        try:
-            for file_name in os.listdir(path):
-                file_path = join_path(path, file_name)
-                if os.stat(file_path)[0] & 0x8000:  # Check if file is a regular file
-                    print(f"Moving {file_path} to flash")
-                    os.rename(file_path, join_path("/", file_name))
-                elif os.stat(file_path)[0] & 0x4000:  # Check if file is a directory
-                    cls.move_all_files_to_flash(file_path)  # Recursively move files in subdirectories
-            logger.info("All files and directories moved to flash successfully!")
-        except Exception as e:
-            logger.warning(f"Error moving files and directories: {e}")
-
-    @classmethod
     def get_current_file_size(cls, tag_name):
         try:
             if tag_name in cls.data_process_registry:
