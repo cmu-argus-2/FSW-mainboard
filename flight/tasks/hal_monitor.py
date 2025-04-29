@@ -20,9 +20,6 @@ _IDX_LENGTH = class_length(HAL_IDX)
 _REGULAR_REBOOT_TIME = const(60 * 60 * 24)  # 24 hours
 _PERIPH_REBOOT_COUNT_IDX = getattr(HAL_IDX, "PERIPH_REBOOT_COUNT")
 _HAL_IDX_INV = {v: k for k, v in HAL_IDX.__dict__.items()}
-_WATCHDOG_GPIO_ERROR_THRESHOLD = const(2)
-_BATT_HEATER_GPIO_ERROR_THRESHOLD = const(5)
-_MAX_DEVICE_ERROR_COUNT = const(5)
 _GRACEFUL_REBOOT_INTERVAL = const(6)  # 6 intervals of task execution
 
 
@@ -128,6 +125,8 @@ class Task(TemplateTask):
             if not DH.data_process_exists(self.log_name):
                 data_format = "L" + "B" * (_IDX_LENGTH - 1)
                 DH.register_data_process(self.log_name, data_format, True, data_limit=10000)
+
+            # restore previous device status
             if not self.restored:
                 prev_data = DH.data_process_registry[self.log_name].get_latest_data()
                 if prev_data is not None:
@@ -153,21 +152,12 @@ class Task(TemplateTask):
                     self.log_info("Could not restore data process, starting fresh")
                 self.restored = True
 
+        # sample device errors from registers and boot errors
         for device_name, device_error_list in SATELLITE.SAMPLE_DEVICE_ERRORS.items():
             if device_error_list != []:
                 self.log_error_handle_info(self.error_decision(device_name, device_error_list), device_name)
 
-        # for device_name in self.gpio_devices:
-        #     if not SATELLITE.get_device_dead(device_name):
-        #         error_count = SATELLITE.get_error_count(device_name)
-        #         if error_count > _MAX_DEVICE_ERROR_COUNT:
-        #             self.log_critical(f"Device {device_name} is dead")
-        #             SATELLITE.update_device_dead(device_name, True)
-        #         elif SATELLITE.WATCHDOG_EN_GPIO_ERROR_COUNT >= _WATCHDOG_GPIO_ERROR_THRESHOLD:
-        #             self.log_error("Watchdog GPIO error count exceeded threshold, rebooting")
-        #             DH.graceful_shutdown()
-        #             SATELLITE.reboot()
-
+        # restart devices that are turned off(individual power switches)
         if self.turn_on_device != {}:
             for device_name, time in self.turn_on_device.items():
                 if self.log_data[HAL_IDX.TIME_HAL] != time:
@@ -181,7 +171,7 @@ class Task(TemplateTask):
                 self.peripheral_reboot_count += 1
                 # SATELLITE.print_device_status()
                 DH.graceful_shutdown()
-                SATELLITE.graceful_turn_off_periph()
+                SATELLITE.graceful_reboot()
                 DH.restore_data_process_files()
                 self.log_info("Gracefully rebooted peripheral power line.")
                 # SATELLITE.print_device_status()

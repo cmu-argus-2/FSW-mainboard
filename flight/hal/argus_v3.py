@@ -660,14 +660,17 @@ class ArgusV3(CubeSat):
             self.__turn_off_power_line(ArgusV3Power.GPS_EN)
 
         elif device_name.startswith("TORQUE"):
-            for location, device_cls in self.TORQUE_DRIVERS.items():
-                if self.TORQUE_DRIVERS_AVAILABLE(location):
-                    device_cls.device.deinit()
+            for location, device_cls in self.__device_list.items():
+                if location.startswith("TORQUE"):
+                    device_cls.temp_disabled = True
+                    if device_cls.device is not None and not device_cls.dead:
+                        device_cls.device.deinit()
             self.__turn_off_power_line(ArgusV3Power.COIL_EN)
 
         else:
             for location, device_cls in self.__device_list.items():
                 if device_cls.peripheral_line and device_cls.device is not None and not device_cls.dead:
+                    device_cls.temp_disabled = True
                     device_cls.device.deinit()
             self.__turn_off_power_line(ArgusV3Power.PERIPH_PWR_EN)
 
@@ -687,7 +690,9 @@ class ArgusV3(CubeSat):
 
             for location, device_cls in self.__device_list.items():
                 if location.startswith("TORQUE"):
-                    self.__boot_device(location, device_cls)
+                    device_cls.temp_disabled = False
+                    if not device_cls.dead:
+                        self.__boot_device(location, device_cls)
 
         else:
             self.__turn_on_power_line(ArgusV3Power.PERIPH_PWR_EN)
@@ -695,7 +700,7 @@ class ArgusV3(CubeSat):
             for location, device_cls in self.__device_list.items():
                 if device_cls.peripheral_line and not device_cls.dead:
                     self.__boot_device(location, device_cls)
-                    self.__device_list[location].temp_disabled = False
+                    device_cls.temp_disabled = False
 
     def handle_error(self, device_name: str) -> int:
         if device_name not in self.__device_list:
@@ -718,18 +723,30 @@ class ArgusV3(CubeSat):
                 self.__turn_off_device(device_name)
                 return Errors.REBOOT_DEVICE
         elif ASIL != ASIL0:
-            ArgusV3Error.ASIL_ERRORS[ASIL] += 1
-            if ArgusV3Error.ASIL_ERRORS[ASIL] >= ArgusV3Error.ASIL_THRESHOLDS[ASIL]:
-                ArgusV3Error.ASIL_ERRORS[ASIL] = 0
-                if device_cls.peripheral_line:
-                    return Errors.GRACEFUL_REBOOT
-                else:
+            if device_name.startswith("TORQUE"):
+                ArgusV3Error.TORQUE_ERRORS[device_name] += 1
+                if (
+                    (ArgusV3Error.TORQUE_ERRORS["TORQUE_XP"] != 0 and ArgusV3Error.TORQUE_ERRORS["TORQUE_XM"] != 0)
+                    or (ArgusV3Error.TORQUE_ERRORS["TORQUE_YP"] != 0 and ArgusV3Error.TORQUE_ERRORS["TORQUE_YM"] != 0)
+                    or (ArgusV3Error.TORQUE_ERRORS["TORQUE_ZP"] != 0 and ArgusV3Error.TORQUE_ERRORS["TORQUE_ZM"] != 0)
+                ):
+                    for key in ArgusV3Error.TORQUE_ERRORS:
+                        ArgusV3Error.TORQUE_ERRORS[key] = 0
                     self.__turn_off_device(device_name)
                     return Errors.REBOOT_DEVICE
+            else:
+                ArgusV3Error.ASIL_ERRORS[ASIL] += 1
+                if ArgusV3Error.ASIL_ERRORS[ASIL] >= ArgusV3Error.ASIL_THRESHOLDS[ASIL]:
+                    ArgusV3Error.ASIL_ERRORS[ASIL] = 0
+                    if device_cls.peripheral_line:
+                        return Errors.GRACEFUL_REBOOT
+                    else:
+                        self.__turn_off_device(device_name)
+                        return Errors.REBOOT_DEVICE
         return Errors.NO_REBOOT
 
-    def graceful_turn_off_periph(self):
-        """gracefully turn off: Gracefully turn off the device."""
+    def graceful_reboot(self):
+        """gracefully reboot: Gracefully reboot the device."""
         self.__turn_off_device("IMU")
         time.sleep(0.5)
         self.__turn_on_device("IMU")
@@ -757,6 +774,15 @@ class ArgusV3Error:
         ASIL1: const(15),  # ASIL 1: Reboot after 15 errors
         ASIL2: const(9),  # ASIL 2: Reboot after 9 errors
         ASIL3: const(6),  # ASIL 3: Reboot after 6 errors
+    }
+
+    TORQUE_ERRORS = {
+        "TORQUE_XP": 0,
+        "TORQUE_XM": 0,
+        "TORQUE_YP": 0,
+        "TORQUE_YM": 0,
+        "TORQUE_ZP": 0,
+        "TORQUE_ZM": 0,
     }
 
     MAX_DEVICE_ERROR = const(10)
