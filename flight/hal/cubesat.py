@@ -212,7 +212,8 @@ class CubeSat:
         return (
             self.key_in_device_list("GPS")
             and self.__device_list["GPS"].device is not None
-            and (not self.__device_list["GPS"].dead or not self.__device_list["GPS"].temp_disabled)
+            and not self.__device_list["GPS"].dead
+            and not self.__device_list["GPS"].temp_disabled
         )
 
     @property
@@ -233,7 +234,8 @@ class CubeSat:
         return (
             self.key_in_device_list(dir + "_PWR")
             and self.__device_list[dir + "_PWR"].device is not None
-            and (not self.__device_list[dir + "_PWR"].dead or not self.__device_list[dir + "_PWR"].temp_disabled)
+            and not self.__device_list[dir + "_PWR"].dead
+            and not self.__device_list[dir + "_PWR"].temp_disabled
         )
 
     @property
@@ -251,7 +253,8 @@ class CubeSat:
         return (
             self.key_in_device_list("IMU")
             and self.__device_list["IMU"].device is not None
-            and (not self.__device_list["IMU"].dead or not self.__device_list["IMU"].temp_disabled)
+            and not self.__device_list["IMU"].dead
+            and not self.__device_list["IMU"].temp_disabled
         )
 
     @property
@@ -279,7 +282,8 @@ class CubeSat:
         return (
             self.key_in_device_list("TORQUE_" + dir)
             and self.__device_list["TORQUE_" + dir].device is not None
-            and (not self.__device_list["TORQUE_" + dir].dead or not self.__device_list["TORQUE_" + dir].temp_disabled)
+            and not self.__device_list["TORQUE_" + dir].dead
+            and not self.__device_list["TORQUE_" + dir].temp_disabled
         )
 
     def TORQUE_DRIVERS_CURRENT(self, dir: str) -> float:
@@ -325,7 +329,8 @@ class CubeSat:
         return (
             self.key_in_device_list("FUEL_GAUGE")
             and self.__device_list["FUEL_GAUGE"].device is not None
-            and (not self.__device_list["FUEL_GAUGE"].dead or not self.__device_list["FUEL_GAUGE"].temp_disabled)
+            and not self.__device_list["FUEL_GAUGE"].dead
+            and not self.__device_list["FUEL_GAUGE"].temp_disabled
         )
 
     @property
@@ -346,7 +351,8 @@ class CubeSat:
         return (
             self.key_in_device_list("LIGHT_" + dir)
             and self.__device_list["LIGHT_" + dir].device is not None
-            and (not self.__device_list["LIGHT_" + dir].dead or not self.__device_list["LIGHT_" + dir].temp_disabled)
+            and not self.__device_list["LIGHT_" + dir].dead
+            and not self.__device_list["LIGHT_" + dir].temp_disabled
         )
 
     @property
@@ -364,7 +370,8 @@ class CubeSat:
         return (
             self.key_in_device_list("RTC")
             and self.__device_list["RTC"].device is not None
-            and (not self.__device_list["RTC"].dead or not self.__device_list["RTC"].temp_disabled)
+            and not self.__device_list["RTC"].dead
+            and not self.__device_list["RTC"].temp_disabled
         )
 
     @property
@@ -382,7 +389,8 @@ class CubeSat:
         return (
             self.key_in_device_list("RADIO")
             and self.__device_list["RADIO"].device is not None
-            and (not self.__device_list["RADIO"].dead or not self.__device_list["RADIO"].temp_disabled)
+            and not self.__device_list["RADIO"].dead
+            and not self.__device_list["RADIO"].temp_disabled
         )
 
     @property
@@ -400,7 +408,8 @@ class CubeSat:
         return (
             self.key_in_device_list("BURN_WIRES")
             and self.__device_list["BURN_WIRES"].device is not None
-            and (not self.__device_list["BURN_WIRES"].dead or not self.__device_list["BURN_WIRES"].temp_disabled)
+            and not self.__device_list["BURN_WIRES"].dead
+            and not self.__device_list["BURN_WIRES"].temp_disabled
         )
 
     @property
@@ -418,7 +427,8 @@ class CubeSat:
         return (
             self.key_in_device_list("SDCARD")
             and self.__device_list["SDCARD"].device is not None
-            and (not self.__device_list["SDCARD"].dead or not self.__device_list["SDCARD"].temp_disabled)
+            and not self.__device_list["SDCARD"].dead
+            and not self.__device_list["SDCARD"].temp_disabled
         )
 
     @property
@@ -436,7 +446,7 @@ class CubeSat:
         return (
             self.key_in_device_list("NEOPIXEL")
             and self.__device_list["NEOPIXEL"].device is not None
-            and (not self.__device_list["NEOPIXEL"].dead or not self.__device_list["NEOPIXEL"].temp_disabled)
+            and (not self.__device_list["NEOPIXEL"].dead and not self.__device_list["NEOPIXEL"].temp_disabled)
         )
 
     @property
@@ -454,7 +464,8 @@ class CubeSat:
         return (
             self.key_in_device_list("BATT_HEATERS")
             and self.__device_list["BATT_HEATERS"].device is not None
-            and (not self.__device_list["BATT_HEATERS"].dead or not self.__device_list["BATT_HEATERS"].temp_disabled)
+            and not self.__device_list["BATT_HEATERS"].dead
+            and not self.__device_list["BATT_HEATERS"].temp_disabled
         )
 
     @property
@@ -472,7 +483,8 @@ class CubeSat:
         return (
             self.key_in_device_list("WATCHDOG")
             and self.__device_list["WATCHDOG"].device is not None
-            and (not self.__device_list["WATCHDOG"].dead or not self.__device_list["WATCHDOG"].temp_disabled)
+            and not self.__device_list["WATCHDOG"].dead
+            and not self.__device_list["WATCHDOG"].temp_disabled
         )
 
     # @property
