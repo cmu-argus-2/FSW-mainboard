@@ -64,11 +64,11 @@ class EmulatedSatellite(CubeSat):
         # self._charger = None
 
         self._light_sensors = LightSensorArray(simulator=self.__simulated_spacecraft)
-        self.append_device("LIGHT_XP", None, self._light_sensors["XP"])
-        self.append_device("LIGHT_XM", None, self._light_sensors["XM"])
-        self.append_device("LIGHT_YP", None, self._light_sensors["YP"])
-        self.append_device("LIGHT_YM", None, self._light_sensors["YM"])
-        self.append_device("LIGHT_ZM", None, self._light_sensors["ZM"])
+        self.append_device("LIGHT_XP", None, self._light_sensors["XP"], ASIL=2)
+        self.append_device("LIGHT_XM", None, self._light_sensors["XM"], ASIL=2)
+        self.append_device("LIGHT_YP", None, self._light_sensors["YP"], ASIL=2)
+        self.append_device("LIGHT_YM", None, self._light_sensors["YM"], ASIL=2)
+        self.append_device("LIGHT_ZM", None, self._light_sensors["ZM"], ASIL=2)
 
         self._torque_drivers = TorqueCoilArray(simulator=self.__simulated_spacecraft)
         self.append_device("TORQUE_XP", None, self._torque_drivers["XP"], ASIL=3)

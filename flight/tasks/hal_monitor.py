@@ -151,6 +151,7 @@ class Task(TemplateTask):
         # sample device errors from registers and boot errors
         for device_name, device_error_list in SATELLITE.SAMPLE_DEVICE_ERRORS.items():
             if device_error_list != []:
+                # print(device_error_list)
                 self.log_error_handle_info(self.error_decision(device_name, device_error_list), device_name)
 
         # restart devices that are turned off(individual power switches)

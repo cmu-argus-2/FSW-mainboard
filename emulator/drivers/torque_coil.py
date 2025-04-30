@@ -2,7 +2,7 @@ from hal.drivers.errors import Errors
 from ulab import numpy as np
 
 # Failure Probabilities:
-_prob_ = 99.999999999 * np.ones((5,))  # % of devices that throw [stall, ocp, ovt, tsd, npor] fault in a day
+_prob_ = 2 * np.ones((5,))  # % of devices that throw [stall, ocp, ovt, tsd, npor] fault in a day
 
 _scale_ = -86400 / (np.log(1 - (0.01 * _prob_)))  # exponential distribution scale
 
@@ -59,6 +59,7 @@ class CoilDriver:
                 + (self.__simulator.sim_time + np.random.exponential(scale=_scale_)) * self._all_faults
             )
         self._all_faults = self._all_faults & False
+        self._stall, self._ocp, self._ovp, self._tsd, self._npor = self._all_faults
 
     @property
     def device_errors(self):
