@@ -71,12 +71,12 @@ class EmulatedSatellite(CubeSat):
         self.append_device("LIGHT_ZM", None, self._light_sensors["ZM"])
 
         self._torque_drivers = TorqueCoilArray(simulator=self.__simulated_spacecraft)
-        self.append_device("TORQUE_XP", None, self._torque_drivers["XP"])
-        self.append_device("TORQUE_XM", None, self._torque_drivers["XM"])
-        self.append_device("TORQUE_YP", None, self._torque_drivers["YP"])
-        self.append_device("TORQUE_YM", None, self._torque_drivers["YM"])
-        self.append_device("TORQUE_ZP", None, self._torque_drivers["ZP"])
-        self.append_device("TORQUE_ZM", None, self._torque_drivers["ZM"])
+        self.append_device("TORQUE_XP", None, self._torque_drivers["XP"], ASIL=3)
+        self.append_device("TORQUE_XM", None, self._torque_drivers["XM"], ASIL=3)
+        self.append_device("TORQUE_YP", None, self._torque_drivers["YP"], ASIL=3)
+        self.append_device("TORQUE_YM", None, self._torque_drivers["YM"], ASIL=3)
+        self.append_device("TORQUE_ZP", None, self._torque_drivers["ZP"], ASIL=3)
+        self.append_device("TORQUE_ZM", None, self._torque_drivers["ZM"], ASIL=3)
 
         self._imu = self.init_device(IMU(simulator=self.__simulated_spacecraft))
         self._imu.enable()
@@ -111,7 +111,7 @@ class EmulatedSatellite(CubeSat):
         """CONTROL_COILS: Control the coils on the CubeSat, depending on the control mode (identical for all coils)."""
         # self._torque_drivers.apply_control(dir, ctrl)
         if self.TORQUE_DRIVERS_AVAILABLE(dir):
-            self._device_list["TORQUE_" + dir].device.set_throttle(dir, ctrl)
+            self.DEVICE_LIST["TORQUE_" + dir].device.set_throttle(dir, ctrl)
 
     ######################## ERROR HANDLING ########################
 

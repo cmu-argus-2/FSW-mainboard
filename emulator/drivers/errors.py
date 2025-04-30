@@ -8,53 +8,64 @@ class Errors:
     DEVICE_NOT_INITIALISED = const(0x1)
 
     # Error Handling
-    INVALID_DEVICE_NAME = const(0x99)  # placeholder value
-    DEVICE_DEAD = const(0xFF)  # placeholder value
-    REBOOT_DEVICE = const(0xFE)  # placeholder value
-    NO_REBOOT = const(0xFD)  # placeholder value
-    GRACEFUL_REBOOT = const(0xFC)  # placeholder value
+    INVALID_DEVICE_NAME = const(0x2)
+    DEVICE_DEAD = const(0x3)
+    REBOOT_DEVICE = const(0x4)
+    NO_REBOOT = const(0x5)
+    GRACEFUL_REBOOT = const(0x6)
+    LOG_DATA = const(0x7)
+    LOG_DATA_ERROR = const(0x8)
 
     # IMU Errors
-    IMU_ERROR_CODE = const(0x2)  # placeholder value
-    IMU_DROP_COMMAND_ERROR = const(0x3)  # placeholder value
-    IMU_FATAL_ERROR = const(0x4)  # placeholder value
+    IMU_ERROR_CODE = const(0x8)
+    IMU_DROP_COMMAND_ERROR = const(0x9)
+    IMU_FATAL_ERROR = const(0xA)
 
     # RTC Errors
-    RTC_LOST_POWER = const(0x10)  # placeholder value
-    RTC_BATTERY_LOW = const(0x11)  # placeholder value
+    RTC_LOST_POWER = const(0x8)
+    RTC_BATTERY_LOW = const(0x9)
 
     # GPS Errors
-    GPS_UPDATE_CHECK_FAILED = const(0x20)  # placeholder value
+    GPS_UPDATE_CHECK_FAILED = const(0x8)
 
     # Radio Errors
-    RADIO_RC64K_CALIBRATION_FAILED = const(0x30)  # placeholder value
-    RADIO_RC13M_CALIBRATION_FAILED = const(0x31)  # placeholder value
-    RADIO_PLL_CALIBRATION_FAILED = const(0x32)  # placeholder value
-    RADIO_ADC_CALIBRATION_FAILED = const(0x33)  # placeholder value
-    RADIO_IMG_CALIBRATION_FAILED = const(0x34)  # placeholder value
-    RADIO_XOSC_START_FAILED = const(0x35)  # placeholder value
-    RADIO_PA_RAMPING_FAILED = const(0x36)  # placeholder value
+    RADIO_RC64K_CALIBRATION_FAILED = const(0x8)
+    RADIO_RC13M_CALIBRATION_FAILED = const(0x9)
+    RADIO_PLL_CALIBRATION_FAILED = const(0xA)
+    RADIO_ADC_CALIBRATION_FAILED = const(0xB)
+    RADIO_IMG_CALIBRATION_FAILED = const(0xC)
+    RADIO_XOSC_START_FAILED = const(0xD)
+    RADIO_PA_RAMPING_FAILED = const(0xE)
 
     # Power Monitor Errors
-    PWR_MON_ADC_ALERT_OVERCURRENT = const(0xA5)  # placeholder value
+    PWR_MON_ADC_ALERT_OVERCURRENT = const(0x8)
 
-    # TORQUE COIL ERRORS
-    TORQUE_COIL_OVERCURRENT_EVENT = const(0xB0)  # placeholder value
-    TORQUE_COIL_OVERVOLTAGE_EVENT = const(0xB5)  # placeholder value
-    TORQUE_COIL_UNDERVOLTAGE_LOCKOUT = const(0xB1)  # placeholder value
-    TORQUE_COIL_THERMAL_SHUTDOWN = const(0xB2)  # placeholder value
-    TORQUE_COIL_EXTENDED_CURRENT_LIMIT_EVENT = const(0xB3)  # placeholder value
-    TORQUE_COIL_THROTTLE_OUTSIDE_RANGE = const(0xB4)  # placeholder value
-    TORQUE_COIL_STALL_EVENT = const(0xB6)  # placeholder value
+    # Torque Coil Errors
+    TORQUE_COIL_OVERCURRENT_EVENT = const(0x8)
+    TORQUE_COIL_OVERVOLTAGE_EVENT = const(0x9)
+    TORQUE_COIL_UNDERVOLTAGE_LOCKOUT = const(0xA)
+    TORQUE_COIL_THERMAL_SHUTDOWN = const(0xB)
+    TORQUE_COIL_EXTENDED_CURRENT_LIMIT_EVENT = const(0xC)
+    TORQUE_COIL_THROTTLE_OUTSIDE_RANGE = const(0xD)
+    TORQUE_COIL_STALL_EVENT = const(0xE)
 
-    # LIGHT SENSOR ERRORS
-    LIGHT_SENSOR_HIGHER_THAN_THRESHOLD = const(0xC0)  # placeholder value
-    LIGHT_SENSOR_LOWER_THAN_THRESHOLD = const(0xC1)  # placeholder value
-    LIGHT_SENSOR_OVERFLOW = const(0xC2)  # placeholder value
-    LIGHT_SENSOR_COVERSION_READY = const(0xC3)  # placeholder value
+    # Light Sensor Errors
+    LIGHT_SENSOR_HIGHER_THAN_THRESHOLD = const(0x8)
+    LIGHT_SENSOR_LOWER_THAN_THRESHOLD = const(0x9)
+    LIGHT_SENSOR_OVERFLOW = const(0xA)
+    LIGHT_SENSOR_COVERSION_READY = const(0xB)
 
-    # BOOST CHARGER ERRORS
-    BOOST_CHARGER_CHARGE_SAFETY_EXPIRED = const(0xD0)  # placeholder value
-    BOOST_CHARGER_BATT_OVP = const(0xD1)  # placeholder value
-    BOOST_CHARGER_THERMAL_SHUTDOWN = const(0xD2)  # placeholder value
-    BOOST_CHARGER_VBUS_OVP = const(0xD3)  # placeholder value
+    # Boost Charger Errors
+    BOOST_CHARGER_CHARGE_SAFETY_EXPIRED = const(0x8)
+    BOOST_CHARGER_BATT_OVP = const(0x9)
+    BOOST_CHARGER_THERMAL_SHUTDOWN = const(0xA)
+    BOOST_CHARGER_VBUS_OVP = const(0xB)
+
+    # Battery Heater Errors
+    BATT_HEATER_EN_GPIO_ERROR = const(0x8)
+    BATT_HEATER_HEAT0_GPIO_ERROR = const(0x9)
+    BATT_HEATER_HEAT1_GPIO_ERROR = const(0xA)
+
+    # Watchdawg Errors
+    WATCHDOG_EN_GPIO_ERROR = const(0x8)
+    WATCHDOG_INPUT_GPIO_ERROR = const(0x9)
