@@ -80,7 +80,7 @@ class EmulatedSatellite(CubeSat):
 
         self._imu = self.init_device(IMU(simulator=self.__simulated_spacecraft))
         self._imu.enable()
-        self.append_device("IMU", None, self._imu)
+        self.append_device("IMU", None, self._imu, ASIL=3)
 
         self._jetson_power_monitor = self.init_device(PowerMonitor(4, 0.05))
         self._board_power_monitor = self.init_device(PowerMonitor(7.6, 0.1))

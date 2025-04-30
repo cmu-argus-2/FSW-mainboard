@@ -388,7 +388,6 @@ class CubeSat:
     def SAMPLE_DEVICE_ERRORS(self) -> dict[str, list[int]]:
         """SAMPLE_DEVICE_ERRORS: Sample the device errors"""
         for name, device in self.__device_list.items():
-            # print(name, device, device.ASIL, device.dead)
             if device.ASIL != ASIL0:
                 if device.device is None and device.dead is False and device.error == Errors.DEVICE_NOT_INITIALISED:
                     self.__errors[name] = [Errors.DEVICE_NOT_INITIALISED]
