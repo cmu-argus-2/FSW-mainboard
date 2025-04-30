@@ -93,7 +93,7 @@ class EmulatedSatellite(CubeSat):
         self.append_device("FUEL_GAUGE", None, FuelGauge())
 
         # self._rtc = self.init_device(RTC(time.gmtime()))
-        self.append_device("RTC", None, RTC(time.gmtime()))
+        self.append_device("RTC", None, RTC(time.gmtime()), ASIL=1)
 
         # self.ERRORS = []
 

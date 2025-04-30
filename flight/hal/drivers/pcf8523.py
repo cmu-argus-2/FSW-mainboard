@@ -185,9 +185,9 @@ class PCF8523:
     def device_errors(self):
         results = []
         if self.lost_power:
-            results.append(Errors.LOST_POWER)
+            results.append(Errors.RTC_LOST_POWER)
         if self.battery_low:
-            results.append(Errors.BATTERY_LOW)
+            results.append(Errors.RTC_BATTERY_LOW)
         return results
 
     def deinit(self):
