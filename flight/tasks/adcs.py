@@ -173,7 +173,7 @@ class Task(TemplateTask):
 
                     if self.execution_counter < 4:
                         # Update Gyro and attitude estimate via propagation
-                        self.AD.gyro_update(self.time, update_covariance=False)
+                        self.AD.gyro_update(self.time, update_covariance=True)
                         self.execution_counter += 1
 
                     else:
@@ -308,3 +308,7 @@ class Task(TemplateTask):
             self.log_info(f"ADCS Mode : {self.MODE}")
             self.log_info(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z + 1]}")
             self.log_info(f"Gyro Bias : {self.AD.state[self.AD.bias_idx]}")
+            
+            from hal.configuration import SATELLITE
+            from ulab import numpy as np
+            SATELLITE.set_fsw_state(np.concatenate((self.AD.state[0:22], self.AD.true_map)))

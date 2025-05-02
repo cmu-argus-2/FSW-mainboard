@@ -46,6 +46,8 @@ class AttitudeDetermination:
     sun_pos_idx = slice(19, 22)
     sun_status_idx = slice(22, 23)
     sun_lux_idx = slice(23, 32)
+    
+    true_map = np.zeros((6,))
 
     # Time storage
     last_gyro_update_time = 0
@@ -56,7 +58,7 @@ class AttitudeDetermination:
     gyro_white_noise_sigma = 1.5e-4  # TODO : characetrize sensor and update
     gyro_bias_sigma = 1.5e-4  # TODO : characetrize sensor and update
     sun_sensor_sigma = 1e-4  # TODO : characetrize sensor and update
-    magnetometer_sigma = 1e-3  # TODO : characetrize sensor and update
+    magnetometer_sigma = 3e-1  # TODO : characetrize sensor and update
 
     # EKF Covariances
     P = 10 * np.ones((6, 6))  # TODO : characterize process noise
@@ -278,20 +280,22 @@ class AttitudeDetermination:
                 return StatusConst.SUN_UPDATE_FAIL, StatusConst.TRUE_SUN_MAP_FAIL  # End update if true position is absent
             else:
                 true_sun_pos_eci = true_sun_pos_eci / true_sun_pos_eci_norm
-                true_sun_pos_body = np.dot(quat_to_R(self.state[self.attitude_idx]).transpose(), true_sun_pos_eci)
 
-            # Get measured sun position
-            measured_sun_pos_body_norm = np.linalg.norm(sun_pos_body)
-            if measured_sun_pos_body_norm == 0:
+            # Convert the measured position to ECI
+            measured_sun_pos_eci = np.dot(quat_to_R(self.state[self.attitude_idx]), sun_pos_body)
+            measured_sun_pos_eci_norm = np.linalg.norm(measured_sun_pos_eci)
+            if measured_sun_pos_eci_norm == 0:
                 return StatusConst.SUN_UPDATE_FAIL, StatusConst.ZERO_NORM  # End update if measured position is absent
             else:
-                measured_sun_pos_body = sun_pos_body / measured_sun_pos_body_norm
+                measured_sun_pos_eci = measured_sun_pos_eci / measured_sun_pos_eci_norm
+                self.true_map[0:3] = true_sun_pos_eci
 
             # EKF update
-            innovation = true_sun_pos_body - measured_sun_pos_body
-            Cov_sunsensor = self.sun_sensor_sigma**2
+            innovation = true_sun_pos_eci - measured_sun_pos_eci
+            s_cross = skew(true_sun_pos_eci)
+            Cov_sunsensor = self.sun_sensor_sigma**2 * np.dot(np.dot(s_cross, np.eye(3)), s_cross.transpose())
             H = np.zeros((3, 6))
-            H[0:3, 0:3] = -skew(true_sun_pos_body)
+            H[0:3, 0:3] = s_cross
 
             # Log status based on EKF update
             update_status = self.EKF_update(H, innovation, Cov_sunsensor)
@@ -322,20 +326,22 @@ class AttitudeDetermination:
                 return StatusConst.MAG_UPDATE_FAIL, StatusConst.TRUE_MAG_MAP_FAIL  # End update if true mag field is zeros
             else:
                 true_mag_field_eci = true_mag_field_eci / true_mag_field_eci_norm
-                true_mag_field_body = np.dot(quat_to_R(self.state[self.attitude_idx]).transpose(), true_mag_field_eci)
+                self.true_map[3:6] = true_mag_field_eci
 
-            # Get measured mag field
-            measured_mag_field_body_norm = np.linalg.norm(mag_field_body)
-            if measured_mag_field_body_norm == 0:
+            # Convert measured mag field into ECI
+            measured_mag_field_eci = np.dot(quat_to_R(self.state[self.attitude_idx]), mag_field_body)
+            measured_mag_field_eci_norm = np.linalg.norm(measured_mag_field_eci)
+            if measured_mag_field_eci_norm == 0:
                 return StatusConst.MAG_UPDATE_FAIL, StatusConst.ZERO_NORM  # End update if measured mag field is zeros
             else:
-                measured_mag_field_body = mag_field_body / measured_mag_field_body_norm
+                measured_mag_field_eci = measured_mag_field_eci / measured_mag_field_eci_norm
 
             # EKF update
-            innovation = true_mag_field_body - measured_mag_field_body
-            Cov_mag_field = self.magnetometer_sigma**2 * np.eye(3)
+            innovation = true_mag_field_eci - measured_mag_field_eci
+            s_cross = skew(true_mag_field_eci)
+            Cov_mag_field = self.magnetometer_sigma**2 * np.dot(np.dot(s_cross, np.eye(3)), s_cross.transpose())
             H = np.zeros((3, 6))
-            H[0:3, 0:3] = -skew(true_mag_field_body)
+            H[0:3, 0:3] = s_cross
 
             # Update log based on EKF status
             update_status = self.EKF_update(H, innovation, Cov_mag_field)
@@ -373,20 +379,28 @@ class AttitudeDetermination:
                     delta_quat[1:4] = np.sin(rotvec_norm / 2) * rotvec / rotvec_norm
 
                 self.state[self.attitude_idx] = quaternion_multiply(self.state[self.attitude_idx], delta_quat)
+                R_q_next = quat_to_R(self.state[self.attitude_idx])
 
                 self.last_gyro_update_time = current_time
 
                 if update_covariance:  # if update covariance, update covariance matrices
                     F = np.zeros((6, 6))
-                    F[0:3, 0:3] = -skew(unbiased_omega)
-                    F[0:3, 3:6] = -np.eye(3)
+                    F[0:3, 3:6] = R_q_next
 
                     G = np.zeros((6, 6))
-                    G[0:3, 0:3] = -np.eye(3)
+                    G[0:3, 0:3] = R_q_next
                     G[3:6, 3:6] = np.eye(3)
-                    
-                    Phi = np.eye(6) + F*dt
-                    self.P = np.dot(np.dot(Phi, self.P), Phi.transpose()) + np.dot(np.dot(G, self.Q), G.transpose())
+
+                    A = np.zeros((12, 12))
+                    A[0:6, 0:6] = -F
+                    A[0:6, 6:12] = np.dot(np.dot(G, self.Q), G.transpose())
+                    A[6:12, 6:12] = F.transpose()
+                    A = A * dt
+
+                    Aexp = np.eye(12) + A
+                    Phi = Aexp[6:12, 6:12].transpose()
+                    Qdk = np.dot(Phi, Aexp[0:6, 6:12])
+                    self.P = np.dot(np.dot(Phi, self.P), Phi.transpose()) + Qdk
 
     def EKF_update(self, H: np.ndarray, innovation: np.ndarray, R_noise: np.ndarray) -> None:
         """

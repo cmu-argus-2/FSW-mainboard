@@ -31,7 +31,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
         os.mkdir(RESULTS_FOLDER)
         self.cppsim = cppSim(trial, RESULTS_FOLDER, CONFIG_FILE, log=True)
 
-        self.measurement = np.zeros((49,))
+        self.measurement = np.zeros((52,))
         self.starting_real_epoch = time.monotonic_ns() / 1.0e9
         self.latest_real_epoch = self.starting_real_epoch
         self.base_dt = self.cppsim.params.dt
@@ -40,12 +40,12 @@ class Simulator:  # will be passed by reference to the emulated HAL
         # Measurement labels
         self.gps_idx = slice(0, 6)
         self.gyro_idx = slice(6, 9)
-        self.mag_idx = slice(9, 12)
-        self.lux_idx = slice(12, 21)
-        self.mtb_idx = slice(21, 27)
-        self.solar_idx = slice(27, 40)
-        self.power_idx = slice(40, 48)
-        self.jetson_idx = slice(48, 49)
+        self.mag_idx = slice(12, 15)
+        self.lux_idx = slice(15, 24)
+        self.mtb_idx = slice(24, 30)
+        self.solar_idx = slice(30, 43)
+        self.power_idx = slice(43, 51)
+        self.jetson_idx = slice(51, 52)
 
     """
         SENSOR CALLBACKS
@@ -71,7 +71,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
 
     def gps(self):
         self.advance_to_time()
-        gps_state = np.array([time.time()] + list(self.measurement[self.gps_idx] * 1e2))
+        gps_state = np.array([self.get_sim_time()] + list(self.measurement[self.gps_idx] * 1e2))
         return gps_state  # GPS returns data in cm
 
     def coil_power(self, idx):
@@ -158,4 +158,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
             self.sim_time += dt
 
     def get_sim_time(self):
-        return 946746000 + self.cppsim.get_time()
+        return 946728000 + self.cppsim.get_time()
+    
+    def set_fsw_state(self, state):
+        self.cppsim.fsw_state = state

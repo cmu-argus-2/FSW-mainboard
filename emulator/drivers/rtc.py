@@ -1,4 +1,4 @@
-from time import gmtime, struct_time
+from time import localtime, gmtime, struct_time
 
 
 class RTC:
@@ -10,7 +10,7 @@ class RTC:
     def datetime(self):
         if self.__simulator is not None:
             unix_time = self.__simulator.get_sim_time()
-            self.current_datetime = gmtime(unix_time)
+            self.current_datetime = localtime(unix_time)
         else:
             self.current_datetime = gmtime()
         return self.current_datetime

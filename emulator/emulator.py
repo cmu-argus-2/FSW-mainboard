@@ -120,3 +120,6 @@ class EmulatedSatellite(CubeSat):
                 print(f"[WARNING] [6][ADCS] Trying to set a NaN input to {dir} coil")
                 return
             self._device_list["TORQUE_" + dir].device.set_throttle(dir, ctrl)
+            
+    def set_fsw_state(self, state):
+        self.__simulated_spacecraft.set_fsw_state(state)
