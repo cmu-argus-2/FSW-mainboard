@@ -26,7 +26,7 @@ class EPS_TEMP_THRESHOLD:
 # Power threshold in mW
 class EPS_POWER_THRESHOLD:
     MAINBOARD = const(1000)  # TODO: this threshold makes sense for v2 mainboards, but change to 400 for v3
-    PERIPHAL = const(1000)
+    PERIPHERAL = const(1000)
     RADIO = const(3300)
     JETSON = const(16000)
     TORQUE_COIL = const(1500)

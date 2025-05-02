@@ -64,7 +64,7 @@ class EPS_IDX:
 class EPS_WARNING_IDX:
     TIME_EPS_WARNING = const(0)
     MAINBOARD_POWER_ALERT = const(1)
-    PERIPH_POWER_ALERT = const(2)
+    PERIPHERAL_POWER_ALERT = const(2)
     RADIO_POWER_ALERT = const(3)
     JETSON_POWER_ALERT = const(4)
     XP_COIL_POWER_ALERT = const(5)

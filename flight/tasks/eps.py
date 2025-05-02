@@ -20,6 +20,7 @@ from hal.configuration import SATELLITE
 IDX_LENGTH = class_length(EPS_IDX)
 WARNING_IDX_LENGTH = class_length(EPS_WARNING_IDX)
 FUEL_GAUGE_LOG_FREQ = 5  # log fuel gauge readings every 5 seconds
+MAINBOARD_TEMP_OFFSET = 200  # offset of mainboard temperature to battery pack temp in cC
 
 
 class Task(TemplateTask):
@@ -78,7 +79,7 @@ class Task(TemplateTask):
     warning_log_data = [0] * WARNING_IDX_LENGTH
     power_buffer_dict = {
         EPS_WARNING_IDX.MAINBOARD_POWER_ALERT: [],
-        EPS_WARNING_IDX.PERIPH_POWER_ALERT: [],
+        EPS_WARNING_IDX.PERIPHERAL_POWER_ALERT: [],
         EPS_WARNING_IDX.RADIO_POWER_ALERT: [],
         EPS_WARNING_IDX.JETSON_POWER_ALERT: [],
         EPS_WARNING_IDX.XP_COIL_POWER_ALERT: [],
@@ -148,7 +149,7 @@ class Task(TemplateTask):
 
     def set_battery_heaters(self, heaters):
         enabled = heaters.heater0_enabled() or heaters.heater1_enabled()
-        temp = self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE]
+        temp = self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] - MAINBOARD_TEMP_OFFSET
         if SATELLITE.FUEL_GAUGE_AVAILABLE:
             temp = self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]
         if SHOULD_ENABLE_HEATERS(enabled, temp):
@@ -173,7 +174,7 @@ class Task(TemplateTask):
             self.log_vc("Jetson", EPS_IDX.JETSON_INPUT_VOLTAGE, EPS_IDX.JETSON_INPUT_CURRENT, voltage, current)
         elif location == "GPS":
             voltage, current = self.read_vc(sensor)
-            self.set_power_alert(voltage, current, EPS_WARNING_IDX.PERIPH_POWER_ALERT, EPS_POWER_THRESHOLD.PERIPH)
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.PERIPHERAL_POWER_ALERT, EPS_POWER_THRESHOLD.PERIPHERAL)
             self.log_vc("Peripheral", EPS_IDX.GPS_VOLTAGE, EPS_IDX.GPS_CURRENT, voltage, current)
         elif location == "RADIO":
             voltage, current = self.read_vc(sensor)
