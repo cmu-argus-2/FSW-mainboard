@@ -141,7 +141,7 @@ class Task(TemplateTask):
             if adcs_data:
                 self.ADCS_MODE = adcs_data[ADCS_IDX.MODE]
 
-                if not (self.ADCS_MODE >= Modes.TUMBLING and self.ADCS_MODE <= Modes.SUN_POINTED):
+                if not (self.ADCS_MODE >= Modes.TUMBLING and self.ADCS_MODE <= Modes.ACS_OFF):
                     self.log_error("ADCS returned an invalid mode, assuming STABLE ADCS mode")
                     self.ADCS_MODE = Modes.STABLE
                 else:
