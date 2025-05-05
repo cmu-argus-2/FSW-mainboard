@@ -417,7 +417,8 @@ ERROR = {
 
 
 def ASSERT(state):
-    assert state == _ERR_NONE, ERROR[state]
+    if state != _ERR_NONE:
+        raise TypeError(f"Following error occured: {ERROR[state]}")
 
 
 # TODO: Characterize latency and potentially tweak sleep time
@@ -560,7 +561,8 @@ class SX126X:
         ASSERT(state)
 
         # Set RX gain mode to be high (better sensitivity) by default
-        state = self.setRxGain(True)
+        state = self.setRxGain(False)
+        ASSERT(state)
 
         if useRegulatorLDO:
             state = self.setRegulatorLDO()
@@ -984,9 +986,9 @@ class SX126X:
 
     def setRxGain(self, high_gain_rx):
         if high_gain_rx is True:
-            return self.writeRegister(_SX126X_REG_RX_GAIN, _SX126X_RX_GAIN_HIGH, 1)
+            return self.writeRegister(_SX126X_REG_RX_GAIN, [_SX126X_RX_GAIN_HIGH], 1)
         else:
-            return self.writeRegister(_SX126X_REG_RX_GAIN, _SX126X_RX_GAIN_LOW, 1)
+            return self.writeRegister(_SX126X_REG_RX_GAIN, [_SX126X_RX_GAIN_LOW], 1)
 
     def setPreambleLength(self, preambleLength):
         modem = self.getPacketType()
