@@ -83,7 +83,14 @@ _SX126X_REG_LORA_SYNC_WORD_MSB = const(0x0740)
 # SX126X_REG_RANDOM_NUMBER_3 = const(0x081C)
 
 _SX126X_REG_RX_GAIN = const(0x08AC)
-_SX126X_REG_AGC_RSSI_MEAS_CALH = const(0x08)
+_SX126X_REG_AGC_RSSI_MEAS_CAL_H = const(0x089C)
+_SX126X_REG_AGC_RSSI_MEAS_CAL_L = const(0x089D)
+_SX126X_REG_AGC_GAIN_TUNE_1_2 = const(0x08F5)
+_SX126X_REG_AGC_GAIN_TUNE_3_4 = const(0x08F6)
+_SX126X_REG_AGC_GAIN_TUNE_5_6 = const(0x08F7)
+_SX126X_REG_AGC_GAIN_TUNE_7_8 = const(0x08F8)
+_SX126X_REG_AGC_GAIN_TUNE_9_10 = const(0x08F9)
+_SX126X_REG_AGC_GAIN_TUNE_11_12 = const(0x08FA)
 
 _SX126X_REG_OCP_CONFIGURATION = const(0x08E7)
 # SX126X_REG_XTA_TRIM = const(0x0911)
@@ -564,7 +571,7 @@ class SX126X:
         ASSERT(state)
 
         # Set RX gain mode to be high (better sensitivity) by default
-        state = self.setRxGain(False)
+        state = self.setRxGain(True)
         ASSERT(state)
 
         if useRegulatorLDO:
@@ -988,10 +995,17 @@ class SX126X:
         return float(ocp[0]) * 2.5
 
     def setRxGain(self, high_gain_rx):
-        if high_gain_rx is True:
+        if high_gain_rx:
             return self.writeRegister(_SX126X_REG_RX_GAIN, [_SX126X_RX_GAIN_HIGH], 1)
         else:
             return self.writeRegister(_SX126X_REG_RX_GAIN, [_SX126X_RX_GAIN_LOW], 1)
+
+    def getRxGain(self):
+        gain = bytearray(1)
+        gain_mv = memoryview(gain)
+        self.readRegister(_SX126X_REG_RX_GAIN, gain_mv, 1)
+
+        return int(gain[0])
 
     def setPreambleLength(self, preambleLength):
         modem = self.getPacketType()
