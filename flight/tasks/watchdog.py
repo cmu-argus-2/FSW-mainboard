@@ -13,12 +13,13 @@ class Task(TemplateTask):
         self.name = "WATCHDOG"
 
     async def main_task(self):
-        if SATELLITE.WATCHDOG_AVAILABLE:
-            if not SATELLITE.WATCHDOG.enabled:
-                self.log_info("Watchdog enabled.")
-                SATELLITE.WATCHDOG.enable()
+        # if SATELLITE.WATCHDOG_AVAILABLE:
+        #     if not SATELLITE.WATCHDOG.enabled:
+        #         self.log_info("Watchdog enabled.")
+        #         SATELLITE.WATCHDOG.enable()
 
-            if SATELLITE.WATCHDOG.input:
-                SATELLITE.WATCHDOG.input_low()
-            else:
-                SATELLITE.WATCHDOG.input_high()
+        #     if SATELLITE.WATCHDOG.input:
+        #         SATELLITE.WATCHDOG.input_low()
+        #     else:
+        #         SATELLITE.WATCHDOG.input_high()
+        pass
