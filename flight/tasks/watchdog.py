@@ -4,7 +4,8 @@
 # functioning correctly.
 
 from core import TemplateTask
-from hal.configuration import SATELLITE
+
+# from hal.configuration import SATELLITE
 
 
 class Task(TemplateTask):
