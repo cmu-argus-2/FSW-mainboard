@@ -1042,8 +1042,8 @@ class SX126X:
         # Set _SX126X_REG_AGC_G_FORST_POW_THR to 0x04
         self.writeRegister(_SX126X_REG_AGC_G_FORST_POW_THR, [0x04], 1)
 
-        # Set _SX126X_REG_RX_GAIN to 0x8A (RX high gain and 470-490 MHz AGC)
-        self.writeRegister(_SX126X_REG_RX_GAIN, [0x8A], 1)
+        # Set _SX126X_REG_RX_GAIN to 0x8A (RX low gain and 470-490 MHz AGC)
+        self.writeRegister(_SX126X_REG_RX_GAIN, [0x88], 1)
 
     def checkConfigAGC(self):
         temp = bytearray(1)
