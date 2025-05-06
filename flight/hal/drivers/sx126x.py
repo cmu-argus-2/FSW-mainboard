@@ -577,11 +577,9 @@ class SX126X:
         state = self.setDio2AsRfSwitch(True)
         ASSERT(state)
 
-        # Set RX gain mode to be high (better sensitivity) by default
-        state = self.setRxGain(True)
-        ASSERT(state)
-
-        print(f"RX Gain Register: {self.getRxGain()}")
+        # Configure AGC for 470 - 490 MHz
+        self.configureAGC()
+        self.checkConfigAGC()
 
         if useRegulatorLDO:
             state = self.setRegulatorLDO()
@@ -1017,9 +1015,6 @@ class SX126X:
         return gain
 
     def configureAGC(self):
-        # Set _SX126X_REG_RX_GAIN to 0x8A (RX high gain and 470-490 MHz AGC)
-        self.writeRegister(_SX126X_REG_AGC_RSSI_MEAS_CAL_L, [0x8A], 1)
-
         # Set _SX126X_REG_AGC_RSSI_MEAS_CAL_L to 0x27
         self.writeRegister(_SX126X_REG_AGC_RSSI_MEAS_CAL_L, [0x27], 1)
 
@@ -1046,6 +1041,43 @@ class SX126X:
 
         # Set _SX126X_REG_AGC_G_FORST_POW_THR to 0x04
         self.writeRegister(_SX126X_REG_AGC_G_FORST_POW_THR, [0x04], 1)
+
+        # Set _SX126X_REG_RX_GAIN to 0x8A (RX high gain and 470-490 MHz AGC)
+        self.writeRegister(_SX126X_REG_RX_GAIN, [0x8A], 1)
+
+    def checkConfigAGC(self):
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
+
+        self.readRegister(_SX126X_REG_AGC_RSSI_MEAS_CAL_L, temp_mv, 1)
+        print(f"_SX126X_REG_AGC_RSSI_MEAS_CAL_L: {temp}")
+
+        self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_1_2, temp_mv, 1)
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_1_2: {temp}")
+
+        self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_3_4, temp_mv, 1)
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_3_4: {temp}")
+
+        self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_5_6, temp_mv, 1)
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_5_6: {temp}")
+
+        self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_7_8, temp_mv, 1)
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_7_8: {temp}")
+
+        self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_9_10, temp_mv, 1)
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_9_10: {temp}")
+
+        self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_11_12, temp_mv, 1)
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_11_12: {temp}")
+
+        self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_13, temp_mv, 1)
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_13: {temp}")
+
+        self.readRegister(_SX126X_REG_AGC_G_FORST_POW_THR, temp_mv, 1)
+        print(f"_SX126X_REG_AGC_G_FORST_POW_THR: {temp}")
+
+        self.readRegister(_SX126X_REG_RX_GAIN, temp_mv, 1)
+        print(f"_SX126X_REG_RX_GAIN: {temp}")
 
     def setPreambleLength(self, preambleLength):
         modem = self.getPacketType()
