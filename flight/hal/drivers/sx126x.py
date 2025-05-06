@@ -82,15 +82,21 @@ _SX126X_REG_LORA_SYNC_WORD_MSB = const(0x0740)
 # SX126X_REG_RANDOM_NUMBER_2 = const(0x081B)
 # SX126X_REG_RANDOM_NUMBER_3 = const(0x081C)
 
-_SX126X_REG_RX_GAIN = const(0x08AC)
+# NOTE: Registers for AGC configuration
+_SX126X_REG_RX_GAIN = const(0x08AC)  # Also AgcSensiAdjust
+
 _SX126X_REG_AGC_RSSI_MEAS_CAL_H = const(0x089C)
 _SX126X_REG_AGC_RSSI_MEAS_CAL_L = const(0x089D)
+
 _SX126X_REG_AGC_GAIN_TUNE_1_2 = const(0x08F5)
 _SX126X_REG_AGC_GAIN_TUNE_3_4 = const(0x08F6)
 _SX126X_REG_AGC_GAIN_TUNE_5_6 = const(0x08F7)
 _SX126X_REG_AGC_GAIN_TUNE_7_8 = const(0x08F8)
 _SX126X_REG_AGC_GAIN_TUNE_9_10 = const(0x08F9)
 _SX126X_REG_AGC_GAIN_TUNE_11_12 = const(0x08FA)
+_SX126X_REG_AGC_GAIN_TUNE_13 = const(0x08FB)
+
+_SX126X_REG_AGC_G_FORST_POW_THR = const(0x08B9)
 
 _SX126X_REG_OCP_CONFIGURATION = const(0x08E7)
 # SX126X_REG_XTA_TRIM = const(0x0911)
@@ -104,8 +110,11 @@ _SX126X_REG_IQ_CONFIG = const(0x0736)
 # SX126X_REG_RX_GAIN_RETENTION_1 = const(0x02A0)
 # SX126X_REG_RX_GAIN_RETENTION_2 = const(0x02A1)
 
+# NOTE: Register values for AGC configuration
 _SX126X_RX_GAIN_LOW = const(0x94)
 _SX126X_RX_GAIN_HIGH = const(0x96)
+
+_SX126X_RX_GAIN_HIGH_AGCBIT = const(0x8A)
 
 _SX126X_SLEEP_START_COLD = const(0b00000000)
 _SX126X_SLEEP_START_WARM = const(0b00000100)
@@ -574,6 +583,8 @@ class SX126X:
         state = self.setRxGain(True)
         ASSERT(state)
 
+        print(f"RX Gain Register: {self.getRxGain()}")
+
         if useRegulatorLDO:
             state = self.setRegulatorLDO()
         else:
@@ -1006,6 +1017,9 @@ class SX126X:
         self.readRegister(_SX126X_REG_RX_GAIN, gain_mv, 1)
 
         return int(gain[0])
+
+    def configureAGC(self):
+        pass
 
     def setPreambleLength(self, preambleLength):
         modem = self.getPacketType()
