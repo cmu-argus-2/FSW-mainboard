@@ -114,8 +114,6 @@ _SX126X_REG_IQ_CONFIG = const(0x0736)
 _SX126X_RX_GAIN_LOW = const(0x94)
 _SX126X_RX_GAIN_HIGH = const(0x96)
 
-_SX126X_RX_GAIN_HIGH_AGCBIT = const(0x8A)
-
 _SX126X_SLEEP_START_COLD = const(0b00000000)
 _SX126X_SLEEP_START_WARM = const(0b00000100)
 _SX126X_SLEEP_RTC_OFF = const(0b00000000)
@@ -1016,10 +1014,38 @@ class SX126X:
         gain_mv = memoryview(gain)
         self.readRegister(_SX126X_REG_RX_GAIN, gain_mv, 1)
 
-        return int(gain[0])
+        return gain
 
     def configureAGC(self):
-        pass
+        # Set _SX126X_REG_RX_GAIN to 0x8A (RX high gain and 470-490 MHz AGC)
+        self.writeRegister(_SX126X_REG_AGC_RSSI_MEAS_CAL_L, [0x8A], 1)
+
+        # Set _SX126X_REG_AGC_RSSI_MEAS_CAL_L to 0x27
+        self.writeRegister(_SX126X_REG_AGC_RSSI_MEAS_CAL_L, [0x27], 1)
+
+        # Set _SX126X_REG_AGC_GAIN_TUNE_1_2 to 0xDE
+        self.writeRegister(_SX126X_REG_AGC_GAIN_TUNE_1_2, [0xDE], 1)
+
+        # Set _SX126X_REG_AGC_GAIN_TUNE_3_4 to 0xE2
+        self.writeRegister(_SX126X_REG_AGC_GAIN_TUNE_3_4, [0xE2], 1)
+
+        # Set _SX126X_REG_AGC_GAIN_TUNE_5_6 to 0x32
+        self.writeRegister(_SX126X_REG_AGC_GAIN_TUNE_5_6, [0x32], 1)
+
+        # Set _SX126X_REG_AGC_GAIN_TUNE_7_8 to 0x44
+        self.writeRegister(_SX126X_REG_AGC_GAIN_TUNE_7_8, [0x44], 1)
+
+        # Set _SX126X_REG_AGC_GAIN_TUNE_9_10 to 0x33
+        self.writeRegister(_SX126X_REG_AGC_GAIN_TUNE_9_10, [0x33], 1)
+
+        # Set _SX126X_REG_AGC_GAIN_TUNE_11_12 to 0x34
+        self.writeRegister(_SX126X_REG_AGC_GAIN_TUNE_11_12, [0x34], 1)
+
+        # Set _SX126X_REG_AGC_GAIN_TUNE_13 to 0x04
+        self.writeRegister(_SX126X_REG_AGC_GAIN_TUNE_13, [0x04], 1)
+
+        # Set _SX126X_REG_AGC_G_FORST_POW_THR to 0x04
+        self.writeRegister(_SX126X_REG_AGC_G_FORST_POW_THR, [0x04], 1)
 
     def setPreambleLength(self, preambleLength):
         modem = self.getPacketType()
