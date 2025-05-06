@@ -1050,34 +1050,64 @@ class SX126X:
         temp_mv = memoryview(temp)
 
         self.readRegister(_SX126X_REG_AGC_RSSI_MEAS_CAL_L, temp_mv, 1)
-        print(f"_SX126X_REG_AGC_RSSI_MEAS_CAL_L: {temp}")
+        print(f"_SX126X_REG_AGC_RSSI_MEAS_CAL_L: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
 
         self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_1_2, temp_mv, 1)
-        print(f"_SX126X_REG_AGC_GAIN_TUNE_1_2: {temp}")
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_1_2: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
 
         self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_3_4, temp_mv, 1)
-        print(f"_SX126X_REG_AGC_GAIN_TUNE_3_4: {temp}")
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_3_4: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
 
         self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_5_6, temp_mv, 1)
-        print(f"_SX126X_REG_AGC_GAIN_TUNE_5_6: {temp}")
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_5_6: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
 
         self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_7_8, temp_mv, 1)
-        print(f"_SX126X_REG_AGC_GAIN_TUNE_7_8: {temp}")
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_7_8: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
 
         self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_9_10, temp_mv, 1)
-        print(f"_SX126X_REG_AGC_GAIN_TUNE_9_10: {temp}")
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_9_10: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
 
         self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_11_12, temp_mv, 1)
-        print(f"_SX126X_REG_AGC_GAIN_TUNE_11_12: {temp}")
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_11_12: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
 
         self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_13, temp_mv, 1)
-        print(f"_SX126X_REG_AGC_GAIN_TUNE_13: {temp}")
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_13: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
 
         self.readRegister(_SX126X_REG_AGC_G_FORST_POW_THR, temp_mv, 1)
-        print(f"_SX126X_REG_AGC_G_FORST_POW_THR: {temp}")
+        print(f"_SX126X_REG_AGC_G_FORST_POW_THR: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
 
         self.readRegister(_SX126X_REG_RX_GAIN, temp_mv, 1)
-        print(f"_SX126X_REG_RX_GAIN: {temp}")
+        print(f"_SX126X_REG_RX_GAIN: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
 
     def setPreambleLength(self, preambleLength):
         modem = self.getPacketType()
