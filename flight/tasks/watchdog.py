@@ -6,11 +6,14 @@
 from core import TemplateTask
 from hal.configuration import SATELLITE
 
+_WAIT_CYCLE = 1  # wait cycles so the pin is toggled before the enable pin
+
 
 class Task(TemplateTask):
     def __init__(self, id):
         super().__init__(id)
         self.name = "WATCHDOG"
+        self.counter = 0
 
     async def main_task(self):
         if SATELLITE.WATCHDOG_AVAILABLE:
@@ -28,6 +31,8 @@ class Task(TemplateTask):
             else:
                 SATELLITE.WATCHDOG.input_high()
 
-            if not SATELLITE.WATCHDOG.enabled:
+            if not SATELLITE.WATCHDOG.enabled and self.counter > _WAIT_CYCLE:
                 self.log_info("Watchdog enabled.")
                 SATELLITE.WATCHDOG.enable()
+
+            self.counter += 1
