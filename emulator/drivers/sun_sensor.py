@@ -20,7 +20,6 @@ class LightSensor:
         self.flag_h = False
         self.flag_L = False
         self.overload_flag = False
-        self.conversion_ready_flag = False
 
     def lux(self):
         if self.__simulator is not None:
