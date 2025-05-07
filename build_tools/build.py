@@ -60,6 +60,15 @@ def get_branch_name():
         return None
 
 
+def check_clean_git():
+    try:
+        status = os.popen("git status --porcelain").read().strip()
+        return status == ""
+    except Exception as e:
+        print(f"Error checking git status: {e}")
+        return None
+
+
 BOARD_PATH = get_board_path()
 CPY_VERSION = 8  # Default to CPY 8
 BOARD_ID = "Argus"  # Default to compiling for Argus
@@ -68,6 +77,7 @@ if os.path.exists(BOARD_PATH):
     BOARD_ID = get_board_id(BOARD_PATH)
 GIT_BRANCH = get_branch_name()
 GIT_COMMIT = get_commit_hash()
+GIT_CLEAN = check_clean_git()
 
 MPY_CROSS_NAME = "mpy-cross-cpy9" if CPY_VERSION == 9 else "mpy-cross"
 if system == "Darwin":
@@ -151,7 +161,11 @@ def create_build(source_folder):
         if GIT_BRANCH:
             f.write(f'print("Branch: {GIT_BRANCH}")\n')
         if GIT_COMMIT:
-            f.write(f'print("Commit: {GIT_COMMIT}")\n')
+            if not GIT_CLEAN:
+                f.write('print("Warning: Uncommitted changes detected!")\n')
+                f.write(f'print("DIRTY Commit: {GIT_COMMIT}")\n')
+            else:
+                f.write(f'print("CLEAN Commit: {GIT_COMMIT}")\n')
         f.write("import main_module\n")
 
     # Create SD folder
@@ -180,7 +194,11 @@ if __name__ == "__main__":
     if GIT_BRANCH:
         print(f"Branch: {GIT_BRANCH}")
     if GIT_COMMIT:
-        print(f"Commit: {GIT_COMMIT}")
+        if not GIT_CLEAN:
+            print("Warning: Uncommitted changes detected!")
+            print(f"DIRTY Commit: {GIT_COMMIT}")
+        else:
+            print(f"CLEAN Commit: {GIT_COMMIT}")
 
     print(f"CircuitPython version: {CPY_VERSION}")
     print(f"Board ID: {BOARD_ID}")
