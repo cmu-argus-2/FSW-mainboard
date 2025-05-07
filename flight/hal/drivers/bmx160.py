@@ -672,8 +672,6 @@ class BMX160:
     @property
     def device_errors(self):
         results = []
-        if self.error_code != BMX160_OK:
-            results.append(Errors.IMU_ERROR_CODE)
         if self.drop_cmd_err:
             results.append(Errors.IMU_DROP_COMMAND_ERROR)
         if self.fatal_err:
