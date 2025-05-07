@@ -79,12 +79,6 @@ _RC_CTRL8 = const(0x19)  # RW
     NPOR   Undervoltage lockout; device disabled,
         resumes with voltage restoration
     """
-# _FAULT = const(0x01)
-# _STALL = const(0x02)
-# _OCP = const(0x03)
-# _OVP = const(0x04)
-# _TSD = const(0x05)
-# _NPOR = const(0x06)
 
 
 class BridgeControl:
