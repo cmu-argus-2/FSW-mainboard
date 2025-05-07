@@ -59,8 +59,6 @@ class LightSensor:
             results.append(Errors.LIGHT_SENSOR_LOWER_THAN_THRESHOLD)
         if self.overload_flag:
             results.append(Errors.LIGHT_SENSOR_OVERFLOW)
-        if self.conversion_ready_flag:
-            results.append(Errors.LIGHT_SENSOR_COVERSION_READY)
 
         self.clear_faults()
         return results

@@ -501,8 +501,6 @@ class OPT4001:
             results.append(Errors.LIGHT_SENSOR_LOWER_THAN_THRESHOLD)
         if self.overload_flag:
             results.append(Errors.LIGHT_SENSOR_OVERFLOW)
-        if self.conversion_ready_flag:
-            results.append(Errors.LIGHT_SENSOR_COVERSION_READY)
         return results
 
     def deinit(self):

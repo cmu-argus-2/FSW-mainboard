@@ -47,6 +47,8 @@ class Task(TemplateTask):
         # decide what to do with the error based, decision made on the most severe error
         if Errors.DEVICE_NOT_INITIALISED in device_errors:
             return [SATELLITE.handle_error(device_name), Errors.DEVICE_NOT_INITIALISED]
+        elif Errors.FN_CALL_ERROR in device_errors:
+            return [SATELLITE.handle_error(device_name), Errors.FN_CALL_ERROR]
         elif Errors.IMU_FATAL_ERROR in device_errors:
             return [SATELLITE.handle_error(device_name), Errors.IMU_FATAL_ERROR]
         elif Errors.RADIO_RC64K_CALIBRATION_FAILED in device_errors:
@@ -77,6 +79,12 @@ class Task(TemplateTask):
             return [Errors.LOG_DATA_ERROR, Errors.WATCHDOG_EN_GPIO_ERROR]
         elif Errors.WATCHDOG_INPUT_GPIO_ERROR in device_errors:
             return [Errors.LOG_DATA_ERROR, Errors.WATCHDOG_INPUT_GPIO_ERROR]
+        elif Errors.LIGHT_SENSOR_HIGHER_THAN_THRESHOLD in device_errors:
+            return [Errors.LOG_DATA, Errors.LIGHT_SENSOR_HIGHER_THAN_THRESHOLD]
+        elif Errors.LIGHT_SENSOR_LOWER_THAN_THRESHOLD in device_errors:
+            return [Errors.LOG_DATA, Errors.LIGHT_SENSOR_LOWER_THAN_THRESHOLD]
+        elif Errors.LIGHT_SENSOR_OVERFLOW in device_errors:
+            return [Errors.LOG_DATA, Errors.LIGHT_SENSOR_OVERFLOW]
 
         return [Errors.NO_ERROR, Errors.NO_ERROR]
 
@@ -158,7 +166,7 @@ class Task(TemplateTask):
             for device_name, time in self.turn_on_device.items():
                 if self.log_data[HAL_IDX.TIME_HAL] != time:
                     SATELLITE.turn_on_device(device_name)
-                    self.log_info(f"Turned on {device_name}")
+                    self.log_info(f"Turned on {device_name} and devices on the same power line.")
                     self.turn_on_device.pop(device_name)
 
         if self.graceful_reboot_counter >= _GRACEFUL_REBOOT_INTERVAL:
