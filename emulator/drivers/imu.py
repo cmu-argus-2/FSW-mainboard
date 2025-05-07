@@ -22,7 +22,7 @@ class IMU:
         self.__accel = array([0.0, 0.0, 0.0])
 
         # Faults
-        self._all_faults = np.array([False] * 3)
+        self._all_faults = np.array([False] * 2)
         self._time_to_each_failure = np.random.exponential(scale=_scale_)
 
         self.drop_cmd_err = False
@@ -71,7 +71,7 @@ class IMU:
                 + (self.__simulator.sim_time + np.random.exponential(scale=_scale_)) * self._all_faults
             )
 
-        self._all_faults[0:2] = self._all_faults[0:2] & False
+        self._all_faults[0:1] = self._all_faults[0:1] & False
         self.drop_cmd_err, self.fatal_err = self._all_faults
 
     @property
