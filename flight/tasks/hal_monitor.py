@@ -41,6 +41,12 @@ class Task(TemplateTask):
         """Return the HAL_IDX field name for a given index, or None if not found."""
         return _HAL_IDX_INV.get(idx)
 
+    def close_data_process(self):
+        try:
+            DH.graceful_shutdown()
+        except Exception as e:
+            self.log_info(f"Error during graceful shutdown: {e}")
+
     ######################## ERROR HANDLING ########################
 
     def error_decision(self, device_name, device_errors):
@@ -173,7 +179,7 @@ class Task(TemplateTask):
             if self.graceful_reboot:
                 self.graceful_reboot = False
                 self.peripheral_reboot_count += 1
-                DH.graceful_shutdown()
+                self.close_data_process()
                 SATELLITE.graceful_reboot()
                 DH.restore_data_process_files()
                 self.log_info("Gracefully rebooted peripheral power line.")
@@ -187,5 +193,6 @@ class Task(TemplateTask):
         # TODO: delay this if the satellite is at a ground pass
         if TPM.monotonic() - SATELLITE.BOOTTIME >= _REGULAR_REBOOT_TIME:
             # TODO: graceful shutdown for payload if needed
-            DH.graceful_shutdown()
+            self.log_info("Executing regular reboot")
+            self.close_data_process()
             SATELLITE.reboot()
