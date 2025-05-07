@@ -14,11 +14,20 @@ class Task(TemplateTask):
 
     async def main_task(self):
         if SATELLITE.WATCHDOG_AVAILABLE:
-            if not SATELLITE.WATCHDOG.enabled:
-                self.log_info("Watchdog enabled.")
-                SATELLITE.WATCHDOG.enable()
+
+            """
+            The enable pin is used for a MOSFET to control the signal to the
+            MCU, the watchdog is powered regardless of the enable pin.
+            The input pin will therefore need to be toggled before the enable pin
+            is toggled to ensure that the watchdog is not triggered during the
+            transition.
+            """
 
             if SATELLITE.WATCHDOG.input:
                 SATELLITE.WATCHDOG.input_low()
             else:
                 SATELLITE.WATCHDOG.input_high()
+
+            if not SATELLITE.WATCHDOG.enabled:
+                self.log_info("Watchdog enabled.")
+                SATELLITE.WATCHDOG.enable()
