@@ -1,0 +1,1108 @@
+0;ðREPL | 9.2.4-4-g07f738803e
+Adafruit CircuitPython 9.2.4-4-g07f738803e on 2025-04-22; Argus3 with rp2350b
+>>> 
+>>> 
+0;ðDone | 9.2.4-4-g07f738803esoft reboot
+
+Auto-reload is off.
+main.py output:
+0;ðmain.py | 9.2.4-4-g07f738803eBranch: hal_monitor_test
+CLEAN Commit: 08097e248bb94b43eb4d4e5877b0bc4988cbab67
+[2000-01-01 00:00:18][INFO] Logger set to level INFO
+Memory stats after gc: True
+Total memory: 389504 bytes
+Memory free: 324224 bytes
+Memory used: 16%
+Booting ARGUS...
+ARGUS booted.
+Boot Errors: {'LIGHT_ZP_4': 1, 'LIGHT_ZP_1': 1, 'JETSON_PWR': 1, 'LIGHT_ZP_3': 1, 'LIGHT_ZP_2': 1}
+Waiting 1 sec...
+Memory stats after gc: False
+Total memory: 385728 bytes
+Memory free: 251088 bytes
+Memory used: 34%
+Memory stats after gc: True
+Total memory: 385728 bytes
+Memory free: 257696 bytes
+Memory used: 33%
+[2025-05-07 01:36:30][INFO] Starting state manager
+[2025-05-07 01:36:31][INFO] Switched to state 0 - STARTUP
+[2025-05-07 01:36:31][INFO] Folder already exists.
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored SDCARD_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored RTC_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored GPS_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored RADIO_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored IMU_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored FUEL_GAUGE_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored BATT_HEATERS_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored WATCHDOG_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored BURN_WIRES_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored BOARD_PWR_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored RADIO_PWR_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored GPS_PWR_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored JETSON_PWR_ERROR_COUNT to 11
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored XP_PWR_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored XM_PWR_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored YP_PWR_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored YM_PWR_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored ZP_PWR_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored TORQUE_XP_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored TORQUE_XM_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored TORQUE_YP_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored TORQUE_YM_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored TORQUE_ZP_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored TORQUE_ZM_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored LIGHT_XP_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored LIGHT_XM_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored LIGHT_YP_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored LIGHT_YM_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored LIGHT_ZM_ERROR_COUNT to 0
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored LIGHT_ZP_1_ERROR_COUNT to 11
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored LIGHT_ZP_2_ERROR_COUNT to 11
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored LIGHT_ZP_3_ERROR_COUNT to 11
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored LIGHT_ZP_4_ERROR_COUNT to 11
+[2025-05-07 01:36:31][INFO] [10][HAL_MONITOR] Restored PERIPH_REBOOT_COUNT to 0
+[2025-05-07 01:36:31][CRITICAL] [10][HAL_MONITOR] Device JETSON_PWR is dead
+[2025-05-07 01:36:31][CRITICAL] [10][HAL_MONITOR] Device LIGHT_ZP_3 is dead
+[2025-05-07 01:36:31][CRITICAL] [10][HAL_MONITOR] Device LIGHT_ZP_4 is dead
+[2025-05-07 01:36:31][CRITICAL] [10][HAL_MONITOR] Device LIGHT_ZP_1 is dead
+[2025-05-07 01:36:31][CRITICAL] [10][HAL_MONITOR] Device LIGHT_ZP_2 is dead
+[2025-05-07 01:36:31][INFO] Folder already exists.
+[2025-05-07 01:36:32][INFO] Folder already exists.
+[2025-05-07 01:36:32][INFO] Folder already exists.
+[2025-05-07 01:36:32][INFO] Folder already exists.
+[2025-05-07 01:36:32][INFO] Folder already exists.
+[2025-05-07 01:36:32][INFO] Folder already exists.
+[2025-05-07 01:36:32][INFO] Folder already exists.
+[2025-05-07 01:36:32][INFO] Folder already exists.
+[2025-05-07 01:36:32][INFO] Folder already exists.
+[2025-05-07 01:36:32][INFO] Switched to state 1 - DETUMBLING
+[2025-05-07 01:36:32][INFO] [0][COMMAND] T0: Transition from STARTUP to DETUMBLING
+[2025-05-07 01:36:32][INFO] [0][COMMAND] Time: 1746581792
+[2025-05-07 01:36:32][INFO] [0][COMMAND] Time since boot: 6
+[2025-05-07 01:36:32][INFO] [0][COMMAND] GLOBAL STATE: DETUMBLING.
+[2025-05-07 01:36:32][INFO] [0][COMMAND] RAM USAGE: 0%
+[2025-05-07 01:36:32][INFO] [2][EPS] Radio Voltage: 5069 mV, Radio Current: 23 mA 
+[2025-05-07 01:36:32][INFO] [2][EPS] YP Voltage: 7584 mV, YP Current: 20 mA 
+[2025-05-07 01:36:32][INFO] [2][EPS] XP Voltage: 7578 mV, XP Current: 15 mA 
+[2025-05-07 01:36:32][INFO] [2][EPS] Board Voltage: 3293 mV, Board Current: 33 mA 
+[2025-05-07 01:36:32][INFO] [2][EPS] XM Voltage: 7584 mV, XM Current: 18 mA 
+[2025-05-07 01:36:32][INFO] [2][EPS] YM Voltage: 7603 mV, YM Current: 15 mA 
+[2025-05-07 01:36:32][INFO] [2][EPS] ZM Coil Voltage: 0 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:36:32][INFO] [2][EPS] XP Coil Voltage: 0 mV, XP Coil Current: 0 mA 
+[2025-05-07 01:36:32][INFO] [2][EPS] YP Coil Voltage: 0 mV, YP Coil Current: 0 mA 
+[2025-05-07 01:36:32][INFO] [2][EPS] YM Coil Voltage: 0 mV, YM Coil Current: 0 mA 
+[2025-05-07 01:36:32][INFO] [2][EPS] XM Coil Voltage: 0 mV, XM Coil Current: 0 mA 
+[2025-05-07 01:36:32][INFO] [2][EPS] ZP Coil Voltage: 167 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:36:32][INFO] [2][EPS] CPU temperature: 2432 ÂcC 
+[2025-05-07 01:36:32][INFO] [2][EPS] Battery Pack Temperature: 2305ÂcC
+[2025-05-07 01:36:32][INFO] [2][EPS] Battery Pack Reported SOC: 64% 
+[2025-05-07 01:36:32][INFO] [2][EPS] Battery Pack Reported Capacity: 961 mAh 
+[2025-05-07 01:36:32][INFO] [2][EPS] Battery Pack Current: -108 mA 
+[2025-05-07 01:36:32][INFO] [2][EPS] Battery Pack Voltage: 7605 mV 
+[2025-05-07 01:36:32][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3802 mV 
+[2025-05-07 01:36:32][INFO] [2][EPS] Battery Pack Time-to-Empty: 33243 seconds 
+[2025-05-07 01:36:32][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:36:32][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:36:32][INFO] [6][ADCS] Gyro Ang Vel : [-0.00390625, -0.00195313, 0.0]
+[2025-05-07 01:36:33][INFO] [0][COMMAND] T1.1: Transition from DETUMBLING to NOMINAL
+[2025-05-07 01:36:33][INFO] Switched to state 2 - NOMINAL
+[2025-05-07 01:36:33][INFO] [4][COMMS] Heartbeat frequency threshold set to 5
+[2025-05-07 01:36:33][INFO] [4][COMMS] RX timeout threshold set to 10
+[2025-05-07 01:36:33][WARNING] No latest data point available.
+[2025-05-07 01:36:33][WARNING] No latest GPS data available
+[2025-05-07 01:36:33][INFO] [4][COMMS] Telemetry heartbeat packed
+[2025-05-07 01:36:33][INFO] [4][COMMS] Sent message with ID: 1
+[2025-05-07 01:36:33][INFO] [1][WATCHDOG] Watchdog enabled.
+[2025-05-07 01:36:33][INFO] [0][COMMAND] Time: 1746581793
+[2025-05-07 01:36:33][INFO] [0][COMMAND] Time since boot: 7
+[2025-05-07 01:36:33][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:36:33][INFO] [0][COMMAND] RAM USAGE: 56%
+[2025-05-07 01:36:34][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:36:34][INFO] [0][COMMAND] Time: 1746581794
+[2025-05-07 01:36:34][INFO] [0][COMMAND] Time since boot: 8
+[2025-05-07 01:36:34][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:36:34][INFO] [0][COMMAND] RAM USAGE: 56%
+[2025-05-07 01:36:34][INFO] [2][EPS] Radio Voltage: 5069 mV, Radio Current: 25 mA 
+[2025-05-07 01:36:34][INFO] [2][EPS] YP Voltage: 7584 mV, YP Current: 20 mA 
+[2025-05-07 01:36:34][INFO] [2][EPS] XP Voltage: 7578 mV, XP Current: 15 mA 
+[2025-05-07 01:36:34][INFO] [2][EPS] Board Voltage: 3300 mV, Board Current: 31 mA 
+[2025-05-07 01:36:34][INFO] [2][EPS] XM Voltage: 7578 mV, XM Current: 20 mA 
+[2025-05-07 01:36:34][INFO] [2][EPS] YM Voltage: 7603 mV, YM Current: 18 mA 
+[2025-05-07 01:36:34][INFO] [2][EPS] ZM Coil Voltage: 0 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:36:34][INFO] [2][EPS] XP Coil Voltage: 0 mV, XP Coil Current: 0 mA 
+[2025-05-07 01:36:34][INFO] [2][EPS] YP Coil Voltage: 0 mV, YP Coil Current: 0 mA 
+[2025-05-07 01:36:34][INFO] [2][EPS] YM Coil Voltage: 0 mV, YM Coil Current: 0 mA 
+[2025-05-07 01:36:34][INFO] [2][EPS] XM Coil Voltage: 0 mV, XM Coil Current: 0 mA 
+[2025-05-07 01:36:34][INFO] [2][EPS] ZP Coil Voltage: 167 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:36:34][INFO] [2][EPS] CPU temperature: 2479 ÂcC 
+[2025-05-07 01:36:34][INFO] [2][EPS] Battery Pack Temperature: 2291ÂcC
+[2025-05-07 01:36:34][INFO] [2][EPS] Battery Pack Reported SOC: 64% 
+[2025-05-07 01:36:34][INFO] [2][EPS] Battery Pack Reported Capacity: 961 mAh 
+[2025-05-07 01:36:34][INFO] [2][EPS] Battery Pack Current: -124 mA 
+[2025-05-07 01:36:34][INFO] [2][EPS] Battery Pack Voltage: 7605 mV 
+[2025-05-07 01:36:34][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3802 mV 
+[2025-05-07 01:36:34][INFO] [2][EPS] Battery Pack Time-to-Empty: 21346 seconds 
+[2025-05-07 01:36:34][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:36:34][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:36:35][WARNING] No latest data point available.
+[2025-05-07 01:36:35][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:36:35][INFO] [6][ADCS] Gyro Ang Vel : [0.0, -0.00390625, -0.00195313]
+[2025-05-07 01:36:35][INFO] [0][COMMAND] Time: 1746581795
+[2025-05-07 01:36:35][INFO] [0][COMMAND] Time since boot: 9
+[2025-05-07 01:36:35][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:36:35][INFO] [0][COMMAND] RAM USAGE: 56%
+[2025-05-07 01:36:36][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:36:36][WARNING] No latest data point available.
+[2025-05-07 01:36:36][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:36:36][INFO] [6][ADCS] Gyro Ang Vel : [-0.00195313, -0.00195313, -0.00195313]
+[2025-05-07 01:36:36][INFO] [0][COMMAND] Time: 1746581796
+[2025-05-07 01:36:36][INFO] [0][COMMAND] Time since boot: 10
+[2025-05-07 01:36:36][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:36:36][INFO] [0][COMMAND] RAM USAGE: 56%
+[2025-05-07 01:36:36][INFO] [2][EPS] Radio Voltage: 5075 mV, Radio Current: 23 mA 
+[2025-05-07 01:36:36][INFO] [2][EPS] YP Voltage: 7584 mV, YP Current: 20 mA 
+[2025-05-07 01:36:36][INFO] [2][EPS] XP Voltage: 7584 mV, XP Current: 15 mA 
+[2025-05-07 01:36:36][INFO] [2][EPS] Board Voltage: 3306 mV, Board Current: 36 mA 
+[2025-05-07 01:36:36][INFO] [2][EPS] XM Voltage: 7578 mV, XM Current: 18 mA 
+[2025-05-07 01:36:36][INFO] [2][EPS] YM Voltage: 7603 mV, YM Current: 15 mA 
+[2025-05-07 01:36:37][INFO] [2][EPS] ZM Coil Voltage: 0 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:36:37][INFO] [2][EPS] XP Coil Voltage: 0 mV, XP Coil Current: 0 mA 
+[2025-05-07 01:36:37][INFO] [2][EPS] YP Coil Voltage: 0 mV, YP Coil Current: 0 mA 
+[2025-05-07 01:36:37][INFO] [2][EPS] YM Coil Voltage: 0 mV, YM Coil Current: 0 mA 
+[2025-05-07 01:36:37][INFO] [2][EPS] XM Coil Voltage: 0 mV, XM Coil Current: 0 mA 
+[2025-05-07 01:36:37][INFO] [2][EPS] ZP Coil Voltage: 167 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:36:37][INFO] [2][EPS] CPU temperature: 2432 ÂcC 
+[2025-05-07 01:36:37][INFO] [2][EPS] Battery Pack Temperature: 2300ÂcC
+[2025-05-07 01:36:37][INFO] [2][EPS] Battery Pack Reported SOC: 64% 
+[2025-05-07 01:36:37][INFO] [2][EPS] Battery Pack Reported Capacity: 961 mAh 
+[2025-05-07 01:36:37][INFO] [2][EPS] Battery Pack Current: -125 mA 
+[2025-05-07 01:36:37][INFO] [2][EPS] Battery Pack Voltage: 7603 mV 
+[2025-05-07 01:36:37][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3801 mV 
+[2025-05-07 01:36:37][INFO] [2][EPS] Battery Pack Time-to-Empty: 17938 seconds 
+[2025-05-07 01:36:37][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:36:37][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:36:37][WARNING] No latest data point available.
+[2025-05-07 01:36:37][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:36:37][INFO] [6][ADCS] Gyro Ang Vel : [0.00195313, -0.00390625, -0.00390625]
+[2025-05-07 01:36:37][INFO] [0][COMMAND] Time: 1746581797
+[2025-05-07 01:36:37][INFO] [0][COMMAND] Time since boot: 11
+[2025-05-07 01:36:37][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:36:37][INFO] [0][COMMAND] RAM USAGE: 56%
+[2025-05-07 01:36:38][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:36:38][WARNING] No latest data point available.
+[2025-05-07 01:36:38][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:36:38][INFO] [6][ADCS] Gyro Ang Vel : [0.0, -0.00390625, -0.00195313]
+[2025-05-07 01:36:38][INFO] [0][COMMAND] Time: 1746581798
+[2025-05-07 01:36:38][INFO] [0][COMMAND] Time since boot: 12
+[2025-05-07 01:36:38][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:36:38][INFO] [0][COMMAND] RAM USAGE: 56%
+[2025-05-07 01:36:39][INFO] [2][EPS] Radio Voltage: 5075 mV, Radio Current: 23 mA 
+[2025-05-07 01:36:39][INFO] [2][EPS] YP Voltage: 7513 mV, YP Current: 20 mA 
+[2025-05-07 01:36:39][INFO] [2][EPS] XP Voltage: 7500 mV, XP Current: 15 mA 
+[2025-05-07 01:36:39][INFO] [2][EPS] Board Voltage: 3300 mV, Board Current: 33 mA 
+[2025-05-07 01:36:39][INFO] [2][EPS] XM Voltage: 7513 mV, XM Current: 18 mA 
+[2025-05-07 01:36:39][INFO] [2][EPS] YM Voltage: 7552 mV, YM Current: 15 mA 
+[2025-05-07 01:36:39][INFO] [2][EPS] ZM Coil Voltage: 1003 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:36:39][INFO] [2][EPS] XP Coil Voltage: 3179 mV, XP Coil Current: 101 mA 
+[2025-05-07 01:36:39][INFO] [2][EPS] YP Coil Voltage: 3179 mV, YP Coil Current: 87 mA 
+[2025-05-07 01:36:39][INFO] [2][EPS] YM Coil Voltage: 3179 mV, YM Coil Current: 101 mA 
+[2025-05-07 01:36:39][INFO] [2][EPS] XM Coil Voltage: 3179 mV, XM Coil Current: 101 mA 
+[2025-05-07 01:36:39][INFO] [2][EPS] ZP Coil Voltage: 1003 mV, ZP Coil Current: 14 mA 
+[2025-05-07 01:36:39][INFO] [2][EPS] CPU temperature: 2432 ÂcC 
+[2025-05-07 01:36:39][INFO] [2][EPS] Battery Pack Temperature: 2285ÂcC
+[2025-05-07 01:36:39][INFO] [2][EPS] Battery Pack Reported SOC: 64% 
+[2025-05-07 01:36:39][INFO] [2][EPS] Battery Pack Reported Capacity: 961 mAh 
+[2025-05-07 01:36:39][INFO] [2][EPS] Battery Pack Current: -422 mA 
+[2025-05-07 01:36:39][INFO] [2][EPS] Battery Pack Voltage: 7562 mV 
+[2025-05-07 01:36:39][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3781 mV 
+[2025-05-07 01:36:39][INFO] [2][EPS] Battery Pack Time-to-Empty: 16920 seconds 
+[2025-05-07 01:36:39][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:36:39][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:36:39][INFO] [0][COMMAND] Time: 1746581799
+[2025-05-07 01:36:39][INFO] [0][COMMAND] Time since boot: 13
+[2025-05-07 01:36:39][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:36:39][INFO] [0][COMMAND] RAM USAGE: 56%
+[2025-05-07 01:36:39][WARNING] No latest data point available.
+[2025-05-07 01:36:39][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:36:39][INFO] [6][ADCS] Gyro Ang Vel : [-0.00195313, 0.0, -0.00195313]
+[2025-05-07 01:36:40][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:36:40][INFO] [0][COMMAND] Time: 1746581800
+[2025-05-07 01:36:40][INFO] [0][COMMAND] Time since boot: 14
+[2025-05-07 01:36:40][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:36:40][INFO] [0][COMMAND] RAM USAGE: 56%
+[2025-05-07 01:36:41][INFO] [2][EPS] Radio Voltage: 5069 mV, Radio Current: 23 mA 
+[2025-05-07 01:36:41][INFO] [2][EPS] YP Voltage: 7584 mV, YP Current: 20 mA 
+[2025-05-07 01:36:41][INFO] [2][EPS] XP Voltage: 7584 mV, XP Current: 15 mA 
+[2025-05-07 01:36:41][INFO] [2][EPS] Board Voltage: 3300 mV, Board Current: 43 mA 
+[2025-05-07 01:36:41][INFO] [2][EPS] XM Voltage: 7578 mV, XM Current: 18 mA 
+[2025-05-07 01:36:41][INFO] [2][EPS] YM Voltage: 7603 mV, YM Current: 15 mA 
+[2025-05-07 01:36:41][INFO] [2][EPS] ZM Coil Voltage: 0 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:36:41][INFO] [2][EPS] XP Coil Voltage: 0 mV, XP Coil Current: 0 mA 
+[2025-05-07 01:36:41][INFO] [2][EPS] YP Coil Voltage: 0 mV, YP Coil Current: 0 mA 
+[2025-05-07 01:36:41][INFO] [2][EPS] YM Coil Voltage: 0 mV, YM Coil Current: 0 mA 
+[2025-05-07 01:36:41][INFO] [2][EPS] XM Coil Voltage: 0 mV, XM Coil Current: 0 mA 
+[2025-05-07 01:36:41][INFO] [2][EPS] ZP Coil Voltage: 167 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:36:41][INFO] [2][EPS] CPU temperature: 2432 ÂcC 
+[2025-05-07 01:36:41][INFO] [2][EPS] Battery Pack Temperature: 2307ÂcC
+[2025-05-07 01:36:41][INFO] [2][EPS] Battery Pack Reported SOC: 64% 
+[2025-05-07 01:36:41][INFO] [2][EPS] Battery Pack Reported Capacity: 961 mAh 
+[2025-05-07 01:36:41][INFO] [2][EPS] Battery Pack Current: -120 mA 
+[2025-05-07 01:36:41][INFO] [2][EPS] Battery Pack Voltage: 7605 mV 
+[2025-05-07 01:36:41][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3802 mV 
+[2025-05-07 01:36:41][INFO] [2][EPS] Battery Pack Time-to-Empty: 15266 seconds 
+[2025-05-07 01:36:41][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:36:41][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:36:41][INFO] [0][COMMAND] Time: 1746581801
+[2025-05-07 01:36:41][INFO] [0][COMMAND] Time since boot: 15
+[2025-05-07 01:36:41][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:36:41][INFO] [0][COMMAND] RAM USAGE: 56%
+[2025-05-07 01:36:42][WARNING] No latest data point available.
+[2025-05-07 01:36:42][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:36:42][INFO] [6][ADCS] Gyro Ang Vel : [0.00195313, -0.00195313, 0.0]
+ARGUS booted.
+Boot Errors: {'LIGHT_ZP_4': 1, 'LIGHT_ZP_1': 1, 'JETSON_PWR': 1, 'LIGHT_ZP_3': 1, 'LIGHT_ZP_2': 1}
+Waiting 1 sec...
+Memory stats after gc: False
+Total memory: 426752 bytes
+Memory free: 292096 bytes
+Memory used: 31%
+Memory stats after gc: True
+Total memory: 426752 bytes
+Memory free: 298720 bytes
+Memory used: 30%
+[2025-05-07 01:36:48][INFO] Starting state manager
+[2025-05-07 01:36:49][INFO] Switched to state 0 - STARTUP
+[2025-05-07 01:36:49][INFO] Folder already exists.
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored SDCARD_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored RTC_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored GPS_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored RADIO_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored IMU_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored FUEL_GAUGE_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored BATT_HEATERS_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored WATCHDOG_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored BURN_WIRES_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored BOARD_PWR_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored RADIO_PWR_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored GPS_PWR_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored JETSON_PWR_ERROR to dead
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored JETSON_PWR_ERROR_COUNT to 12
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored XP_PWR_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored XM_PWR_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored YP_PWR_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored YM_PWR_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored ZP_PWR_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored TORQUE_XP_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored TORQUE_XM_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored TORQUE_YP_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored TORQUE_YM_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored TORQUE_ZP_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored TORQUE_ZM_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored LIGHT_XP_ERROR_COUNT to 0
+[2025-05-07 01:36:49][INFO] [10][HAL_MONITOR] Restored LIGHT_XM_ERROR_COUNT to 0
+[2025-05-07 01:36:50][INFO] [10][HAL_MONITOR] Restored LIGHT_YP_ERROR_COUNT to 0
+[2025-05-07 01:36:50][INFO] [10][HAL_MONITOR] Restored LIGHT_YM_ERROR_COUNT to 0
+[2025-05-07 01:36:50][INFO] [10][HAL_MONITOR] Restored LIGHT_ZM_ERROR_COUNT to 0
+[2025-05-07 01:36:50][INFO] [10][HAL_MONITOR] Restored LIGHT_ZP_1_ERROR to dead
+[2025-05-07 01:36:50][INFO] [10][HAL_MONITOR] Restored LIGHT_ZP_1_ERROR_COUNT to 12
+[2025-05-07 01:36:50][INFO] [10][HAL_MONITOR] Restored LIGHT_ZP_2_ERROR to dead
+[2025-05-07 01:36:50][INFO] [10][HAL_MONITOR] Restored LIGHT_ZP_2_ERROR_COUNT to 12
+[2025-05-07 01:36:50][INFO] [10][HAL_MONITOR] Restored LIGHT_ZP_3_ERROR to dead
+[2025-05-07 01:36:50][INFO] [10][HAL_MONITOR] Restored LIGHT_ZP_3_ERROR_COUNT to 12
+[2025-05-07 01:36:50][INFO] [10][HAL_MONITOR] Restored LIGHT_ZP_4_ERROR to dead
+[2025-05-07 01:36:50][INFO] [10][HAL_MONITOR] Restored LIGHT_ZP_4_ERROR_COUNT to 12
+[2025-05-07 01:36:50][INFO] [10][HAL_MONITOR] Restored PERIPH_REBOOT_COUNT to 0
+[2025-05-07 01:36:50][INFO] Folder already exists.
+[2025-05-07 01:36:50][INFO] Folder already exists.
+[2025-05-07 01:36:50][INFO] Folder already exists.
+[2025-05-07 01:36:50][INFO] Folder already exists.
+[2025-05-07 01:36:50][INFO] Folder already exists.
+[2025-05-07 01:36:50][INFO] Folder already exists.
+[2025-05-07 01:36:50][INFO] Folder already exists.
+[2025-05-07 01:36:50][INFO] Folder already exists.
+[2025-05-07 01:36:50][INFO] Folder already exists.
+[2025-05-07 01:36:50][INFO] Switched to state 1 - DETUMBLING
+[2025-05-07 01:36:50][INFO] [0][COMMAND] T0: Transition from STARTUP to DETUMBLING
+[2025-05-07 01:36:50][INFO] [0][COMMAND] Time: 1746581810
+[2025-05-07 01:36:50][INFO] [0][COMMAND] Time since boot: 6
+[2025-05-07 01:36:50][INFO] [0][COMMAND] GLOBAL STATE: DETUMBLING.
+[2025-05-07 01:36:50][INFO] [0][COMMAND] RAM USAGE: 0%
+[2025-05-07 01:36:50][INFO] [2][EPS] Radio Voltage: 5069 mV, Radio Current: 23 mA 
+[2025-05-07 01:36:50][INFO] [2][EPS] YP Voltage: 7578 mV, YP Current: 20 mA 
+[2025-05-07 01:36:50][INFO] [2][EPS] XP Voltage: 7584 mV, XP Current: 15 mA 
+[2025-05-07 01:36:50][INFO] [2][EPS] Board Voltage: 3293 mV, Board Current: 36 mA 
+[2025-05-07 01:36:50][INFO] [2][EPS] XM Voltage: 7578 mV, XM Current: 18 mA 
+[2025-05-07 01:36:50][INFO] [2][EPS] YM Voltage: 7610 mV, YM Current: 15 mA 
+[2025-05-07 01:36:50][INFO] [2][EPS] ZM Coil Voltage: 0 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:36:50][INFO] [2][EPS] XP Coil Voltage: 0 mV, XP Coil Current: 0 mA 
+[2025-05-07 01:36:50][INFO] [2][EPS] YP Coil Voltage: 0 mV, YP Coil Current: 0 mA 
+[2025-05-07 01:36:50][INFO] [2][EPS] YM Coil Voltage: 0 mV, YM Coil Current: 0 mA 
+[2025-05-07 01:36:50][INFO] [2][EPS] XM Coil Voltage: 0 mV, XM Coil Current: 0 mA 
+[2025-05-07 01:36:50][INFO] [2][EPS] ZP Coil Voltage: 167 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:36:50][INFO] [2][EPS] CPU temperature: 2807 ÂcC 
+[2025-05-07 01:36:50][INFO] [2][EPS] Battery Pack Temperature: 2298ÂcC
+[2025-05-07 01:36:50][INFO] [2][EPS] Battery Pack Reported SOC: 64% 
+[2025-05-07 01:36:50][INFO] [2][EPS] Battery Pack Reported Capacity: 960 mAh 
+[2025-05-07 01:36:50][INFO] [2][EPS] Battery Pack Current: -113 mA 
+[2025-05-07 01:36:50][INFO] [2][EPS] Battery Pack Voltage: 7602 mV 
+[2025-05-07 01:36:50][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3801 mV 
+[2025-05-07 01:36:50][INFO] [2][EPS] Battery Pack Time-to-Empty: 19850 seconds 
+[2025-05-07 01:36:50][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:36:50][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:36:51][INFO] [6][ADCS] Gyro Ang Vel : [0.0, -0.00390625, -0.00195313]
+[2025-05-07 01:36:51][INFO] [0][COMMAND] T1.1: Transition from DETUMBLING to NOMINAL
+[2025-05-07 01:36:51][INFO] Switched to state 2 - NOMINAL
+[2025-05-07 01:36:51][INFO] [4][COMMS] Heartbeat frequency threshold set to 5
+[2025-05-07 01:36:51][INFO] [4][COMMS] RX timeout threshold set to 10
+[2025-05-07 01:36:51][WARNING] No latest data point available.
+[2025-05-07 01:36:51][WARNING] No latest GPS data available
+[2025-05-07 01:36:51][INFO] [4][COMMS] Telemetry heartbeat packed
+[2025-05-07 01:36:52][INFO] [4][COMMS] Sent message with ID: 1
+[2025-05-07 01:36:52][INFO] [1][WATCHDOG] Watchdog enabled.
+[2025-05-07 01:36:52][INFO] [0][COMMAND] Time: 1746581812
+[2025-05-07 01:36:52][INFO] [0][COMMAND] Time since boot: 7
+[2025-05-07 01:36:52][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:36:52][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:36:52][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:36:52][INFO] [2][EPS] Radio Voltage: 5075 mV, Radio Current: 23 mA 
+[2025-05-07 01:36:52][INFO] [2][EPS] YP Voltage: 7578 mV, YP Current: 20 mA 
+[2025-05-07 01:36:52][INFO] [2][EPS] XP Voltage: 7578 mV, XP Current: 15 mA 
+[2025-05-07 01:36:52][INFO] [2][EPS] Board Voltage: 3306 mV, Board Current: 69 mA 
+[2025-05-07 01:36:52][INFO] [2][EPS] XM Voltage: 7578 mV, XM Current: 20 mA 
+[2025-05-07 01:36:52][INFO] [2][EPS] YM Voltage: 7603 mV, YM Current: 15 mA 
+[2025-05-07 01:36:52][INFO] [2][EPS] ZM Coil Voltage: 0 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:36:52][INFO] [2][EPS] XP Coil Voltage: 0 mV, XP Coil Current: 0 mA 
+[2025-05-07 01:36:52][INFO] [2][EPS] YP Coil Voltage: 0 mV, YP Coil Current: 0 mA 
+[2025-05-07 01:36:52][INFO] [2][EPS] YM Coil Voltage: 0 mV, YM Coil Current: 0 mA 
+[2025-05-07 01:36:52][INFO] [2][EPS] XM Coil Voltage: 0 mV, XM Coil Current: 0 mA 
+[2025-05-07 01:36:52][INFO] [2][EPS] ZP Coil Voltage: 167 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:36:53][INFO] [2][EPS] CPU temperature: 2432 ÂcC 
+[2025-05-07 01:36:53][INFO] [2][EPS] Battery Pack Temperature: 2293ÂcC
+[2025-05-07 01:36:53][INFO] [2][EPS] Battery Pack Reported SOC: 64% 
+[2025-05-07 01:36:53][INFO] [2][EPS] Battery Pack Reported Capacity: 960 mAh 
+[2025-05-07 01:36:53][INFO] [2][EPS] Battery Pack Current: -118 mA 
+[2025-05-07 01:36:53][INFO] [2][EPS] Battery Pack Voltage: 7601 mV 
+[2025-05-07 01:36:53][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3800 mV 
+[2025-05-07 01:36:53][INFO] [2][EPS] Battery Pack Time-to-Empty: 16200 seconds 
+[2025-05-07 01:36:53][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:36:53][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:36:53][WARNING] No latest data point available.
+[2025-05-07 01:36:53][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:36:53][INFO] [6][ADCS] Gyro Ang Vel : [0.0, -0.00390625, -0.00195313]
+[2025-05-07 01:36:53][INFO] [0][COMMAND] Time: 1746581813
+[2025-05-07 01:36:53][INFO] [0][COMMAND] Time since boot: 8
+[2025-05-07 01:36:53][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:36:53][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:36:54][INFO] [0][COMMAND] Time: 1746581814
+[2025-05-07 01:36:54][INFO] [0][COMMAND] Time since boot: 9
+[2025-05-07 01:36:54][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:36:54][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:36:54][WARNING] No latest data point available.
+[2025-05-07 01:36:54][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:36:54][INFO] [6][ADCS] Gyro Ang Vel : [-0.00390625, -0.00195313, -0.00195313]
+[2025-05-07 01:36:54][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:36:54][INFO] [2][EPS] Radio Voltage: 5069 mV, Radio Current: 23 mA 
+[2025-05-07 01:36:54][INFO] [2][EPS] YP Voltage: 7520 mV, YP Current: 20 mA 
+[2025-05-07 01:36:54][INFO] [2][EPS] XP Voltage: 7500 mV, XP Current: 15 mA 
+[2025-05-07 01:36:54][INFO] [2][EPS] Board Voltage: 3300 mV, Board Current: 36 mA 
+[2025-05-07 01:36:54][INFO] [2][EPS] XM Voltage: 7488 mV, XM Current: 18 mA 
+[2025-05-07 01:36:54][INFO] [2][EPS] YM Voltage: 7539 mV, YM Current: 15 mA 
+[2025-05-07 01:36:54][INFO] [2][EPS] ZM Coil Voltage: 334 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:36:54][INFO] [2][EPS] XP Coil Voltage: 3179 mV, XP Coil Current: 14 mA 
+[2025-05-07 01:36:54][INFO] [2][EPS] YP Coil Voltage: 3179 mV, YP Coil Current: 14 mA 
+[2025-05-07 01:36:54][INFO] [2][EPS] YM Coil Voltage: 3179 mV, YM Coil Current: 72 mA 
+[2025-05-07 01:36:54][INFO] [2][EPS] XM Coil Voltage: 3179 mV, XM Coil Current: 101 mA 
+[2025-05-07 01:36:54][INFO] [2][EPS] ZP Coil Voltage: 167 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:36:54][INFO] [2][EPS] CPU temperature: 2432 ÂcC 
+[2025-05-07 01:36:54][INFO] [2][EPS] Battery Pack Temperature: 2293ÂcC
+[2025-05-07 01:36:54][INFO] [2][EPS] Battery Pack Reported SOC: 64% 
+[2025-05-07 01:36:54][INFO] [2][EPS] Battery Pack Reported Capacity: 960 mAh 
+[2025-05-07 01:36:54][INFO] [2][EPS] Battery Pack Current: -414 mA 
+[2025-05-07 01:36:54][INFO] [2][EPS] Battery Pack Voltage: 7567 mV 
+[2025-05-07 01:36:54][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3783 mV 
+[2025-05-07 01:36:54][INFO] [2][EPS] Battery Pack Time-to-Empty: 15615 seconds 
+[2025-05-07 01:36:54][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:36:54][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:36:55][INFO] [0][COMMAND] Time: 1746581815
+[2025-05-07 01:36:55][INFO] [0][COMMAND] Time since boot: 10
+[2025-05-07 01:36:55][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:36:55][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:36:55][WARNING] No latest data point available.
+[2025-05-07 01:36:55][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:36:55][INFO] [6][ADCS] Gyro Ang Vel : [-0.00195313, -0.00195313, -0.00195313]
+[2025-05-07 01:36:56][INFO] [0][COMMAND] Time: 1746581816
+[2025-05-07 01:36:56][INFO] [0][COMMAND] Time since boot: 11
+[2025-05-07 01:36:56][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:36:56][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:36:56][INFO] [2][EPS] Radio Voltage: 5075 mV, Radio Current: 23 mA 
+[2025-05-07 01:36:56][INFO] [2][EPS] YP Voltage: 7578 mV, YP Current: 20 mA 
+[2025-05-07 01:36:56][INFO] [2][EPS] XP Voltage: 7578 mV, XP Current: 15 mA 
+[2025-05-07 01:36:56][INFO] [2][EPS] Board Voltage: 3306 mV, Board Current: 49 mA 
+[2025-05-07 01:36:56][INFO] [2][EPS] XM Voltage: 7571 mV, XM Current: 18 mA 
+[2025-05-07 01:36:56][INFO] [2][EPS] YM Voltage: 7610 mV, YM Current: 15 mA 
+[2025-05-07 01:36:56][INFO] [2][EPS] ZM Coil Voltage: 0 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:36:56][INFO] [2][EPS] XP Coil Voltage: 0 mV, XP Coil Current: 0 mA 
+[2025-05-07 01:36:56][INFO] [2][EPS] YP Coil Voltage: 0 mV, YP Coil Current: 0 mA 
+[2025-05-07 01:36:56][INFO] [2][EPS] YM Coil Voltage: 0 mV, YM Coil Current: 0 mA 
+[2025-05-07 01:36:56][INFO] [2][EPS] XM Coil Voltage: 0 mV, XM Coil Current: 0 mA 
+[2025-05-07 01:36:56][INFO] [2][EPS] ZP Coil Voltage: 167 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:36:56][INFO] [2][EPS] CPU temperature: 2432 ÂcC 
+[2025-05-07 01:36:56][INFO] [2][EPS] Battery Pack Temperature: 2300ÂcC
+[2025-05-07 01:36:56][INFO] [2][EPS] Battery Pack Reported SOC: 64% 
+[2025-05-07 01:36:56][INFO] [2][EPS] Battery Pack Reported Capacity: 960 mAh 
+[2025-05-07 01:36:56][INFO] [2][EPS] Battery Pack Current: -114 mA 
+[2025-05-07 01:36:56][INFO] [2][EPS] Battery Pack Voltage: 7600 mV 
+[2025-05-07 01:36:56][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3800 mV 
+[2025-05-07 01:36:56][INFO] [2][EPS] Battery Pack Time-to-Empty: 14484 seconds 
+[2025-05-07 01:36:56][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:36:56][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:36:56][WARNING] No latest data point available.
+[2025-05-07 01:36:56][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:36:56][INFO] [6][ADCS] Gyro Ang Vel : [-0.00195313, -0.00195313, 0.0]
+[2025-05-07 01:36:56][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:36:57][INFO] [0][COMMAND] Time: 1746581817
+[2025-05-07 01:36:57][INFO] [0][COMMAND] Time since boot: 12
+[2025-05-07 01:36:57][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:36:57][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:36:57][WARNING] [COMMS ERROR] RX'd packet has invalid source
+[2025-05-07 01:36:57][WARNING] [4][COMMS] GS requested invalid command: 0
+[2025-05-07 01:36:57][WARNING] No latest data point available.
+[2025-05-07 01:36:57][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:36:57][INFO] [6][ADCS] Gyro Ang Vel : [0.00195313, -0.00195313, 0.0]
+[2025-05-07 01:36:58][INFO] [0][COMMAND] Time: 1746581818
+[2025-05-07 01:36:58][INFO] [0][COMMAND] Time since boot: 13
+[2025-05-07 01:36:58][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:36:58][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:36:58][INFO] [2][EPS] Radio Voltage: 5075 mV, Radio Current: 23 mA 
+[2025-05-07 01:36:58][INFO] [2][EPS] YP Voltage: 7500 mV, YP Current: 20 mA 
+[2025-05-07 01:36:58][INFO] [2][EPS] XP Voltage: 7500 mV, XP Current: 15 mA 
+[2025-05-07 01:36:58][INFO] [2][EPS] Board Voltage: 3293 mV, Board Current: 36 mA 
+[2025-05-07 01:36:58][INFO] [2][EPS] XM Voltage: 7513 mV, XM Current: 18 mA 
+[2025-05-07 01:36:58][INFO] [2][EPS] YM Voltage: 7539 mV, YM Current: 15 mA 
+[2025-05-07 01:36:58][INFO] [2][EPS] ZM Coil Voltage: 501 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:36:58][INFO] [2][EPS] XP Coil Voltage: 3179 mV, XP Coil Current: 14 mA 
+[2025-05-07 01:36:58][INFO] [2][EPS] YP Coil Voltage: 3179 mV, YP Coil Current: 101 mA 
+[2025-05-07 01:36:58][INFO] [2][EPS] YM Coil Voltage: 3179 mV, YM Coil Current: 14 mA 
+[2025-05-07 01:36:58][INFO] [2][EPS] XM Coil Voltage: 3179 mV, XM Coil Current: 101 mA 
+[2025-05-07 01:36:58][INFO] [2][EPS] ZP Coil Voltage: 501 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:36:58][INFO] [2][EPS] CPU temperature: 2432 ÂcC 
+[2025-05-07 01:36:58][INFO] [2][EPS] Battery Pack Temperature: 2307ÂcC
+[2025-05-07 01:36:58][INFO] [2][EPS] Battery Pack Reported SOC: 64% 
+[2025-05-07 01:36:58][INFO] [2][EPS] Battery Pack Reported Capacity: 960 mAh 
+[2025-05-07 01:36:58][INFO] [2][EPS] Battery Pack Current: -386 mA 
+[2025-05-07 01:36:58][INFO] [2][EPS] Battery Pack Voltage: 7562 mV 
+[2025-05-07 01:36:58][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3781 mV 
+[2025-05-07 01:36:58][INFO] [2][EPS] Battery Pack Time-to-Empty: 14281 seconds 
+[2025-05-07 01:36:58][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:36:58][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:36:58][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:36:58][WARNING] No latest data point available.
+[2025-05-07 01:36:59][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:36:59][INFO] [6][ADCS] Gyro Ang Vel : [0.00195313, -0.00390625, 0.00195313]
+[2025-05-07 01:36:59][INFO] [0][COMMAND] Time: 1746581819
+[2025-05-07 01:36:59][INFO] [0][COMMAND] Time since boot: 14
+[2025-05-07 01:36:59][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:36:59][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:36:59][WARNING] No latest data point available.
+[2025-05-07 01:37:00][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:37:00][INFO] [6][ADCS] Gyro Ang Vel : [-0.00195313, -0.00390625, 0.0]
+[2025-05-07 01:37:00][INFO] [0][COMMAND] Time: 1746581820
+[2025-05-07 01:37:00][INFO] [0][COMMAND] Time since boot: 15
+[2025-05-07 01:37:00][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:00][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:00][INFO] [2][EPS] Radio Voltage: 5075 mV, Radio Current: 23 mA 
+[2025-05-07 01:37:00][INFO] [2][EPS] YP Voltage: 7520 mV, YP Current: 20 mA 
+[2025-05-07 01:37:00][INFO] [2][EPS] XP Voltage: 7520 mV, XP Current: 15 mA 
+[2025-05-07 01:37:00][INFO] [2][EPS] Board Voltage: 3293 mV, Board Current: 28 mA 
+[2025-05-07 01:37:00][INFO] [2][EPS] XM Voltage: 7500 mV, XM Current: 20 mA 
+[2025-05-07 01:37:00][INFO] [2][EPS] YM Voltage: 7520 mV, YM Current: 15 mA 
+[2025-05-07 01:37:00][INFO] [2][EPS] ZM Coil Voltage: 1003 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:37:00][INFO] [2][EPS] XP Coil Voltage: 3179 mV, XP Coil Current: 101 mA 
+[2025-05-07 01:37:00][INFO] [2][EPS] YP Coil Voltage: 3179 mV, YP Coil Current: 101 mA 
+[2025-05-07 01:37:00][INFO] [2][EPS] YM Coil Voltage: 3179 mV, YM Coil Current: 101 mA 
+[2025-05-07 01:37:00][INFO] [2][EPS] XM Coil Voltage: 3179 mV, XM Coil Current: 87 mA 
+[2025-05-07 01:37:00][INFO] [2][EPS] ZP Coil Voltage: 836 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:37:00][INFO] [2][EPS] CPU temperature: 2479 ÂcC 
+[2025-05-07 01:37:00][INFO] [2][EPS] Battery Pack Temperature: 2291ÂcC
+[2025-05-07 01:37:00][INFO] [2][EPS] Battery Pack Reported SOC: 64% 
+[2025-05-07 01:37:00][INFO] [2][EPS] Battery Pack Reported Capacity: 960 mAh 
+[2025-05-07 01:37:00][INFO] [2][EPS] Battery Pack Current: -414 mA 
+[2025-05-07 01:37:00][INFO] [2][EPS] Battery Pack Voltage: 7560 mV 
+[2025-05-07 01:37:00][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3801 mV 
+[2025-05-07 01:37:00][INFO] [2][EPS] Battery Pack Time-to-Empty: 13241 seconds 
+[2025-05-07 01:37:00][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:37:00][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:37:01][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:37:01][INFO] [0][COMMAND] Time: 1746581821
+[2025-05-07 01:37:01][INFO] [0][COMMAND] Time since boot: 16
+[2025-05-07 01:37:01][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:01][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:02][WARNING] No latest data point available.
+[2025-05-07 01:37:02][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:37:02][INFO] [6][ADCS] Gyro Ang Vel : [0.00195313, -0.00390625, 0.0]
+[2025-05-07 01:37:02][INFO] [0][COMMAND] Time: 1746581822
+[2025-05-07 01:37:02][INFO] [0][COMMAND] Time since boot: 17
+[2025-05-07 01:37:02][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:02][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:02][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:37:02][INFO] [4][COMMS] Timeout in GS communication
+[2025-05-07 01:37:02][INFO] [2][EPS] Radio Voltage: 5075 mV, Radio Current: 23 mA 
+[2025-05-07 01:37:02][INFO] [2][EPS] YP Voltage: 7494 mV, YP Current: 20 mA 
+[2025-05-07 01:37:02][INFO] [2][EPS] XP Voltage: 7500 mV, XP Current: 15 mA 
+[2025-05-07 01:37:02][INFO] [2][EPS] Board Voltage: 3300 mV, Board Current: 33 mA 
+[2025-05-07 01:37:02][INFO] [2][EPS] XM Voltage: 7500 mV, XM Current: 18 mA 
+[2025-05-07 01:37:02][INFO] [2][EPS] YM Voltage: 7520 mV, YM Current: 15 mA 
+[2025-05-07 01:37:02][INFO] [2][EPS] ZM Coil Voltage: 1003 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:37:02][INFO] [2][EPS] XP Coil Voltage: 3179 mV, XP Coil Current: 101 mA 
+[2025-05-07 01:37:02][INFO] [2][EPS] YP Coil Voltage: 3179 mV, YP Coil Current: 43 mA 
+[2025-05-07 01:37:02][INFO] [2][EPS] YM Coil Voltage: 3179 mV, YM Coil Current: 14 mA 
+[2025-05-07 01:37:02][INFO] [2][EPS] XM Coil Voltage: 3179 mV, XM Coil Current: 101 mA 
+[2025-05-07 01:37:02][INFO] [2][EPS] ZP Coil Voltage: 1003 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:37:02][INFO] [2][EPS] CPU temperature: 2479 ÂcC 
+[2025-05-07 01:37:02][INFO] [2][EPS] Battery Pack Temperature: 2291ÂcC
+[2025-05-07 01:37:02][INFO] [2][EPS] Battery Pack Reported SOC: 63% 
+[2025-05-07 01:37:02][INFO] [2][EPS] Battery Pack Reported Capacity: 959 mAh 
+[2025-05-07 01:37:02][INFO] [2][EPS] Battery Pack Current: -427 mA 
+[2025-05-07 01:37:02][INFO] [2][EPS] Battery Pack Voltage: 7553 mV 
+[2025-05-07 01:37:02][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3777 mV 
+[2025-05-07 01:37:02][INFO] [2][EPS] Battery Pack Time-to-Empty: 12217 seconds 
+[2025-05-07 01:37:02][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:37:02][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:37:03][INFO] [0][COMMAND] Time: 1746581823
+[2025-05-07 01:37:03][INFO] [0][COMMAND] Time since boot: 18
+[2025-05-07 01:37:03][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:03][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:03][WARNING] No latest data point available.
+[2025-05-07 01:37:03][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:37:03][INFO] [6][ADCS] Gyro Ang Vel : [0.00195313, 0.0, -0.00195313]
+[2025-05-07 01:37:03][WARNING] No latest data point available.
+[2025-05-07 01:37:03][WARNING] No latest GPS data available
+[2025-05-07 01:37:03][INFO] [4][COMMS] Telemetry heartbeat packed
+[2025-05-07 01:37:04][INFO] [4][COMMS] Sent message with ID: 1
+[2025-05-07 01:37:04][INFO] [0][COMMAND] Time: 1746581824
+[2025-05-07 01:37:04][INFO] [0][COMMAND] Time since boot: 19
+[2025-05-07 01:37:04][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:04][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:04][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:37:05][INFO] [2][EPS] Radio Voltage: 5075 mV, Radio Current: 23 mA 
+[2025-05-07 01:37:05][INFO] [2][EPS] YP Voltage: 7578 mV, YP Current: 20 mA 
+[2025-05-07 01:37:05][INFO] [2][EPS] XP Voltage: 7578 mV, XP Current: 15 mA 
+[2025-05-07 01:37:05][INFO] [2][EPS] Board Voltage: 3313 mV, Board Current: 28 mA 
+[2025-05-07 01:37:05][INFO] [2][EPS] XM Voltage: 7571 mV, XM Current: 18 mA 
+[2025-05-07 01:37:05][INFO] [2][EPS] YM Voltage: 7597 mV, YM Current: 15 mA 
+[2025-05-07 01:37:05][INFO] [2][EPS] ZM Coil Voltage: 0 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:37:05][INFO] [2][EPS] XP Coil Voltage: 0 mV, XP Coil Current: 0 mA 
+[2025-05-07 01:37:05][INFO] [2][EPS] YP Coil Voltage: 0 mV, YP Coil Current: 0 mA 
+[2025-05-07 01:37:05][INFO] [2][EPS] YM Coil Voltage: 0 mV, YM Coil Current: 0 mA 
+[2025-05-07 01:37:05][INFO] [2][EPS] XM Coil Voltage: 0 mV, XM Coil Current: 0 mA 
+[2025-05-07 01:37:05][INFO] [2][EPS] ZP Coil Voltage: 167 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:37:05][INFO] [2][EPS] CPU temperature: 2432 ÂcC 
+[2025-05-07 01:37:05][INFO] [2][EPS] Battery Pack Temperature: 2295ÂcC
+[2025-05-07 01:37:05][INFO] [2][EPS] Battery Pack Reported SOC: 63% 
+[2025-05-07 01:37:05][INFO] [2][EPS] Battery Pack Reported Capacity: 959 mAh 
+[2025-05-07 01:37:05][INFO] [2][EPS] Battery Pack Current: -116 mA 
+[2025-05-07 01:37:05][INFO] [2][EPS] Battery Pack Voltage: 7600 mV 
+[2025-05-07 01:37:05][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3799 mV 
+[2025-05-07 01:37:05][INFO] [2][EPS] Battery Pack Time-to-Empty: 11058 seconds 
+[2025-05-07 01:37:05][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:37:05][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:37:05][INFO] [0][COMMAND] Time: 1746581825
+[2025-05-07 01:37:05][INFO] [0][COMMAND] Time since boot: 20
+[2025-05-07 01:37:05][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:05][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:05][WARNING] No latest data point available.
+[2025-05-07 01:37:05][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:37:05][INFO] [6][ADCS] Gyro Ang Vel : [0.00195313, -0.00390625, -0.00195313]
+[2025-05-07 01:37:06][INFO] [0][COMMAND] Time: 1746581826
+[2025-05-07 01:37:06][INFO] [0][COMMAND] Time since boot: 22
+[2025-05-07 01:37:06][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:06][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:06][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:37:06][INFO] [2][EPS] Radio Voltage: 5069 mV, Radio Current: 23 mA 
+[2025-05-07 01:37:06][INFO] [2][EPS] YP Voltage: 7578 mV, YP Current: 20 mA 
+[2025-05-07 01:37:06][INFO] [2][EPS] XP Voltage: 7578 mV, XP Current: 15 mA 
+[2025-05-07 01:37:06][INFO] [2][EPS] Board Voltage: 3293 mV, Board Current: 54 mA 
+[2025-05-07 01:37:06][INFO] [2][EPS] XM Voltage: 7578 mV, XM Current: 18 mA 
+[2025-05-07 01:37:06][INFO] [2][EPS] YM Voltage: 7603 mV, YM Current: 15 mA 
+[2025-05-07 01:37:06][INFO] [2][EPS] ZM Coil Voltage: 0 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:37:06][INFO] [2][EPS] XP Coil Voltage: 0 mV, XP Coil Current: 0 mA 
+[2025-05-07 01:37:06][INFO] [2][EPS] YP Coil Voltage: 0 mV, YP Coil Current: 0 mA 
+[2025-05-07 01:37:06][INFO] [2][EPS] YM Coil Voltage: 0 mV, YM Coil Current: 0 mA 
+[2025-05-07 01:37:06][INFO] [2][EPS] XM Coil Voltage: 0 mV, XM Coil Current: 0 mA 
+[2025-05-07 01:37:06][INFO] [2][EPS] ZP Coil Voltage: 167 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:37:06][INFO] [2][EPS] CPU temperature: 2432 ÂcC 
+[2025-05-07 01:37:06][INFO] [2][EPS] Battery Pack Temperature: 2300ÂcC
+[2025-05-07 01:37:06][INFO] [2][EPS] Battery Pack Reported SOC: 63% 
+[2025-05-07 01:37:06][INFO] [2][EPS] Battery Pack Reported Capacity: 959 mAh 
+[2025-05-07 01:37:06][INFO] [2][EPS] Battery Pack Current: -118 mA 
+[2025-05-07 01:37:06][INFO] [2][EPS] Battery Pack Voltage: 7605 mV 
+[2025-05-07 01:37:06][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3802 mV 
+[2025-05-07 01:37:06][INFO] [2][EPS] Battery Pack Time-to-Empty: 11278 seconds 
+[2025-05-07 01:37:06][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:37:06][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:37:07][WARNING] No latest data point available.
+[2025-05-07 01:37:07][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:37:07][INFO] [6][ADCS] Gyro Ang Vel : [0.0, -0.00195313, -0.00195313]
+[2025-05-07 01:37:07][INFO] [0][COMMAND] Time: 1746581827
+[2025-05-07 01:37:07][INFO] [0][COMMAND] Time since boot: 22
+[2025-05-07 01:37:07][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:07][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:08][INFO] [0][COMMAND] Time: 1746581828
+[2025-05-07 01:37:08][INFO] [0][COMMAND] Time since boot: 23
+[2025-05-07 01:37:08][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:08][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:08][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:37:08][INFO] [2][EPS] Radio Voltage: 5075 mV, Radio Current: 23 mA 
+[2025-05-07 01:37:08][INFO] [2][EPS] YP Voltage: 7578 mV, YP Current: 20 mA 
+[2025-05-07 01:37:08][INFO] [2][EPS] XP Voltage: 7578 mV, XP Current: 18 mA 
+[2025-05-07 01:37:08][INFO] [2][EPS] Board Voltage: 3300 mV, Board Current: 31 mA 
+[2025-05-07 01:37:08][INFO] [2][EPS] XM Voltage: 7571 mV, XM Current: 20 mA 
+[2025-05-07 01:37:08][INFO] [2][EPS] YM Voltage: 7603 mV, YM Current: 15 mA 
+[2025-05-07 01:37:08][INFO] [2][EPS] ZM Coil Voltage: 0 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:37:08][INFO] [2][EPS] XP Coil Voltage: 0 mV, XP Coil Current: 0 mA 
+[2025-05-07 01:37:08][INFO] [2][EPS] YP Coil Voltage: 0 mV, YP Coil Current: 0 mA 
+[2025-05-07 01:37:08][INFO] [2][EPS] YM Coil Voltage: 0 mV, YM Coil Current: 0 mA 
+[2025-05-07 01:37:08][INFO] [2][EPS] XM Coil Voltage: 0 mV, XM Coil Current: 0 mA 
+[2025-05-07 01:37:08][INFO] [2][EPS] ZP Coil Voltage: 167 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:37:08][INFO] [2][EPS] CPU temperature: 2479 ÂcC 
+[2025-05-07 01:37:08][INFO] [2][EPS] Battery Pack Temperature: 2291ÂcC
+[2025-05-07 01:37:08][INFO] [2][EPS] Battery Pack Reported SOC: 63% 
+[2025-05-07 01:37:08][INFO] [2][EPS] Battery Pack Reported Capacity: 959 mAh 
+[2025-05-07 01:37:08][INFO] [2][EPS] Battery Pack Current: -120 mA 
+[2025-05-07 01:37:08][INFO] [2][EPS] Battery Pack Voltage: 7598 mV 
+[2025-05-07 01:37:08][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3799 mV 
+[2025-05-07 01:37:08][INFO] [2][EPS] Battery Pack Time-to-Empty: 11424 seconds 
+[2025-05-07 01:37:08][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:37:08][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:37:09][WARNING] No latest data point available.
+[2025-05-07 01:37:09][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:37:09][INFO] [6][ADCS] Gyro Ang Vel : [0.00390625, -0.00195313, -0.00195313]
+[2025-05-07 01:37:09][INFO] [0][COMMAND] Time: 1746581829
+[2025-05-07 01:37:09][INFO] [0][COMMAND] Time since boot: 24
+[2025-05-07 01:37:09][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:09][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:09][WARNING] [COMMS ERROR] RX'd packet has invalid source
+[2025-05-07 01:37:09][WARNING] [4][COMMS] GS requested invalid command: 0
+[2025-05-07 01:37:10][WARNING] No latest data point available.
+[2025-05-07 01:37:10][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:37:10][INFO] [6][ADCS] Gyro Ang Vel : [0.00195313, -0.00390625, 0.0]
+[2025-05-07 01:37:10][INFO] [2][EPS] Radio Voltage: 5075 mV, Radio Current: 23 mA 
+[2025-05-07 01:37:10][INFO] [2][EPS] YP Voltage: 7513 mV, YP Current: 18 mA 
+[2025-05-07 01:37:10][INFO] [2][EPS] XP Voltage: 7520 mV, XP Current: 15 mA 
+[2025-05-07 01:37:10][INFO] [2][EPS] Board Voltage: 3293 mV, Board Current: 59 mA 
+[2025-05-07 01:37:10][INFO] [2][EPS] XM Voltage: 7507 mV, XM Current: 18 mA 
+[2025-05-07 01:37:10][INFO] [2][EPS] YM Voltage: 7520 mV, YM Current: 15 mA 
+[2025-05-07 01:37:10][INFO] [2][EPS] ZM Coil Voltage: 1003 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:37:10][INFO] [2][EPS] XP Coil Voltage: 3346 mV, XP Coil Current: 101 mA 
+[2025-05-07 01:37:10][INFO] [2][EPS] YP Coil Voltage: 3179 mV, YP Coil Current: 87 mA 
+[2025-05-07 01:37:10][INFO] [2][EPS] YM Coil Voltage: 3179 mV, YM Coil Current: 87 mA 
+[2025-05-07 01:37:10][INFO] [2][EPS] XM Coil Voltage: 3179 mV, XM Coil Current: 29 mA 
+[2025-05-07 01:37:10][INFO] [2][EPS] ZP Coil Voltage: 1003 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:37:10][INFO] [2][EPS] CPU temperature: 2432 ÂcC 
+[2025-05-07 01:37:10][INFO] [2][EPS] Battery Pack Temperature: 2287ÂcC
+[2025-05-07 01:37:10][INFO] [2][EPS] Battery Pack Reported SOC: 63% 
+[2025-05-07 01:37:10][INFO] [2][EPS] Battery Pack Reported Capacity: 959 mAh 
+[2025-05-07 01:37:10][INFO] [2][EPS] Battery Pack Current: -467 mA 
+[2025-05-07 01:37:10][INFO] [2][EPS] Battery Pack Voltage: 7553 mV 
+[2025-05-07 01:37:10][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3777 mV 
+[2025-05-07 01:37:10][INFO] [2][EPS] Battery Pack Time-to-Empty: 12003 seconds 
+[2025-05-07 01:37:10][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:37:10][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:37:10][INFO] [0][COMMAND] Time: 1746581830
+[2025-05-07 01:37:10][INFO] [0][COMMAND] Time since boot: 26
+[2025-05-07 01:37:10][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:10][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:11][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:37:11][INFO] [0][COMMAND] Time: 1746581831
+[2025-05-07 01:37:11][INFO] [0][COMMAND] Time since boot: 27
+[2025-05-07 01:37:11][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:11][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:12][WARNING] No latest data point available.
+[2025-05-07 01:37:12][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:37:12][INFO] [6][ADCS] Gyro Ang Vel : [0.00585938, -0.00195313, -0.00390625]
+[2025-05-07 01:37:12][INFO] [0][COMMAND] Time: 1746581832
+[2025-05-07 01:37:12][INFO] [0][COMMAND] Time since boot: 27
+[2025-05-07 01:37:12][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:12][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:12][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:37:12][INFO] [2][EPS] Radio Voltage: 5075 mV, Radio Current: 23 mA 
+[2025-05-07 01:37:12][INFO] [2][EPS] YP Voltage: 7488 mV, YP Current: 18 mA 
+[2025-05-07 01:37:12][INFO] [2][EPS] XP Voltage: 7507 mV, XP Current: 15 mA 
+[2025-05-07 01:37:12][INFO] [2][EPS] Board Voltage: 3313 mV, Board Current: 43 mA 
+[2025-05-07 01:37:12][INFO] [2][EPS] XM Voltage: 7507 mV, XM Current: 18 mA 
+[2025-05-07 01:37:12][INFO] [2][EPS] YM Voltage: 7539 mV, YM Current: 15 mA 
+[2025-05-07 01:37:12][INFO] [2][EPS] ZM Coil Voltage: 836 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:37:12][INFO] [2][EPS] XP Coil Voltage: 3179 mV, XP Coil Current: 29 mA 
+[2025-05-07 01:37:12][INFO] [2][EPS] YP Coil Voltage: 3179 mV, YP Coil Current: 101 mA 
+[2025-05-07 01:37:12][INFO] [2][EPS] YM Coil Voltage: 3179 mV, YM Coil Current: 101 mA 
+[2025-05-07 01:37:12][INFO] [2][EPS] XM Coil Voltage: 3179 mV, XM Coil Current: 14 mA 
+[2025-05-07 01:37:12][INFO] [2][EPS] ZP Coil Voltage: 669 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:37:12][INFO] [2][EPS] CPU temperature: 2432 ÂcC 
+[2025-05-07 01:37:12][INFO] [2][EPS] Battery Pack Temperature: 2303ÂcC
+[2025-05-07 01:37:12][INFO] [2][EPS] Battery Pack Reported SOC: 63% 
+[2025-05-07 01:37:12][INFO] [2][EPS] Battery Pack Reported Capacity: 958 mAh 
+[2025-05-07 01:37:12][INFO] [2][EPS] Battery Pack Current: -414 mA 
+[2025-05-07 01:37:12][INFO] [2][EPS] Battery Pack Voltage: 7561 mV 
+[2025-05-07 01:37:12][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3780 mV 
+[2025-05-07 01:37:12][INFO] [2][EPS] Battery Pack Time-to-Empty: 11356 seconds 
+[2025-05-07 01:37:12][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:37:12][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:37:13][WARNING] No latest data point available.
+[2025-05-07 01:37:13][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:37:13][INFO] [6][ADCS] Gyro Ang Vel : [0.00390625, -0.00390625, -0.00195313]
+[2025-05-07 01:37:13][INFO] [0][COMMAND] Time: 1746581833
+[2025-05-07 01:37:13][INFO] [0][COMMAND] Time since boot: 29
+[2025-05-07 01:37:13][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:13][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:14][WARNING] No latest data point available.
+[2025-05-07 01:37:14][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:37:14][INFO] [6][ADCS] Gyro Ang Vel : [-0.00195313, -0.00195313, -0.00195313]
+[2025-05-07 01:37:14][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:37:14][INFO] [4][COMMS] Timeout in GS communication
+[2025-05-07 01:37:14][INFO] [2][EPS] Radio Voltage: 5069 mV, Radio Current: 23 mA 
+[2025-05-07 01:37:14][INFO] [2][EPS] YP Voltage: 7526 mV, YP Current: 20 mA 
+[2025-05-07 01:37:14][INFO] [2][EPS] XP Voltage: 7475 mV, XP Current: 15 mA 
+[2025-05-07 01:37:14][INFO] [2][EPS] Board Voltage: 3293 mV, Board Current: 28 mA 
+[2025-05-07 01:37:14][INFO] [2][EPS] XM Voltage: 7507 mV, XM Current: 18 mA 
+[2025-05-07 01:37:14][INFO] [2][EPS] YM Voltage: 7520 mV, YM Current: 15 mA 
+[2025-05-07 01:37:14][INFO] [2][EPS] ZM Coil Voltage: 501 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:37:14][INFO] [2][EPS] XP Coil Voltage: 3179 mV, XP Coil Current: 58 mA 
+[2025-05-07 01:37:14][INFO] [2][EPS] YP Coil Voltage: 3179 mV, YP Coil Current: 43 mA 
+[2025-05-07 01:37:14][INFO] [2][EPS] YM Coil Voltage: 3179 mV, YM Coil Current: 101 mA 
+[2025-05-07 01:37:14][INFO] [2][EPS] XM Coil Voltage: 3179 mV, XM Coil Current: 72 mA 
+[2025-05-07 01:37:14][INFO] [2][EPS] ZP Coil Voltage: 334 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:37:14][INFO] [2][EPS] CPU temperature: 2432 ÂcC 
+[2025-05-07 01:37:14][INFO] [2][EPS] Battery Pack Temperature: 2303ÂcC
+[2025-05-07 01:37:14][INFO] [2][EPS] Battery Pack Reported SOC: 63% 
+[2025-05-07 01:37:14][INFO] [2][EPS] Battery Pack Reported Capacity: 958 mAh 
+[2025-05-07 01:37:14][INFO] [2][EPS] Battery Pack Current: -445 mA 
+[2025-05-07 01:37:14][INFO] [2][EPS] Battery Pack Voltage: 7562 mV 
+[2025-05-07 01:37:14][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3781 mV 
+[2025-05-07 01:37:14][INFO] [2][EPS] Battery Pack Time-to-Empty: 11199 seconds 
+[2025-05-07 01:37:14][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:37:14][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:37:14][INFO] [0][COMMAND] Time: 1746581834
+[2025-05-07 01:37:14][INFO] [0][COMMAND] Time since boot: 30
+[2025-05-07 01:37:14][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:14][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:15][WARNING] No latest data point available.
+[2025-05-07 01:37:15][WARNING] No latest GPS data available
+[2025-05-07 01:37:15][INFO] [4][COMMS] Telemetry heartbeat packed
+[2025-05-07 01:37:15][INFO] [4][COMMS] Sent message with ID: 1
+[2025-05-07 01:37:15][WARNING] No latest data point available.
+[2025-05-07 01:37:15][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:37:15][INFO] [6][ADCS] Gyro Ang Vel : [0.00195313, -0.00195313, -0.00195313]
+[2025-05-07 01:37:16][INFO] [0][COMMAND] Time: 1746581836
+[2025-05-07 01:37:16][INFO] [0][COMMAND] Time since boot: 31
+[2025-05-07 01:37:16][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:16][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:16][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:37:16][INFO] [0][COMMAND] Time: 1746581836
+[2025-05-07 01:37:16][INFO] [0][COMMAND] Time since boot: 32
+[2025-05-07 01:37:16][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:16][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:17][INFO] [2][EPS] Radio Voltage: 5075 mV, Radio Current: 23 mA 
+[2025-05-07 01:37:17][INFO] [2][EPS] YP Voltage: 7578 mV, YP Current: 20 mA 
+[2025-05-07 01:37:17][INFO] [2][EPS] XP Voltage: 7571 mV, XP Current: 15 mA 
+[2025-05-07 01:37:17][INFO] [2][EPS] Board Voltage: 3300 mV, Board Current: 31 mA 
+[2025-05-07 01:37:17][INFO] [2][EPS] XM Voltage: 7571 mV, XM Current: 18 mA 
+[2025-05-07 01:37:17][INFO] [2][EPS] YM Voltage: 7597 mV, YM Current: 15 mA 
+[2025-05-07 01:37:17][INFO] [2][EPS] ZM Coil Voltage: 0 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:37:17][INFO] [2][EPS] XP Coil Voltage: 0 mV, XP Coil Current: 0 mA 
+[2025-05-07 01:37:17][INFO] [2][EPS] YP Coil Voltage: 0 mV, YP Coil Current: 0 mA 
+[2025-05-07 01:37:17][INFO] [2][EPS] YM Coil Voltage: 0 mV, YM Coil Current: 0 mA 
+[2025-05-07 01:37:17][INFO] [2][EPS] XM Coil Voltage: 0 mV, XM Coil Current: 0 mA 
+[2025-05-07 01:37:17][INFO] [2][EPS] ZP Coil Voltage: 167 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:37:17][INFO] [2][EPS] CPU temperature: 2479 ÂcC 
+[2025-05-07 01:37:17][INFO] [2][EPS] Battery Pack Temperature: 2305ÂcC
+[2025-05-07 01:37:17][INFO] [2][EPS] Battery Pack Reported SOC: 63% 
+[2025-05-07 01:37:17][INFO] [2][EPS] Battery Pack Reported Capacity: 958 mAh 
+[2025-05-07 01:37:17][INFO] [2][EPS] Battery Pack Current: -116 mA 
+[2025-05-07 01:37:17][INFO] [2][EPS] Battery Pack Voltage: 7562 mV 
+[2025-05-07 01:37:17][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3781 mV 
+[2025-05-07 01:37:17][INFO] [2][EPS] Battery Pack Time-to-Empty: 10530 seconds 
+[2025-05-07 01:37:17][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:37:17][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:37:17][WARNING] No latest data point available.
+[2025-05-07 01:37:17][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:37:17][INFO] [6][ADCS] Gyro Ang Vel : [0.00195313, -0.00390625, -0.00195313]
+[2025-05-07 01:37:17][INFO] [0][COMMAND] Time: 1746581837
+[2025-05-07 01:37:17][INFO] [0][COMMAND] Time since boot: 33
+[2025-05-07 01:37:17][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:17][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:18][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:37:18][INFO] [2][EPS] Radio Voltage: 5069 mV, Radio Current: 23 mA 
+[2025-05-07 01:37:18][INFO] [2][EPS] YP Voltage: 7578 mV, YP Current: 20 mA 
+[2025-05-07 01:37:18][INFO] [2][EPS] XP Voltage: 7578 mV, XP Current: 15 mA 
+[2025-05-07 01:37:18][INFO] [2][EPS] Board Voltage: 3293 mV, Board Current: 31 mA 
+[2025-05-07 01:37:18][INFO] [2][EPS] XM Voltage: 7571 mV, XM Current: 18 mA 
+[2025-05-07 01:37:18][INFO] [2][EPS] YM Voltage: 7603 mV, YM Current: 15 mA 
+[2025-05-07 01:37:18][INFO] [2][EPS] ZM Coil Voltage: 0 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:37:18][INFO] [2][EPS] XP Coil Voltage: 0 mV, XP Coil Current: 0 mA 
+[2025-05-07 01:37:18][INFO] [2][EPS] YP Coil Voltage: 0 mV, YP Coil Current: 0 mA 
+[2025-05-07 01:37:18][INFO] [2][EPS] YM Coil Voltage: 0 mV, YM Coil Current: 0 mA 
+[2025-05-07 01:37:18][INFO] [2][EPS] XM Coil Voltage: 0 mV, XM Coil Current: 0 mA 
+[2025-05-07 01:37:18][INFO] [2][EPS] ZP Coil Voltage: 167 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:37:18][INFO] [2][EPS] CPU temperature: 2432 ÂcC 
+[2025-05-07 01:37:18][INFO] [2][EPS] Battery Pack Temperature: 2285ÂcC
+[2025-05-07 01:37:18][INFO] [2][EPS] Battery Pack Reported SOC: 63% 
+[2025-05-07 01:37:18][INFO] [2][EPS] Battery Pack Reported Capacity: 958 mAh 
+[2025-05-07 01:37:18][INFO] [2][EPS] Battery Pack Current: -399 mA 
+[2025-05-07 01:37:18][INFO] [2][EPS] Battery Pack Voltage: 7562 mV 
+[2025-05-07 01:37:18][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3781 mV 
+[2025-05-07 01:37:18][INFO] [2][EPS] Battery Pack Time-to-Empty: 10496 seconds 
+[2025-05-07 01:37:18][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:37:18][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:37:19][INFO] [0][COMMAND] Time: 1746581839
+[2025-05-07 01:37:19][INFO] [0][COMMAND] Time since boot: 34
+[2025-05-07 01:37:19][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:19][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:19][WARNING] No latest data point available.
+[2025-05-07 01:37:19][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:37:19][INFO] [6][ADCS] Gyro Ang Vel : [-0.00195313, -0.00195313, -0.00390625]
+[2025-05-07 01:37:19][INFO] [0][COMMAND] Time: 1746581839
+[2025-05-07 01:37:19][INFO] [0][COMMAND] Time since boot: 35
+[2025-05-07 01:37:19][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:19][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:21][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:37:21][INFO] [2][EPS] Radio Voltage: 5075 mV, Radio Current: 23 mA 
+[2025-05-07 01:37:21][INFO] [2][EPS] YP Voltage: 7578 mV, YP Current: 20 mA 
+[2025-05-07 01:37:21][INFO] [2][EPS] XP Voltage: 7578 mV, XP Current: 15 mA 
+[2025-05-07 01:37:21][INFO] [2][EPS] Board Voltage: 3293 mV, Board Current: 31 mA 
+[2025-05-07 01:37:21][INFO] [2][EPS] XM Voltage: 7571 mV, XM Current: 20 mA 
+[2025-05-07 01:37:21][INFO] [2][EPS] YM Voltage: 7603 mV, YM Current: 15 mA 
+[2025-05-07 01:37:21][INFO] [2][EPS] ZM Coil Voltage: 0 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:37:21][INFO] [2][EPS] XP Coil Voltage: 0 mV, XP Coil Current: 0 mA 
+[2025-05-07 01:37:21][INFO] [2][EPS] YP Coil Voltage: 0 mV, YP Coil Current: 0 mA 
+[2025-05-07 01:37:21][INFO] [2][EPS] YM Coil Voltage: 0 mV, YM Coil Current: 0 mA 
+[2025-05-07 01:37:21][INFO] [2][EPS] XM Coil Voltage: 0 mV, XM Coil Current: 0 mA 
+[2025-05-07 01:37:21][INFO] [2][EPS] ZP Coil Voltage: 167 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:37:21][INFO] [2][EPS] CPU temperature: 2479 ÂcC 
+[2025-05-07 01:37:21][INFO] [2][EPS] Battery Pack Temperature: 2309ÂcC
+[2025-05-07 01:37:21][INFO] [2][EPS] Battery Pack Reported SOC: 63% 
+[2025-05-07 01:37:21][INFO] [2][EPS] Battery Pack Reported Capacity: 958 mAh 
+[2025-05-07 01:37:21][INFO] [2][EPS] Battery Pack Current: -376 mA 
+[2025-05-07 01:37:21][INFO] [2][EPS] Battery Pack Voltage: 7558 mV 
+[2025-05-07 01:37:21][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3779 mV 
+[2025-05-07 01:37:21][INFO] [2][EPS] Battery Pack Time-to-Empty: 10816 seconds 
+[2025-05-07 01:37:21][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:37:21][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:37:21][INFO] [0][COMMAND] Time: 1746581841
+[2025-05-07 01:37:21][INFO] [0][COMMAND] Time since boot: 36
+[2025-05-07 01:37:21][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:21][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:21][WARNING] [COMMS ERROR] RX'd packet has invalid source
+[2025-05-07 01:37:21][WARNING] [4][COMMS] GS requested invalid command: 0
+[2025-05-07 01:37:21][WARNING] No latest data point available.
+[2025-05-07 01:37:22][WARNING] [6][ADCS] MEKF init failure : Orbit Prop Init failure
+[2025-05-07 01:37:22][INFO] [6][ADCS] Gyro Ang Vel : [-0.00195313, -0.00195313, 0.0]
+[2025-05-07 01:37:22][INFO] [0][COMMAND] Time: 1746581842
+[2025-05-07 01:37:22][INFO] [0][COMMAND] Time since boot: 37
+[2025-05-07 01:37:22][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:22][INFO] [0][COMMAND] RAM USAGE: 50%
+[2025-05-07 01:37:22][INFO] [3][OBDH] Data processes: ['img', 'eps_warning', 'gps', 'hal', 'cdh', 'eps', 'cmd_logs', 'adcs', 'comms']
+[2025-05-07 01:37:23][INFO] [2][EPS] Radio Voltage: 5075 mV, Radio Current: 23 mA 
+[2025-05-07 01:37:23][INFO] [2][EPS] YP Voltage: 7578 mV, YP Current: 20 mA 
+[2025-05-07 01:37:23][INFO] [2][EPS] XP Voltage: 7578 mV, XP Current: 15 mA 
+[2025-05-07 01:37:23][INFO] [2][EPS] Board Voltage: 3300 mV, Board Current: 64 mA 
+[2025-05-07 01:37:23][INFO] [2][EPS] XM Voltage: 7578 mV, XM Current: 18 mA 
+[2025-05-07 01:37:23][INFO] [2][EPS] YM Voltage: 7610 mV, YM Current: 15 mA 
+[2025-05-07 01:37:23][INFO] [2][EPS] ZM Coil Voltage: 0 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:37:23][INFO] [2][EPS] XP Coil Voltage: 0 mV, XP Coil Current: 0 mA 
+[2025-05-07 01:37:23][INFO] [2][EPS] YP Coil Voltage: 0 mV, YP Coil Current: 0 mA 
+[2025-05-07 01:37:23][INFO] [2][EPS] YM Coil Voltage: 0 mV, YM Coil Current: 0 mA 
+[2025-05-07 01:37:23][INFO] [2][EPS] XM Coil Voltage: 0 mV, XM Coil Current: 0 mA 
+[2025-05-07 01:37:23][INFO] [2][EPS] ZP Coil Voltage: 167 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:37:23][INFO] [2][EPS] CPU temperature: 2479 ÂcC 
+[2025-05-07 01:37:23][INFO] [2][EPS] Battery Pack Temperature: 2311ÂcC
+[2025-05-07 01:37:23][INFO] [2][EPS] Battery Pack Reported SOC: 63% 
+[2025-05-07 01:37:23][INFO] [2][EPS] Battery Pack Reported Capacity: 958 mAh 
+[2025-05-07 01:37:23][INFO] [2][EPS] Battery Pack Current: -128 mA 
+[2025-05-07 01:37:23][INFO] [2][EPS] Battery Pack Voltage: 7598 mV 
+[2025-05-07 01:37:23][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3799 mV 
+[2025-05-07 01:37:23][INFO] [2][EPS] Battery Pack Time-to-Empty: 10856 seconds 
+[2025-05-07 01:37:23][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:37:23][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:37:23][WARNING] [6][ADCS] Success : Force initializing MEKF
+[2025-05-07 01:37:23][INFO] [6][ADCS] Gyro Ang Vel : [0.0, 0.0, -0.00390625]
+[2025-05-07 01:37:23][INFO] [0][COMMAND] Time: 1746581843
+[2025-05-07 01:37:23][INFO] [0][COMMAND] Time since boot: 38
+[2025-05-07 01:37:23][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:37:23][INFO] [0][COMMAND] RAM USAGE: 50%
+Traceback (most recent call last):
+  File "main.py", line 3, in <module>
+  File "main_module.py", line 1, in <module>
+  File "state_machine.py", line 1, in start
+  File "scheduler.py", line 1, in run
+  File "scheduler.py", line 1, in _step
+  File "scheduler.py", line 1, in _run_task
+  File "scheduler.py", line 1, in _run_at_fixed_rate
+  File "template_task.py", line 1, in _run
+  File "hal_monitor.py", line 1, in main_task
+  File "data_handler.py", line 1, in log_data
+  File "data_handler.py", line 1, in log
+  File "data_handler.py", line 1, in resolve_current_file
+  File "data_handler.py", line 1, in create_new_path
+  File "data_handler.py", line 1, in join_path
+KeyboardInterrupt: 
+0;ð1@data_handler.py KeyboardInterrupt | 9.2.4-4-g07f738803e
+Code done running.
+Auto-reload is off.
+
+Press any key to enter the REPL. Use CTRL-D to reload.
+soft reboot
+
+Auto-reload is off.
+main.py output:
+0;ðmain.py | 9.2.4-4-g07f738803eBranch: hal_monitor_test
+Warning: Uncommitted changes detected!
+DIRTY Commit: 08097e248bb94b43eb4d4e5877b0bc4988cbab67
+[2000-01-01 00:01:24][INFO] Logger set to level INFO
+Memory stats after gc: True
+Total memory: 389504 bytes
+Memory free: 324032 bytes
+Memory used: 16%
+Booting ARGUS...
+ARGUS booted.
+Boot Errors: {'LIGHT_ZP_4': 1, 'LIGHT_ZP_1': 1, 'JETSON_PWR': 1, 'LIGHT_ZP_3': 1, 'LIGHT_ZP_2': 1}
+Waiting 1 sec...
+Memory stats after gc: False
+Total memory: 385728 bytes
+Memory free: 250912 bytes
+Memory used: 34%
+Memory stats after gc: True
+Total memory: 385728 bytes
+Memory free: 257520 bytes
+Memory used: 33%
+[2025-05-07 01:38:11][INFO] Starting state manager
+[2025-05-07 01:38:12][INFO] Switched to state 0 - STARTUP
+[2025-05-07 01:38:12][INFO] Folder already exists.
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored SDCARD_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored RTC_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored GPS_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored RADIO_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored IMU_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored FUEL_GAUGE_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored BATT_HEATERS_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored WATCHDOG_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored BURN_WIRES_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored BOARD_PWR_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored RADIO_PWR_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored GPS_PWR_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored JETSON_PWR_ERROR_COUNT to 12
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored XP_PWR_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored XM_PWR_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored YP_PWR_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored YM_PWR_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored ZP_PWR_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored TORQUE_XP_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored TORQUE_XM_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored TORQUE_YP_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored TORQUE_YM_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored TORQUE_ZP_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored TORQUE_ZM_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored LIGHT_XP_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored LIGHT_XM_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored LIGHT_YP_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored LIGHT_YM_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored LIGHT_ZM_ERROR_COUNT to 0
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored LIGHT_ZP_1_ERROR_COUNT to 12
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored LIGHT_ZP_2_ERROR_COUNT to 12
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored LIGHT_ZP_3_ERROR_COUNT to 12
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored LIGHT_ZP_4_ERROR_COUNT to 12
+[2025-05-07 01:38:12][INFO] [10][HAL_MONITOR] Restored PERIPH_REBOOT_COUNT to 0
+[2025-05-07 01:38:12][CRITICAL] [10][HAL_MONITOR] Device JETSON_PWR is dead
+[2025-05-07 01:38:12][CRITICAL] [10][HAL_MONITOR] Device LIGHT_ZP_3 is dead
+[2025-05-07 01:38:12][CRITICAL] [10][HAL_MONITOR] Device LIGHT_ZP_4 is dead
+[2025-05-07 01:38:12][CRITICAL] [10][HAL_MONITOR] Device LIGHT_ZP_1 is dead
+[2025-05-07 01:38:12][CRITICAL] [10][HAL_MONITOR] Device LIGHT_ZP_2 is dead
+[2025-05-07 01:38:12][ERROR] [1][WATCHDOG] 'Task' object has no attribute 'counter' 
+ Traceback (most recent call last):
+  File "template_task.py", line 1, in _run
+  File "watchdog.py", line 1, in main_task
+AttributeError: 'Task' object has no attribute 'counter'
+[2025-05-07 01:38:13][INFO] Folder already exists.
+[2025-05-07 01:38:13][INFO] Folder already exists.
+[2025-05-07 01:38:13][INFO] Folder already exists.
+[2025-05-07 01:38:13][INFO] Folder already exists.
+[2025-05-07 01:38:13][INFO] Folder already exists.
+[2025-05-07 01:38:13][INFO] Folder already exists.
+[2025-05-07 01:38:13][INFO] Folder already exists.
+[2025-05-07 01:38:13][INFO] Folder already exists.
+[2025-05-07 01:38:13][INFO] Folder already exists.
+[2025-05-07 01:38:13][ERROR] [1][WATCHDOG] 'Task' object has no attribute 'counter' 
+ Traceback (most recent call last):
+  File "template_task.py", line 1, in _run
+  File "watchdog.py", line 1, in main_task
+AttributeError: 'Task' object has no attribute 'counter'
+[2025-05-07 01:38:13][INFO] [0][COMMAND] Time: 1746581893
+[2025-05-07 01:38:13][INFO] [0][COMMAND] Time since boot: 5
+[2025-05-07 01:38:13][INFO] [0][COMMAND] GLOBAL STATE: STARTUP.
+[2025-05-07 01:38:13][INFO] [0][COMMAND] RAM USAGE: 0%
+[2025-05-07 01:38:14][ERROR] [1][WATCHDOG] 'Task' object has no attribute 'counter' 
+ Traceback (most recent call last):
+  File "template_task.py", line 1, in _run
+  File "watchdog.py", line 1, in main_task
+AttributeError: 'Task' object has no attribute 'counter'
+[2025-05-07 01:38:14][INFO] Switched to state 1 - DETUMBLING
+[2025-05-07 01:38:14][INFO] [0][COMMAND] T0: Transition from STARTUP to DETUMBLING
+[2025-05-07 01:38:14][INFO] [2][EPS] Radio Voltage: 5069 mV, Radio Current: 23 mA 
+[2025-05-07 01:38:14][INFO] [2][EPS] YP Voltage: 7584 mV, YP Current: 20 mA 
+[2025-05-07 01:38:14][INFO] [2][EPS] XP Voltage: 7584 mV, XP Current: 18 mA 
+[2025-05-07 01:38:14][INFO] [2][EPS] Board Voltage: 3300 mV, Board Current: 36 mA 
+[2025-05-07 01:38:14][INFO] [2][EPS] XM Voltage: 7584 mV, XM Current: 18 mA 
+[2025-05-07 01:38:14][INFO] [2][EPS] YM Voltage: 7610 mV, YM Current: 15 mA 
+[2025-05-07 01:38:14][INFO] [2][EPS] ZM Coil Voltage: 0 mV, ZM Coil Current: 0 mA 
+[2025-05-07 01:38:14][INFO] [2][EPS] XP Coil Voltage: 0 mV, XP Coil Current: 0 mA 
+[2025-05-07 01:38:14][INFO] [2][EPS] YP Coil Voltage: 0 mV, YP Coil Current: 0 mA 
+[2025-05-07 01:38:14][INFO] [2][EPS] YM Coil Voltage: 0 mV, YM Coil Current: 0 mA 
+[2025-05-07 01:38:14][INFO] [2][EPS] XM Coil Voltage: 0 mV, XM Coil Current: 0 mA 
+[2025-05-07 01:38:14][INFO] [2][EPS] ZP Coil Voltage: 167 mV, ZP Coil Current: 0 mA 
+[2025-05-07 01:38:14][INFO] [2][EPS] CPU temperature: 2432 ÂcC 
+[2025-05-07 01:38:14][INFO] [2][EPS] Battery Pack Temperature: 2295ÂcC
+[2025-05-07 01:38:14][INFO] [2][EPS] Battery Pack Reported SOC: 63% 
+[2025-05-07 01:38:14][INFO] [2][EPS] Battery Pack Reported Capacity: 957 mAh 
+[2025-05-07 01:38:14][INFO] [2][EPS] Battery Pack Current: -114 mA 
+[2025-05-07 01:38:14][INFO] [2][EPS] Battery Pack Voltage: 7602 mV 
+[2025-05-07 01:38:14][INFO] [2][EPS] Battery Pack Midpoint Voltage: 3801 mV 
+[2025-05-07 01:38:14][INFO] [2][EPS] Battery Pack Time-to-Empty: 49449 seconds 
+[2025-05-07 01:38:14][INFO] [2][EPS] Battery Pack Time-to-Full: 368634 seconds 
+[2025-05-07 01:38:14][INFO] [2][EPS] EPS state: 2 
+[2025-05-07 01:38:14][INFO] [6][ADCS] Gyro Ang Vel : [0.00195313, -0.00390625, -0.00195313]
+[2025-05-07 01:38:14][INFO] [6][ADCS] Gyro Ang Vel : [-0.00195313, 0.0, 0.0]
+[2025-05-07 01:38:14][ERROR] [1][WATCHDOG] 'Task' object has no attribute 'counter' 
+ Traceback (most recent call last):
+  File "template_task.py", line 1, in _run
+  File "watchdog.py", line 1, in main_task
+AttributeError: 'Task' object has no attribute 'counter'
+[2025-05-07 01:38:14][INFO] [0][COMMAND] T1.1: Transition from DETUMBLING to NOMINAL
+[2025-05-07 01:38:14][INFO] Switched to state 2 - NOMINAL
+[2025-05-07 01:38:15][INFO] [0][COMMAND] Time: 1746581895
+[2025-05-07 01:38:15][INFO] [0][COMMAND] Time since boot: 7
+[2025-05-07 01:38:15][INFO] [0][COMMAND] GLOBAL STATE: NOMINAL.
+[2025-05-07 01:38:15][INFO] [0][COMMAND] RAM USAGE: 57%
+[2025-05-07 01:38:15][ERROR] [1][WATCHDOG] 'Task' object has no attribute 'counter' 
+ Traceback (most recent call last):
+  File "template_task.py", line 1, in _run
+  File "watchdog.py", line 1, in main_task
+AttributeError: 'Task' object has no attribute 'counter'
+Traceback (most recent call last):
+  File "main.py", line 4, in <module>
+  File "main_module.py", line 1, in <module>
+  File "state_machine.py", line 1, in start
+  File "scheduler.py", line 1, in run
+  File "scheduler.py", line 1, in _step
+  File "scheduler.py", line 1, in _run_task
+  File "scheduler.py", line 1, in _run_at_fixed_rate
+  File "template_task.py", line 1, in _run
+  File "hal_monitor.py", line 1, in main_task
+  File "cubesat.py", line 1, in SAMPLE_DEVICE_ERRORS
+  File "objectWrapper.py", line 1, in device_errors
+  File "opt4003.py", line 1, in device_errors
+  File "adafruit_register/i2c_bit.py", line 59, in __get__
+KeyboardInterrupt: 
+0;ð59@adafruit_register/i2c_bit.py KeyboardInterrupt | 9.2.4-4-g07f738803e
+Code done running.
+
+Press any key to enter the REPL. Use CTRL-D to reload.
