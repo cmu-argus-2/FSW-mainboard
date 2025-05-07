@@ -311,7 +311,8 @@ class ArgusV3(CubeSat):
     def __boot_device(self, name: str, device: object):
         func = device.boot_fn
         device.device, device.error = func(name)
-        device.device = objectWrapper(device.device)
+        if device.error == Errors.NO_ERROR and device.device is not None:
+            device.device = objectWrapper(device.device)
 
     def boot_sequence(self):
         """boot_sequence: Boot sequence for the CubeSat."""
