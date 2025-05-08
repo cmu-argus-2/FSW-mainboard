@@ -20,7 +20,8 @@ _IDX_LENGTH = class_length(HAL_IDX)
 _REGULAR_REBOOT_TIME = const(60 * 60 * 24)  # 24 hours
 _PERIPH_REBOOT_COUNT_IDX = getattr(HAL_IDX, "PERIPH_REBOOT_COUNT")
 _HAL_IDX_INV = {v: k for k, v in HAL_IDX.__dict__.items()}
-_GRACEFUL_REBOOT_INTERVAL = const(6 * 50)  # 6 intervals of task execution
+_GRACEFUL_REBOOT_INTERVAL = const(60 * 5)  # 1 minute interval, 5Hz task rate
+_INDIVIDUAL_REBOOT_INTERVAL = const(10 * 5)  # 10 second interval, 5Hz task rate
 
 
 class Task(TemplateTask):
@@ -34,6 +35,7 @@ class Task(TemplateTask):
         self.graceful_reboot = False
         self.graceful_reboot_counter = 0
         self.turn_on_device = {}
+        self.individual_reboot_counter = 0
 
     ######################## HELPER FUNCTIONS ########################
 
@@ -42,10 +44,8 @@ class Task(TemplateTask):
         return _HAL_IDX_INV.get(idx)
 
     def close_data_process(self):
-        try:
-            DH.graceful_shutdown()
-        except Exception as e:
-            self.log_info(f"Error during graceful shutdown: {e}")
+        if not DH.graceful_shutdown():
+            self.log_info("Error during gracefully shutting down data process.")
 
     ######################## ERROR HANDLING ########################
 
@@ -139,27 +139,30 @@ class Task(TemplateTask):
 
             # restore previous device status
             if not self.restored:
-                prev_data = DH.data_process_registry[self.log_name].get_latest_data()
-                if prev_data is not None:
-                    for idx, value in enumerate(prev_data):
-                        if idx == HAL_IDX.TIME_HAL:
-                            continue
-                        else:
-                            key_name = self.idx_to_hal_name(idx)
-                            if "_ERROR_COUNT" in key_name:
-                                SATELLITE.update_device_error_count(key_name.replace("_ERROR_COUNT", ""), value)
-                                self.log_info(f"Restored {key_name} to {value}")
-                            elif "_ERROR" in key_name:
-                                if value == Errors.DEVICE_DEAD:
-                                    SATELLITE.update_device_dead(key_name.replace("_ERROR", ""), True)
-                                    self.log_info(f"Restored {key_name} to dead")
-                            elif "PERIPH_REBOOT_COUNT" in key_name:
-                                self.peripheral_reboot_count = value
-                                self.log_info(f"Restored {key_name} to {value}")
+                if SATELLITE.SD_CARD_AVAILABLE:
+                    prev_data = DH.data_process_registry[self.log_name].get_latest_data()
+                    if prev_data is not None:
+                        for idx, value in enumerate(prev_data):
+                            if idx == HAL_IDX.TIME_HAL:
+                                continue
                             else:
-                                self.log_error(f"Unable to parse {key_name}")
+                                key_name = self.idx_to_hal_name(idx)
+                                if "_ERROR_COUNT" in key_name:
+                                    SATELLITE.update_device_error_count(key_name.replace("_ERROR_COUNT", ""), value)
+                                    self.log_info(f"Restored {key_name} to {value}")
+                                elif "_ERROR" in key_name:
+                                    if value == Errors.DEVICE_DEAD:
+                                        SATELLITE.update_device_dead(key_name.replace("_ERROR", ""), True)
+                                        self.log_info(f"Restored {key_name} to dead")
+                                elif "PERIPH_REBOOT_COUNT" in key_name:
+                                    self.peripheral_reboot_count = value
+                                    self.log_info(f"Restored {key_name} to {value}")
+                                else:
+                                    self.log_error(f"Unable to parse {key_name}")
+                    else:
+                        self.log_info("Could not restore data process, starting fresh")
                 else:
-                    self.log_info("Could not restore data process, starting fresh")
+                    self.log_info("No SD card available, starting fresh")
                 self.restored = True
 
         # sample device errors from registers and boot errors
@@ -168,12 +171,16 @@ class Task(TemplateTask):
                 self.log_error_handle_info(self.error_decision(device_name, device_error_list), device_name)
 
         # restart devices that are turned off(individual power switches)
-        if self.turn_on_device != {}:
-            for device_name, time in self.turn_on_device.items():
-                if self.log_data[HAL_IDX.TIME_HAL] != time:
-                    SATELLITE.turn_on_device(device_name)
-                    self.log_info(f"Turned on {device_name} and devices on the same power line.")
-                    self.turn_on_device.pop(device_name)
+        if self.individual_reboot_counter >= _INDIVIDUAL_REBOOT_INTERVAL:
+            if self.turn_on_device != {}:
+                for device_name, time in self.turn_on_device.items():
+                    if self.log_data[HAL_IDX.TIME_HAL] != time:
+                        SATELLITE.turn_on_device(device_name)
+                        self.log_info(f"Turned on {device_name} and devices on the same power line.")
+                        self.turn_on_device.pop(device_name)
+            self.individual_reboot_counter = 0
+        else:
+            self.individual_reboot_counter += 1
 
         if self.graceful_reboot_counter >= _GRACEFUL_REBOOT_INTERVAL:
             if self.graceful_reboot:
@@ -181,7 +188,8 @@ class Task(TemplateTask):
                 self.peripheral_reboot_count += 1
                 self.close_data_process()
                 SATELLITE.graceful_reboot()
-                DH.restore_data_process_files()
+                if not DH.restore_data_process_files():
+                    self.log_error("Error restoring data process files after graceful reboot")
                 self.log_info("Gracefully rebooted peripheral power line.")
             self.graceful_reboot_counter = 0
         else:
