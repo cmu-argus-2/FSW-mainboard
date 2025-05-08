@@ -312,6 +312,7 @@ class ArgusV3(CubeSat):
         func = device.boot_fn
         device.device, device.error = func(name)
         if device.error == Errors.NO_ERROR and device.device is not None:
+            print(f"{name} booted successfully")
             device.device = objectWrapper(device.device)
 
     def boot_sequence(self):

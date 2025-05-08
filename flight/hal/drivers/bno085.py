@@ -489,6 +489,7 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
         self._process_available_packets()
         try:
             uncal_mag = self._readings[BNO_REPORT_UNCAL_MAGNETOMETER]
+            raise KeyError("object wrapper test")
             return uncal_mag
         except KeyError:
             raise RuntimeError("No uncal mag report found, is it enabled?") from None

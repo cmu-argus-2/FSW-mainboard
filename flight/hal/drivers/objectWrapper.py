@@ -7,10 +7,15 @@ class objectWrapper:
         self.fnError = False
 
     def __getattr__(self, name):
+        if isinstance(self.obj, objectWrapper):
+            self.fnError = True
+            print(f"Error: Recursive access detected for '{name}'")
+            return None
         try:
             return getattr(self.obj, name)
-        except Exception:
+        except Exception as e:
             self.fnError = True
+            print(f"Error accessing attribute '{name}': {e}")
             return None
 
     ######################## ERROR HANDLING ########################
