@@ -7,11 +7,25 @@ class objectWrapper:
         self.fnError = False
 
     def __getattr__(self, name):
-        try:
-            return getattr(self.obj, name)
-        except Exception:
+        if isinstance(self.obj, objectWrapper):
             self.fnError = True
-            return None
+            raise RuntimeError(f"Error: Recursive access detected for '{name}'")
+        try:
+            attr = getattr(self.obj, name)
+            if callable(attr):  # Check if the attribute is a method
+
+                def wrapped_method(*args, **kwargs):
+                    try:
+                        return attr(*args, **kwargs)
+                    except Exception as e:
+                        self.fnError = True
+                        raise RuntimeError(f"Error calling method '{name}': {e}")
+
+                return wrapped_method
+            return attr
+        except Exception as e:
+            self.fnError = True
+            raise RuntimeError(f"Error accessing attribute '{name}': {e}")
 
     ######################## ERROR HANDLING ########################
 
@@ -19,5 +33,6 @@ class objectWrapper:
     def device_errors(self):
         result = self.obj.device_errors
         if self.fnError:
+            print("debug: logged function call error")
             result.append(Errors.FN_CALL_ERROR)
         return result
