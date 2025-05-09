@@ -478,21 +478,21 @@ class BNO085:  # pylint: disable=too-many-instance-attributes, too-many-public-m
     def gyro(self) -> Optional[Tuple[int, int, int]]:
         """Returns the sensor's uncalibrated value from the gyro registers"""
         self._process_available_packets()
-        try:
-            uncal_gyro = self._readings[BNO_REPORT_UNCAL_GYROSCOPE]
-            return uncal_gyro
-        except KeyError:
-            raise RuntimeError("No uncal gyro report found, is it enabled?") from None
+        # try:
+        uncal_gyro = self._readings[BNO_REPORT_UNCAL_GYROSCOPE]
+        return uncal_gyro
+        # except KeyError:
+        #     raise RuntimeError("No uncal gyro report found, is it enabled?") from None
 
     def mag(self) -> Optional[Tuple[int, int, int]]:
         """Returns the sensor's uncalibrated value from the magnetometer registers"""
         self._process_available_packets()
-        try:
-            uncal_mag = self._readings[BNO_REPORT_UNCAL_MAGNETOMETER]
-            raise KeyError("object wrapper test")
-            return uncal_mag
-        except KeyError:
-            raise RuntimeError("No uncal mag report found, is it enabled?") from None
+        # try:
+        uncal_mag = self._readings[BNO_REPORT_UNCAL_MAGNETOMETER]
+        raise KeyError("No uncal mag report found, is it enabled?")
+        return uncal_mag
+        # except KeyError:
+        #     raise RuntimeError("No uncal mag report found, is it enabled?") from None
 
     def _send_me_command(self, subcommand_params: Optional[List[int]]) -> None:
         start_time = time.monotonic()
