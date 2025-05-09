@@ -1,12 +1,10 @@
 from time import gmtime, monotonic, struct_time
 
 from hal.drivers.errors import Errors
+from hal.drivers.failure_prob import rtc_prob
 from ulab import numpy as np
 
-# Failure Probabilities:
-_prob_ = 2 * np.ones((2,))  # % of devices that throw [lost_power, battery_low] fault in a day
-
-_scale_ = -86400 / (np.log(1 - (0.01 * _prob_)))  # exponential distribution scale
+_scale_ = rtc_prob.scale
 
 
 class RTC:
