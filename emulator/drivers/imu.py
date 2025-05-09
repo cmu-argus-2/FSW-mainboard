@@ -1,11 +1,9 @@
 from hal.drivers.errors import Errors
+from hal.drivers.failure_prob import imu_prob
 from numpy import array
 from ulab import numpy as np
 
-# Failure Probabilities:
-_prob_ = np.array([2, 0.1])  # % of devices that throw [drop_cmd, fatal_err] fault in a day
-
-_scale_ = -86400 / (np.log(1 - (0.01 * _prob_)))  # exponential distribution scale
+_scale_ = imu_prob.scale
 
 BMX160_OK = 0
 

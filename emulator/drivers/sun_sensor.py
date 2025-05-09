@@ -1,10 +1,8 @@
 from hal.drivers.errors import Errors
+from hal.drivers.failure_prob import sun_sensor_prob
 from ulab import numpy as np
 
-# Failure Probabilities:
-_prob_ = 2 * np.ones((3,))  # % of devices that throw [flag_h, flag_l, overload] fault in a day
-
-_scale_ = -86400 / (np.log(1 - (0.01 * _prob_)))  # exponential distribution scale
+_scale_ = sun_sensor_prob.scale
 
 
 class LightSensor:

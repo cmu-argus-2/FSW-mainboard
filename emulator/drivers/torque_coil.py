@@ -1,10 +1,8 @@
 from hal.drivers.errors import Errors
+from hal.drivers.failure_prob import torque_coil_prob
 from ulab import numpy as np
 
-# Failure Probabilities:
-_prob_ = 2 * np.ones((5,))  # % of devices that throw [stall, ocp, ovt, tsd, npor] fault in a day
-
-_scale_ = -86400 / (np.log(1 - (0.01 * _prob_)))  # exponential distribution scale
+_scale_ = torque_coil_prob.scale
 
 
 class CoilDriver:
