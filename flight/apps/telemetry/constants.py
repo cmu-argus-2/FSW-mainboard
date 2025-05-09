@@ -58,19 +58,21 @@ class EPS_IDX:
     ZP_SOLAR_CHARGE_CURRENT = const(40)
     ZM_SOLAR_CHARGE_VOLTAGE = const(41)
     ZM_SOLAR_CHARGE_CURRENT = const(42)
+    BATTERY_HEATERS_ENABLED = const(43)
 
 
 class EPS_WARNING_IDX:
     TIME_EPS_WARNING = const(0)
     MAINBOARD_POWER_ALERT = const(1)
-    RADIO_POWER_ALERT = const(2)
-    JETSON_POWER_ALERT = const(3)
-    XP_COIL_POWER_ALERT = const(4)
-    XM_COIL_POWER_ALERT = const(5)
-    YP_COIL_POWER_ALERT = const(6)
-    YM_COIL_POWER_ALERT = const(7)
-    ZP_COIL_POWER_ALERT = const(8)
-    ZM_COIL_POWER_ALERT = const(9)
+    PERIPHERAL_POWER_ALERT = const(2)
+    RADIO_POWER_ALERT = const(3)
+    JETSON_POWER_ALERT = const(4)
+    XP_COIL_POWER_ALERT = const(5)
+    XM_COIL_POWER_ALERT = const(6)
+    YP_COIL_POWER_ALERT = const(7)
+    YM_COIL_POWER_ALERT = const(8)
+    ZP_COIL_POWER_ALERT = const(9)
+    ZM_COIL_POWER_ALERT = const(10)
 
 
 class ADCS_IDX:

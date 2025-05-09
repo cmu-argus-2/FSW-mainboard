@@ -1,7 +1,14 @@
 # Electrical Power Subsystem Task
 
 import microcontroller
-from apps.eps.eps import EPS_POWER_FLAG, EPS_POWER_THRESHOLD, GET_EPS_POWER_FLAG, GET_POWER_STATUS
+from apps.eps.eps import (
+    EPS_POWER_FLAG,
+    EPS_POWER_THRESHOLD,
+    GET_EPS_POWER_FLAG,
+    GET_POWER_STATUS,
+    SHOULD_DISABLE_HEATERS,
+    SHOULD_ENABLE_HEATERS,
+)
 from apps.telemetry.constants import EPS_IDX, EPS_WARNING_IDX, class_length
 from core import DataHandler as DH
 from core import TemplateTask
@@ -12,6 +19,8 @@ from hal.configuration import SATELLITE
 
 IDX_LENGTH = class_length(EPS_IDX)
 WARNING_IDX_LENGTH = class_length(EPS_WARNING_IDX)
+FUEL_GAUGE_LOG_FREQ = 5  # log fuel gauge readings every 5 seconds
+MAINBOARD_TEMP_OFFSET = 200  # offset of mainboard temperature to battery pack temp in cC
 
 
 class Task(TemplateTask):
@@ -63,12 +72,14 @@ class Task(TemplateTask):
         "ZP_SOLAR_CHARGE_CURRENT",
         "ZM_SOLAR_CHARGE_VOLTAGE",
         "ZM_SOLAR_CHARGE_CURRENT",
+        "BATTERY_HEATERS_ENABLED",
     ]"""
 
     log_data = [0] * IDX_LENGTH  # - use mV for voltage and mA for current (h = short integer 2 bytes)
     warning_log_data = [0] * WARNING_IDX_LENGTH
     power_buffer_dict = {
         EPS_WARNING_IDX.MAINBOARD_POWER_ALERT: [],
+        EPS_WARNING_IDX.PERIPHERAL_POWER_ALERT: [],
         EPS_WARNING_IDX.RADIO_POWER_ALERT: [],
         EPS_WARNING_IDX.JETSON_POWER_ALERT: [],
         EPS_WARNING_IDX.XP_COIL_POWER_ALERT: [],
@@ -136,6 +147,99 @@ class Task(TemplateTask):
             elif idx == EPS_WARNING_IDX.ZM_COIL_POWER_ALERT:
                 self.log_warning(f"ZM Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold} mW")
 
+    def set_battery_heaters(self, heaters):
+        enabled = heaters.heater0_enabled() or heaters.heater1_enabled()
+        temp = self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] - MAINBOARD_TEMP_OFFSET
+        if SATELLITE.FUEL_GAUGE_AVAILABLE:
+            temp = self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]
+        if SHOULD_ENABLE_HEATERS(enabled, temp):
+            heaters.enable_heater0()
+            heaters.enable_heater1()
+            self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED] = 1
+            self.log_info("Enabled battery heaters")
+        if SHOULD_DISABLE_HEATERS(enabled, temp):
+            heaters.disable_heater0()
+            heaters.disable_heater1()
+            self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED] = 0
+            self.log_info("Disabled battery heaters")
+
+    def process_pm_readings(self, location, sensor):
+        if location == "BOARD":
+            voltage, current = self.read_vc(sensor)
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.MAINBOARD_POWER_ALERT, EPS_POWER_THRESHOLD.MAINBOARD)
+            self.log_vc("Main", EPS_IDX.MAINBOARD_VOLTAGE, EPS_IDX.MAINBOARD_CURRENT, voltage, current)
+        elif location == "JETSON":
+            voltage, current = self.read_vc(sensor)
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.JETSON_POWER_ALERT, EPS_POWER_THRESHOLD.JETSON)
+            self.log_vc("Jetson", EPS_IDX.JETSON_INPUT_VOLTAGE, EPS_IDX.JETSON_INPUT_CURRENT, voltage, current)
+        elif location == "GPS":
+            voltage, current = self.read_vc(sensor)
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.PERIPHERAL_POWER_ALERT, EPS_POWER_THRESHOLD.PERIPHERAL)
+            self.log_vc("Peripheral", EPS_IDX.GPS_VOLTAGE, EPS_IDX.GPS_CURRENT, voltage, current)
+        elif location == "RADIO":
+            voltage, current = self.read_vc(sensor)
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.RADIO_POWER_ALERT, EPS_POWER_THRESHOLD.RADIO)
+            self.log_vc("Radio", EPS_IDX.RF_LDO_OUTPUT_VOLTAGE, EPS_IDX.RF_LDO_OUTPUT_CURRENT, voltage, current)
+        # Power production monitors
+        elif location == "XP":
+            voltage, current = self.read_vc(sensor)
+            self.log_vc("XP", EPS_IDX.XP_SOLAR_CHARGE_VOLTAGE, EPS_IDX.XP_SOLAR_CHARGE_CURRENT, voltage, current)
+        elif location == "XM":
+            voltage, current = self.read_vc(sensor)
+            self.log_vc("XM", EPS_IDX.XM_SOLAR_CHARGE_VOLTAGE, EPS_IDX.XM_SOLAR_CHARGE_CURRENT, voltage, current)
+        elif location == "YP":
+            voltage, current = self.read_vc(sensor)
+            self.log_vc("YP", EPS_IDX.YP_SOLAR_CHARGE_VOLTAGE, EPS_IDX.YP_SOLAR_CHARGE_CURRENT, voltage, current)
+        elif location == "YM":
+            voltage, current = self.read_vc(sensor)
+            self.log_vc("YM", EPS_IDX.YM_SOLAR_CHARGE_VOLTAGE, EPS_IDX.YM_SOLAR_CHARGE_CURRENT, voltage, current)
+
+    def process_torque_coil_readings(self, location, sensor):
+        if location == "XP":
+            voltage, current = self.read_vc(sensor)
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.XP_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
+            self.log_vc("XP Coil", EPS_IDX.XP_COIL_VOLTAGE, EPS_IDX.XP_COIL_CURRENT, voltage, current)
+        elif location == "XM":
+            voltage, current = self.read_vc(sensor)
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.XM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
+            self.log_vc("XM Coil", EPS_IDX.XM_COIL_VOLTAGE, EPS_IDX.XM_COIL_CURRENT, voltage, current)
+        elif location == "YP":
+            voltage, current = self.read_vc(sensor)
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.YP_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
+            self.log_vc("YP Coil", EPS_IDX.YP_COIL_VOLTAGE, EPS_IDX.YP_COIL_CURRENT, voltage, current)
+        elif location == "YM":
+            voltage, current = self.read_vc(sensor)
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.YM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
+            self.log_vc("YM Coil", EPS_IDX.YM_COIL_VOLTAGE, EPS_IDX.YM_COIL_CURRENT, voltage, current)
+        elif location == "ZP":
+            voltage, current = self.read_vc(sensor)
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.ZP_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
+            self.log_vc("ZP Coil", EPS_IDX.ZP_COIL_VOLTAGE, EPS_IDX.ZP_COIL_CURRENT, voltage, current)
+        elif location == "ZM":
+            voltage, current = self.read_vc(sensor)
+            self.set_power_alert(voltage, current, EPS_WARNING_IDX.ZM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL)
+            self.log_vc("ZM Coil", EPS_IDX.ZM_COIL_VOLTAGE, EPS_IDX.ZM_COIL_CURRENT, voltage, current)
+
+    def log_fuel_gauge_readings(self):
+        self.log_info(f"Battery Pack Temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]}°cC")
+        self.log_info(f"Battery Pack Reported SOC: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]}% ")
+        self.log_info(f"Battery Pack Reported Capacity: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY]} mAh ")
+        self.log_info(f"Battery Pack Current: {self.log_data[EPS_IDX.BATTERY_PACK_CURRENT]} mA ")
+        self.log_info(f"Battery Pack Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_VOLTAGE]} mV ")
+        self.log_info(f"Battery Pack Midpoint Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE]} mV ")
+        self.log_info(f"Battery Pack Time-to-Empty: {self.log_data[EPS_IDX.BATTERY_PACK_TTE]} seconds ")
+        self.log_info(f"Battery Pack Time-to-Full: {self.log_data[EPS_IDX.BATTERY_PACK_TTF]} seconds ")
+
+    def update_eps_state(self):
+        soc = self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]
+        curr_flag = self.log_data[EPS_IDX.EPS_POWER_FLAG]
+        flag = GET_EPS_POWER_FLAG(curr_flag, soc)
+        if flag <= EPS_POWER_FLAG.EXPERIMENT or flag > EPS_POWER_FLAG.NONE:
+            self.log_data[EPS_IDX.EPS_POWER_FLAG] = int(flag)
+            self.log_info(f"EPS state: {self.log_data[EPS_IDX.EPS_POWER_FLAG]} ")
+        else:
+            self.log_error("EPS state invalid; SOC or power flag may be corrupted")
+
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:
             pass
@@ -143,9 +247,9 @@ class Task(TemplateTask):
         else:
             if not DH.data_process_exists("eps"):
                 data_format = (
-                    "Lbhhhhb" + "h" * 4 + "L" * 2 + "h" * 30
+                    "Lbhhhhb" + "h" * 4 + "L" * 2 + "h" * 30 + "b"
                 )  # - use mV for voltage and mA for current (h = short integer 2 bytes, L = 4 bytes)
-                DH.register_data_process("eps", data_format, True, data_limit=100000)
+                DH.register_data_process("eps", data_format, True, data_limit=1000000, write_interval=5)
 
             if not DH.data_process_exists("eps_warning"):
                 data_format = "L" + "b" * (WARNING_IDX_LENGTH - 1)
@@ -158,99 +262,31 @@ class Task(TemplateTask):
 
             for location, sensor in SATELLITE.POWER_MONITORS.items():
                 if SATELLITE.POWER_MONITOR_AVAILABLE(location):
-                    if location == "BOARD":
-                        voltage, current = self.read_vc(sensor)
-                        self.set_power_alert(
-                            voltage, current, EPS_WARNING_IDX.MAINBOARD_POWER_ALERT, EPS_POWER_THRESHOLD.MAINBOARD
-                        )
-                        self.log_vc("Board", EPS_IDX.MAINBOARD_VOLTAGE, EPS_IDX.MAINBOARD_CURRENT, voltage, current)
-                    elif location == "JETSON":
-                        voltage, current = self.read_vc(sensor)
-                        self.set_power_alert(voltage, current, EPS_WARNING_IDX.JETSON_POWER_ALERT, EPS_POWER_THRESHOLD.JETSON)
-                        self.log_vc("Jetson", EPS_IDX.JETSON_INPUT_VOLTAGE, EPS_IDX.JETSON_INPUT_CURRENT, voltage, current)
-                    elif location == "RADIO":
-                        voltage, current = self.read_vc(sensor)
-                        self.set_power_alert(voltage, current, EPS_WARNING_IDX.RADIO_POWER_ALERT, EPS_POWER_THRESHOLD.RADIO)
-                        self.log_vc("Radio", EPS_IDX.RF_LDO_OUTPUT_VOLTAGE, EPS_IDX.RF_LDO_OUTPUT_CURRENT, voltage, current)
-                    # Power production monitors
-                    elif location == "XP":
-                        voltage, current = self.read_vc(sensor)
-                        self.log_vc("XP", EPS_IDX.XP_SOLAR_CHARGE_VOLTAGE, EPS_IDX.XP_SOLAR_CHARGE_CURRENT, voltage, current)
-                    elif location == "XM":
-                        voltage, current = self.read_vc(sensor)
-                        self.log_vc("XM", EPS_IDX.XM_SOLAR_CHARGE_VOLTAGE, EPS_IDX.XM_SOLAR_CHARGE_CURRENT, voltage, current)
-                    elif location == "YP":
-                        voltage, current = self.read_vc(sensor)
-                        self.log_vc("YP", EPS_IDX.YP_SOLAR_CHARGE_VOLTAGE, EPS_IDX.YP_SOLAR_CHARGE_CURRENT, voltage, current)
-                    elif location == "YM":
-                        voltage, current = self.read_vc(sensor)
-                        self.log_vc("YM", EPS_IDX.YM_SOLAR_CHARGE_VOLTAGE, EPS_IDX.YM_SOLAR_CHARGE_CURRENT, voltage, current)
+                    self.process_pm_readings(location, sensor)
 
             for location, sensor in SATELLITE.TORQUE_DRIVERS.items():
                 if SATELLITE.TORQUE_DRIVERS_AVAILABLE(location):
-                    if location == "XP":
-                        voltage, current = self.read_vc(sensor)
-                        self.set_power_alert(
-                            voltage, current, EPS_WARNING_IDX.XP_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL
-                        )
-                        self.log_vc("XP Coil", EPS_IDX.XP_COIL_VOLTAGE, EPS_IDX.XP_COIL_CURRENT, voltage, current)
-                    elif location == "XM":
-                        voltage, current = self.read_vc(sensor)
-                        self.set_power_alert(
-                            voltage, current, EPS_WARNING_IDX.XM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL
-                        )
-                        self.log_vc("XM Coil", EPS_IDX.XM_COIL_VOLTAGE, EPS_IDX.XM_COIL_CURRENT, voltage, current)
-                    elif location == "YP":
-                        voltage, current = self.read_vc(sensor)
-                        self.set_power_alert(
-                            voltage, current, EPS_WARNING_IDX.YP_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL
-                        )
-                        self.log_vc("YP Coil", EPS_IDX.YP_COIL_VOLTAGE, EPS_IDX.YP_COIL_CURRENT, voltage, current)
-                    elif location == "YM":
-                        voltage, current = self.read_vc(sensor)
-                        self.set_power_alert(
-                            voltage, current, EPS_WARNING_IDX.YM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL
-                        )
-                        self.log_vc("YM Coil", EPS_IDX.YM_COIL_VOLTAGE, EPS_IDX.YM_COIL_CURRENT, voltage, current)
-                    elif location == "ZP":
-                        voltage, current = self.read_vc(sensor)
-                        self.set_power_alert(
-                            voltage, current, EPS_WARNING_IDX.ZP_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL
-                        )
-                        self.log_vc("ZP Coil", EPS_IDX.ZP_COIL_VOLTAGE, EPS_IDX.ZP_COIL_CURRENT, voltage, current)
-                    elif location == "ZM":
-                        voltage, current = self.read_vc(sensor)
-                        self.set_power_alert(
-                            voltage, current, EPS_WARNING_IDX.ZM_COIL_POWER_ALERT, EPS_POWER_THRESHOLD.TORQUE_COIL
-                        )
-                        self.log_vc("ZM Coil", EPS_IDX.ZM_COIL_VOLTAGE, EPS_IDX.ZM_COIL_CURRENT, voltage, current)
+                    self.process_torque_coil_readings(location, sensor)
 
+            # Log every second
             if self.log_counter % self.frequency == 0:
                 self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
                 self.log_info(f"CPU temperature: {self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE]} °cC ")
 
                 if SATELLITE.FUEL_GAUGE_AVAILABLE:
                     self.read_fuel_gauge()
-                    self.log_info(f"Battery Pack Temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]}°cC")
-                    self.log_info(f"Battery Pack Reported SOC: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]}% ")
-                    self.log_info(
-                        f"Battery Pack Reported Capacity: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY]} mAh "
-                    )
-                    self.log_info(f"Battery Pack Current: {self.log_data[EPS_IDX.BATTERY_PACK_CURRENT]} mA ")
-                    self.log_info(f"Battery Pack Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_VOLTAGE]} mV ")
-                    self.log_info(f"Battery Pack Midpoint Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE]} mV ")
-                    self.log_info(f"Battery Pack Time-to-Empty: {self.log_data[EPS_IDX.BATTERY_PACK_TTE]} seconds ")
-                    self.log_info(f"Battery Pack Time-to-Full: {self.log_data[EPS_IDX.BATTERY_PACK_TTF]} seconds ")
+                    self.update_eps_state()
 
-                    soc = self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]
-                    curr_flag = self.log_data[EPS_IDX.EPS_POWER_FLAG]
-                    flag = GET_EPS_POWER_FLAG(curr_flag, soc)
-                    if flag != EPS_POWER_FLAG.NONE:
-                        self.log_data[EPS_IDX.EPS_POWER_FLAG] = int(flag)
-                        self.log_info(f"EPS state: {self.log_data[EPS_IDX.EPS_POWER_FLAG]} ")
-                    else:
-                        self.log_error("EPS state invalid; SOC or power flag may be corrupted")
+                if SATELLITE.BATTERY_HEATERS_AVAILABLE:
+                    battery_heaters = SATELLITE.BATTERY_HEATERS
+                    self.set_battery_heaters(battery_heaters)
+                    self.log_info(f"Battery Heaters Enabled: {self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED]}")
 
                 DH.log_data("eps", self.log_data)
+
+            if self.log_counter % (FUEL_GAUGE_LOG_FREQ * self.frequency) == 0:
+                if SATELLITE.FUEL_GAUGE_AVAILABLE:
+                    self.log_fuel_gauge_readings()
+
             DH.log_data("eps_warning", self.warning_log_data)
             self.log_counter += 1
