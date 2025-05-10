@@ -312,6 +312,7 @@ class ArgusV3(CubeSat):
         func = device.boot_fn
         device.device, device.error = func(name)
         if device.error == Errors.NO_ERROR and device.device is not None:
+            print(f"{name} booted successfully")
             device.device = objectWrapper(device.device)
 
     def boot_sequence(self):
@@ -653,11 +654,13 @@ class ArgusV3(CubeSat):
         device_cls = self.__device_list[device_name]
 
         if device_name == "RADIO":
+            device_cls.temp_disabled = True
             if device_cls.device is not None:
                 device_cls.device.deinit()
             self.__turn_off_power_line(ArgusV3Power.RADIO_EN)
 
         elif device_name == "GPS":
+            device_cls.temp_disabled = True
             if device_cls.device is not None:
                 device_cls.device.deinit()
             self.__turn_off_power_line(ArgusV3Power.GPS_EN)
@@ -683,10 +686,12 @@ class ArgusV3(CubeSat):
         if device_name == "RADIO":
             self.__turn_on_power_line(ArgusV3Power.RADIO_EN)
             self.__boot_device(device_name, device_cls)
+            device_cls.temp_disabled = False
 
         elif device_name == "GPS":
             self.__turn_on_power_line(ArgusV3Power.GPS_EN)
             self.__boot_device(device_name, device_cls)
+            device_cls.temp_disabled = False
 
         elif device_name.startswith("TORQUE"):
             self.__turn_on_power_line(ArgusV3Power.COIL_EN)
