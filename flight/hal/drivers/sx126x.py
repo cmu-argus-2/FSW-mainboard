@@ -638,6 +638,7 @@ class SX126X:
 
     def RX_available(self):
         # check if there is data in the FIFO buffer
+        raise NotImplementedError("RX_available not implemented")
         return self.irq.value
 
     def receive(self, data, len_, timeout_en, timeout_ms):
@@ -1570,6 +1571,7 @@ class SX1262(SX126X):
             return state
 
     def recv(self, len=0, timeout_en=False, timeout_ms=0):
+        raise NotImplementedError("Use blocking mode for receive")
         if not self.blocking:
             return self._readData(len)
         else:
@@ -1620,7 +1622,6 @@ class SX1262(SX126X):
         # Compatibility with Radiohead
         if data[:4] == radiohead_check:
             data = data[4:]
-
         return bytes(data), state
 
     def _transmit(self, data):
