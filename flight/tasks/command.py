@@ -19,6 +19,9 @@ from micropython import const
 
 _TPM_INIT_TIMEOUT = const(10)  # seconds
 _EXIT_STARTUP_TIMEOUT = const(5)  # seconds
+_BURN_WIRE_STRENGTH = const(7)  # 0-255
+_DEPLOYMENT_INTERVAL = const(5)  # seconds
+_PWM_MAX = const(3)  # Maximum PWM value for deployment
 
 
 class Task(TemplateTask):
@@ -44,8 +47,27 @@ class Task(TemplateTask):
         self.ADCS_MODE = Modes.STABLE
         self.EPS_MODE = EPS_POWER_FLAG.NOMINAL
 
+        self.deployment_done = False
+        self.deploymentPWM = 0
+        self.last_deployment_time = None
+
     def get_memory_usage(self):
         return int(gc.mem_alloc() / self.total_memory * 100)
+
+    def deployment_sequence(self):
+        # ------------------------------------------------------------------------------------------------------------------------------------
+        # DEPLOYMENT SEQUENCE
+        # ------------------------------------------------------------------------------------------------------------------------------------
+        burn_wires = SATELLITE.BURN_WIRES
+        if self.deploymentPWM == 0:
+            # Enable the first PWM
+            burn_wires.set_pwm(self.deploymentPWM, _BURN_WIRE_STRENGTH)
+        elif self.deploymentPWM < _PWM_MAX:
+            # Disable previous PWM and enable current one
+            burn_wires.set_pwm(self.deploymentPWM - 1, 0)
+            burn_wires.set_pwm(self.deploymentPWM, _BURN_WIRE_STRENGTH)
+        burn_wires.enable_driver()
+        self.deploymentPWM += 1  # Increment PWM for next deployment
 
     def startup(self):
         # ------------------------------------------------------------------------------------------------------------------------------------
@@ -111,9 +133,32 @@ class Task(TemplateTask):
                 if not DH.data_process_exists("cmd_logs"):
                     DH.register_data_process("cmd_logs", "LBB", True, data_limit=100000)
 
-                # T0: Boot over and deployment complete
-                SM.switch_to(STATES.DETUMBLING)
-                self.log_info("T0: Transition from STARTUP to DETUMBLING")
+                # check if the deployment is ready to be performed
+                deployment_time_check = (
+                    (TPM.monotonic() - self.last_deployment_time) >= _DEPLOYMENT_INTERVAL
+                    if self.last_deployment_time is not None
+                    else True
+                )
+
+                # TODO: add deployment flag
+                if SATELLITE.BURN_WIRES_AVAILABLE:
+                    # Deployment finished when the deployment PWM reaches 3
+                    if self.deploymentPWM == _PWM_MAX and deployment_time_check:
+                        self.log_info("Deployment complete")
+                        self.deployment_done = True
+                        SATELLITE.BURN_WIRES.disable_driver()
+                    elif self.deploymentPWM < _PWM_MAX and deployment_time_check:
+                        self.log_info(f"Deployment sequence: {self.deploymentPWM}")
+                        self.last_deployment_time = TPM.monotonic()
+                        self.deployment_sequence()
+                else:
+                    self.log_info("Burn wires not available, skipping deployment sequence...")
+                    self.deployment_done = True
+
+                if self.deployment_done:
+                    # T0: Boot over and deployment complete
+                    SM.switch_to(STATES.DETUMBLING)
+                    self.log_info("T0: Transition from STARTUP to DETUMBLING")
 
     def state_machine_execution(self):
         # ------------------------------------------------------------------------------------------------------------------------------------

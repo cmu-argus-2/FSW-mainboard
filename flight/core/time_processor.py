@@ -122,3 +122,7 @@ class TimeProcessor:
     @classmethod
     def localtime(cls):
         return time.localtime(cls.time())
+
+    @classmethod
+    def sleep(cls, seconds):
+        time.sleep(seconds)
