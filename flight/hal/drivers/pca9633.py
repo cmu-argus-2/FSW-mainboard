@@ -1,3 +1,16 @@
+"""
+`pca9633`
+====================================================
+
+CircuitPython driver for the pca9633
+
+* Author(s): Varun Rajesh, Perrin Tong
+
+Implementation Notes
+--------------------
+
+"""
+
 from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register.i2c_bit import RWBit
 from adafruit_register.i2c_bits import RWBits
@@ -54,6 +67,12 @@ class PCA9633:
         """Disable the PCA9633 driver."""
         self._driver_enable = False
         self._channel_enable = 0b00000000
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return []
 
     def deinit(self):
         """Deinitialize the PCA9633 driver."""

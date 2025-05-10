@@ -94,3 +94,12 @@ class FuelGauge:
 
     def reset(self):
         pass
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return []
+
+    def deinit(self):
+        return

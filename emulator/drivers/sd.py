@@ -20,3 +20,12 @@ class SD:
         if filepath[0] == "/":
             filepath = filepath[1:]
         self.mkdir(filepath)
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return []
+
+    def deinit(self):
+        return
