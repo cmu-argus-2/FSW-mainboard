@@ -256,7 +256,7 @@ class PayloadController:
                 # We have timed out while booting
                 # Log error and reset the state
                 logger.error("Timeout booting. Resetting state.")
-                cls._switch_to_state(PayloadState.POWERING_ON)
+                cls._switch_to_staate(PayloadState.POWERING_ON)
 
         elif cls.state == PayloadState.POWERING_ON:
             # Wait for the Payload to be ready
