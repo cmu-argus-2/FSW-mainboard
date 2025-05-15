@@ -53,7 +53,7 @@ class STATES:
         LOW_POWER: [NOMINAL, LOW_POWER],
     }
 
-    DETUMBLING_TIMEOUT_DURATION = 30  # seconds - TODO: Update with actual value
+    DETUMBLING_TIMEOUT_DURATION = 1.5 * 60 * 60  # seconds - TODO: Update with actual value
 
 
 STR_STATES = ["STARTUP", "DETUMBLING", "NOMINAL", "EXPERIMENT", "LOW_POWER"]
