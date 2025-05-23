@@ -53,7 +53,7 @@ except ImportError:
 _HOME_PATH = "/sd"  # Default path for the SD card
 _CLOSED = const(20)
 _OPEN = const(21)
-_IMG_SIZE_LIMIT = const(100000)
+_IMG_DATA_LIMIT = const(100000)
 
 
 _PROCESS_CONFIG_FILENAME = ".data_process_configuration.json"
@@ -101,7 +101,7 @@ class DataProcess:
         "dir_path",
         "current_path",
         "bytesize",
-        "size_limit",
+        "data_limit",
         "last_data",
         "delete_paths",
         "excluded_paths",
@@ -129,7 +129,7 @@ class DataProcess:
         persistent: bool = True,
         data_limit: int = 100000,
         write_interval: int = 1,
-        circular_buffer_size: int = 10,
+        circular_buffer_size: int = 50,
         retrieve_latest_data: bool = True,
         append_to_current: bool = True,
         new_config_file: bool = False,
@@ -160,6 +160,7 @@ class DataProcess:
         self.circular_buffer_size = circular_buffer_size
         self.retrieve_latest_data = retrieve_latest_data
         self.append_to_current = append_to_current
+        self.data_limit = data_limit
 
         self.current_path = None
 
@@ -179,11 +180,6 @@ class DataProcess:
 
             self.dir_path = join_path(_HOME_PATH, tag_name)
             self.create_folder()
-
-            # To Be Resolved for each file process, TODO check if int, positive, etc
-            self.size_limit = (
-                data_limit // self.bytesize
-            )  # + (data_limit % self.bytesize)   # Default size limit is 1000 data lines
 
             if retrieve_latest_data:
                 # attempt to retrieve the latest data point and load it into the internal buffer
@@ -296,7 +292,7 @@ class DataProcess:
             self.open()
         elif self.status == _OPEN:
             current_file_size = self.get_current_file_size()
-            if current_file_size >= self.size_limit:
+            if current_file_size >= self.data_limit:
                 self.close()
                 self.current_path = self.create_new_path()
                 self.open()
@@ -514,7 +510,7 @@ class DataProcess:
         files = os.listdir(self.dir_path)
         # TODO - implement the rest of the function
         if self.get_current_file_size() is not None:
-            total_size = (len(files) - 2) * self.size_limit + self.get_current_file_size()
+            total_size = (len(files) - 2) * self.data_limit + self.get_current_file_size()
         else:
             total_size = 0
 
@@ -578,7 +574,7 @@ class ImageProcess(DataProcess):
         self.dir_path = join_path(_HOME_PATH, self.tag_name)
         self.create_folder()
 
-        self.size_limit = _IMG_SIZE_LIMIT
+        self.data_limit = _IMG_DATA_LIMIT
 
         self.current_path = self.create_new_path()
         self.delete_paths = []  # Paths that are flagged for deletion
@@ -603,7 +599,7 @@ class ImageProcess(DataProcess):
             self.open()
         elif self.status == _OPEN:
             current_file_size = self.get_current_file_size()
-            if current_file_size >= self.size_limit:
+            if current_file_size >= self.data_limit:
                 self.close()
                 self.current_path = self.create_new_path()
                 self.open()
@@ -823,7 +819,7 @@ class DataHandler:
         persistent: bool,
         data_limit: int = 100000,
         write_interval: int = 1,
-        circular_buffer_size: int = 10,
+        circular_buffer_size: int = 50,
         retrieve_latest_data: bool = True,
         append_to_current: bool = True,
     ) -> None:
