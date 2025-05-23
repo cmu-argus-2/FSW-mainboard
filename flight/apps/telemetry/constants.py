@@ -147,7 +147,46 @@ class GPS_IDX:
 
 
 class PAYLOAD_IDX:
-    pass
+    # Some updates to the TM are coming soon.
+    # System part
+    SYSTEM_TIME = const(0)
+    SYSTEM_UPTIME = const(1)
+    LAST_EXECUTED_CMD_TIME = const(2)
+    LAST_EXECUTED_CMD_ID = const(3)
+    PAYLOAD_STATE = const(4)
+    ACTIVE_CAMERAS = const(5)
+    CAPTURE_MODE = const(6)
+    CAM_STATUS_0 = const(7)
+    CAM_STATUS_1 = const(8)
+    CAM_STATUS_2 = const(9)
+    CAM_STATUS_3 = const(10)
+    IMU_STATUS = const(11)
+    TASKS_IN_EXECUTION = const(12)
+    DISK_USAGE = const(13)
+    LATEST_ERROR = const(14)
+    # Tegrastats part
+    TEGRASTATS_PROCESS_STATUS = const(15)
+    RAM_USAGE = const(16)
+    SWAP_USAGE = const(17)
+    ACTIVE_CORES = const(18)
+    CPU_LOAD_0 = const(19)
+    CPU_LOAD_1 = const(20)
+    CPU_LOAD_2 = const(21)
+    CPU_LOAD_3 = const(22)
+    CPU_LOAD_4 = const(23)
+    CPU_LOAD_5 = const(24)
+    GPU_FREQ = const(25)
+    CPU_TEMP = const(26)
+    GPU_TEMP = const(27)
+    VDD_IN = const(28)
+    VDD_CPU_GPU_CV = const(29)
+    VDD_SOC = const(30)
+    # Payload controller part
+    TIME_PAYLOAD_CONTROLLER = const(31)
+    PAYLOAD_CONTROLLER_STATE = const(32)
+    PAYLOAD_CONTROLLER_COMMUNICATION_INTERFACE_ID = const(33)
+    PAYLOAD_CONTROLLER_COMMUNICATION_INTERFACE_CONNECTED = const(34)
+    PAYLOAD_CONTROLLER_LAST_ERROR = const(35)
 
 
 class STORAGE_IDX:

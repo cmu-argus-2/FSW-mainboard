@@ -105,7 +105,7 @@ class ArgusV3Interfaces:
     JETSON_BAUD = const(57600)
     JETSON_TX = board.TX1
     JETSON_RX = board.RX1
-    JETSON_UART = UART(JETSON_TX, JETSON_RX, baudrate=JETSON_BAUD)
+    JETSON_UART = UART(JETSON_TX, JETSON_RX, baudrate=JETSON_BAUD, timeout=0.04)
 
 
 class ArgusV3Components:
