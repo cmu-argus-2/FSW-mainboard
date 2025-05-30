@@ -1,0 +1,11 @@
+name: HIL CI
+
+on:
+  workflow_dispatch:  # <-- allows manual triggering
+
+jobs:
+  hil-test:
+    runs-on: [self-hosted]
+    steps:
+      - uses: actions/checkout@v3
+      - run: echo "Testing job manually on the Pi"
