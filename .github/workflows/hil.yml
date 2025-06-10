@@ -1,7 +1,7 @@
 name: HIL CI
 
 on:
-  workflow_dispatch:  # <-- allows manual triggering
+  push: 
 
 jobs:
   hil-test:
@@ -9,3 +9,4 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: echo "Testing job manually on the Pi"
+  
