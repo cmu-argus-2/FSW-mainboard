@@ -1,11 +1,35 @@
 name: HIL CI
 
 on:
-  workflow_dispatch:  # <-- allows manual triggering
+  push:  # Run the workflow on any push to any branch
 
 jobs:
   hil-test:
     runs-on: [self-hosted]
     steps:
-      - uses: actions/checkout@v3
-      - run: echo "Testing job manually on the Pi"
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Change to working directory
+        run: cd ~/FSW-mainboard
+
+      - name: Flash Mainboard
+        run: |
+          cd ~/FSW-mainboard
+          sudo ./run.sh /media/argus/ARGUS/
+
+      - name: Run serial log test
+        run: |
+          cd ~/FSW-mainboard
+          timeout 20s sudo minicom -D /dev/ttyACM0 -C smoke_output.log -S ~/FSW-mainboard/build_tools/reset_board.mscr || true
+
+      - name: View serial output (tail)
+        run: |
+          cd ~/FSW-mainboard
+          tail -n 20 smoke_output.log
+
+      - name: Upload serial log as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hil-smoke-log
+          path: ~/FSW-mainboard/smoke_output.log
