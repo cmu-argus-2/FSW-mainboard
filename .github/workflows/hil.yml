@@ -1,7 +1,7 @@
 name: HIL CI
 
 on:
-  push:  # Run the workflow on any push to any branch
+  push: 
 
 jobs:
   hil-test:
