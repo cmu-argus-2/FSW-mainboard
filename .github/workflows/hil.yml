@@ -16,17 +16,19 @@ jobs:
       - name: Flash Mainboard
         run: |
           cd ~/FSW-mainboard
+          sudo minicom -D /dev/ttyACM0 -b 115200 -S build_tools/exit_to_repl.minicom || true
           sudo ./run.sh /media/argus/ARGUS/
 
-      - name: Run serial log test
+      - name: Run smoke test (5 min)
         run: |
           cd ~/FSW-mainboard
-          timeout 20s sudo minicom -D /dev/ttyACM0 -C smoke_output.log -S ~/FSW-mainboard/build_tools/reset_board.mscr || true
+          timeout 300s sudo minicom -D /dev/ttyACM0 -b 115200 -C smoke_output.log -S build_tools/reset_board.minicom || true
+          sudo minicom -D /dev/ttyACM0 -b 115200 -S build_tools/exit_to_repl.minicom || true
 
       - name: View serial output (tail)
         run: |
           cd ~/FSW-mainboard
-          tail -n 20 smoke_output.log
+          tail -n 50 smoke_output.log
 
       - name: Upload serial log as artifact
         uses: actions/upload-artifact@v4
