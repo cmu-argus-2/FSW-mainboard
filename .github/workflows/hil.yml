@@ -10,20 +10,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Change to working directory
-        run: cd ~/FSW-mainboard
-
       - name: Flash Mainboard
         run: |
           cd ~/FSW-mainboard
-          sudo minicom -D /dev/ttyACM0 -b 115200 -S build_tools/exit_to_repl.minicom || true
+          sudo minicom -D /dev/ttyACM0 -b 115200 -S build_tools/exit_to_repl.minicom
           sudo ./run.sh /media/argus/ARGUS/
 
       - name: Run smoke test (5 min)
         run: |
           cd ~/FSW-mainboard
-          timeout 300s sudo minicom -D /dev/ttyACM0 -b 115200 -C smoke_output.log -S build_tools/reset_board.minicom || true
-          sudo minicom -D /dev/ttyACM0 -b 115200 -S build_tools/exit_to_repl.minicom || true
+          timeout 300s sudo minicom -D /dev/ttyACM0 -b 115200 -C smoke_output.log -S build_tools/reset_board.minicom
+          sudo minicom -D /dev/ttyACM0 -b 115200 -S build_tools/exit_to_repl.minicom
 
       - name: View serial output (tail)
         run: |
