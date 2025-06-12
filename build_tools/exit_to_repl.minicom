@@ -1,0 +1,3 @@
+send "^C"
+sleep 0.5
+send "^C"
