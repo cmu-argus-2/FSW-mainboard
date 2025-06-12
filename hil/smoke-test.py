@@ -1,11 +1,12 @@
-import serial
-import time
+import argparse
 import datetime
+import errno
 import os
 import sys
-import errno
-import argparse
+import time
 from pathlib import Path
+
+import serial
 
 RETRY_DELAY = 5         # seconds
 
