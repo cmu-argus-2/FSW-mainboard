@@ -29,6 +29,9 @@ jobs:
           latest=$(ls -t smoke_output_*.log | head -n 1)
           echo "log_path=$latest" >> $GITHUB_OUTPUT
 
+          timestamp=$(echo "$latest" | sed -E 's/^smoke_output_(.*)\.log$/\1/')
+          echo "timestamp=$timestamp" >> $GITHUB_OUTPUT
+
       - name: View serial output (tail)
         run: |
           cd ~/FSW-mainboard/smoke_test_logs
@@ -37,5 +40,5 @@ jobs:
       - name: Upload serial log as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: hil-smoke-log
+          name: hil-smoke-log-${{ steps.find_log.outputs.timestamp }}
           path: ~/FSW-mainboard/smoke_test_logs/${{ steps.find_log.outputs.log_path }}
