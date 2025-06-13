@@ -1,0 +1,46 @@
+name: HIL CI
+
+on:
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  hil-test:
+    runs-on: [self-hosted]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Flash Mainboard
+        run: |
+          cd ~/FSW-mainboard
+          sudo minicom -D /dev/ttyACM0 -b 115200 -S build_tools/exit_to_repl.minicom || true
+          sudo ./run.sh /media/argus/ARGUS 
+
+      - name: Run smoke test
+        run: |
+          cd ~/FSW-mainboard
+          source .venv/bin/activate
+          python3 hil/smoke-test.py -d 300
+
+      - name: Find latest log file
+        id: find_log
+        run: |
+          cd ~/FSW-mainboard/smoke_test_logs
+          latest=$(ls -t smoke_output_*.log | head -n 1)
+          echo "log_path=$latest" >> $GITHUB_OUTPUT
+
+          timestamp=$(echo "$latest" | sed -E 's/^smoke_output_(.*)\.log$/\1/')
+          echo "timestamp=$timestamp" >> $GITHUB_OUTPUT
+
+      - name: View serial output
+        run: |
+          cd ~/FSW-mainboard/smoke_test_logs
+          cat "${{ steps.find_log.outputs.log_path }}"
+
+      - name: Upload serial log as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hil-smoke-log-${{ steps.find_log.outputs.timestamp }}
+          path: ~/FSW-mainboard/smoke_test_logs/${{ steps.find_log.outputs.log_path }}
