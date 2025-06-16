@@ -9,4 +9,3 @@ black
 isort
 pre-commit
 argparse
-pyserial==3.5
