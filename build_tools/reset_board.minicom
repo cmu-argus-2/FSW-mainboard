@@ -1,0 +1,6 @@
+send "^C"
+sleep 0.5
+send "^C"
+sleep 0.5
+send "^D"
+sleep 300
