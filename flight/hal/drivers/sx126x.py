@@ -579,7 +579,6 @@ class SX126X:
 
         # Configure AGC for 470 - 490 MHz
         self.configureAGC()
-        self.checkConfigAGC()
 
         if useRegulatorLDO:
             state = self.setRegulatorLDO()
