@@ -140,10 +140,10 @@ class AttitudeDetermination:
             return StatusConst.OK, StatusConst.MEKF_INIT_FORCE
 
         # Get a valid position from OrbitProp
-        status, true_pos_eci, true_vel_eci = OrbitPropagator.update_position(current_time)
+        # status, true_pos_eci, true_vel_eci = OrbitPropagator.update_position(current_time)
 
-        if status != StatusConst.OK:
-            return StatusConst.MEKF_INIT_FAIL, status
+        # if status != StatusConst.OK:
+        #     return StatusConst.MEKF_INIT_FAIL, status
 
         # Get a valid sun position
         sun_status, sun_pos_body, lux_readings = self.read_sun_position()
@@ -165,21 +165,21 @@ class AttitudeDetermination:
         _, _, omega_body = self.read_gyro()
 
         # Inertial sun position
-        true_sun_pos_eci = approx_sun_position_ECI(current_time)
+        # true_sun_pos_eci = approx_sun_position_ECI(current_time)
 
         # Inertial magnetic field vector
-        true_mag_field_eci = igrf_eci(current_time, true_pos_eci)
+        # true_mag_field_eci = igrf_eci(current_time, true_pos_eci)
 
         # Run TRIAD
-        triad_status, attitude = self.TRIAD(true_sun_pos_eci, true_mag_field_eci, sun_pos_body, mag_field_body)
+        # triad_status, attitude = self.TRIAD(true_sun_pos_eci, true_mag_field_eci, sun_pos_body, mag_field_body)
 
-        if triad_status == StatusConst.TRIAD_FAIL:  # If TRIAD fails, do not initialize
-            return StatusConst.MEKF_INIT_FAIL, StatusConst.TRIAD_FAIL
+        # if triad_status == StatusConst.TRIAD_FAIL:  # If TRIAD fails, do not initialize
+        #     return StatusConst.MEKF_INIT_FAIL, StatusConst.TRIAD_FAIL
 
         # Log variables to state
-        self.state[self.position_idx] = true_pos_eci
-        self.state[self.velocity_idx] = true_vel_eci
-        self.state[self.attitude_idx] = attitude
+        self.state[self.position_idx] = np.zeros((3,)) # true_pos_eci
+        self.state[self.velocity_idx] = np.zeros((3,)) # true_vel_eci
+        self.state[self.attitude_idx] = np.zeros((4,)) # attitude
         self.state[self.omega_idx] = omega_body
         self.state[self.bias_idx] = np.zeros((3,))
         self.state[self.mag_field_idx] = mag_field_body
@@ -251,7 +251,7 @@ class AttitudeDetermination:
 
         return StatusConst.OK, StatusConst.OK
 
-    def sun_position_update(self, current_time: int, update_covariance: bool = True) -> None:
+    def sun_position_update(self, current_time: int) -> None:
         """
         Performs an MEKF update step for Sun position
         """
@@ -262,51 +262,9 @@ class AttitudeDetermination:
         self.state[self.sun_pos_idx] = sun_pos_body
         self.state[self.sun_lux_idx] = lux_readings
 
-        if (
-            self.initialized
-            and update_covariance
-            and status
-            not in [
-                StatusConst.SUN_NO_READINGS,
-                StatusConst.SUN_NOT_ENOUGH_READINGS,
-                StatusConst.SUN_ECLIPSE,
-            ]
-        ):  # Only run an update if MEKF is initialized and valid readings were obtained
+        return StatusConst.OK, status
 
-            # Extract true sun position based on a map
-            true_sun_pos_eci = approx_sun_position_ECI(current_time)
-            true_sun_pos_eci_norm = np.linalg.norm(true_sun_pos_eci)
-            if true_sun_pos_eci_norm == 0:
-                return StatusConst.SUN_UPDATE_FAIL, StatusConst.TRUE_SUN_MAP_FAIL  # End update if true position is absent
-            else:
-                true_sun_pos_eci = true_sun_pos_eci / true_sun_pos_eci_norm
-
-            # Convert the measured position to ECI
-            measured_sun_pos_eci = np.dot(quat_to_R(self.state[self.attitude_idx]), sun_pos_body)
-            measured_sun_pos_eci_norm = np.linalg.norm(measured_sun_pos_eci)
-            if measured_sun_pos_eci_norm == 0:
-                return StatusConst.SUN_UPDATE_FAIL, StatusConst.ZERO_NORM  # End update if measured position is absent
-            else:
-                measured_sun_pos_eci = measured_sun_pos_eci / measured_sun_pos_eci_norm
-                self.true_map[0:3] = true_sun_pos_eci
-
-            # EKF update
-            innovation = true_sun_pos_eci - measured_sun_pos_eci
-            s_cross = skew(true_sun_pos_eci)
-            Cov_sunsensor = self.sun_sensor_sigma**2 * np.dot(np.dot(s_cross, np.eye(3)), s_cross.transpose())
-            H = np.zeros((3, 6))
-            H[0:3, 0:3] = s_cross
-
-            # Log status based on EKF update
-            update_status = self.EKF_update(H, innovation, Cov_sunsensor)
-            if update_status != StatusConst.OK:
-                return StatusConst.SUN_UPDATE_FAIL, update_status
-            else:
-                return StatusConst.OK, StatusConst.OK
-        else:
-            return StatusConst.SUN_UPDATE_FAIL, status
-
-    def magnetometer_update(self, current_time=int, update_covariance: bool = True) -> None:
+    def magnetometer_update(self, current_time=int) -> None:
         """
         Performs an MEKF update step for magnetometer
         """
@@ -317,43 +275,9 @@ class AttitudeDetermination:
             self.state[self.mag_field_idx] = mag_field_body
 
         # Perform an update only if MEKF initialized and valid field reading obtained
-        if self.initialized and update_covariance and status == StatusConst.OK:
+        return StatusConst.OK, status
 
-            # Obtain true mag field in ECI from IGRF
-            true_mag_field_eci = igrf_eci(current_time, self.state[self.position_idx] / 1000)
-            true_mag_field_eci_norm = np.linalg.norm(true_mag_field_eci)
-            if true_mag_field_eci_norm == 0:
-                return StatusConst.MAG_UPDATE_FAIL, StatusConst.TRUE_MAG_MAP_FAIL  # End update if true mag field is zeros
-            else:
-                true_mag_field_eci = true_mag_field_eci / true_mag_field_eci_norm
-                self.true_map[3:6] = true_mag_field_eci
-
-            # Convert measured mag field into ECI
-            measured_mag_field_eci = np.dot(quat_to_R(self.state[self.attitude_idx]), mag_field_body)
-            measured_mag_field_eci_norm = np.linalg.norm(measured_mag_field_eci)
-            if measured_mag_field_eci_norm == 0:
-                return StatusConst.MAG_UPDATE_FAIL, StatusConst.ZERO_NORM  # End update if measured mag field is zeros
-            else:
-                measured_mag_field_eci = measured_mag_field_eci / measured_mag_field_eci_norm
-
-            # EKF update
-            innovation = true_mag_field_eci - measured_mag_field_eci
-            s_cross = skew(true_mag_field_eci)
-            Cov_mag_field = self.magnetometer_sigma**2 * np.dot(np.dot(s_cross, np.eye(3)), s_cross.transpose())
-            H = np.zeros((3, 6))
-            H[0:3, 0:3] = s_cross
-
-            # Update log based on EKF status
-            update_status = self.EKF_update(H, innovation, Cov_mag_field)
-            if update_status != StatusConst.OK:
-                return StatusConst.MAG_UPDATE_FAIL, update_status
-            else:
-                return StatusConst.OK, StatusConst.OK
-
-        else:
-            return StatusConst.MAG_UPDATE_FAIL, status
-
-    def gyro_update(self, current_time: int, update_covariance: bool = True) -> None:
+    def gyro_update(self, current_time: int) -> None:
         """
         Performs an MEKF update step for Gyro
         If update_error_covariance is False, the gyro measurements just update the attitude
@@ -364,79 +288,23 @@ class AttitudeDetermination:
         self.state[self.omega_idx] = omega_body  # save omega to state
 
         if status == StatusConst.OK:
-            if self.initialized:  # If initialized, also update attitude via propagation
-                bias = self.state[self.bias_idx]
-                dt = current_time - self.last_gyro_update_time
+            """
+            bias = self.state[self.bias_idx]
+            dt = current_time - self.last_gyro_update_time
 
-                unbiased_omega = omega_body - bias
-                rotvec = unbiased_omega * dt
-                rotvec_norm = np.linalg.norm(rotvec)
-                if rotvec_norm == 0:
-                    delta_quat = np.array([1, 0, 0, 0])  # Unit quaternion
-                else:
-                    delta_quat = np.zeros((4,))
-                    delta_quat[0] = np.cos(rotvec_norm / 2)
-                    delta_quat[1:4] = np.sin(rotvec_norm / 2) * rotvec / rotvec_norm
+            unbiased_omega = omega_body - bias
+            rotvec = unbiased_omega * dt
+            rotvec_norm = np.linalg.norm(rotvec)
+            if rotvec_norm == 0:
+                delta_quat = np.array([1, 0, 0, 0])  # Unit quaternion
+            else:
+                delta_quat = np.zeros((4,))
+                delta_quat[0] = np.cos(rotvec_norm / 2)
+                delta_quat[1:4] = np.sin(rotvec_norm / 2) * rotvec / rotvec_norm
 
-                self.state[self.attitude_idx] = quaternion_multiply(self.state[self.attitude_idx], delta_quat)
-                R_q_next = quat_to_R(self.state[self.attitude_idx])
-
-                self.last_gyro_update_time = current_time
-
-                if update_covariance:  # if update covariance, update covariance matrices
-                    F = np.zeros((6, 6))
-                    F[0:3, 3:6] = R_q_next
-
-                    G = np.zeros((6, 6))
-                    G[0:3, 0:3] = R_q_next
-                    G[3:6, 3:6] = np.eye(3)
-
-                    A = np.zeros((12, 12))
-                    A[0:6, 0:6] = -F
-                    A[0:6, 6:12] = np.dot(np.dot(G, self.Q), G.transpose())
-                    A[6:12, 6:12] = F.transpose()
-                    A = A * dt
-
-                    Aexp = np.eye(12) + A
-                    Phi = Aexp[6:12, 6:12].transpose()
-                    Qdk = np.dot(Phi, Aexp[0:6, 6:12])
-                    self.P = np.dot(np.dot(Phi, self.P), Phi.transpose()) + Qdk
-
-    def EKF_update(self, H: np.ndarray, innovation: np.ndarray, R_noise: np.ndarray) -> None:
-        """
-        - Updates the state estimate based on available information
-        """
-        S = np.dot(np.dot(H, self.P), H.transpose()) + R_noise
-
-        # ulab inv declares a matrix singular if det < 5E-2
-        # S is scaled up by 1000 and then down to remove this error
-        # If the singularity persists, we stop the covariance update
-        try:
-            K = np.dot(np.dot(self.P, H.transpose()), 1000 * np.linalg.inv(1000 * S))
-        except ValueError:
-            return StatusConst.EKF_UPDATE_FAIL
-
-        dx = np.dot(K, innovation)
-
-        dq_norm = np.linalg.norm(dx[0:3])
-        if dq_norm == 0:
-            attitude_correction = np.array([1, 0, 0, 0])  # Unit quaternion
-        else:
-            attitude_correction = np.zeros((4,))
-            attitude_correction[0] = np.cos(dq_norm / 2)
-            attitude_correction[1:4] = np.sin(dq_norm / 2) * dx[0:3] / dq_norm
-
-        # Update State
-        self.state[self.attitude_idx] = quaternion_multiply(self.state[self.attitude_idx], attitude_correction)
-        self.state[self.bias_idx] = self.state[self.bias_idx] + dx[3:]
-
-        # Symmetric Joseph update
-        Identity = np.eye(6)
-        self.P = np.dot(np.dot((Identity - np.dot(K, H)), self.P), (Identity - np.dot(K, H)).transpose()) + np.dot(
-            np.dot(K, R_noise), K.transpose()
-        )
-
-        return StatusConst.OK
+            self.state[self.attitude_idx] = quaternion_multiply(self.state[self.attitude_idx], delta_quat)
+            """
+            self.last_gyro_update_time = current_time
 
     def current_mode(self, current_mode) -> int:
         """

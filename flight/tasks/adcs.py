@@ -89,10 +89,10 @@ class Task(TemplateTask):
             # ------------------------------------------------------------------------------------------------------------------------------------
             if SM.current_state == STATES.DETUMBLING:
                 # Query the Gyro
-                self.AD.gyro_update(self.time, update_covariance=False)
+                self.AD.gyro_update(self.time)
 
                 # Query Magnetometer
-                self.AD.magnetometer_update(self.time, update_covariance=False)
+                self.AD.magnetometer_update(self.time)
 
                 # Run Attitude Control
                 self.attitude_control()
@@ -111,7 +111,7 @@ class Task(TemplateTask):
 
                 if self.execution_counter < 4:
                     # Update Gyro and attitude estimate via propagation
-                    self.AD.gyro_update(self.time, update_covariance=False)
+                    self.AD.gyro_update(self.time)
                     self.execution_counter += 1
 
                 else:
@@ -123,21 +123,22 @@ class Task(TemplateTask):
                             )
                     else:
                         # Update Each sensor with covariances
-                        status_1, status_2 = self.AD.position_update(self.time)
+                        # status_1, status_2 = self.AD.position_update(self.time)
+                        status_1 = StatusConst.OK
                         if status_1 != StatusConst.OK:
                             self.failure_messages.append(
                                 StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
                             )
                         else:
-                            status_1, status_2 = self.AD.sun_position_update(self.time, update_covariance=True)
+                            status_1, status_2 = self.AD.sun_position_update(self.time)
                             if status_1 != StatusConst.OK:
                                 self.failure_messages.append(
                                     StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
                                 )
 
-                            self.AD.gyro_update(self.time, update_covariance=True)
+                            self.AD.gyro_update(self.time)
 
-                            status_1, status_2 = self.AD.magnetometer_update(self.time, update_covariance=True)
+                            status_1, status_2 = self.AD.magnetometer_update(self.time)
                             if status_1 != StatusConst.OK:
                                 self.failure_messages.append(
                                     StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
@@ -173,7 +174,7 @@ class Task(TemplateTask):
 
                     if self.execution_counter < 4:
                         # Update Gyro and attitude estimate via propagation
-                        self.AD.gyro_update(self.time, update_covariance=True)
+                        self.AD.gyro_update(self.time)
                         self.execution_counter += 1
 
                     else:
@@ -185,21 +186,22 @@ class Task(TemplateTask):
                                 )
                         else:
                             # Update Each sensor with covariances
-                            status_1, status_2 = self.AD.position_update(self.time)
+                            # status_1, status_2 = self.AD.position_update(self.time)
+                            status_1 = StatusConst.OK
                             if status_1 != StatusConst.OK:
                                 self.failure_messages.append(
                                     StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
                                 )
                             else:
-                                status_1, status_2 = self.AD.sun_position_update(self.time, update_covariance=True)
+                                status_1, status_2 = self.AD.sun_position_update(self.time)
                                 if status_1 != StatusConst.OK:
                                     self.failure_messages.append(
                                         StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
                                     )
 
-                                self.AD.gyro_update(self.time, update_covariance=True)
+                                self.AD.gyro_update(self.time)
 
-                                status_1, status_2 = self.AD.magnetometer_update(self.time, update_covariance=True)
+                                status_1, status_2 = self.AD.magnetometer_update(self.time)
                                 if status_1 != StatusConst.OK:
                                     self.failure_messages.append(
                                         StatusConst.get_fail_message(status_1) + " : " + StatusConst.get_fail_message(status_2)
