@@ -74,7 +74,7 @@ COMMANDS = [
     ),
     (CMD_ID.REQUEST_FILE_PKT, file_id_exists, ["file_id", "file_time"], REQUEST_FILE_PKT),
     (CMD_ID.REQUEST_IMAGE, lambda: True, [], REQUEST_IMAGE),
-    (CMD_ID.DOWNLINK_ALL, lambda: True, [], DOWNLINK_ALL),
+    (CMD_ID.DOWNLINK_ALL, file_id_exists, ["file_id", "file_time"], DOWNLINK_ALL),
 ]
 
 
@@ -154,7 +154,7 @@ def unpack_command_arguments(cmd_id, cmd_arglist):
         logger.error(f"[COMMAND]: Incorrect payload size, expected: {CMD_ID.ARGS_LEN[cmd_id]}, received: {len(cmd_arglist)}")
         return CommandProcessingStatus.ARGUMENT_UNPACKING_FAILED
 
-    if cmd_id == CMD_ID.SWITCH_TO_STATE or cmd_id == CMD_ID.REQUEST_FILE_METADATA:
+    if cmd_id == CMD_ID.SWITCH_TO_STATE or cmd_id == CMD_ID.REQUEST_FILE_METADATA or cmd_id == CMD_ID.DOWNLINK_ALL:
         cmd_args.append(cmd_arglist[0])  # target_state_id / file_id (uint8)
         cmd_args.append(tm_helper.unpack_unsigned_long_int(cmd_arglist[1:5]))  # time_in_state / file_time (uint32)
 

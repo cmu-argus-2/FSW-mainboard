@@ -53,7 +53,7 @@ except ImportError:
 _HOME_PATH = "/sd"  # Default path for the SD card
 _CLOSED = const(20)
 _OPEN = const(21)
-_IMG_SIZE_LIMIT = const(100000)
+_IMG_DATA_LIMIT = const(100000)
 
 
 _PROCESS_CONFIG_FILENAME = ".data_process_configuration.json"
@@ -101,7 +101,7 @@ class DataProcess:
         "dir_path",
         "current_path",
         "bytesize",
-        "size_limit",
+        "data_limit",
         "last_data",
         "delete_paths",
         "excluded_paths",
@@ -129,7 +129,7 @@ class DataProcess:
         persistent: bool = True,
         data_limit: int = 100000,
         write_interval: int = 1,
-        circular_buffer_size: int = 10,
+        circular_buffer_size: int = 50,
         retrieve_latest_data: bool = True,
         append_to_current: bool = True,
         new_config_file: bool = False,
@@ -160,6 +160,7 @@ class DataProcess:
         self.circular_buffer_size = circular_buffer_size
         self.retrieve_latest_data = retrieve_latest_data
         self.append_to_current = append_to_current
+        self.data_limit = data_limit
 
         self.current_path = None
 
@@ -179,11 +180,6 @@ class DataProcess:
 
             self.dir_path = join_path(_HOME_PATH, tag_name)
             self.create_folder()
-
-            # To Be Resolved for each file process, TODO check if int, positive, etc
-            self.size_limit = (
-                data_limit // self.bytesize
-            )  # + (data_limit % self.bytesize)   # Default size limit is 1000 data lines
 
             if retrieve_latest_data:
                 # attempt to retrieve the latest data point and load it into the internal buffer
@@ -296,7 +292,7 @@ class DataProcess:
             self.open()
         elif self.status == _OPEN:
             current_file_size = self.get_current_file_size()
-            if current_file_size >= self.size_limit:
+            if current_file_size >= self.data_limit:
                 self.close()
                 self.current_path = self.create_new_path()
                 self.open()
@@ -405,24 +401,27 @@ class DataProcess:
         and prepare for deletion.
         """
         files = self.get_sorted_file_list()
-        if len(files) > 1:  # Ignore process configuration file
-            if latest or (
-                file_time is not None and file_time == 0
-            ):  # Edge case for when time = 0 we want to return the latest
-                transmit_file = files[-1]
-                if transmit_file == _PROCESS_CONFIG_FILENAME:
-                    transmit_file = files[-2]
-            else:
-                transmit_file = files[0]
-                if transmit_file == _PROCESS_CONFIG_FILENAME:
-                    transmit_file = files[1]
 
-                if file_time is not None:
-                    result_file = get_closest_file_time(file_time, files)
-                    transmit_file = result_file if result_file is not None else transmit_file
+        # remove process configuration file, it will always be the first one
+        if len(files) == 0:
+            logger.warning("No process configuration file.")
+            return None
+        elif len(files) == 1:
+            # Only the process configuration file is present
+            logger.warning("Only process configuration file present.")
+            return None
+        elif len(files) > 1:
+            files = files[1:]  # Ignore process configuration file
+            transmit_file = None
+            if latest:
+                transmit_file = files[-1]
+            elif file_time is not None:
+                result_file = get_closest_file_time(file_time, files)
+                transmit_file = result_file if result_file is not None else files[0]
+            else:  # oldest file
+                transmit_file = files[0]
 
             tm_path = join_path(self.dir_path, transmit_file)
-
             if tm_path == self.current_path:
                 self.close()
                 self.resolve_current_file()
@@ -511,7 +510,7 @@ class DataProcess:
         files = os.listdir(self.dir_path)
         # TODO - implement the rest of the function
         if self.get_current_file_size() is not None:
-            total_size = (len(files) - 2) * self.size_limit + self.get_current_file_size()
+            total_size = (len(files) - 2) * self.data_limit + self.get_current_file_size()
         else:
             total_size = 0
 
@@ -575,7 +574,7 @@ class ImageProcess(DataProcess):
         self.dir_path = join_path(_HOME_PATH, self.tag_name)
         self.create_folder()
 
-        self.size_limit = _IMG_SIZE_LIMIT
+        self.data_limit = _IMG_DATA_LIMIT
 
         self.current_path = self.create_new_path()
         self.delete_paths = []  # Paths that are flagged for deletion
@@ -600,7 +599,7 @@ class ImageProcess(DataProcess):
             self.open()
         elif self.status == _OPEN:
             current_file_size = self.get_current_file_size()
-            if current_file_size >= self.size_limit:
+            if current_file_size >= self.data_limit:
                 self.close()
                 self.current_path = self.create_new_path()
                 self.open()
@@ -669,19 +668,25 @@ class ImageProcess(DataProcess):
         and prepare for deletion.
         """
         files = self.get_sorted_file_list()
-        if len(files) > 1:  # Ignore process configuration file
+
+        # remove process configuration file, it will always be the first one
+        if len(files) == 0:
+            logger.warning("No process configuration file.")
+            return None
+        elif len(files) == 1:
+            # Only the process configuration file is present
+            logger.warning("Only process configuration file present.")
+            return None
+        elif len(files) > 1:
+            files = files[1:]  # Ignore process configuration file
+            transmit_file = None
             if latest:
                 transmit_file = files[-1]
-                if transmit_file == _PROCESS_CONFIG_FILENAME:
-                    transmit_file = files[-2]
-            else:
+            elif file_time is not None:
+                result_file = get_closest_file_time(file_time, files)
+                transmit_file = result_file if result_file is not None else files[0]
+            else:  # oldest file
                 transmit_file = files[0]
-                if transmit_file == _PROCESS_CONFIG_FILENAME:
-                    transmit_file = files[1]
-
-                if file_time is not None:
-                    result_file = get_closest_file_time(file_time, files)
-                    transmit_file = result_file if result_file is not None else transmit_file
 
             tm_path = join_path(self.dir_path, transmit_file)
 
@@ -814,7 +819,7 @@ class DataHandler:
         persistent: bool,
         data_limit: int = 100000,
         write_interval: int = 1,
-        circular_buffer_size: int = 10,
+        circular_buffer_size: int = 50,
         retrieve_latest_data: bool = True,
         append_to_current: bool = True,
     ) -> None:

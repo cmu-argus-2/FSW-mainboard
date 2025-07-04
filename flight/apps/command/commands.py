@@ -137,40 +137,36 @@ def REQUEST_FILE_METADATA(file_id, file_time=None):
     file_tag = file_tags_str[file_id]
 
     if file_time is None:
-        file_path = DH.request_TM_path(file_tag)
+        file_path = DH.request_TM_path(file_tag, True)
     else:
-        file_path = DH.request_TM_path(file_tag, file_time)
+        # Specify file_tag, latest = False and file_time
+        file_path = DH.request_TM_path(file_tag, False, file_time)
 
     return [file_path]
 
 
+# NOTE: REQUEST_FILE_PKT handled internally in comms
 def REQUEST_FILE_PKT(file_id, file_time):
-    """Requests a specific file packet from the spacecraft."""
-    logger.info(f"Executing REQUEST_FILE_PKT with file_tag: {file_id}, file_tim: {file_time}")
-    # TODO: potentially change if we want to handle file packets here instead of Comms
+    raise NotImplementedError("Handled internally by comms subsystem")
+
+
+def REQUEST_IMAGE():
+    raise NotImplementedError("Not implemented")
+
+
+def DOWNLINK_ALL(file_id, file_time=None):
+    """Downlinks all packets for a specific file from the spacecraft."""
+    logger.info(f"Executing DOWNLINK_ALL with file_tag: {file_id} and file_time: {file_time}")
     file_path = None
     file_tag = file_tags_str[file_id]
 
     if file_time is None:
         file_path = DH.request_TM_path(file_tag)
     else:
-        file_path = DH.request_TM_path(file_tag, file_time)
+        # Specify file_tag, latest = False and file_time
+        file_path = DH.request_TM_path(file_tag, False, file_time)
 
     return [file_path]
-
-
-def REQUEST_IMAGE():
-    """Requests an image from the spacecraft's internal storage."""
-    logger.info("Executing REQUEST_IMAGE")
-    # TODO: finish implementation, if we are keeping this command
-    path = DH.request_TM_path_image()
-    return [path]
-
-
-def DOWNLINK_ALL():
-    """Requests all files, images, and mission data be downlinked immediately in the event mission is compromised"""
-    logger.info("Executing DOWNLINK_ALL")
-    return [DH.get_all_data_processes_name()]
 
 
 def get_tx_message_header():

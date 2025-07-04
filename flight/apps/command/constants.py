@@ -19,7 +19,7 @@ class CMD_ID:
     REQUEST_FILE_PKT = const(0x4B)
     REQUEST_IMAGE = const(0x4C)
 
-    DOWNLINK_ALL = const(0x4D)
+    DOWNLINK_ALL = const(0x50)
 
     ARGS_LEN = {
         FORCE_REBOOT: 0,
@@ -34,6 +34,7 @@ class CMD_ID:
         REQUEST_TM_PAYLOAD: 0,
         REQUEST_FILE_METADATA: 5,
         REQUEST_FILE_PKT: 5,
+        DOWNLINK_ALL: 5,
     }
 
 

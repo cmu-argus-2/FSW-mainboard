@@ -14,6 +14,10 @@ class Watchdog:
     def enable(self):
         self.__enable.value = True
 
+    @property
+    def enabled(self):
+        return self.__enable.value
+
     def disable(self):
         self.__enable.value = False
 
@@ -22,3 +26,7 @@ class Watchdog:
 
     def input_low(self):
         self.__input.value = False
+
+    @property
+    def input(self):
+        return self.__input.value
