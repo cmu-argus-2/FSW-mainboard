@@ -88,16 +88,15 @@ class Modes:
     SUN_VECTOR_REF = np.array([0.0, 0.0, 1.0])
 
     # Detumbling
-    TUMBLING_LO = 0.03  # Exit detumbling into stable if ω < 0.03 rad/s (2 deg/s)
-    TUMBLING_HI = 0.05
-
-    # Re-enter detumbling if ω > 0.09 rad/s (5 deg/s)
+    TUMBLING_TOL  = 0.09  # Exit detumbling into stable if ω < 0.09 rad/s (5 deg/s)
 
     # STABLE MODE
-    STABLE_TOL_LO = 0.01  # Exit into sun_pointing if angular momentum error norm < 0.01
-    STABLE_TOL_HI = 0.03  # Re-enter stable state if angular momentum error norm > 0.03
+    STABLE_TOL_LO = 0.26  # Exit into sun_pointing if momentum less than 15 deg from major axis
+    STABLE_TOL_HI = 0.34  # Re-enter stable state if momentum more than 20 deg from major axis
 
-    SUN_POINTED_TOL = 0.05  # "sun-pointed" if att err < 0.09 rad = 5 deg.
+    # SUN POINTED MODE
+    SUN_POINTED_TOL_LO = 0.176  # Turn ACS off if momentum less than 10 deg from sun vector
+    SUN_POINTED_TOL_HI = 0.26   # Re-enter sun_pointed if momentum more than 15 deg from sun vector
 
 
 class PhysicalConst:
@@ -153,8 +152,9 @@ class ControllerConst:
     FALLBACK_CONTROL = np.zeros(CONTROL_DIM)
 
     # Spin-stabilized Constants
-    OMEGA_MAG_TARGET = Modes.TUMBLING_LO  # Target angular velocity along major axis -> Required ω for stable confn
+    OMEGA_MAG_TARGET = 0.035  # Target angular velocity (2 deg/s) for spin stabilization
     MOMENTUM_TARGET = np.dot(PhysicalConst.INERTIA_MAT, PhysicalConst.INERTIA_MAJOR_DIR * OMEGA_MAG_TARGET)
+    MOMENTUM_TARGET_MAG = np.linalg.norm(MOMENTUM_TARGET)
     SPIN_STABILIZING_GAIN = 2.0e07
 
     # Sun Pointing Constants
