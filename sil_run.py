@@ -4,9 +4,10 @@ import signal
 import subprocess
 import time
 
-from argusim.visualization.plotter import plot_all
+# from argusim.visualization.plotter import plot_all
+from fsw_plotter import plot_FSW, collect_FSW_data
 
-DEFAULT_RUNTIME = 5 * 60  # 5 minutes
+DEFAULT_RUNTIME = 60 # 5 * 60  # 5 minutes
 DEFAULT_OUTFILE = "sil_logs.log"
 
 # KEYWORD SEARCHES:
@@ -42,6 +43,17 @@ def parse_FSW_logs(outfile):
         raise Exception("FSW Simulation Failed")
 
 
+def plot_results(result_folder_path):
+    result_folder_path = "../../../" + result_folder_path
+    plot_script_abs = os.path.join(os.path.dirname(__file__), "simulation/argusim/visualization/plotter.py")
+    process = subprocess.Popen(["python3", plot_script_abs, result_folder_path], cwd=os.path.dirname(plot_script_abs))
+    while process.poll() is None:  # wait while the plotting is finished
+        time.sleep(0.1)
+    return_code = process.returncode
+    if return_code != 0:
+        raise AssertionError(f"Plotting failed with code {return_code}")
+
+
 if __name__ == "__main__":
     # Define Parser
     parser = argparse.ArgumentParser(prog="SIL_tester")
@@ -63,10 +75,15 @@ if __name__ == "__main__":
 
     # Run script
     FSW_simulate(int(args.duration), args.outfile)
+    result_folder_path = os.path.join("montecarlo/results", max(os.listdir("montecarlo/results")))
+    collect_FSW_data(args.outfile,result_folder_path)
 
-    # Run Plotting
-    result_folder_path = os.path.join("results", max(os.listdir("results")))
-    plot_all(result_folder_path=result_folder_path)
+    # Run Plotting (Sim states)
+    plot_results(result_folder_path=result_folder_path)
+    # plot_all(result_folder_path=result_folder_path)
+
+    # Run Plotting (from Sim and FSW logs)
+    plot_FSW(result_folder_path=os.path.join(result_folder_path, "plots"))
 
     # Parse Logs
     parse_FSW_logs(args.outfile)

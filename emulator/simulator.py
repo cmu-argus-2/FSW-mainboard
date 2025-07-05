@@ -17,21 +17,27 @@ from datetime import datetime
 
 import numpy as np
 from argusim.simulation_manager.sim import Simulator as cppSim
+import shutil
 
 ARGUS_ROOT = os.getenv("ARGUS_ROOT", os.path.join(os.getcwd(), "../"))
-RESULTS_ROOT_FOLDER = os.path.join(ARGUS_ROOT, "results")
-CONFIG_FILE = os.path.join(ARGUS_ROOT, "params.yaml")
+RESULTS_ROOT_FOLDER = os.path.join(ARGUS_ROOT, "montecarlo/results")
+CONFIG_FILE = os.path.join(ARGUS_ROOT, "montecarlo/configs/params.yaml")
 
 
 class Simulator:  # will be passed by reference to the emulated HAL
-    def __init__(self):
-        # Initialize the CPP sim
-        trial = random.randint(0, 100)
-        RESULTS_FOLDER = os.path.join(RESULTS_ROOT_FOLDER, datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
-        os.mkdir(RESULTS_FOLDER)
+    def __init__(self, trial=None):
+        if trial is None:
+            trial = random.randint(0, 100)
+        RESULTS_FOLDER = os.path.join(
+            RESULTS_ROOT_FOLDER,
+            datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
+            "trials/trial" + str(trial)
+        )
+        os.makedirs(RESULTS_FOLDER)
+        shutil.copy(CONFIG_FILE, os.path.join(os.path.dirname(RESULTS_FOLDER), "../params.yaml"))
         self.cppsim = cppSim(trial, RESULTS_FOLDER, CONFIG_FILE, log=True)
 
-        self.measurement = np.zeros((52,))
+        self.measurement = np.zeros((49,))
         self.starting_real_epoch = time.monotonic_ns() / 1.0e9
         self.latest_real_epoch = self.starting_real_epoch
         self.base_dt = self.cppsim.params.dt
@@ -40,12 +46,12 @@ class Simulator:  # will be passed by reference to the emulated HAL
         # Measurement labels
         self.gps_idx = slice(0, 6)
         self.gyro_idx = slice(6, 9)
-        self.mag_idx = slice(12, 15)
-        self.lux_idx = slice(15, 24)
-        self.mtb_idx = slice(24, 30)
-        self.solar_idx = slice(30, 43)
-        self.power_idx = slice(43, 51)
-        self.jetson_idx = slice(51, 52)
+        self.mag_idx = slice(9, 12)
+        self.lux_idx = slice(12, 21)
+        self.mtb_idx = slice(21, 27)
+        self.solar_idx = slice(27, 40)
+        self.power_idx = slice(40, 48)
+        self.jetson_idx = slice(48, 49)
 
     """
         SENSOR CALLBACKS
