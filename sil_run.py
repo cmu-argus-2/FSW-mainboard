@@ -3,6 +3,7 @@ import os
 import signal
 import subprocess
 import time
+from datetime import datetime
 
 # from argusim.visualization.plotter import plot_all
 from fsw_plotter import plot_FSW, collect_FSW_data
@@ -16,10 +17,12 @@ DEFAULT_OUTFILE = "sil_logs.log"
 KEYWORDS = {"WARNING": "\033[93m", "ERROR": "\033[91m"}
 
 
-def FSW_simulate(runtime: float, outfile: str) -> None:
+def FSW_simulate(runtime: float, outfile: str, trial_number: int, trial_date: str) -> None:
     try:
         with open(outfile, "w") as log_file:
-            process = subprocess.Popen(["./run.sh", "simulate"], stdout=log_file, stderr=log_file, preexec_fn=os.setsid)
+            # option to run a number of simulations, and to run a specific trial
+            process = subprocess.Popen(["./run.sh", "simulate", str(trial_number), trial_date], 
+                                       stdout=log_file, stderr=log_file, preexec_fn=os.setsid)
             print(f"Running simulation for {runtime} seconds, output written to {outfile}")
             time.sleep(runtime)
             print("Terminating...")
@@ -73,17 +76,32 @@ if __name__ == "__main__":
     # Parse Arguments
     args = parser.parse_args()
 
+    trial_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    result_folder_path = os.path.join("montecarlo/results", trial_date)
+
     # Run script
-    FSW_simulate(int(args.duration), args.outfile)
-    result_folder_path = os.path.join("montecarlo/results", max(os.listdir("montecarlo/results")))
-    collect_FSW_data(args.outfile,result_folder_path)
+    N_trials = 2
+    for i in range(N_trials):
+        trial_number = i + 1
+        trial_result_folder_path = os.path.join(result_folder_path, "trials/trial" + str(trial_number))
+        print(f"Running Trial {trial_number}...")
+
+        # Run FSW Simulation
+        FSW_simulate(int(args.duration), args.outfile, trial_number=trial_number, trial_date=trial_date)
+
+        # Collect FSW data
+        collect_FSW_data(args.outfile, trial_result_folder_path)
+        print(f"Trial {trial_number} completed. Results saved to {trial_result_folder_path}")
 
     # Run Plotting (Sim states)
     plot_results(result_folder_path=result_folder_path)
     # plot_all(result_folder_path=result_folder_path)
 
     # Run Plotting (from Sim and FSW logs)
-    plot_FSW(result_folder_path=os.path.join(result_folder_path, "plots"))
+    plot_FSW(result_folder_path=result_folder_path)
 
     # Parse Logs
-    parse_FSW_logs(args.outfile)
+    for i in range(N_trials):
+        trial_number = i + 1
+        trial_result_folder_path= os.path.join(result_folder_path, "trials/trial" + str(trial_number))
+        parse_FSW_logs(os.path.join(trial_result_folder_path, args.outfile))

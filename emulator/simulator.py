@@ -25,12 +25,14 @@ CONFIG_FILE = os.path.join(ARGUS_ROOT, "montecarlo/configs/params.yaml")
 
 
 class Simulator:  # will be passed by reference to the emulated HAL
-    def __init__(self, trial=None):
+    def __init__(self, trial=None, trial_date=None):
         if trial is None:
             trial = random.randint(0, 100)
+        if trial_date is None:
+            trial_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         RESULTS_FOLDER = os.path.join(
             RESULTS_ROOT_FOLDER,
-            datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
+            trial_date,
             "trials/trial" + str(trial)
         )
         os.makedirs(RESULTS_FOLDER)
@@ -61,11 +63,11 @@ class Simulator:  # will be passed by reference to the emulated HAL
 
     def gyro(self):
         self.advance_to_time()
-        return self.measurement[self.gyro_idx]
+        return self.measurement[self.gyro_idx]  # IMU obtains gyro readins in deg/s
 
     def mag(self):
         self.advance_to_time()
-        return self.measurement[self.mag_idx] * 1e6  # IMU obtains magnetic field readings in uT
+        return self.measurement[self.mag_idx]  # IMU obtains magnetic field readings in uT
 
     def sun_lux(self, attr):
         self.advance_to_time()  # XP, XM, YP, YM, ZP1, ZP2, ZP3, ZP4, ZM

@@ -2,6 +2,8 @@ import re
 import numpy as np
 import os
 from datetime import datetime
+import shutil
+import matplotlib.pyplot as plt
 
 # Convert timestamp strings to seconds from the start
 def timestamps_to_seconds(timestamps):
@@ -15,46 +17,92 @@ def plot_FSW(result_folder_path):
     """
     Plots the FSW data.
     """
+    plots_folder_path = os.path.join(result_folder_path, "plots")
+    # trials folder path
+    trials_folder_path = os.path.join(result_folder_path, "trials")
+    # Collect list of trial folders
+    trial_folders = [
+        os.path.join(trials_folder_path, d)
+        for d in os.listdir(trials_folder_path)
+        if os.path.isdir(os.path.join(trials_folder_path, d))
+    ]
+    adcs_modes_list = []
+    gyro_ang_vels_list = []
+    gyro_biases_list = []
+    mag_fields_list = []
+    sun_vectors_list = []
+    sun_statuses_list = []
+    trial_numbers = []
+    for i, trial_folder in enumerate(trial_folders):
+        # load FSW data for each trial
+        data_path = os.path.join(trial_folder, "fsw_extracted_data.npz")
+        if not os.path.exists(data_path):
+            print(f"Extracted data file not found at {data_path}")
+            return
+        # Extract trial number from the folder name (assumes folder ends with an integer)
+        trial_number_match = re.search(r'(\d+)$', trial_folder)
+        if trial_number_match:
+            trial_number = int(trial_number_match.group(1))
+        else:
+            trial_number = None
+        trial_numbers.append(trial_number)
+        data = np.load(data_path, allow_pickle=True)
+
+        # Extract arrays by key
+        adcs_modes = data["adcs_modes"]
+        gyro_ang_vels = data["gyro_ang_vels"]
+        gyro_biases = data["gyro_biases"]
+
+        # Extract timestamps from the first column of each array
+        timestamps_modes = adcs_modes[:, 0]
+        timestamps_gyro = gyro_ang_vels[:, 0]
+        timestamps_bias = gyro_biases[:, 0]
+
+        # Convert data columns to appropriate types
+        adcs_modes_values = adcs_modes[:, 1].astype(int)
+        gyro_ang_vel = gyro_ang_vels[:, 1:4].astype(float)
+        gyro_bias = gyro_biases[:, 1:4].astype(float)
+
+        timestamps_gyro = timestamps_to_seconds(timestamps_gyro)
+        timestamps_modes = timestamps_to_seconds(timestamps_modes)
+        timestamps_bias = timestamps_to_seconds(timestamps_bias)
+
+        mag_fields = data["mag_fields"]
+        timestamps_mag = timestamps_to_seconds(mag_fields[:, 0])
+        mag_field = mag_fields[:, 1:4].astype(float)
+
+        sun_vectors = data["sun_vectors"]
+        timestamps_sun = timestamps_to_seconds(sun_vectors[:, 0])
+        sun_vector = sun_vectors[:, 1:4].astype(float)
+
+        sun_statuses = data["sun_statuses"]
+        timestamps_status = timestamps_to_seconds(sun_statuses[:, 0])
+        sun_status = sun_statuses[:, 1].astype(int)
+
+        # Store everything into lists
+        adcs_modes_list.append((timestamps_modes, adcs_modes_values))
+        gyro_ang_vels_list.append((timestamps_gyro, gyro_ang_vel))
+        gyro_biases_list.append((timestamps_bias, gyro_bias))
+        mag_fields_list.append((timestamps_mag, mag_field))
+        sun_vectors_list.append((timestamps_sun, sun_vector))
+        sun_statuses_list.append((timestamps_status, sun_status))
+
+        
+
     print("Plotting FSW data...")
-    import matplotlib.pyplot as plt
-
-    # Load the extracted data
-    data_path = os.path.join(result_folder_path, "../fsw_extracted_data.npz")
-    if not os.path.exists(data_path):
-        print(f"Extracted data file not found at {data_path}")
-        return
-
-    data = np.load(data_path, allow_pickle=True)
-
-    # Extract arrays by key
-    adcs_modes = data["adcs_modes"]
-    gyro_ang_vels = data["gyro_ang_vels"]
-    gyro_biases = data["gyro_biases"]
-
-    # Extract timestamps from the first column of each array
-    timestamps_modes = adcs_modes[:, 0]
-    timestamps_gyro = gyro_ang_vels[:, 0]
-    timestamps_bias = gyro_biases[:, 0]
-
-    # Convert data columns to appropriate types
-    adcs_modes_values = adcs_modes[:, 1].astype(int)
-    gyro_ang_vel = gyro_ang_vels[:, 1:4].astype(float)
-    gyro_bias = gyro_biases[:, 1:4].astype(float)
-
-    timestamps_gyro = timestamps_to_seconds(timestamps_gyro)
-    timestamps_modes = timestamps_to_seconds(timestamps_modes)
-    timestamps_bias = timestamps_to_seconds(timestamps_bias)
     # Use timestamps_gyro for plotting (assuming all timestamps are aligned)
     # Plot ADCS Mode
     mode_names = ["TUMBLING", "STABLE", "SUN_POINTED", "ACS_OFF"]
     plt.figure(figsize=(10, 4))
-    plt.plot(timestamps_modes, adcs_modes_values, label="ADCS Mode")
+    for idx, (timestamps_modes, adcs_modes_values) in enumerate(adcs_modes_list):
+        plt.plot(timestamps_modes, adcs_modes_values, label=f"Trial {idx+1}")
     plt.ylabel("ADCS Mode")
     plt.xlabel("Time (s)")
     plt.yticks(ticks=range(len(mode_names)), labels=mode_names)
     plt.legend()
     plt.tight_layout()
-    output_plot_path_mode = os.path.join(result_folder_path, "fsw_adcs_mode_plot.png")
+    plt.title("ADCS Mode")
+    output_plot_path_mode = os.path.join(plots_folder_path, "fsw_adcs_mode_plot.png")
     plt.savefig(output_plot_path_mode)
     plt.close()
     print(f"ADCS Mode plot saved to {output_plot_path_mode}")
@@ -62,18 +110,20 @@ def plot_FSW(result_folder_path):
     # Plot Gyro Angular Velocity
     plt.figure(figsize=(10, 8))
     axes = []
-    labels = ["Gyro X", "Gyro Y", "Gyro Z"]
-    colors = ['tab:blue', 'tab:orange', 'tab:green']
+    labels = ["Gyro X [deg/s]", "Gyro Y [deg/s]", "Gyro Z [deg/s]"]
     for i in range(3):
         ax = plt.subplot(3, 1, i + 1)
-        ax.plot(timestamps_gyro, gyro_ang_vel[:, i], label=labels[i], color=colors[i])
+        for trial_idx, (timestamps_gyro, gyro_ang_vel) in enumerate(gyro_ang_vels_list):
+            ax.plot(timestamps_gyro, gyro_ang_vel[:, i], label=f"Trial {trial_numbers[trial_idx]}")
         ax.set_ylabel(labels[i])
         if i == 2:
             ax.set_xlabel("Time (s)")
-        ax.legend()
+        if i == 0:
+            ax.legend()
+        ax.set_title("ADCS Angular Velocity")
         axes.append(ax)
     plt.tight_layout()
-    output_plot_path_gyro = os.path.join(result_folder_path, "fsw_gyro_ang_vel_plot.png")
+    output_plot_path_gyro = os.path.join(plots_folder_path, "fsw_gyro_ang_vel_plot.png")
     plt.savefig(output_plot_path_gyro)
     plt.close()
     print(f"Gyro Angular Velocity plot saved to {output_plot_path_gyro}")
@@ -81,77 +131,77 @@ def plot_FSW(result_folder_path):
     # Plot Gyro Bias
     plt.figure(figsize=(10, 8))
     labels = ["Bias X", "Bias Y", "Bias Z"]
-    colors = ['tab:blue', 'tab:orange', 'tab:green']
     for i in range(3):
         ax = plt.subplot(3, 1, i + 1)
-        ax.plot(timestamps_bias, gyro_bias[:, i], label=labels[i], color=colors[i])
+        for trial_idx, (timestamps_bias, gyro_bias) in enumerate(gyro_biases_list):
+            ax.plot(timestamps_bias, gyro_bias[:, i], label=f"Trial {trial_numbers[trial_idx]}")
         ax.set_ylabel(labels[i])
         if i == 2:
             ax.set_xlabel("Time (s)")
-        ax.legend()
+        if i == 0:
+            ax.legend()
+            ax.set_title("ADCS Gyro Bias")
+
     plt.tight_layout()
-    output_plot_path_bias = os.path.join(result_folder_path, "fsw_gyro_bias_plot.png")
+    output_plot_path_bias = os.path.join(plots_folder_path, "fsw_gyro_bias_plot.png")
     plt.savefig(output_plot_path_bias)
     plt.close()
     print(f"Gyro Bias plot saved to {output_plot_path_bias}")
 
-    # Plot Magnetic Field
-    mag_fields = data["mag_fields"]
-    if mag_fields.size > 0:
-        timestamps_mag = timestamps_to_seconds(mag_fields[:, 0])
-        mag_field = mag_fields[:, 1:4].astype(float)
-        plt.figure(figsize=(10, 8))
-        labels = ["Mag X", "Mag Y", "Mag Z"]
-        colors = ['tab:blue', 'tab:orange', 'tab:green']
-        for i in range(3):
-            ax = plt.subplot(3, 1, i + 1)
-            ax.plot(timestamps_mag, mag_field[:, i], label=labels[i], color=colors[i])
-            ax.set_ylabel(labels[i])
-            if i == 2:
-                ax.set_xlabel("Time (s)")
+    # Plot Magnetic Field        
+    plt.figure(figsize=(10, 8))
+    labels = ["Mag X [T]", "Mag Y [T]", "Mag Z [T]"]
+    for i in range(3):
+        ax = plt.subplot(3, 1, i + 1)
+        for trial_idx, (timestamps_mag, mag_field) in enumerate(mag_fields_list):
+            ax.plot(timestamps_mag, mag_field[:, i], label=f"Trial {trial_numbers[trial_idx]}")
+        ax.set_ylabel(labels[i])
+        if i == 2:
+            ax.set_xlabel("Time (s)")
+        if i == 0:
             ax.legend()
-        plt.tight_layout()
-        output_plot_path_mag = os.path.join(result_folder_path, "fsw_mag_field_plot.png")
-        plt.savefig(output_plot_path_mag)
-        plt.close()
-        print(f"Mag Field plot saved to {output_plot_path_mag}")
+            ax.set_title("ADCS Magnetic Field")
+    plt.tight_layout()
+    output_plot_path_mag = os.path.join(plots_folder_path, "fsw_mag_field_plot.png")
+    plt.savefig(output_plot_path_mag)
+    plt.close()
+    print(f"Mag Field plot saved to {output_plot_path_mag}")
 
     # Plot Sun Vector
-    sun_vectors = data["sun_vectors"]
-    if sun_vectors.size > 0:
-        timestamps_sun = timestamps_to_seconds(sun_vectors[:, 0])
-        sun_vector = sun_vectors[:, 1:4].astype(float)
-        plt.figure(figsize=(10, 8))
-        labels = ["Sun X", "Sun Y", "Sun Z"]
-        colors = ['tab:blue', 'tab:orange', 'tab:green']
-        for i in range(3):
-            ax = plt.subplot(3, 1, i + 1)
-            ax.plot(timestamps_sun, sun_vector[:, i], label=labels[i], color=colors[i])
-            ax.set_ylabel(labels[i])
-            if i == 2:
-                ax.set_xlabel("Time (s)")
+    plt.figure(figsize=(10, 8))
+    labels = ["Sun X", "Sun Y", "Sun Z"]
+    colors = ['tab:blue', 'tab:orange', 'tab:green']
+    for i in range(3):
+        ax = plt.subplot(3, 1, i + 1)
+        for trial_idx, (timestamps_sun, sun_vector) in enumerate(sun_vectors_list):
+            ax.plot(timestamps_sun, sun_vector[:, i], label=f"Trial {trial_numbers[trial_idx]}")
+        ax.set_ylabel(labels[i])
+        if i == 2:
+            ax.set_xlabel("Time (s)")
+        if i == 0:
             ax.legend()
-        plt.tight_layout()
-        output_plot_path_sun = os.path.join(result_folder_path, "fsw_sun_vector_plot.png")
-        plt.savefig(output_plot_path_sun)
-        plt.close()
-        print(f"Sun Vector plot saved to {output_plot_path_sun}")
+            ax.set_title("ADCS Sun Vector")
+    plt.tight_layout()
+    output_plot_path_sun = os.path.join(plots_folder_path, "fsw_sun_vector_plot.png")
+    plt.savefig(output_plot_path_sun)
+    plt.close()
+    print(f"Sun Vector plot saved to {output_plot_path_sun}")
 
     # Plot Sun Status
-    sun_statuses = data["sun_statuses"]
-    if sun_statuses.size > 0:
-        timestamps_status = timestamps_to_seconds(sun_statuses[:, 0])
-        sun_status = sun_statuses[:, 1].astype(int)
-        plt.figure(figsize=(10, 4))
-        plt.plot(timestamps_status, sun_status, label="Sun Status", color='tab:purple')
-        plt.ylabel("Sun Status")
-        plt.xlabel("Time (s)")
-        plt.legend()
-        plt.tight_layout()
-        output_plot_path_status = os.path.join(result_folder_path, "fsw_sun_status_plot.png")
-        plt.savefig(output_plot_path_status)
-        plt.close()
-        print(f"Sun Status plot saved to {output_plot_path_status}")
+    # [TODO:] set y labels to the corresponding codes
+    plt.figure(figsize=(10, 4))
+    for trial_idx, (timestamps_status, sun_status) in enumerate(sun_statuses_list):
+        plt.plot(timestamps_status, sun_status, label=f"Trial {trial_numbers[trial_idx]}")
+    plt.ylabel("Sun Status")
+    plt.xlabel("Time (s)")
+    plt.legend()
+    plt.title("ADCS Sun Status")
+    plt.tight_layout()
+    output_plot_path_status = os.path.join(plots_folder_path, "fsw_sun_status_plot.png")
+    plt.savefig(output_plot_path_status)
+    plt.close()
+    print(f"Sun Status plot saved to {output_plot_path_status}")
+        
 
 
 def collect_FSW_data(outfile, result_folder_path):
@@ -229,4 +279,7 @@ def collect_FSW_data(outfile, result_folder_path):
              sun_vectors=sun_vectors_np,
              sun_statuses=sun_statuses_np)
     print(f"Extracted data saved to {output_path}")
+
+    # Move sil_logs.log to the result folder
+    shutil.move(outfile, result_folder_path)
     
