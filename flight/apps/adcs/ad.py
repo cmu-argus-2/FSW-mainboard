@@ -87,7 +87,7 @@ class AttitudeDetermination:
         """
 
         if SATELLITE.IMU_AVAILABLE:
-            gyro = np.array(SATELLITE.IMU.gyro())
+            gyro = np.deg2rad(np.array(SATELLITE.IMU.gyro())) # Convert gyro reading from deg/s to rad/s
             query_time = TPM.time()
 
             # Sensor validity check
