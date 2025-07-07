@@ -14,11 +14,12 @@ SOCKET_RADIO = False
 
 SimulatedSpacecraft = None
 if SIMULATION:
-    from hal.simulator import Simulator
     # if there is a trial flag, use it to create the simulator
     import random
     from datetime import datetime
-    
+
+    from hal.simulator import Simulator
+
     trial = int(os.getenv("ARGUS_SIMULATION_TRIAL", random.randint(0, 100)))
     trial_date = os.getenv("ARGUS_SIMULATION_DATE", datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
     SimulatedSpacecraft = Simulator(trial=trial, trial_date=trial_date)

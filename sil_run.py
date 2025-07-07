@@ -6,9 +6,9 @@ import time
 from datetime import datetime
 
 # from argusim.visualization.plotter import plot_all
-from fsw_plotter import plot_FSW, collect_FSW_data
+from fsw_plotter import collect_FSW_data, plot_FSW
 
-DEFAULT_RUNTIME = 60 # 5 * 60  # 5 minutes
+DEFAULT_RUNTIME = 60  # 5 * 60  # 5 minutes
 DEFAULT_OUTFILE = "sil_logs.log"
 
 # KEYWORD SEARCHES:
@@ -21,8 +21,9 @@ def FSW_simulate(runtime: float, outfile: str, trial_number: int, trial_date: st
     try:
         with open(outfile, "w") as log_file:
             # option to run a number of simulations, and to run a specific trial
-            process = subprocess.Popen(["./run.sh", "simulate", str(trial_number), trial_date], 
-                                       stdout=log_file, stderr=log_file, preexec_fn=os.setsid)
+            process = subprocess.Popen(
+                ["./run.sh", "simulate", str(trial_number), trial_date], stdout=log_file, stderr=log_file, preexec_fn=os.setsid
+            )
             print(f"Running simulation for {runtime} seconds, output written to {outfile}")
             time.sleep(runtime)
             print("Terminating...")
@@ -81,6 +82,7 @@ if __name__ == "__main__":
 
     # Run script
     N_trials = 2
+    save_sil_logs = False
     for i in range(N_trials):
         trial_number = i + 1
         trial_result_folder_path = os.path.join(result_folder_path, "trials/trial" + str(trial_number))
@@ -90,7 +92,7 @@ if __name__ == "__main__":
         FSW_simulate(int(args.duration), args.outfile, trial_number=trial_number, trial_date=trial_date)
 
         # Collect FSW data
-        collect_FSW_data(args.outfile, trial_result_folder_path)
+        collect_FSW_data(args.outfile, trial_result_folder_path, save_sil_logs=save_sil_logs)
         print(f"Trial {trial_number} completed. Results saved to {trial_result_folder_path}")
 
     # Run Plotting (Sim states)
@@ -103,5 +105,5 @@ if __name__ == "__main__":
     # Parse Logs
     for i in range(N_trials):
         trial_number = i + 1
-        trial_result_folder_path= os.path.join(result_folder_path, "trials/trial" + str(trial_number))
+        trial_result_folder_path = os.path.join(result_folder_path, "trials/trial" + str(trial_number))
         parse_FSW_logs(os.path.join(trial_result_folder_path, args.outfile))

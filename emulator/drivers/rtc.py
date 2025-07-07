@@ -1,4 +1,4 @@
-from time import localtime, gmtime, struct_time
+from time import gmtime, localtime, struct_time
 
 
 class RTC:

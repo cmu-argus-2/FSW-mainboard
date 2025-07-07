@@ -298,7 +298,8 @@ class Task(TemplateTask):
             self.log_info(f"Mag Field : {self.log_data[ADCS_IDX.MAG_X:ADCS_IDX.MAG_Z + 1]}")
             self.log_info(f"Sun Vector : {self.log_data[ADCS_IDX.SUN_VEC_X:ADCS_IDX.SUN_VEC_Z + 1]}")
             self.log_info(f"Sun Status : {self.log_data[ADCS_IDX.SUN_STATUS]}")
-            
+
             from hal.configuration import SATELLITE
             from ulab import numpy as np
+
             SATELLITE.set_fsw_state(np.concatenate((self.AD.state[0:22], self.AD.true_map)))

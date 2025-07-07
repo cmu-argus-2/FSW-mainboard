@@ -46,7 +46,7 @@ class AttitudeDetermination:
     sun_pos_idx = slice(19, 22)
     sun_status_idx = slice(22, 23)
     sun_lux_idx = slice(23, 32)
-    
+
     true_map = np.zeros((6,))
 
     # Time storage
@@ -87,7 +87,7 @@ class AttitudeDetermination:
         """
 
         if SATELLITE.IMU_AVAILABLE:
-            gyro = np.deg2rad(np.array(SATELLITE.IMU.gyro())) # Convert gyro reading from deg/s to rad/s
+            gyro = np.deg2rad(np.array(SATELLITE.IMU.gyro()))  # Convert gyro reading from deg/s to rad/s
             query_time = TPM.time()
 
             # Sensor validity check
@@ -177,9 +177,9 @@ class AttitudeDetermination:
         #     return StatusConst.MEKF_INIT_FAIL, StatusConst.TRIAD_FAIL
 
         # Log variables to state
-        self.state[self.position_idx] = np.zeros((3,)) # true_pos_eci
-        self.state[self.velocity_idx] = np.zeros((3,)) # true_vel_eci
-        self.state[self.attitude_idx] = np.zeros((4,)) # attitude
+        self.state[self.position_idx] = np.zeros((3,))  # true_pos_eci
+        self.state[self.velocity_idx] = np.zeros((3,))  # true_vel_eci
+        self.state[self.attitude_idx] = np.zeros((4,))  # attitude
         self.state[self.omega_idx] = omega_body
         self.state[self.bias_idx] = np.zeros((3,))
         self.state[self.mag_field_idx] = mag_field_body
@@ -318,7 +318,8 @@ class AttitudeDetermination:
                 return Modes.TUMBLING
         elif current_mode == Modes.STABLE:
             momentum_error = np.linalg.norm(
-                PhysicalConst.INERTIA_MAJOR_DIR - np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx]) / ControllerConst.MOMENTUM_TARGET_MAG
+                PhysicalConst.INERTIA_MAJOR_DIR
+                - np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx]) / ControllerConst.MOMENTUM_TARGET_MAG
             )
             # ControllerConst.MOMENTUM_TARGET - np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx])
 
@@ -333,7 +334,8 @@ class AttitudeDetermination:
 
         elif current_mode == Modes.SUN_POINTED:
             momentum_error = np.linalg.norm(
-                PhysicalConst.INERTIA_MAJOR_DIR - np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx]) / ControllerConst.MOMENTUM_TARGET_MAG
+                PhysicalConst.INERTIA_MAJOR_DIR
+                - np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx]) / ControllerConst.MOMENTUM_TARGET_MAG
             )
             # ControllerConst.MOMENTUM_TARGET - np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx])
 
@@ -354,12 +356,13 @@ class AttitudeDetermination:
 
         elif current_mode == Modes.ACS_OFF:
             momentum_error = np.linalg.norm(
-                PhysicalConst.INERTIA_MAJOR_DIR - np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx]) / ControllerConst.MOMENTUM_TARGET_MAG
+                PhysicalConst.INERTIA_MAJOR_DIR
+                - np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx]) / ControllerConst.MOMENTUM_TARGET_MAG
             )
             # ControllerConst.MOMENTUM_TARGET - np.dot(PhysicalConst.INERTIA_MAT, self.state[self.omega_idx])
             if momentum_error >= Modes.STABLE_TOL_HI:
                 return Modes.STABLE
-            
+
             if self.state[self.sun_status_idx] == StatusConst.OK:
                 sun_error = np.linalg.norm(
                     self.state[self.sun_pos_idx]

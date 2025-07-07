@@ -1,9 +1,11 @@
-import re
-import numpy as np
 import os
-from datetime import datetime
+import re
 import shutil
+from datetime import datetime
+
 import matplotlib.pyplot as plt
+import numpy as np
+
 
 # Convert timestamp strings to seconds from the start
 def timestamps_to_seconds(timestamps):
@@ -40,7 +42,7 @@ def plot_FSW(result_folder_path):
             print(f"Extracted data file not found at {data_path}")
             return
         # Extract trial number from the folder name (assumes folder ends with an integer)
-        trial_number_match = re.search(r'(\d+)$', trial_folder)
+        trial_number_match = re.search(r"(\d+)$", trial_folder)
         if trial_number_match:
             trial_number = int(trial_number_match.group(1))
         else:
@@ -87,15 +89,13 @@ def plot_FSW(result_folder_path):
         sun_vectors_list.append((timestamps_sun, sun_vector))
         sun_statuses_list.append((timestamps_status, sun_status))
 
-        
-
     print("Plotting FSW data...")
     # Use timestamps_gyro for plotting (assuming all timestamps are aligned)
     # Plot ADCS Mode
     mode_names = ["TUMBLING", "STABLE", "SUN_POINTED", "ACS_OFF"]
     plt.figure(figsize=(10, 4))
-    for idx, (timestamps_modes, adcs_modes_values) in enumerate(adcs_modes_list):
-        plt.plot(timestamps_modes, adcs_modes_values, label=f"Trial {idx+1}")
+    for trial_idx, (timestamps_modes, adcs_modes_values) in enumerate(adcs_modes_list):
+        plt.plot(timestamps_modes, adcs_modes_values, label=f"Trial {trial_numbers[trial_idx]}")
     plt.ylabel("ADCS Mode")
     plt.xlabel("Time (s)")
     plt.yticks(ticks=range(len(mode_names)), labels=mode_names)
@@ -114,7 +114,7 @@ def plot_FSW(result_folder_path):
     for i in range(3):
         ax = plt.subplot(3, 1, i + 1)
         for trial_idx, (timestamps_gyro, gyro_ang_vel) in enumerate(gyro_ang_vels_list):
-            ax.plot(timestamps_gyro, gyro_ang_vel[:, i], label=f"Trial {trial_numbers[trial_idx]}")
+            ax.plot(timestamps_gyro, np.rad2deg(gyro_ang_vel[:, i]), label=f"Trial {trial_numbers[trial_idx]}")
         ax.set_ylabel(labels[i])
         if i == 2:
             ax.set_xlabel("Time (s)")
@@ -148,7 +148,7 @@ def plot_FSW(result_folder_path):
     plt.close()
     print(f"Gyro Bias plot saved to {output_plot_path_bias}")
 
-    # Plot Magnetic Field        
+    # Plot Magnetic Field
     plt.figure(figsize=(10, 8))
     labels = ["Mag X [T]", "Mag Y [T]", "Mag Z [T]"]
     for i in range(3):
@@ -170,7 +170,6 @@ def plot_FSW(result_folder_path):
     # Plot Sun Vector
     plt.figure(figsize=(10, 8))
     labels = ["Sun X", "Sun Y", "Sun Z"]
-    colors = ['tab:blue', 'tab:orange', 'tab:green']
     for i in range(3):
         ax = plt.subplot(3, 1, i + 1)
         for trial_idx, (timestamps_sun, sun_vector) in enumerate(sun_vectors_list):
@@ -188,12 +187,16 @@ def plot_FSW(result_folder_path):
     print(f"Sun Vector plot saved to {output_plot_path_sun}")
 
     # Plot Sun Status
-    # [TODO:] set y labels to the corresponding codes
+    sun_mode_names = ["SUN_FLAG_ZERO", "SUN_NO_READINGS", "SUN_NOT_ENOUGH_READINGS", "SUN_ECLIPSE"]
     plt.figure(figsize=(10, 4))
     for trial_idx, (timestamps_status, sun_status) in enumerate(sun_statuses_list):
-        plt.plot(timestamps_status, sun_status, label=f"Trial {trial_numbers[trial_idx]}")
+        # Set all sun_status == 0 to 50 for plotting
+        sun_status_plot = np.where(sun_status == 0, 50, sun_status)
+        plt.plot(timestamps_status, sun_status_plot, label=f"Trial {trial_numbers[trial_idx]}")
     plt.ylabel("Sun Status")
     plt.xlabel("Time (s)")
+    plt.yticks(ticks=range(50, 50 + len(sun_mode_names)), labels=sun_mode_names)
+    plt.ylim(49, 54)
     plt.legend()
     plt.title("ADCS Sun Status")
     plt.tight_layout()
@@ -201,10 +204,9 @@ def plot_FSW(result_folder_path):
     plt.savefig(output_plot_path_status)
     plt.close()
     print(f"Sun Status plot saved to {output_plot_path_status}")
-        
 
 
-def collect_FSW_data(outfile, result_folder_path):
+def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False):
     """
     Collects FSW data from the log file.
     """
@@ -212,18 +214,12 @@ def collect_FSW_data(outfile, result_folder_path):
     fsw_data = []
     pattern = re.compile(r"\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]\[INFO\] \[\d+\]\[ADCS\] .+:.+")
 
-    with open(outfile, 'r') as f:
+    with open(outfile, "r") as f:
         for line in f:
             if pattern.match(line.strip()):
                 fsw_data.append(line.strip())
 
     print(f"Collected {len(fsw_data)} FSW data entries.")
-    # [2024-10-01 21:21:26][INFO] [6][ADCS] ADCS Mode : 1
-    # [2024-10-01 21:21:26][INFO] [6][ADCS] Gyro Ang Vel : [np.float64(0.0), np.float64(0.0), np.float64(0.0)]
-    # [2024-10-01 21:21:26][INFO] [6][ADCS] Gyro Bias : [0. 0. 0.]
-    # [2024-10-27 23:16:05][INFO] [6][ADCS] Mag Field : [-3.477101329337895e-05, -2.7282350701214218e-05, 1.3561380237317155e-05]
-    # [2024-10-27 23:16:05][INFO] [6][ADCS] Sun Vector : [-0.18666812846588665, -0.862232934081153, -0.4708602523051283]
-    # [2024-10-27 23:16:05][INFO] [6][ADCS] Sun Status : 0
     # Extract timestamp, ADCS Mode, Gyro Ang Vel, and Gyro Bias
     # Prepare empty lists for each variable
     adcs_modes = []
@@ -234,29 +230,29 @@ def collect_FSW_data(outfile, result_folder_path):
     sun_statuses = []
 
     for entry in fsw_data:
-        timestamp = entry.split(']')[0][1:]
-        adcs_mode = re.search(r'ADCS Mode : (\d+)', entry)
-        gyro_ang_vel = re.search(r'Gyro Ang Vel : \[(.*?)\]', entry)
-        gyro_bias = re.search(r'Gyro Bias : \[(.+?)\]', entry)
-        mag_field = re.search(r'Mag Field : \[(.*?)\]', entry)
-        sun_vector = re.search(r'Sun Vector : \[(.*?)\]', entry)
-        sun_status = re.search(r'Sun Status : (\d+)', entry)
+        timestamp = entry.split("]")[0][1:]
+        adcs_mode = re.search(r"ADCS Mode : (\d+)", entry)
+        gyro_ang_vel = re.search(r"Gyro Ang Vel : \[(.*?)\]", entry)
+        gyro_bias = re.search(r"Gyro Bias : \[(.+?)\]", entry)
+        mag_field = re.search(r"Mag Field : \[(.*?)\]", entry)
+        sun_vector = re.search(r"Sun Vector : \[(.*?)\]", entry)
+        sun_status = re.search(r"Sun Status : (\d+)", entry)
 
         if adcs_mode:
             adcs_modes.append([timestamp, int(adcs_mode.group(1))])
         elif gyro_ang_vel:
-            values = re.findall(r'np\.float64\((.*?)\)', gyro_ang_vel.group(1))
+            values = re.findall(r"np\.float64\((.*?)\)", gyro_ang_vel.group(1))
             if not values:
-                values = re.findall(r'[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|[-+]?\d+(?:[eE][-+]?\d+)?', gyro_ang_vel.group(1))
+                values = re.findall(r"[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|[-+]?\d+(?:[eE][-+]?\d+)?", gyro_ang_vel.group(1))
             gyro_ang_vels.append([timestamp] + [float(v) for v in values])
         elif gyro_bias:
-            values = re.findall(r'[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|[-+]?\d+(?:[eE][-+]?\d+)?', gyro_bias.group(1))
+            values = re.findall(r"[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|[-+]?\d+(?:[eE][-+]?\d+)?", gyro_bias.group(1))
             gyro_biases.append([timestamp] + [float(v) for v in values])
         elif mag_field:
-            values = re.findall(r'[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|[-+]?\d+(?:[eE][-+]?\d+)?', mag_field.group(1))
+            values = re.findall(r"[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|[-+]?\d+(?:[eE][-+]?\d+)?", mag_field.group(1))
             mag_fields.append([timestamp] + [float(v) for v in values])
         elif sun_vector:
-            values = re.findall(r'[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|[-+]?\d+(?:[eE][-+]?\d+)?', sun_vector.group(1))
+            values = re.findall(r"[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|[-+]?\d+(?:[eE][-+]?\d+)?", sun_vector.group(1))
             sun_vectors.append([timestamp] + [float(v) for v in values])
         elif sun_status:
             sun_statuses.append([timestamp, int(sun_status.group(1))])
@@ -268,18 +264,22 @@ def collect_FSW_data(outfile, result_folder_path):
     mag_fields_np = np.array(mag_fields)
     sun_vectors_np = np.array(sun_vectors)
     sun_statuses_np = np.array(sun_statuses)
-    
+
     # Save extracted data to a .npz file in the result folder
     output_path = os.path.join(result_folder_path, "fsw_extracted_data.npz")
-    np.savez(output_path, 
-             adcs_modes=adcs_modes_np, 
-             gyro_ang_vels=gyro_ang_vels_np, 
-             gyro_biases=gyro_biases_np,
-             mag_fields=mag_fields_np,
-             sun_vectors=sun_vectors_np,
-             sun_statuses=sun_statuses_np)
+    np.savez(
+        output_path,
+        adcs_modes=adcs_modes_np,
+        gyro_ang_vels=gyro_ang_vels_np,
+        gyro_biases=gyro_biases_np,
+        mag_fields=mag_fields_np,
+        sun_vectors=sun_vectors_np,
+        sun_statuses=sun_statuses_np,
+    )
     print(f"Extracted data saved to {output_path}")
 
     # Move sil_logs.log to the result folder
-    shutil.move(outfile, result_folder_path)
-    
+    if save_sil_logs:
+        shutil.move(outfile, result_folder_path)
+    else:
+        os.remove(outfile)

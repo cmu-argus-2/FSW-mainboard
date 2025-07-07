@@ -88,7 +88,7 @@ class Modes:
     SUN_VECTOR_REF = np.array([0.0, 0.0, 1.0])
 
     # Detumbling
-    TUMBLING_TOL  = 0.09  # Exit detumbling into stable if ω < 0.09 rad/s (5 deg/s)
+    TUMBLING_TOL = 0.09  # Exit detumbling into stable if ω < 0.09 rad/s (5 deg/s)
 
     # STABLE MODE
     STABLE_TOL_LO = 0.26  # Exit into sun_pointing if momentum less than 15 deg from major axis
@@ -96,7 +96,7 @@ class Modes:
 
     # SUN POINTED MODE
     SUN_POINTED_TOL_LO = 0.176  # Turn ACS off if momentum less than 10 deg from sun vector
-    SUN_POINTED_TOL_HI = 0.26   # Re-enter sun_pointed if momentum more than 15 deg from sun vector
+    SUN_POINTED_TOL_HI = 0.26  # Re-enter sun_pointed if momentum more than 15 deg from sun vector
 
 
 class PhysicalConst:

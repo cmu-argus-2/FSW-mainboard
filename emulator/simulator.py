@@ -12,12 +12,12 @@ Author(s): Karthik Karumanchi, Ibrahima S. Sow
 
 import os
 import random
+import shutil
 import time
 from datetime import datetime
 
 import numpy as np
 from argusim.simulation_manager.sim import Simulator as cppSim
-import shutil
 
 ARGUS_ROOT = os.getenv("ARGUS_ROOT", os.path.join(os.getcwd(), "../"))
 RESULTS_ROOT_FOLDER = os.path.join(ARGUS_ROOT, "montecarlo/results")
@@ -30,11 +30,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
             trial = random.randint(0, 100)
         if trial_date is None:
             trial_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        RESULTS_FOLDER = os.path.join(
-            RESULTS_ROOT_FOLDER,
-            trial_date,
-            "trials/trial" + str(trial)
-        )
+        RESULTS_FOLDER = os.path.join(RESULTS_ROOT_FOLDER, trial_date, "trials/trial" + str(trial))
         os.makedirs(RESULTS_FOLDER)
         shutil.copy(CONFIG_FILE, os.path.join(os.path.dirname(RESULTS_FOLDER), "../params.yaml"))
         self.cppsim = cppSim(trial, RESULTS_FOLDER, CONFIG_FILE, log=True)
@@ -167,6 +163,6 @@ class Simulator:  # will be passed by reference to the emulated HAL
 
     def get_sim_time(self):
         return 946728000 + self.cppsim.get_time()
-    
+
     def set_fsw_state(self, state):
         self.cppsim.fsw_state = state
