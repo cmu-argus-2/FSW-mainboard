@@ -9,6 +9,7 @@ class EPS_POWER_FLAG:
     EXPERIMENT = const(0x3)
 
 
+# SOC thresholds in percentage
 class EPS_SOC_THRESHOLD:
     LOW_POWER_ENTRY = const(30)
     LOW_POWER_EXIT = const(40)
@@ -16,9 +17,16 @@ class EPS_SOC_THRESHOLD:
     EXPERIMENT_EXIT = const(60)
 
 
+# Temperature thresholds in cC (centi-Celsius)
+class EPS_TEMP_THRESHOLD:
+    BATTERY_HEAT_ENABLE = const(0)
+    BATTERY_HEAT_DISABLE = const(500)
+
+
 # Power threshold in mW
 class EPS_POWER_THRESHOLD:
     MAINBOARD = const(1000)  # TODO: this threshold makes sense for v2 mainboards, but change to 400 for v3
+    PERIPHERAL = const(1000)
     RADIO = const(3300)
     JETSON = const(16000)
     TORQUE_COIL = const(1500)
@@ -37,10 +45,6 @@ def GET_EPS_POWER_FLAG(curr_flag, soc):
             else:
                 flag = EPS_POWER_FLAG.NOMINAL
 
-        # TODO:
-        # add logic to take discharge rate into account
-        # when determining experiment state enter/exit thresholds;
-        # the current approach is probably too simple
         elif EPS_SOC_THRESHOLD.LOW_POWER_EXIT <= soc < EPS_SOC_THRESHOLD.EXPERIMENT_EXIT:
             flag = EPS_POWER_FLAG.NOMINAL
 
@@ -67,4 +71,14 @@ def GET_POWER_STATUS(buf, power, threshold, window):
     # Obtain the moving average
     power_avg = sum(buf) / len(buf)
     # Return the moving average value & the power status
-    return (power_avg >= threshold), power_avg
+    return (power_avg >= threshold), int(power_avg)
+
+
+def SHOULD_ENABLE_HEATERS(enabled, temp):
+    """returns whether battery heaters should be enabled in current conditions"""
+    return not enabled and (temp <= EPS_TEMP_THRESHOLD.BATTERY_HEAT_ENABLE)
+
+
+def SHOULD_DISABLE_HEATERS(enabled, temp):
+    """returns whether battery heaters should be disabled in current conditions"""
+    return enabled and (temp >= EPS_TEMP_THRESHOLD.BATTERY_HEAT_DISABLE)

@@ -1,6 +1,5 @@
 from apps.adcs.consts import ControllerConst, Modes, PhysicalConst, StatusConst
 from apps.adcs.sun import compute_body_sun_vector_from_lux, read_light_sensors
-from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 from ulab import numpy as np
 

@@ -56,7 +56,7 @@ class CubeSat:
                 ("FUEL_GAUGE", Device(self.__fuel_gauge_boot, ASIL2)),
                 ("BATT_HEATERS", Device(self.__battery_heaters_boot, ASIL1)),
                 ("WATCHDOG", Device(self.__watchdog_boot, ASIL2)),
-                ("BURN_WIRE", Device(self.__burn_wire_boot, ASIL4)),
+                ("BURN_WIRES", Device(self.__burn_wire_boot, ASIL4)),
                 ("BOARD_PWR", Device(self.__power_monitor_boot, ASIL1)),
                 ("RADIO_PWR", Device(self.__power_monitor_boot, ASIL1)),
                 ("GPS_PWR", Device(self.__power_monitor_boot, ASIL1)),
