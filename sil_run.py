@@ -10,6 +10,7 @@ from fsw_plotter import collect_FSW_data, plot_FSW
 
 DEFAULT_RUNTIME = 60  # 5 * 60  # 5 minutes
 DEFAULT_OUTFILE = "sil_logs.log"
+DEFAULT_N_TRIALS = 1  # Default number of trials to run
 
 # KEYWORD SEARCHES:
 # List of all keywords to probe the log for
@@ -73,6 +74,17 @@ if __name__ == "__main__":
         default=DEFAULT_OUTFILE,
         help=f"Log file to save FSW logs to [string, default: {DEFAULT_OUTFILE}] \n NOTE: Enter filename with extension",
     )
+    parser.add_argument(
+        "--n_trials",
+        type=int,
+        default=DEFAULT_N_TRIALS,
+        help="Number of trials to run [int, default: 100]",
+    )
+    parser.add_argument(
+        "--erase_sil_logs",
+        action="store_true",
+        help="Flag to erase SIL logs for each trial [default: False]",
+    )
 
     # Parse Arguments
     args = parser.parse_args()
@@ -81,9 +93,7 @@ if __name__ == "__main__":
     result_folder_path = os.path.join("montecarlo/results", trial_date)
 
     # Run script
-    N_trials = 2
-    save_sil_logs = False
-    for i in range(N_trials):
+    for i in range(args.n_trials):
         trial_number = i + 1
         trial_result_folder_path = os.path.join(result_folder_path, "trials/trial" + str(trial_number))
         print(f"Running Trial {trial_number}...")
@@ -92,7 +102,7 @@ if __name__ == "__main__":
         FSW_simulate(int(args.duration), args.outfile, trial_number=trial_number, trial_date=trial_date)
 
         # Collect FSW data
-        collect_FSW_data(args.outfile, trial_result_folder_path, save_sil_logs=save_sil_logs)
+        collect_FSW_data(args.outfile, trial_result_folder_path, save_sil_logs=not args.erase_sil_logs)
         print(f"Trial {trial_number} completed. Results saved to {trial_result_folder_path}")
 
     # Run Plotting (Sim states)
@@ -103,7 +113,8 @@ if __name__ == "__main__":
     plot_FSW(result_folder_path=result_folder_path)
 
     # Parse Logs
-    for i in range(N_trials):
-        trial_number = i + 1
-        trial_result_folder_path = os.path.join(result_folder_path, "trials/trial" + str(trial_number))
-        parse_FSW_logs(os.path.join(trial_result_folder_path, args.outfile))
+    if not args.erase_sil_logs:
+        for i in range(args.n_trials):
+            trial_number = i + 1
+            trial_result_folder_path = os.path.join(result_folder_path, "trials/trial" + str(trial_number))
+            parse_FSW_logs(os.path.join(trial_result_folder_path, args.outfile))

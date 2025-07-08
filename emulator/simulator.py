@@ -163,6 +163,3 @@ class Simulator:  # will be passed by reference to the emulated HAL
 
     def get_sim_time(self):
         return 946728000 + self.cppsim.get_time()
-
-    def set_fsw_state(self, state):
-        self.cppsim.fsw_state = state
