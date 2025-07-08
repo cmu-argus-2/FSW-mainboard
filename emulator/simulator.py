@@ -158,4 +158,4 @@ class Simulator:  # will be passed by reference to the emulated HAL
             self.sim_time += dt
 
     def get_sim_time(self):
-        return 946746000 + self.cppsim.get_time()
+        return 946728000 + self.cppsim.get_time()
