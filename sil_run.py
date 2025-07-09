@@ -86,11 +86,17 @@ if __name__ == "__main__":
         default=False,
         help="Flag to erase SIL logs for each trial [default: False]",
     )
+    parser.add_argument(
+        "--store_sil_logs_results",
+        action="store_true",
+        default=False,
+        help="Flag to erase SIL logs for each trial [default: False]",
+    )
 
     # Parse Arguments
     args = parser.parse_args()
-
-    args.erase_sil_logs = True
+    # args.store_sil_logs_results = False
+    # args.erase_sil_logs = True
 
     trial_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     result_folder_path = os.path.join("montecarlo/results", trial_date)
@@ -105,7 +111,12 @@ if __name__ == "__main__":
         FSW_simulate(int(args.duration), args.outfile, trial_number=trial_number, trial_date=trial_date)
 
         # Collect FSW data
-        collect_FSW_data(args.outfile, trial_result_folder_path, save_sil_logs=not args.erase_sil_logs)
+        collect_FSW_data(
+            args.outfile,
+            trial_result_folder_path,
+            save_sil_logs=args.store_sil_logs_results,
+            erase_sil_logs=args.erase_sil_logs,
+        )
         print(f"Trial {trial_number} completed. Results saved to {trial_result_folder_path}")
 
     # Run Plotting (Sim states)
