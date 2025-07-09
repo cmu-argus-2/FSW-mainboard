@@ -69,6 +69,8 @@ class Task(TemplateTask):
     sun_pos_body = np.zeros((3,))
     sun_lux = np.zeros((9,))
 
+    mag_counter = 0
+
     def __init__(self, id):
         super().__init__(id)
         self.name = "ADCS"  # Override the name
@@ -93,11 +95,20 @@ class Task(TemplateTask):
                 self.gyro_status, self.gyro_data = sensors.read_gyro()
 
                 # Query Magnetometer
-                self.mag_status, self.mag_data = sensors.read_magnetometer()
+                if self.mag_counter == 0:
+                    self.mag_status, self.mag_data = sensors.read_magnetometer()
+                    self.last_mag_time = TPM.time()
 
                 # Run Attitude Control
-                self.attitude_control()
+                if self.mag_counter < 3:
+                    self.attitude_control()
+                    self.last_mtb_time = TPM.time()
+                else:
+                    zero_all_coils()
 
+                self.mag_counter += 1
+                if self.mag_counter == 5:
+                    self.mag_counter = 0
                 # Check if detumbling has been completed
                 if sensors.current_mode(self.MODE) != Modes.TUMBLING:
                     zero_all_coils()
@@ -109,6 +120,7 @@ class Task(TemplateTask):
             elif SM.current_state == STATES.LOW_POWER or SM.current_state == STATES.EXPERIMENT:
                 # Turn coils off to conserve power
                 zero_all_coils()
+                self.mag_counter = 0
 
             # ------------------------------------------------------------------------------------------------------------------------------------
             # NOMINAL
@@ -127,7 +139,9 @@ class Task(TemplateTask):
                     self.gyro_status, self.gyro_data = sensors.read_gyro()
 
                     # Query Magnetometer
-                    self.mag_status, self.mag_data = sensors.read_magnetometer()
+                    if self.mag_counter == 0:
+                        self.mag_status, self.mag_data = sensors.read_magnetometer()
+                        self.last_mag_time = TPM.time()
 
                     # Query Sun Position
                     self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
@@ -139,8 +153,15 @@ class Task(TemplateTask):
                         self.MODE = new_mode
 
                     # Run attitude control if not in Low-power
-                    if SM.current_state != STATES.LOW_POWER and self.MODE != Modes.ACS_OFF:
+                    if SM.current_state != STATES.LOW_POWER and self.MODE != Modes.ACS_OFF and self.mag_counter < 3:
                         self.attitude_control()
+                        self.last_mtb_time = TPM.time()
+                    else:
+                        zero_all_coils()
+
+                    self.mag_counter += 1
+                    if self.mag_counter == 5:
+                        self.mag_counter = 0
 
             # Log data
             # NOTE: In detumbling, most of the log will be zeros since very few sensors are queried
@@ -164,7 +185,7 @@ class Task(TemplateTask):
             # Control MCMs and obtain coil statuses
             dipole_moment = spin_stabilizing_controller(self.gyro_data, self.mag_data)
 
-        else:  # Sun-pointed controller
+        elif self.MODE == Modes.SUN_POINTED:  # Sun-pointed controller
 
             # Perform ACS iff a sun vector measurement is valid
             # i.e., ignore eclipses, insufficient readings etc.
@@ -173,6 +194,10 @@ class Task(TemplateTask):
 
             # Control MCMs and obtain coil statuses
             dipole_moment = sun_pointing_controller(self.sun_pos_body, self.gyro_data, self.mag_data)
+        else:
+            # If in ACS_OFF or any other mode, do not control MCMs
+            # Just zero out the dipole moment
+            dipole_moment = np.zeros((3,))
 
         self.coil_status = mcm_coil_allocator(dipole_moment)
 
@@ -220,6 +245,8 @@ class Task(TemplateTask):
         self.log_info(f"Mag Field : {self.log_data[ADCS_IDX.MAG_X:ADCS_IDX.MAG_Z + 1]}")
         self.log_info(f"Sun Vector : {self.log_data[ADCS_IDX.SUN_VEC_X:ADCS_IDX.SUN_VEC_Z + 1]}")
         self.log_info(f"Sun Status : {self.log_data[ADCS_IDX.SUN_STATUS]}")
+        self.log_info(f"Gyro Status : {self.gyro_status}")
+        self.log_info(f"Mag Status : {self.mag_status}")
 
         # from hal.configuration import SATELLITE
         # from ulab import numpy as np

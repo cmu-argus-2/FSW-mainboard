@@ -29,7 +29,7 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
     if (
         not readings_are_valid((omega, mag_field))
         or np.linalg.norm(mag_field) == 0
-        or np.linalg.norm(omega) <= ControllerConst.OMEGA_TOLERANCE
+        # or np.linalg.norm(omega) <= ControllerConst.OMEGA_TOLERANCE
     ):
         return ControllerConst.FALLBACK_CONTROL
 
@@ -51,7 +51,7 @@ def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field
         not readings_are_valid((sun_vector, omega, mag_field))
         or np.linalg.norm(mag_field) == 0
         or np.linalg.norm(sun_vector) == 0
-        or np.linalg.norm(omega) <= ControllerConst.OMEGA_TOLERANCE
+        # or np.linalg.norm(omega) <= ControllerConst.OMEGA_TOLERANCE
     ):
         return ControllerConst.FALLBACK_CONTROL
 

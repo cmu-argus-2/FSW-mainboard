@@ -29,8 +29,8 @@ def plot_FSW(result_folder_path):
         if os.path.isdir(os.path.join(trials_folder_path, d))
     ]
     adcs_modes_list = []
+    global_modes_list = []
     gyro_ang_vels_list = []
-    gyro_biases_list = []
     mag_fields_list = []
     sun_vectors_list = []
     sun_statuses_list = []
@@ -52,22 +52,22 @@ def plot_FSW(result_folder_path):
 
         # Extract arrays by key
         adcs_modes = data["adcs_modes"]
+        global_modes = data["global_modes"]
         gyro_ang_vels = data["gyro_ang_vels"]
-        gyro_biases = data["gyro_biases"]
 
         # Extract timestamps from the first column of each array
         timestamps_modes = adcs_modes[:, 0]
+        timestamps_global = global_modes[:, 0]
         timestamps_gyro = gyro_ang_vels[:, 0]
-        timestamps_bias = gyro_biases[:, 0]
 
         # Convert data columns to appropriate types
         adcs_modes_values = adcs_modes[:, 1].astype(int)
+        global_modes_values = global_modes[:, 1].astype(int)
         gyro_ang_vel = gyro_ang_vels[:, 1:4].astype(float)
-        gyro_bias = gyro_biases[:, 1:4].astype(float)
 
         timestamps_gyro = timestamps_to_seconds(timestamps_gyro)
         timestamps_modes = timestamps_to_seconds(timestamps_modes)
-        timestamps_bias = timestamps_to_seconds(timestamps_bias)
+        timestamps_global = timestamps_to_seconds(timestamps_global)
 
         mag_fields = data["mag_fields"]
         timestamps_mag = timestamps_to_seconds(mag_fields[:, 0])
@@ -83,8 +83,8 @@ def plot_FSW(result_folder_path):
 
         # Store everything into lists
         adcs_modes_list.append((timestamps_modes, adcs_modes_values))
+        global_modes_list.append((timestamps_global, global_modes_values))
         gyro_ang_vels_list.append((timestamps_gyro, gyro_ang_vel))
-        gyro_biases_list.append((timestamps_bias, gyro_bias))
         mag_fields_list.append((timestamps_mag, mag_field))
         sun_vectors_list.append((timestamps_sun, sun_vector))
         sun_statuses_list.append((timestamps_status, sun_status))
@@ -92,20 +92,38 @@ def plot_FSW(result_folder_path):
     print("Plotting FSW data...")
     # Use timestamps_gyro for plotting (assuming all timestamps are aligned)
     # Plot ADCS Mode
+    # Plot ADCS Mode
     mode_names = ["TUMBLING", "STABLE", "SUN_POINTED", "ACS_OFF"]
-    plt.figure(figsize=(10, 4))
+    global_mode_names = ["STARTUP", "DETUMBLING", "NOMINAL", "EXPERIMENT", "LOW_POWER"]
+
+    plt.figure(figsize=(12, 7))
+
+    # ADCS Mode subplot
+    ax1 = plt.subplot(2, 1, 1)
     for trial_idx, (timestamps_modes, adcs_modes_values) in enumerate(adcs_modes_list):
-        plt.plot(timestamps_modes, adcs_modes_values, label=f"Trial {trial_numbers[trial_idx]}")
-    plt.ylabel("ADCS Mode")
-    plt.xlabel("Time (s)")
-    plt.yticks(ticks=range(len(mode_names)), labels=mode_names)
-    plt.legend()
+        ax1.plot(timestamps_modes, adcs_modes_values, label=f"Trial {trial_numbers[trial_idx]}")
+    ax1.set_ylabel("ADCS Mode")
+    ax1.set_yticks(range(len(mode_names)))
+    ax1.set_yticklabels(mode_names)
+    ax1.legend()
+    ax1.set_title("ADCS Mode")
+
+    # Global Mode subplot
+    ax2 = plt.subplot(2, 1, 2, sharex=ax1)
+    for trial_idx, (timestamps_global, global_modes_values) in enumerate(global_modes_list):
+        ax2.plot(timestamps_global, global_modes_values, label=f"Trial {trial_numbers[trial_idx]}")
+    ax2.set_ylabel("Global Mode")
+    ax2.set_xlabel("Time (s)")
+    ax2.set_yticks(range(len(global_mode_names)))
+    ax2.set_yticklabels(global_mode_names)
+    ax2.legend()
+    ax2.set_title("Global Mode")
+
     plt.tight_layout()
-    plt.title("ADCS Mode")
-    output_plot_path_mode = os.path.join(plots_folder_path, "fsw_adcs_mode_plot.png")
-    plt.savefig(output_plot_path_mode)
+    output_plot_path_modes = os.path.join(plots_folder_path, "fsw_modes_subplot.png")
+    plt.savefig(output_plot_path_modes)
     plt.close()
-    print(f"ADCS Mode plot saved to {output_plot_path_mode}")
+    print(f"ADCS and Global Mode subplot saved to {output_plot_path_modes}")
 
     # Plot Gyro Angular Velocity
     plt.figure(figsize=(10, 8))
@@ -127,26 +145,6 @@ def plot_FSW(result_folder_path):
     plt.savefig(output_plot_path_gyro)
     plt.close()
     print(f"Gyro Angular Velocity plot saved to {output_plot_path_gyro}")
-
-    # Plot Gyro Bias
-    plt.figure(figsize=(10, 8))
-    labels = ["Bias X", "Bias Y", "Bias Z"]
-    for i in range(3):
-        ax = plt.subplot(3, 1, i + 1)
-        for trial_idx, (timestamps_bias, gyro_bias) in enumerate(gyro_biases_list):
-            ax.plot(timestamps_bias, gyro_bias[:, i], label=f"Trial {trial_numbers[trial_idx]}")
-        ax.set_ylabel(labels[i])
-        if i == 2:
-            ax.set_xlabel("Time (s)")
-        if i == 0:
-            ax.legend()
-            ax.set_title("ADCS Gyro Bias")
-
-    plt.tight_layout()
-    output_plot_path_bias = os.path.join(plots_folder_path, "fsw_gyro_bias_plot.png")
-    plt.savefig(output_plot_path_bias)
-    plt.close()
-    print(f"Gyro Bias plot saved to {output_plot_path_bias}")
 
     # Plot Magnetic Field
     plt.figure(figsize=(10, 8))
@@ -213,18 +211,22 @@ def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False):
     print(f"Collecting FSW data from {outfile}...")
     fsw_data = []
     pattern = re.compile(r"\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]\[INFO\] \[\d+\]\[ADCS\] .+:.+")
-
+    command_global_state_pattern = re.compile(
+        r"\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]\[INFO\] \[\d+\]\[COMMAND\] GLOBAL STATE: .+"
+    )
     with open(outfile, "r") as f:
         for line in f:
-            if pattern.match(line.strip()):
+            if pattern.match(line.strip()) or command_global_state_pattern.match(line.strip()):
                 fsw_data.append(line.strip())
 
     print(f"Collected {len(fsw_data)} FSW data entries.")
     # Extract timestamp, ADCS Mode, Gyro Ang Vel, and Gyro Bias
     # Prepare empty lists for each variable
+    # [2024-10-21 09:20:32][INFO] [0][COMMAND] GLOBAL STATE: DETUMBLING.
+    # Also append to fsw_data the command global state pattern
     adcs_modes = []
+    global_modes = []
     gyro_ang_vels = []
-    gyro_biases = []
     mag_fields = []
     sun_vectors = []
     sun_statuses = []
@@ -232,22 +234,28 @@ def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False):
     for entry in fsw_data:
         timestamp = entry.split("]")[0][1:]
         adcs_mode = re.search(r"ADCS Mode : (\d+)", entry)
+        global_mode = re.search(r"GLOBAL STATE: (\w+)", entry)
         gyro_ang_vel = re.search(r"Gyro Ang Vel : \[(.*?)\]", entry)
-        gyro_bias = re.search(r"Gyro Bias : \[(.+?)\]", entry)
         mag_field = re.search(r"Mag Field : \[(.*?)\]", entry)
         sun_vector = re.search(r"Sun Vector : \[(.*?)\]", entry)
         sun_status = re.search(r"Sun Status : (\d+)", entry)
+        global_mode_code = {
+            "STARTUP": 0,
+            "DETUMBLING": 1,
+            "NOMINAL": 2,
+            "EXPERIMENT": 3,
+            "LOW_POWER": 4,
+        }
 
         if adcs_mode:
             adcs_modes.append([timestamp, int(adcs_mode.group(1))])
+        elif global_mode:
+            global_modes.append([timestamp, global_mode_code[global_mode.group(1)]])
         elif gyro_ang_vel:
             values = re.findall(r"np\.float64\((.*?)\)", gyro_ang_vel.group(1))
             if not values:
                 values = re.findall(r"[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|[-+]?\d+(?:[eE][-+]?\d+)?", gyro_ang_vel.group(1))
             gyro_ang_vels.append([timestamp] + [float(v) for v in values])
-        elif gyro_bias:
-            values = re.findall(r"[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|[-+]?\d+(?:[eE][-+]?\d+)?", gyro_bias.group(1))
-            gyro_biases.append([timestamp] + [float(v) for v in values])
         elif mag_field:
             values = re.findall(r"[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|[-+]?\d+(?:[eE][-+]?\d+)?", mag_field.group(1))
             mag_fields.append([timestamp] + [float(v) for v in values])
@@ -259,8 +267,8 @@ def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False):
 
     # Convert lists to numpy arrays (timestamps already included)
     adcs_modes_np = np.array(adcs_modes)
+    global_modes_np = np.array(global_modes)
     gyro_ang_vels_np = np.array(gyro_ang_vels)
-    gyro_biases_np = np.array(gyro_biases)
     mag_fields_np = np.array(mag_fields)
     sun_vectors_np = np.array(sun_vectors)
     sun_statuses_np = np.array(sun_statuses)
@@ -270,8 +278,8 @@ def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False):
     np.savez(
         output_path,
         adcs_modes=adcs_modes_np,
+        global_modes=global_modes_np,
         gyro_ang_vels=gyro_ang_vels_np,
-        gyro_biases=gyro_biases_np,
         mag_fields=mag_fields_np,
         sun_vectors=sun_vectors_np,
         sun_statuses=sun_statuses_np,
