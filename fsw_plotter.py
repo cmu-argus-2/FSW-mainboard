@@ -204,7 +204,7 @@ def plot_FSW(result_folder_path):
     print(f"Sun Status plot saved to {output_plot_path_status}")
 
 
-def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False):
+def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False, erase_sil_logs=False):
     """
     Collects FSW data from the log file.
     """
@@ -288,6 +288,6 @@ def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False):
 
     # Move sil_logs.log to the result folder
     if save_sil_logs:
-        shutil.move(outfile, result_folder_path)
-    else:
+        shutil.copy(outfile, result_folder_path)
+    if erase_sil_logs:
         os.remove(outfile)

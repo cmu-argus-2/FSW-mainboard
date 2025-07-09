@@ -10,7 +10,7 @@ from fsw_plotter import collect_FSW_data, plot_FSW
 
 DEFAULT_RUNTIME = 60  # 5 * 60  # 5 minutes
 DEFAULT_OUTFILE = "sil_logs.log"
-DEFAULT_N_TRIALS = 1  # Default number of trials to run
+DEFAULT_N_TRIALS = 100  # Default number of trials to run
 
 # KEYWORD SEARCHES:
 # List of all keywords to probe the log for
@@ -83,11 +83,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--erase_sil_logs",
         action="store_true",
+        default=False,
         help="Flag to erase SIL logs for each trial [default: False]",
     )
 
     # Parse Arguments
     args = parser.parse_args()
+
+    args.erase_sil_logs = True
 
     trial_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     result_folder_path = os.path.join("montecarlo/results", trial_date)
