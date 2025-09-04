@@ -1,6 +1,6 @@
 # Flight Software for the Argus Board
 
-**This page is deprecated and no longer maintained. Please refer to [Confluence](https://spacecraft.atlassian.net/wiki/spaces/CMA/pages/15761570/FSW+Overview) for internal docs.
+**This page is deprecated and no longer maintained. Please refer to [Confluence](https://spacecraft.atlassian.net/wiki/spaces/CMA/pages/15761570/FSW+Overview) for internal docs.**
 
 The repository contains the current flight software for the **Mainboard** of Argus. Argus is a technology demonstration mission with the goal of demonstrating vision-based Orbit Determination on a low-cost satellite (devoid of any GPS or ground involvement). We also aim to collect a decent dataset of images of the Earth to further efforts in CubeSat visual applications and demonstrate efficient on-orbit ML/GPU processing.
 
@@ -113,4 +113,5 @@ Other common devices causing brown out are burn wires, consider lowering its str
 
 ### Do I have to change anything before compiling the code for my targetted board.
 No. Configurations are automatically detected.
+
 
