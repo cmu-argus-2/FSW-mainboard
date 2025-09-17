@@ -110,7 +110,7 @@ class ArgusV4Interfaces:
 
 class ArgusV4Components:
     """
-    Represents the components used in the Argus V3 system.
+    Represents the components used in the Argus V4 system.
 
     This class defines constants for various components such as GPS, battery,
     power monitor, Jetson power monitor, IMU, charger, torque coils,
@@ -296,10 +296,10 @@ class ArgusV4Components:
 
 
 class ArgusV4(CubeSat):
-    """ArgusV4: Represents the Argus V3 CubeSat."""
+    """ArgusV4: Represents the Argus V4 CubeSat."""
 
     def __init__(self, debug: bool = False):
-        """__init__: Initializes the Argus V3 CubeSat."""
+        """__init__: Initializes the Argus V4 CubeSat."""
         self.__debug = debug
 
         super().__init__()
