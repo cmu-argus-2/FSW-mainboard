@@ -123,7 +123,7 @@ class ArgusV4Components:
 
     # IMU
     IMU_I2C = ArgusV4Interfaces.I2C0
-    IMU_I2C_ADDRESS = const(0x4A)
+    IMU_I2C_ADDRESS = const(0x68)
 
     # XM TORQUE COILS
     TORQUE_COILS_XM_I2C = ArgusV4Interfaces.I2C0

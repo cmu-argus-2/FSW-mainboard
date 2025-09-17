@@ -294,8 +294,6 @@ class BMX160:
             self._enable = DigitalInOut(enable_pin)
             self._enable.switch_to_output(value=True)
 
-        super().__init__(self._enable)
-
         self.i2c_device = I2CDevice(i2c, i2c_address, probe=True)
 
         # soft reset & reboot
