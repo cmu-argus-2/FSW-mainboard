@@ -6,6 +6,7 @@ from adafruit_register.i2c_bits import ROBits, RWBits
 from adafruit_register.i2c_struct import Struct
 from digitalio import DigitalInOut
 from micropython import const
+from ulab.numpy import pi
 
 # Chip ID
 BMX160_CHIP_ID = const(0xD8)
@@ -199,6 +200,7 @@ GyroSensitivity2DegPerSec_values = [
 ]  # Section 1.2, Table 3
 
 g_TO_METERS_PER_SECOND_SQUARED = 1 / 9.80665  # in m/s^2
+DEG_TO_RAD = pi / 180.0  # conversion factor from degrees to radians
 
 AccelSensitivity2Gravity = const(16384)  # accelerometer sensitivity. See Section 1.2, Table 2
 GyroSensitivity2DegPerSec = 131.2  # gyroscope sensitivity. See Section 1.2, Table 3
@@ -219,8 +221,10 @@ class BMX160:
     # multiplicative constants
 
     # NOTE THESE FIRST TWO GET SET IN THE INIT SEQUENCE
-    ACC_SCALAR = 1 / (AccelSensitivity2Gravity * g_TO_METERS_PER_SECOND_SQUARED)  # 1 m/s^2 = 0.101971621 g
-    GYR_SCALAR = 1 / GyroSensitivity2DegPerSec_values[4]
+    # ACC_SCALAR converts raw accelerometer values to m/s^2 (linear acceleration)
+    ACC_SCALAR = 1 / (AccelSensitivity2Gravity * g_TO_METERS_PER_SECOND_SQUARED)  # m/s^2 per LSB
+    # GYR_SCALAR converts raw gyroscope values to rad/s (angular velocity)
+    GYR_SCALAR = (1 / GyroSensitivity2DegPerSec_values[4]) * DEG_TO_RAD  # deg/s per LSB, then convert to rad/s
     MAG_SCALAR = 1 / 16
     TEMP_SCALAR = 0.5**9
 
@@ -343,11 +347,11 @@ class BMX160:
 
     ### ACTUAL API
     def gyro(self):
-        # deg/s
+        # rad/s (radians per second - angular velocity)
         return tuple(x * self.GYR_SCALAR for x in self._gyro)
 
     def accel(self):
-        # m/s^2
+        # m/s^2 (meters per second squared - linear acceleration)
         return tuple(x * self.ACC_SCALAR for x in self._accel)
 
     def mag(self):
@@ -415,7 +419,8 @@ class BMX160:
             # read out the value to see if it changed successfully
             rangeconst = self._gyro_range
             val = BMX160_GYRO_RANGE_VALUES[rangeconst]
-            self.GYR_SCALAR = val / 32768.0
+            # Convert deg/s to rad/s
+            self.GYR_SCALAR = (val / 32768.0) * DEG_TO_RAD
         else:
             pass
 
@@ -517,6 +522,7 @@ class BMX160:
             # convert to 0-3 range for indexing
             ind = rangeconst >> 2
             val = BMX160_ACCEL_RANGE_VALUES[ind]
+            # Linear acceleration in m/s^2
             self.ACC_SCALAR = (val / 32768.0) / g_TO_METERS_PER_SECOND_SQUARED
         else:
             pass
