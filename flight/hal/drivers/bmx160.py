@@ -298,7 +298,7 @@ class _ScaledReadOnlyStruct(Struct):
         raise NotImplementedError()
 
 
-# TODO replace _SclaedReadOnlyStruct with Struct in BMX160 so that the
+# TODO replace _ScaledReadOnlyStruct with Struct in BMX160 so that the
 # scale factor can be changed as a function of range mode
 
 
@@ -626,7 +626,7 @@ class BMX160:
         # we can choose the delay on a case-by-case basis.
         time.sleep(0.005)
 
-    ############## MAGENTOMETER SETTINGS  ##############
+    ############## MAGNETOMETER SETTINGS  ##############
 
     def init_mag(self):
         # see pg 25 of: https://ae-bst.resource.bosch.com/media/_tech/media/datasheets/BST-BMX160-DS000.pdf
