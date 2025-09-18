@@ -38,5 +38,10 @@ elif board_id == "Argus3":
 
     SATELLITE = ArgusV3(debug=DEBUG_MODE)
 
+elif board_id == "Argus4":
+    from hal.argus_v4 import ArgusV4
+
+    SATELLITE = ArgusV4(debug=DEBUG_MODE)
+
 else:
     raise ValueError(f"Invalid hardware version {board_id}")
