@@ -150,10 +150,13 @@ class Task(TemplateTask):
                                 if "_ERROR_COUNT" in key_name:
                                     SATELLITE.update_device_error_count(key_name.replace("_ERROR_COUNT", ""), value)
                                     self.log_info(f"Restored {key_name} to {value}")
-                                elif "_ERROR" in key_name:
-                                    if value == Errors.DEVICE_DEAD:
-                                        SATELLITE.update_device_dead(key_name.replace("_ERROR", ""), True)
+                                    if SATELLITE.check_device_dead(value):
+                                        SATELLITE.update_device_dead(key_name.replace("_ERROR_COUNT", ""), True)
                                         self.log_info(f"Restored {key_name} to dead")
+                                # elif "_ERROR" in key_name:
+                                #     if value == Errors.DEVICE_DEAD:
+                                #         SATELLITE.update_device_dead(key_name.replace("_ERROR", ""), True)
+                                #         self.log_info(f"Restored {key_name} to dead")
                                 elif "PERIPH_REBOOT_COUNT" in key_name:
                                     self.peripheral_reboot_count = value
                                     self.log_info(f"Restored {key_name} to {value}")

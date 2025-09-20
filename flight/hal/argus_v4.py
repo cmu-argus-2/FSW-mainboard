@@ -707,6 +707,9 @@ class ArgusV4(CubeSat):
                     self.__boot_device(location, device_cls)
                     device_cls.temp_disabled = False
 
+    def check_device_dead(self, error_count: int) -> bool:
+        return error_count > ArgusV4Error.MAX_DEVICE_ERROR
+
     def handle_error(self, device_name: str) -> int:
         if device_name not in self.__device_list:
             return Errors.INVALID_DEVICE_NAME
@@ -714,7 +717,7 @@ class ArgusV4(CubeSat):
         device_cls = self.__device_list[device_name]
 
         device_cls.error_count += 1
-        if device_cls.error_count > ArgusV4Error.MAX_DEVICE_ERROR:
+        if self.check_device_dead(device_cls.error_count):
             device_cls.dead = True
             device_cls.device = None
             return Errors.DEVICE_DEAD

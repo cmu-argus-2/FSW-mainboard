@@ -519,6 +519,9 @@ class CubeSat:
     def reboot(self, device_name: str):
         raise NotImplementedError("CubeSats must implement reboot_devices method")
 
+    def check_device_dead(self, error_count: int) -> bool:
+        raise NotImplementedError("CubeSats must implement check_device_dead method")
+
     @property
     def SAMPLE_DEVICE_ERRORS(self) -> dict[str, list[int]]:
         """SAMPLE_DEVICE_ERRORS: Sample the device errors"""
