@@ -48,15 +48,18 @@ def _get_future_nanos(seconds_in_future):
 class PriorityTask:
     """Represents an asynchronous task with a priority."""
 
-    def __init__(self, coroutine, priority: int):
+    def __init__(self, coroutine, priority: int, urgent: bool = False):
         self.coroutine = coroutine  # the coroutine to be executed
         self.priority = priority  # integer representing the priority (lower is higher priority)
+        self.urgent = urgent  # flag indicating if this task is urgent (like watchdog)
 
     def priority_sort(self):
-        return self.priority
+        # Urgent tasks get even higher priority by subtracting 0.5
+        return self.priority - 0.5 if self.urgent else self.priority
 
     def __repr__(self):
-        return "{{Task {}, Priority {}}}".format(self.coroutine, self.priority)
+        urgent_str = " URGENT" if self.urgent else ""
+        return "{{Task {}, Priority {}{}}}".format(self.coroutine, self.priority, urgent_str)
 
     __str__ = __repr__
 
@@ -76,10 +79,12 @@ class Sleeper:
         return self._resume_nanos  # The timestamp when the task should resume
 
     def priority_sort(self):
-        return self.task.priority
+        return self.task.priority_sort()  # Use the task's priority_sort method to respect urgency
 
     def __repr__(self):
-        return "{{Sleeper remaining: {:.2f}, task: {} }}".format((self.resume_nanos() - _monotonic_ns()), self.task)
+        return "{{Sleeper remaining: {:.2f}, task: {} }}".format(
+            (self.resume_nanos() - _monotonic_ns()) / 1000000000.0, self.task
+        )
 
     __str__ = __repr__
 
@@ -95,6 +100,7 @@ class ScheduledTask:
         priority,
         forward_args,
         forward_kwargs,
+        urgent=False,
     ):
         # reference to the event loop
         self._loop = loop
@@ -110,6 +116,7 @@ class ScheduledTask:
         self._scheduled_to_run = False
         # priority
         self._priority = priority
+        self._urgent = urgent
 
     def change_rate(self, hz: float):
         """Update the task rate to a new frequency."""
@@ -123,7 +130,7 @@ class ScheduledTask:
         """Schedule the task if not already scheduled."""
         self._stop = False
         if not self._scheduled_to_run:  # Check if the task is already scheduled to run
-            self._loop.add_task(self._run_at_fixed_rate(), self._priority)
+            self._loop.add_task(self._run_at_fixed_rate(), self._priority, self._urgent)
 
     async def _run_at_fixed_rate(self):
         """Coroutine that runs the task at the specified rate."""
@@ -134,7 +141,11 @@ class ScheduledTask:
                 if self._stop:
                     return
 
-                iteration = self._forward_async_fn(*self._forward_args, **self._forward_kwargs)
+                # Call the function - check if it needs arguments
+                if self._forward_args or self._forward_kwargs:
+                    iteration = self._forward_async_fn(*self._forward_args, **self._forward_kwargs)
+                else:
+                    iteration = self._forward_async_fn()
 
                 self._running = True
                 try:
@@ -149,7 +160,6 @@ class ScheduledTask:
                 # just go as fast as possible & schedule to run "now." If we catch back up again
                 # we'll return to seconds_per_invocation without doing a bunch of catchup runs.
                 target_run_nanos = target_run_nanos + self._nanoseconds_per_invocation
-                # print('target_run_nanos is ', target_run_nanos)
                 now_nanos = _monotonic_ns()
                 if now_nanos <= target_run_nanos:
                     await self._loop._sleep_until_nanos(target_run_nanos)
@@ -180,6 +190,7 @@ class Scheduler:
         self._ready = []  # List of sleeping tasks ready to resume
         self._current = None  # The current task being executed
         self._debug = debug  # Debug flag
+        self._preemption_check_interval = 5  # Check for preemption every N tasks
 
     @property
     def debug(self):
@@ -188,14 +199,16 @@ class Scheduler:
     def enable_debug_logging(self):
         self._debug = True
 
-    def add_task(self, awaitable_task, priority):
+    def add_task(self, awaitable_task, priority, urgent=False):
         """
         Add a concurrent task (known as a coroutine, implemented as a generator in CircuitPython)
         Use:
           scheduler.add_task( my_async_method() )
         :param awaitable_task:  The coroutine to be concurrently driven to completion.
+        :param priority: Task priority (lower is higher priority)
+        :param urgent: Flag indicating if this is an urgent task that can preempt others
         """
-        self._tasks.append(PriorityTask(awaitable_task, priority))
+        self._tasks.append(PriorityTask(awaitable_task, priority, urgent))
 
     async def sleep(self, seconds):
         """
@@ -220,7 +233,7 @@ class Scheduler:
 
         self.add_task(_run_later(), priority)
 
-    def schedule(self, hz: float, coroutine_function, priority, *args, **kwargs):
+    def schedule(self, hz: float, coroutine_function, priority, *args, urgent=False, **kwargs):
         """
         Schedule a coroutine to run at a specified frequency.
 
@@ -236,13 +249,15 @@ class Scheduler:
 
         :param hz: Frequency in Hz at which to run the coroutine.
         :param coroutine_function: The coroutine to schedule.
+        :param priority: Task priority (lower is higher priority)
+        :param urgent: Flag indicating if this is an urgent task that can preempt others
         """
         assert coroutine_function is not None, "coroutine function must not be none"
-        task = ScheduledTask(self, hz, coroutine_function, priority, args, kwargs)
+        task = ScheduledTask(self, hz, coroutine_function, priority, args, kwargs, urgent=urgent)
         task.start()
         return task
 
-    def schedule_later(self, hz: float, coroutine_function, priority, *args, **kwargs):
+    def schedule_later(self, hz: float, coroutine_function, priority, *args, urgent=False, **kwargs):
         """
         Schedule a coroutine to start after an initial delay of one interval.
 
@@ -251,6 +266,8 @@ class Scheduler:
 
         :param hz: Frequency in Hz at which to run the coroutine after the initial delay.
         :param coroutine_function: The coroutine to schedule.
+        :param priority: Task priority (lower is higher priority)
+        :param urgent: Flag indicating if this is an urgent task that can preempt others
         """
         ran_once = False
 
@@ -262,7 +279,7 @@ class Scheduler:
                 await _yield_once()
                 ran_once = True
 
-        return self.schedule(hz, call_later, priority)
+        return self.schedule(hz, call_later, priority, urgent=urgent)
 
     def run(self):
         """
@@ -296,89 +313,160 @@ class Scheduler:
         if self._debug:
             print("Loop completed", self._tasks, self._sleeping)
 
+    def _get_urgent_ready_tasks(self):
+        """Get urgent tasks that are ready to run immediately"""
+        if not self._sleeping:
+            return []
+
+        now = _monotonic_ns()
+        urgent_ready = []
+
+        for sleeper in self._sleeping[:]:  # Create a copy to avoid modification during iteration
+            if sleeper.resume_nanos() <= now and sleeper.task.urgent:
+                urgent_ready.append(sleeper)
+
+        return urgent_ready
+
     def _step(self):
         """
         Executes one iteration of the event loop, managing tasks and sleep states.
-        In order:
-        - Sorts active tasks by priority and executes them.
-        - Populates and sorts the "ready" list based on tasks that are due to run.
-        - Runs ready tasks and removes them from the sleeping list.
-        - If no active tasks remain, calculates sleep duration based on the earliest
-        sleeping task's resume time and allows the system to sleep until the next task is due.
+        Enhanced with proper preemptive scheduling for urgent tasks.
         """
 
         if self._debug:
             print("  stepping over ", len(self._tasks), " tasks")
 
-        # Sort tasks by priority before running them
-        self._tasks.sort(key=PriorityTask.priority_sort)
+        # PHASE 1: Handle urgent tasks that are ready to run immediately
+        urgent_ready = self._get_urgent_ready_tasks()
+        if urgent_ready:
+            if self._debug:
+                print(f"  Processing {len(urgent_ready)} urgent ready tasks")
 
-        # Run each task in the sorted list, removing it from _tasks after execution
-        tasks_to_run = self._tasks[:]  # O(n) copy
-        self._tasks.clear()  # O(1)
+            # Sort urgent tasks by priority
+            urgent_ready.sort(key=lambda sleeper: sleeper.task.priority_sort())
 
-        for task in tasks_to_run:  # O(n) iteration
-            self._run_task(task)
+            for urgent_sleeper in urgent_ready:
+                if urgent_sleeper in self._sleeping:  # Double-check it's still there
+                    self._sleeping.remove(urgent_sleeper)
+                    self._run_task(urgent_sleeper.task)
 
-        if self._debug:
-            print("  sleeping list (unsorted):")
-            for i in self._sleeping:
-                print("    {}".format(i))
+        # PHASE 2: Process active tasks with preemption awareness
+        if self._tasks:
+            # Sort tasks by priority (urgent tasks naturally sort first)
+            self._tasks.sort(key=lambda task: task.priority_sort())
 
-        # Create the ready list by selecting tasks from _sleeping that are ready to run based on their resume time
-        self._ready = [x for x in self._sleeping if x.resume_nanos() <= _monotonic_ns()]
-        # Sort the ready tasks by priority
-        self._ready.sort(key=lambda x: x.task.priority)
+            # Run tasks, checking for urgent preemption periodically
+            tasks_to_run = self._tasks[:]
+            self._tasks.clear()
 
-        if self._debug:
-            print("  ready list (sorted)")
-            for i in self._ready:
-                print("    {}".format(i))
+            task_count = 0
+            for task in tasks_to_run:
+                self._run_task(task)
+                task_count += 1
 
-        # Execute each ready task, removing it from both _ready and _sleeping lists after completion
-        ready_tasks = self._ready[:]  # O(n) copy
-        self._ready.clear()  # O(1)
+                # Check for urgent preemption every few tasks or after urgent/high-priority tasks
+                if task_count % self._preemption_check_interval == 0 or task.urgent or task.priority <= 1:
 
-        ready_task_set = set(ready_tasks)  # O(n) set creation
-        self._sleeping = [sleeper for sleeper in self._sleeping if sleeper not in ready_task_set]  # O(n) filtering
+                    urgent_ready = self._get_urgent_ready_tasks()
+                    if urgent_ready:
+                        if self._debug:
+                            print(f"  Preempting after task {task_count} for urgent tasks")
 
-        for ready_task in ready_tasks:  # O(n) iteration
-            self._run_task(ready_task.task)
+                        urgent_ready.sort(key=lambda sleeper: sleeper.task.priority_sort())
+                        for urgent_sleeper in urgent_ready:
+                            if urgent_sleeper in self._sleeping:
+                                self._sleeping.remove(urgent_sleeper)
+                                self._run_task(urgent_sleeper.task)
 
-        # If there are no more active tasks but there are tasks in the sleeping list, determine sleep duration
+        # PHASE 3: Handle normally scheduled sleeping tasks
+        if self._sleeping:
+            if self._debug:
+                print("  sleeping list (unsorted):")
+                for sleeper in self._sleeping:
+                    print("    {}".format(sleeper))
+
+            # Create the ready list by selecting tasks from _sleeping that are ready to run
+            now = _monotonic_ns()
+            ready_tasks = []
+            remaining_sleeping = []
+
+            for sleeper in self._sleeping:
+                if sleeper.resume_nanos() <= now:
+                    ready_tasks.append(sleeper)
+                else:
+                    remaining_sleeping.append(sleeper)
+
+            self._sleeping = remaining_sleeping
+
+            # Sort ready tasks by priority (urgent tasks first)
+            ready_tasks.sort(key=lambda sleeper: sleeper.task.priority_sort())
+
+            if self._debug and ready_tasks:
+                print("  ready list (sorted by priority):")
+                for sleeper in ready_tasks:
+                    print("    {}".format(sleeper))
+
+            # Execute ready tasks
+            for sleeper in ready_tasks:
+                self._run_task(sleeper.task)
+
+        # PHASE 4: Sleep if no active tasks but sleeping tasks exist
         if len(self._tasks) == 0 and len(self._sleeping) > 0:
-            # Sort sleeping tasks by their resume time, so we can find the earliest time any task needs to run
-            self._sleeping.sort(key=Sleeper.resume_nanos)
+            # Sort sleeping tasks by resume time to find the earliest
+            self._sleeping.sort(key=lambda sleeper: sleeper.resume_nanos())
             next_sleeper = self._sleeping[0]
             sleep_nanos = next_sleeper.resume_nanos() - _monotonic_ns()
 
             if sleep_nanos > 0:
-                # Calculate sleep duration in seconds and put the system to sleep until the next task is due
-                # This helps reduce CPU usage when there are no immediate tasks
                 sleep_seconds = sleep_nanos / 1000000000.0
 
                 if self._debug:
-                    print("  No active tasks.  Sleeping for ", sleep_seconds, "s. \n", self._sleeping)
+                    print("  No active tasks. Sleeping for {:.3f}s until next task".format(sleep_seconds))
+
+                # For urgent tasks, sleep in smaller chunks to enable quick response
+                min_urgent_priority = min((s.task.priority for s in self._sleeping if s.task.urgent), default=float("inf"))
+                if min_urgent_priority <= 1:  # High-priority urgent tasks exist
+                    sleep_seconds = min(sleep_seconds, 0.001)  # Max 1ms sleep for responsiveness
 
                 time.sleep(sleep_seconds)
 
     def _run_task(self, task: PriorityTask):
         """
         Runs a task and re-queues for the next loop if it is both (1) not complete and (2) not sleeping.
+        Enhanced with execution time monitoring for debugging.
         """
         self._current = task
+        start_time = _monotonic_ns()
+
         try:
             # Attempt to run the next step of the coroutine
             task.coroutine.send(None)
 
-            if self._debug:
-                print("  current", self._current)
+            # Monitor execution time for debugging and starvation detection
+            elapsed_ns = _monotonic_ns() - start_time
+            elapsed_ms = elapsed_ns / 1000000
 
-            # If the task hasn’t suspended itself and remains active, add it back to the queue
+            if self._debug:
+                priority_str = "URGENT" if task.urgent else f"P{task.priority}"
+                print(f"  Task {priority_str} executed in {elapsed_ms:.2f}ms: {task.coroutine}")
+
+            # Warn about long-running non-urgent tasks
+            if not task.urgent and elapsed_ms > 10:  # 10ms threshold
+                if self._debug:
+                    print(f"  WARNING: Non-urgent task took {elapsed_ms:.1f}ms - may block urgent tasks")
+
+            # If the task hasn't suspended itself and remains active, add it back to the queue
             if self._current is not None:
                 self._tasks.append(task)
+
         except StopIteration:
-            pass  # Task is complete
+            if self._debug:
+                print(f"  Task completed: {task}")
+        except Exception as e:
+            # Handle other exceptions to prevent scheduler crash
+            if self._debug:
+                print(f"  Task {task} raised exception: {e}")
+            # Don't re-queue task that threw an exception to prevent infinite error loops
         finally:
             self._current = None  # Clear the current task reference upon completion
 
@@ -398,7 +486,8 @@ class Scheduler:
         self._sleeping.append(Sleeper(target_run_nanos, self._current))
 
         if self._debug:
-            print("  sleeping ", self._current)
+            sleep_duration_ms = (target_run_nanos - _monotonic_ns()) / 1000000
+            print(f"  Sleeping {self._current} for {sleep_duration_ms:.1f}ms")
 
         # Clear the current task indicator to mark it as suspended
         self._current = None
