@@ -14,7 +14,7 @@ class is inherited by the chip-specific subclasses.
 Functions are included for reading and writing registers and manipulating
 datetime objects.
 
-Author(s): Philip R. Moyer and Radomir Dopieralski for Adafruit Industries.
+Author(s): Philip R. Moyer and Radomir Dopieralski for Adafruit Industries, Perrin Tong
 Date: November 2016
 Affiliation: Adafruit Industries
 
@@ -179,39 +179,16 @@ class PCF8523:
         self.power_management = STANDARD_BATTERY_SWITCHOVER_AND_DETECTION
         self.datetime_register = value
 
-    """
-    ----------------------- HANDLER METHODS -----------------------
-    """
+    ######################## ERROR HANDLING ########################
 
-    def get_flags(self):
-        flags = {}
+    @property
+    def device_errors(self):
+        results = []
         if self.lost_power:
-            flags["lost_power"] = None
+            results.append(Errors.RTC_LOST_POWER)
         if self.battery_low:
-            flags["battery_low"] = None
-        return flags
-
-    ######################### DIAGNOSTICS #########################
-
-    def __check_lost_power(self) -> int:
-        """_check_lost_power: Check if power was lost since the time was set.
-
-        :return: True if power was lost, otherwise true
-        """
-        if self.lost_power:
-            return Errors.RTC_LOST_POWER
-
-        return Errors.NO_ERROR
-
-    def __check_battery_status(self) -> int:
-        """_check_battery_status: Checks if the battery status is low.
-
-        :return: False if the battery is low, otherwise true
-        """
-        if self.battery_low:
-            return Errors.RTC_BATTERY_LOW
-
-        return Errors.NO_ERROR
+            results.append(Errors.RTC_BATTERY_LOW)
+        return results
 
     def deinit(self):
         return
