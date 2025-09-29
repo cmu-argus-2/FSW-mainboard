@@ -1,5 +1,6 @@
 CircuitPython Compilation & Flashing Guide for Argus
 =====
+**This page is deprecated and no longer maintained. Please refer to [Confluence](https://spacecraft.atlassian.net/wiki/spaces/TH/pages/7241736/Mainboard+Bringup) for internal docs.**
 ## Supported Board CPY Information
 | Mainboard  | MCU | CPY  |
 | ------------- | ------------- | ------------- |
