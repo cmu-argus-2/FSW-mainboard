@@ -84,13 +84,13 @@ if __name__ == "__main__":
         "--erase_sil_logs",
         action="store_true",
         default=False,
-        help="Flag to erase SIL logs for each trial [default: False]",
+        help="Flag to erase SIL logs in main folder [default: False]",
     )
     parser.add_argument(
         "--store_sil_logs_results",
         action="store_true",
         default=False,
-        help="Flag to erase SIL logs for each trial [default: False]",
+        help="Flag to store SIL logs for each trial in results trial folder [default: False]",
     )
 
     # Parse Arguments
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     plot_FSW(result_folder_path=result_folder_path)
 
     # Parse Logs
-    if not args.erase_sil_logs:
+    if args.store_sil_logs_results:
         for i in range(args.n_trials):
             trial_number = i + 1
             trial_result_folder_path = os.path.join(result_folder_path, "trials/trial" + str(trial_number))

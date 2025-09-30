@@ -10,7 +10,7 @@ def read_gyro() -> tuple[int, np.ndarray]:
     """
 
     if SATELLITE.IMU_AVAILABLE:
-        gyro = np.deg2rad(np.array(SATELLITE.IMU.gyro()))  # Convert field from deg/s to rad/s
+        gyro = np.array(SATELLITE.IMU.gyro())  # np.deg2rad()  # Convert field from deg/s to rad/s
 
         # Sensor validity check
         if not is_valid_gyro_reading(gyro):

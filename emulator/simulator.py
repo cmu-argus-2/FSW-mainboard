@@ -59,7 +59,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
 
     def gyro(self):
         self.advance_to_time()
-        return self.measurement[self.gyro_idx]  # IMU obtains gyro readins in deg/s
+        return np.deg2rad(self.measurement[self.gyro_idx])  # IMU obtains gyro readins in deg/s
 
     def mag(self):
         self.advance_to_time()
