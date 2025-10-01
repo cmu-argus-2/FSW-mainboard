@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 
 # from argusim.visualization.plotter import plot_all
-from fsw_plotter import collect_FSW_data, plot_FSW
+from scripts.fsw_plotter import collect_FSW_data, plot_FSW
 
 DEFAULT_RUNTIME = 60  # 5 * 60  # 5 minutes
 DEFAULT_OUTFILE = "sil_logs.log"
