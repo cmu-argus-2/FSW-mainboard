@@ -528,8 +528,7 @@ class BMX160:
         `BMX160_GYRO_FASTSTARTUP_MODE`
         """
         if powermode not in _BMX160_GYRO_MODES:
-            print("Unknown gyroscope powermode: " + str(powermode))
-            return
+            raise ValueError("Unknown gyroscope powermode: " + str(powermode))
 
         self.write_u8(_BMX160_COMMAND_REG_ADDR, powermode)
         if int(self.query_error) == 0:
@@ -613,8 +612,7 @@ class BMX160:
         `BMI160_ACCEL_SUSPEND_MODE`
         """
         if powermode not in _BMX160_ACCEL_MODES:
-            print("Unknown accelerometer power mode: " + str(powermode))
-            return
+            raise ValueError("Unknown accelerometer power mode: " + str(powermode))
 
         self.write_u8(_BMX160_COMMAND_REG_ADDR, powermode)
         if int(self.query_error) == 0:
@@ -740,7 +738,7 @@ def find_nearest_valid(desired, possible_values):
 def settingswarning(interp=""):
     if interp != "":
         interp = " --" + interp + " -- "
-    print(
+    raise Exception(
         "BMX160 error occurred during "
         + interp
         + "setting change. \nSetting not successfully changed and BMX160 may be in error state."
