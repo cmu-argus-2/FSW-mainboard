@@ -227,5 +227,11 @@ class MAX17205:
             # Write to _MAX1720X_CONFIG2_ADDR
             i2c.write(bytes([_MAX1720X_CONFIG2_ADDR, 0x01, 0x00]))
 
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return []
+
     def deinit(self):
         return
