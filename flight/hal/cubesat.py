@@ -81,6 +81,10 @@ class CubeSat:
                 ("LIGHT_ZP_2", Device(self.__light_sensor_boot, ASIL2)),
                 ("LIGHT_ZP_3", Device(self.__light_sensor_boot, ASIL2)),
                 ("LIGHT_ZP_4", Device(self.__light_sensor_boot, ASIL2)),
+                ("DEPLOYMENT_XP", Device(self.__deployment_sensor_boot, ASIL1, peripheral_line=False)),
+                ("DEPLOYMENT_YP", Device(self.__deployment_sensor_boot, ASIL1, peripheral_line=False)),
+                ("DEPLOYMENT_YM", Device(self.__deployment_sensor_boot, ASIL1, peripheral_line=False)),
+                ("DEPLOYMENT_ZP", Device(self.__deployment_sensor_boot, ASIL1, peripheral_line=False)),
             ]
         )
 

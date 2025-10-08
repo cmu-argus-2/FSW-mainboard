@@ -161,6 +161,14 @@ class ArgusV4Components:
     BURN_WIRE_I2C = ArgusV4Interfaces.I2C0
     BURN_WIRE_I2C_ADDRESS = const(0x60)
 
+    # XM DEPLOYMENT SENSOR
+    DEPLOYMENT_SENSOR_XM_I2C = ArgusV4Interfaces.I2C0
+    DEPLOYMENT_SENSOR_XM_I2C_ADDRESS = const(0x52)  # TODO: update address
+
+    # YM DEPLOYMENT SENSOR
+    DEPLOYMENT_SENSOR_YM_I2C = ArgusV4Interfaces.I2C0
+    DEPLOYMENT_SENSOR_YM_I2C_ADDRESS = const(0x52)  # TODO: update address
+
     ########
     # I2C1 #
     ########
@@ -228,6 +236,14 @@ class ArgusV4Components:
     FUEL_GAUGE_I2C = ArgusV4Interfaces.I2C1
     FUEL_GAUGE_I2C_ADDRESS = const(0x36)
     FUEL_GAUGE_ALERT = board.BATT_ALRT
+
+    # XP DEPLOYMENT SENSOR
+    DEPLOYMENT_SENSOR_XP_I2C = ArgusV4Interfaces.I2C1
+    DEPLOYMENT_SENSOR_XP_I2C_ADDRESS = const(0x52)  # TODO: update address
+
+    # YP DEPLOYMENT SENSOR
+    DEPLOYMENT_SENSOR_YP_I2C = ArgusV4Interfaces.I2C1
+    DEPLOYMENT_SENSOR_YP_I2C_ADDRESS = const(0x52)  # TODO: update address
 
     ########
     # SPI0 #
@@ -633,6 +649,30 @@ class ArgusV4(CubeSat):
                 ArgusV4Components.WATCHDAWG_INPUT,
             )
             return [watchdawg, Errors.NO_ERROR]
+        except Exception as e:
+            if self.__debug:
+                raise e
+
+            return [None, Errors.DEVICE_NOT_INITIALISED]
+
+    def __deployment_sensor_boot(self, direction) -> list[object, int]:
+        """deployment_sensor_boot: Boot sequence for the deployment sensor"""
+        from hal.drivers.vl53l4cd import VL53L4CD
+
+        directions = {
+            "DEPLOYMENT_XP": [ArgusV4Components.DEPLOYMENT_SENSOR_XP_I2C, ArgusV4Components.DEPLOYMENT_SENSOR_XP_I2C_ADDRESS],
+            "DEPLOYMENT_XM": [ArgusV4Components.DEPLOYMENT_SENSOR_XM_I2C, ArgusV4Components.DEPLOYMENT_SENSOR_XM_I2C_ADDRESS],
+            "DEPLOYMENT_YP": [ArgusV4Components.DEPLOYMENT_SENSOR_YP_I2C, ArgusV4Components.DEPLOYMENT_SENSOR_YP_I2C_ADDRESS],
+            "DEPLOYMENT_YM": [ArgusV4Components.DEPLOYMENT_SENSOR_YM_I2C, ArgusV4Components.DEPLOYMENT_SENSOR_YM_I2C_ADDRESS],
+        }
+
+        data = directions[direction]
+
+        try:
+            bus = data[0]
+            address = data[1]
+            deployment_sensor = VL53L4CD(bus, address)
+            return [deployment_sensor, Errors.NO_ERROR]
         except Exception as e:
             if self.__debug:
                 raise e
