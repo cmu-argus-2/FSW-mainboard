@@ -161,13 +161,9 @@ class ArgusV4Components:
     BURN_WIRE_I2C = ArgusV4Interfaces.I2C0
     BURN_WIRE_I2C_ADDRESS = const(0x60)
 
-    # XM DEPLOYMENT SENSOR
-    DEPLOYMENT_SENSOR_XM_I2C = ArgusV4Interfaces.I2C0
-    DEPLOYMENT_SENSOR_XM_I2C_ADDRESS = const(0x52)  # TODO: update address
-
     # YM DEPLOYMENT SENSOR
     DEPLOYMENT_SENSOR_YM_I2C = ArgusV4Interfaces.I2C0
-    DEPLOYMENT_SENSOR_YM_I2C_ADDRESS = const(0x52)  # TODO: update address
+    DEPLOYMENT_SENSOR_YM_I2C_ADDRESS = const(0x52)
 
     ########
     # I2C1 #
@@ -239,11 +235,7 @@ class ArgusV4Components:
 
     # XP DEPLOYMENT SENSOR
     DEPLOYMENT_SENSOR_XP_I2C = ArgusV4Interfaces.I2C1
-    DEPLOYMENT_SENSOR_XP_I2C_ADDRESS = const(0x52)  # TODO: update address
-
-    # YP DEPLOYMENT SENSOR
-    DEPLOYMENT_SENSOR_YP_I2C = ArgusV4Interfaces.I2C1
-    DEPLOYMENT_SENSOR_YP_I2C_ADDRESS = const(0x52)  # TODO: update address
+    DEPLOYMENT_SENSOR_XP_I2C_ADDRESS = const(0x52)
 
     ########
     # SPI0 #
@@ -661,8 +653,6 @@ class ArgusV4(CubeSat):
 
         directions = {
             "DEPLOYMENT_XP": [ArgusV4Components.DEPLOYMENT_SENSOR_XP_I2C, ArgusV4Components.DEPLOYMENT_SENSOR_XP_I2C_ADDRESS],
-            "DEPLOYMENT_XM": [ArgusV4Components.DEPLOYMENT_SENSOR_XM_I2C, ArgusV4Components.DEPLOYMENT_SENSOR_XM_I2C_ADDRESS],
-            "DEPLOYMENT_YP": [ArgusV4Components.DEPLOYMENT_SENSOR_YP_I2C, ArgusV4Components.DEPLOYMENT_SENSOR_YP_I2C_ADDRESS],
             "DEPLOYMENT_YM": [ArgusV4Components.DEPLOYMENT_SENSOR_YM_I2C, ArgusV4Components.DEPLOYMENT_SENSOR_YM_I2C_ADDRESS],
         }
 
