@@ -314,10 +314,8 @@ class Scheduler:
         self._tasks.sort(key=PriorityTask.priority_sort)
 
         # Run each task in the sorted list, removing it from _tasks after execution
-        tasks_to_run = self._tasks[:]  # O(n) copy
-        self._tasks.clear()  # O(1)
-
-        for task in tasks_to_run:  # O(n) iteration
+        for _ in range(len(self._tasks)):
+            task = self._tasks.pop(0)
             self._run_task(task)
 
         if self._debug:
@@ -336,13 +334,9 @@ class Scheduler:
                 print("    {}".format(i))
 
         # Execute each ready task, removing it from both _ready and _sleeping lists after completion
-        ready_tasks = self._ready[:]  # O(n) copy
-        self._ready.clear()  # O(1)
-
-        ready_task_set = set(ready_tasks)  # O(n) set creation
-        self._sleeping = [sleeper for sleeper in self._sleeping if sleeper not in ready_task_set]  # O(n) filtering
-
-        for ready_task in ready_tasks:  # O(n) iteration
+        for i in range(len(self._ready)):
+            ready_task = self._ready.pop(0)
+            self._sleeping.remove(ready_task)
             self._run_task(ready_task.task)
 
         # If there are no more active tasks but there are tasks in the sleeping list, determine sleep duration
