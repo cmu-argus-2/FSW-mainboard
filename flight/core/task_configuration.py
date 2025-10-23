@@ -11,7 +11,7 @@ from tasks.watchdog import Task as watchdog
 
 TASK_CONFIG = {
     TASK.COMMAND: {"Task": command, "Frequency": 2, "Priority": 2},
-    TASK.WATCHDOG: {"Task": watchdog, "Frequency": 1, "Priority": 1, "Urgent": True},
+    TASK.WATCHDOG: {"Task": watchdog, "Frequency": 1, "Priority": 1},
     TASK.EPS: {"Task": eps, "Frequency": 5, "Priority": 2},
     TASK.OBDH: {"Task": obdh, "Frequency": 0.5, "Priority": 2},
     TASK.COMMS: {"Task": comms, "Frequency": 1, "Priority": 2, "ScheduleLater": True},

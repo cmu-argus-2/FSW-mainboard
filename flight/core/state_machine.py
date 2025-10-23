@@ -120,12 +120,10 @@ class StateManager:
 
             frequency = task_params["Frequency"]
             priority = task_params["Priority"]
-            urgent = task_params.get("Urgent", False)  # Default to False if not specified
             task_fn = self.__tasks[task_id]._run
             self.__tasks[task_id].set_frequency(frequency)
 
-            # Pass urgent flag to scheduler - always use keyword argument
-            self.__scheduled_tasks[task_id] = schedule(frequency, task_fn, priority, urgent=urgent)
+            self.__scheduled_tasks[task_id] = schedule(frequency, task_fn, priority)
 
     def stop_all_tasks(self):
         for name, task in self.__scheduled_tasks.items():
