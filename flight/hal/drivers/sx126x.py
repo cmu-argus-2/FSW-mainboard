@@ -81,7 +81,23 @@ _SX126X_REG_LORA_SYNC_WORD_MSB = const(0x0740)
 # SX126X_REG_RANDOM_NUMBER_1 = const(0x081A)
 # SX126X_REG_RANDOM_NUMBER_2 = const(0x081B)
 # SX126X_REG_RANDOM_NUMBER_3 = const(0x081C)
-# SX126X_REG_RX_GAIN = const(0x08AC)
+
+# NOTE: Registers for AGC configuration
+_SX126X_REG_RX_GAIN = const(0x08AC)  # Also AgcSensiAdjust
+
+_SX126X_REG_AGC_RSSI_MEAS_CAL_H = const(0x089C)
+_SX126X_REG_AGC_RSSI_MEAS_CAL_L = const(0x089D)
+
+_SX126X_REG_AGC_GAIN_TUNE_1_2 = const(0x08F5)
+_SX126X_REG_AGC_GAIN_TUNE_3_4 = const(0x08F6)
+_SX126X_REG_AGC_GAIN_TUNE_5_6 = const(0x08F7)
+_SX126X_REG_AGC_GAIN_TUNE_7_8 = const(0x08F8)
+_SX126X_REG_AGC_GAIN_TUNE_9_10 = const(0x08F9)
+_SX126X_REG_AGC_GAIN_TUNE_11_12 = const(0x08FA)
+_SX126X_REG_AGC_GAIN_TUNE_13 = const(0x08FB)
+
+_SX126X_REG_AGC_G_FORST_POW_THR = const(0x08B9)
+
 _SX126X_REG_OCP_CONFIGURATION = const(0x08E7)
 # SX126X_REG_XTA_TRIM = const(0x0911)
 # SX126X_REG_XTB_TRIM = const(0x0912)
@@ -93,6 +109,11 @@ _SX126X_REG_IQ_CONFIG = const(0x0736)
 # SX126X_REG_RX_GAIN_RETENTION_0 = const(0x029F)
 # SX126X_REG_RX_GAIN_RETENTION_1 = const(0x02A0)
 # SX126X_REG_RX_GAIN_RETENTION_2 = const(0x02A1)
+
+# NOTE: Register values for AGC configuration
+_SX126X_RX_GAIN_LOW = const(0x94)
+_SX126X_RX_GAIN_HIGH = const(0x96)
+
 _SX126X_SLEEP_START_COLD = const(0b00000000)
 _SX126X_SLEEP_START_WARM = const(0b00000100)
 _SX126X_SLEEP_RTC_OFF = const(0b00000000)
@@ -413,7 +434,8 @@ ERROR = {
 
 
 def ASSERT(state):
-    assert state == _ERR_NONE, ERROR[state]
+    if state != _ERR_NONE:
+        raise TypeError(f"Following error occured: {ERROR[state]}")
 
 
 # TODO: Characterize latency and potentially tweak sleep time
@@ -554,6 +576,9 @@ class SX126X:
 
         state = self.setDio2AsRfSwitch(True)
         ASSERT(state)
+
+        # Configure AGC for 470 - 490 MHz
+        self.configureAGC()
 
         if useRegulatorLDO:
             state = self.setRegulatorLDO()
@@ -974,6 +999,114 @@ class SX126X:
         self.readRegister(_SX126X_REG_OCP_CONFIGURATION, ocp_mv, 1)
 
         return float(ocp[0]) * 2.5
+
+    def setRxGain(self, high_gain_rx):
+        if high_gain_rx:
+            return self.writeRegister(_SX126X_REG_RX_GAIN, [_SX126X_RX_GAIN_HIGH], 1)
+        else:
+            return self.writeRegister(_SX126X_REG_RX_GAIN, [_SX126X_RX_GAIN_LOW], 1)
+
+    def getRxGain(self):
+        gain = bytearray(1)
+        gain_mv = memoryview(gain)
+        self.readRegister(_SX126X_REG_RX_GAIN, gain_mv, 1)
+
+        return gain
+
+    def configureAGC(self):
+        # Set _SX126X_REG_AGC_RSSI_MEAS_CAL_L to 0x27
+        self.writeRegister(_SX126X_REG_AGC_RSSI_MEAS_CAL_L, [0x27], 1)
+
+        # Set _SX126X_REG_AGC_GAIN_TUNE_1_2 to 0xDE
+        self.writeRegister(_SX126X_REG_AGC_GAIN_TUNE_1_2, [0xDE], 1)
+
+        # Set _SX126X_REG_AGC_GAIN_TUNE_3_4 to 0xE2
+        self.writeRegister(_SX126X_REG_AGC_GAIN_TUNE_3_4, [0xE2], 1)
+
+        # Set _SX126X_REG_AGC_GAIN_TUNE_5_6 to 0x32
+        self.writeRegister(_SX126X_REG_AGC_GAIN_TUNE_5_6, [0x32], 1)
+
+        # Set _SX126X_REG_AGC_GAIN_TUNE_7_8 to 0x44
+        self.writeRegister(_SX126X_REG_AGC_GAIN_TUNE_7_8, [0x44], 1)
+
+        # Set _SX126X_REG_AGC_GAIN_TUNE_9_10 to 0x33
+        self.writeRegister(_SX126X_REG_AGC_GAIN_TUNE_9_10, [0x33], 1)
+
+        # Set _SX126X_REG_AGC_GAIN_TUNE_11_12 to 0x34
+        self.writeRegister(_SX126X_REG_AGC_GAIN_TUNE_11_12, [0x34], 1)
+
+        # Set _SX126X_REG_AGC_GAIN_TUNE_13 to 0x04
+        self.writeRegister(_SX126X_REG_AGC_GAIN_TUNE_13, [0x04], 1)
+
+        # Set _SX126X_REG_AGC_G_FORST_POW_THR to 0x04
+        self.writeRegister(_SX126X_REG_AGC_G_FORST_POW_THR, [0x04], 1)
+
+        # Set _SX126X_REG_RX_GAIN to 0x8A (RX low gain and 470-490 MHz AGC)
+        self.writeRegister(_SX126X_REG_RX_GAIN, [0x88], 1)
+
+    def checkConfigAGC(self):
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
+
+        self.readRegister(_SX126X_REG_AGC_RSSI_MEAS_CAL_L, temp_mv, 1)
+        print(f"_SX126X_REG_AGC_RSSI_MEAS_CAL_L: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
+
+        self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_1_2, temp_mv, 1)
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_1_2: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
+
+        self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_3_4, temp_mv, 1)
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_3_4: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
+
+        self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_5_6, temp_mv, 1)
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_5_6: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
+
+        self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_7_8, temp_mv, 1)
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_7_8: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
+
+        self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_9_10, temp_mv, 1)
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_9_10: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
+
+        self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_11_12, temp_mv, 1)
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_11_12: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
+
+        self.readRegister(_SX126X_REG_AGC_GAIN_TUNE_13, temp_mv, 1)
+        print(f"_SX126X_REG_AGC_GAIN_TUNE_13: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
+
+        self.readRegister(_SX126X_REG_AGC_G_FORST_POW_THR, temp_mv, 1)
+        print(f"_SX126X_REG_AGC_G_FORST_POW_THR: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
+
+        self.readRegister(_SX126X_REG_RX_GAIN, temp_mv, 1)
+        print(f"_SX126X_REG_RX_GAIN: {temp[0]}")
+
+        temp = bytearray(1)
+        temp_mv = memoryview(temp)
 
     def setPreambleLength(self, preambleLength):
         modem = self.getPacketType()
