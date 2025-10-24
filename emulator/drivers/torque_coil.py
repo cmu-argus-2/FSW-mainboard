@@ -16,9 +16,9 @@ class CoilDriver:
             self.__simulator.set_control_input(dir, ctrl)
 
     def read_voltage_current(self):
-        if self.__simulator:
+        if self.__simulator is not None:
             self.__voltage = self.current_throttle * 5
-            self.__current = self.__simulator.coil_power(self.__id) / self.__voltage if self.__voltage != 0 else 0
+            self.__current = (self.__simulator.coil_power(self.__id) / self.__voltage) if self.__voltage != 0 else 0
 
         return (self.__voltage, self.__current)
 
