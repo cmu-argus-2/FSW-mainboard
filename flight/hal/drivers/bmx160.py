@@ -4,8 +4,7 @@ from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register.i2c_bit import ROBit
 from adafruit_register.i2c_bits import ROBits, RWBits
 from adafruit_register.i2c_struct import Struct
-
-# from adafruit_bus_device.spi_device import SPIDevice
+from hal.drivers.errors import Errors
 from micropython import const
 from ulab.numpy import pi
 
@@ -715,6 +714,17 @@ class BMX160:
             self._BUFFER[0] = address & 0xFF
             self._BUFFER[1] = val & 0xFF
             i2c.write(self._BUFFER, end=2)
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        results = []
+        if self.drop_cmd_err:
+            results.append(Errors.IMU_DROP_COMMAND_ERROR)
+        if self.fatal_err:
+            results.append(Errors.IMU_FATAL_ERROR)
+        return results
 
     def deinit(self):
         return

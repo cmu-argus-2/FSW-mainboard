@@ -4,6 +4,7 @@ from tasks.command import Task as command
 from tasks.comms import Task as comms
 from tasks.eps import Task as eps
 from tasks.gps import Task as gps
+from tasks.hal_monitor import Task as hal_monitor
 from tasks.obdh import Task as obdh
 from tasks.payload import Task as payload
 from tasks.watchdog import Task as watchdog
@@ -17,4 +18,7 @@ TASK_CONFIG = {
     TASK.ADCS: {"Task": adcs, "Frequency": 5, "Priority": 1},
     TASK.GPS: {"Task": gps, "Frequency": 0.025, "Priority": 3, "ScheduleLater": True},
     TASK.PAYLOAD: {"Task": payload, "Frequency": 0.1, "Priority": 3, "ScheduleLater": True},
+    # Watchdog needs to have priority over HAL monitor to ensure it is serviced
+    # HAL monitor can take too long on boot and cause watchdog resets
+    TASK.HAL_MONITOR: {"Task": hal_monitor, "Frequency": 5, "Priority": 2},
 }
