@@ -422,7 +422,7 @@ class BMX160:
 
     ### ACTUAL API
     def gyro(self):
-        # deg/s
+        # rad/s (converted from deg/s)
         return tuple(x * self.GYR_SCALAR for x in self._gyro)
 
     def accel(self):

@@ -170,7 +170,7 @@ assets/*
 
 flight/build/
 params.yaml
-results/
+montecarlo/
 
 
 temp_test.py
