@@ -24,7 +24,7 @@ if hasattr(board, "PERIPH_PWR_EN"):
     PERIPH_PWR_EN.value = True  # Enable peripherals if applicable
     time.sleep(2)  # Wait for peripherals to power up
 
-if hasattr(board, "RADIO_EN"):
+if hasattr(board, "LORA_EN"):
     RADIO_EN = digitalio.DigitalInOut(board.LORA_EN)
     RADIO_EN.direction = digitalio.Direction.OUTPUT
     RADIO_EN.value = True
