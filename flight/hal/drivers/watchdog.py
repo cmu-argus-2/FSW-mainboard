@@ -11,8 +11,8 @@ class Watchdog:
 
         self.__input = digitalio.DigitalInOut(input)
         self.__input.direction = digitalio.Direction.OUTPUT
-        self.__input.value = False
-        self.__input_val = False  # Error handling
+        self.__input.value = True
+        self.__input_val = True  # Error handling
 
     def enable(self):
         self.__enable.value = True
