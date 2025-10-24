@@ -3,17 +3,23 @@ class CoilDriver:
         self.__simulator = simulator
         self.__id = id
         self.current_throttle = 0
+        self.current_throttle_volts = 0
         self.__voltage = 0
         self.__current = 0
 
     def set_throttle_volts(self, new_throttle_volts):
-        self.current_throttle = new_throttle_volts
+        self.current_throttle_volts = new_throttle_volts
 
     def set_throttle(self, dir, ctrl):
+        self.current_throttle = ctrl
         if self.__simulator is not None:
             self.__simulator.set_control_input(dir, ctrl)
 
     def read_voltage_current(self):
+        if self.__simulator:
+            self.__voltage = self.current_throttle * 5
+            self.__current = self.__simulator.coil_power(self.__id) / self.__voltage if self.__voltage != 0 else 0
+
         return (self.__voltage, self.__current)
 
 
