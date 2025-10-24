@@ -1,18 +1,12 @@
-# Payload Control Task
-
-from apps.payload.controller import PayloadController as PC
-from apps.payload.controller import PayloadState, map_state
-from apps.payload.definitions import ExternalRequest
-from core import TemplateTask
-from core import state_manager as SM
-from core.data_handler import DataHandler as DH
-from core.states import STATES
 
 import time
 import struct
+import logging
 from hal.configuration import SATELLITE
 from apps.payload.uart_comms import PayloadUART as PU
+from PIL import Image
 from io import BytesIO
+
 
 _NUM_IMG_TO_MAINTAIN_READY = 5  # Number of images to maintain in memory at least
 image_array = b'' # Initialize byte array for image being received
@@ -25,99 +19,6 @@ ID_START = 0
 LEN_START = ID_START + 4
 DATA_START = LEN_START + 4
 DATA_END = DATA_START + 246
-
-
-class Task(TemplateTask):
-
-    current_request = ExternalRequest.NO_ACTION
-
-    def __init__(self, id):
-        super().__init__(id)
-        self.name = "PAYLOAD"
-
-    def init_all_data_processes(self):
-        # Image process
-        if not DH.data_process_exists("img"):
-            DH.register_image_process()  # WARNING: Image process from DH is different from regular data processes!
-
-        # Telemetry process
-        if not DH.data_process_exists("payload_tm"):
-            DH.register_data_process(
-                tag_name="payload_tm",
-                data_format=PC.tm_process_data_format,
-                persistent=True,
-                data_limit=100000,
-                circular_buffer_size=200,
-            )
-
-        # OD process (should be a separate file process)
-        if not DH.data_process_exists("payload_od"):
-            pass
-
-        # Data process for runtime external requests from the CDH
-        if not DH.data_process_exists("payload_requests"):
-            DH.register_data_process(tag_name="payload_requests", data_format="B", persistent=False)
-
-    async def main_task(self):
-        if SM.current_state == STATES.STARTUP:
-            return
-
-        # Check if any external requests were received irrespective of state
-        if DH.data_process_exists("payload_requests") and DH.data_available("payload_requests"):
-            candidate_request = DH.get_latest_data("payload_requests")[0]
-            if candidate_request != ExternalRequest.NO_ACTION:  # TODO: add timeout in-between requests
-                PC.add_request(candidate_request)
-
-        if SM.current_state != STATES.EXPERIMENT:
-
-            if not PC.interface_injected():
-                PC.load_communication_interface()
-
-            # Need to handle issues with power control eventually or log error codes for the HAL
-
-            self.init_all_data_processes()
-
-            """
-            Two cases:
-             - Satellite has booted up and we need to initialize the payload
-             - State transitioned out of EXPERIMENT and we need to stop the payload gracefully
-               (forcefully in worst-case scenarios)
-            """
-
-            # TODO: This is going to change
-            if PC.state != PayloadState.OFF:  # All good
-
-                PC.add_request(ExternalRequest.TURN_OFF)
-
-                if PC.state == PayloadState.SHUTTING_DOWN:
-                    # TODO: check timeout just in case. However, this will be handled internally.
-                    PC.add_request(ExternalRequest.FORCE_POWER_OFF)
-                    pass
-
-        else:  # EXPERIMENT state
-
-            if PC.state == PayloadState.OFF:
-                PC.add_request(ExternalRequest.TURN_ON)
-
-            elif PC.state == PayloadState.READY:
-                if DH.data_process_exists("img"):
-                    # Check how many images we have collected in memory
-                    if (
-                        DH.how_many_complete_images() < _NUM_IMG_TO_MAINTAIN_READY and not PC.file_transfer_in_progress()
-                    ):  # Handle this properly..
-                        # TODO: add DH check on the size to clean-up not complete images (that can arise in bootup)
-                        self.log_info("Not enough images in memory, requesting new image")
-                        PC.add_request(ExternalRequest.REQUEST_IMAGE)
-        image_receiver_task()   
-
-        # DO NOT EXPOSE THE LOGIC IN THE TASK and KEEP EVERYTHING INTERNAL
-        PC.run_control_logic()
-        self.log_info(f"Payload state: {map_state(PC.state)}")
-
-
-
-
-
 
 def create_crc5_packet(data_bytes):
     """Calculate CRC5 for a full 64-bit (8-byte) block."""
@@ -211,10 +112,8 @@ def image_receiver_task():
     # Connect to the mainboard
     handler = ImageTransferHandler()
     if not handler.is_connected:
-        print("Image receiver: Failed to connect to payload UART")
         return 0
-    print(f"Image receiver: Connected to payload UART")
-
+    
     start_time = time.time()
 
     # Initiate handshake and wait for ack and start image collection signal
@@ -223,11 +122,9 @@ def image_receiver_task():
     retry = 0
     while (not handler.handshake_complete and retry < 3):
         handler.send(b'START')
-        return 0
         while not handler.handshake_complete: 
             received = handler.receive() #Returns a byttearray
             if received == b'SENDING':
-                print("Handshake complete, starting image transfer")
                 handler.send(b'ACK')
                 handler.handshake_complete = True
                 break
@@ -267,7 +164,7 @@ def image_receiver_task():
             handler.send(b'ACK')
 
         # TODO Check for end of image signal or condition to break the loop
-        if packet_info['packet_id'] == 0: # last packet id is 0
+        if packet_info['packet_id'] == -1: # last packet id is -1
             break
 
     # Save the reconstructed image
