@@ -115,10 +115,6 @@ class Task(TemplateTask):
         self.log_info(f"Payload state: {map_state(PC.state)}")
 
 
-
-
-
-
 def create_crc5_packet(data_bytes):
     """Calculate CRC5 for a full 64-bit (8-byte) block."""
     num_bytes = PACKET_SIZE
@@ -126,7 +122,9 @@ def create_crc5_packet(data_bytes):
     polynomial = 0x05  # CRC5 polynomial (x^5 + x^2 + 1)
     crc = 0x1F  # initial CRC value
 
+    # Convert the bytearray to an integer for bitwise operations
     data_int = int.from_bytes(data_bytes, 'big')  # bytes to int to do ops
+
     for i in range(num_bits):
         if (crc & 0x10) ^ (data_int & (1 << (num_bits-1))):
             crc = ((crc << 1) ^ polynomial) & 0x1F
@@ -134,7 +132,30 @@ def create_crc5_packet(data_bytes):
             crc = (crc << 1) & 0x1F
         data_int <<= 1
 
-    return (data_bytes << 8) | bytes([crc])  # Append 5-bit CRC to data
+    # Now that we've computed the CRC, append it to the original data
+    # Convert the integer back to bytes, add the CRC
+    result_int = (data_int >> num_bits) | (crc << (num_bits))  # Append CRC to the data
+    result_bytes = result_int.to_bytes(num_bytes + 1, 'big')  # Convert to bytearray with CRC appended
+
+    return result_bytes
+
+
+# def create_crc5_packet(data_bytes):
+#     """Calculate CRC5 for a full 64-bit (8-byte) block."""
+#     num_bytes = PACKET_SIZE
+#     num_bits = num_bytes * 8
+#     polynomial = 0x05  # CRC5 polynomial (x^5 + x^2 + 1)
+#     crc = 0x1F  # initial CRC value
+
+#     data_int = int.from_bytes(data_bytes, 'big')  # bytes to int to do ops
+#     for i in range(num_bits):
+#         if (crc & 0x10) ^ (data_int & (1 << (num_bits-1))):
+#             crc = ((crc << 1) ^ polynomial) & 0x1F
+#         else:
+#             crc = (crc << 1) & 0x1F
+#         data_int <<= 1
+
+#     return (data_bytes << 8) | bytes([crc])  # Append 5-bit CRC to data
 
 def verify_crc5_packet(packet):
     """Verify CRC5 for an 8-byte (64-bit) block."""
@@ -184,6 +205,7 @@ class ImageTransferHandler():
     def receive(self):
         if self.is_connected:
             received = PU.receive()
+            return received # TODO TODAY
             if (len(received) >= PACKET_SIZE + CRC5_SIZE):
                 return received #TODO see if this is an issue
         return None
@@ -207,13 +229,14 @@ class ImageTransferHandler():
             'data': data_payload_raw #Also includes crc
         }
 
+# '''
 def image_receiver_task():
     # Connect to the mainboard
     handler = ImageTransferHandler()
     if not handler.is_connected:
-        print("Image receiver: Failed to connect to payload UART")
+        # print("Image receiver: Failed to connect to payload UART")
         return 0
-    print(f"Image receiver: Connected to payload UART")
+    # print(f"Image receiver: Connected to payload UART")
 
     start_time = time.time()
 
@@ -223,11 +246,11 @@ def image_receiver_task():
     retry = 0
     while (not handler.handshake_complete and retry < 3):
         handler.send(b'START')
-        return 0
+
         while not handler.handshake_complete: 
             received = handler.receive() #Returns a byttearray
             if received == b'SENDING':
-                print("Handshake complete, starting image transfer")
+                # print("Handshake complete, starting image transfer")
                 handler.send(b'ACK')
                 handler.handshake_complete = True
                 break
@@ -258,7 +281,7 @@ def image_receiver_task():
         data = packet_info['data']
 
         # While receiving packets, verify the crc5 checksum for each packet
-        if not handler.verify_crc5_packet(data):
+        if not verify_crc5_packet(data):
             handler.send(b'NACK')
             continue
         else:
@@ -271,6 +294,30 @@ def image_receiver_task():
             break
 
     # Save the reconstructed image
-    handler.image_handler.save_image_to_disk(handler.image_array, 'latest_image.jpg')
-    return 1
-    
+    if packet_info['packet_id'] == 0:
+        handler.send(b'IMAGE_RECEIVED')
+        # handler.disconnect()
+        handler.image_handler.save_image_to_disk(handler.image_array, 'latest_image.jpeg')
+        return 1
+'''
+
+
+def image_receiver_task():
+    handler = ImageTransferHandler()
+
+    if not handler.is_connected:
+        print("Image receiver: Failed to connect to payload UART")
+        return 0
+    print(f"Image receiver: Connected to payload UART")
+    # while True:
+    received_val = handler.receive()
+    if received_val is not None:
+        received_val = received_val.decode('utf-8').strip()
+        # print(f"Received from payload: {received_val}")
+        if received_val == 'H':
+            print(f"Received helloOOO from payload: {received_val}")
+            handler.send(b'A')
+
+
+ 
+# '''
