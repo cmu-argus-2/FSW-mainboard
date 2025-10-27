@@ -10,7 +10,7 @@ def read_gyro() -> tuple[int, np.ndarray]:
     """
 
     if SATELLITE.IMU_AVAILABLE:
-        gyro = np.array(SATELLITE.IMU.gyro())  # np.deg2rad()  # Convert field from deg/s to rad/s
+        gyro = np.array(SATELLITE.IMU.gyro())  # Gyro measurements are in rad/s
 
         # Sensor validity check
         if not is_valid_gyro_reading(gyro):
@@ -55,11 +55,10 @@ def read_sun_position() -> tuple[int, np.ndarray, np.ndarray]:
     SENSOR VALIDITY CHECKS
 """
 
-_MIN_MAG_NORM = 1.0e-5  # Min allowed magnetometer reading is 10 uT (Expected field strength in orbit is ~40 uT)
-_MAX_MAG_NORM = 1.0e-3  # Max allowed magnetometer reading is 100 uT (Field strength at Mean Sea Level is ~60 uT)
-# [TODO:] revise number above, magnetorquer might produce a strong magnetic field
-_MAX_GYRO_NORM = 1.0e3  # Max allowed gyro angular velocity is 1000 deg/s (Expect to detumble at ~30 deg/s)
-
+_MIN_MAG_NORM = 1.0e-6  # Min allowed magnetometer reading is 1 uT (Expected field strength in orbit is ~40 uT)
+_MAX_MAG_NORM = 2.5e-3  # Max allowed magnetometer reading is 2500 uT (Field strength at Mean Sea Level is ~60 uT)
+# bmx160 magnetometer scale wont go past 1.3 mT in x,y and 2.5 mT in z axis
+_MAX_GYRO_NORM = 2.0e3 * np.pi / 180.0  # bmx160 gyro max scale is 2000 deg/s - anything higher is likely faulty reading
 
 def is_valid_mag_reading(mag: np.ndarray) -> bool:
     # Magnetometer validity check

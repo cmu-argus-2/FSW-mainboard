@@ -143,7 +143,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
 
     def advance_to_time(self):
         """
-        Advance in steps of 'dt' to rech the current FSW time
+        Advance in steps of 'dt' to reach the current FSW time
         """
         time_diff = self.get_time_diff_since_last()
         iters = int(time_diff / self.base_dt)

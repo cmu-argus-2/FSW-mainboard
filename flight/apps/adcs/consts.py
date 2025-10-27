@@ -107,7 +107,6 @@ class PhysicalConst:
     INERTIA_MAT = np.array(
         [[3.544e-03, -1.8729e-05, -5.2467e-06], [-1.8729e-05, 3.590e-03, 1.9134e-05], [-5.2467e-06, 1.9134e-05, 4.120e-03]]
     )
-    INERTIA_DET = np.linalg.det(INERTIA_MAT)
 
     # Compute Major axis of inertia
     _eigvals, _eigvecs = np.linalg.eig(INERTIA_MAT)
