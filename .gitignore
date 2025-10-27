@@ -169,8 +169,7 @@ assets/*
 
 
 flight/build/
-params.yaml
-montecarlo/
 
+sil/configs/params.yaml
 
 temp_test.py

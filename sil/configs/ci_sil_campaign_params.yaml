@@ -1,0 +1,29 @@
+---
+# -----------------------------------------------------------------------------------------------------------
+# Sim campaign settings
+# -----------------------------------------------------------------------------------------------------------
+# This file contains parameters for the SIL simulation campaigns.
+# list of sil batches to run
+sil_campaign:
+     sil_set_1:
+          num_sims: 1 # 100
+          sim_duration: 30000 # [seconds] how long the sim runs
+          runtime: 60 # [seconds] how long the FSW is allowed to run
+          failure_modes: none
+          output_dir: "sil_set_1_results"
+          outfile: "sil_logs.log"
+          description: "Baseline simulation campaign with nominal parameters."
+     sil_set_2:
+          num_sims: 2 # 50
+          sim_duration: 30000 # [seconds]
+          runtime: 60 # [seconds] how long the FSW is allowed to run
+          output_dir: "sil_set_2_results"
+          outfile: "sil_logs.log"
+          failure_modes: magnetorquer_single_point_failure
+          description: "Single point failure magnetorquer simulation campaign."
+# potential parameters to add:
+# - frequency of data logging
+# - configuration of the failure modes
+# should there be different params files for each campaign or just one
+# that gets modified?
+

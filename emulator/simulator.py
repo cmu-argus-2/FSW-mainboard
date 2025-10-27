@@ -20,17 +20,17 @@ import numpy as np
 from argusim.simulation_manager.sim import Simulator as cppSim
 
 ARGUS_ROOT = os.getenv("ARGUS_ROOT", os.path.join(os.getcwd(), "../"))
-RESULTS_ROOT_FOLDER = os.path.join(ARGUS_ROOT, "montecarlo/results")
-CONFIG_FILE = os.path.join(ARGUS_ROOT, "montecarlo/configs/params.yaml")
+RESULTS_ROOT_FOLDER = os.path.join(ARGUS_ROOT, "sil/results")
+CONFIG_FILE = os.path.join(ARGUS_ROOT, "sil/configs/params.yaml")
 
 
 class Simulator:  # will be passed by reference to the emulated HAL
-    def __init__(self, trial=None, trial_date=None):
+    def __init__(self, trial=None, trial_date=None, sim_set_name="sil_set_1"):
         if trial is None:
             trial = random.randint(0, 100)
         if trial_date is None:
             trial_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        RESULTS_FOLDER = os.path.join(RESULTS_ROOT_FOLDER, trial_date, "trials/trial" + str(trial))
+        RESULTS_FOLDER = os.path.join(RESULTS_ROOT_FOLDER, trial_date, sim_set_name, "trials/trial" + str(trial))
         os.makedirs(RESULTS_FOLDER)
         shutil.copy(CONFIG_FILE, os.path.join(os.path.dirname(RESULTS_FOLDER), "../params.yaml"))
         self.cppsim = cppSim(trial, RESULTS_FOLDER, CONFIG_FILE, log=True)

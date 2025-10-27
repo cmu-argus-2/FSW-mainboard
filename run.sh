@@ -60,10 +60,16 @@ elif [ "$1" == "simulate" ]; then
         export ARGUS_SIMULATION_TRIAL=$2
         echo "Running simulation with trial number $2"
         $PYTHON_CMD build_tools/build-emulator.py
-    else
+    elif [[ -z $4 ]]; then
         export ARGUS_SIMULATION_TRIAL=$2
         export ARGUS_SIMULATION_DATE=$3
         echo "Running simulation with trial number $2 at date $3"
+        $PYTHON_CMD build_tools/build-emulator.py
+    else
+        export ARGUS_SIMULATION_TRIAL=$2
+        export ARGUS_SIMULATION_DATE=$3
+        export ARGUS_SIMULATION_SET_NAME=$4
+        echo "Running simulation from set $4 with trial number $2 at date $3"
         $PYTHON_CMD build_tools/build-emulator.py
     fi
     cd build/ && rm -rf sd && $PYTHON_CMD main.py
