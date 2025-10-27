@@ -60,6 +60,7 @@ _MAX_MAG_NORM = 2.5e-3  # Max allowed magnetometer reading is 2500 uT (Field str
 # bmx160 magnetometer scale wont go past 1.3 mT in x,y and 2.5 mT in z axis
 _MAX_GYRO_NORM = 2.0e3 * np.pi / 180.0  # bmx160 gyro max scale is 2000 deg/s - anything higher is likely faulty reading
 
+
 def is_valid_mag_reading(mag: np.ndarray) -> bool:
     # Magnetometer validity check
     if mag is None or len(mag) != 3:
