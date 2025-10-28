@@ -115,7 +115,7 @@ def run_simulation_trial(trial_number: int, trial_date: str, sim_set_name: str, 
 
 def arg_parse(parser):
     parser.add_argument(
-        "--sil_campaign_configfile",
+        "--sil_campaign_config_file",
         default=DEFAULT_CONFIGFILE,
         help=(
             "Path to sil campaign config file [string, default: "
@@ -185,7 +185,7 @@ if __name__ == "__main__":
 
         # Parse Logs
         if args.store_sil_logs_results:
-            for i in range(args.n_trials):
+            for i in range(n_trials):
                 trial_number = i + 1
-                trial_result_folder_path = os.path.join(campaign_folder_path, "trials/trial" + str(trial_number))
-                parse_FSW_logs(os.path.join(trial_result_folder_path, args.outfile))
+                trial_result_folder_path = os.path.join(sim_set_folder_path, "trials/trial" + str(trial_number))
+                parse_FSW_logs(os.path.join(trial_result_folder_path, set_config_params["outfile"]))
