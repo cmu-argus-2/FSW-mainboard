@@ -161,5 +161,9 @@ class Simulator:  # will be passed by reference to the emulated HAL
             self.measurement = self.cppsim.step(self.sim_time, dt)
             self.sim_time += dt
 
-    def get_sim_time(self):
-        return 946728000 + self.cppsim.get_time()
+    def get_sim_time(self):  # spice's tdb/et to unix time
+        return self.j2000_to_unix(self.cppsim.get_time())
+
+    def j2000_to_unix(self, j2000_time):
+        """Convert J2000 time to Unix epoch time.~1s accuracy."""
+        return 946727930 + j2000_time
