@@ -1,4 +1,5 @@
 import argparse
+import collections.abc
 import os
 import shutil
 import signal
@@ -74,6 +75,21 @@ def plot_results(result_folder_path):
         raise AssertionError(f"Plotting failed with code {return_code}")
 
 
+def update(d, u, i):
+    """
+    Recursively updates dictionary d with values from dictionary u.
+    Solution based on https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
+    """
+    if i > 10:
+        raise Exception("Max recursion depth reached in update()")
+    for k, v in u.items():
+        if isinstance(v, collections.abc.Mapping):
+            d[k] = update(d.get(k, {}), v, i + 1)
+        else:
+            d[k] = v
+    return d
+
+
 def generate_sim_set_params(sim_set_config):  # , i_sim_set: int):
     # generate params.yaml for this sim set
     configs_folder_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "configs")
@@ -83,20 +99,11 @@ def generate_sim_set_params(sim_set_config):  # , i_sim_set: int):
         os.remove(sim_set_config_file_path)
     shutil.copy(nominal_config_file_path, sim_set_config_file_path)
 
-    # TODO: params editing below needs to work for nested and "unested" params
     if sim_set_config["param_changes"]:
         with open(sim_set_config_file_path, "r") as file:
             params_data = yaml.safe_load(file)
 
-        for component, changes in sim_set_config["param_changes"].items():
-            if component in params_data:
-                for param, new_value in changes.items():
-                    if param in params_data[component]:
-                        params_data[component][param] = new_value
-                    else:
-                        raise KeyError(f"Parameter '{param}' not found in component '{component}' of params.yaml")
-            else:
-                raise KeyError(f"Component '{component}' not found in params.yaml")
+        params_data = update(params_data, sim_set_config["param_changes"], 0)
 
         with open(sim_set_config_file_path, "w") as file:
             yaml.dump(params_data, file)
@@ -192,6 +199,12 @@ if __name__ == "__main__":
 
         # Run Plotting (Sim states)
         sim_set_folder_path = os.path.join("sil/results", trial_date, sim_set)
+
+        # Write description.txt
+        description_file_path = os.path.join(sim_set_folder_path, "description.txt")
+        with open(description_file_path, "w") as description_file:
+            description_file.write(sil_campaign_params["sil_campaign"][sim_set]["description"])
+
         # os.path.join(campaign_folder_path, f"sil_set_{i_sim_set}")
         plot_results(result_folder_path=sim_set_folder_path)
         # plot_all(result_folder_path=result_folder_path)

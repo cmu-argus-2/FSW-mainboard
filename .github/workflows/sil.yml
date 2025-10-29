@@ -65,7 +65,7 @@ jobs:
         run: echo "SILCONFIGFILE=sil/configs/ci_sil_campaign_params.yaml" >> $GITHUB_ENV
       
       - name: Run flight software
-        run: python3 sil_run.py --sil_campaign_config_file ${{env.SILCONFIGFILE}} --store_sil_logs_results
+        run: python3 sil/sil_run.py --sil_campaign_config_file ${{env.SILCONFIGFILE}} --store_sil_logs_results
       
       - name: Upload FSW log file
         if: always()

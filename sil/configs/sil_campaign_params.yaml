@@ -5,22 +5,29 @@
 # This file contains parameters for the SIL simulation campaigns.
 # list of sil batches to run
 sil_campaign:
-     # sil_set_1: # nominal
-     #      num_sims: 1 # 100
-     #      sim_duration: 30000 # [seconds] how long the sim runs
-     #      runtime: 60 # [seconds] how long the FSW is allowed to run
-     #      outfile: "sil_logs.log"
-     #      param_changes: False
-     #      description: "Baseline simulation campaign with nominal parameters."
-     sil_set_2: # single point actuator failure
-          num_sims: 2 # 50
-          sim_duration: 30000 # [seconds]
+     sil_set_1: # nominal
+          num_sims: 2 # 100
           runtime: 60 # [seconds] how long the FSW is allowed to run
           outfile: "sil_logs.log"
+          param_changes: False
+          description: "Baseline simulation campaign with nominal parameters."
+     sil_set_2: # single point actuator failure
+          num_sims: 2 # 50
+          runtime: 100 # [seconds] how long the FSW is allowed to run
+          outfile: "sil_logs.log"
           param_changes: # parts of the nominal file to change
+               MAX_TIME: 30000 # 96000 # [s]
                magnetorquers:
                     random_failures: true
                     N_rand_failures: 1
           description: "Single point failure magnetorquer simulation campaign."
-# potential parameters to add:
-# - frequency of data logging
+     # sil_set_3: # full axis actuator failure
+     #      num_sims: 2 # 50
+     #      runtime: 100 # [seconds] how long the FSW is allowed to run
+     #      outfile: "sil_logs.log"
+     #      param_changes: # parts of the nominal file to change
+     #           MAX_TIME: 30000 # 96000 # [s]
+     #           magnetorquers:
+     #                random_failures: true
+     #                N_rand_failures: 3
+     #      description: "Three failures magnetorquer simulation campaign. Full axis failure is possible."
