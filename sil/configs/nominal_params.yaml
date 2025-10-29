@@ -85,6 +85,10 @@ magnetorquers:
                     0.0, 0.005, 0.0,
                     0.0, 0.0, 0.005] # [UNITS: T/(Am2)] # sensitivity of the magnetorquers to the magnetic field in the body frame
 
+     random_failures: False
+     N_rand_failures: 0  # number of random magnetorquer failures
+     working_status: [True,True,True,True,True,True] # True = working, False = failed
+
 # -----------------------------------------------------------------------------------------------------------
 # Payload
 # -----------------------------------------------------------------------------------------------------------

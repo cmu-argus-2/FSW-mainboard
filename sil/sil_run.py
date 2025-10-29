@@ -74,7 +74,7 @@ def plot_results(result_folder_path):
         raise AssertionError(f"Plotting failed with code {return_code}")
 
 
-def generate_sim_set_params(sil_campaign_params, i_sim_set: int):
+def generate_sim_set_params(sim_set_config):  # , i_sim_set: int):
     # generate params.yaml for this sim set
     configs_folder_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "configs")
     nominal_config_file_path = os.path.join(configs_folder_path, "nominal_params.yaml")
@@ -83,9 +83,23 @@ def generate_sim_set_params(sil_campaign_params, i_sim_set: int):
         os.remove(sim_set_config_file_path)
     shutil.copy(nominal_config_file_path, sim_set_config_file_path)
 
-    # get the configurations for this sim set
-    sim_set_config = sil_campaign_params[f"sil_set_{i_sim_set}"]
-    # TODO: Edit params.yaml accordingly
+    # TODO: params editing below needs to work for nested and "unested" params
+    if sim_set_config["param_changes"]:
+        with open(sim_set_config_file_path, "r") as file:
+            params_data = yaml.safe_load(file)
+
+        for component, changes in sim_set_config["param_changes"].items():
+            if component in params_data:
+                for param, new_value in changes.items():
+                    if param in params_data[component]:
+                        params_data[component][param] = new_value
+                    else:
+                        raise KeyError(f"Parameter '{param}' not found in component '{component}' of params.yaml")
+            else:
+                raise KeyError(f"Component '{component}' not found in params.yaml")
+
+        with open(sim_set_config_file_path, "w") as file:
+            yaml.dump(params_data, file)
 
     return sim_set_config
 
@@ -104,6 +118,7 @@ def run_simulation_trial(trial_number: int, trial_date: str, sim_set_name: str, 
     trial_result_folder_path = os.path.join(
         current_file_path, "results", trial_date, sim_set_name, "trials", "trial" + str(trial_number)
     )
+    os.makedirs(trial_result_folder_path, exist_ok=True)
     collect_FSW_data(
         set_config_params["outfile"],
         trial_result_folder_path,
@@ -154,28 +169,29 @@ if __name__ == "__main__":
     # Read sil campaign config to determine number of sim sets
     with open(os.path.join(current_file_path, "configs", "sil_campaign_params.yaml"), "r") as file:
         sil_campaign_params = yaml.safe_load(file)
-    n_sim_sets = len(sil_campaign_params["sil_campaign"].keys())
+    sim_sets = sil_campaign_params["sil_campaign"]
+    n_sim_sets = len(sim_sets.keys())
 
     # Run campaign script
     os.makedirs(campaign_folder_path)
-    for i_sim_set in range(1, n_sim_sets + 1):
-        print(f"Running Simulation Set {i_sim_set}...")
+    for sim_set in sim_sets.keys():
+        print(f"Running Simulation Set {sim_set}...")
         # Generate sim set params file
-        set_config_params = generate_sim_set_params(sil_campaign_params["sil_campaign"], i_sim_set)
-        sim_set_folder_path = os.path.join(campaign_folder_path, f"sil_set_{i_sim_set}")
-        n_trials = sil_campaign_params["sil_campaign"][f"sil_set_{i_sim_set}"]["num_sims"]
+        set_config_params = generate_sim_set_params(sil_campaign_params["sil_campaign"][sim_set])
+        sim_set_folder_path = os.path.join(campaign_folder_path, sim_set)
+        n_trials = sil_campaign_params["sil_campaign"][sim_set]["num_sims"]
         # Run simulation set script
         for i in range(n_trials):
             run_simulation_trial(
                 trial_number=i + 1,
                 trial_date=trial_date,
-                sim_set_name=f"sil_set_{i_sim_set}",
+                sim_set_name=sim_set,
                 set_config_params=set_config_params,
                 args=args,
             )
 
         # Run Plotting (Sim states)
-        sim_set_folder_path = os.path.join("sil/results", trial_date, f"sil_set_{i_sim_set}")
+        sim_set_folder_path = os.path.join("sil/results", trial_date, sim_set)
         # os.path.join(campaign_folder_path, f"sil_set_{i_sim_set}")
         plot_results(result_folder_path=sim_set_folder_path)
         # plot_all(result_folder_path=result_folder_path)
