@@ -97,7 +97,9 @@ def mcm_coil_allocator(u: np.ndarray) -> np.ndarray:
 
     # Compute Coil Voltages based on Allocation matrix and target input
     u_throttle = np.dot(mcm_alloc, u)
-    u_throttle = np.clip(u_throttle, -1, 1)
+    # Maintain direction, clip magnitude to 1
+    u_throttle = u_throttle / max(1.0, np.max(np.abs(u_throttle)))
+    # np.clip(u_throttle, -1, 1)
 
     # Apply Coil Voltages
     for n in range(MCMConst.N_MCM):
