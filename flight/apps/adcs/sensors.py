@@ -131,6 +131,8 @@ def current_mode(current_mode) -> int:
         if sun_status != StatusConst.OK:
             return Modes.SUN_POINTED
 
+        h = np.dot(PhysicalConst.INERTIA_MAT, omega)
+        h_hat = h / np.linalg.norm(h)  # conical condition
         sun_error = np.linalg.norm(sun_pos_body - h_hat)
 
         if sun_status == StatusConst.OK and sun_error <= Modes.SUN_POINTED_TOL_LO:
@@ -147,6 +149,8 @@ def current_mode(current_mode) -> int:
         if momentum_error >= Modes.STABLE_TOL_HI:
             return Modes.STABLE
         elif sun_status == StatusConst.OK:
+            h = np.dot(PhysicalConst.INERTIA_MAT, omega)
+            h_hat = h / np.linalg.norm(h)  # conical condition
             sun_error = np.linalg.norm(sun_pos_body - h_hat)
             if sun_error >= Modes.SUN_POINTED_TOL_HI:
                 return Modes.SUN_POINTED

@@ -6,13 +6,13 @@
 # list of sil batches to run
 sil_campaign:
      sil_set_1: # nominal
-          num_sims: 2 # 100
-          runtime: 60 # [seconds] how long the FSW is allowed to run
+          num_sims: 100 # 100
+          runtime: 100 # [seconds] how long the FSW is allowed to run
           outfile: "sil_logs.log"
           param_changes: False
           description: "Baseline simulation campaign with nominal parameters."
      sil_set_2: # single point actuator failure
-          num_sims: 2 # 50
+          num_sims: 100 # 50
           runtime: 100 # [seconds] how long the FSW is allowed to run
           outfile: "sil_logs.log"
           param_changes: # parts of the nominal file to change

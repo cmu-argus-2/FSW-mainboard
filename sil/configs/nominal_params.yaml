@@ -2,7 +2,7 @@
 # -----------------------------------------------------------------------------------------------------------
 # Sim settings
 # -----------------------------------------------------------------------------------------------------------
-MAX_TIME: 18000 # 96000 # [s]
+MAX_TIME: 30000 # 96000 # [s]
 dt: 0.1 # 0.1         # [s]
 earliest_sim_start_time_UTC: 2024-10-01 12:00:00
 latest_sim_start_time_UTC: 2024-10-28 23:59:59
@@ -119,7 +119,7 @@ photodiodes:
      photodiode_orientation_dev : 0.001 # stddev of angular mounting error about nominal normal vector for each photodiode [rad]
      photodiodes_dt : 1.0 # [UNITS: s]
      photodiode_std : 500 # [UNITS: lux]
-     photodiode_std_dev : 40 # stddev of uncertainity in photodiode lux error estimation as a % of nominal error stddev [%]
+     photodiode_std_dev : 30 # stddev of uncertainity in photodiode lux error estimation as a % of nominal error stddev [%]
 
 # IMU: BMX160
 # datasheet available at https://www.mouser.com/pdfdocs/BST-BMX160-DS000-11.pdf?srsltid=AfmBOorTgWdtOic1ucbtO3aiVbBWY2ZANbA-VqI-fsoNfpYn_k_XHI-1

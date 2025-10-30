@@ -58,7 +58,11 @@ def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field
     # Do sun pointing
     else:
         # Compute pointing error
-        error = sun_vector - np.dot(PhysicalConst.INERTIA_MAT, omega) / np.linalg.norm(ControllerConst.MOMENTUM_TARGET)
+        ang_mom = np.dot(PhysicalConst.INERTIA_MAT, omega)
+        # conical projection of angular momentum onto sun vector
+        error = sun_vector - ang_mom / np.linalg.norm(ang_mom)
+        # spherical projection of angular momentum onto sun vector
+        # error = sun_vector - np.dot(PhysicalConst.INERTIA_MAT, omega) / np.linalg.norm(ControllerConst.MOMENTUM_TARGET)
 
         # Compute controller using bang-bang control law
         u_dir = np.cross(mag_field, error)
