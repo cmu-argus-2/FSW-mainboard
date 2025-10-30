@@ -1,4 +1,4 @@
 [submodule "simulation"]
 	path = simulation
 	url = https://github.com/cmu-argus-2/GNC-Simulation.git
-	branch = FSW-interface
+	branch = fsw_interface_2

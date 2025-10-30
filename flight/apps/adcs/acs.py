@@ -26,13 +26,17 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
     All sensor estimates are in the body-fixed reference frame.
     """
     # Stop ACS if the reading values are invalid
-    if not readings_are_valid((omega, mag_field)) or np.linalg.norm(mag_field) == 0:
+    if (
+        not readings_are_valid((omega, mag_field))
+        or np.linalg.norm(mag_field) == 0
+        # or np.linalg.norm(omega) <= ControllerConst.OMEGA_TOLERANCE
+    ):
         return ControllerConst.FALLBACK_CONTROL
 
     # Do spin stabilization
     else:
         # Compute angular momentum error
-        error = PhysicalConst.INERTIA_MAJOR_DIR - np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET
+        error = ControllerConst.MOMENTUM_TARGET - np.dot(PhysicalConst.INERTIA_MAT, omega)
 
         # Compute B-cross dipole moment
         u = ControllerConst.SPIN_STABILIZING_GAIN * np.cross(mag_field, error)
@@ -47,19 +51,24 @@ def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field
         not readings_are_valid((sun_vector, omega, mag_field))
         or np.linalg.norm(mag_field) == 0
         or np.linalg.norm(sun_vector) == 0
+        # or np.linalg.norm(omega) <= ControllerConst.OMEGA_TOLERANCE
     ):
         return ControllerConst.FALLBACK_CONTROL
 
     # Do sun pointing
     else:
         # Compute pointing error
-        error = sun_vector - np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET
+        ang_mom = np.dot(PhysicalConst.INERTIA_MAT, omega)
+        # conical projection of angular momentum onto sun vector
+        error = sun_vector - ang_mom / np.linalg.norm(ang_mom)
+        # spherical projection of angular momentum onto sun vector
+        # error = sun_vector - np.dot(PhysicalConst.INERTIA_MAT, omega) / np.linalg.norm(ControllerConst.MOMENTUM_TARGET)
 
         # Compute controller using bang-bang control law
         u_dir = np.cross(mag_field, error)
         u_dir_norm = np.linalg.norm(u_dir)
 
-        if u_dir_norm < 1e-6:
+        if u_dir_norm < 1e-8:
             # Return zeros to avoid division by zero
             return ControllerConst.FALLBACK_CONTROL
         else:
@@ -92,7 +101,9 @@ def mcm_coil_allocator(u: np.ndarray) -> np.ndarray:
 
     # Compute Coil Voltages based on Allocation matrix and target input
     u_throttle = np.dot(mcm_alloc, u)
-    u_throttle = np.clip(u_throttle, -1, 1)
+    # Maintain direction, clip magnitude to 1
+    u_throttle = u_throttle / max(1.0, np.max(np.abs(u_throttle)))
+    # np.clip(u_throttle, -1, 1)
 
     # Apply Coil Voltages
     for n in range(MCMConst.N_MCM):
