@@ -76,7 +76,7 @@ def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field
             return u_dir / u_dir_norm
 
 
-def mcm_coil_allocator(u: np.ndarray) -> np.ndarray:
+def mcm_coil_allocator(u: np.ndarray, b: np.ndarray) -> np.ndarray:
     # Query the available coil statuses
     coil_status = []
     mcm_alloc = np.zeros((6, 3))
@@ -98,6 +98,19 @@ def mcm_coil_allocator(u: np.ndarray) -> np.ndarray:
             mcm_alloc[2 * n : 2 * (n + 1)] = np.zeros((2, 3))
 
         coil_status = coil_status + [EP_status, EM_status]
+
+    # check full axis failure
+    axis_fail = []
+    for axis in range(3):
+        if not (coil_status[2 * axis] or coil_status[2 * axis + 1]):
+            axis_fail += [axis]
+    # if one axis failure, modify allocation matrix
+    if len(axis_fail) == 1:
+        if np.abs(b[axis_fail[0]]) > 1e-9:
+            mcm_mat_no_zaxis = np.zeros((3, 3))
+            mcm_mat_no_zaxis[:, axis_fail[0]] = b / b[axis_fail[0]]
+            mcm_mat_no_zaxis = np.eye(3) - mcm_mat_no_zaxis
+            mcm_alloc = mcm_alloc @ mcm_mat_no_zaxis
 
     # Compute Coil Voltages based on Allocation matrix and target input
     u_throttle = np.dot(mcm_alloc, u)
