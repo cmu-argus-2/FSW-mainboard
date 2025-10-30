@@ -7,16 +7,17 @@
 sil_campaign:
      sil_set_1:
           num_sims: 1 # 100
-          runtime: 60 # [seconds] how long the FSW is allowed to run
+          runtime: 30 # [seconds] how long the FSW is allowed to run
           outfile: "sil_logs.log"
-          param_changes: False
+          param_changes:
+               MAX_TIME: 9000 # 96000 # [s]
           description: "Baseline simulation campaign with nominal parameters."
      sil_set_2:
           num_sims: 2 # 50
-          runtime: 100 # [seconds] how long the FSW is allowed to run
+          runtime: 15 # [seconds] how long the FSW is allowed to run
           outfile: "sil_logs.log"
           param_changes:
-               MAX_TIME: 30000 # 96000 # [s]
+               MAX_TIME: 3600 # 96000 # [s]
                magnetorquers:
                     random_failures: true
                     N_rand_failures: 1

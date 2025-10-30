@@ -23,7 +23,7 @@ from sil.fsw_plotter import collect_FSW_data, plot_FSW
 # DEFAULT_RUNTIME = 60  # 5 * 60  # 5 minutes
 # DEFAULT_OUTFILE = "sil_logs.log"
 # DEFAULT_N_TRIALS = 1  # Default number of trials to run
-DEFAULT_CONFIGFILE = os.path.join(os.path.abspath(os.path.dirname(__file__)), "configs", "sil_campaign_params.yaml")
+DEFAULT_CONFIGFILE = "sil_campaign_params.yaml"
 
 # KEYWORD SEARCHES:
 # List of all keywords to probe the log for
@@ -172,15 +172,18 @@ if __name__ == "__main__":
     trial_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     current_file_path = os.path.abspath(os.path.dirname(__file__))
     campaign_folder_path = os.path.join(current_file_path, "results", trial_date)
+    campaign_config_file_path = os.path.join(current_file_path, "configs", args.sil_campaign_config_file)
 
     # Read sil campaign config to determine number of sim sets
-    with open(os.path.join(current_file_path, "configs", "sil_campaign_params.yaml"), "r") as file:
+    with open(campaign_config_file_path, "r") as file:
         sil_campaign_params = yaml.safe_load(file)
     sim_sets = sil_campaign_params["sil_campaign"]
     n_sim_sets = len(sim_sets.keys())
 
     # Run campaign script
     os.makedirs(campaign_folder_path)
+    # Copy the campaign config file to the campaign folder
+    shutil.copy(campaign_config_file_path, os.path.join(campaign_folder_path, "sil_campaign_params.yaml"))
     for sim_set in sim_sets.keys():
         print(f"Running Simulation Set {sim_set}...")
         # Generate sim set params file
