@@ -13,7 +13,7 @@ def tolerance() -> float:
 
 @pytest.fixture
 def zero_spin_error_omega() -> np.ndarray:
-    return ControllerConst.MOMENTUM_TARGET * np.linalg.inv(PhysicalConst.INERTIA_MAT) @ PhysicalConst.INERTIA_MAJOR_DIR
+    return np.linalg.inv(PhysicalConst.INERTIA_MAT) @ ControllerConst.MOMENTUM_TARGET
 
 
 @pytest.fixture
@@ -65,7 +65,7 @@ def nominal_sun_vector() -> np.ndarray:
 def zero_pointing_error_omega(
     nominal_sun_vector: np.ndarray,
 ) -> np.ndarray:
-    return ControllerConst.MOMENTUM_TARGET * np.linalg.inv(PhysicalConst.INERTIA_MAT) @ nominal_sun_vector
+    return np.linalg.norm(ControllerConst.MOMENTUM_TARGET) * np.linalg.inv(PhysicalConst.INERTIA_MAT) @ nominal_sun_vector
 
 
 @pytest.fixture
@@ -87,7 +87,7 @@ def larger_pointing_error_omega(
         (  # parallel magnetic field and pointing error test case
             "nominal_sun_vector",
             "larger_pointing_error_omega",
-            "zero_pointing_error_omega",
+            "nominal_sun_vector",
             ControllerConst.FALLBACK_CONTROL,
         ),
         (  # zero sun vector test case
