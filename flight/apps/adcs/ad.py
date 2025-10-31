@@ -110,6 +110,7 @@ class AttitudeDetermination:
 
         if SATELLITE.IMU_AVAILABLE:
             mag = 1e-6 * np.array(SATELLITE.IMU.mag())  # Convert field from uT to T
+
             query_time = TPM.time()
 
             # Sensor validity check
@@ -408,7 +409,6 @@ class AttitudeDetermination:
                     Aexp = np.eye(12) + A
                     Phi = Aexp[6:12, 6:12].transpose()
                     Qdk = np.dot(Phi, Aexp[0:6, 6:12])
-                    Qdk = np.dot(np.dot(Phi, self.P), Phi.transpose()) + Qdk
                     self.P = np.dot(np.dot(Phi, self.P), Phi.transpose()) + Qdk
 
     def magnetometer_update(self, current_time=int, update_covariance: bool = True) -> None:
@@ -464,10 +464,9 @@ class AttitudeDetermination:
         S = np.dot(np.dot(H, self.P), H.transpose()) + R_noise
 
         # ulab inv declares a matrix singular if det < 5E-2
-        # S is scaled up by 1000 and then down to remove this error
-        # If the singularity persists, we stop the covariance update
+        # If singular, we stop the covariance update
         try:
-            S_inv = 1000 * np.linalg.inv(1000 * S)
+            S_inv = np.linalg.inv(S)
         except ValueError:
             return StatusConst.EKF_UPDATE_FAIL
         K = np.dot(np.dot(self.P, H.transpose()), S_inv)

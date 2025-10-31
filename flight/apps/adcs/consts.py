@@ -94,13 +94,7 @@ class PhysicalConst:
     Constants associated with physical satellite bus parameters.
     """
 
-    INERTIA_MAT = np.array(
-        [
-            [0.0033, 0.0, 0.0],
-            [0.0, 0.0033, 0.0],
-            [0.0, 0.0, 0.0066],
-        ]
-    )
+    INERTIA_MAT = np.array([[0.00251, 0, 0], [0, 0.0026, 0], [0, 0, 0.002786]])
 
     # Compute Major axis of inertia
     _eigvals, _eigvecs = np.linalg.eig(INERTIA_MAT)

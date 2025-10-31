@@ -4,6 +4,8 @@ import signal
 import subprocess
 import time
 
+from argusim.visualization.plotter import plot_all
+
 DEFAULT_RUNTIME = 5 * 60  # 5 minutes
 DEFAULT_OUTFILE = "sil_logs.log"
 
@@ -64,3 +66,7 @@ if __name__ == "__main__":
 
     # Parse Logs
     parse_FSW_logs(args.outfile)
+
+    # Run Plotting
+    result_folder_path = os.path.join("results", max(os.listdir("results")))
+    plot_all(result_folder_path=result_folder_path)
