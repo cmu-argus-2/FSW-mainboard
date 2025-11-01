@@ -15,6 +15,13 @@ def timestamps_to_seconds(timestamps):
     return np.array([(dt - start_time).total_seconds() for dt in dt_objs])
 
 
+def undersample(data, percentage):
+    if not 0 < percentage <= 100:
+        raise ValueError("Percentage must be between 0 and 100")
+    step = max(1, int(100 / percentage))
+    return data[::step]
+
+
 def plot_FSW(result_folder_path):
     """
     Plots the FSW data.
@@ -204,7 +211,7 @@ def plot_FSW(result_folder_path):
     print(f"Sun Status plot saved to {output_plot_path_status}")
 
 
-def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False, erase_sil_logs=False):
+def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False, erase_sil_logs=False, percent_to_log=1):
     """
     Collects FSW data from the log file.
     """
@@ -273,7 +280,17 @@ def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False, erase_sil
     sun_vectors_np = np.array(sun_vectors)
     sun_statuses_np = np.array(sun_statuses)
 
+    # Undersample the data to a given percentage
+    adcs_modes_np = undersample(adcs_modes_np, 100 * percent_to_log)
+    global_modes_np = undersample(global_modes_np, 100 * percent_to_log)
+    gyro_ang_vels_np = undersample(gyro_ang_vels_np, 100 * percent_to_log)
+    mag_fields_np = undersample(mag_fields_np, 100 * percent_to_log)
+    sun_vectors_np = undersample(sun_vectors_np, 100 * percent_to_log)
+    sun_statuses_np = undersample(sun_statuses_np, 100 * percent_to_log)
+
     # Save extracted data to a .npz file in the result folder
+    if not os.path.exists(result_folder_path):
+        os.makedirs(result_folder_path)
     output_path = os.path.join(result_folder_path, "fsw_extracted_data.npz")
     np.savez(
         output_path,

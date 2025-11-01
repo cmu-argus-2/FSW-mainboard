@@ -9,6 +9,7 @@ sil_campaign:
           num_sims: 1 # 100
           runtime: 30 # [seconds] how long the FSW is allowed to run
           outfile: "sil_logs.log"
+          fsw_percent_to_log: 0.01 # fraction of FSW data to log for plotting
           param_changes:
                MAX_TIME: 9000 # 96000 # [s]
           description: "Baseline simulation campaign with nominal parameters."
@@ -16,6 +17,7 @@ sil_campaign:
           num_sims: 2 # 50
           runtime: 15 # [seconds] how long the FSW is allowed to run
           outfile: "sil_logs.log"
+          fsw_percent_to_log: 0.01 # fraction of FSW data to log for plotting
           param_changes:
                MAX_TIME: 3600 # 96000 # [s]
                magnetorquers:

@@ -131,6 +131,7 @@ def run_simulation_trial(trial_number: int, trial_date: str, sim_set_name: str, 
         trial_result_folder_path,
         save_sil_logs=args.store_sil_logs_results,
         erase_sil_logs=args.erase_sil_logs,
+        percent_to_log=set_config_params["fsw_percent_to_log"],
     )
     print(f"Trial {trial_number} of {sim_set_name} completed. Results saved to {trial_result_folder_path}")
 
