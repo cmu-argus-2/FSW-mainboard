@@ -9,6 +9,20 @@ import platform
 import shutil
 import sys
 
+# Optional YAML support for build-time configuration. If PyYAML is not
+# installed, YAML config will be skipped with a warning.
+# Optional YAML support for build-time configuration. If PyYAML is not
+# installed, YAML config will be skipped with a warning.
+# Optional YAML support for build-time configuration. If PyYAML is not
+# installed, YAML config will be skipped with a warning.
+try:
+    import yaml
+
+    _HAS_YAML = True
+except Exception:
+    yaml = None
+    _HAS_YAML = False
+
 system = platform.system()
 
 
@@ -111,6 +125,47 @@ def create_build(source_folder):
     build_folder = os.path.join(build_folder, "lib/")
 
     os.makedirs(build_folder)
+
+    # Attempt to load a YAML build configuration from the repository root
+    # and generate a Python module for the firmware to import at runtime.
+    repo_root = os.getcwd()
+    yaml_path = os.path.join(repo_root, "build_config.yaml")
+    if os.path.exists(yaml_path):
+        if not _HAS_YAML:
+            print("build_config.yaml found but PyYAML is not installed; skipping generation of build_config.py")
+        else:
+            try:
+                with open(yaml_path, "r") as yf:
+                    config_data = yaml.safe_load(yf)
+
+                # Write a Python module into the build lib folder. We'll compile
+                # it with mpy-cross below so the device gets the compiled module.
+                gen_path = os.path.join(build_folder, "build_config.py")
+                with open(gen_path, "w") as gf:
+                    gf.write("# Auto-generated from build_config.yaml\n")
+                    gf.write("# Do not edit - changes will be overwritten by the build system.\n\n")
+                    # Write a CONFIG dict containing the entire YAML structure
+                    gf.write("CONFIG = ")
+                    # Use JSON to produce a stable textual representation, then
+                    # write a Python literal by loading it back when the module
+                    # is imported. Simpler: write the Python literal with repr.
+                    gf.write(repr(config_data) + "\n\n")
+
+                # Compile the generated file to .mpy using mpy-cross so the
+                # rest of the build pipeline mirrors existing behaviour.
+                current_dir = os.getcwd()
+                os.chdir(build_folder)
+                try:
+                    print(f"Compiling generated config: {gen_path}")
+                    os.system(f"{MPY_CROSS_PATH} build_config.py -O3")
+                    # Remove the .py source so the build folder mirrors the
+                    # normal compiled-only output used elsewhere in this script.
+                    if os.path.exists("build_config.py"):
+                        os.remove("build_config.py")
+                finally:
+                    os.chdir(current_dir)
+            except Exception as e:
+                print(f"Failed to generate build_config.py from {yaml_path}: {e}")
 
     for root, _, files in os.walk(source_folder):
         # only include drivers or drivers_PYC_V05

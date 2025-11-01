@@ -1,0 +1,148 @@
+# Argus Flight Software Configuration
+# This file contains all configurable constants for the FSW
+# Run build_tools/compile_config.py to generate constants.py before deployment
+
+# Command & Data Handling (C&DH)
+cdh:
+  tpm_init_timeout: 10  # seconds - Time to attempt RTC initialization
+  exit_startup_timeout: 5  # seconds - Time before exiting startup state
+  burn_wire_strength: 7  # 0-255 - PWM strength for burn wire deployment
+  deployment_interval: 5  # seconds - Interval between deployment sequences
+  pwm_max: 3  # Maximum PWM value for deployment
+
+# Communications (COMMS)
+comms:
+  cmd_response_ok: 0
+  cmd_response_none: 1
+
+# Electrical Power System (EPS)
+eps:
+  # Power modes
+  power_modes:
+    none: 0x0
+    low_power: 0x1
+    nominal: 0x2
+    experiment: 0x3
+  
+  # State of Charge (SoC) thresholds (percentage)
+  soc_thresholds:
+    low_power_entry: 30  # Enter low power mode
+    low_power_exit: 40   # Exit low power mode
+    experiment_entry: 80 # Enter experiment mode (high power)
+    experiment_exit: 60  # Exit experiment mode
+  
+  # Battery heater thresholds (millivolts)
+  battery_temp_thresholds:
+    heat_enable: 0    # Enable heating
+    heat_disable: 500 # Disable heating
+  
+  # Current draw thresholds (milliamps)
+  current_draw_thresholds:
+    mainboard: 1000    # TODO: change to 400 for v3 mainboards
+    peripheral: 1000
+    radio: 3300
+    jetson: 16000
+    torque_coil: 1500
+
+# Attitude Determination and Control System (ADCS)
+adcs:
+  # ADCS modes
+  modes:
+    tumbling: 0x0
+    stable: 0x1
+    sun_pointed: 0x2
+  
+  # Sun sensor configuration
+  sun_sensor:
+    max_range: 140000  # OPT4001 max range
+    threshold_illumination_lux: 3000  # Lux threshold for sun detection
+    num_light_sensors: 9
+    error_lux: -1
+
+# Spacecraft States
+states:
+  # State values
+  startup: 0x00
+  detumbling: 0x01
+  nominal: 0x02
+  experiment: 0x03
+  low_power: 0x04
+  
+  # State timeouts (seconds)
+  detumbling_timeout_duration: 600  # 10 minutes
+
+# Task IDs
+task_ids:
+  command: 0x00
+  watchdog: 0x01
+  eps: 0x02
+  obdh: 0x03
+  comms: 0x04
+  imu: 0x05
+  adcs: 0x06
+  thermal: 0x07
+  gps: 0x08
+  payload: 0x09
+
+# Command IDs (Ground Commands)
+command_ids:
+  force_reboot: 0x40
+  switch_to_state: 0x41
+  uplink_time_reference: 0x42
+  uplink_orbit_reference: 0x43
+  turn_off_payload: 0x44
+  schedule_od_experiment: 0x45
+  request_tm_nominal: 0x46
+  request_tm_hal: 0x47
+  request_tm_storage: 0x48
+  request_tm_payload: 0x49
+  request_file_metadata: 0x4A
+  request_file_pkt: 0x4B
+  request_image: 0x4C
+  downlink_all: 0x50
+
+# Command Processing Status Codes
+command_status:
+  execution_success: 0x00
+  unknown_command_id: 0x01
+  precondition_failed: 0x02
+  argument_count_mismatch: 0x03
+  execution_failed: 0x04
+  argument_unpacking_failed: 0x05
+
+# Queue Status
+queue_status:
+  ok: 0
+  overflow: 1
+  empty: 2
+  overwrite: 3
+
+# Data Handler
+data_handler:
+  closed: 20
+  open: 21
+  img_data_limit: 100000
+
+# Telemetry Frame Sizes
+telemetry:
+  frame_sizes:
+    nominal: 227
+    hal: 46
+    storage: 74
+    payload: 0
+    full_frame: 248
+
+# Logging Levels
+logging:
+  notset: 0
+  debug: 10
+  info: 20
+  warning: 30
+  error: 40
+  critical: 50
+  nothing: 100
+
+# Time Processor Module
+time_processor:
+  default_time_reference: 1735689600  # Jan 1st 2025, 00:00:00 UTC
+  time_offset: 0
