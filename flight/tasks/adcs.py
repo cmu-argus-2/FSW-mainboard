@@ -240,7 +240,7 @@ class Task(TemplateTask):
 
         # Log Gyro Angular Velocities
         self.log_info(f"ADCS Mode : {self.MODE}")
-        self.log_info(f"Gyro Ang Vel : {self.gyro_data}")
+        self.log_info(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z + 1]}")
         # [TODO:] Remove later
         self.log_info(f"Mag Field : {self.log_data[ADCS_IDX.MAG_X:ADCS_IDX.MAG_Z + 1]}")
         self.log_info(f"Sun Vector : {self.log_data[ADCS_IDX.SUN_VEC_X:ADCS_IDX.SUN_VEC_Z + 1]}")
