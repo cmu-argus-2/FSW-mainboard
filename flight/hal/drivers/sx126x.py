@@ -1,6 +1,7 @@
 from time import monotonic_ns, sleep
 
 import digitalio
+from hal.drivers.errors import Errors
 from micropython import const
 
 _MS_PER_NS = const(1000000)
@@ -260,14 +261,14 @@ _SX126X_STATUS_SPI_FAILED = const(0b11111111)
 # SX126X_GFSK_RX_STATUS_ABORT_ERR = const(0b00000100)
 # SX126X_GFSK_RX_STATUS_PACKET_RECEIVED = const(0b00000010)
 # SX126X_GFSK_RX_STATUS_PACKET_SENT = const(0b00000001)
-# SX126X_PA_RAMP_ERR = const(0b100000000)
-# SX126X_PLL_LOCK_ERR = const(0b001000000)
+_SX126X_PA_RAMP_ERR = const(0b100000000)
+_SX126X_PLL_LOCK_ERR = const(0b001000000)
 _SX126X_XOSC_START_ERR = const(0b000100000)
-# SX126X_IMG_CALIB_ERR = const(0b000010000)
-# SX126X_ADC_CALIB_ERR = const(0b000001000)
-# SX126X_PLL_CALIB_ERR = const(0b000000100)
-# SX126X_RC13M_CALIB_ERR = const(0b000000010)
-# SX126X_RC64K_CALIB_ERR = const(0b000000001)
+_SX126X_IMG_CALIB_ERR = const(0b000010000)
+_SX126X_ADC_CALIB_ERR = const(0b000001000)
+_SX126X_PLL_CALIB_ERR = const(0b000000100)
+_SX126X_RC13M_CALIB_ERR = const(0b000000010)
+_SX126X_RC64K_CALIB_ERR = const(0b000000001)
 # SX126X_SYNC_WORD_PUBLIC = const(0x34)
 _SX126X_SYNC_WORD_PRIVATE = const(0x12)
 
@@ -413,7 +414,8 @@ ERROR = {
 
 
 def ASSERT(state):
-    assert state == _ERR_NONE, ERROR[state]
+    if state != _ERR_NONE:
+        raise RuntimeError(ERROR[state])
 
 
 # TODO: Characterize latency and potentially tweak sleep time
@@ -1372,6 +1374,7 @@ class SX126X:
             if abs(ticks_diff(start, ticks_ms())) >= timeout:
                 self.cs.value = True
                 self.spi.unlock()
+                # raise RuntimeError("GPIO not low, timeout")
                 return _ERR_SPI_CMD_TIMEOUT
 
         for i in range(cmdLen):
@@ -1670,6 +1673,32 @@ class SX1262(SX126X):
         if events & _SX126X_IRQ_TX_DONE:
             super().startReceive()
         self._callbackFunction(events)
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        results = []
+        errors = self.getDeviceErrors()
+        if errors & _SX126X_RC64K_CALIB_ERR:
+            results.append(Errors.RADIO_RC64K_CALIBRATION_FAILED)
+        if errors & _SX126X_RC13M_CALIB_ERR:
+            results.append(Errors.RADIO_RC13M_CALIBRATION_FAILED)
+        if errors & _SX126X_PLL_CALIB_ERR:
+            results.append(Errors.RADIO_PLL_CALIBRATION_FAILED)
+        if errors & _SX126X_XOSC_START_ERR:
+            results.append(Errors.RADIO_XOSC_START_FAILED)
+        if errors & _SX126X_IMG_CALIB_ERR:
+            results.append(Errors.RADIO_IMG_CALIBRATION_FAILED)
+        if errors & _SX126X_ADC_CALIB_ERR:
+            results.append(Errors.RADIO_ADC_CALIBRATION_FAILED)
+        if errors & _SX126X_PLL_CALIB_ERR:
+            results.append(Errors.RADIO_PLL_CALIBRATION_FAILED)
+        if errors & _SX126X_PA_RAMP_ERR:
+            results.append(Errors.RADIO_PA_RAMP_FAILED)
+        if results != []:
+            self.clearDeviceErrors()
+        return results
 
     def deinit(self):
         self.cs.deinit()
