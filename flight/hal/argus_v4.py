@@ -235,7 +235,7 @@ class ArgusV4Components:
 
     # XP DEPLOYMENT SENSOR
     DEPLOYMENT_SENSOR_XP_I2C = ArgusV4Interfaces.I2C1
-    DEPLOYMENT_SENSOR_XP_I2C_ADDRESS = const(0x52)
+    DEPLOYMENT_SENSOR_XP_I2C_ADDRESS = const(0x29)
 
     ########
     # SPI0 #
@@ -664,6 +664,7 @@ class ArgusV4(CubeSat):
             deployment_sensor = VL53L4CD(bus, address)
             return [deployment_sensor, Errors.NO_ERROR]
         except Exception as e:
+            print(e)
             if self.__debug:
                 raise e
 

@@ -228,6 +228,8 @@ class Task(TemplateTask):
             if SATELLITE.NEOPIXEL_AVAILABLE:
                 SATELLITE.NEOPIXEL.fill([255, 165, 0])
 
+            SATELLITE.tmp_deployment()
+
             # Detumbling timeout in case the ADCS is not working
             if SM.time_since_last_state_change > STATES.DETUMBLING_TIMEOUT_DURATION:
                 self.log_info("DETUMBLING timeout - Setting Detumbling Error Flag.")
@@ -257,6 +259,8 @@ class Task(TemplateTask):
             # Neopixel for NOMINAL (green)
             if SATELLITE.NEOPIXEL_AVAILABLE:
                 SATELLITE.NEOPIXEL.fill([0, 255, 0])
+
+            SATELLITE.tmp_deployment()
 
             """Transitions out of NOMINAL"""
             if self.ADCS_MODE == Modes.TUMBLING and self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] != 1:

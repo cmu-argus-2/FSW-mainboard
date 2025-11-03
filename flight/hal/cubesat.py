@@ -352,6 +352,20 @@ class CubeSat:
         """
         return self.key_in_device_list("WATCHDOG") and self.__device_list["WATCHDOG"].device is not None
 
+    @property
+    def tmp_deployment(self):
+        """tmp_deployment: Returns the deployment sensors object
+        :return: object or None
+        """
+        deployment_sensors = {}
+        for name, device in self.__device_list.items():
+            if "DEPLOYMENT_" in name:
+                deployment_sensors[name.replace("DEPLOYMENT_", "")] = device.device
+
+        for dir in deployment_sensors:
+            print(f"Deployment sensor {dir}: {deployment_sensors[dir].distance}")
+        # return deployment_sensors
+
     # @property
     # def PAYLOADUART(self):
     #     """PAYLOAD_EN: Returns the payload enable object
