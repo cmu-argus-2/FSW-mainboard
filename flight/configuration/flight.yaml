@@ -1,0 +1,15 @@
+# Author: Perrin
+# Description: Flight configuration file, compiled as satellite_config module
+# Note: Add "_const: true" to any value that should be wrapped with const() in MicroPython
+
+# Commanding Task
+command:
+  EXIT_STARTUP_TIMEOUT:
+    value: 162000  # seconds
+    _const: true
+
+# Time Processor Module
+time_processor:
+  time_reference: 
+    value: 1735689600  # Jan 1st 2025, 00:00:00 UTC
+    _const: false

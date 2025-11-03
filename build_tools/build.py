@@ -9,12 +9,6 @@ import platform
 import shutil
 import sys
 
-# Optional YAML support for build-time configuration. If PyYAML is not
-# installed, YAML config will be skipped with a warning.
-# Optional YAML support for build-time configuration. If PyYAML is not
-# installed, YAML config will be skipped with a warning.
-# Optional YAML support for build-time configuration. If PyYAML is not
-# installed, YAML config will be skipped with a warning.
 try:
     import yaml
 
@@ -117,6 +111,99 @@ def check_directory_location(source_folder):
         raise FileNotFoundError(f"Source folder {source_folder} not found")
 
 
+def generate_satellite_config(source_folder, use_flight_config=False):
+    """
+    Generate satellite_config.py from ground.yaml or flight.yaml.
+
+    Args:
+        source_folder: Path to the flight source folder
+        use_flight_config: If True, use flight.yaml; otherwise use ground.yaml
+    """
+    if not _HAS_YAML:
+        raise ImportError("PyYAML is not installed; cannot generate satellite_config.py")
+
+    config_file = "flight.yaml" if use_flight_config else "ground.yaml"
+    yaml_path = os.path.join(source_folder, "configuration", config_file)
+
+    if not os.path.exists(yaml_path):
+        raise FileNotFoundError(f"Configuration file {yaml_path} not found; cannot generate satellite_config.py")
+
+    try:
+        with open(yaml_path, "r") as yf:
+            config_data = yaml.safe_load(yf)
+
+        if config_data is None:
+            print(f"Configuration file {yaml_path} is empty; skipping generation of satellite_config.py")
+            return
+
+        output_lines = [
+            "# Auto-generated from " + config_file,
+            "# Do not edit - changes will be overwritten by the build system.",
+            "",
+            "from micropython import const",
+            "",
+        ]
+
+        for category_name, category_data in config_data.items():
+            if category_data is None:
+                continue
+
+            class_name = category_name + "_config"
+            output_lines.append(f"class {class_name}:")
+
+            if not category_data or not isinstance(category_data, dict):
+                output_lines.append("    pass")
+                output_lines.append("")
+                continue
+
+            for key, value in category_data.items():
+                if isinstance(value, dict) and "value" in value:
+                    actual_value = value["value"]
+                    use_const = value.get("_const", False)
+
+                    if use_const and isinstance(actual_value, int):
+                        python_value = f"const({actual_value})"
+                    elif isinstance(actual_value, str):
+                        python_value = repr(actual_value)
+                    elif isinstance(actual_value, (int, float, bool)):
+                        python_value = repr(actual_value)
+                    elif isinstance(actual_value, list):
+                        python_value = repr(actual_value)
+                    elif isinstance(actual_value, dict):
+                        python_value = repr(actual_value)
+                    else:
+                        python_value = repr(actual_value)
+                else:
+                    # Simple value without metadata, if no const defined
+                    if isinstance(value, str):
+                        python_value = repr(value)
+                    elif isinstance(value, (int, float, bool)):
+                        python_value = repr(value)
+                    elif isinstance(value, list):
+                        python_value = repr(value)
+                    elif isinstance(value, dict):
+                        python_value = repr(value)
+                    else:
+                        python_value = repr(value)
+
+                output_lines.append(f"    {key} = {python_value}")
+
+            output_lines.append("")
+
+        core_folder = os.path.join(source_folder, "core")
+        if not os.path.exists(core_folder):
+            os.makedirs(core_folder, exist_ok=True)
+
+        config_py_path = os.path.join(core_folder, "satellite_config.py")
+        with open(config_py_path, "w") as py_file:
+            py_file.write("\n".join(output_lines))
+
+        print(f"Generated {config_py_path} from {config_file}")
+
+    except Exception as e:
+        print(f"Failed to generate satellite_config.py from {yaml_path}: {e}")
+
+
 def create_build(source_folder):
     build_folder = "build/"
     if os.path.exists(build_folder):
@@ -125,47 +212,6 @@ def create_build(source_folder):
     build_folder = os.path.join(build_folder, "lib/")
 
     os.makedirs(build_folder)
-
-    # Attempt to load a YAML build configuration from the repository root
-    # and generate a Python module for the firmware to import at runtime.
-    repo_root = os.getcwd()
-    yaml_path = os.path.join(repo_root, "build_config.yaml")
-    if os.path.exists(yaml_path):
-        if not _HAS_YAML:
-            print("build_config.yaml found but PyYAML is not installed; skipping generation of build_config.py")
-        else:
-            try:
-                with open(yaml_path, "r") as yf:
-                    config_data = yaml.safe_load(yf)
-
-                # Write a Python module into the build lib folder. We'll compile
-                # it with mpy-cross below so the device gets the compiled module.
-                gen_path = os.path.join(build_folder, "build_config.py")
-                with open(gen_path, "w") as gf:
-                    gf.write("# Auto-generated from build_config.yaml\n")
-                    gf.write("# Do not edit - changes will be overwritten by the build system.\n\n")
-                    # Write a CONFIG dict containing the entire YAML structure
-                    gf.write("CONFIG = ")
-                    # Use JSON to produce a stable textual representation, then
-                    # write a Python literal by loading it back when the module
-                    # is imported. Simpler: write the Python literal with repr.
-                    gf.write(repr(config_data) + "\n\n")
-
-                # Compile the generated file to .mpy using mpy-cross so the
-                # rest of the build pipeline mirrors existing behaviour.
-                current_dir = os.getcwd()
-                os.chdir(build_folder)
-                try:
-                    print(f"Compiling generated config: {gen_path}")
-                    os.system(f"{MPY_CROSS_PATH} build_config.py -O3")
-                    # Remove the .py source so the build folder mirrors the
-                    # normal compiled-only output used elsewhere in this script.
-                    if os.path.exists("build_config.py"):
-                        os.remove("build_config.py")
-                finally:
-                    os.chdir(current_dir)
-            except Exception as e:
-                print(f"Failed to generate build_config.py from {yaml_path}: {e}")
 
     for root, _, files in os.walk(source_folder):
         # only include drivers or drivers_PYC_V05
@@ -240,11 +286,18 @@ if __name__ == "__main__":
         help="Source folder path",
         required=False,
     )
+    parser.add_argument(
+        "--flight",
+        action="store_true",
+        help="Use flight.yaml configuration instead of ground.yaml",
+    )
     args = parser.parse_args()
 
     source_folder = args.source_folder
 
     check_directory_location(source_folder)
+
+    generate_satellite_config(source_folder, use_flight_config=args.flight)
 
     if GIT_BRANCH:
         print(f"Branch: {GIT_BRANCH}")

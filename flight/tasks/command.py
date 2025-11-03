@@ -11,6 +11,7 @@ from apps.eps.eps import EPS_POWER_FLAG
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX
 from core import DataHandler as DH
 from core import TemplateTask
+from core import command_config as CONFIG
 from core import state_manager as SM
 from core.states import STATES, STR_STATES
 from core.time_processor import TimeProcessor as TPM
@@ -18,7 +19,7 @@ from hal.configuration import SATELLITE
 from micropython import const
 
 _TPM_INIT_TIMEOUT = const(10)  # seconds
-_EXIT_STARTUP_TIMEOUT = const(5)  # seconds
+_EXIT_STARTUP_TIMEOUT = CONFIG.EXIT_STARTUP_TIMEOUT  # Already a const in satellite_config
 _BURN_WIRE_STRENGTH = const(7)  # 0-255
 _DEPLOYMENT_INTERVAL = const(5)  # seconds
 _PWM_MAX = const(3)  # Maximum PWM value for deployment

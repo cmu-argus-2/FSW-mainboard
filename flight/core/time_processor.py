@@ -30,6 +30,7 @@ GPS time or an uplinked time reference.
 
 import time
 
+from core import time_processor_config as CONFIG
 from hal.configuration import SATELLITE
 
 
@@ -41,7 +42,7 @@ class TimeProcessor:
     """
 
     # Initialize to initial value for Jan 1st 2025
-    time_reference = 1735689600
+    time_reference = CONFIG.time_reference
 
     """
     time_offset: Offset between time.time() and
