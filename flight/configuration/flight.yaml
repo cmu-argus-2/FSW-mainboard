@@ -5,7 +5,7 @@
 # Commanding Task
 command:
   EXIT_STARTUP_TIMEOUT:
-    value: 162000  # seconds
+    value: 2700  # seconds, i.e., 45 minutes
     _const: true
 
 # Time Processor Module
