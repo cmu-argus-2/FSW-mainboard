@@ -1,11 +1,11 @@
-# Auto-generated from flight.yaml
+# Auto-generated from ground.yaml
 # Do not edit - changes will be overwritten by the build system.
 
 from micropython import const
 
 
 class command_config:
-    EXIT_STARTUP_TIMEOUT = const(162000)
+    EXIT_STARTUP_TIMEOUT = const(5)
 
 
 class time_processor_config:

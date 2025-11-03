@@ -11,8 +11,8 @@ from apps.eps.eps import EPS_POWER_FLAG
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX
 from core import DataHandler as DH
 from core import TemplateTask
-from core import command_config as CONFIG
 from core import state_manager as SM
+from core.satellite_config import command_config as CONFIG
 from core.states import STATES, STR_STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE

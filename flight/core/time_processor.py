@@ -30,7 +30,7 @@ GPS time or an uplinked time reference.
 
 import time
 
-from core import time_processor_config as CONFIG
+from core.satellite_config import time_processor_config as CONFIG
 from hal.configuration import SATELLITE
 
 
