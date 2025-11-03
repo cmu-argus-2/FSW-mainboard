@@ -209,7 +209,7 @@ def generate_satellite_config(source_folder, use_flight_config=False):
         print(f"Failed to generate satellite_config.py from {yaml_path}: {e}")
 
 
-def create_build(source_folder):
+def create_build(source_folder, flight_build):
     build_folder = "build/"
     if os.path.exists(build_folder):
         shutil.rmtree(build_folder)
@@ -264,6 +264,9 @@ def create_build(source_folder):
     # Create main.py file with single import statement "import main_module"
     build_folder = os.path.join(build_folder, "..")
     with open(os.path.join(build_folder, "main.py"), "w") as f:
+        f.write('print("")\n')
+        f.write('print("################################")\n')
+        f.write(f'print("Build Config: {"FLIGHT" if flight_build else "GROUND"}")\n')
         if GIT_BRANCH:
             f.write(f'print("Branch: {GIT_BRANCH}")\n')
         if GIT_COMMIT:
@@ -272,6 +275,7 @@ def create_build(source_folder):
                 f.write(f'print("DIRTY Commit: {GIT_COMMIT}")\n')
             else:
                 f.write(f'print("CLEAN Commit: {GIT_COMMIT}")\n')
+        f.write('print("################################")\n')
         f.write("import main_module\n")
 
     # Create SD folder
@@ -300,9 +304,11 @@ if __name__ == "__main__":
 
     source_folder = args.source_folder
 
+    flight_build = args.flight
+
     check_directory_location(source_folder)
 
-    generate_satellite_config(source_folder, use_flight_config=args.flight)
+    generate_satellite_config(source_folder, use_flight_config=flight_build)
 
     if GIT_BRANCH:
         print(f"Branch: {GIT_BRANCH}")
@@ -316,4 +322,4 @@ if __name__ == "__main__":
     print(f"CircuitPython version: {CPY_VERSION}")
     print(f"Board ID: {BOARD_ID}")
 
-    build_folder = create_build(source_folder)
+    build_folder = create_build(source_folder, flight_build)
