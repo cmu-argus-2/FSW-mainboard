@@ -142,6 +142,7 @@ def generate_satellite_config(source_folder, use_flight_config=False):
             "",
             "from micropython import const",
             "",
+            "",
         ]
 
         for category_name, category_data in config_data.items():
@@ -153,7 +154,8 @@ def generate_satellite_config(source_folder, use_flight_config=False):
 
             if not category_data or not isinstance(category_data, dict):
                 output_lines.append("    pass")
-                output_lines.append("")
+                for _ in range(2):
+                    output_lines.append("")
                 continue
 
             for key, value in category_data.items():
@@ -188,7 +190,10 @@ def generate_satellite_config(source_folder, use_flight_config=False):
 
                 output_lines.append(f"    {key} = {python_value}")
 
-            output_lines.append("")
+            for _ in range(2):
+                output_lines.append("")
+
+        output_lines.pop()  # Remove last extra newline
 
         core_folder = os.path.join(source_folder, "core")
         if not os.path.exists(core_folder):
