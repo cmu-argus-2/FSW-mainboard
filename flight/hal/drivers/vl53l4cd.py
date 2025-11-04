@@ -210,6 +210,7 @@ class VL53L4CD:
     @property
     def distance(self):
         """The distance in units of centimeters."""
+        self.clear_interrupt()
         dist = self._read_register(_VL53L4CD_RESULT_DISTANCE, 2)
         dist = struct.unpack(">H", dist)[0]
         return dist / 10
