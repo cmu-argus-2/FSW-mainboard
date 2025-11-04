@@ -375,7 +375,9 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'XM', etc.)
         :return: float - distance value in cm if the sensor is available else -1
         """
-        return self.__device_list["DEPLOYMENT_" + dir].device.distance
+        if self.DEPLOYMENT_SENSOR_AVAILABLE(dir):
+            return self.__device_list["DEPLOYMENT_" + dir].device.distance
+        return -1
 
     # @property
     # def PAYLOADUART(self):
