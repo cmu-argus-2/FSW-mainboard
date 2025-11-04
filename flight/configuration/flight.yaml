@@ -9,7 +9,7 @@ command:
     _const: true
 
   DETUMBLING_TIMEOUT_DURATION:
-    value: 7200  # seconds, i.e., 2 hours
+    value: 18000  # seconds, i.e., 5 hours
     _const: true
 
 # Time Processor Module
