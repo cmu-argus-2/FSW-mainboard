@@ -64,6 +64,10 @@ elif [ "$1" == "simulate" ]; then
     $PYTHON_CMD build_tools/build-emulator.py $FLIGHT_FLAG
     cd build/ && $PYTHON_CMD main.py
     cd -
+elif [ "$1" == "flight" ]; then
+    # If --flight is the only argument, build with flight config
+    $PYTHON_CMD build_tools/build.py $FLIGHT_FLAG
+    $PYTHON_CMD build_tools/move_to_board.py
 else
     # Pass flight flag to build command
     $PYTHON_CMD build_tools/build.py $FLIGHT_FLAG

@@ -10,3 +10,7 @@ class command_config:
 
 class time_processor_config:
     time_reference = 1735689600
+
+
+class main_config:
+    LOG_LEVEL = "INFO"

@@ -13,3 +13,8 @@ time_processor:
   time_reference: 
     value: 1735689600  # Jan 1st 2025, 00:00:00 UTC
     _const: false
+
+# Main Task
+main:
+  LOG_LEVEL:
+    value: "WARNING"
