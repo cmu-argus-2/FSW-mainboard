@@ -37,25 +37,39 @@ echo "Using Python command: $PYTHON_CMD"
 
 export ARGUS_SIMULATION_FLAG=0
 
+# Check for flight flag
+FLIGHT_FLAG=""
+if [[ " $@ " =~ " flight " ]]; then
+    FLIGHT_FLAG="--flight"
+    echo "Using flight configuration (flight.yaml)"
+else
+    echo "Using ground configuration (ground.yaml)"
+fi
+
 if [[ -z $1 ]]; then
-    $PYTHON_CMD build_tools/build.py
+    $PYTHON_CMD build_tools/build.py $FLIGHT_FLAG
     $PYTHON_CMD build_tools/move_to_board.py
 elif [ "$1" == "emulate" ]; then
-    $PYTHON_CMD build_tools/build-emulator.py
+    $PYTHON_CMD build_tools/build-emulator.py $FLIGHT_FLAG
     cd build/ && $PYTHON_CMD main.py
     cd -
 elif [ "$1" == "emulate-profile" ]; then
-    $PYTHON_CMD build_tools/build-emulator.py
+    $PYTHON_CMD build_tools/build-emulator.py $FLIGHT_FLAG
     cd build/ && mprof run --python main.py
     mprof plot -o output.png
     cd -
 elif [ "$1" == "simulate" ]; then
     export ARGUS_SIMULATION_FLAG=1
     echo "ARGUS_SIMULATION_FLAG set to 1 for simulation mode."
-    $PYTHON_CMD build_tools/build-emulator.py
+    $PYTHON_CMD build_tools/build-emulator.py $FLIGHT_FLAG
     cd build/ && $PYTHON_CMD main.py
     cd -
+elif [ "$1" == "flight" ]; then
+    # If --flight is the only argument, build with flight config
+    $PYTHON_CMD build_tools/build.py $FLIGHT_FLAG
+    $PYTHON_CMD build_tools/move_to_board.py
 else
-    $PYTHON_CMD build_tools/build.py
+    # Pass flight flag to build command
+    $PYTHON_CMD build_tools/build.py $FLIGHT_FLAG
     $PYTHON_CMD build_tools/move_to_board.py -d "$1"
 fi
