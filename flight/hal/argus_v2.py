@@ -568,6 +568,11 @@ class ArgusV2(CubeSat):
     def __watchdog_boot(self, _) -> list[object, int]:
         return [None, Errors.NO_ERROR]
 
+    def __deployment_sensor_boot(self, _) -> list[object, int]:
+        """deployment_sensor_boot: Boot sequence for the deployment sensor"""
+
+        return [None, Errors.NO_ERROR]
+
     ######################## ERROR HANDLING ########################
 
     def handle_error(self, _: str) -> int:
