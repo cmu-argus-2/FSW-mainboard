@@ -8,6 +8,10 @@ command:
     value: 5  # seconds
     _const: true
 
+  DETUMBLING_TIMEOUT_DURATION:
+    value: 30  # seconds, i.e., 30 seconds
+    _const: true
+
 # Time Processor Module
 time_processor:
   time_reference: 

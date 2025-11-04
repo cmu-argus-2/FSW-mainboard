@@ -6,6 +6,7 @@ from micropython import const
 
 class command_config:
     EXIT_STARTUP_TIMEOUT = const(5)
+    DETUMBLING_TIMEOUT_DURATION = const(30)
 
 
 class time_processor_config:

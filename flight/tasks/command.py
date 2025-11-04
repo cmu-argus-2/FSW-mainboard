@@ -230,7 +230,7 @@ class Task(TemplateTask):
                 SATELLITE.NEOPIXEL.fill([255, 165, 0])
 
             # Detumbling timeout in case the ADCS is not working
-            if SM.time_since_last_state_change > STATES.DETUMBLING_TIMEOUT_DURATION:
+            if SM.time_since_last_state_change > CONFIG.DETUMBLING_TIMEOUT_DURATION:
                 self.log_info("DETUMBLING timeout - Setting Detumbling Error Flag.")
                 # Set the detumbling error flag in the NVM
                 self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1
