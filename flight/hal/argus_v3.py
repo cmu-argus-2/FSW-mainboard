@@ -642,6 +642,11 @@ class ArgusV3(CubeSat):
 
             return [None, Errors.DEVICE_NOT_INITIALISED]
 
+    def __deployment_sensor_boot(self, _) -> list[object, int]:
+        """deployment_sensor_boot: Boot sequence for the deployment sensor"""
+
+        return [None, Errors.NO_ERROR]
+
     ######################## ERROR HANDLING ########################
 
     def __turn_off_power_line(self, power_line):
