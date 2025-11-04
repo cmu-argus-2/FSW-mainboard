@@ -438,7 +438,7 @@ class VL53L4CD:
 
     def set_address(self, new_address):
         """
-        Set a new I2C address to the instantaited object. This is only called when using
+        Set a new I2C address to the instantiated object. This is only called when using
         multiple VL53L4CD sensors on the same I2C bus (SDA & SCL pins). See also the
         `example <examples.html#id2>`_ for proper usage.
         """
