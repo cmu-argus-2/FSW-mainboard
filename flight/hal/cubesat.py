@@ -353,18 +353,29 @@ class CubeSat:
         return self.key_in_device_list("WATCHDOG") and self.__device_list["WATCHDOG"].device is not None
 
     @property
-    def tmp_deployment(self):
-        """tmp_deployment: Returns the deployment sensors object
-        :return: object or None
-        """
+    def DEPLOYMENT_SENSORS(self):
+        """Returns a dictionary of deployment sensors with the direction as the key (e.g. 'XP', 'XM', 'YP', 'YM', 'ZM')"""
         deployment_sensors = {}
         for name, device in self.__device_list.items():
             if "DEPLOYMENT_" in name:
                 deployment_sensors[name.replace("DEPLOYMENT_", "")] = device.device
+        return deployment_sensors
 
-        for dir in deployment_sensors:
-            print(f"Deployment sensor {dir}: {deployment_sensors[dir].distance}")
-        # return deployment_sensors
+    def DEPLOYMENT_SENSOR_AVAILABLE(self, dir: str) -> bool:
+        """Returns True if the specific deployment sensor for the given direction is available.
+
+        :param dir: The direction key (e.g., 'XP', 'XM', etc.)
+        :return: bool - True if the sensor exists and is not None, False otherwise.
+        """
+        return self.key_in_device_list("DEPLOYMENT_" + dir) and self.__device_list["DEPLOYMENT_" + dir].device is not None
+
+    def DEPLOYMENT_SENSOR_DISTANCE(self, dir: str) -> float:
+        """Returns the distance reading for the specific deployment sensor if available and returns -1 otherwise
+
+        :param dir: The direction key (e.g., 'XP', 'XM', etc.)
+        :return: float - distance value in cm if the sensor is available else -1
+        """
+        return self.__device_list["DEPLOYMENT_" + dir].device.distance
 
     # @property
     # def PAYLOADUART(self):

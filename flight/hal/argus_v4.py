@@ -163,7 +163,7 @@ class ArgusV4Components:
 
     # YM DEPLOYMENT SENSOR
     DEPLOYMENT_SENSOR_YM_I2C = ArgusV4Interfaces.I2C0
-    DEPLOYMENT_SENSOR_YM_I2C_ADDRESS = const(0x52)
+    DEPLOYMENT_SENSOR_YM_I2C_ADDRESS = const(0x29)
 
     ########
     # I2C1 #
@@ -662,6 +662,8 @@ class ArgusV4(CubeSat):
             bus = data[0]
             address = data[1]
             deployment_sensor = VL53L4CD(bus, address)
+            deployment_sensor.timing_budget = 10
+            deployment_sensor.start_ranging()
             return [deployment_sensor, Errors.NO_ERROR]
         except Exception as e:
             print(e)
