@@ -280,7 +280,6 @@ def create_build(source_folder, flight_build):
 
     # Create SD folder
     os.makedirs(os.path.join(build_folder, "sd/"), exist_ok=True)
-    return build_folder
 
 
 if __name__ == "__main__":
@@ -322,4 +321,4 @@ if __name__ == "__main__":
     print(f"CircuitPython version: {CPY_VERSION}")
     print(f"Board ID: {BOARD_ID}")
 
-    build_folder = create_build(source_folder, flight_build)
+    create_build(source_folder, flight_build)
