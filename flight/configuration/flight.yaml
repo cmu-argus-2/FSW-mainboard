@@ -5,7 +5,7 @@
 # Commanding Task
 command:
   EXIT_STARTUP_TIMEOUT:
-    value: 2700  # seconds, i.e., 45 minutes
+    value: 1800  # seconds, i.e., 30 minutes
     _const: true
 
   DETUMBLING_TIMEOUT_DURATION:
