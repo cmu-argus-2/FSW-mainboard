@@ -751,7 +751,9 @@ class SATELLITE_RADIO:
 
         # Send a message to GS
         if SATELLITE.RADIO_AVAILABLE:
-            SATELLITE.RADIO.send(cls.tx_message)
+            _, state = SATELLITE.RADIO.send(cls.tx_message)
+            if state != 0:
+                logger.critical(f"[COMMS ERROR] RADIO failed to TX (error: {state})")
             cls.crc_count = 0
         else:
             logger.error("[COMMS ERROR] RADIO no longer active on SAT")
