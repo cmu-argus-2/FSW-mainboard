@@ -106,17 +106,17 @@ def mcm_coil_allocator(u: np.ndarray, b: np.ndarray) -> np.ndarray:
             axis_fail += [axis]
     # if one axis failure, modify allocation matrix
     if len(axis_fail) == 1:
-        if np.abs(b[axis_fail[0]]) > 1e-9:
+        if abs(b[axis_fail[0]]) > 1e-9:
             mcm_mat_no_zaxis = np.zeros((3, 3))
             mcm_mat_no_zaxis[:, axis_fail[0]] = b / b[axis_fail[0]]
-            mcm_mat_no_zaxis = np.eye(3) - mcm_mat_no_zaxis
-            mcm_alloc = mcm_alloc @ mcm_mat_no_zaxis
+            mcm_mat_no_zaxis[:, :] = np.eye(3) - mcm_mat_no_zaxis
+            mcm_alloc = np.dot(mcm_alloc, mcm_mat_no_zaxis)
 
     # Compute Coil Voltages based on Allocation matrix and target input
     u_throttle = np.dot(mcm_alloc, u)
     # Maintain direction, clip magnitude to 1
-    u_throttle = u_throttle / max(1.0, np.max(np.abs(u_throttle)))
-    # np.clip(u_throttle, -1, 1)
+    u_throttle = u_throttle / max(1.0, np.max(abs(u_throttle)))
+    # u_throttle = np.clip(u_throttle, -1, 1)
 
     # Apply Coil Voltages
     for n in range(MCMConst.N_MCM):
