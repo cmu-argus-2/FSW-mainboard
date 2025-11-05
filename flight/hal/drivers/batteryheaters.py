@@ -45,3 +45,9 @@ class BatteryHeaters:
 
     def heater1_enabled(self):
         return self.__heater1_en.value and self.__enable.value if self.__heater1_en is not None else False
+
+    def deinit(self):
+        self.__enable.deinit()
+        self.__heater0_en.deinit()
+        if self.__heater1_en is not None:
+            self.__heater1_en.deinit()
