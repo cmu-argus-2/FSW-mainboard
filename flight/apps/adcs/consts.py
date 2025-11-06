@@ -83,10 +83,20 @@ class Modes:
     TUMBLING = 0  # Satellite is spinning outside the "stable" bounds.
     STABLE = 1  # Satellite is spinning inside the "stable" bounds.
     SUN_POINTED = 2  # Satellite is generally pointed towards the sun.
+    ACS_OFF = 3  # Satellite has pointed to the sun and ACS can be turned off
 
     SUN_VECTOR_REF = np.array([0.0, 0.0, 1.0])
-    STABLE_TOL = 0.14  # 0.05  # "stable" if ang vel < 0.05 rad/s = 2.86 deg/s.
-    SUN_POINTED_TOL = 0.1  # "sun-pointed" if att err < 0.09 rad = 5 deg.
+
+    # Detumbling
+    TUMBLING_TOL = 0.09  # Exit detumbling into stable if ω < 0.09 rad/s (5 deg/s)
+
+    # STABLE MODE
+    STABLE_TOL_LO = 0.26  # Exit into sun_pointing if momentum less than 15 deg from major axis
+    STABLE_TOL_HI = 0.34  # Re-enter stable state if momentum more than 20 deg from major axis
+
+    # SUN POINTED MODE
+    SUN_POINTED_TOL_LO = 0.176  # Turn ACS off if momentum less than 10 deg from sun vector
+    SUN_POINTED_TOL_HI = 0.26  # Re-enter sun_pointed if momentum more than 15 deg from sun vector
 
 
 class PhysicalConst:
@@ -95,11 +105,7 @@ class PhysicalConst:
     """
 
     INERTIA_MAT = np.array(
-        [
-            [0.0033, 0.0, 0.0],
-            [0.0, 0.0033, 0.0],
-            [0.0, 0.0, 0.0066],
-        ]
+        [[3.544e-03, -1.8729e-05, -5.2467e-06], [-1.8729e-05, 3.590e-03, 1.9134e-05], [-5.2467e-06, 1.9134e-05, 4.120e-03]]
     )
 
     # Compute Major axis of inertia
@@ -145,11 +151,15 @@ class ControllerConst:
     FALLBACK_CONTROL = np.zeros(CONTROL_DIM)
 
     # Spin-stabilized Constants
-    OMEGA_MAG_TARGET = 0.1125  # Target angular velocity along major axis
-    MOMENTUM_TARGET = np.linalg.norm(np.dot(PhysicalConst.INERTIA_MAT, PhysicalConst.INERTIA_MAJOR_DIR * OMEGA_MAG_TARGET))
-    SPIN_STABILIZING_GAIN = 1.0e06
+    OMEGA_MAG_TARGET = 0.035  # Target angular velocity (2 deg/s) for spin stabilization
+    MOMENTUM_TARGET = np.dot(PhysicalConst.INERTIA_MAT, PhysicalConst.INERTIA_MAJOR_DIR * OMEGA_MAG_TARGET)
+    MOMENTUM_TARGET_MAG = np.linalg.norm(MOMENTUM_TARGET)
+    SPIN_STABILIZING_GAIN = 2.0e07
 
     # Sun Pointing Constants
+
+    # Tolerances
+    OMEGA_TOLERANCE = 0.02  # rad/s (~1.2 deg/s)
 
 
 class MCMConst:
@@ -164,10 +174,10 @@ class MCMConst:
     ALLOC_MAT = np.array(
         [
             [0.5, 0.0, 0.0],
-            [0.5, 0.0, 0.0],
+            [-0.5, 0.0, 0.0],
             [0.0, 0.5, 0.0],
-            [0.0, 0.5, 0.0],
+            [0.0, -0.5, 0.0],
             [0.0, 0.0, 0.5],
-            [0.0, 0.0, 0.5],
+            [0.0, 0.0, -0.5],
         ]
     )
