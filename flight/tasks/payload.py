@@ -17,7 +17,7 @@ from io import BytesIO
 _NUM_IMG_TO_MAINTAIN_READY = 5  # Number of images to maintain in memory at least
 image_array = b'' # Initialize byte array for image being received
 
-PACKET_SIZE = 512       # num bytes
+PACKET_SIZE = 250       # num bytes TODO : MATCH WITH PAYLOAD UART
 CRC5_SIZE = 1           # num bytes for crc5 (5 bits will be used)
 
 STRUCT_FORMAT_UINT32 = '<I'  # Little-endian unsigned integer (4 bytes)
@@ -26,6 +26,12 @@ LEN_START = ID_START + 4
 DATA_START = LEN_START + 4
 DATA_END = DATA_START + 246
 
+CMD_HANDSHAKE_REQUEST = 0x01, 
+CMD_DATA_CHUNK = 0x02, 
+CMD_ACK_READY = 0x10,
+CMD_ACK_OK = 0x11,
+CMD_NACK_CORRUPT = 0x20, 
+CMD_NACK_LOST = 0x21
 
 class Task(TemplateTask):
 
@@ -214,24 +220,34 @@ class ImageTransferHandler():
         self.image_array += data
         
 
-    def deconstruct_received_bytes(self, received_bytes):
-        # Deconstruct the received bytes from array into components: length, data,
-        # The received bytes is like this -> | id (4 bytes) | length (4 bytes) | data (up to 246 bytes) | crc (1 byte) |
+def deconstruct_received_bytes(received_bytes):
+    # Deconstruct the received bytes from array into components: length, data,
+    # The received bytes is like this -> | id (4 bytes) | length (4 bytes) | data (up to 246 bytes) | crc (1 byte) |
+    # The received data has a padding of zeros if data is less than PACKET_SIZE
+    packet_id = received_bytes[ID_START:LEN_START]
+    data_length = received_bytes[LEN_START:DATA_START]
+    data_payload_raw = received_bytes[DATA_START:DATA_END+CRC5_SIZE]
+    # crc = received_bytes[DATA_END:DATA_END + CRC5_SIZE]
 
-        packet_id = received_bytes[ID_START:LEN_START]
-        data_length = received_bytes[LEN_START:DATA_START]
-        data_payload_raw = received_bytes[DATA_START:DATA_END+CRC5_SIZE]
-        # crc = received_bytes[DATA_END:DATA_END + CRC5_SIZE]
+    return {
+        'packet_id': packet_id,
+        'data_length': data_length,
+        'data': data_payload_raw #Also includes crc
+    }
 
-        return {
-            'packet_id': packet_id,
-            'data_length': data_length,
-            'data': data_payload_raw #Also includes crc
-        }
+def create_packet(packet_id, data):
+    if (type(data) is str):
+        data = data.encode('utf-8')
+    data_length = len(data)
+    result = bytearray()
+    # Add packet ID  to the data 
+    result = packet_id.to_bytes(4, byteorder='big') + data
+    result = result.ljust(PACKET_SIZE, b'\0')
+    return result
 
+def read_packet(received_bytes)
 # '''
 def image_receiver_task():
-    # Connect to the mainboard
     handler = ImageTransferHandler()
     if not handler.is_connected:
         # print("Image receiver: Failed to connect to payload UART")
@@ -240,18 +256,21 @@ def image_receiver_task():
 
     start_time = time.time()
 
-    # Initiate handshake and wait for ack and start image collection signal
-    # If HANDSHAKE fails after 3 retries, abort mission and log failure
     timeout_shake = 0
     retry = 0
     while (not handler.handshake_complete and retry < 3):
         handler.send(b'START')
 
         while not handler.handshake_complete: 
-            received = handler.receive() #Returns a byttearray
-            if received == b'SENDING':
+            received = handler.receive() #Returns a bytearray
+            received = received.decode('utf-8').strip()
+            # if received != "":
+            if received is not None:
+                print(f"Handshake received: {received}")
+            if received == "SENDING":
                 # print("Handshake complete, starting image transfer")
                 handler.send(b'ACK')
+                
                 handler.handshake_complete = True
                 break
             timeout_shake = time.time() - start_time

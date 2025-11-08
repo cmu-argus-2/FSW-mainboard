@@ -29,7 +29,7 @@ class PayloadUART(PayloadCommunicationInterface):
     @classmethod
     def receive(cls):
         if cls.packet_available():
-            pckt = cls._uart.read(cls._uart.in_waiting)
+            pckt = cls._uart.read(cls._PCKT_SIZE)
             return pckt
         return bytearray()
 
@@ -42,7 +42,7 @@ class PayloadUART(PayloadCommunicationInterface):
         """Checks if a packet is available to read."""
         if not cls._connected or cls._uart is None:
             return False
-        return cls._uart.in_waiting > 0
+        return cls._uart.in_waiting  >= 0
 
     @classmethod
     def get_id(cls):
