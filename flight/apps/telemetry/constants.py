@@ -210,7 +210,11 @@ class HAL_IDX:
     LIGHT_ZP_3_ERROR_COUNT = const(64)
     LIGHT_ZP_4_ERROR = const(65)
     LIGHT_ZP_4_ERROR_COUNT = const(66)
-    PERIPH_REBOOT_COUNT = const(67)
+    DEPLOYMENT_XP_ERROR = const(67)
+    DEPLOYMENT_XP_ERROR_COUNT = const(68)
+    DEPLOYMENT_YM_ERROR = const(69)
+    DEPLOYMENT_YM_ERROR_COUNT = const(70)
+    PERIPH_REBOOT_COUNT = const(71)
 
 
 """

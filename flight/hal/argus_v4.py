@@ -10,6 +10,7 @@ import digitalio
 from busio import I2C, SPI, UART
 from hal.cubesat import ASIL0, ASIL1, ASIL2, ASIL3, ASIL4, CubeSat
 from hal.drivers.errors import Errors
+from hal.drivers.objectWrapper import objectWrapper
 from micropython import const
 from sdcardio import SDCard
 
@@ -319,6 +320,8 @@ class ArgusV4(CubeSat):
     def __boot_device(self, name: str, device: object):
         func = device.boot_fn
         device.device, device.error = func(name)
+        if device.error == Errors.NO_ERROR and device.device is not None:
+            device.device = objectWrapper(device.device)
 
     def boot_sequence(self):
         """boot_sequence: Boot sequence for the CubeSat."""
