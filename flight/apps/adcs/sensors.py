@@ -51,7 +51,7 @@ def read_sun_position() -> tuple[int, np.ndarray, np.ndarray]:
     return status, sun_pos_body, np.array(light_sensor_lux_readings) / SunConst.LIGHT_SENSOR_LOG_FACTOR
 
 
-def read_deployment_sensors(sens_id) -> tuple[float, float]:
+def read_deployment_sensors(sens_id) -> float:
     """
     - Reads the deployment sensor distances from HAL
     - Returns the distance for XP or YM sensors

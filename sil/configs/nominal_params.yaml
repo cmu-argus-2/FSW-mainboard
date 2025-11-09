@@ -79,8 +79,15 @@ deployables :
      N_rand_deploy_fail: 0  # number of random magnetorquer failures
      deploy_status: [True,True,True,True] # True = deployed, False = undeployed
 
-CoPM : [0.005,-0.005,-0.005] # center of pressure with respect to center of mass of CubeSat
-CoPM_dev : 0.001 # stddev from nominal of CoPM [m]
+# Spacecraft body frame origin is the center of mass. 
+# These are all positioned relative to the geometric center of the CubeSat at the center of the cube.
+# CoPM : [0.005,-0.005,-0.005] # center of pressure with respect to center of mass of CubeSat
+# CoPM_dev : 0.001 # stddev from nominal of CoPM [m]
+CoM : [0.0,0.0,-0.005] # center of pressure with respect to center of mass of CubeSat
+CoM_dev : 0.001 # stddev from nominal of CoPM [m]
+# In practice, CoP will be very dependent on the attitude of the spacecraft. For simplicity, we assume a fixed CoP here.
+CoP : [0.0,0.0,0.0] # center of pressure with respect to center of mass of CubeSat
+CoP_dev : 0.001 # stddev from nominal of CoPM [m]
 Cd : 2.2 # Drag coefficient
 CR : 1.8 # Reflectivity coefficient
 

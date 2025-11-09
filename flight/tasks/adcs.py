@@ -71,7 +71,7 @@ class Task(TemplateTask):
 
     mag_counter = 0
 
-    xm_deployed = False
+    xp_deployed = False
     ym_deployed = False
 
     ctr_const = ControllerConst()
@@ -83,16 +83,7 @@ class Task(TemplateTask):
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:
             # check for deployment to update inertia matrix
-            if not self.xm_deployed:
-                xp_dist = sensors.read_deployment_sensors("XP")
-                self.xm_deployed = xp_dist > 0 and xp_dist < 10
-                if self.xm_deployed:
-                    self.ctr_const.update_inertia_no_deploy(xp_deployed=self.xm_deployed, ym_deployed=self.ym_deployed)
-            if not self.ym_deployed:
-                ym_dist = sensors.read_deployment_sensors("YM")
-                self.ym_deployed = ym_dist > 0 and ym_dist < 10
-                if self.ym_deployed:
-                    self.ctr_const.update_inertia_no_deploy(xp_deployed=self.xm_deployed, ym_deployed=self.ym_deployed)
+            pass
         else:
             if not DH.data_process_exists("adcs"):
                 data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f"
@@ -100,6 +91,17 @@ class Task(TemplateTask):
 
             self.time = TPM.time()
             self.log_data[ADCS_IDX.TIME_ADCS] = self.time
+
+            if not self.xp_deployed:
+                xp_dist = sensors.read_deployment_sensors("XP")
+                self.xp_deployed = xp_dist < 0 or xp_dist > 10
+                if self.xp_deployed:
+                    self.ctr_const.update_inertia_no_deploy(xp_deployed=self.xp_deployed, ym_deployed=self.ym_deployed)
+            if not self.ym_deployed:
+                ym_dist = sensors.read_deployment_sensors("YM")
+                self.ym_deployed = ym_dist < 0 or ym_dist > 10
+                if self.ym_deployed:
+                    self.ctr_const.update_inertia_no_deploy(xp_deployed=self.xp_deployed, ym_deployed=self.ym_deployed)
 
             # ------------------------------------------------------------------------------------------------------------------------------------
             # DETUMBLING
@@ -122,7 +124,7 @@ class Task(TemplateTask):
                 if self.mag_counter == 5:
                     self.mag_counter = 0
                 # Check if detumbling has been completed
-                if sensors.current_mode(self.MODE) != Modes.TUMBLING:
+                if sensors.current_mode(self.MODE, self.ctr_const) != Modes.TUMBLING:
                     zero_all_coils()
                     self.MODE = Modes.STABLE
 
@@ -141,7 +143,7 @@ class Task(TemplateTask):
                 if (
                     SM.current_state == STATES.NOMINAL
                     and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
-                    and sensors.current_mode(self.MODE) == Modes.TUMBLING
+                    and sensors.current_mode(self.MODE, self.ctr_const) == Modes.TUMBLING
                 ):
                     # Do not allow a switch to Detumbling from Low power
                     self.MODE = Modes.TUMBLING
@@ -158,7 +160,7 @@ class Task(TemplateTask):
                     self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
 
                     # identify Mode based on current sensor readings
-                    new_mode = sensors.current_mode(self.MODE)
+                    new_mode = sensors.current_mode(self.MODE, self.ctr_const)
                     if new_mode != self.MODE:
                         zero_all_coils()
                         self.MODE = new_mode
@@ -259,6 +261,11 @@ class Task(TemplateTask):
         self.log_info(f"Sun Status : {self.log_data[ADCS_IDX.SUN_STATUS]}")
         self.log_info(f"Gyro Status : {self.gyro_status}")
         self.log_info(f"Mag Status : {self.mag_status}")
+        # self.log_info(f"Deployment Status (XP,YM) : {[self.xp_deployed, self.ym_deployed]}")
+        # debugging
+        # self.log_info(f"Coil Status : {self.log_data[ADCS_IDX.XP_COIL_STATUS:ADCS_IDX.ZM_COIL_STATUS + 1]}")
+        # self.log_info(f"Inertia Mat : {self.ctr_const.INERTIA_MAT}")
+        # self.log_info(f"Momentum Target : {self.ctr_const.MOMENTUM_TARGET}")
 
         # from hal.configuration import SATELLITE
         # from ulab import numpy as np
