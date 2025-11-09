@@ -28,11 +28,56 @@ area :
      area_dev : 20 # stddev from nominal area as a % of nominal area [%]
      min_area : 0.01 # Min area [m^2]
 
-inertia : 
-     nominal_inertia : [3.544e-03, -1.8729e-05, -5.2467e-06,
-                        -1.8729e-05, 3.590e-03, 1.9134e-05,
-                        -5.2467e-06, 1.9134e-05, 4.120e-03]
+inertia :
+     nominal_inertia : [ 2.29087756e-03, -1.87290000e-05, -5.24670000e-06,
+                         -1.87290000e-05,  2.33687756e-03,  1.91340000e-05,
+                         -5.24670000e-06,  1.91340000e-05,  2.37975511e-03]
+     # nominal_inertia_no_deployables : [3.544e-03, -1.8729e-05, -5.2467e-06, # full inertia with deployed panels
+     #                                    -1.8729e-05, 3.590e-03, 1.9134e-05,
+     #                                    -5.2467e-06, 1.9134e-05, 4.120e-03]
      principal_axis_dev : [0.4,0.4,0.4] # stddev of principal axis inertias about nominal as a % of nominal [%]
+
+deployables :
+     N_deployables : 4
+     deployable_mass : [0.0383, 0.0383, 0.0383, 0.0383] # kg
+     deployable_inertia : [5.2061e-05,       0.0,        0.0, # deploy xp inertia
+                                  0.0, 3.065e-05,        0.0,
+                                  0.0,       0.0, 2.1408e-05,
+                           5.2061e-05,       0.0,        0.0, # deploy xm inertia
+                                  0.0, 3.065e-05,        0.0,
+                                  0.0,       0.0, 2.1408e-05,
+                            3.065e-05,       0.0,        0.0, # deploy yp inertia
+                                  0.0, 5.206e-05,        0.0,
+                                  0.0,       0.0, 2.1408e-05,
+                            3.065e-05,       0.0,        0.0, # deploy ym inertia
+                                  0.0, 5.206e-05,        0.0,
+                                  0.0,       0.0, 2.1408e-05] # kg.m^2    
+     # deployable position when undeployed
+     deployable_stowed_pos : [  0.05,  0.0, 0.0,
+                               -0.05,  0.0, 0.0,
+                                 0.0, 0.05, 0.0,
+                                 0.0,-0.05, 0.0] # m
+     # deployable orientation when undeployed
+     deployable_stowed_orient : [0.0,0.0,0.0,
+                                 0.0,0.0,0.0,
+                                 0.0,0.0,0.0,
+                                 0.0,0.0,0.0] # deg
+     # deployable position when deployed
+     deployable_deployed_pos : [ 0.1, 0.0, 0.05,
+                                -0.1, 0.0, 0.05,
+                                 0.0, 0.1, 0.05,
+                                 0.0,-0.1, 0.05] # m
+     # deployable orientation when deployed
+     deployable_deployed_orient : [  0.0,  90.0,0.0,  
+                                     0.0, -90.0,0.0,
+                                    90.0,   0.0,0.0,
+                                   -90.0,   0.0,0.0] # deg
+     # deployable has a deployment sensor: True, no sensor: False
+     deployable_sensor_flag : [True, False, False, True] # flags for deployable position sensors
+     # failures
+     random_deploy_fail: False
+     N_rand_deploy_fail: 0  # number of random magnetorquer failures
+     deploy_status: [True,True,True,True] # True = deployed, False = undeployed
 
 CoPM : [0.005,-0.005,-0.005] # center of pressure with respect to center of mass of CubeSat
 CoPM_dev : 0.001 # stddev from nominal of CoPM [m]
@@ -263,7 +308,7 @@ PlotFlags:
      pointing_plots: True
      actuator_plots: True
      att_animation : False
-     percent_to_log : 0.01 # [0,1] percent of the data to log for plotting
+     percent_to_log : 0.01 # [0,1] fraction of the data to log for plotting
 debugFlags:
      perfect_sensors: False  # Perfect measurements
      include_battery: True # Include battery in simulation

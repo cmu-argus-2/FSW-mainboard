@@ -23,16 +23,29 @@ sil_campaign:
      #                random_failures: true
      #                N_rand_failures: 1
      #      description: "Single point failure magnetorquer simulation campaign."
-     sil_set_3: # full axis actuator failure
-          num_sims: 100 # 50
+     # sil_set_3: # full axis actuator failure
+     #      num_sims: 100 # 50
+     #      runtime: 100 # [seconds] how long the FSW is allowed to run
+     #      outfile: "sil_logs.log"
+     #      fsw_percent_to_log: 0.01 # fraction of FSW data to log for plotting
+     #      param_changes: # parts of the nominal file to change
+     #           MAX_TIME: 30000 # 96000 # [s]
+     #           magnetorquers:
+     #                random_failures: true
+     #                N_rand_failures: 3
+     #           PlotFlags:
+     #                percent_to_log : 0.01 # [0,1] fraction of the data to log for plotting
+     #      description: "Three failures magnetorquer simulation campaign. Full axis failure is possible."
+     sil_set_4: # full axis actuator failure
+          num_sims: 1 # 50
           runtime: 100 # [seconds] how long the FSW is allowed to run
           outfile: "sil_logs.log"
           fsw_percent_to_log: 0.01 # fraction of FSW data to log for plotting
           param_changes: # parts of the nominal file to change
                MAX_TIME: 30000 # 96000 # [s]
-               magnetorquers:
-                    random_failures: true
-                    N_rand_failures: 3
+               deployables:
+                    random_deploy_fail: True
+                    N_rand_deploy_fail: 1
                PlotFlags:
-                    percent_to_log : 0.01 # [0,1] percent of the data to log for plotting
+                    percent_to_log : 0.01 # [0,1] fraction of the data to log for plotting
           description: "Three failures magnetorquer simulation campaign. Full axis failure is possible."
