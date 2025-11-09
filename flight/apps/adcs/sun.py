@@ -14,7 +14,7 @@ both for the mode transitions, sun pointing controller accuracy, and attitude de
 
 """
 
-from apps.adcs.consts import SunConst, StatusConst
+from apps.adcs.consts import StatusConst, SunConst
 from core import logger
 from hal.configuration import SATELLITE
 from micropython import const

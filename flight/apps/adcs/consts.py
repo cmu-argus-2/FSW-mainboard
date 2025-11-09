@@ -103,6 +103,7 @@ class SunConst:
     """
     Constants associated with sun sensor parameters.
     """
+
     # map from light sensors to body vector
     LIGHT_SENSOR_NORMALS = [
         [1, 0, 0],
@@ -123,6 +124,7 @@ class SunConst:
     # Logging only allows for a max value of 65535. Since OPT4003 has a max value of 140k, scale log data down by 3
     LIGHT_SENSOR_LOG_FACTOR = 3
 
+
 class ControllerConst:
     """
     Constants associated with Controller Behavior
@@ -132,13 +134,9 @@ class ControllerConst:
         [[3.544e-03, -1.8729e-05, -5.2467e-06], [-1.8729e-05, 3.590e-03, 1.9134e-05], [-5.2467e-06, 1.9134e-05, 4.120e-03]]
     )
     # change in inertia in case xp does not deploy
-    DELTA_INERTIA_NO_DEP_XP = np.array(
-        [[2.0e-04, 0.0, 0.0], [0.0, 1.5e-04, 0.0], [0.0, 0.0, 1.8e-04]]
-    )
+    DELTA_INERTIA_NO_DEP_XP = np.array([[1.68e-05, 0.0, -1.94e-04], [0.0, 3.37e-04, 0.0], [-1.94e-04, 0.0, 3.21e-04]])
     # change in inertia in case ym does not deploy
-    DELTA_INERTIA_NO_DEP_YM = np.array(
-        [[1.8e-04, 0.0, 0.0], [0.0, 2.2e-04, 0.0], [0.0, 0.0, 2.0e-04]]
-    )
+    DELTA_INERTIA_NO_DEP_YM = np.array([[3.37e-04, 0.0, 0.0], [0.0, 1.68e-05, 1.94e-04], [0.0, 1.94e-04, 3.21e-04]])
 
     INERTIA_MAT = INERTIA_MAT_NOM.copy()
 
