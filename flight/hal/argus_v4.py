@@ -559,7 +559,6 @@ class ArgusV4(CubeSat):
             vfs = CustomVfsFat(sd_card)
             return [vfs, Errors.NO_ERROR]
         except Exception as e:
-            print(e)
             if self.__debug:
                 raise e
 
@@ -669,7 +668,6 @@ class ArgusV4(CubeSat):
             deployment_sensor.start_ranging()
             return [deployment_sensor, Errors.NO_ERROR]
         except Exception as e:
-            print(e)
             if self.__debug:
                 raise e
 
