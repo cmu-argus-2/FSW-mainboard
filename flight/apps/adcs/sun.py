@@ -14,7 +14,7 @@ both for the mode transitions, sun pointing controller accuracy, and attitude de
 
 """
 
-from apps.adcs.consts import PhysicalConst, StatusConst
+from apps.adcs.consts import SunConst, StatusConst
 from core import logger
 from hal.configuration import SATELLITE
 from micropython import const
@@ -86,7 +86,7 @@ def compute_body_sun_vector_from_lux(I_vec):
     # Extract body vectors and lux readings where the sensor readings are valid
     ACTIVE_LIGHT_READINGS = np.array([I_vec[i] for i in range(_NUM_LIGHT_SENSORS) if I_vec[i] > _THRESHOLD_ILLUMINATION_LUX])
     ACTIVE_LIGHT_NORMALS = np.array(
-        [PhysicalConst.LIGHT_SENSOR_NORMALS[i] for i in range(_NUM_LIGHT_SENSORS) if I_vec[i] > _THRESHOLD_ILLUMINATION_LUX]
+        [SunConst.LIGHT_SENSOR_NORMALS[i] for i in range(_NUM_LIGHT_SENSORS) if I_vec[i] > _THRESHOLD_ILLUMINATION_LUX]
     )
 
     # Try to perform an inverse. If the condition-number of under 1e-4, Cpy throws a ValueError for a singular matrix
@@ -139,11 +139,11 @@ def missing_axis_reading(I_vec):
     missing_y = True
     missing_z = True
     for (i, lux) in enumerate(I_vec):
-        if missing_x and lux != _ERROR_LUX and i in PhysicalConst.LIGHT_X_IDXS:
+        if missing_x and lux != _ERROR_LUX and i in SunConst.LIGHT_X_IDXS:
             missing_x = False
-        if missing_y and lux != _ERROR_LUX and i in PhysicalConst.LIGHT_Y_IDXS:
+        if missing_y and lux != _ERROR_LUX and i in SunConst.LIGHT_Y_IDXS:
             missing_y = False
-        if missing_z and lux != _ERROR_LUX and i in PhysicalConst.LIGHT_Z_IDXS:
+        if missing_z and lux != _ERROR_LUX and i in SunConst.LIGHT_Z_IDXS:
             missing_z = False
 
         if not (missing_x or missing_y or missing_z):

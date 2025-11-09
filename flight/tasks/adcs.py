@@ -2,7 +2,7 @@
 
 import apps.adcs.sensors as sensors
 from apps.adcs.acs import mcm_coil_allocator, spin_stabilizing_controller, sun_pointing_controller, zero_all_coils
-from apps.adcs.consts import Modes, StatusConst
+from apps.adcs.consts import Modes, StatusConst, ControllerConst
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX
 from core import DataHandler as DH
 from core import TemplateTask
@@ -71,14 +71,30 @@ class Task(TemplateTask):
 
     mag_counter = 0
 
+    xm_deployed = False
+    ym_deployed = False
+
+    ctr_const = ControllerConst()
+
     def __init__(self, id):
         super().__init__(id)
         self.name = "ADCS"  # Override the name
 
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:
-            pass
-
+            # check for deployment to update inertia matrix
+            if not self.xm_deployed:
+                xp_dist = sensors.read_deployment_sensors("XP")
+                self.xm_deployed = xp_dist > 0 and xp_dist < 10
+                if self.xm_deployed:
+                    self.ctr_const.update_inertia_no_deploy(xp_deployed=self.xm_deployed,
+                                                             ym_deployed=self.ym_deployed)
+            if not self.ym_deployed:
+                ym_dist = sensors.read_deployment_sensors("YM")
+                self.ym_deployed = ym_dist > 0 and ym_dist < 10
+                if self.ym_deployed:
+                    self.ctr_const.update_inertia_no_deploy(xp_deployed=self.xm_deployed,
+                                                            ym_deployed=self.ym_deployed)
         else:
             if not DH.data_process_exists("adcs"):
                 data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f"
@@ -97,12 +113,10 @@ class Task(TemplateTask):
                 # Query Magnetometer
                 if self.mag_counter == 0:
                     self.mag_status, self.mag_data = sensors.read_magnetometer()
-                    self.last_mag_time = TPM.time()
 
                 # Run Attitude Control
                 if self.mag_counter < 3:
                     self.attitude_control()
-                    self.last_mtb_time = TPM.time()
                 else:
                     zero_all_coils()
 
@@ -141,7 +155,6 @@ class Task(TemplateTask):
                     # Query Magnetometer
                     if self.mag_counter == 0:
                         self.mag_status, self.mag_data = sensors.read_magnetometer()
-                        self.last_mag_time = TPM.time()
 
                     # Query Sun Position
                     self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
@@ -155,7 +168,6 @@ class Task(TemplateTask):
                     # Run attitude control if not in Low-power
                     if SM.current_state != STATES.LOW_POWER and self.MODE != Modes.ACS_OFF and self.mag_counter < 3:
                         self.attitude_control()
-                        self.last_mtb_time = TPM.time()
                     else:
                         zero_all_coils()
 
@@ -183,7 +195,7 @@ class Task(TemplateTask):
                 return
 
             # Control MCMs and obtain coil statuses
-            dipole_moment = spin_stabilizing_controller(self.gyro_data, self.mag_data)
+            dipole_moment = spin_stabilizing_controller(self.gyro_data, self.mag_data, self.ctr_const)
 
         elif self.MODE == Modes.SUN_POINTED:  # Sun-pointed controller
 
@@ -193,7 +205,7 @@ class Task(TemplateTask):
                 return
 
             # Control MCMs and obtain coil statuses
-            dipole_moment = sun_pointing_controller(self.sun_pos_body, self.gyro_data, self.mag_data)
+            dipole_moment = sun_pointing_controller(self.sun_pos_body, self.gyro_data, self.mag_data, self.ctr_const.INERTIA_MAT)
         else:
             # If in ACS_OFF or any other mode, do not control MCMs
             # Just zero out the dipole moment

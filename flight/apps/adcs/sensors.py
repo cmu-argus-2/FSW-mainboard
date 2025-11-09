@@ -1,4 +1,4 @@
-from apps.adcs.consts import ControllerConst, Modes, PhysicalConst, StatusConst
+from apps.adcs.consts import ControllerConst, Modes, StatusConst
 from apps.adcs.sun import compute_body_sun_vector_from_lux, read_light_sensors
 from hal.configuration import SATELLITE
 from ulab import numpy as np
@@ -51,6 +51,13 @@ def read_sun_position() -> tuple[int, np.ndarray, np.ndarray]:
     return status, sun_pos_body, np.array(light_sensor_lux_readings) / PhysicalConst.LIGHT_SENSOR_LOG_FACTOR
 
 
+def read_deployment_sensors(sens_id) -> tuple[float, float]:
+    """
+    - Reads the deployment sensor distances from HAL
+    - Returns the distance for XP or YM sensors
+    """
+    return SATELLITE.DEPLOYMENT_SENSOR_DISTANCE(sens_id)
+
 """
     SENSOR VALIDITY CHECKS
 """
@@ -86,7 +93,7 @@ def is_valid_gyro_reading(gyro: np.ndarray) -> bool:
 """
 
 
-def current_mode(current_mode) -> int:
+def current_mode(current_mode, ctr_const: ControllerConst) -> int:
     """
     - Returns the current mode of the ADCS
     """
@@ -108,8 +115,8 @@ def current_mode(current_mode) -> int:
     elif current_mode == Modes.STABLE:
         if gyro_status != StatusConst.OK:
             return Modes.STABLE
-        h_hat = np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET_MAG
-        momentum_error = np.linalg.norm(PhysicalConst.INERTIA_MAJOR_DIR - h_hat)
+        h_hat = np.dot(ctr_const.INERTIA_MAT, omega) / ctr_const.MOMENTUM_TARGET_MAG
+        momentum_error = np.linalg.norm(ctr_const.INERTIA_MAJOR_DIR - h_hat)
         if omega_norm >= Modes.TUMBLING_TOL:
             return Modes.TUMBLING
 
@@ -122,8 +129,8 @@ def current_mode(current_mode) -> int:
     elif current_mode == Modes.SUN_POINTED:
         if gyro_status != StatusConst.OK:
             return Modes.STABLE
-        h_hat = np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET_MAG
-        momentum_error = np.linalg.norm(PhysicalConst.INERTIA_MAJOR_DIR - h_hat)
+        h_hat = np.dot(ctr_const.INERTIA_MAT, omega) / ctr_const.MOMENTUM_TARGET_MAG
+        momentum_error = np.linalg.norm(ctr_const.INERTIA_MAJOR_DIR - h_hat)
 
         if momentum_error >= Modes.STABLE_TOL_LO:
             return Modes.STABLE
@@ -131,7 +138,7 @@ def current_mode(current_mode) -> int:
         if sun_status != StatusConst.OK:
             return Modes.SUN_POINTED
 
-        h = np.dot(PhysicalConst.INERTIA_MAT, omega)
+        h = np.dot(ctr_const.INERTIA_MAT, omega)
         h_hat = h / np.linalg.norm(h)  # conical condition
         sun_error = np.linalg.norm(sun_pos_body - h_hat)
 
@@ -144,12 +151,12 @@ def current_mode(current_mode) -> int:
     elif current_mode == Modes.ACS_OFF:
         if gyro_status != StatusConst.OK:
             return Modes.ACS_OFF
-        h_hat = np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET_MAG
-        momentum_error = np.linalg.norm(PhysicalConst.INERTIA_MAJOR_DIR - h_hat)
+        h_hat = np.dot(ctr_const.INERTIA_MAT, omega) / ctr_const.MOMENTUM_TARGET_MAG
+        momentum_error = np.linalg.norm(ctr_const.INERTIA_MAJOR_DIR - h_hat)
         if momentum_error >= Modes.STABLE_TOL_HI:
             return Modes.STABLE
         elif sun_status == StatusConst.OK:
-            h = np.dot(PhysicalConst.INERTIA_MAT, omega)
+            h = np.dot(ctr_const.INERTIA_MAT, omega)
             h_hat = h / np.linalg.norm(h)  # conical condition
             sun_error = np.linalg.norm(sun_pos_body - h_hat)
             if sun_error >= Modes.SUN_POINTED_TOL_HI:

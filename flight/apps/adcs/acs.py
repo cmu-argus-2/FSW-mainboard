@@ -4,7 +4,7 @@ Attitude Control Module for the Attitude Determination and Control Subsystem (AD
 This module is responsible for computing voltage allocations to each of ARGUS' 6 magnetorquer coils.
 """
 
-from apps.adcs.consts import ControllerConst, MCMConst, PhysicalConst
+from apps.adcs.consts import ControllerConst, MCMConst
 from hal.configuration import SATELLITE
 from ulab import numpy as np
 
@@ -19,9 +19,9 @@ def readings_are_valid(
     return True
 
 
-def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.ndarray:
+def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray, ctr_const: ControllerConst) -> np.ndarray:
     """
-    B-cross law: https://arc.aiaa.org/doi/epdf/10.2514/1.53074.
+    Spin-stabilizing angular momentum feedback law.
     Augmented with tanh function for soft clipping.
     All sensor estimates are in the body-fixed reference frame.
     """
@@ -29,23 +29,22 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
     if (
         not readings_are_valid((omega, mag_field))
         or np.linalg.norm(mag_field) == 0
-        # or np.linalg.norm(omega) <= ControllerConst.OMEGA_TOLERANCE
     ):
-        return ControllerConst.FALLBACK_CONTROL
+        return ctr_const.FALLBACK_CONTROL
 
     # Do spin stabilization
     else:
         # Compute angular momentum error
-        error = ControllerConst.MOMENTUM_TARGET - np.dot(PhysicalConst.INERTIA_MAT, omega)
+        error = ctr_const.MOMENTUM_TARGET - np.dot(ctr_const.INERTIA_MAT, omega)
 
         # Compute B-cross dipole moment
-        u = ControllerConst.SPIN_STABILIZING_GAIN * np.cross(mag_field, error)
+        u = ctr_const.SPIN_STABILIZING_GAIN * np.cross(mag_field, error)
 
         # Smoothly normalize the control input
         return np.tanh(u)
 
 
-def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field: np.ndarray) -> np.ndarray:
+def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field: np.ndarray, inertia_mat: np.ndarray) -> np.ndarray:
     # Stop ACS if the reading values are invalid
     if (
         not readings_are_valid((sun_vector, omega, mag_field))
@@ -58,7 +57,7 @@ def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field
     # Do sun pointing
     else:
         # Compute pointing error
-        ang_mom = np.dot(PhysicalConst.INERTIA_MAT, omega)
+        ang_mom = np.dot(inertia_mat, omega)
         # conical projection of angular momentum onto sun vector
         error = sun_vector - ang_mom / np.linalg.norm(ang_mom)
         # spherical projection of angular momentum onto sun vector
