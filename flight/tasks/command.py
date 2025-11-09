@@ -23,6 +23,8 @@ _EXIT_STARTUP_TIMEOUT = CONFIG.EXIT_STARTUP_TIMEOUT  # Already a const in satell
 _BURN_WIRE_STRENGTH = const(7)  # 0-255
 _DEPLOYMENT_INTERVAL = const(5)  # seconds
 _PWM_MAX = const(3)  # Maximum PWM value for deployment
+_BURN_WIRE_TIMEOUT = CONFIG.BURN_WIRE_TIMEOUT  # number of tries
+_DEPLOYMENT_DISTANCE = const(2)  # distance(cm) threshold for deployment
 
 
 class Task(TemplateTask):
@@ -50,6 +52,7 @@ class Task(TemplateTask):
 
         self.deployment_done = False
         self.deploymentPWM = 0
+        self.deploymentTries = 0
         self.last_deployment_time = None
 
     def get_memory_usage(self):
@@ -70,6 +73,19 @@ class Task(TemplateTask):
         burn_wires.enable_driver()
         self.deploymentPWM += 1  # Increment PWM for next deployment
 
+    def check_one_deployment(self, dir: str) -> bool:
+        # ------------------------------------------------------------------------------------------------------------------------------------
+        # CHECK DEPLOYMENT STATUS
+        # ------------------------------------------------------------------------------------------------------------------------------------
+        available = SATELLITE.DEPLOYMENT_SENSOR_AVAILABLE(dir)
+        if available:
+            return SATELLITE.DEPLOYMENT_SENSOR_DISTANCE(dir) >= _DEPLOYMENT_DISTANCE
+        else:
+            return True  # Assume deployed if sensor not available
+
+    def check_deployment_status(self):
+        return self.check_one_deployment("XP") and self.check_one_deployment("YM")
+
     def startup(self):
         # ------------------------------------------------------------------------------------------------------------------------------------
         # STARTUP SEQUENCE
@@ -85,8 +101,6 @@ class Task(TemplateTask):
         # Neopixel for STARTUP (white)
         if SATELLITE.NEOPIXEL_AVAILABLE:
             SATELLITE.NEOPIXEL.fill([255, 255, 255])
-
-        # TODO: Deployment
 
         # Check time_since_boot
         time_since_boot = TPM.monotonic() - SATELLITE.BOOTTIME
@@ -145,9 +159,14 @@ class Task(TemplateTask):
                 if SATELLITE.BURN_WIRES_AVAILABLE:
                     # Deployment finished when the deployment PWM reaches 3
                     if self.deploymentPWM == _PWM_MAX and deployment_time_check:
-                        self.log_info("Deployment complete")
-                        self.deployment_done = True
-                        SATELLITE.BURN_WIRES.disable_driver()
+                        self.deploymentTries += 1
+                        if self.check_deployment_status() or self.deploymentTries >= _BURN_WIRE_TIMEOUT:
+                            self.log_info("Deployment complete")
+                            self.deployment_done = True
+                            SATELLITE.BURN_WIRES.disable_driver()
+                        else:
+                            self.log_warning("Deployment not successful, retrying deployment sequence...")
+                            self.deploymentPWM = 0  # Reset PWM to retry deployment
                     elif self.deploymentPWM < _PWM_MAX and deployment_time_check:
                         self.log_info(f"Deployment sequence: {self.deploymentPWM}")
                         self.last_deployment_time = TPM.monotonic()
