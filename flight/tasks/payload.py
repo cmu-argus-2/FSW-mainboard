@@ -32,6 +32,7 @@ CMD_ACK_READY = 0x10,
 CMD_ACK_OK = 0x11,
 CMD_NACK_CORRUPT = 0x20, 
 CMD_NACK_LOST = 0x21
+CMD_IMAGE_REQUEST = 0x06;
 
 class Task(TemplateTask):
 
@@ -198,7 +199,7 @@ class ImageTransferHandler():
         self.handshake_complete = False
         self.uart = PU.connect()
         self.is_connected = PU.is_connected
-        self.image_array = b''
+        self.image_array = {}
 
     def disconnect(self):
         PU.disconnect()
@@ -216,61 +217,137 @@ class ImageTransferHandler():
                 return received #TODO see if this is an issue
         return None
 
-    def image_array_append(self, data):
-        self.image_array += data
-        
+    def image_array_append(self, data, chunk_id):
+        self.image_array[chunk_id] = data
 
-def deconstruct_received_bytes(received_bytes):
-    # Deconstruct the received bytes from array into components: length, data,
-    # The received bytes is like this -> | id (4 bytes) | length (4 bytes) | data (up to 246 bytes) | crc (1 byte) |
-    # The received data has a padding of zeros if data is less than PACKET_SIZE
-    packet_id = received_bytes[ID_START:LEN_START]
-    data_length = received_bytes[LEN_START:DATA_START]
-    data_payload_raw = received_bytes[DATA_START:DATA_END+CRC5_SIZE]
-    # crc = received_bytes[DATA_END:DATA_END + CRC5_SIZE]
+    def sort_image_array(self):
+        sorted_image = bytearray()
+        for key in sorted(self.image_array.keys()):
+            sorted_image += self.image_array[key]
+        return sorted_image
 
-    return {
-        'packet_id': packet_id,
-        'data_length': data_length,
-        'data': data_payload_raw #Also includes crc
-    }
+# def deconstruct_received_bytes(received_bytes):
+#     # Deconstruct the received bytes from array into components: length, data,
+#     # The received bytes is like this -> | id (4 bytes) | length (4 bytes) | data (up to 246 bytes) | crc (1 byte) |
+#     # The received data has a padding of zeros if data is less than PACKET_SIZE
+#     packet_id = received_bytes[ID_START:LEN_START]
+#     data_length = received_bytes[LEN_START:DATA_START]
+#     data_payload_raw = received_bytes[DATA_START:DATA_END+CRC5_SIZE]
+#     # crc = received_bytes[DATA_END:DATA_END + CRC5_SIZE]
 
-def create_packet(packet_id, data):
-    if (type(data) is str):
-        data = data.encode('utf-8')
-    data_length = len(data)
+#     return {
+#         'packet_id': packet_id,
+#         'data_length': data_length,
+#         'data': data_payload_raw #Also includes crc
+#     }
+
+# REQ:  PACKET_TYPE|REQUESTED_PACKET|INFO
+# IMAGE: PACKET_TYPE|CHUNK_ID|PACKET|CRC
+# ACK:  ACK_OK|CHUNK_ID or ACK_OK|PACKET_ID
+# NACK:  NACK | FAILED packet ID 
+# PACKET_TYPE: uint8_t
+# CHUNK_ID: uint32_t
+# PACKET: Byte array
+# CRC: uint8_t 
+
+
+# IT CAN ONLY REQUEST IMAGE PACKET FOR NOW
+def create_packet(packet_id, requested_packet=None, data=None, chunk_id=None, data_length=None, last_packet=0):
+    if data is not None: 
+        if (type(data) is str):
+            data = data.encode('utf-8')
+            data_length = len(data)
+
     result = bytearray()
-    # Add packet ID  to the data 
-    result = packet_id.to_bytes(4, byteorder='big') + data
-    result = result.ljust(PACKET_SIZE, b'\0')
+    if packet_id == CMD_HANDSHAKE_REQUEST: 
+        # Only handle image request handshake for now
+        if requested_packet == CMD_IMAGE_REQUEST:
+            # info = data if data is not None else b''
+            result = packet_id.to_bytes(2, byteorder='big') + requested_packet.to_bytes(2, byteorder='big') #+ info.ljust(PACKET_SIZE - 4, b'\0')
+            result = result.ljust(PACKET_SIZE, b'\0')
+    
+    elif packet_id == CMD_DATA_CHUNK:   
+        # Data chunk packet
+        result = packet_id.to_bytes(2, byteorder='big') + chunk_id.to_bytes(4, byteorder='big') + data_length.to_bytes(4, byteorder='big') + data + last_packet.to_bytes(1, byteorder='big')
+        crc_packet = create_crc5_packet(result)
+        result = crc_packet.ljust(PACKET_SIZE + CRC5_SIZE, b'\0')
+    
+    elif packet_id == CMD_ACK_OK:
+        # ACK packet
+        result = packet_id.to_bytes(2, byteorder='big') + chunk_id.to_bytes(4, byteorder='big')
+        result = result.ljust(PACKET_SIZE, b'\0')
+    
+    elif packet_id == CMD_NACK_CORRUPT:
+        # NACK packet
+        result = packet_id.to_bytes(2, byteorder='big') + chunk_id.to_bytes(4, byteorder='big')
+        result = result.ljust(PACKET_SIZE, b'\0')
+    
+    elif packet_id == CMD_ACK_READY:
+        # ACK READY packet
+        result = packet_id.to_bytes(2, byteorder='big') + requested_packet.to_bytes(2, byteorder='big')
+        result = result.ljust(PACKET_SIZE, b'\0')
+
     return result
 
-def read_packet(received_bytes)
+# Return dictionary with packet_id, chunk_id, data_length, data, crc
+def read_packet(received_bytes):
+    # received_bytes = received_byts.deco
+    packet_id = int.from_bytes(received_bytes[0:2], byteorder='big')
+    if packet_id == CMD_HANDSHAKE_REQUEST:
+        requested_packet = int.from_bytes(received_bytes[2:4], byteorder='big')
+        info = received_bytes[4:].decode('utf-8').strip('\0')
+        return {'packet_id': packet_id, 'requested_packet': requested_packet, 'data': info}
+    
+    elif packet_id == CMD_DATA_CHUNK:
+        chunk_id = int.from_bytes(received_bytes[2:6], byteorder='big')
+        data_length = int.from_bytes(received_bytes[6:10], byteorder='big')
+        data = received_bytes[10:10+data_length]
+        last_packet = received_bytes[10+data_length]
+        crc = received_bytes[10+data_length+1]
+        verify_crc = verify_crc5_packet(received_bytes[0:10+data_length+2])
+        return {'packet_id': packet_id, 'chunk_id': chunk_id, 'data_length': data_length, 'data': data, 'last_packet': last_packet, 'crc': crc, 'crc_valid': verify_crc}
+    
+    elif packet_id == CMD_ACK_READY:
+        ready_packet_id = int.from_bytes(received_bytes[2:6], byteorder='big')
+        return {'packet_id': packet_id, 'ready_packet_id': ready_packet_id}
+    
+    elif packet_id == CMD_ACK_OK:
+        acked_packet_id = int.from_bytes(received_bytes[2:6], byteorder='big')
+        return {'packet_id': packet_id, 'acked_packet_id': acked_packet_id}
+    
+    elif packet_id == CMD_NACK_CORRUPT:
+        failed_packet_id = int.from_bytes(received_bytes[2:6], byteorder='big')
+        return {'packet_id': packet_id, 'failed_packet_id': failed_packet_id}
+    
+    else: # Unknown packet type
+        return {'packet_id': packet_id}
+
+
+
 # '''
 def image_receiver_task():
     handler = ImageTransferHandler()
     if not handler.is_connected:
-        # print("Image receiver: Failed to connect to payload UART")
         return 0
-    # print(f"Image receiver: Connected to payload UART")
 
     start_time = time.time()
 
     timeout_shake = 0
     retry = 0
     while (not handler.handshake_complete and retry < 3):
-        handler.send(b'START')
+        start_packet = create_packet(CMD_HANDSHAKE_REQUEST, requested_packet=CMD_IMAGE_REQUEST, data=b'')
+        handler.send(start_packet)
 
         while not handler.handshake_complete: 
             received = handler.receive() #Returns a bytearray
-            received = received.decode('utf-8').strip()
             # if received != "":
             if received is not None:
+                received = read_packet(received)
                 print(f"Handshake received: {received}")
-            if received == "SENDING":
+            if received['packet_id'] == CMD_ACK_READY:
                 # print("Handshake complete, starting image transfer")
-                handler.send(b'ACK')
-                
+                ack_ready_packet = create_packet(CMD_ACK_OK, requested_packet=CMD_IMAGE_REQUEST)
+                handler.send(ack_ready_packet)
                 handler.handshake_complete = True
                 break
             timeout_shake = time.time() - start_time
@@ -295,28 +372,31 @@ def image_receiver_task():
                 return 0
             continue
         timeout = 0
-        packet_info = handler.deconstruct_received_bytes(received)
-
-        data = packet_info['data']
-
-        # While receiving packets, verify the crc5 checksum for each packet
-        if not verify_crc5_packet(data):
-            handler.send(b'NACK')
+        # packet_info = handler.deconstruct_received_bytes(received)
+        packet_info = read_packet(received)
+        if packet_info['packet_id'] != CMD_DATA_CHUNK:
             continue
-        else:
+        if packet_info['crc_valid'] == False:
+            nack_packet = create_packet(CMD_NACK_CORRUPT, chunk_id=packet_info['chunk_id'])
+            handler.send(nack_packet)
+            continue
+        
+        data_received = packet_info['data']
+
             # Reconstruct image from packets
-            handler.image_array_append(data[:-1]) # Append data without crc
-            handler.send(b'ACK')
+        handler.image_array_append(data_received[:-1], packet_info['chunk_id']) # Append data without crc
+        ack_packet = create_packet(CMD_ACK_OK, chunk_id=packet_info['chunk_id'])
+        handler.send(ack_packet)
 
         # TODO Check for end of image signal or condition to break the loop
-        if packet_info['packet_id'] == 0: # last packet id is 0
+        if packet_info['last_packet'] == 1: # last packet id is 0
             break
 
     # Save the reconstructed image
-    if packet_info['packet_id'] == 0:
+    if packet_info['last_packet'] == 1:
         handler.send(b'IMAGE_RECEIVED')
         # handler.disconnect()
-        handler.image_handler.save_image_to_disk(handler.image_array, 'latest_image.jpeg')
+        handler.image_handler.save_image_to_disk(handler.sort_image_array(), 'latest_image.jpeg')
         return 1
 '''
 
