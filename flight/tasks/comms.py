@@ -9,6 +9,8 @@ from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 from micropython import const
 
+from hal.configuration import SATELLITE
+
 # Constants
 _CMD_RESPONSE_OK = const(0)
 _CMD_RESPONSE_NONE = const(1)
@@ -143,6 +145,13 @@ class Task(TemplateTask):
             return _CMD_RESPONSE_NONE
 
     def transmit_message(self):
+        
+        # change the color of the led to indicate that a transmission is occuring
+        # this will be like a flash, because once it runs the command task it will overwrite 
+        # the colour of the led
+        if SATELLITE.NEOPIXEL_AVAILABLE:
+            SATELLITE.NEOPIXEL.fill([50, 92, 168])
+
         if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD or self.ground_pass:
             # If heartbeat TX counter has elapsed, or currently in an active ground pass
 
@@ -204,6 +213,13 @@ class Task(TemplateTask):
 
             # Check the response from the GS
             if self.rq_cmd != 0x00:
+                
+                # change the color of the led to indicate that received message from gs
+                # this will be like a flash, because once it runs the command task it will overwrite 
+                # the colour of the led
+                if SATELLITE.NEOPIXEL_AVAILABLE:
+                    SATELLITE.NEOPIXEL.fill([168, 50, 168])
+                        
                 # GS requested valid message ID
                 self.log_info(f"RX message RSSI: {SATELLITE_RADIO.get_rssi()}")
                 self.log_info(f"GS requested command: {self.rq_cmd}")
