@@ -261,6 +261,7 @@ class Task(TemplateTask):
         self.log_info(f"Sun Status : {self.log_data[ADCS_IDX.SUN_STATUS]}")
         self.log_info(f"Gyro Status : {self.gyro_status}")
         self.log_info(f"Mag Status : {self.mag_status}")
+
         # self.log_info(f"Deployment Status (XP,YM) : {[self.xp_deployed, self.ym_deployed]}")
         # debugging
         # self.log_info(f"Coil Status : {self.log_data[ADCS_IDX.XP_COIL_STATUS:ADCS_IDX.ZM_COIL_STATUS + 1]}")
