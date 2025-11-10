@@ -169,8 +169,7 @@ assets/*
 
 
 flight/build/
-params.yaml
-results/
 
+sil/configs/params.yaml
 
 temp_test.py

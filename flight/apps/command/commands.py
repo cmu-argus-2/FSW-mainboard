@@ -21,7 +21,6 @@ Author: Ibrahima S. Sow
 """
 
 import supervisor
-from apps.adcs.orbit_propagation import OrbitPropagator
 from apps.command.constants import file_tags_str
 from apps.telemetry import TelemetryPacker
 from core import logger
@@ -29,9 +28,6 @@ from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
-
-# from hal.configuration import SATELLITE
-from ulab import numpy as np
 
 FILE_PKTSIZE = 240
 
@@ -60,11 +56,7 @@ def UPLINK_TIME_REFERENCE(time_reference):
 
 def UPLINK_ORBIT_REFERENCE(time_reference, orbital_parameters):
     """Sends time-referenced orbital information to update the orbit reference."""
-    logger.info(
-        f"Executing UPLINK_ORBIT_REFERENCE with orbital_parameters: pos({orbital_parameters}, time_reference: {time_reference}"
-    )
-    OrbitPropagator.set_last_update_time(time_reference)
-    OrbitPropagator.set_last_updated_state(np.array(orbital_parameters))
+    # TODO: Now that AD is gone, delete this command
     return []
 
 
