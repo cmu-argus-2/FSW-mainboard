@@ -7,6 +7,7 @@
 sil_campaign:
      # sil_set_1: # nominal
      #      num_sims: 1 # 100
+     #      first_trial_number: 1 # for debugging, to repeat specific trial
      #      runtime: 100 # [seconds] how long the FSW is allowed to run
      #      outfile: "sil_logs.log"
      #      fsw_percent_to_log: 0.01 # fraction of FSW data to log for plotting
@@ -14,6 +15,7 @@ sil_campaign:
      #      description: "Baseline simulation campaign with nominal parameters."
      # sil_set_2: # single point actuator failure
      #      num_sims: 100 # 50
+     #      first_trial_number: 1 # for debugging, to repeat specific trial
      #      runtime: 100 # [seconds] how long the FSW is allowed to run
      #      outfile: "sil_logs.log"
      #      fsw_percent_to_log: 0.01 # fraction of FSW data to log for plotting
@@ -25,6 +27,7 @@ sil_campaign:
      #      description: "Single point failure magnetorquer simulation campaign."
      # sil_set_3: # full axis actuator failure
      #      num_sims: 100 # 50
+     #      first_trial_number: 1 # for debugging, to repeat specific trial
      #      runtime: 100 # [seconds] how long the FSW is allowed to run
      #      outfile: "sil_logs.log"
      #      fsw_percent_to_log: 0.01 # fraction of FSW data to log for plotting
@@ -36,16 +39,18 @@ sil_campaign:
      #           PlotFlags:
      #                percent_to_log : 0.01 # [0,1] fraction of the data to log for plotting
      #      description: "Three failures magnetorquer simulation campaign. Full axis failure is possible."
-     sil_set_4: # full axis actuator failure
+     sil_set_4: # xp panel failure
           num_sims: 1 # 50
+          first_trial_number: 50 # for debugging, to repeat specific trial
           runtime: 100 # [seconds] how long the FSW is allowed to run
           outfile: "sil_logs.log"
           fsw_percent_to_log: 0.01 # fraction of FSW data to log for plotting
           param_changes: # parts of the nominal file to change
                MAX_TIME: 30000 # 96000 # [s]
                deployables:
-                    random_deploy_fail: True
-                    N_rand_deploy_fail: 1
+                    # random_deploy_fail: True
+                    # N_rand_deploy_fail: 1
+                    deploy_status: [False,True,True,True] 
                PlotFlags:
                     percent_to_log : 0.01 # [0,1] fraction of the data to log for plotting
-          description: "Three failures magnetorquer simulation campaign. Full axis failure is possible."
+          description: "XP Panel Deployment failure simulation campaign."

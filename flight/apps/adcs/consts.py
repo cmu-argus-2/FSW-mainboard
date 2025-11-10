@@ -162,11 +162,6 @@ class ControllerConst:
     MOMENTUM_TARGET_MAG = np.linalg.norm(MOMENTUM_TARGET)
     SPIN_STABILIZING_GAIN = 2.0e07
 
-    # Sun Pointing Constants
-
-    # Tolerances
-    OMEGA_TOLERANCE = 0.02  # rad/s (~1.2 deg/s)
-
     @classmethod
     def update_inertia_no_deploy(cls, xp_deployed: bool, ym_deployed: bool):
         """

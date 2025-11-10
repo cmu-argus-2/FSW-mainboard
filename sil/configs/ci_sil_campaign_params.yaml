@@ -7,6 +7,7 @@
 sil_campaign:
      sil_set_1:
           num_sims: 1 # 100
+          first_trial_number: 1 # for debugging, to repeat specific trial
           runtime: 30 # [seconds] how long the FSW is allowed to run
           outfile: "sil_logs.log"
           fsw_percent_to_log: 0.01 # fraction of FSW data to log for plotting
@@ -15,6 +16,7 @@ sil_campaign:
           description: "Baseline simulation campaign with nominal parameters."
      sil_set_2:
           num_sims: 2 # 50
+          first_trial_number: 1 # for debugging, to repeat specific trial
           runtime: 15 # [seconds] how long the FSW is allowed to run
           outfile: "sil_logs.log"
           fsw_percent_to_log: 0.01 # fraction of FSW data to log for plotting

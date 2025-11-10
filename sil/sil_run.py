@@ -191,10 +191,11 @@ if __name__ == "__main__":
         set_config_params = generate_sim_set_params(sil_campaign_params["sil_campaign"][sim_set])
         sim_set_folder_path = os.path.join(campaign_folder_path, sim_set)
         n_trials = sil_campaign_params["sil_campaign"][sim_set]["num_sims"]
+        first_trial_id = sil_campaign_params["sil_campaign"][sim_set]["first_trial_number"]
         # Run simulation set script
         for i in range(n_trials):
             run_simulation_trial(
-                trial_number=i + 1,
+                trial_number=i + first_trial_id,
                 trial_date=trial_date,
                 sim_set_name=sim_set,
                 set_config_params=set_config_params,

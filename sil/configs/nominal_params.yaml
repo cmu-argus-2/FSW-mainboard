@@ -18,8 +18,8 @@ useLUTs : False
 # physical properties
 # -----------------------------------------------------------------------------------------------------------
 mass : 
-     nominal_mass : 1.0 # kg
-     mass_dev : 50 # Stddev from nominal mass as a % of nominal mass [%]
+     nominal_mass : 1.1468 # kg
+     mass_dev : 3 # Stddev from nominal mass as a % of nominal mass [%]
      min_mass : 0.5 # Min allowable mass [kg]
      max_mass : 2.0 # Max allowable mass [kg]
 
