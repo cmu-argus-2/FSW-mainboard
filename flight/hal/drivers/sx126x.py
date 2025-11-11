@@ -1583,6 +1583,9 @@ class SX1262(SX126X):
 
     def rssi(self):
         return super().getRSSI()
+    
+    def snr(self):
+        return super().getSNR()
 
     def _events(self):
         return super().getIrqStatus()
