@@ -26,13 +26,13 @@ LEN_START = ID_START + 4
 DATA_START = LEN_START + 4
 DATA_END = DATA_START + 246
 
-CMD_HANDSHAKE_REQUEST = 0x01, 
-CMD_DATA_CHUNK = 0x02, 
-CMD_ACK_READY = 0x10,
-CMD_ACK_OK = 0x11,
-CMD_NACK_CORRUPT = 0x20, 
+CMD_HANDSHAKE_REQUEST = 0x01
+CMD_DATA_CHUNK = 0x02
+CMD_ACK_READY = 0x10
+CMD_ACK_OK = 0x11
+CMD_NACK_CORRUPT = 0x20
 CMD_NACK_LOST = 0x21
-CMD_IMAGE_REQUEST = 0x06;
+CMD_IMAGE_REQUEST = 0x06
 
 class Task(TemplateTask):
 
@@ -346,7 +346,7 @@ def image_receiver_task():
                 print(f"Handshake received: {received}")
             if received['packet_id'] == CMD_ACK_READY:
                 # print("Handshake complete, starting image transfer")
-                ack_ready_packet = create_packet(CMD_ACK_OK, requested_packet=CMD_IMAGE_REQUEST)
+                ack_ready_packet = create_packet(CMD_ACK_READY, requested_packet=CMD_IMAGE_REQUEST)
                 handler.send(ack_ready_packet)
                 handler.handshake_complete = True
                 break
