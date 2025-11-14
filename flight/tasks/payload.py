@@ -258,65 +258,65 @@ def create_packet(packet_id, requested_packet=None, data=None, chunk_id=None, da
             data = data.encode('utf-8')
             data_length = len(data)
 
-    result = bytearray()
+    result = bytearray(PACKET_SIZE)
     if packet_id == CMD_HANDSHAKE_REQUEST: 
         # Only handle image request handshake for now
         if requested_packet == CMD_IMAGE_REQUEST:
             # info = data if data is not None else b''
-            result = packet_id.to_bytes(2, byteorder='big') + requested_packet.to_bytes(2, byteorder='big') #+ info.ljust(PACKET_SIZE - 4, b'\0')
-            result = result.ljust(PACKET_SIZE, b'\0')
+            result = packet_id.to_bytes(1, byteorder='big') + requested_packet.to_bytes(1, byteorder='big') #+ info.ljust(PACKET_SIZE - 4, b'\0')
+            # result = result.ljust(PACKET_SIZE, b'\0')
     
     elif packet_id == CMD_DATA_CHUNK:   
         # Data chunk packet
-        result = packet_id.to_bytes(2, byteorder='big') + chunk_id.to_bytes(4, byteorder='big') + data_length.to_bytes(4, byteorder='big') + data + last_packet.to_bytes(1, byteorder='big')
+        result = packet_id.to_bytes(1, byteorder='big') + chunk_id.to_bytes(4, byteorder='big') + data_length.to_bytes(4, byteorder='big') + data + last_packet.to_bytes(1, byteorder='big')
         crc_packet = create_crc5_packet(result)
-        result = crc_packet.ljust(PACKET_SIZE + CRC5_SIZE, b'\0')
+        # result = crc_packet.ljust(PACKET_SIZE + CRC5_SIZE, b'\0')
     
     elif packet_id == CMD_ACK_OK:
         # ACK packet
-        result = packet_id.to_bytes(2, byteorder='big') + chunk_id.to_bytes(4, byteorder='big')
-        result = result.ljust(PACKET_SIZE, b'\0')
+        result = packet_id.to_bytes(1, byteorder='big') + chunk_id.to_bytes(4, byteorder='big')
+        # result = result.ljust(PACKET_SIZE, b'\0')
     
     elif packet_id == CMD_NACK_CORRUPT:
         # NACK packet
-        result = packet_id.to_bytes(2, byteorder='big') + chunk_id.to_bytes(4, byteorder='big')
-        result = result.ljust(PACKET_SIZE, b'\0')
+        result = packet_id.to_bytes(1, byteorder='big') + chunk_id.to_bytes(4, byteorder='big')
+        # result = result.ljust(PACKET_SIZE, b'\0')
     
     elif packet_id == CMD_ACK_READY:
         # ACK READY packet
-        result = packet_id.to_bytes(2, byteorder='big') + requested_packet.to_bytes(2, byteorder='big')
-        result = result.ljust(PACKET_SIZE, b'\0')
+        result = packet_id.to_bytes(1, byteorder='big') + requested_packet.to_bytes(1, byteorder='big')
+        # result = result.ljust(PACKET_SIZE, b'\0')
 
     return result
 
 # Return dictionary with packet_id, chunk_id, data_length, data, crc
 def read_packet(received_bytes):
     # received_bytes = received_byts.deco
-    packet_id = int.from_bytes(received_bytes[0:2], byteorder='big')
+    packet_id = int.from_bytes(received_bytes[0], byteorder='big')
     if packet_id == CMD_HANDSHAKE_REQUEST:
-        requested_packet = int.from_bytes(received_bytes[2:4], byteorder='big')
-        info = received_bytes[4:].decode('utf-8').strip('\0')
+        requested_packet = int.from_bytes(received_bytes[1:2], byteorder='big')
+        info = received_bytes[2:].decode('utf-8').strip('\0')
         return {'packet_id': packet_id, 'requested_packet': requested_packet, 'data': info}
     
     elif packet_id == CMD_DATA_CHUNK:
-        chunk_id = int.from_bytes(received_bytes[2:6], byteorder='big')
-        data_length = int.from_bytes(received_bytes[6:10], byteorder='big')
-        data = received_bytes[10:10+data_length]
-        last_packet = received_bytes[10+data_length]
-        crc = received_bytes[10+data_length+1]
-        verify_crc = verify_crc5_packet(received_bytes[0:10+data_length+2])
+        chunk_id = int.from_bytes(received_bytes[1:5], byteorder='big')
+        data_length = int.from_bytes(received_bytes[5:9], byteorder='big')
+        data = received_bytes[9:9+data_length]
+        last_packet = received_bytes[9+data_length]
+        crc = received_bytes[9+data_length+1]
+        verify_crc = verify_crc5_packet(received_bytes[0:9+data_length+2])
         return {'packet_id': packet_id, 'chunk_id': chunk_id, 'data_length': data_length, 'data': data, 'last_packet': last_packet, 'crc': crc, 'crc_valid': verify_crc}
     
     elif packet_id == CMD_ACK_READY:
-        ready_packet_id = int.from_bytes(received_bytes[2:6], byteorder='big')
+        ready_packet_id = int.from_bytes(received_bytes[1:2], byteorder='big')
         return {'packet_id': packet_id, 'ready_packet_id': ready_packet_id}
     
     elif packet_id == CMD_ACK_OK:
-        acked_packet_id = int.from_bytes(received_bytes[2:6], byteorder='big')
+        acked_packet_id = int.from_bytes(received_bytes[1:5], byteorder='big')
         return {'packet_id': packet_id, 'acked_packet_id': acked_packet_id}
     
     elif packet_id == CMD_NACK_CORRUPT:
-        failed_packet_id = int.from_bytes(received_bytes[2:6], byteorder='big')
+        failed_packet_id = int.from_bytes(received_bytes[1:5], byteorder='big')
         return {'packet_id': packet_id, 'failed_packet_id': failed_packet_id}
     
     else: # Unknown packet type
@@ -336,32 +336,38 @@ def image_receiver_task():
     retry = 0
     while (not handler.handshake_complete and retry < 3):
         start_packet = create_packet(CMD_HANDSHAKE_REQUEST, requested_packet=CMD_IMAGE_REQUEST, data=b'')
+        print("Sending handshake request to payload", start_packet)
         handler.send(start_packet)
 
-        while not handler.handshake_complete: 
-            received = handler.receive() #Returns a bytearray
-            # if received != "":
-            if received is not None:
-                received = read_packet(received)
-                print(f"Handshake received: {received}")
-            if received['packet_id'] == CMD_ACK_READY:
-                # print("Handshake complete, starting image transfer")
-                ack_ready_packet = create_packet(CMD_ACK_READY, requested_packet=CMD_IMAGE_REQUEST)
-                handler.send(ack_ready_packet)
-                handler.handshake_complete = True
-                break
-            timeout_shake = time.time() - start_time
-            if timeout_shake > 30: #Retry handshake 3 times Consider changing to a timeout based on actual time
-                retry += 1
-                timeout_shake = 0
-                break
-        if retry >= 5:
+        # if not handler.handshake_complete: 
+        received = handler.receive() #Returns a bytearray
+        if received is None:
+            continue
+        old_received = received
+        received = read_packet(received)
+        print(f"Handshake received: {received}")
+        print("Received handshake preeiosdfhn;sdffghis: *******************************", received['packet_id'], received, old_received)
+
+        if received['packet_id'] == CMD_ACK_READY:
+            print("Handshake complete, starting image transfer")
+            ack_ready_packet = create_packet(CMD_ACK_READY, requested_packet=CMD_IMAGE_REQUEST)
+            handler.send(ack_ready_packet)
+            handler.handshake_complete = True
+            break
+        print("Received handshake is: *******************************", received['packet_id'], received, old_received)
+        timeout_shake = time.time() - start_time
+        if timeout_shake > 5: #Retry handshake 3 times Consider changing to a timeout based on actual time
+            retry += 1
+            timeout_shake = 0
+            break
+        if retry >= 3:
             handler.disconnect()
             return 0
 
     # Receive packets until full image is received'
     start_time = time.time()
     timeout = 0
+    print("Starting image transfer...GROOT")
     while True:
         received = handler.receive()
         if received is None:
