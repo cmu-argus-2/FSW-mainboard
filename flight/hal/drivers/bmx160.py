@@ -489,7 +489,7 @@ class BMX160:
             # read out the value to see if it changed successfully
             rangeconst = self._gyro_range
             val = _BMX160_GYRO_RANGE_VALUES[rangeconst]
-            self.GYR_SCALAR = val / 32768.0
+            self.GYR_SCALAR = pi / 180 * val / 32768.0
         else:
             pass
 
