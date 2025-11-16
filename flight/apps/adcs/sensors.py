@@ -51,6 +51,26 @@ def read_sun_position() -> tuple[int, np.ndarray, np.ndarray]:
     return status, sun_pos_body, np.array(light_sensor_lux_readings) / PhysicalConst.LIGHT_SENSOR_LOG_FACTOR
 
 
+def get_gyro_scale() -> int:
+    """
+    - Reads the scale configuration of the gyro
+    """
+
+    if SATELLITE.IMU_AVAILABLE:
+        return SATELLITE.IMU.gyro_range
+    else:
+        return StatusConst.GYRO_FAIL
+
+
+def set_gyro_scale(gyro_const_value: int) -> None:
+    """
+    - Sets the scale configuration of the gyro
+    """
+
+    if SATELLITE.IMU_AVAILABLE:
+        SATELLITE.IMU.gyro_range = gyro_const_value
+
+
 """
     SENSOR VALIDITY CHECKS
 """
