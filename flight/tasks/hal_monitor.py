@@ -10,6 +10,7 @@ from apps.telemetry.constants import HAL_IDX, class_length
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
+from core.satellite_config import hal_monitor_config as CONFIG
 from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
@@ -17,7 +18,7 @@ from hal.drivers.errors import Errors
 from micropython import const
 
 _IDX_LENGTH = class_length(HAL_IDX)
-_REGULAR_REBOOT_TIME = const(60 * 60 * 24)  # 24 hours
+_REGULAR_REBOOT_TIME = CONFIG.REGULAR_REBOOT
 _PERIPH_REBOOT_COUNT_IDX = getattr(HAL_IDX, "PERIPH_REBOOT_COUNT")
 _HAL_IDX_INV = {v: k for k, v in HAL_IDX.__dict__.items()}
 _GRACEFUL_REBOOT_INTERVAL = const(60 * 5)  # 1 minute interval, 5Hz task rate
