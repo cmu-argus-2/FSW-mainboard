@@ -33,6 +33,7 @@ CMD_ACK_OK = 0x11
 CMD_NACK_CORRUPT = 0x20
 CMD_NACK_LOST = 0x21
 CMD_IMAGE_REQUEST = 0x06
+CMD_IMAGE_RECEIVED = 0x07
 
 class Task(TemplateTask):
 
@@ -122,31 +123,6 @@ class Task(TemplateTask):
         self.log_info(f"Payload state: {map_state(PC.state)}")
 
 
-def create_crc5_packet(data_bytes):
-    """Calculate CRC5 for a full 64-bit (8-byte) block."""
-    num_bytes = PACKET_SIZE
-    num_bits = num_bytes * 8
-    polynomial = 0x05  # CRC5 polynomial (x^5 + x^2 + 1)
-    crc = 0x1F  # initial CRC value
-
-    # Convert the bytearray to an integer for bitwise operations
-    data_int = int.from_bytes(data_bytes, 'big')  # bytes to int to do ops
-
-    for i in range(num_bits):
-        if (crc & 0x10) ^ (data_int & (1 << (num_bits-1))):
-            crc = ((crc << 1) ^ polynomial) & 0x1F
-        else:
-            crc = (crc << 1) & 0x1F
-        data_int <<= 1
-
-    # Now that we've computed the CRC, append it to the original data
-    # Convert the integer back to bytes, add the CRC
-    result_int = (data_int >> num_bits) | (crc << (num_bits))  # Append CRC to the data
-    result_bytes = result_int.to_bytes(num_bytes + 1, 'big')  # Convert to bytearray with CRC appended
-
-    return result_bytes
-
-
 # def create_crc5_packet(data_bytes):
 #     """Calculate CRC5 for a full 64-bit (8-byte) block."""
 #     num_bytes = PACKET_SIZE
@@ -154,7 +130,9 @@ def create_crc5_packet(data_bytes):
 #     polynomial = 0x05  # CRC5 polynomial (x^5 + x^2 + 1)
 #     crc = 0x1F  # initial CRC value
 
+#     # Convert the bytearray to an integer for bitwise operations
 #     data_int = int.from_bytes(data_bytes, 'big')  # bytes to int to do ops
+
 #     for i in range(num_bits):
 #         if (crc & 0x10) ^ (data_int & (1 << (num_bits-1))):
 #             crc = ((crc << 1) ^ polynomial) & 0x1F
@@ -162,13 +140,37 @@ def create_crc5_packet(data_bytes):
 #             crc = (crc << 1) & 0x1F
 #         data_int <<= 1
 
-#     return (data_bytes << 8) | bytes([crc])  # Append 5-bit CRC to data
+#     # Now that we've computed the CRC, append it to the original data
+#     # Convert the integer back to bytes, add the CRC
+#     result_int = (data_int >> num_bits) | (crc << (num_bits))  # Append CRC to the data
+#     result_bytes = result_int.to_bytes(num_bytes + 1, 'big')  # Convert to bytearray with CRC appended
+
+#     return result_bytes
+
+def create_crc5_packet(data_bytes):
+    """Calculate CRC5 for a full 64-bit (8-byte) block."""
+    num_bytes = PACKET_SIZE
+    num_bits = num_bytes * 8
+    polynomial = 0x05  # CRC5 polynomial (x^5 + x^2 + 1)
+    crc = 0x1F  # initial CRC value
+
+    data_int = int.from_bytes(data_bytes, 'big')  # bytes to int to do ops
+    for i in range(num_bits):
+        if (crc & 0x10) ^ (data_int & (1 << (num_bits-1))):
+            crc = ((crc << 1) ^ polynomial) & 0x1F
+        else:
+            crc = (crc << 1) & 0x1F
+        data_int <<= 1
+
+    return (data_bytes ) + bytes([crc])  # Append 5-bit CRC to data
 
 def verify_crc5_packet(packet):
     """Verify CRC5 for an 8-byte (64-bit) block."""
     data_bytes = packet[:-1]  # data minus crc
     # received_crc = packet[-1] >> 3  # crc is the whole byte shifted by 3
     computed_packet = create_crc5_packet(data_bytes)
+    print("Computed packet: ", computed_packet)
+    print("Received packet: ", packet)
     # computed_crc = computed_packet[-1] >> 3  # get only crc
     return packet == computed_packet
 
@@ -269,7 +271,7 @@ def create_packet(packet_id, requested_packet=None, data=None, chunk_id=None, da
     elif packet_id == CMD_DATA_CHUNK:   
         # Data chunk packet
         result = packet_id.to_bytes(1, byteorder='big') + chunk_id.to_bytes(4, byteorder='big') + data_length.to_bytes(4, byteorder='big') + data + last_packet.to_bytes(1, byteorder='big')
-        crc_packet = create_crc5_packet(result)
+        result = create_crc5_packet(result)
         # result = crc_packet.ljust(PACKET_SIZE + CRC5_SIZE, b'\0')
     
     elif packet_id == CMD_ACK_OK:
@@ -286,19 +288,22 @@ def create_packet(packet_id, requested_packet=None, data=None, chunk_id=None, da
         # ACK READY packet
         result = packet_id.to_bytes(1, byteorder='big') + requested_packet.to_bytes(1, byteorder='big')
         # result = result.ljust(PACKET_SIZE, b'\0')
-
+    elif packet_id == CMD_IMAGE_RECEIVED:
+        result = packet_id.to_bytes(1, byteorder='big')
+        # result = result.ljust(PACKET_SIZE, b'\0')
     return result
 
 # Return dictionary with packet_id, chunk_id, data_length, data, crc
 def read_packet(received_bytes):
     # received_bytes = received_byts.deco
-    packet_id = int.from_bytes(received_bytes[0], byteorder='big')
+    packet_id = int.from_bytes(received_bytes[0:1], byteorder='big')
     if packet_id == CMD_HANDSHAKE_REQUEST:
         requested_packet = int.from_bytes(received_bytes[1:2], byteorder='big')
-        info = received_bytes[2:].decode('utf-8').strip('\0')
-        return {'packet_id': packet_id, 'requested_packet': requested_packet, 'data': info}
+        # info = received_bytes[2:].decode('utf-8').strip('\0')
+        return {'packet_id': packet_id, 'requested_packet': requested_packet} #, 'data': info}
     
     elif packet_id == CMD_DATA_CHUNK:
+        print("Reading data chunk packet: ", received_bytes)
         chunk_id = int.from_bytes(received_bytes[1:5], byteorder='big')
         data_length = int.from_bytes(received_bytes[5:9], byteorder='big')
         data = received_bytes[9:9+data_length]
@@ -344,17 +349,18 @@ def image_receiver_task():
         if received is None:
             continue
         old_received = received
+        # print ("Handshake received raw: ", received)
         received = read_packet(received)
-        print(f"Handshake received: {received}")
-        print("Received handshake preeiosdfhn;sdffghis: *******************************", received['packet_id'], received, old_received)
+        # print(f"Handshake received: {received}")
+        # print("Received handshake preeiosdfhn;sdffghis: *******************************", received['packet_id'], received, old_received)
 
         if received['packet_id'] == CMD_ACK_READY:
-            print("Handshake complete, starting image transfer")
+            # print("Handshake complete, starting image transfer")
             ack_ready_packet = create_packet(CMD_ACK_READY, requested_packet=CMD_IMAGE_REQUEST)
             handler.send(ack_ready_packet)
             handler.handshake_complete = True
             break
-        print("Received handshake is: *******************************", received['packet_id'], received, old_received)
+        # print("Received handshake is: *******************************", received['packet_id'], received, old_received)
         timeout_shake = time.time() - start_time
         if timeout_shake > 5: #Retry handshake 3 times Consider changing to a timeout based on actual time
             retry += 1
@@ -400,29 +406,8 @@ def image_receiver_task():
 
     # Save the reconstructed image
     if packet_info['last_packet'] == 1:
-        handler.send(b'IMAGE_RECEIVED')
-        # handler.disconnect()
+        final_packet = create_packet(CMD_IMAGE_RECEIVED)
+        handler.send(final_packet)
         handler.image_handler.save_image_to_disk(handler.sort_image_array(), 'latest_image.jpeg')
+        # handler.disconnect()
         return 1
-'''
-
-
-def image_receiver_task():
-    handler = ImageTransferHandler()
-
-    if not handler.is_connected:
-        print("Image receiver: Failed to connect to payload UART")
-        return 0
-    print(f"Image receiver: Connected to payload UART")
-    # while True:
-    received_val = handler.receive()
-    if received_val is not None:
-        received_val = received_val.decode('utf-8').strip()
-        # print(f"Received from payload: {received_val}")
-        if received_val == 'H':
-            print(f"Received helloOOO from payload: {received_val}")
-            handler.send(b'A')
-
-
- 
-# '''
