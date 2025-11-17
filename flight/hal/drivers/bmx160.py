@@ -421,7 +421,7 @@ class BMX160:
 
     ### ACTUAL API
     def gyro(self):
-        # deg/s
+        # rad/s
         return tuple(x * self.GYR_SCALAR for x in self._gyro)
 
     def accel(self):
@@ -488,7 +488,7 @@ class BMX160:
             # read out the value to see if it changed successfully
             rangeconst = self._gyro_range
             val = _BMX160_GYRO_RANGE_VALUES[rangeconst]
-            self.GYR_SCALAR = val / 32768.0
+            self.GYR_SCALAR = (val / 32768.0) * self.DEG_TO_RAD  # Convert deg/s to rad/s
         else:
             pass
 
