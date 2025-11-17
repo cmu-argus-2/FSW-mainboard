@@ -122,6 +122,8 @@ class CubeSat:
             "LIGHT_ZP_2": [],
             "LIGHT_ZP_3": [],
             "LIGHT_ZP_4": [],
+            "DEPLOYMENT_XP": [],
+            "DEPLOYMENT_YM": [],
         }
         # Get boot time from time.monotonic()
         self._time_ref_boot = int(time.monotonic())
