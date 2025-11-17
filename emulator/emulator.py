@@ -50,17 +50,17 @@ class EmulatedSatellite(CubeSat):
         super().__init__()
 
         # self._radio = Radio(self.__use_socket)
-        self.append_device("RADIO", None, Radio(self.__use_socket))
+        self.append_device("RADIO", None, Radio(self.__use_socket), ASIL=4)
         # self._sd_card = SD()
-        self.append_device("SDCARD", None, SD())
+        self.append_device("SDCARD", None, SD(), ASIL=1)
         # self._burnwires = self.init_device(BurnWires())
-        self.append_device("BURN_WIRES", None, BurnWires())
+        self.append_device("BURN_WIRES", None, BurnWires(), ASIL=4)
         self._payload_uart = self.init_device(Payload())
         self.append_device("PAYLOAD_UART", None, self._payload_uart)
 
         # self._vfs = None
         self._gps = self.init_device(GPS(simulator=self.__simulated_spacecraft))
-        self.append_device("GPS", None, self._gps)
+        self.append_device("GPS", None, self._gps, ASIL=4)
         # self._charger = None
 
         self._light_sensors = LightSensorArray(simulator=self.__simulated_spacecraft)
@@ -86,14 +86,13 @@ class EmulatedSatellite(CubeSat):
         self._board_power_monitor = self.init_device(PowerMonitor(7.6, 0.1))
         # self._power_monitors["BOARD"] = self._board_power_monitor
         # self._power_monitors["JETSON"] = self._jetson_power_monitor
-        self.append_device("BOARD_PWR", None, self._board_power_monitor)
-        self.append_device("JETSON_PWR", None, self._jetson_power_monitor)
+        self.append_device("BOARD_PWR", None, self._board_power_monitor, ASIL=1)
+        self.append_device("JETSON_PWR", None, self._jetson_power_monitor, ASIL=1)
 
         # self._fuel_gauge = self.init_device(FuelGauge())
-        self.append_device("FUEL_GAUGE", None, FuelGauge())
-
+        self.append_device("FUEL_GAUGE", None, FuelGauge(), ASIL=2)
         # self._rtc = self.init_device(RTC(time.gmtime()))
-        self.append_device("RTC", None, RTC(time.gmtime()), ASIL=1)
+        self.append_device("RTC", None, RTC(time.gmtime()), ASIL=2)
 
         # self.ERRORS = []
 
