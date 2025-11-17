@@ -326,7 +326,18 @@ class Scheduler:
                 print("    {}".format(i))
 
         # Create the ready list by selecting tasks from _sleeping that are ready to run based on their resume time
-        self._ready = [x for x in self._sleeping if x.resume_nanos() <= _monotonic_ns()]
+        # Since _sleeping is kept sorted by resume time, we can optimize this
+        now = _monotonic_ns()
+        self._ready = []
+        cutoff_index = 0
+
+        for i, sleeper in enumerate(self._sleeping):
+            if sleeper.resume_nanos() <= now:
+                self._ready.append(sleeper)
+                cutoff_index = i + 1
+            else:
+                break  # Since sorted, no need to check further
+
         # Sort the ready tasks by priority
         self._ready.sort(key=lambda x: x.task.priority)
 
@@ -339,16 +350,16 @@ class Scheduler:
         ready_tasks = self._ready[:]  # O(n) copy
         self._ready.clear()  # O(1)
 
-        ready_task_set = set(ready_tasks)  # O(n) set creation
-        self._sleeping = [sleeper for sleeper in self._sleeping if sleeper not in ready_task_set]  # O(n) filtering
+        # Remove ready tasks from sleeping list efficiently since we know the cutoff index
+        if cutoff_index > 0:
+            self._sleeping = self._sleeping[cutoff_index:]  # O(n) slice, but only once
 
         for ready_task in ready_tasks:  # O(n) iteration
             self._run_task(ready_task.task)
 
         # If there are no more active tasks but there are tasks in the sleeping list, determine sleep duration
         if len(self._tasks) == 0 and len(self._sleeping) > 0:
-            # Sort sleeping tasks by their resume time, so we can find the earliest time any task needs to run
-            self._sleeping.sort(key=Sleeper.resume_nanos)
+            # _sleeping is already sorted by resume time, so first element is the earliest
             next_sleeper = self._sleeping[0]
             sleep_nanos = next_sleeper.resume_nanos() - _monotonic_ns()
 
@@ -394,8 +405,17 @@ class Scheduler:
 
         assert self._current is not None, "You can only sleep from within a task"
 
-        # Register the current task in the sleeping queue, set to resume at `target_run_nanos`
-        self._sleeping.append(Sleeper(target_run_nanos, self._current))
+        # Register the current task in the sleeping queue, maintaining sorted order by resume time
+        sleeper = Sleeper(target_run_nanos, self._current)
+
+        # Manual binary search insertion to maintain sorted order - O(log n) search + O(n) insert
+        insert_pos = 0
+        for i, s in enumerate(self._sleeping):
+            if s.resume_nanos() > target_run_nanos:
+                insert_pos = i
+                break
+            insert_pos = i + 1
+        self._sleeping.insert(insert_pos, sleeper)
 
         if self._debug:
             print("  sleeping ", self._current)
