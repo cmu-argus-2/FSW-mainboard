@@ -408,13 +408,12 @@ class Scheduler:
         # Register the current task in the sleeping queue, maintaining sorted order by resume time
         sleeper = Sleeper(target_run_nanos, self._current)
 
-        # Manual binary search insertion to maintain sorted order - O(log n) search + O(n) insert
-        insert_pos = 0
+        # Manual linear search insertion to maintain sorted order - O(n) search + O(n) insert
+        insert_pos = len(self._sleeping)  # Default to insert at end
         for i, s in enumerate(self._sleeping):
             if s.resume_nanos() > target_run_nanos:
                 insert_pos = i
                 break
-            insert_pos = i + 1
         self._sleeping.insert(insert_pos, sleeper)
 
         if self._debug:
