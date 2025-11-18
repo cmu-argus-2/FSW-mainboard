@@ -39,7 +39,7 @@ def FSW_simulate(runtime: float, outfile: str, trial_number: int, trial_date: st
                 ["./run.sh", "simulate", str(trial_number), trial_date, sim_set_name],
                 stdout=log_file,
                 stderr=log_file,
-                preexec_fn=lambda: (os.setsid(), signal.alarm(20))
+                preexec_fn=lambda: (os.setsid(), signal.alarm(20)),
             )
             print(f"Running simulation for {runtime} seconds, output written to {outfile}")
             time.sleep(runtime)

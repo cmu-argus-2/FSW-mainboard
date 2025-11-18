@@ -2,17 +2,13 @@ import os
 import re
 import shutil
 import subprocess
-
-import matplotlib.pyplot as plt
-import numpy as np
-
-import subprocess
 import sys
 import time
 from datetime import datetime
 
+import matplotlib.pyplot as plt
+import numpy as np
 import yaml
-
 
 # flake8: noqa: E402
 project_root = os.path.abspath(os.path.dirname(__file__))
@@ -345,17 +341,13 @@ if __name__ == "__main__":
     if not campaign_dirs:
         print(f"No results to plot found at {results_path}")
         sys.exit(0)
-    
-    results_folders = [
-        os.path.join(results_path, d)
-        for d in campaign_dirs
-        if os.path.isdir(os.path.join(results_path, d))
-    ]
+
+    results_folders = [os.path.join(results_path, d) for d in campaign_dirs if os.path.isdir(os.path.join(results_path, d))]
     print("Found sil campaigns:")
     print("Trial ID: Campaign Folder/Date")
     for i, campaign in enumerate(campaign_dirs):
         print(f"{i:>{len('Trial ID')}}: {campaign:>{len('Campaign Folder/Date')}}")
-        
+
     trial_id = input("Enter the ID of the trial to re-plot: ")
     try:
         trial_id = int(trial_id)
@@ -363,17 +355,17 @@ if __name__ == "__main__":
     except (ValueError, AssertionError):
         print("Invalid trial ID. Exiting.")
         sys.exit(1)
-    
+
     run_date = datetime.strptime(campaign_dirs[trial_id], "%Y-%m-%d_%H-%M-%S")
     trial_date = run_date.strftime("%Y-%m-%d_%H-%M-%S")
-    
+
     campaign_folder = os.path.join(current_file_path, "results", trial_date)
     campaign_config_file_path = os.path.join(campaign_folder, "sil_campaign_params.yaml")
 
     # Read sil campaign config to determine number of sim sets
     with open(campaign_config_file_path, "r") as file:
         sil_campaign_params = yaml.safe_load(file)
-    
+
     sim_sets = sil_campaign_params["sil_campaign"]
     n_sim_sets = len(sim_sets.keys())
 
