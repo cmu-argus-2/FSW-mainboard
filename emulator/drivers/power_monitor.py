@@ -12,3 +12,12 @@ class PowerMonitor:
             elif self.__device_name == "JETSON":
                 self.__voltage, self.__current = self.__simulator.jetson_power()
         return (self.__voltage, self.__current)
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return []
+
+    def deinit(self):
+        return

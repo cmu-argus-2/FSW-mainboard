@@ -1021,6 +1021,37 @@ class DataHandler:
         return cls.data_process_registry[tag_name]
 
     @classmethod
+    def graceful_shutdown(cls) -> bool:
+        """
+        WARNING: should not be used unless for self-driven reboot.
+        Gracefully shuts down all data processes by closing their files.
+
+        Returns:
+            Bool
+        """
+        try:
+            for tag_name in cls.data_process_registry:
+                cls.data_process_registry[tag_name].close()
+            return True
+        except Exception:
+            return False
+
+    @classmethod
+    def restore_data_process_files(cls) -> bool:
+        """
+        Restores the data process files by reinitializing them.
+
+        Returns:
+            Bool
+        """
+        try:
+            for tag_name in cls.data_process_registry:
+                cls.data_process_registry[tag_name].try_to_reuse_latest_file()
+            return True
+        except Exception:
+            return False
+
+    @classmethod
     def get_all_data_processes_name(cls) -> List[str]:
         """
         Returns a list of all registered data process names.
