@@ -53,11 +53,11 @@ except ImportError:
 _HOME_PATH = "/sd"  # Default path for the SD card
 _CLOSED = const(20)
 _OPEN = const(21)
-_IMG_DATA_LIMIT = const(100000)
+_FILE_DATA_LIMIT = const(100000)
 
 
 _PROCESS_CONFIG_FILENAME = ".data_process_configuration.json"
-_IMG_TAG_NAME = "img"
+_FILE_TAG_NAME = "file"  # Identifier for generic file processes
 
 
 class DataProcess:
@@ -564,29 +564,64 @@ class DataProcess:
             logger.warning(f"Can't read {self.current_path}: File is not closed!")
 
 
-class ImageProcess(DataProcess):
-    def __init__(self, tag_name: str):
+class FileProcess(DataProcess):
+    """
+    Class for managing arbitrary file data (images, audio, binary blobs, etc.).
+
+    Attributes:
+        tag_name (str): The tag name for the file.
+        file_extension (str): The file extension (e.g., 'jpg', 'png', 'wav', 'bin').
+        data_limit (int): Maximum file size in bytes (default 100KB).
+        circular_buffer_size (int): Number of files to keep in circular buffer (default 20).
+        buffer_size (int): Size of write buffer for efficient SD card writes (default 512 bytes).
+    """
+
+    def __init__(
+        self,
+        tag_name: str,
+        file_extension: str = "bin",
+        data_limit: int = _FILE_DATA_LIMIT,
+        circular_buffer_size: int = 20,
+        buffer_size: int = 512,
+    ):
+        """
+        Initializes a FileProcess object.
+
+        Args:
+            tag_name (str): The tag name for the file process.
+            file_extension (str, optional): File extension without dot (default is 'bin').
+            data_limit (int, optional): Maximum file size in bytes (default is 100KB).
+            circular_buffer_size (int, optional): Number of files in circular buffer (default is 20).
+            buffer_size (int, optional): Write buffer size in bytes (default is 512).
+        """
         self.tag_name = tag_name
         self.file = None
+        self.file_extension = file_extension.lstrip(".")  # Remove leading dot if present
 
         self.status = _CLOSED
 
         self.dir_path = join_path(_HOME_PATH, self.tag_name)
         self.create_folder()
 
-        self.data_limit = _IMG_DATA_LIMIT
+        self.data_limit = data_limit
 
         self.current_path = self.create_new_path()
         self.delete_paths = []  # Paths that are flagged for deletion
         self.excluded_paths = []  # Paths that are currently being transmitted
-        self.circular_buffer_size = 20  # Default size of the circular buffer for the files in the directory
-        self.img_buf_size = 512  # Default size of the circular buffer for image data logs
-        self.img_buf = bytearray(self.img_buf_size)  # Pre-allocated static buffer for image process
-        self.img_buf_index = 0  # index to track position in buffer
+        self.circular_buffer_size = circular_buffer_size
+        self.buffer_size = buffer_size
+        self.file_buf = bytearray(self.buffer_size)  # Pre-allocated static buffer for file writes
+        self.file_buf_index = 0  # index to track position in buffer
 
         config_file_path = join_path(self.dir_path, _PROCESS_CONFIG_FILENAME)
         if not path_exist(config_file_path):
-            config_data = {_IMG_TAG_NAME: True}
+            config_data = {
+                _FILE_TAG_NAME: True,
+                "file_extension": self.file_extension,
+                "data_limit": data_limit,
+                "circular_buffer_size": circular_buffer_size,
+                "buffer_size": buffer_size,
+            }
             with open(config_file_path, "w") as config_file:
                 json.dump(config_data, config_file)
 
@@ -606,47 +641,47 @@ class ImageProcess(DataProcess):
 
     def create_new_path(self) -> str:
         """
-        Create a new filename for the image process.
+        Create a new filename for the file process.
 
         Returns:
             str: The new filename.
         """
         # Keeping the tag name in the filename for identification
-        return join_path(self.dir_path, self.tag_name) + "_" + str(TPM.time()) + ".jpg"
+        return join_path(self.dir_path, self.tag_name) + "_" + str(TPM.time()) + "." + self.file_extension
 
     def log(self, data: bytearray) -> None:
         """
         Logs the given image data. Stores into a buffer and write in blocks of 512 Bytes
 
         Args:
-            data (List[bytes]): The bytes of image data to be logged.
+            data (bytearray): The bytes of data to be logged.
 
         Returns:
             None
         """
 
         if not DataHandler.SD_ERROR_FLAG:
-            # Add to image buffer and transmit only when multiples of 512 Bytes have been attained
+            # Add to file buffer and transmit only when buffer is full
             data_len = len(data)
             data_offset = 0  # Keeps track of processed data
 
             while data_offset < data_len:
-                space_remaining = self.img_buf_size - self.img_buf_index
+                space_remaining = self.buffer_size - self.file_buf_index
                 chunk_size = min(data_len - data_offset, space_remaining)  # Fill as much as possible
 
                 # Copy data into buffer
-                self.img_buf[self.img_buf_index : self.img_buf_index + chunk_size] = data[
+                self.file_buf[self.file_buf_index : self.file_buf_index + chunk_size] = data[
                     data_offset : data_offset + chunk_size
                 ]
-                self.img_buf_index += chunk_size
+                self.file_buf_index += chunk_size
                 data_offset += chunk_size  # Move data offset
 
-                if self.img_buf_index == self.img_buf_size:
+                if self.file_buf_index == self.buffer_size:
                     # Buffer is full, write to SD card
                     self.resolve_current_file()
-                    self.file.write(self.img_buf[: self.img_buf_size])  # Write full 512-byte block
+                    self.file.write(self.file_buf[: self.buffer_size])  # Write full buffer block
                     self.file.flush()
-                    self.img_buf_index = 0  # Reset buffer index
+                    self.file_buf_index = 0  # Reset buffer index
 
         else:
             # Transmit each time without adding to a buf
@@ -658,10 +693,10 @@ class ImageProcess(DataProcess):
 
     def request_TM_path(self, latest: bool = False, file_time=None) -> Optional[str]:
         """
-        MODIFIED FOR IMAGES as we need complete images to be transmitted.
+        MODIFIED FOR FILES as we need complete files to be transmitted.
 
-        Returns the path of a designated image available for transmission.
-        If no image is available, the function returns None.
+        Returns the path of a designated file available for transmission.
+        If no file is available, the function returns None.
 
         The function store the file path to be excluded in a separate list.
         Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list
@@ -698,13 +733,20 @@ class ImageProcess(DataProcess):
         else:
             return None
 
-    def image_completed(self):
+    def file_completed(self):
         """
-        Closes the current file and resolves it, to prepare for the next image.
+        Closes the current file and resolves it, to prepare for the next file.
+        Flushes any remaining buffered data before closing.
 
         Returns:
             None
         """
+        # Flush any remaining data in the buffer
+        if self.file_buf_index > 0 and self.status == _OPEN:
+            self.file.write(self.file_buf[: self.file_buf_index])
+            self.file.flush()
+            self.file_buf_index = 0
+
         self.close()
         self.resolve_current_file()
 
@@ -778,10 +820,22 @@ class DataHandler:
                     with open(config_file, "r") as f:
                         config_data = json.load(f)
 
-                        if _IMG_TAG_NAME in config_data:
-                            data_format: str = config_data.get(_IMG_TAG_NAME)
-                            cls.register_image_process()
+                        # Check for generic file process
+                        if _FILE_TAG_NAME in config_data:
+                            file_extension: str = config_data.get("file_extension", "bin")
+                            data_limit: int = config_data.get("data_limit", _FILE_DATA_LIMIT)
+                            circular_buffer_size: int = config_data.get("circular_buffer_size", 20)
+                            buffer_size: int = config_data.get("buffer_size", 512)
+                            cls.register_file_process(
+                                tag_name=dir_name,
+                                file_extension=file_extension,
+                                data_limit=data_limit,
+                                circular_buffer_size=circular_buffer_size,
+                                buffer_size=buffer_size,
+                            )
                             continue
+
+                        # Standard data process
                         data_format: str = config_data.get("data_format")
                         data_limit: int = config_data.get("data_limit")
                         write_interval: int = config_data.get("write_interval")
@@ -861,14 +915,34 @@ class DataHandler:
             raise ValueError("Data limit must be a positive integer.")
 
     @classmethod
-    def register_image_process(cls) -> None:
+    def register_file_process(
+        cls,
+        tag_name: str,
+        file_extension: str = "bin",
+        data_limit: int = _FILE_DATA_LIMIT,
+        circular_buffer_size: int = 20,
+        buffer_size: int = 512,
+    ) -> None:
         """
-        Register an image process with the given data format.
+        Register a file process for arbitrary file types.
+
+        Parameters:
+        - tag_name (str): The name of the file process.
+        - file_extension (str, optional): File extension without dot (default is 'bin').
+        - data_limit (int, optional): Maximum file size in bytes (default is 100KB).
+        - circular_buffer_size (int, optional): Number of files in circular buffer (default is 20).
+        - buffer_size (int, optional): Write buffer size in bytes (default is 512).
 
         Returns:
         - None
         """
-        cls.data_process_registry[_IMG_TAG_NAME] = ImageProcess(_IMG_TAG_NAME)
+        cls.data_process_registry[tag_name] = FileProcess(
+            tag_name=tag_name,
+            file_extension=file_extension,
+            data_limit=data_limit,
+            circular_buffer_size=circular_buffer_size,
+            buffer_size=buffer_size,
+        )
 
     @classmethod
     def log_data(cls, tag_name: str, data: List) -> None:
@@ -894,39 +968,72 @@ class DataHandler:
             logger.critical(f"Error: {e}")
 
     @classmethod
-    def log_image(cls, data: List[bytes]) -> None:
+    def log_file(cls, tag_name: str, data: bytearray) -> None:
         """
-        Logs the provided image data.
+        Logs the provided file data (images, audio, binary blobs, etc.).
 
         Parameters:
-        - data (List[bytes]): The image data to be logged.
+        - tag_name (str): The name of file process to associate with the logged data.
+        - data (bytearray): The file data to be logged.
+
+        Raises:
+        - KeyError: If the provided tag name is not registered in the data process registry.
 
         Returns:
         - None
         """
         try:
-            if _IMG_TAG_NAME in cls.data_process_registry:
-                cls.data_process_registry[_IMG_TAG_NAME].log(data)
+            if tag_name in cls.data_process_registry:
+                cls.data_process_registry[tag_name].log(data)
             else:
-                raise KeyError("Data process not registered!")
+                raise KeyError("File process not registered!")
         except KeyError as e:
             logger.critical(f"Error: {e}")
 
     @classmethod
-    def image_completed(cls) -> bool:
+    def log_image(cls, data: bytearray) -> None:
         """
-        Closes the current file and resolves it, to prepare for the next image.
+        Logs the provided image data.
+
+        Parameters:
+        - data (bytearray): The image data to be logged.
+
+        Returns:
+        - None
+        """
+        cls.log_file("img", data)
+
+    @classmethod
+    def file_completed(cls, tag_name: str) -> None:
+        """
+        Closes the current file and resolves it, to prepare for the next file.
+
+        Parameters:
+        - tag_name (str): The name of the file process.
 
         Returns:
             None
         """
         try:
-            if _IMG_TAG_NAME in cls.data_process_registry:
-                cls.data_process_registry[_IMG_TAG_NAME].image_completed()
+            if tag_name in cls.data_process_registry:
+                if hasattr(cls.data_process_registry[tag_name], "file_completed"):
+                    cls.data_process_registry[tag_name].file_completed()
+                else:
+                    logger.warning(f"Process {tag_name} does not support file_completed()")
             else:
-                raise KeyError("Image data process not registered!")
+                raise KeyError("File process not registered!")
         except KeyError as e:
             logger.critical(f"Error: {e}")
+
+    @classmethod
+    def image_completed(cls) -> None:
+        """
+        Closes the current image file and resolves it, to prepare for the next image.
+
+        Returns:
+            None
+        """
+        cls.file_completed("img")
 
     @classmethod
     def get_latest_data(cls, tag_name: str):
@@ -1086,6 +1193,21 @@ class DataHandler:
         return tag_name in cls.data_process_registry
 
     @classmethod
+    def file_process_exists(cls, tag_name: str) -> bool:
+        """
+        Check if a file process with the specified tag name exists.
+
+        Parameters:
+            tag_name (str): The name of the file process.
+
+        Returns:
+            bool: True if the file process exists, False otherwise.
+        """
+        if tag_name in cls.data_process_registry:
+            return isinstance(cls.data_process_registry[tag_name], FileProcess)
+        return False
+
+    @classmethod
     def image_process_exists(cls) -> bool:
         """
         Check if the image process exists.
@@ -1093,7 +1215,7 @@ class DataHandler:
         Returns:
             bool: True if the image process exists, False otherwise.
         """
-        return _IMG_TAG_NAME in cls.data_process_registry
+        return cls.file_process_exists("img")
 
     @classmethod
     def request_TM_path(cls, tag_name, latest=False, file_time=None):
@@ -1123,13 +1245,7 @@ class DataHandler:
         Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list
         and prepare for deletion.
         """
-        try:
-            if "img" in cls.data_process_registry:
-                return cls.data_process_registry["img"].request_TM_path(latest=latest, file_time=file_time)
-            else:
-                raise KeyError("Image process not registered!")
-        except KeyError as e:
-            logger.critical(f"Error: {e}")
+        return cls.request_TM_path("img", latest=latest, file_time=file_time)
 
     @classmethod
     def notify_TM_path(cls, tag_name, path):
