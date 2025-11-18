@@ -14,7 +14,7 @@ command:
 
   BURN_WIRE_TIMEOUT:
     value: 5  # number of deployment attempts before forcing completion
-    _const: true:with
+    _const: true
 
 # Time Processor Module
 time_processor:
