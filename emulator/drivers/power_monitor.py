@@ -5,3 +5,12 @@ class PowerMonitor:
 
     def read_voltage_current(self):
         return (self.__voltage, self.__current)
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return []
+
+    def deinit(self):
+        return

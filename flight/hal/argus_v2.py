@@ -575,7 +575,13 @@ class ArgusV2(CubeSat):
 
     ######################## ERROR HANDLING ########################
 
+    def check_device_dead(self, _: int) -> bool:
+        return False
+
     def handle_error(self, _: str) -> int:
+        return Errors.NO_REBOOT
+
+    def graceful_reboot_devices(self, device_name):
         pass
 
     def reboot(self):

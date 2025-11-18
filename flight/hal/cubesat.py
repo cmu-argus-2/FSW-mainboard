@@ -28,6 +28,7 @@ class Device:
         self.error_count = 0
         self.peripheral_line = peripheral_line
         self.dead = False
+        self.temp_disabled = False
 
 
 class CubeSat:
@@ -50,12 +51,12 @@ class CubeSat:
                 ("NEOPIXEL", Device(self.__neopixel_boot, ASIL0)),
                 ("SDCARD", Device(self.__sd_card_boot, ASIL1)),  # SD Card must enabled before other devices
                 ("RTC", Device(self.__rtc_boot, ASIL2)),
-                ("GPS", Device(self.__gps_boot, ASIL3, peripheral_line=False)),
+                ("GPS", Device(self.__gps_boot, ASIL4, peripheral_line=False)),
                 ("RADIO", Device(self.__radio_boot, ASIL4, peripheral_line=False)),
                 ("IMU", Device(self.__imu_boot, ASIL3)),
                 ("FUEL_GAUGE", Device(self.__fuel_gauge_boot, ASIL2)),
-                ("BATT_HEATERS", Device(self.__battery_heaters_boot, ASIL1)),
-                ("WATCHDOG", Device(self.__watchdog_boot, ASIL2)),
+                ("BATT_HEATERS", Device(self.__battery_heaters_boot, ASIL4, peripheral_line=False)),
+                ("WATCHDOG", Device(self.__watchdog_boot, ASIL4)),
                 ("BURN_WIRES", Device(self.__burn_wire_boot, ASIL4)),
                 ("BOARD_PWR", Device(self.__power_monitor_boot, ASIL1)),
                 ("RADIO_PWR", Device(self.__power_monitor_boot, ASIL1)),
@@ -66,12 +67,12 @@ class CubeSat:
                 ("YP_PWR", Device(self.__power_monitor_boot, ASIL1)),
                 ("YM_PWR", Device(self.__power_monitor_boot, ASIL1)),
                 ("ZP_PWR", Device(self.__power_monitor_boot, ASIL1)),
-                ("TORQUE_XP", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
-                ("TORQUE_XM", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
-                ("TORQUE_YP", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
-                ("TORQUE_YM", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
-                ("TORQUE_ZP", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
-                ("TORQUE_ZM", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
+                ("TORQUE_XP", Device(self.__torque_driver_boot, ASIL3)),
+                ("TORQUE_XM", Device(self.__torque_driver_boot, ASIL3)),
+                ("TORQUE_YP", Device(self.__torque_driver_boot, ASIL3)),
+                ("TORQUE_YM", Device(self.__torque_driver_boot, ASIL3)),
+                ("TORQUE_ZP", Device(self.__torque_driver_boot, ASIL3)),
+                ("TORQUE_ZM", Device(self.__torque_driver_boot, ASIL3)),
                 ("LIGHT_XP", Device(self.__light_sensor_boot, ASIL2)),
                 ("LIGHT_XM", Device(self.__light_sensor_boot, ASIL2)),
                 ("LIGHT_YP", Device(self.__light_sensor_boot, ASIL2)),
@@ -87,7 +88,43 @@ class CubeSat:
         )
 
         self.__imu_temp_flag = False
-
+        self.__errors = {
+            "SDCARD": [],
+            "RTC": [],
+            "GPS": [],
+            "RADIO": [],
+            "IMU": [],
+            "FUEL_GAUGE": [],
+            "BATT_HEATERS": [],
+            "WATCHDOG": [],
+            "BURN_WIRES": [],
+            "BOARD_PWR": [],
+            "RADIO_PWR": [],
+            "GPS_PWR": [],
+            "JETSON_PWR": [],
+            "XP_PWR": [],
+            "XM_PWR": [],
+            "YP_PWR": [],
+            "YM_PWR": [],
+            "ZP_PWR": [],
+            "TORQUE_XP": [],
+            "TORQUE_XM": [],
+            "TORQUE_YP": [],
+            "TORQUE_YM": [],
+            "TORQUE_ZP": [],
+            "TORQUE_ZM": [],
+            "LIGHT_XP": [],
+            "LIGHT_XM": [],
+            "LIGHT_YP": [],
+            "LIGHT_YM": [],
+            "LIGHT_ZM": [],
+            "LIGHT_ZP_1": [],
+            "LIGHT_ZP_2": [],
+            "LIGHT_ZP_3": [],
+            "LIGHT_ZP_4": [],
+            "DEPLOYMENT_XP": [],
+            "DEPLOYMENT_YM": [],
+        }
         # Get boot time from time.monotonic()
         self._time_ref_boot = int(time.monotonic())
 
@@ -96,18 +133,15 @@ class CubeSat:
         """boot_sequence: Boot sequence for the CubeSat."""
         raise NotImplementedError("CubeSats must implement boot method")
 
-    def reboot(self) -> None:
-        """reboot: Reboot the CubeSat."""
-        raise NotImplementedError("CubeSats must implement reboot method")
-
-    def handle_error(self, device_name: str) -> int:
-        """handle_error: Handle the error for the given device."""
-        raise NotImplementedError("CubeSats must implement handle_error method")
-
     def print_device_list(self) -> None:
         """print_device_list: Print the device list."""
         for name, device in self.__device_list.items():
             print(f"{name}: {device.device}")
+
+    def print_device_status(self) -> None:
+        """print_device_status: Print the device status."""
+        for name, device in self.__device_list.items():
+            print(f"{name}: {device.device} - {device.error} - {device.dead} - {device.temp_disabled}")
 
     @property
     def ERRORS(self):
@@ -116,9 +150,50 @@ class CubeSat:
         """
         error_list = {}
         for name, device in self.__device_list.items():
-            if device.error != Errors.NO_ERROR:
+            if device.error != Errors.NO_ERROR and device.dead is False:
                 error_list[name] = device.error
         return error_list
+
+    @property
+    def DEVICES_STATUS(self):
+        """DEVICES_STATUS: Returns the status of the devices"""
+        status = {}
+        for name, device in self.__device_list.items():
+            if device.ASIL != ASIL0:
+                status[name] = [device.error, device.error_count, device.dead]
+        return status
+
+    def update_device_error(self, device_name: str, error: int):
+        """update_device_error: Update the error for the given device."""
+        if device_name in self.__device_list:
+            self.__device_list[device_name].error = error
+
+    def update_device_error_count(self, device_name: str, error_count: int):
+        """update_device_error_count: Update the error count for the given device."""
+        if device_name in self.__device_list:
+            self.__device_list[device_name].error_count = error_count
+
+    def increment_device_error_count(self, device_name: str):
+        """increment_device_error_count: Increment the error count for the given device."""
+        if device_name in self.__device_list:
+            self.__device_list[device_name].error_count += 1
+
+    def get_error_count(self, device_name: str) -> int:
+        """get_error_count: Get the error count for the given device."""
+        if device_name in self.__device_list:
+            return self.__device_list[device_name].error_count
+        return None
+
+    def update_device_dead(self, device_name: str, dead: bool):
+        """update_device_dead: Update the dead status for the given device."""
+        if device_name in self.__device_list:
+            self.__device_list[device_name].dead = dead
+
+    def get_device_dead(self, device_name: str) -> bool:
+        """get_device_dead: Get the dead status for the given device."""
+        if device_name in self.__device_list:
+            return self.__device_list[device_name].dead
+        return True
 
     def key_in_device_list(self, key: str) -> bool:
         """key_in_device_list: Check if the key is in the device list"""
@@ -138,7 +213,12 @@ class CubeSat:
         """GPS_AVAILABLE: Returns True if the GPS is available
         :return: bool
         """
-        return self.key_in_device_list("GPS") and self.__device_list["GPS"].device is not None
+        return (
+            self.key_in_device_list("GPS")
+            and self.__device_list["GPS"].device is not None
+            and not self.__device_list["GPS"].dead
+            and not self.__device_list["GPS"].temp_disabled
+        )
 
     @property
     def POWER_MONITORS(self):
@@ -155,7 +235,12 @@ class CubeSat:
         """POWER_MONITOR_AVAILABLE: Returns True if the power monitor for the given direction is available
         :return: bool
         """
-        return self.key_in_device_list(dir + "_PWR") and self.__device_list[dir + "_PWR"].device is not None
+        return (
+            self.key_in_device_list(dir + "_PWR")
+            and self.__device_list[dir + "_PWR"].device is not None
+            and not self.__device_list[dir + "_PWR"].dead
+            and not self.__device_list[dir + "_PWR"].temp_disabled
+        )
 
     @property
     def IMU(self):
@@ -169,7 +254,12 @@ class CubeSat:
         """IMU_AVAILABLE: Returns True if the IMU is available
         :return: bool
         """
-        return self.key_in_device_list("IMU") and self.__device_list["IMU"].device is not None
+        return (
+            self.key_in_device_list("IMU")
+            and self.__device_list["IMU"].device is not None
+            and not self.__device_list["IMU"].dead
+            and not self.__device_list["IMU"].temp_disabled
+        )
 
     @property
     def IMU_TEMPERATURE_AVAILABLE(self) -> bool:
@@ -193,7 +283,12 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'XM', etc.)
         :return: bool - True if the driver exists and is not None, False otherwise.
         """
-        return self.key_in_device_list("TORQUE_" + dir) and self.__device_list["TORQUE_" + dir].device is not None
+        return (
+            self.key_in_device_list("TORQUE_" + dir)
+            and self.__device_list["TORQUE_" + dir].device is not None
+            and not self.__device_list["TORQUE_" + dir].dead
+            and not self.__device_list["TORQUE_" + dir].temp_disabled
+        )
 
     def TORQUE_DRIVERS_CURRENT(self, dir: str) -> float:
         """Returns the coil current for the specific magnetorquer if available and returns -1 otherwise
@@ -235,7 +330,12 @@ class CubeSat:
         """FUEL_GAUGE_AVAILABLE: Returns True if the fuel gauge is available
         :return: bool
         """
-        return self.key_in_device_list("FUEL_GAUGE") and self.__device_list["FUEL_GAUGE"].device is not None
+        return (
+            self.key_in_device_list("FUEL_GAUGE")
+            and self.__device_list["FUEL_GAUGE"].device is not None
+            and not self.__device_list["FUEL_GAUGE"].dead
+            and not self.__device_list["FUEL_GAUGE"].temp_disabled
+        )
 
     @property
     def LIGHT_SENSORS(self):
@@ -252,7 +352,12 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'XM', etc.)
         :return: bool - True if the sensor exists and is not None, False otherwise.
         """
-        return self.key_in_device_list("LIGHT_" + dir) and self.__device_list["LIGHT_" + dir].device is not None
+        return (
+            self.key_in_device_list("LIGHT_" + dir)
+            and self.__device_list["LIGHT_" + dir].device is not None
+            and not self.__device_list["LIGHT_" + dir].dead
+            and not self.__device_list["LIGHT_" + dir].temp_disabled
+        )
 
     @property
     def RTC(self):
@@ -266,7 +371,12 @@ class CubeSat:
         """RTC_AVAILABLE: Returns True if the RTC is available
         :return: bool
         """
-        return self.key_in_device_list("RTC") and self.__device_list["RTC"].device is not None
+        return (
+            self.key_in_device_list("RTC")
+            and self.__device_list["RTC"].device is not None
+            and not self.__device_list["RTC"].dead
+            and not self.__device_list["RTC"].temp_disabled
+        )
 
     @property
     def RADIO(self):
@@ -280,7 +390,12 @@ class CubeSat:
         """RADIO_AVAILABLE: Returns True if the radio is available
         :return: bool
         """
-        return self.key_in_device_list("RADIO") and self.__device_list["RADIO"].device is not None
+        return (
+            self.key_in_device_list("RADIO")
+            and self.__device_list["RADIO"].device is not None
+            and not self.__device_list["RADIO"].dead
+            and not self.__device_list["RADIO"].temp_disabled
+        )
 
     @property
     def BURN_WIRES(self):
@@ -294,7 +409,12 @@ class CubeSat:
         """BURN_WIRES_AVAILABLE: Returns True if the burn wires are available
         :return: bool
         """
-        return self.key_in_device_list("BURN_WIRES") and self.__device_list["BURN_WIRES"].device is not None
+        return (
+            self.key_in_device_list("BURN_WIRES")
+            and self.__device_list["BURN_WIRES"].device is not None
+            and not self.__device_list["BURN_WIRES"].dead
+            and not self.__device_list["BURN_WIRES"].temp_disabled
+        )
 
     @property
     def SD_CARD(self):
@@ -308,7 +428,12 @@ class CubeSat:
         """SD_CARD_AVAILABLE: Returns True if the SD card is available
         :return: bool
         """
-        return self.key_in_device_list("SDCARD") and self.__device_list["SDCARD"].device is not None
+        return (
+            self.key_in_device_list("SDCARD")
+            and self.__device_list["SDCARD"].device is not None
+            and not self.__device_list["SDCARD"].dead
+            and not self.__device_list["SDCARD"].temp_disabled
+        )
 
     @property
     def NEOPIXEL(self):
@@ -322,7 +447,11 @@ class CubeSat:
         """NEOPIXEL_AVAILABLE: Returns True if the neopixel is available
         :return: bool
         """
-        return self.key_in_device_list("NEOPIXEL") and self.__device_list["NEOPIXEL"].device is not None
+        return (
+            self.key_in_device_list("NEOPIXEL")
+            and self.__device_list["NEOPIXEL"].device is not None
+            and (not self.__device_list["NEOPIXEL"].dead and not self.__device_list["NEOPIXEL"].temp_disabled)
+        )
 
     @property
     def BATTERY_HEATERS(self):
@@ -336,7 +465,12 @@ class CubeSat:
         """BATT_HEATERS_AVAILABLE: Returns True if the battery heaters are available
         :return: bool
         """
-        return self.key_in_device_list("BATT_HEATERS") and self.__device_list["BATT_HEATERS"].device is not None
+        return (
+            self.key_in_device_list("BATT_HEATERS")
+            and self.__device_list["BATT_HEATERS"].device is not None
+            and not self.__device_list["BATT_HEATERS"].dead
+            and not self.__device_list["BATT_HEATERS"].temp_disabled
+        )
 
     @property
     def WATCHDOG(self):
@@ -350,7 +484,12 @@ class CubeSat:
         """WATCHDOG_AVAILABLE: Returns True if the watchdog is available
         :return: bool
         """
-        return self.key_in_device_list("WATCHDOG") and self.__device_list["WATCHDOG"].device is not None
+        return (
+            self.key_in_device_list("WATCHDOG")
+            and self.__device_list["WATCHDOG"].device is not None
+            and not self.__device_list["WATCHDOG"].dead
+            and not self.__device_list["WATCHDOG"].temp_disabled
+        )
 
     @property
     def DEPLOYMENT_SENSORS(self):
@@ -399,3 +538,38 @@ class CubeSat:
         :return: object or None
         """
         return self._time_ref_boot
+
+    ######################## ERROR HANDLING ########################
+
+    def handle_error(self, device_name: str) -> int:
+        raise NotImplementedError("CubeSats must implement handle_error method")
+
+    def graceful_reboot_devices(self, device_name: str):
+        raise NotImplementedError("CubeSats must implement graceful_reboot_devices method")
+
+    def reboot(self, device_name: str):
+        raise NotImplementedError("CubeSats must implement reboot_devices method")
+
+    def check_device_dead(self, error_count: int) -> bool:
+        raise NotImplementedError("CubeSats must implement check_device_dead method")
+
+    @property
+    def SAMPLE_DEVICE_ERRORS(self) -> dict[str, list[int]]:
+        """SAMPLE_DEVICE_ERRORS: Sample the device errors"""
+        for key in self.__errors:
+            self.__errors[key] = []
+        for name, device in self.__device_list.items():
+            if device.ASIL != ASIL0:
+                if (
+                    device.device is None
+                    and not device.dead
+                    and not device.temp_disabled
+                    and device.error == Errors.DEVICE_NOT_INITIALISED
+                ):
+                    self.__errors[name] = [Errors.DEVICE_NOT_INITIALISED]
+                elif device.device is not None and not device.dead and not device.temp_disabled:
+                    try:
+                        self.__errors[name] = device.device.device_errors
+                    except Exception:
+                        self.__errors[name] = [Errors.DEVICE_NOT_INITIALISED]
+        return self.__errors

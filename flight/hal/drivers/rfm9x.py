@@ -993,6 +993,13 @@ class RFM9x:
         else:
             return False
 
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        results = []
+        return results
+
     def deinit(self):
         self.dio0.deinit()
         self.dio0 = None
