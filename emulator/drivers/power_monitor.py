@@ -1,8 +1,8 @@
 class PowerMonitor:
-    def __init__(self, device_name: str, simulator=None) -> None:
+    def __init__(self, device_name: str, voltage: float = 0, current: float = 0, simulator=None) -> None:
         self.__device_name = device_name
-        self.__voltage = 0
-        self.__current = 0
+        self.__voltage = voltage
+        self.__current = current
         self.__simulator = simulator
 
     def read_voltage_current(self):
@@ -12,3 +12,12 @@ class PowerMonitor:
             elif self.__device_name == "JETSON":
                 self.__voltage, self.__current = self.__simulator.jetson_power()
         return (self.__voltage, self.__current)
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return []
+
+    def deinit(self):
+        return

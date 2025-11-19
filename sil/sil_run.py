@@ -18,7 +18,7 @@ project_root = os.path.abspath(os.path.join(project_root, ".."))
 if project_root not in sys.path:
     sys.path.append(project_root)
 # from argusim.visualization.plotter import plot_all
-from sil.fsw_plotter import collect_FSW_data, plot_FSW
+from sil.fsw_plotter import collect_FSW_data, plot_FSW, plot_results
 
 # DEFAULT_RUNTIME = 60  # 5 * 60  # 5 minutes
 # DEFAULT_OUTFILE = "sil_logs.log"
@@ -39,7 +39,7 @@ def FSW_simulate(runtime: float, outfile: str, trial_number: int, trial_date: st
                 ["./run.sh", "simulate", str(trial_number), trial_date, sim_set_name],
                 stdout=log_file,
                 stderr=log_file,
-                preexec_fn=os.setsid,
+                preexec_fn=lambda: (os.setsid(), signal.alarm(20)),
             )
             print(f"Running simulation for {runtime} seconds, output written to {outfile}")
             time.sleep(runtime)
@@ -62,17 +62,6 @@ def parse_FSW_logs(outfile):
 
     if errors_detected:
         raise Exception("FSW Simulation Failed")
-
-
-def plot_results(result_folder_path):
-    result_folder_path = "../../../" + result_folder_path
-    plot_script_abs = os.path.join(project_root, "simulation/argusim/visualization/plotter.py")
-    process = subprocess.Popen(["python3", plot_script_abs, result_folder_path], cwd=os.path.dirname(plot_script_abs))
-    while process.poll() is None:  # wait while the plotting is finished
-        time.sleep(0.1)
-    return_code = process.returncode
-    if return_code != 0:
-        raise AssertionError(f"Plotting failed with code {return_code}")
 
 
 def update(d, u, i):

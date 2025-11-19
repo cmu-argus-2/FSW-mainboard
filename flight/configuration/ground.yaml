@@ -22,3 +22,9 @@ time_processor:
 main:
   LOG_LEVEL:
     value: "INFO"
+
+# HAL Monitor Task
+hal_monitor:
+  REGULAR_REBOOT:
+    value: 3600 # seconds, i.e., 1 hour
+    _const: true
