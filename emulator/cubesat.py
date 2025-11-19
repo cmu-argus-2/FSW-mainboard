@@ -403,7 +403,7 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'YM')
         :return: bool - True if the sensor exists and is not None, False otherwise.
         """
-        return self.key_in_device_list("DEPLOYMENT_" + dir) and self._device_list["DEPLOYMENT_" + dir].device is not None
+        return self.key_in_device_list("DEPLOYMENT_" + dir) and self.__device_list["DEPLOYMENT_" + dir].device is not None
 
     def DEPLOYMENT_SENSOR_DISTANCE(self, dir: str) -> float:
         """Returns the distance reading for the specific deployment sensor if available and returns -1 otherwise
@@ -412,7 +412,7 @@ class CubeSat:
         :return: float - distance value in cm if the sensor is available else -1
         """
         if self.DEPLOYMENT_SENSOR_AVAILABLE(dir):
-            return self._device_list["DEPLOYMENT_" + dir].device.distance()
+            return self.__device_list["DEPLOYMENT_" + dir].device.distance()
         return -1
 
     @property
