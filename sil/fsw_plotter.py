@@ -1,11 +1,22 @@
 import os
 import re
 import shutil
+import subprocess
+import sys
+import time
 from datetime import datetime
 
 import matplotlib.pyplot as plt
 import numpy as np
+import yaml
 
+# flake8: noqa: E402
+project_root = os.path.abspath(os.path.dirname(__file__))
+project_root = os.path.abspath(os.path.join(project_root, ".."))
+
+# Add the project root to PYTHONPATH if it isn't already
+if project_root not in sys.path:
+    sys.path.append(project_root)
 
 # Convert timestamp strings to seconds from the start
 def timestamps_to_seconds(timestamps):
@@ -308,3 +319,59 @@ def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False, erase_sil
         shutil.copy(outfile, result_folder_path)
     if erase_sil_logs:
         os.remove(outfile)
+
+
+def plot_results(result_folder_path):
+    result_folder_path = "../../../" + result_folder_path
+    plot_script_abs = os.path.join(project_root, "simulation/argusim/visualization/plotter.py")
+    process = subprocess.Popen(["python3", plot_script_abs, result_folder_path], cwd=os.path.dirname(plot_script_abs))
+    while process.poll() is None:  # wait while the plotting is finished
+        time.sleep(0.1)
+    return_code = process.returncode
+    if return_code != 0:
+        raise AssertionError(f"Plotting failed with code {return_code}")
+
+
+if __name__ == "__main__":
+    current_file_path = os.path.abspath(os.path.dirname(__file__))
+    results_path = os.path.join(current_file_path, "results")
+    # Ensure results folder exists and get list of folders inside it
+    campaign_dirs = os.listdir(results_path)
+    campaign_dirs = [d for d in os.listdir(results_path) if os.path.isdir(os.path.join(results_path, d))]
+    if not campaign_dirs:
+        print(f"No results to plot found at {results_path}")
+        sys.exit(0)
+
+    results_folders = [os.path.join(results_path, d) for d in campaign_dirs if os.path.isdir(os.path.join(results_path, d))]
+    print("Found sil campaigns:")
+    print("Trial ID: Campaign Folder/Date")
+    for i, campaign in enumerate(campaign_dirs):
+        print(f"{i:>{len('Trial ID')}}: {campaign:>{len('Campaign Folder/Date')}}")
+
+    trial_id = input("Enter the ID of the trial to re-plot: ")
+    try:
+        trial_id = int(trial_id)
+        assert 0 <= trial_id < len(campaign_dirs)
+    except (ValueError, AssertionError):
+        print("Invalid trial ID. Exiting.")
+        sys.exit(1)
+
+    run_date = datetime.strptime(campaign_dirs[trial_id], "%Y-%m-%d_%H-%M-%S")
+    trial_date = run_date.strftime("%Y-%m-%d_%H-%M-%S")
+
+    campaign_folder = os.path.join(current_file_path, "results", trial_date)
+    campaign_config_file_path = os.path.join(campaign_folder, "sil_campaign_params.yaml")
+
+    # Read sil campaign config to determine number of sim sets
+    with open(campaign_config_file_path, "r") as file:
+        sil_campaign_params = yaml.safe_load(file)
+
+    sim_sets = sil_campaign_params["sil_campaign"]
+    n_sim_sets = len(sim_sets.keys())
+
+    # Run campaign script
+    # Copy the campaign config file to the campaign folder
+    for sim_set in sim_sets.keys():
+        sim_set_folder_path = os.path.join("sil/results", trial_date, sim_set)
+        plot_results(sim_set_folder_path)
+        plot_FSW(sim_set_folder_path)

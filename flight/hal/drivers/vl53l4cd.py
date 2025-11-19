@@ -445,5 +445,12 @@ class VL53L4CD:
         self._write_register(_VL53L4CD_I2C_SLAVE_DEVICE_ADDRESS, struct.pack(">B", new_address))
         self.i2c_device = i2c_device.I2CDevice(self._i2c, new_address)
 
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        results = []
+        return results
+
     def deinit(self):
         return

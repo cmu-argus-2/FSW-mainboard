@@ -15,3 +15,7 @@ class time_processor_config:
 
 class main_config:
     LOG_LEVEL = "INFO"
+
+
+class hal_monitor_config:
+    REGULAR_REBOOT = const(3600)
