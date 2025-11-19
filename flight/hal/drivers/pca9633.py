@@ -7,38 +7,43 @@ _DISABLE = const(0b00000000)
 
 
 class PCA9633:
-    """Driver for the PCA9633 I2C LED driver."""
+    # MODE1 bits
+    _mode1 = RWBits(1, 0x00, 0)  # MODE1 register
+    _sleep = RWBits(1, 0x00, 4)  # SLEEP bit in MODE1 (0 = on, 1 = sleep)
+    # MODE2 bits
+    _outdrv = RWBits(1, 0x01, 2)  # OUTDRV bit in MODE2 (0 = open-drain, 1 = totem-pole)
 
-    # Register definitions
-    _totem_pole_mode = RWBits(8, 0x01, 0)  # Totem Pole Mode (bit 0 of register 0x01)
-    _channel_enable = RWBits(8, 0x08, 0)  # Channel enable/mode (register 0x08)
-    _pwm_channel_0 = RWBits(8, 0x02, 0)  # PWM value for channel 0 (register 0x02)
-    _pwm_channel_1 = RWBits(8, 0x03, 0)  # PWM value for channel 1 (register 0x03)
-    _pwm_channel_2 = RWBits(8, 0x04, 0)  # PWM value for channel 2 (register 0x04)
-    _pwm_channel_3 = RWBits(8, 0x05, 0)  # PWM value for channel 3 (register 0x05)
-    _driver_enable = RWBits(8, 0x00, 0)  # Driver enable (bit 0 of register 0x00)
+    # LEDOUT and PWM
+    _channel_enable = RWBits(8, 0x08, 0)  # LEDOUT
+    _pwm_channel_0 = RWBits(8, 0x02, 0)
+    _pwm_channel_1 = RWBits(8, 0x03, 0)
+    _pwm_channel_2 = RWBits(8, 0x04, 0)
+    _pwm_channel_3 = RWBits(8, 0x05, 0)
 
-    _MODE_SELECTION = 0b01101010
+    _MODE_SELECTION = 0b10101010  # LED3 on, 0-2 PWM
 
     def __init__(self, i2c, address=0x60):
-        """
-        Initialize the PCA9633 driver.
-
-        :param i2c: The I2C bus object.
-        :param address: The I2C address of the PCA9633 (default: 0x60).
-        """
         self.i2c_device = I2CDevice(i2c, address)
         self.i2c = i2c
-        self._totem_pole_mode = _ENABLE
+
+        # Wake up oscillator
+        self._sleep = 0
+
+        self._mode1 = 1
+
+        # Ensure totem-pole outputs if that’s what your hardware wants
+        self._outdrv = 1
+
+        # Configure channel modes (LED3 on, 0-2 off)
+        # 10: ON
+        # 01: possibly pwm
+        self.set_pwm(3, 255)  # 0
+        self.set_pwm(0, 255)  # 0
+        self.set_pwm(1, 255)  # 0
+        self.set_pwm(2, 255)
         self._channel_enable = self._MODE_SELECTION
 
     def set_pwm(self, channel, value):
-        """
-        Set the PWM drive strength for a specific channel.
-
-        :param channel: The channel number (0-3).
-        :param value: The PWM value (0-255).
-        """
         if channel == 0:
             self._pwm_channel_0 = value
         elif channel == 1:
@@ -51,14 +56,20 @@ class PCA9633:
             raise ValueError("Channel must be between 0 and 3.")
 
     def enable_driver(self):
-        """Enable the PCA9633 driver."""
-        self._driver_enable = _ENABLE
+        # Wake and restore LEDOUT config
+        self.set_pwm(3, 0)
+        self._sleep = 0
+        # self._channel_enable = self._MODE_SELECTION
 
     def disable_driver(self):
-        """Disable the PCA9633 driver."""
-        self._driver_enable = _DISABLE
-        self._channel_enable = _DISABLE
+        # Optional: real low-power disable
+        # self._channel_enable = 0b  # all LEDs off
+        self.set_pwm(3, 255)  # 0
+        self.set_pwm(0, 255)  # 0
+        self.set_pwm(1, 255)  # 0
+        self.set_pwm(2, 255)
+        self._sleep = 1
 
     def deinit(self):
-        """Deinitialize the PCA9633 driver."""
-        return
+        # You might want to call disable_driver() here
+        self.disable_driver()

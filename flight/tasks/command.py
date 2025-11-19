@@ -20,7 +20,8 @@ from micropython import const
 
 _TPM_INIT_TIMEOUT = const(10)  # seconds
 _EXIT_STARTUP_TIMEOUT = CONFIG.EXIT_STARTUP_TIMEOUT  # Already a const in satellite_config
-_BURN_WIRE_STRENGTH = const(7)  # 0-255
+_BURN_WIRE_STRENGTH = const(128)  # 0-255
+_BURN_WIRE_OFF = const(255)
 _DEPLOYMENT_INTERVAL = const(5)  # seconds
 _PWM_MIN = const(0)  # Minimum PWM value for deployment
 _BURN_WIRE_TIMEOUT = CONFIG.BURN_WIRE_TIMEOUT  # number of tries
@@ -68,7 +69,7 @@ class Task(TemplateTask):
             burn_wires.set_pwm(self.deploymentPWM, _BURN_WIRE_STRENGTH)
         elif self.deploymentPWM >= _PWM_MIN:
             # Disable previous PWM and enable current one
-            burn_wires.set_pwm(self.deploymentPWM + 1, 0)
+            burn_wires.set_pwm(self.deploymentPWM + 1, _BURN_WIRE_OFF)
             burn_wires.set_pwm(self.deploymentPWM, _BURN_WIRE_STRENGTH)
         burn_wires.enable_driver()
         self.deploymentPWM -= 1  # Increment PWM for next deployment
@@ -158,16 +159,17 @@ class Task(TemplateTask):
                 # TODO: add deployment flag
                 if SATELLITE.BURN_WIRES_AVAILABLE:
                     # Deployment finished when the deployment PWM reaches 0
-                    if self.deploymentPWM == _PWM_MIN and deployment_time_check:
+                    if self.deploymentPWM < _PWM_MIN and deployment_time_check:
                         self.deploymentTries += 1
                         if self.check_deployment_status() or self.deploymentTries >= _BURN_WIRE_TIMEOUT:
                             self.log_info("Deployment complete")
                             self.deployment_done = True
+                            SATELLITE.BURN_WIRES.set_pwm(0, _BURN_WIRE_OFF)
                             SATELLITE.BURN_WIRES.disable_driver()
                         else:
                             self.log_warning("Deployment not successful, retrying deployment sequence...")
                             self.deploymentPWM = 2  # Reset PWM to retry deployment
-                    elif self.deploymentPWM > _PWM_MIN and deployment_time_check:
+                    elif self.deploymentPWM >= _PWM_MIN and deployment_time_check:
                         self.log_info(f"Deployment sequence: {self.deploymentPWM}")
                         self.last_deployment_time = TPM.monotonic()
                         self.deployment_sequence()
