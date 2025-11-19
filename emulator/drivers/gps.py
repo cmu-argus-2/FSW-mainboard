@@ -56,3 +56,12 @@ class GPS:
 
     def disable(self):
         self.__enable = False
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return []
+
+    def deinit(self):
+        return
