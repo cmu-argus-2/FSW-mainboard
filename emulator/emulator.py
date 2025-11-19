@@ -62,7 +62,6 @@ class EmulatedSatellite(CubeSat):
         self.append_device("GPS", None, GPS(simulator=self.__simulated_spacecraft))
         # self._charger = None
 
-        self._light_sensors = LightSensorArray(simulator=self.__simulated_spacecraft)
         self.append_device("LIGHT_XP", None, LightSensor("XP", simulator=self.__simulated_spacecraft), ASIL=2)
         self.append_device("LIGHT_XM", None, LightSensor("XM", simulator=self.__simulated_spacecraft), ASIL=2)
         self.append_device("LIGHT_YP", None, LightSensor("YP", simulator=self.__simulated_spacecraft), ASIL=2)
@@ -84,25 +83,22 @@ class EmulatedSatellite(CubeSat):
         self._imu = self.init_device(IMU(simulator=self.__simulated_spacecraft))
         self._imu.enable()
         self.append_device("IMU", None, self._imu, ASIL=3)
+        # Board Power monitor
+        self.append_device("BOARD_PWR", None, PowerMonitor(device_name="BOARD", voltage=7.6, current=0.1), ASIL=1)
 
-        self._board_power_monitor = self.init_device(PowerMonitor(7.6, 0.1))
-        # self._power_monitors["BOARD"] = self._board_power_monitor
-        # self._power_monitors["JETSON"] = self._jetson_power_monitor
-        self.append_device("BOARD_PWR", None, self._board_power_monitor, ASIL=1)
-        
         # Solar Power monitors
-        self.append_device("XP_PWR", None, PowerMonitor("XP", simulator=self.__simulated_spacecraft), ASIL=1)
-        self.append_device("XM_PWR", None, PowerMonitor("XM", simulator=self.__simulated_spacecraft), ASIL=1)
-        self.append_device("YP_PWR", None, PowerMonitor("YP", simulator=self.__simulated_spacecraft), ASIL=1)
-        self.append_device("YM_PWR", None, PowerMonitor("YM", simulator=self.__simulated_spacecraft), ASIL=1)
-        self.append_device("ZP_PWR", None, PowerMonitor("ZP", simulator=self.__simulated_spacecraft), ASIL=1)
+        self.append_device("XP_PWR", None, PowerMonitor(device_name="XP", simulator=self.__simulated_spacecraft), ASIL=1)
+        self.append_device("XM_PWR", None, PowerMonitor(device_name="XM", simulator=self.__simulated_spacecraft), ASIL=1)
+        self.append_device("YP_PWR", None, PowerMonitor(device_name="YP", simulator=self.__simulated_spacecraft), ASIL=1)
+        self.append_device("YM_PWR", None, PowerMonitor(device_name="YM", simulator=self.__simulated_spacecraft), ASIL=1)
+        self.append_device("ZP_PWR", None, PowerMonitor(device_name="ZP", simulator=self.__simulated_spacecraft), ASIL=1)
 
         # Jetson Power Monitor
         self.append_device("JETSON_PWR", None, PowerMonitor("JETSON", simulator=self.__simulated_spacecraft), ASIL=1)
 
         # Fuel Gauge
         self.append_device("FUEL_GAUGE", None, FuelGauge(simulator=self.__simulated_spacecraft), ASIL=2)
-        
+
         # RTC
         self.append_device("RTC", None, RTC(time.gmtime(), simulator=self.__simulated_spacecraft), ASIL=2)
 
@@ -126,7 +122,7 @@ class EmulatedSatellite(CubeSat):
                 print(f"[WARNING] [6][ADCS] Trying to set a NaN input to {dir} coil")
                 return
             self.DEVICE_LIST["TORQUE_" + dir].device.set_throttle(dir, ctrl)
-    
+
     def set_fsw_state(self, state):
         self.__simulated_spacecraft.set_fsw_state(state)
 

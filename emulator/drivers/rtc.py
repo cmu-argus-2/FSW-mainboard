@@ -1,4 +1,4 @@
-from time import gmtime, monotonic, localtime, struct_time
+from time import gmtime, localtime, monotonic, struct_time
 
 from hal.drivers.errors import Errors
 from hal.drivers.failure_prob import rtc_prob
