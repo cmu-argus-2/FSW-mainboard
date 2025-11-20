@@ -20,10 +20,11 @@ from micropython import const
 
 _TPM_INIT_TIMEOUT = const(10)  # seconds
 _EXIT_STARTUP_TIMEOUT = CONFIG.EXIT_STARTUP_TIMEOUT  # Already a const in satellite_config
-_DEPLOYABLE_STRENGTH = const(128)  # 0-255
+_DEPLOYABLE_STRENGTH = const(7)  # 0-255
 _ANTENNA_STRENGTH = int(_DEPLOYABLE_STRENGTH / 2)
 _ANTENNA_PWM = const(2)
-_BURN_WIRE_OFF = const(0)
+_ANTENNA_DEPLOYMENT_TRIES = const(2)
+# _BURN_WIRE_OFF = const(0)
 _DEPLOYMENT_INTERVAL = const(5)  # seconds
 _PWM_MIN = const(0)  # Minimum PWM value for deployment
 _FIRST_PWM = const(2)  # First PWM to start deployment
@@ -59,6 +60,8 @@ class Task(TemplateTask):
         self.deploymentTries = 0
         self.last_deployment_time = None
 
+        self.antenna_tries = 0
+
     def get_memory_usage(self):
         return int(gc.mem_alloc() / self.total_memory * 100)
 
@@ -74,12 +77,18 @@ class Task(TemplateTask):
             )
         elif self.deploymentPWM >= _PWM_MIN:
             # Disable previous PWM and enable current one
-            burn_wires.set_pwm(self.deploymentPWM + 1, _BURN_WIRE_OFF)
+            burn_wires.turn_off_pwm(self.deploymentPWM + 1)
             burn_wires.set_pwm(
                 self.deploymentPWM, _DEPLOYABLE_STRENGTH if self.deploymentPWM != _ANTENNA_PWM else _ANTENNA_STRENGTH
             )
         burn_wires.enable_driver()
-        self.deploymentPWM -= 1  # Increment PWM for next deployment
+        if self.deploymentPWM == _ANTENNA_PWM:
+            # always try and redeploy antenna as there's no deployment sensor
+            self.antenna_tries += 1
+            if self.antenna_tries >= _ANTENNA_DEPLOYMENT_TRIES:
+                self.deploymentPWM -= 1  # Increment PWM for next deployment
+        else:
+            self.deploymentPWM -= 1  # Increment PWM for next deployment
 
     def check_one_deployment(self, dir: str) -> bool:
         # ------------------------------------------------------------------------------------------------------------------------------------
@@ -171,7 +180,7 @@ class Task(TemplateTask):
                         if self.check_deployment_status() or self.deploymentTries >= _BURN_WIRE_TIMEOUT:
                             self.log_info("Deployment complete")
                             self.deployment_done = True
-                            SATELLITE.BURN_WIRES.set_pwm(self.deploymentPWM + 1, _BURN_WIRE_OFF)
+                            SATELLITE.BURN_WIRES.turn_off_pwm(self.deploymentPWM + 1)
                             SATELLITE.BURN_WIRES.disable_driver()
                         else:
                             self.log_warning("Deployment not successful, retrying deployment sequence...")
