@@ -7,7 +7,7 @@ from flight.apps.command.constants import CMD_ID
 from flight.apps.command.preconditions import valid_state, valid_time_format
 from flight.apps.command.processor import process_command  # noqa F401
 from flight.apps.command.processor import CommandProcessingStatus, check_arguments_size, unpack_command_arguments
-from flight.apps.telemetry.helpers import pack_signed_long_int, pack_unsigned_long_int
+from flight.apps.telemetry.helpers import pack_unsigned_long_int
 from flight.core.state_machine import STATES
 
 
