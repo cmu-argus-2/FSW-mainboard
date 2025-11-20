@@ -15,7 +15,7 @@ from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register.i2c_bits import RWBits
 from micropython import const
 
-_CIRCUIT_NEGATED = False
+_CIRCUIT_NEGATED = True
 _PWM_MIN = const(0)
 _PWM_MAX = const(255)
 
@@ -46,7 +46,7 @@ class PCA9633:
         self.set_pwm(0, _PWM_MIN)
         self.set_pwm(1, _PWM_MIN)
         self.set_pwm(2, _PWM_MIN)
-        self.nnel_enable = self._MODE_SELECTION
+        self._channel_enable = self._MODE_SELECTION
 
     def set_pwm(self, channel, value):
         value = (_PWM_MAX - value) if _CIRCUIT_NEGATED else value
