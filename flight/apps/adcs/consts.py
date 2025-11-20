@@ -18,25 +18,11 @@ class StatusConst:
         Failure Status Constants
     """
 
-    # Algorithm Failures
-    MEKF_INIT_FAIL = 1
-    MEKF_INIT_FORCE = 2
-    OPROP_INIT_FAIL = 3
-    TRIAD_FAIL = 4
-    POS_UPDATE_FAIL = 5
-    SUN_UPDATE_FAIL = 6
-    MAG_UPDATE_FAIL = 7
-    EKF_UPDATE_FAIL = 8
-    TRUE_SUN_MAP_FAIL = 9
-    TRUE_MAG_MAP_FAIL = 10
-
     # Sensor based Failures
     # Gyro
     GYRO_FAIL = 21
     # Magnetometer
     MAG_FAIL = 31
-    # GPS
-    GPS_FAIL = 41
     # Light Sensor
     SUN_NO_READINGS = 51
     SUN_NOT_ENOUGH_READINGS = 52
@@ -50,19 +36,8 @@ class StatusConst:
 
     # Failure Messages
     _FAIL_MESSAGES = {
-        MEKF_INIT_FAIL: "MEKF init failure",
-        MEKF_INIT_FORCE: "Force initializing MEKF",
-        OPROP_INIT_FAIL: "Orbit Prop Init failure",
-        TRIAD_FAIL: "TRIAD failure",
-        POS_UPDATE_FAIL: "Position update failure",
-        SUN_UPDATE_FAIL: "Sun update failure",
-        MAG_UPDATE_FAIL: "Mag update failure",
-        EKF_UPDATE_FAIL: "Singular Matrix",
-        TRUE_SUN_MAP_FAIL: "Invalid true sunpos",
-        TRUE_MAG_MAP_FAIL: "Invalid true mag",
         GYRO_FAIL: "Gyro failure",
         MAG_FAIL: "Magnetometer failure",
-        GPS_FAIL: "GPS failure",
         SUN_NO_READINGS: "No readings",
         SUN_NOT_ENOUGH_READINGS: "Insufficient readings",
         SUN_ECLIPSE: "In eclipse",
