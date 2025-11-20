@@ -15,7 +15,7 @@ from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register.i2c_bits import RWBits
 from micropython import const
 
-_CIRCUIT_NEGATED = True
+_CIRCUIT_NEGATED = False
 _PWM_MIN = const(0)
 _PWM_MAX = const(255)
 
