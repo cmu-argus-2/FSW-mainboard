@@ -1,11 +1,8 @@
 try:
-    import time
     from typing import Optional
 
     from busio import UART
     from digitalio import DigitalInOut
-    from hal.drivers.errors import Errors
-    from micropython import const
 except ImportError:
     pass
 
@@ -633,32 +630,11 @@ class GPS:
         """Disable the GPS module through the enable pin"""
         self.__enable = False
 
-    """
-    ----------------------- HANDLER METHODS -----------------------
-    """
+    ######################## ERROR HANDLING ########################
 
-    def get_flags(self):
-        return {}
-
-    ######################### DIAGNOSTICS #########################
-
-    def __check_for_updates(self) -> int:
-        """_check_for_errors: Checks for an update on the GPS
-
-        :return: true if test passes, false if fails
-        """
-        num_tries = const(10)
-
-        for i in range(num_tries):
-            success = False
-
-            success = self.update()
-            if success:
-                return Errors.NO_ERROR
-
-            time.sleep(1)
-
-        return Errors.GPS_UPDATE_CHECK_FAILED
+    @property
+    def device_errors(self):
+        return []
 
     def deinit(self):
         if self._enable is not None:

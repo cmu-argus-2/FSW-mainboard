@@ -10,7 +10,7 @@ CircuitPython library to support DS3231 Real Time Clock (RTC).
 
 This library supports the use of the DS3231-based RTC in CircuitPython.
 
-Author(s): Philip R. Moyer and Radomir Dopieralski for Adafruit Industries.
+Author(s): Philip R. Moyer and Radomir Dopieralski for Adafruit Industries, Perrin Tong
 
 Implementation Notes
 --------------------
@@ -179,6 +179,12 @@ class DS3231:
     def calibration(self, value: int) -> None:
         self._calibration = value
         self.force_temperature_conversion()
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return []
 
     def deinit(self) -> None:
         return

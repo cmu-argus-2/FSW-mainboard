@@ -1,3 +1,16 @@
+"""
+`pca9633`
+====================================================
+
+CircuitPython driver for the pca9633
+
+* Author(s): Varun Rajesh, Perrin Tong
+
+Implementation Notes
+--------------------
+
+"""
+
 from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register.i2c_bits import RWBits
 from micropython import const
@@ -69,6 +82,12 @@ class PCA9633:
         self.set_pwm(1, 255)  # 0
         self.set_pwm(2, 255)
         self._sleep = 1
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return []
 
     def deinit(self):
         # You might want to call disable_driver() here
