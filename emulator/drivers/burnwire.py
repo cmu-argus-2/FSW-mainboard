@@ -8,6 +8,9 @@ class BurnWires:
     def set_pwm(self, x, y):
         return
 
+    def turn_off_pwm(self, channel):
+        return
+
     def enable_driver(self):
         return
 
