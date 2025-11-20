@@ -42,15 +42,10 @@ class PCA9633:
         self._sleep = 0
         self._outdrv = 1
 
-        # self.set_pwm(3, _PWM_MIN)
-        # self.set_pwm(0, _PWM_MIN)
-        # self.set_pwm(1, _PWM_MIN)
-        # self.set_pwm(2, _PWM_MIN)
         self.turn_off_pwm(3)
         self.turn_off_pwm(0)
         self.turn_off_pwm(1)
         self.turn_off_pwm(2)
-        # self._channel_enable = self._MODE_SELECTION
 
     def set_pwm(self, channel, value):
         value = (_PWM_MAX - value) if _NEGATED else value
