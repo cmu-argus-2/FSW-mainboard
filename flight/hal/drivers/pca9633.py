@@ -15,13 +15,13 @@ from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register.i2c_bits import RWBits
 from micropython import const
 
-_ENABLE = const(0b00000001)
-_DISABLE = const(0b00000000)
+_CIRCUIT_NEGATED = True
+_PWM_MIN = const(0)
+_PWM_MAX = const(255)
 
 
 class PCA9633:
     # MODE1 bits
-    _mode1 = RWBits(1, 0x00, 0)  # MODE1 register
     _sleep = RWBits(1, 0x00, 4)  # SLEEP bit in MODE1 (0 = on, 1 = sleep)
     # MODE2 bits
     _outdrv = RWBits(1, 0x01, 2)  # OUTDRV bit in MODE2 (0 = open-drain, 1 = totem-pole)
@@ -33,30 +33,23 @@ class PCA9633:
     _pwm_channel_2 = RWBits(8, 0x04, 0)
     _pwm_channel_3 = RWBits(8, 0x05, 0)
 
-    _MODE_SELECTION = 0b10101010  # LED3 on, 0-2 PWM
+    _MODE_SELECTION = 0b10101010
 
     def __init__(self, i2c, address=0x60):
         self.i2c_device = I2CDevice(i2c, address)
         self.i2c = i2c
 
-        # Wake up oscillator
         self._sleep = 0
-
-        self._mode1 = 1
-
-        # Ensure totem-pole outputs if that’s what your hardware wants
         self._outdrv = 1
 
-        # Configure channel modes (LED3 on, 0-2 off)
-        # 10: ON
-        # 01: possibly pwm
-        self.set_pwm(3, 255)  # 0
-        self.set_pwm(0, 255)  # 0
-        self.set_pwm(1, 255)  # 0
-        self.set_pwm(2, 255)
-        self._channel_enable = self._MODE_SELECTION
+        self.set_pwm(3, _PWM_MIN)
+        self.set_pwm(0, _PWM_MIN)
+        self.set_pwm(1, _PWM_MIN)
+        self.set_pwm(2, _PWM_MIN)
+        self.nnel_enable = self._MODE_SELECTION
 
     def set_pwm(self, channel, value):
+        value = (_PWM_MAX - value) if _CIRCUIT_NEGATED else value
         if channel == 0:
             self._pwm_channel_0 = value
         elif channel == 1:
@@ -69,18 +62,14 @@ class PCA9633:
             raise ValueError("Channel must be between 0 and 3.")
 
     def enable_driver(self):
-        # Wake and restore LEDOUT config
-        self.set_pwm(3, 0)
+        self.set_pwm(3, _PWM_MAX)
         self._sleep = 0
-        # self._channel_enable = self._MODE_SELECTION
 
     def disable_driver(self):
-        # Optional: real low-power disable
-        # self._channel_enable = 0b  # all LEDs off
-        self.set_pwm(3, 255)  # 0
-        self.set_pwm(0, 255)  # 0
-        self.set_pwm(1, 255)  # 0
-        self.set_pwm(2, 255)
+        self.set_pwm(3, _PWM_MIN)
+        self.set_pwm(0, _PWM_MIN)
+        self.set_pwm(1, _PWM_MIN)
+        self.set_pwm(2, _PWM_MIN)
         self._sleep = 1
 
     ######################## ERROR HANDLING ########################
@@ -90,5 +79,4 @@ class PCA9633:
         return []
 
     def deinit(self):
-        # You might want to call disable_driver() here
-        self.disable_driver()
+        return
