@@ -55,6 +55,7 @@ _CLOSED = const(20)
 _OPEN = const(21)
 _FILE_DATA_LIMIT = const(100000)
 _PACKET_HEADER_SIZE = const(2)  # 2 bytes for packet length header
+_FIXED_PACKET_SIZE = const(200)  # Fixed packet size in bytes (includes header + data + padding)
 
 
 _PROCESS_CONFIG_FILENAME = ".data_process_configuration.json"
@@ -569,13 +570,21 @@ class FileProcess(DataProcess):
     """
     Class for managing arbitrary file data (images, audio, binary blobs, etc.).
 
-    Files are stored as packet containers with the following format:
-    [packet_len (2 bytes)][packet_data (variable)][packet_len (2 bytes)][packet_data (variable)]...
+    Files are stored as fixed-length packet containers with the following format:
+    [packet_len (2 bytes)][packet_data (variable)][padding to _FIXED_PACKET_SIZE]...
 
     This allows:
-    - Multiple variable-length packets in a single binary file
+    - O(1) direct access to any packet by index (no scanning required)
+    - O(1) packet count calculation from file size
+    - Multiple packets in a single binary file
     - Easy extraction of individual packets for transmission
     - Reconstruction of original files on ground station
+    - Efficient storage with predictable file sizes
+
+    Each packet is exactly _FIXED_PACKET_SIZE bytes (default 200), where:
+    - First 2 bytes: actual data length (big-endian)
+    - Next N bytes: actual packet data
+    - Remaining bytes: zero padding
 
     Attributes:
         tag_name (str): The tag name for the file.
@@ -663,8 +672,11 @@ class FileProcess(DataProcess):
 
     def log(self, data: bytearray) -> None:
         """
-        Logs the given file data as a packet with a 2-byte length header.
-        Format: [packet_len (2 bytes, big-endian)][packet_data (variable)]
+        Logs the given file data as a fixed-length packet with a 2-byte length header.
+        Format: [packet_len (2 bytes, big-endian)][packet_data (variable)][padding to _FIXED_PACKET_SIZE]
+
+        The packet is padded to _FIXED_PACKET_SIZE bytes for constant-time access.
+        Actual data length is stored in the header for extraction without padding.
 
         Args:
             data (bytearray): The bytes of data to be logged as a packet.
@@ -672,14 +684,20 @@ class FileProcess(DataProcess):
         Returns:
             None
         """
-        # Prepend packet length header (2 bytes, big-endian)
+        # Calculate data length (excluding header)
         packet_len = len(data)
-        if packet_len > 65535:
-            logger.error(f"Packet too large: {packet_len} bytes (max 65535)")
+        max_data_size = _FIXED_PACKET_SIZE - _PACKET_HEADER_SIZE
+
+        if packet_len > max_data_size:
+            logger.error(f"Packet too large: {packet_len} bytes (max {max_data_size})")
             return
 
+        # Create fixed-size packet with header, data, and padding
         packet_header = packet_len.to_bytes(2, "big")
-        packet_data = packet_header + data
+        packet_data = bytearray(_FIXED_PACKET_SIZE)
+        packet_data[0:2] = packet_header
+        packet_data[2 : 2 + packet_len] = data
+        # Remaining bytes are already zero (padding)
 
         if not DataHandler.SD_ERROR_FLAG:
             # Add to file buffer and transmit only when buffer is full
@@ -758,7 +776,10 @@ class FileProcess(DataProcess):
 
     def get_packet_count(self, filepath: str = None) -> int:
         """
-        Get the number of packets in a file by reading packet headers.
+        Get the number of packets in a file using O(1) calculation.
+
+        Since all packets are fixed-size (_FIXED_PACKET_SIZE), we can calculate
+        the packet count directly from the file size.
 
         Args:
             filepath (str, optional): Path to the file. If None, uses current file.
@@ -774,21 +795,11 @@ class FileProcess(DataProcess):
             return 0
 
         try:
-            packet_count = 0
-            with open(filepath, "rb") as f:
-                while True:
-                    # Read packet length header
-                    header = f.read(_PACKET_HEADER_SIZE)
-                    if len(header) < _PACKET_HEADER_SIZE:
-                        break  # End of file
+            file_stats = os.stat(filepath)
+            filesize = file_stats[6]  # size of the file in bytes
 
-                    packet_len = int.from_bytes(header, "big")
-                    if packet_len == 0:
-                        break  # Invalid packet
-
-                    # Skip packet data
-                    f.seek(packet_len, 1)  # Seek forward from current position
-                    packet_count += 1
+            # Calculate packet count directly from file size
+            packet_count = filesize // _FIXED_PACKET_SIZE
 
             return packet_count
         except Exception as e:
@@ -797,47 +808,47 @@ class FileProcess(DataProcess):
 
     def get_packet(self, filepath: str, packet_index: int) -> Optional[bytearray]:
         """
-        Extract a specific packet from a file by index.
+        Extract a specific packet from a file by index using O(1) direct access.
+
+        Since all packets are fixed-size (_FIXED_PACKET_SIZE), we can seek directly
+        to the packet location without scanning through the file.
 
         Args:
             filepath (str): Path to the file.
             packet_index (int): Zero-based index of the packet to extract.
 
         Returns:
-            bytearray: The packet data (without length header), or None if not found.
+            bytearray: The packet data (without padding), or None if not found.
         """
         if not path_exist(filepath):
             logger.warning(f"File does not exist: {filepath}")
             return None
 
         try:
-            current_index = 0
+            # Calculate the byte offset for the packet
+            packet_offset = packet_index * _FIXED_PACKET_SIZE
+
             with open(filepath, "rb") as f:
-                while True:
-                    # Read packet length header
-                    header = f.read(_PACKET_HEADER_SIZE)
-                    if len(header) < _PACKET_HEADER_SIZE:
-                        break  # End of file
+                # Seek directly to the packet location (O(1) operation)
+                f.seek(packet_offset)
 
-                    packet_len = int.from_bytes(header, "big")
-                    if packet_len == 0:
-                        break  # Invalid packet
+                # Read the fixed-size packet
+                packet_data = f.read(_FIXED_PACKET_SIZE)
 
-                    if current_index == packet_index:
-                        # Found the target packet, read and return it
-                        packet_data = f.read(packet_len)
-                        if len(packet_data) == packet_len:
-                            return bytearray(packet_data)
-                        else:
-                            logger.error(f"Incomplete packet at index {packet_index}")
-                            return None
-                    else:
-                        # Skip this packet
-                        f.seek(packet_len, 1)
-                        current_index += 1
+                if len(packet_data) < _PACKET_HEADER_SIZE:
+                    logger.warning(f"Packet index {packet_index} not found in {filepath}")
+                    return None
 
-            logger.warning(f"Packet index {packet_index} not found in {filepath}")
-            return None
+                # Extract actual data length from header
+                packet_len = int.from_bytes(packet_data[0:2], "big")
+
+                if packet_len == 0 or packet_len > (_FIXED_PACKET_SIZE - _PACKET_HEADER_SIZE):
+                    logger.error(f"Invalid packet length {packet_len} at index {packet_index}")
+                    return None
+
+                # Return only the actual data (without header and padding)
+                return bytearray(packet_data[2 : 2 + packet_len])
+
         except Exception as e:
             logger.error(f"Error extracting packet from {filepath}: {e}")
             return None
