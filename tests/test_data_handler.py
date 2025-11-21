@@ -115,65 +115,149 @@ def sd_root(tmp_path):
     return sd_root
 
 
-def test_image_nominal_log(sd_root):
+def test_file_process_nominal_log(sd_root):
+    """Test nominal file process logging with fixed-size packets."""
     dh._HOME_PATH = str(sd_root)  # temporary SD card
-    DH.register_image_process()
-    assert dh._IMG_TAG_NAME in DH.data_process_registry  # ensure that image process was registered
+    file_tag = "test_file"
+    DH.register_file_process(tag_name=file_tag, buffer_size=512)
+    assert file_tag in DH.data_process_registry  # ensure that file process was registered
 
-    DH.log_image(bytearray(100))  # Adding 100 bytes
-    img_process = DH.data_process_registry[dh._IMG_TAG_NAME]
-    assert img_process.img_buf_index == 100
+    file_process = DH.data_process_registry[file_tag]
 
-    DH.log_image(bytearray(412))  # Adding remaining 412 bytes
-    assert os.stat(img_process.current_path).st_size == 512  # Ensure block of 512 was written to file
+    # Log a packet smaller than max size (200 - 2 = 198 bytes max)
+    data1 = bytearray(100)
+    DH.log_file(file_tag, data1)
 
-    DH.log_image(bytearray(700))  # Testing overflow
-    assert img_process.img_buf_index == 188
-    assert os.stat(img_process.current_path).st_size == 1024
+    # Each packet is fixed at 200 bytes (dh._FIXED_PACKET_SIZE)
+    # Buffer index should be at 200
+    assert file_process.file_buf_index == 200
+    assert file_process.packet_count == 1
 
-    DH.log_image(bytearray(200))  # Testing not writing if not 512 block
-    assert img_process.img_buf_index == 388
-    assert os.stat(img_process.current_path).st_size == 1024
+    # Log second packet (another 200 bytes fixed)
+    data2 = bytearray(150)
+    DH.log_file(file_tag, data2)
+    assert file_process.file_buf_index == 400
+    assert file_process.packet_count == 2
 
-    DH.log_image(bytearray(200))  # Testing a second 512 write
-    assert img_process.img_buf_index == 76
-    assert os.stat(img_process.current_path).st_size == 1536
+    # Log third packet (200 bytes), triggering write when buffer reaches 512
+    data3 = bytearray(120)
+    DH.log_file(file_tag, data3)
+    # After 3 packets (600 bytes), buffer should have written 512 bytes and kept 88
+    assert os.stat(file_process.current_path).st_size == 512  # One block written
+    assert file_process.file_buf_index == 88  # Remaining 88 bytes in buffer
+    assert file_process.packet_count == 3
 
 
-def test_image_edge_case_log(sd_root):
-    # Testing Edge cases with image buffer
+def test_file_process_packet_retrieval(sd_root):
+    """Test packet retrieval with fixed-size packets (O(1) access)."""
     dh._HOME_PATH = str(sd_root)  # temporary SD card
-    DH.register_image_process()
-    assert dh._IMG_TAG_NAME in DH.data_process_registry  # ensure that image process was registered
-    img_process = DH.data_process_registry[dh._IMG_TAG_NAME]
+    file_tag = "test_retrieval"
+    DH.register_file_process(tag_name=file_tag, buffer_size=512)
 
-    # Writing exactly 512 bytes at once
-    DH.log_image(bytearray(512))
-    assert os.stat(img_process.current_path).st_size == 512
-    assert img_process.img_buf_index == 0  # Buffer resets after write
+    file_process = DH.data_process_registry[file_tag]
 
-    # Writing nothing should not affect buffer
-    DH.log_image(bytearray(0))
-    assert img_process.img_buf_index == 0  # Should still be empty
-    assert os.stat(img_process.current_path).st_size == 512  # No additional writes
+    # Log multiple packets with different data
+    test_data = [
+        bytearray([1, 2, 3, 4, 5]),
+        bytearray([10, 20, 30, 40]),
+        bytearray([100, 200] * 50),  # 100 bytes
+    ]
 
-    # Overflow handling when adding 1024 bytes
-    DH.log_image(bytearray(1024))
-    assert os.stat(img_process.current_path).st_size == 1536  # Two full writes
-    assert img_process.img_buf_index == 0  # Buffer should be empty after exact writes
+    for data in test_data:
+        DH.log_file(file_tag, data)
 
-    # Writing in small increments without reaching 512
-    DH.log_image(bytearray(100))
-    assert img_process.img_buf_index == 100
-    assert os.stat(img_process.current_path).st_size == 1536  # No new writes
+    # Force flush buffer to disk
+    DH.file_completed(file_tag)
 
-    DH.log_image(bytearray(411))
-    assert img_process.img_buf_index == 511  # Still no write yet
-    assert os.stat(img_process.current_path).st_size == 1536
+    filepath = file_process.current_path
 
-    DH.log_image(bytearray(1))  # This should push buffer to 512, triggering a write
-    assert img_process.img_buf_index == 0  # Buffer resets
-    assert os.stat(img_process.current_path).st_size == 2048  # New block written
+    # Test O(1) packet count
+    packet_count = file_process.get_packet_count(filepath)
+    assert packet_count == 3, f"Expected 3 packets, got {packet_count}"
+
+    # Test O(1) direct packet access
+    packet0 = file_process.get_packet(filepath, 0)
+    assert packet0 == test_data[0], "Packet 0 data mismatch"
+
+    packet1 = file_process.get_packet(filepath, 1)
+    assert packet1 == test_data[1], "Packet 1 data mismatch"
+
+    packet2 = file_process.get_packet(filepath, 2)
+    assert packet2 == test_data[2], "Packet 2 data mismatch"
+
+    # Test out of bounds access
+    packet_none = file_process.get_packet(filepath, 10)
+    assert packet_none is None, "Should return None for out of bounds index"
+
+
+def test_file_process_fixed_packet_structure(sd_root):
+    """Test that packets are stored with fixed size and proper padding."""
+    dh._HOME_PATH = str(sd_root)  # temporary SD card
+    file_tag = "test_structure"
+    DH.register_file_process(tag_name=file_tag, buffer_size=512)
+
+    file_process = DH.data_process_registry[file_tag]
+
+    # Log a small packet
+    small_data = bytearray([1, 2, 3])
+    DH.log_file(file_tag, small_data)
+
+    # Force flush to disk
+    DH.file_completed(file_tag)
+
+    filepath = file_process.current_path
+
+    # Verify file size is exactly one fixed packet size (200 bytes)
+    file_size = os.stat(filepath).st_size
+    assert file_size == dh._FIXED_PACKET_SIZE, f"Expected {dh._FIXED_PACKET_SIZE} bytes, got {file_size}"
+
+    # Read raw bytes and verify structure
+    with open(filepath, "rb") as f:
+        raw_packet = f.read()
+
+    # First 2 bytes should be the length (3 in big-endian)
+    length = int.from_bytes(raw_packet[0:2], "big")
+    assert length == 3, f"Expected length 3, got {length}"
+
+    # Next 3 bytes should be the actual data
+    actual_data = raw_packet[2:5]
+    assert actual_data == bytes([1, 2, 3]), "Data mismatch"
+
+    # Remaining bytes should be padding (zeros)
+    padding = raw_packet[5:]
+    assert len(padding) == dh._FIXED_PACKET_SIZE - 5, "Padding length mismatch"
+    assert all(b == 0 for b in padding), "Padding should be all zeros"
+
+
+def test_file_process_max_data_size(sd_root):
+    """Test handling of maximum data size per packet."""
+    dh._HOME_PATH = str(sd_root)  # temporary SD card
+    file_tag = "test_max_size"
+    DH.register_file_process(tag_name=file_tag, buffer_size=512)
+
+    file_process = DH.data_process_registry[file_tag]
+
+    # Maximum data size is FIXED_PACKET_SIZE - HEADER_SIZE = 200 - 2 = 198 bytes
+    max_data_size = dh._FIXED_PACKET_SIZE - dh._PACKET_HEADER_SIZE
+
+    # Log packet at exactly max size
+    max_data = bytearray(range(max_data_size))
+    DH.log_file(file_tag, max_data)
+    assert file_process.packet_count == 1
+
+    # Log packet exceeding max size (should fail/log error)
+    oversized_data = bytearray(max_data_size + 1)
+    initial_count = file_process.packet_count
+    DH.log_file(file_tag, oversized_data)
+    # Packet count should not increase for oversized data
+    assert file_process.packet_count == initial_count, "Oversized packet should not be logged"
+
+    # Flush and verify retrieval
+    DH.file_completed(file_tag)
+    filepath = file_process.current_path
+
+    retrieved_data = file_process.get_packet(filepath, 0)
+    assert retrieved_data == max_data, "Max size packet retrieval failed"
 
 
 if __name__ == "__main__":
