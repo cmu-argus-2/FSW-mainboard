@@ -235,6 +235,20 @@ class Task(TemplateTask):
                 # Set the detumbling error flag in the NVM
                 self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1
 
+            # Detumbling impossible due to magnetorquer failure
+            working_coils = [
+                SATELLITE.TORQUE_DRIVERS_AVAILABLE("XP"),
+                SATELLITE.TORQUE_DRIVERS_AVAILABLE("XM"),
+                SATELLITE.TORQUE_DRIVERS_AVAILABLE("YP"),
+                SATELLITE.TORQUE_DRIVERS_AVAILABLE("YM"),
+                SATELLITE.TORQUE_DRIVERS_AVAILABLE("ZP"),
+                SATELLITE.TORQUE_DRIVERS_AVAILABLE("ZM"),
+            ]
+            if not any(working_coils):
+                self.log_info("DETUMBLING actuator failure - Setting Detumbling Error Flag.")
+                # Set the detumbling error flag in the NVM
+                self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1
+
             """Transitions out of DETUMBLING"""
             if self.ADCS_MODE != Modes.TUMBLING or self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] == 1:
                 # T1.1: Spin stabilized OR detumbling error flag is set, transition to NOMINAL
