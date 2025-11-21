@@ -69,7 +69,7 @@ class Task(TemplateTask):
         # DEPLOYMENT SEQUENCE
         # ------------------------------------------------------------------------------------------------------------------------------------
         burn_wires = SATELLITE.BURN_WIRES
-        if self.deploymentPWM == 2:
+        if self.deploymentPWM == _FIRST_PWM:
             # Enable the first PWM
             burn_wires.set_pwm(
                 self.deploymentPWM, _DEPLOYABLE_STRENGTH if self.deploymentPWM != _ANTENNA_PWM else _ANTENNA_STRENGTH
@@ -85,9 +85,9 @@ class Task(TemplateTask):
             # always try and redeploy antenna as there's no deployment sensor
             self.antenna_tries += 1
             if self.antenna_tries >= _ANTENNA_DEPLOYMENT_TRIES:
-                self.deploymentPWM -= 1  # Increment PWM for next deployment
+                self.deploymentPWM -= 1  # Decrement PWM for next deployment
         else:
-            self.deploymentPWM -= 1  # Increment PWM for next deployment
+            self.deploymentPWM -= 1  # Decrement PWM for next deployment
 
     def check_one_deployment(self, dir: str) -> bool:
         # ------------------------------------------------------------------------------------------------------------------------------------
@@ -184,6 +184,7 @@ class Task(TemplateTask):
                         else:
                             self.log_warning("Deployment not successful, retrying deployment sequence...")
                             self.deploymentPWM = _FIRST_PWM  # Reset PWM to retry deployment
+                            self.antenna_tries = 0
                     elif self.deploymentPWM >= _PWM_MIN and deployment_time_check:
                         self.log_info(f"Deployment sequence: {self.deploymentPWM}")
                         self.last_deployment_time = TPM.monotonic()
