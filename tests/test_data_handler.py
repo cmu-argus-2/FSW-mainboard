@@ -332,5 +332,146 @@ def test_file_process_image_reconstruction(sd_root, tmp_path):
     assert output_size == original_size, f"Output size mismatch: {output_size} vs {original_size}"
 
 
+def test_file_process_custom_packet_reconstruction(sd_root, tmp_path):
+    """Test reading a binary file with custom packet headers, storing, and reconstructing it."""
+    import struct
+    from dataclasses import dataclass
+
+    @dataclass
+    class PacketHeader:
+        payload_size_bytes: int  # u16: actual payload size in this fragment
+        page_id: int  # u16: image/page ID
+        tile_idx: int  # u16: tile index
+        frag_idx: int  # u8: fragment index within tile
+
+        def to_bytes(self) -> bytes:
+            # >HHHB = big-endian: u16, u16, u16, u8
+            return struct.pack(">HHHB", self.payload_size_bytes, self.page_id, self.tile_idx, self.frag_idx)
+
+        @staticmethod
+        def from_bytes(data: bytes) -> "PacketHeader":
+            payload_size, page_id, tile_idx, frag_idx = struct.unpack(">HHHB", data)
+            return PacketHeader(payload_size, page_id, tile_idx, frag_idx)
+
+        @staticmethod
+        def size_bytes() -> int:
+            return 7
+
+    dh._HOME_PATH = str(sd_root)  # temporary SD card
+    file_tag = "test_custom_binary"
+    DH.register_file_process(tag_name=file_tag, buffer_size=512)
+
+    file_process = DH.data_process_registry[file_tag]
+
+    # Read the test binary file with custom packet structure
+    test_bin_path = os.path.join(os.path.dirname(__file__), "test_image.bin")
+    with open(test_bin_path, "rb") as f:
+        original_bin_data = f.read()
+
+    original_size = len(original_bin_data)
+
+    # Calculate max data per packet for FileProcess
+    max_data_size = dh._FIXED_PACKET_SIZE - dh._PACKET_HEADER_SIZE  # 238 bytes with 240 byte packets
+
+    # Parse the original binary file to extract custom packets
+    original_packets = []
+    offset = 0
+    header_size = PacketHeader.size_bytes()
+
+    while offset < original_size:
+        if offset + header_size > original_size:
+            break  # Not enough data for a header
+
+        # Read custom packet header
+        header_bytes = original_bin_data[offset : offset + header_size]
+        header = PacketHeader.from_bytes(header_bytes)
+
+        # Read payload
+        payload_start = offset + header_size
+        payload_end = payload_start + header.payload_size_bytes
+
+        if payload_end > original_size:
+            break  # Not enough data for payload
+
+        payload = original_bin_data[payload_start:payload_end]
+
+        # Store the complete custom packet (header + payload) together
+        complete_packet = header_bytes + payload
+        original_packets.append(complete_packet)
+
+        offset = payload_end
+
+    # Store each custom packet (header + payload) as a single FileProcess packet
+    for i, packet_data in enumerate(original_packets):
+        # Check if this packet fits in one FileProcess packet
+        if len(packet_data) <= max_data_size:
+            # Fits in one packet - store as is
+            DH.log_file(file_tag, bytearray(packet_data))
+        else:
+            # Need to split across multiple FileProcess packets
+            pkt_offset = 0
+            while pkt_offset < len(packet_data):
+                chunk_size = min(max_data_size, len(packet_data) - pkt_offset)
+                chunk = bytearray(packet_data[pkt_offset : pkt_offset + chunk_size])
+                DH.log_file(file_tag, chunk)
+                pkt_offset += chunk_size
+
+    # Complete the file (flush buffer)
+    DH.file_completed(file_tag)
+
+    filepath = file_process.current_path
+    stored_packet_count = file_process.get_packet_count(filepath)
+
+    # Reconstruct the binary file by reading all FileProcess packets
+    reconstructed_data = bytearray()
+    for i in range(stored_packet_count):
+        result = file_process.get_packet(filepath, i)
+        assert result is not None, f"Packet {i} should exist"
+        length, data = result
+        reconstructed_data.extend(data)
+
+    # Verify reconstructed data matches original
+    assert len(reconstructed_data) == original_size, f"Size mismatch: {len(reconstructed_data)} vs {original_size}"
+    assert reconstructed_data == bytearray(original_bin_data), "Reconstructed data does not match original"
+
+    # Write reconstructed binary file
+    output_path = tmp_path / "reconstructed_image.bin"
+    with open(output_path, "wb") as f:
+        f.write(reconstructed_data)
+
+    # Verify the output file exists and has correct size
+    assert os.path.exists(output_path), "Reconstructed binary file was not created"
+    output_size = os.path.getsize(output_path)
+    assert output_size == original_size, f"Output size mismatch: {output_size} vs {original_size}"
+
+    # Verify we can parse the reconstructed file and get the same packets
+    reconstructed_packets = []
+    offset = 0
+    while offset < len(reconstructed_data):
+        if offset + header_size > len(reconstructed_data):
+            break
+
+        header_bytes = reconstructed_data[offset : offset + header_size]
+        header = PacketHeader.from_bytes(header_bytes)
+
+        payload_start = offset + header_size
+        payload_end = payload_start + header.payload_size_bytes
+
+        if payload_end > len(reconstructed_data):
+            break
+
+        payload = reconstructed_data[payload_start:payload_end]
+        complete_packet = header_bytes + payload
+        reconstructed_packets.append(complete_packet)
+
+        offset = payload_end
+
+    assert len(reconstructed_packets) == len(original_packets), "Packet count mismatch after reconstruction"
+
+    # Verify each packet matches
+    for i, (orig, recon) in enumerate(zip(original_packets, reconstructed_packets)):
+        assert orig == recon, f"Packet {i} mismatch"
+
+
 if __name__ == "__main__":
     pytest.main()

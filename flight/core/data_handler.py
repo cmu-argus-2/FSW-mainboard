@@ -55,7 +55,7 @@ _CLOSED = const(20)
 _OPEN = const(21)
 _FILE_DATA_LIMIT = const(100000)
 _PACKET_HEADER_SIZE = const(2)  # 2 bytes for packet length header
-_FIXED_PACKET_SIZE = const(200)  # Fixed packet size in bytes (includes header + data + padding)
+_FIXED_PACKET_SIZE = const(240)  # Fixed packet size in bytes (includes header + data + padding)
 
 
 _PROCESS_CONFIG_FILENAME = ".data_process_configuration.json"
