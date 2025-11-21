@@ -331,8 +331,6 @@ def test_file_process_image_reconstruction(sd_root, tmp_path):
     output_size = os.path.getsize(output_path)
     assert output_size == original_size, f"Output size mismatch: {output_size} vs {original_size}"
 
-    print(f"Successfully reconstructed image to: {output_path}")
-
 
 if __name__ == "__main__":
     pytest.main()
