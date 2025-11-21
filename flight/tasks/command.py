@@ -24,7 +24,6 @@ _DEPLOYABLE_STRENGTH = const(7)  # 0-255
 _ANTENNA_STRENGTH = int(_DEPLOYABLE_STRENGTH / 2)
 _ANTENNA_PWM = const(2)
 _ANTENNA_DEPLOYMENT_TRIES = const(2)
-# _BURN_WIRE_OFF = const(0)
 _DEPLOYMENT_INTERVAL = const(5)  # seconds
 _PWM_MIN = const(0)  # Minimum PWM value for deployment
 _FIRST_PWM = const(2)  # First PWM to start deployment
