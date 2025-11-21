@@ -237,6 +237,28 @@ class CubeSat:
         """
         return self.key_in_device_list("TORQUE_" + dir) and self.__device_list["TORQUE_" + dir].device is not None
 
+    def TORQUE_DRIVERS_CURRENT(self, dir: str) -> float:
+        """Returns the coil current for the specific magnetorquer if available and returns -1 otherwise
+
+        :param dir: The direction key (e.g., 'XP', 'XM', etc.)
+        :return: float - current value in amps if the coil is available else -1
+        """
+        if self.TORQUE_DRIVERS_AVAILABLE(dir):
+            self.__device_list["TORQUE_" + dir].device.read_current()
+        else:
+            return -1.0
+
+    def TORQUE_DRIVERS_VOLTAGE(self, dir: str) -> float:
+        """Returns the coil voltage for the specific magnetorquer if available and returns -1 otherwise
+
+        :param dir: The direction key (e.g., 'XP', 'XM', etc.)
+        :return: float - voltage value in volts if the coil is available else -1
+        """
+        if self.TORQUE_DRIVERS_AVAILABLE(dir):
+            self.__device_list["TORQUE_" + dir].device.read_voltage()
+        else:
+            return -1.0
+
     @property
     def FUEL_GAUGE(self):
         """FUEL_GAUGE: Returns the fuel gauge object
@@ -343,28 +365,55 @@ class CubeSat:
         """BATT_HEATERS: Returns the battery heaters object
         :return: object or None
         """
-        return self.__device_list["BATT_HEATERS"].device
+        return self._device_list["BATT_HEATERS"].device
 
     @property
     def BATTERY_HEATERS_AVAILABLE(self) -> bool:
         """BATT_HEATERS_AVAILABLE: Returns True if the battery heaters are available
         :return: bool
         """
-        return self.key_in_device_list("BATT_HEATERS") and self.__device_list["BATT_HEATERS"].device is not None
+        return self.key_in_device_list("BATT_HEATERS") and self._device_list["BATT_HEATERS"].device is not None
 
     @property
     def WATCHDOG(self):
         """WATCHDOG: Returns the watchdog object
         :return: object or None
         """
-        return self.__device_list["WATCHDOG"].device
+        return self._device_list["WATCHDOG"].device
 
     @property
     def WATCHDOG_AVAILABLE(self) -> bool:
         """WATCHDOG_AVAILABLE: Returns True if the watchdog is available
         :return: bool
         """
-        return self.key_in_device_list("WATCHDOG") and self.__device_list["WATCHDOG"].device is not None
+        return self.key_in_device_list("WATCHDOG") and self._device_list["WATCHDOG"].device is not None
+
+    @property
+    def DEPLOYMENT_SENSORS(self):
+        """Returns a dictionary of deployment sensors with the direction as the key (e.g. 'XP', 'YM')"""
+        deployment_sensors = {}
+        for name, device in self._device_list.items():
+            if "DEPLOYMENT_" in name:
+                deployment_sensors[name.replace("DEPLOYMENT_", "")] = device.device
+        return deployment_sensors
+
+    def DEPLOYMENT_SENSOR_AVAILABLE(self, dir: str) -> bool:
+        """Returns True if the specific deployment sensor for the given direction is available.
+
+        :param dir: The direction key (e.g., 'XP', 'YM')
+        :return: bool - True if the sensor exists and is not None, False otherwise.
+        """
+        return self.key_in_device_list("DEPLOYMENT_" + dir) and self.__device_list["DEPLOYMENT_" + dir].device is not None
+
+    def DEPLOYMENT_SENSOR_DISTANCE(self, dir: str) -> float:
+        """Returns the distance reading for the specific deployment sensor if available and returns -1 otherwise
+
+        :param dir: The direction key (e.g., 'XP', 'YM', etc.)
+        :return: float - distance value in cm if the sensor is available else -1
+        """
+        if self.DEPLOYMENT_SENSOR_AVAILABLE(dir):
+            return self.__device_list["DEPLOYMENT_" + dir].device.distance()
+        return -1
 
     @property
     def BOOTTIME(self):

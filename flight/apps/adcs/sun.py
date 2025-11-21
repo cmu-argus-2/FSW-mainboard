@@ -14,7 +14,7 @@ both for the mode transitions, sun pointing controller accuracy, and attitude de
 
 """
 
-from apps.adcs.consts import PhysicalConst, StatusConst
+from apps.adcs.consts import StatusConst, SunConst
 from core import logger
 from hal.configuration import SATELLITE
 from micropython import const
@@ -84,9 +84,9 @@ def compute_body_sun_vector_from_lux(I_vec):
         status = StatusConst.OK
 
     # Extract body vectors and lux readings where the sensor readings are valid
-    ACTIVE_LIGHT_READINGS = [I_vec[i] for i in range(_NUM_LIGHT_SENSORS) if I_vec[i] > _THRESHOLD_ILLUMINATION_LUX]
+    ACTIVE_LIGHT_READINGS = np.array([I_vec[i] for i in range(_NUM_LIGHT_SENSORS) if I_vec[i] > _THRESHOLD_ILLUMINATION_LUX])
     ACTIVE_LIGHT_NORMALS = np.array(
-        [PhysicalConst.LIGHT_SENSOR_NORMALS[i] for i in range(_NUM_LIGHT_SENSORS) if I_vec[i] > _THRESHOLD_ILLUMINATION_LUX]
+        [SunConst.LIGHT_SENSOR_NORMALS[i] for i in range(_NUM_LIGHT_SENSORS) if I_vec[i] > _THRESHOLD_ILLUMINATION_LUX]
     )
 
     # Try to perform an inverse. If the condition-number of under 1e-4, Cpy throws a ValueError for a singular matrix
@@ -139,43 +139,13 @@ def missing_axis_reading(I_vec):
     missing_y = True
     missing_z = True
     for (i, lux) in enumerate(I_vec):
-        if missing_x and lux != _ERROR_LUX and i in PhysicalConst.LIGHT_X_IDXS:
+        if missing_x and lux != _ERROR_LUX and i in SunConst.LIGHT_X_IDXS:
             missing_x = False
-        if missing_y and lux != _ERROR_LUX and i in PhysicalConst.LIGHT_Y_IDXS:
+        if missing_y and lux != _ERROR_LUX and i in SunConst.LIGHT_Y_IDXS:
             missing_y = False
-        if missing_z and lux != _ERROR_LUX and i in PhysicalConst.LIGHT_Z_IDXS:
+        if missing_z and lux != _ERROR_LUX and i in SunConst.LIGHT_Z_IDXS:
             missing_z = False
 
         if not (missing_x or missing_y or missing_z):
             return False
     return True
-
-
-def unix_time_to_julian_day(unix_time):
-    """Takes in a unix timestamp and returns the julian day"""
-    return unix_time / 86400 + 2440587.5
-
-
-def approx_sun_position_ECI(utime):
-    """
-    Formula taken from "Satellite Orbits: Models, Methods and Applications", Section 3.3.2, page 70, by Motenbruck and Gill
-
-    Args:
-        - utime: Unix timestamp
-
-    Returns:
-        - Sun pointing in Earth Centered Intertial (ECI) frame (km)
-    """
-    JD = unix_time_to_julian_day(utime)
-    OplusW = 282.94  # Ω + ω
-    T = (JD - 2451545.0) / 36525
-
-    M = np.radians(357.5256 + 35999.049 * T)
-
-    long = np.radians(OplusW + np.degrees(M) + (6892 / 3600) * np.sin(M) + (72 / 3600) * np.sin(2 * M))
-    r_mag = (149.619 - 2.499 * np.cos(M) - 0.021 * np.cos(2 * M)) * 10**6
-
-    epsilon = np.radians(23.43929111)
-    r_vec = np.array([r_mag * np.cos(long), r_mag * np.sin(long) * np.cos(epsilon), r_mag * np.sin(long) * np.sin(epsilon)])
-
-    return r_vec
