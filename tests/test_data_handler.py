@@ -176,14 +176,23 @@ def test_file_process_packet_retrieval(sd_root):
     assert packet_count == 3, f"Expected 3 packets, got {packet_count}"
 
     # Test O(1) direct packet access
-    packet0 = file_process.get_packet(filepath, 0)
-    assert packet0 == test_data[0], "Packet 0 data mismatch"
+    result0 = file_process.get_packet(filepath, 0)
+    assert result0 is not None, "Packet 0 should exist"
+    length0, data0 = result0
+    assert length0 == len(test_data[0]), "Packet 0 length mismatch"
+    assert data0 == test_data[0], "Packet 0 data mismatch"
 
-    packet1 = file_process.get_packet(filepath, 1)
-    assert packet1 == test_data[1], "Packet 1 data mismatch"
+    result1 = file_process.get_packet(filepath, 1)
+    assert result1 is not None, "Packet 1 should exist"
+    length1, data1 = result1
+    assert length1 == len(test_data[1]), "Packet 1 length mismatch"
+    assert data1 == test_data[1], "Packet 1 data mismatch"
 
-    packet2 = file_process.get_packet(filepath, 2)
-    assert packet2 == test_data[2], "Packet 2 data mismatch"
+    result2 = file_process.get_packet(filepath, 2)
+    assert result2 is not None, "Packet 2 should exist"
+    length2, data2 = result2
+    assert length2 == len(test_data[2]), "Packet 2 length mismatch"
+    assert data2 == test_data[2], "Packet 2 data mismatch"
 
     # Test out of bounds access
     packet_none = file_process.get_packet(filepath, 10)
@@ -256,7 +265,10 @@ def test_file_process_max_data_size(sd_root):
     DH.file_completed(file_tag)
     filepath = file_process.current_path
 
-    retrieved_data = file_process.get_packet(filepath, 0)
+    result = file_process.get_packet(filepath, 0)
+    assert result is not None, "Max size packet should exist"
+    retrieved_length, retrieved_data = result
+    assert retrieved_length == max_data_size, f"Expected length {max_data_size}, got {retrieved_length}"
     assert retrieved_data == max_data, "Max size packet retrieval failed"
 
 

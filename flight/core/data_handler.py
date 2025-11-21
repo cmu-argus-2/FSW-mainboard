@@ -700,6 +700,9 @@ class FileProcess(DataProcess):
         # Remaining bytes are already zero (padding)
 
         if not DataHandler.SD_ERROR_FLAG:
+            # Ensure file is open before writing
+            self.resolve_current_file()
+
             # Add to file buffer and transmit only when buffer is full
             data_len = len(packet_data)
             data_offset = 0  # Keeps track of processed data
@@ -717,7 +720,6 @@ class FileProcess(DataProcess):
 
                 if self.file_buf_index == self.buffer_size:
                     # Buffer is full, write to SD card
-                    self.resolve_current_file()
                     self.file.write(self.file_buf[: self.buffer_size])  # Write full buffer block
                     self.file.flush()
                     self.file_buf_index = 0  # Reset buffer index
@@ -846,7 +848,7 @@ class FileProcess(DataProcess):
                     logger.error(f"Invalid packet length {packet_len} at index {packet_index}")
                     return None
 
-                # Return only the actual data (without header and padding)
+                # Return the length and actual data (without header and padding)
                 return packet_len, bytearray(packet_data[2 : 2 + packet_len])
 
         except Exception as e:
@@ -1049,6 +1051,7 @@ class DataHandler:
         Parameters:
         - tag_name (str): The name of the file process.
         - file_extension (str, optional): File extension without dot (default is 'bin').
+                                         Note: Currently not used, all files use 'bin' extension.
         - data_limit (int, optional): Maximum file size in bytes (default is 100KB).
         - circular_buffer_size (int, optional): Number of files in circular buffer (default is 20).
         - buffer_size (int, optional): Write buffer size in bytes (default is 512).
@@ -1058,7 +1061,6 @@ class DataHandler:
         """
         cls.data_process_registry[tag_name] = FileProcess(
             tag_name=tag_name,
-            file_extension=file_extension,
             data_limit=data_limit,
             circular_buffer_size=circular_buffer_size,
             buffer_size=buffer_size,
