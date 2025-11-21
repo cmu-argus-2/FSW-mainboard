@@ -107,3 +107,12 @@ class Radio:
 
     def crc_error(self):
         return 0
+
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        return []
+
+    def deinit(self):
+        return

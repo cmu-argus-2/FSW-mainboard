@@ -10,6 +10,7 @@ import digitalio
 from busio import I2C, SPI, UART
 from hal.cubesat import ASIL0, ASIL1, ASIL2, ASIL3, ASIL4, CubeSat
 from hal.drivers.errors import Errors
+from hal.drivers.objectWrapper import objectWrapper
 from micropython import const
 from sdcardio import SDCard
 
@@ -310,6 +311,9 @@ class ArgusV3(CubeSat):
     def __boot_device(self, name: str, device: object):
         func = device.boot_fn
         device.device, device.error = func(name)
+        if device.error == Errors.NO_ERROR and device.device is not None:
+            print(f"{name} booted successfully")
+            device.device = objectWrapper(device.device)
 
     def boot_sequence(self):
         """boot_sequence: Boot sequence for the CubeSat."""
@@ -645,68 +649,139 @@ class ArgusV3(CubeSat):
 
     ######################## ERROR HANDLING ########################
 
-    def __restart_power_line(self, power_line):
+    def __turn_off_power_line(self, power_line):
         power_line.value = False
-        time.sleep(0.5)
-        power_line.value = True
-        time.sleep(0.5)
 
-    def __reboot_device(self, device_name: str):
+    def __turn_on_power_line(self, power_line):
+        power_line.value = True
+
+    def __turn_off_device(self, device_name: str):
         device_cls = self.__device_list[device_name]
 
         if device_name == "RADIO":
-            device_cls.device.deinit()
-            self.__restart_power_line(ArgusV3Power.RADIO_EN)
-            self.__boot_device(device_name, device_cls)
+            device_cls.temp_disabled = True
+            if device_cls.device is not None:
+                device_cls.device.deinit()
+            self.__turn_off_power_line(ArgusV3Power.RADIO_EN)
 
         elif device_name == "GPS":
-            device_cls.device.deinit()
-            self.__restart_power_line(ArgusV3Power.GPS_EN)
-            self.__boot_device(device_name, device_cls)
+            device_cls.temp_disabled = True
+            if device_cls.device is not None:
+                device_cls.device.deinit()
+            self.__turn_off_power_line(ArgusV3Power.GPS_EN)
 
         elif device_name.startswith("TORQUE"):
-            for location, device_cls in self.TORQUE_DRIVERS.items():
-                if self.TORQUE_DRIVERS_AVAILABLE(location):
-                    device_cls.device.deinit()
-
-            self.__restart_power_line(ArgusV3Power.COIL_EN)
-
             for location, device_cls in self.__device_list.items():
                 if location.startswith("TORQUE"):
-                    self.__boot_device(location, device_cls)
+                    device_cls.temp_disabled = True
+                    if device_cls.device is not None and not device_cls.dead:
+                        device_cls.device.deinit()
+            self.__turn_off_power_line(ArgusV3Power.COIL_EN)
 
         else:
             for location, device_cls in self.__device_list.items():
                 if device_cls.peripheral_line and device_cls.device is not None and not device_cls.dead:
+                    device_cls.temp_disabled = True
                     device_cls.device.deinit()
+            self.__turn_off_power_line(ArgusV3Power.PERIPH_PWR_EN)
 
-            self.__restart_power_line(ArgusV3Power.PERIPH_PWR_EN)
+    def __turn_on_device(self, device_name: str):
+        device_cls = self.__device_list[device_name]
+
+        if device_name == "RADIO":
+            self.__turn_on_power_line(ArgusV3Power.RADIO_EN)
+            self.__boot_device(device_name, device_cls)
+            device_cls.temp_disabled = False
+
+        elif device_name == "GPS":
+            self.__turn_on_power_line(ArgusV3Power.GPS_EN)
+            self.__boot_device(device_name, device_cls)
+            device_cls.temp_disabled = False
+
+        elif device_name.startswith("TORQUE"):
+            self.__turn_on_power_line(ArgusV3Power.COIL_EN)
+
+            for location, device_cls in self.__device_list.items():
+                if location.startswith("TORQUE"):
+                    device_cls.temp_disabled = False
+                    if not device_cls.dead:
+                        self.__boot_device(location, device_cls)
+
+        else:
+            self.__turn_on_power_line(ArgusV3Power.PERIPH_PWR_EN)
 
             for location, device_cls in self.__device_list.items():
                 if device_cls.peripheral_line and not device_cls.dead:
                     self.__boot_device(location, device_cls)
+                    device_cls.temp_disabled = False
+
+    def check_device_dead(self, error_count: int) -> bool:
+        return error_count > ArgusV3Error.MAX_DEVICE_ERROR
 
     def handle_error(self, device_name: str) -> int:
         if device_name not in self.__device_list:
             return Errors.INVALID_DEVICE_NAME
 
-        self.__device_list[device_name].error_count += 1
-        if self.__device_list[device_name].error_count > ArgusV3Error.MAX_DEVICE_ERROR:
-            self.__device_list[device_name].dead = True
-            self.__device_list[device_name].device = None
+        device_cls = self.__device_list[device_name]
+
+        device_cls.error_count += 1
+        if device_cls.error_count > ArgusV3Error.MAX_DEVICE_ERROR:
+            device_cls.dead = True
+            device_cls.device = None
             return Errors.DEVICE_DEAD
 
-        ASIL = self.__device_list[device_name].ASIL
+        ASIL = device_cls.ASIL
+        device_cls.temp_disabled = True
+
         if ASIL == ASIL4:
-            self.__reboot_device(device_name)
-            return Errors.REBOOT_DEVICE
-        elif ASIL != ASIL0:
-            ArgusV3Error.ASIL_ERRORS[ASIL] += 1
-            if ArgusV3Error.ASIL_ERRORS[ASIL] >= ArgusV3Error.ASIL_THRESHOLDS[ASIL]:
-                self.__reboot_device(device_name)
-                ArgusV3Error.ASIL_ERRORS[ASIL] = 0
+            if device_cls.peripheral_line:
+                return Errors.GRACEFUL_REBOOT
+            else:
+                self.__turn_off_device(device_name)
                 return Errors.REBOOT_DEVICE
+
+        elif ASIL != ASIL0:
+            if device_name.startswith("TORQUE"):
+                ArgusV3Error.TORQUE_ERRORS[device_name] += 1
+                if (
+                    (ArgusV3Error.TORQUE_ERRORS["TORQUE_XP"] != 0 and ArgusV3Error.TORQUE_ERRORS["TORQUE_XM"] != 0)
+                    or (ArgusV3Error.TORQUE_ERRORS["TORQUE_YP"] != 0 and ArgusV3Error.TORQUE_ERRORS["TORQUE_YM"] != 0)
+                    or (ArgusV3Error.TORQUE_ERRORS["TORQUE_ZP"] != 0 and ArgusV3Error.TORQUE_ERRORS["TORQUE_ZM"] != 0)
+                ):
+                    for key in ArgusV3Error.TORQUE_ERRORS:
+                        ArgusV3Error.TORQUE_ERRORS[key] = 0
+                    self.__turn_off_device(device_name)
+                    return Errors.REBOOT_DEVICE
+
+            elif device_name.startswith("GPS"):
+                ArgusV3Error.GPS_ERRORS += 1
+                if ArgusV3Error.GPS_ERRORS >= ArgusV3Error.ASIL_THRESHOLDS[ASIL]:
+                    ArgusV3Error.GPS_ERRORS = 0
+                    self.__turn_off_device(device_name)
+                    return Errors.REBOOT_DEVICE
+            else:
+                ArgusV3Error.ASIL_ERRORS[ASIL] += 1
+                if ArgusV3Error.ASIL_ERRORS[ASIL] >= ArgusV3Error.ASIL_THRESHOLDS[ASIL]:
+                    ArgusV3Error.ASIL_ERRORS[ASIL] = 0
+                    if device_cls.peripheral_line:
+                        return Errors.GRACEFUL_REBOOT
+                    else:
+                        self.__turn_off_device(device_name)
+                        return Errors.REBOOT_DEVICE
         return Errors.NO_REBOOT
+
+    def graceful_reboot(self):
+        """gracefully reboot: Gracefully reboot the device."""
+        self.__turn_off_device("IMU")  # can be any device on peripheral line
+        time.sleep(0.5)
+        self.__turn_on_device("IMU")  # can be any device on peripheral line
+        time.sleep(0.5)
+
+    def turn_on_device(self, device_name: str):
+        """turn_on_device: Turn on the device."""
+        if device_name not in self.__device_list:
+            return Errors.INVALID_DEVICE_NAME
+        self.__turn_on_device(device_name)
 
     def reboot(self):
         """Reboot the satellite by resetting the main power."""
@@ -725,5 +800,16 @@ class ArgusV3Error:
         ASIL2: const(3),  # ASIL 2: Reboot after 3 errors
         ASIL3: const(2),  # ASIL 3: Reboot after 2 errors
     }
+
+    TORQUE_ERRORS = {
+        "TORQUE_XP": 0,
+        "TORQUE_XM": 0,
+        "TORQUE_YP": 0,
+        "TORQUE_YM": 0,
+        "TORQUE_ZP": 0,
+        "TORQUE_ZM": 0,
+    }
+
+    GPS_ERRORS = 0
 
     MAX_DEVICE_ERROR = const(10)

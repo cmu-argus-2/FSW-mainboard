@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from hal.cubesat import CubeSat
 from hal.drivers.burnwire import BurnWires
+from hal.drivers.errors import Errors
 from hal.drivers.fuel_gauge import FuelGauge
 from hal.drivers.gps import GPS
 from hal.drivers.imu import IMU
@@ -49,50 +50,49 @@ class EmulatedSatellite(CubeSat):
         super().__init__()
 
         # self._radio = Radio(self.__use_socket)
-        self.append_device("RADIO", None, Radio(self.__use_socket))
+        self.append_device("RADIO", None, Radio(self.__use_socket), ASIL=4)
         # self._sd_card = SD()
-        self.append_device("SD", None, SD())
+        self.append_device("SDCARD", None, SD(), ASIL=1)
         # self._burnwires = self.init_device(BurnWires())
-        self.append_device("BURNWIRES", None, BurnWires())
+        self.append_device("BURN_WIRES", None, BurnWires(), ASIL=4)
         self._payload_uart = self.init_device(Payload())
         self.append_device("PAYLOAD_UART", None, self._payload_uart)
 
         # self._vfs = None
         self._gps = self.init_device(GPS(simulator=self.__simulated_spacecraft))
-        self.append_device("GPS", None, self._gps)
+        self.append_device("GPS", None, self._gps, ASIL=4)
         # self._charger = None
 
         self._light_sensors = LightSensorArray(simulator=self.__simulated_spacecraft)
-        self.append_device("LIGHT_XP", None, self._light_sensors["XP"])
-        self.append_device("LIGHT_XM", None, self._light_sensors["XM"])
-        self.append_device("LIGHT_YP", None, self._light_sensors["YP"])
-        self.append_device("LIGHT_YM", None, self._light_sensors["YM"])
-        self.append_device("LIGHT_ZM", None, self._light_sensors["ZM"])
+        self.append_device("LIGHT_XP", None, self._light_sensors["XP"], ASIL=2)
+        self.append_device("LIGHT_XM", None, self._light_sensors["XM"], ASIL=2)
+        self.append_device("LIGHT_YP", None, self._light_sensors["YP"], ASIL=2)
+        self.append_device("LIGHT_YM", None, self._light_sensors["YM"], ASIL=2)
+        self.append_device("LIGHT_ZM", None, self._light_sensors["ZM"], ASIL=2)
 
         self._torque_drivers = TorqueCoilArray(simulator=self.__simulated_spacecraft)
-        self.append_device("TORQUE_XP", None, self._torque_drivers["XP"])
-        self.append_device("TORQUE_XM", None, self._torque_drivers["XM"])
-        self.append_device("TORQUE_YP", None, self._torque_drivers["YP"])
-        self.append_device("TORQUE_YM", None, self._torque_drivers["YM"])
-        self.append_device("TORQUE_ZP", None, self._torque_drivers["ZP"])
-        self.append_device("TORQUE_ZM", None, self._torque_drivers["ZM"])
+        self.append_device("TORQUE_XP", None, self._torque_drivers["XP"], ASIL=3)
+        self.append_device("TORQUE_XM", None, self._torque_drivers["XM"], ASIL=3)
+        self.append_device("TORQUE_YP", None, self._torque_drivers["YP"], ASIL=3)
+        self.append_device("TORQUE_YM", None, self._torque_drivers["YM"], ASIL=3)
+        self.append_device("TORQUE_ZP", None, self._torque_drivers["ZP"], ASIL=3)
+        self.append_device("TORQUE_ZM", None, self._torque_drivers["ZM"], ASIL=3)
 
         self._imu = self.init_device(IMU(simulator=self.__simulated_spacecraft))
         self._imu.enable()
-        self.append_device("IMU", None, self._imu)
+        self.append_device("IMU", None, self._imu, ASIL=3)
 
         self._jetson_power_monitor = self.init_device(PowerMonitor(4, 0.05))
         self._board_power_monitor = self.init_device(PowerMonitor(7.6, 0.1))
         # self._power_monitors["BOARD"] = self._board_power_monitor
         # self._power_monitors["JETSON"] = self._jetson_power_monitor
-        self.append_device("BOARD_PWR", None, self._board_power_monitor)
-        self.append_device("JETSON_PWR", None, self._jetson_power_monitor)
+        self.append_device("BOARD_PWR", None, self._board_power_monitor, ASIL=1)
+        self.append_device("JETSON_PWR", None, self._jetson_power_monitor, ASIL=1)
 
         # self._fuel_gauge = self.init_device(FuelGauge())
-        self.append_device("FUEL_GAUGE", None, FuelGauge())
-
+        self.append_device("FUEL_GAUGE", None, FuelGauge(), ASIL=2)
         # self._rtc = self.init_device(RTC(time.gmtime()))
-        self.append_device("RTC", None, RTC(time.gmtime()))
+        self.append_device("RTC", None, RTC(time.gmtime()), ASIL=2)
 
         # self.ERRORS = []
 
@@ -110,4 +110,15 @@ class EmulatedSatellite(CubeSat):
         """CONTROL_COILS: Control the coils on the CubeSat, depending on the control mode (identical for all coils)."""
         # self._torque_drivers.apply_control(dir, ctrl)
         if self.TORQUE_DRIVERS_AVAILABLE(dir):
-            self._device_list["TORQUE_" + dir].device.set_throttle(dir, ctrl)
+            self.DEVICE_LIST["TORQUE_" + dir].device.set_throttle(dir, ctrl)
+
+    ######################## ERROR HANDLING ########################
+
+    def handle_error(self, _: str) -> int:
+        return Errors.NO_REBOOT
+
+    def graceful_reboot_devices(self, device_name):
+        pass
+
+    def reboot(self):
+        pass
