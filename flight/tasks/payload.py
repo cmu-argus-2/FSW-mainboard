@@ -147,30 +147,58 @@ class Task(TemplateTask):
 
 #     return result_bytes
 
+# def create_crc5_packet(data_bytes):
+#     """Calculate CRC5 for a full 64-bit (8-byte) block."""
+#     num_bytes = PACKET_SIZE
+#     num_bits = num_bytes * 8
+#     polynomial = 0x05  # CRC5 polynomial (x^5 + x^2 + 1)
+#     crc = 0x1F  # initial CRC value
+#     print("Data bytes for CRC computation: ", data_bytes)
+
+#     data_int = int.from_bytes(data_bytes, 'big')  # bytes to int to do ops
+#     print("Data int for CRC computation: ", data_int)
+#     for i in range(num_bits):
+#         if (crc & 0x10) ^ (data_int & (1 << (num_bits-1))):
+#             crc = ((crc << 1) ^ polynomial) & 0x1F
+#         else:
+#             crc = (crc << 1) & 0x1F
+#         data_int <<= 1
+#     print("Computed CRC5: ", crc)
+#     return (data_bytes ) + bytes([crc])  # Append 5-bit CRC to data
+
+
 def create_crc5_packet(data_bytes):
-    """Calculate CRC5 for a full 64-bit (8-byte) block."""
-    num_bytes = PACKET_SIZE
-    num_bits = num_bytes * 8
+    """Calculate CRC5 for a full block of data without converting to int."""
+    num_bytes = len(data_bytes)
+    num_bits = num_bytes * 8  # Total bits in the data
     polynomial = 0x05  # CRC5 polynomial (x^5 + x^2 + 1)
-    crc = 0x1F  # initial CRC value
+    crc = 0x1F  # Initial CRC value (0x1F)
 
-    data_int = int.from_bytes(data_bytes, 'big')  # bytes to int to do ops
-    for i in range(num_bits):
-        if (crc & 0x10) ^ (data_int & (1 << (num_bits-1))):
-            crc = ((crc << 1) ^ polynomial) & 0x1F
-        else:
-            crc = (crc << 1) & 0x1F
-        data_int <<= 1
+    print("Data bytes for CRC computation: ", data_bytes)
 
-    return (data_bytes ) + bytes([crc])  # Append 5-bit CRC to data
+    # Process each byte in the data
+    for byte in data_bytes:
+        # Process each bit of the byte (most significant bit first)
+        for bit in range(7, -1, -1):
+            # XOR the MSB of crc with the current bit of the byte
+            if (crc & 0x10) ^ ((byte >> bit) & 0x01):
+                crc = (crc << 1) ^ polynomial  # XOR with polynomial if the bits differ
+            else:
+                crc = (crc << 1)  # Just shift CRC if the bits are the same
+            crc &= 0x1F  # Ensure the CRC stays within 5 bits (CRC5)
+
+    print("Computed CRC5: ", crc)
+    return data_bytes + bytes([crc])  # Append the 5-bit CRC to the data
+
 
 def verify_crc5_packet(packet):
     """Verify CRC5 for an 8-byte (64-bit) block."""
     data_bytes = packet[:-1]  # data minus crc
     # received_crc = packet[-1] >> 3  # crc is the whole byte shifted by 3
     computed_packet = create_crc5_packet(data_bytes)
-    print("Computed packet: ", computed_packet)
-    print("Received packet: ", packet)
+    # print()
+    # print("Computed packet: ", computed_packet)
+    # print("Received packet: ", packet)
     # computed_crc = computed_packet[-1] >> 3  # get only crc
     return packet == computed_packet
 
@@ -220,7 +248,13 @@ class ImageTransferHandler():
         return None
 
     def image_array_append(self, data, chunk_id):
+        print("Appending chunk ID: ", chunk_id)
+        if not isinstance(data, (list, bytearray,bytes)):
+            raise ValueError(f"Expected 'data' to be a list or bytearray, but got {type(data)}")
+
+        # pass
         self.image_array[chunk_id] = data
+        print()
 
     def sort_image_array(self):
         sorted_image = bytearray()
@@ -305,10 +339,15 @@ def read_packet(received_bytes):
     elif packet_id == CMD_DATA_CHUNK:
         print("Reading data chunk packet: ", received_bytes)
         chunk_id = int.from_bytes(received_bytes[1:5], byteorder='big')
+        print("gonna access data length")
         data_length = int.from_bytes(received_bytes[5:9], byteorder='big')
+        print("Gonna access data now")
         data = received_bytes[9:9+data_length]
+        print("gonna access last packet")
         last_packet = received_bytes[9+data_length]
+        print("Gonna access crc")
         crc = received_bytes[9+data_length+1]
+        print("FONNA VERIFY CRC NOW")
         verify_crc = verify_crc5_packet(received_bytes[0:9+data_length+2])
         return {'packet_id': packet_id, 'chunk_id': chunk_id, 'data_length': data_length, 'data': data, 'last_packet': last_packet, 'crc': crc, 'crc_valid': verify_crc}
     
