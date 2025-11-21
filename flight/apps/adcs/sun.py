@@ -41,7 +41,7 @@ def read_light_sensors():
         lux_readings: list of lux readings on each face. A "ERROR_LUX" reading comes from a dysfunctional sensor.
     """
 
-    faces = ["XP", "XM", "YP", "YM", "ZP1", "ZP2", "ZP3", "ZP4", "ZM"]
+    faces = ["XP", "XM", "YP", "YM", "ZP_1", "ZP_2", "ZP_3", "ZP_4", "ZM"]
     lux_readings = []
 
     for face in faces:
@@ -149,33 +149,3 @@ def missing_axis_reading(I_vec):
         if not (missing_x or missing_y or missing_z):
             return False
     return True
-
-
-def unix_time_to_julian_day(unix_time):
-    """Takes in a unix timestamp and returns the julian day"""
-    return unix_time / 86400 + 2440587.5
-
-
-def approx_sun_position_ECI(utime):
-    """
-    Formula taken from "Satellite Orbits: Models, Methods and Applications", Section 3.3.2, page 70, by Motenbruck and Gill
-
-    Args:
-        - utime: Unix timestamp
-
-    Returns:
-        - Sun pointing in Earth Centered Intertial (ECI) frame (km)
-    """
-    JD = unix_time_to_julian_day(utime)
-    OplusW = 282.94  # Ω + ω
-    T = (JD - 2451545.0) / 36525
-
-    M = np.radians(357.5256 + 35999.049 * T)
-
-    long = np.radians(OplusW + np.degrees(M) + (6892 / 3600) * np.sin(M) + (72 / 3600) * np.sin(2 * M))
-    r_mag = (149.619 - 2.499 * np.cos(M) - 0.021 * np.cos(2 * M)) * 10**6
-
-    epsilon = np.radians(23.43929111)
-    r_vec = np.array([r_mag * np.cos(long), r_mag * np.sin(long) * np.cos(epsilon), r_mag * np.sin(long) * np.sin(epsilon)])
-
-    return r_vec

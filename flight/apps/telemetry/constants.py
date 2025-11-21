@@ -103,10 +103,10 @@ class ADCS_IDX:
     YM_COIL_STATUS = const(24)
     ZP_COIL_STATUS = const(25)
     ZM_COIL_STATUS = const(26)
-    ATTITUDE_QW = const(27)
-    ATTITUDE_QX = const(28)
-    ATTITUDE_QY = const(29)
-    ATTITUDE_QZ = const(30)
+    # ATTITUDE_QW = const(27)
+    # ATTITUDE_QX = const(28)
+    # ATTITUDE_QY = const(29)
+    # ATTITUDE_QZ = const(30)
 
 
 class GPS_IDX:

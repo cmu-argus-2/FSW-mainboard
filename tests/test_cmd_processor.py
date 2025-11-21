@@ -7,15 +7,13 @@ from flight.apps.command.constants import CMD_ID
 from flight.apps.command.preconditions import valid_state, valid_time_format
 from flight.apps.command.processor import process_command  # noqa F401
 from flight.apps.command.processor import CommandProcessingStatus, check_arguments_size, unpack_command_arguments
-from flight.apps.telemetry.helpers import pack_signed_long_int, pack_unsigned_long_int
+from flight.apps.telemetry.helpers import pack_unsigned_long_int
 from flight.core.state_machine import STATES
 
 
 class MOCK_ARGUMENTS:
     time_in_state = 20
     time_reference = int(time.time())
-    pos = 150
-    vel = 50
 
 
 def mock_command_success(*args):
@@ -31,15 +29,6 @@ def setup_commands(monkeypatch):
     """Fixture to set up the COMMANDS list with mock commands."""
     switch_to_state_args = (STATES.DETUMBLING).to_bytes(1, "big") + (MOCK_ARGUMENTS.time_in_state).to_bytes(4, "big")
     uplink_time_ref_args = (MOCK_ARGUMENTS.time_reference).to_bytes(4, "big")
-    uplink_orbit_ref_args = (
-        (MOCK_ARGUMENTS.time_reference).to_bytes(4, "big")
-        + (MOCK_ARGUMENTS.pos).to_bytes(4, "big")
-        + (MOCK_ARGUMENTS.pos * 2).to_bytes(4, "big")
-        + (MOCK_ARGUMENTS.pos * 3).to_bytes(4, "big")
-        + (MOCK_ARGUMENTS.vel).to_bytes(4, "big")
-        + (MOCK_ARGUMENTS.vel * 2).to_bytes(4, "big")
-        + (MOCK_ARGUMENTS.vel * 3).to_bytes(4, "big")
-    )
 
     mock_cmds = [
         (0x01, lambda: True, [], mock_command_success),  # Success command with no arguments
@@ -58,12 +47,6 @@ def setup_commands(monkeypatch):
             uplink_time_ref_args,
             mock_command_success,
         ),  # Mock UPLINK_TIME_REFERENCE Command with 1 arguments
-        (
-            CMD_ID.UPLINK_ORBIT_REFERENCE,
-            lambda: True,
-            uplink_orbit_ref_args,
-            mock_command_success,
-        ),  # Mock UPLINK_ORBIT_REFERENCE Command with 7 arguments, mixed data types
     ]
     monkeypatch.setattr("flight.apps.command.processor.COMMANDS", mock_cmds)
     return mock_cmds
@@ -114,21 +97,6 @@ def test_unpack_two_arguments(setup_commands):
     assert two_args == [STATES.DETUMBLING, MOCK_ARGUMENTS.time_in_state]
 
 
-def test_unpack_several_arguments(setup_commands):
-    several_args = unpack_command_arguments(setup_commands[6][0], setup_commands[6][2])
-    assert several_args == [
-        MOCK_ARGUMENTS.time_reference,
-        [
-            MOCK_ARGUMENTS.pos,
-            MOCK_ARGUMENTS.pos * 2,
-            MOCK_ARGUMENTS.pos * 3,
-            MOCK_ARGUMENTS.vel,
-            MOCK_ARGUMENTS.vel * 2,
-            MOCK_ARGUMENTS.vel * 3,
-        ],
-    ]
-
-
 @pytest.mark.parametrize(
     "command_id, arguments, expected_outputs",
     [
@@ -140,44 +108,6 @@ def test_unpack_several_arguments(setup_commands):
         (
             CMD_ID.UPLINK_TIME_REFERENCE,
             (pack_unsigned_long_int([1741539497], 0) + pack_unsigned_long_int([1741539497], 0)),
-            False,
-        ),
-        (
-            CMD_ID.UPLINK_ORBIT_REFERENCE,
-            (
-                pack_unsigned_long_int([1741539497], 0)
-                + pack_signed_long_int([0], 0)
-                + pack_signed_long_int([1], 0)
-                + pack_signed_long_int([2], 0)
-                + pack_signed_long_int([3], 0)
-                + pack_signed_long_int([4], 0)
-                + pack_signed_long_int([5], 0)
-            ),
-            True,
-        ),
-        (CMD_ID.UPLINK_ORBIT_REFERENCE, (), False),
-        (
-            CMD_ID.UPLINK_ORBIT_REFERENCE,
-            (
-                pack_unsigned_long_int([1741539497], 0)
-                + pack_signed_long_int([0], 0)
-                + pack_signed_long_int([1], 0)
-                + pack_signed_long_int([2], 0)
-                + pack_signed_long_int([3], 0)
-                + pack_signed_long_int([4], 0)
-                + pack_signed_long_int([5], 0)
-                + pack_signed_long_int([6], 0)
-            ),
-            False,
-        ),
-        (
-            CMD_ID.UPLINK_ORBIT_REFERENCE,
-            (
-                pack_unsigned_long_int([1741539497], 0)
-                + pack_signed_long_int([0], 0)
-                + pack_signed_long_int([1], 0)
-                + pack_signed_long_int([6], 0)
-            ),
             False,
         ),
         (CMD_ID.TURN_OFF_PAYLOAD, (), True),

@@ -237,6 +237,28 @@ class CubeSat:
         """
         return self.key_in_device_list("TORQUE_" + dir) and self.__device_list["TORQUE_" + dir].device is not None
 
+    def TORQUE_DRIVERS_CURRENT(self, dir: str) -> float:
+        """Returns the coil current for the specific magnetorquer if available and returns -1 otherwise
+
+        :param dir: The direction key (e.g., 'XP', 'XM', etc.)
+        :return: float - current value in amps if the coil is available else -1
+        """
+        if self.TORQUE_DRIVERS_AVAILABLE(dir):
+            self.__device_list["TORQUE_" + dir].device.read_current()
+        else:
+            return -1.0
+
+    def TORQUE_DRIVERS_VOLTAGE(self, dir: str) -> float:
+        """Returns the coil voltage for the specific magnetorquer if available and returns -1 otherwise
+
+        :param dir: The direction key (e.g., 'XP', 'XM', etc.)
+        :return: float - voltage value in volts if the coil is available else -1
+        """
+        if self.TORQUE_DRIVERS_AVAILABLE(dir):
+            self.__device_list["TORQUE_" + dir].device.read_voltage()
+        else:
+            return -1.0
+
     @property
     def FUEL_GAUGE(self):
         """FUEL_GAUGE: Returns the fuel gauge object

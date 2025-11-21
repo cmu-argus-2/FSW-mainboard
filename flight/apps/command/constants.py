@@ -6,7 +6,6 @@ class CMD_ID:
     FORCE_REBOOT = const(0x40)
     SWITCH_TO_STATE = const(0x41)
     UPLINK_TIME_REFERENCE = const(0x42)
-    UPLINK_ORBIT_REFERENCE = const(0x43)
     TURN_OFF_PAYLOAD = const(0x44)
     SCHEDULE_OD_EXPERIMENT = const(0x45)
 
@@ -25,7 +24,6 @@ class CMD_ID:
         FORCE_REBOOT: 0,
         SWITCH_TO_STATE: 5,
         UPLINK_TIME_REFERENCE: 4,
-        UPLINK_ORBIT_REFERENCE: 28,
         TURN_OFF_PAYLOAD: 0,
         SCHEDULE_OD_EXPERIMENT: 0,
         REQUEST_TM_NOMINAL: 0,
