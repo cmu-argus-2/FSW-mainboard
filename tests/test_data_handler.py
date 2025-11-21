@@ -272,5 +272,67 @@ def test_file_process_max_data_size(sd_root):
     assert retrieved_data == max_data, "Max size packet retrieval failed"
 
 
+def test_file_process_image_reconstruction(sd_root, tmp_path):
+    """Test reading a real image, storing as packets, and reconstructing it."""
+    dh._HOME_PATH = str(sd_root)  # temporary SD card
+    file_tag = "test_image"
+    DH.register_file_process(tag_name=file_tag, buffer_size=512)
+
+    file_process = DH.data_process_registry[file_tag]
+
+    # Read the test image
+    test_image_path = os.path.join(os.path.dirname(__file__), "test_image.jpg")
+    with open(test_image_path, "rb") as f:
+        original_image_data = f.read()
+
+    original_size = len(original_image_data)
+
+    # Calculate max data per packet
+    max_data_size = dh._FIXED_PACKET_SIZE - dh._PACKET_HEADER_SIZE  # 198 bytes
+
+    # Split image into packets and log them
+    offset = 0
+    packet_count = 0
+    while offset < original_size:
+        chunk_size = min(max_data_size, original_size - offset)
+        chunk = bytearray(original_image_data[offset : offset + chunk_size])
+        DH.log_file(file_tag, chunk)
+        offset += chunk_size
+        packet_count += 1
+
+    # Complete the file (flush buffer)
+    DH.file_completed(file_tag)
+
+    filepath = file_process.current_path
+
+    # Verify packet count
+    stored_packet_count = file_process.get_packet_count(filepath)
+    assert stored_packet_count == packet_count, f"Expected {packet_count} packets, got {stored_packet_count}"
+
+    # Reconstruct the image by reading all packets
+    reconstructed_data = bytearray()
+    for i in range(packet_count):
+        result = file_process.get_packet(filepath, i)
+        assert result is not None, f"Packet {i} should exist"
+        length, data = result
+        reconstructed_data.extend(data)
+
+    # Verify reconstructed data matches original
+    assert len(reconstructed_data) == original_size, f"Size mismatch: {len(reconstructed_data)} vs {original_size}"
+    assert reconstructed_data == bytearray(original_image_data), "Reconstructed data does not match original"
+
+    # Write reconstructed image to verify it's valid
+    output_path = tmp_path / "reconstructed_image.jpg"
+    with open(output_path, "wb") as f:
+        f.write(reconstructed_data)
+
+    # Verify the output file exists and has correct size
+    assert os.path.exists(output_path), "Reconstructed image file was not created"
+    output_size = os.path.getsize(output_path)
+    assert output_size == original_size, f"Output size mismatch: {output_size} vs {original_size}"
+
+    print(f"Successfully reconstructed image to: {output_path}")
+
+
 if __name__ == "__main__":
     pytest.main()
