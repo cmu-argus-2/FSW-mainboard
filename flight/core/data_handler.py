@@ -806,7 +806,7 @@ class FileProcess(DataProcess):
             logger.error(f"Error counting packets in {filepath}: {e}")
             return 0
 
-    def get_packet(self, filepath: str, packet_index: int) -> Optional[bytearray]:
+    def get_packet(self, filepath: str, packet_index: int) -> Optional[Tuple[int, bytearray]]:
         """
         Extract a specific packet from a file by index using O(1) direct access.
 
@@ -818,7 +818,7 @@ class FileProcess(DataProcess):
             packet_index (int): Zero-based index of the packet to extract.
 
         Returns:
-            bytearray: The packet data (without padding), or None if not found.
+            Optional[Tuple[int, bytearray]]: The packet length and data (without padding), or None if not found.
         """
         if not path_exist(filepath):
             logger.warning(f"File does not exist: {filepath}")
@@ -847,7 +847,7 @@ class FileProcess(DataProcess):
                     return None
 
                 # Return only the actual data (without header and padding)
-                return bytearray(packet_data[2 : 2 + packet_len])
+                return packet_len, bytearray(packet_data[2 : 2 + packet_len])
 
         except Exception as e:
             logger.error(f"Error extracting packet from {filepath}: {e}")
