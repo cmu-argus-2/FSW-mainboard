@@ -10,6 +10,7 @@ import os
 
 from apps.command.constants import file_ids_str
 from core import logger
+from core.data_handler import DataHandler as DH
 from core.data_handler import extract_time_from_filename
 from hal.configuration import SATELLITE
 from micropython import const
@@ -347,11 +348,22 @@ class SATELLITE_RADIO:
             cls.file_time = extract_time_from_filename(cls.filepath)
 
             cls.file_size = int(file_stat[6])
-            cls.file_message_count = int(cls.file_size / _FILE_PKTSIZE)
 
-            # Increment 1 to message count to account for division floor
-            if (cls.file_size % _FILE_PKTSIZE) > 0:
-                cls.file_message_count += 1
+            # Check if this is a FileProcess (packet-based file)
+            if DH.is_file_process(file_tag):
+                # For FileProcess, get actual packet count from file
+                file_process = DH.data_process_registry.get(file_tag)
+                if file_process:
+                    cls.file_message_count = file_process.get_packet_count(cls.filepath)
+                else:
+                    logger.warning(f"[COMMS ERROR] FileProcess {file_tag} not found")
+                    cls.file_message_count = 0
+            else:
+                # For regular DataProcess files, divide by packet size
+                cls.file_message_count = int(cls.file_size / _FILE_PKTSIZE)
+                # Increment 1 to message count to account for division floor
+                if (cls.file_size % _FILE_PKTSIZE) > 0:
+                    cls.file_message_count += 1
 
     """
         Name: file_get_packet
@@ -360,40 +372,58 @@ class SATELLITE_RADIO:
 
     @classmethod
     def file_get_packet(cls, sq_cnt):
-        if cls.filepath is not None:
-            cls.file_obj = open(cls.filepath, "rb")
-
-        else:
+        if cls.filepath is None:
             logger.warning("[COMMS ERROR] Undefined TX filepath")
             cls.file_array = bytes([0x00])
-
-            # Return file array size
             return 1
 
         # Check if the sequence count is valid
         if sq_cnt >= cls.file_message_count:
             logger.warning("[COMMS ERROR] Invalid sequence count")
             cls.file_array = bytes([0x00])
-
-            # Return file array size
             return 1
 
-        # Seek to the correct sq_cnt
-        if sq_cnt != cls.file_message_count - 1:
-            cls.file_obj.seek(sq_cnt * _FILE_PKTSIZE)
-            cls.file_array = cls.file_obj.read(_FILE_PKTSIZE)
-            cls.file_obj.close()
+        # Extract file_tag from filepath
+        file_tag = cls.filepath.split("/")[2]
 
-            return _FILE_PKTSIZE
-
+        # Check if this is a FileProcess (packet-based file)
+        if DH.is_file_process(file_tag):
+            # Use FileProcess packet extraction
+            file_process = DH.data_process_registry.get(file_tag)
+            if file_process:
+                packet_data = file_process.get_packet(cls.filepath, sq_cnt)
+                if packet_data is not None:
+                    cls.file_array = bytes(packet_data)
+                    return len(cls.file_array)
+                else:
+                    logger.warning(f"[COMMS ERROR] Failed to extract packet {sq_cnt}")
+                    cls.file_array = bytes([0x00])
+                    return 1
+            else:
+                logger.warning(f"[COMMS ERROR] FileProcess {file_tag} not found")
+                cls.file_array = bytes([0x00])
+                return 1
         else:
-            last_pkt_size = cls.file_size - (cls.file_message_count - 1) * _FILE_PKTSIZE
+            # For regular DataProcess files, use byte-offset method
+            try:
+                cls.file_obj = open(cls.filepath, "rb")
 
-            cls.file_obj.seek(sq_cnt * _FILE_PKTSIZE)
-            cls.file_array = cls.file_obj.read(last_pkt_size)
-            cls.file_obj.close()
-
-            return last_pkt_size
+                # Seek to the correct sq_cnt
+                if sq_cnt != cls.file_message_count - 1:
+                    cls.file_obj.seek(sq_cnt * _FILE_PKTSIZE)
+                    cls.file_array = cls.file_obj.read(_FILE_PKTSIZE)
+                    cls.file_obj.close()
+                    return _FILE_PKTSIZE
+                else:
+                    last_pkt_size = cls.file_size - (cls.file_message_count - 1) * _FILE_PKTSIZE
+                    cls.file_obj.seek(sq_cnt * _FILE_PKTSIZE)
+                    cls.file_array = cls.file_obj.read(last_pkt_size)
+                    cls.file_obj.close()
+                    return last_pkt_size
+            except Exception as e:
+                logger.error(f"[COMMS ERROR] Failed to read file: {e}")
+                cls.file_array = bytes([0x00])
+                return 1
 
     """
         Name: file_pack_metadata

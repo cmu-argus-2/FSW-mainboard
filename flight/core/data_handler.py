@@ -13,12 +13,12 @@ This module provides the main interface for the onboard data handling system wit
 - Manages telemetry (TM) and telecommand (TC) file generation for transmission.
 - Provides file exclusion, flagging, and deletion as an interface for the communication subsystem.
 - File exclusion, flagging, and deletion as interface for a communication subsystem
-- Handles binary encoding and decoding with configurable formats for efficient numerical and image data storage.
+- Handles binary encoding and decoding with configurable formats for efficient numerical and file data storage.
 - Facilitates seamless data sharing and communication between flight software components.
-- Binary encoding and decoding with configurable formats for compact and efficient storage of numerical and image data.
+- Binary encoding and decoding with configurable formats for compact and efficient storage of numerical and file data.
 - Easily adaptable to diverse mission requirements.
 
-Author: Ibrahima Sory Sow
+Author: Ibrahima Sory Sow, Perrin Tong
 
 Data format (character: byte size):
     "b": 1,  # byte
@@ -54,6 +54,7 @@ _HOME_PATH = "/sd"  # Default path for the SD card
 _CLOSED = const(20)
 _OPEN = const(21)
 _FILE_DATA_LIMIT = const(100000)
+_PACKET_HEADER_SIZE = const(2)  # 2 bytes for packet length header
 
 
 _PROCESS_CONFIG_FILENAME = ".data_process_configuration.json"
@@ -568,18 +569,26 @@ class FileProcess(DataProcess):
     """
     Class for managing arbitrary file data (images, audio, binary blobs, etc.).
 
+    Files are stored as packet containers with the following format:
+    [packet_len (2 bytes)][packet_data (variable)][packet_len (2 bytes)][packet_data (variable)]...
+
+    This allows:
+    - Multiple variable-length packets in a single binary file
+    - Easy extraction of individual packets for transmission
+    - Reconstruction of original files on ground station
+
     Attributes:
         tag_name (str): The tag name for the file.
         file_extension (str): The file extension (e.g., 'jpg', 'png', 'wav', 'bin').
         data_limit (int): Maximum file size in bytes (default 100KB).
         circular_buffer_size (int): Number of files to keep in circular buffer (default 20).
         buffer_size (int): Size of write buffer for efficient SD card writes (default 512 bytes).
+        packet_count (int): Number of packets stored in the current file.
     """
 
     def __init__(
         self,
         tag_name: str,
-        file_extension: str = "bin",
         data_limit: int = _FILE_DATA_LIMIT,
         circular_buffer_size: int = 20,
         buffer_size: int = 512,
@@ -596,7 +605,7 @@ class FileProcess(DataProcess):
         """
         self.tag_name = tag_name
         self.file = None
-        self.file_extension = file_extension.lstrip(".")  # Remove leading dot if present
+        self.file_extension = "bin"
 
         self.status = _CLOSED
 
@@ -612,6 +621,7 @@ class FileProcess(DataProcess):
         self.buffer_size = buffer_size
         self.file_buf = bytearray(self.buffer_size)  # Pre-allocated static buffer for file writes
         self.file_buf_index = 0  # index to track position in buffer
+        self.packet_count = 0  # Number of packets in current file
 
         config_file_path = join_path(self.dir_path, _PROCESS_CONFIG_FILENAME)
         if not path_exist(config_file_path):
@@ -627,16 +637,18 @@ class FileProcess(DataProcess):
 
     def resolve_current_file(self) -> None:
         """
-        Resolve the current image to write to.
+        Resolve the current file to write to.
         """
         if self.status == _CLOSED:
             self.current_path = self.create_new_path()
+            self.packet_count = 0
             self.open()
         elif self.status == _OPEN:
             current_file_size = self.get_current_file_size()
             if current_file_size >= self.data_limit:
                 self.close()
                 self.current_path = self.create_new_path()
+                self.packet_count = 0
                 self.open()
 
     def create_new_path(self) -> str:
@@ -651,18 +663,27 @@ class FileProcess(DataProcess):
 
     def log(self, data: bytearray) -> None:
         """
-        Logs the given image data. Stores into a buffer and write in blocks of 512 Bytes
+        Logs the given file data as a packet with a 2-byte length header.
+        Format: [packet_len (2 bytes, big-endian)][packet_data (variable)]
 
         Args:
-            data (bytearray): The bytes of data to be logged.
+            data (bytearray): The bytes of data to be logged as a packet.
 
         Returns:
             None
         """
+        # Prepend packet length header (2 bytes, big-endian)
+        packet_len = len(data)
+        if packet_len > 65535:
+            logger.error(f"Packet too large: {packet_len} bytes (max 65535)")
+            return
+
+        packet_header = packet_len.to_bytes(2, "big")
+        packet_data = packet_header + data
 
         if not DataHandler.SD_ERROR_FLAG:
             # Add to file buffer and transmit only when buffer is full
-            data_len = len(data)
+            data_len = len(packet_data)
             data_offset = 0  # Keeps track of processed data
 
             while data_offset < data_len:
@@ -670,7 +691,7 @@ class FileProcess(DataProcess):
                 chunk_size = min(data_len - data_offset, space_remaining)  # Fill as much as possible
 
                 # Copy data into buffer
-                self.file_buf[self.file_buf_index : self.file_buf_index + chunk_size] = data[
+                self.file_buf[self.file_buf_index : self.file_buf_index + chunk_size] = packet_data[
                     data_offset : data_offset + chunk_size
                 ]
                 self.file_buf_index += chunk_size
@@ -686,10 +707,12 @@ class FileProcess(DataProcess):
         else:
             # Transmit each time without adding to a buf
             self.resolve_current_file()
-            self.last_data = data
+            self.last_data = packet_data
 
-            self.file.write(data)
+            self.file.write(packet_data)
             self.file.flush()
+
+        self.packet_count += 1
 
     def request_TM_path(self, latest: bool = False, file_time=None) -> Optional[str]:
         """
@@ -731,6 +754,92 @@ class FileProcess(DataProcess):
             self.excluded_paths.append(tm_path)
             return tm_path
         else:
+            return None
+
+    def get_packet_count(self, filepath: str = None) -> int:
+        """
+        Get the number of packets in a file by reading packet headers.
+
+        Args:
+            filepath (str, optional): Path to the file. If None, uses current file.
+
+        Returns:
+            int: Number of packets in the file, or 0 if error.
+        """
+        if filepath is None:
+            filepath = self.current_path
+
+        if not path_exist(filepath):
+            logger.warning(f"File does not exist: {filepath}")
+            return 0
+
+        try:
+            packet_count = 0
+            with open(filepath, "rb") as f:
+                while True:
+                    # Read packet length header
+                    header = f.read(_PACKET_HEADER_SIZE)
+                    if len(header) < _PACKET_HEADER_SIZE:
+                        break  # End of file
+
+                    packet_len = int.from_bytes(header, "big")
+                    if packet_len == 0:
+                        break  # Invalid packet
+
+                    # Skip packet data
+                    f.seek(packet_len, 1)  # Seek forward from current position
+                    packet_count += 1
+
+            return packet_count
+        except Exception as e:
+            logger.error(f"Error counting packets in {filepath}: {e}")
+            return 0
+
+    def get_packet(self, filepath: str, packet_index: int) -> Optional[bytearray]:
+        """
+        Extract a specific packet from a file by index.
+
+        Args:
+            filepath (str): Path to the file.
+            packet_index (int): Zero-based index of the packet to extract.
+
+        Returns:
+            bytearray: The packet data (without length header), or None if not found.
+        """
+        if not path_exist(filepath):
+            logger.warning(f"File does not exist: {filepath}")
+            return None
+
+        try:
+            current_index = 0
+            with open(filepath, "rb") as f:
+                while True:
+                    # Read packet length header
+                    header = f.read(_PACKET_HEADER_SIZE)
+                    if len(header) < _PACKET_HEADER_SIZE:
+                        break  # End of file
+
+                    packet_len = int.from_bytes(header, "big")
+                    if packet_len == 0:
+                        break  # Invalid packet
+
+                    if current_index == packet_index:
+                        # Found the target packet, read and return it
+                        packet_data = f.read(packet_len)
+                        if len(packet_data) == packet_len:
+                            return bytearray(packet_data)
+                        else:
+                            logger.error(f"Incomplete packet at index {packet_index}")
+                            return None
+                    else:
+                        # Skip this packet
+                        f.seek(packet_len, 1)
+                        current_index += 1
+
+            logger.warning(f"Packet index {packet_index} not found in {filepath}")
+            return None
+        except Exception as e:
+            logger.error(f"Error extracting packet from {filepath}: {e}")
             return None
 
     def file_completed(self):
@@ -800,7 +909,7 @@ class DataHandler:
         If a configuration file is found, it reads the data format and line limit from the file and registers
         a data process with the specified parameters.
 
-        If an 'img' configuration is found, it registers an image process with the specified data format.
+        If a file configuration is found, it registers a file process with the specified data format.
 
         Returns:
             None
@@ -991,19 +1100,6 @@ class DataHandler:
             logger.critical(f"Error: {e}")
 
     @classmethod
-    def log_image(cls, data: bytearray) -> None:
-        """
-        Logs the provided image data.
-
-        Parameters:
-        - data (bytearray): The image data to be logged.
-
-        Returns:
-        - None
-        """
-        cls.log_file("img", data)
-
-    @classmethod
     def file_completed(cls, tag_name: str) -> None:
         """
         Closes the current file and resolves it, to prepare for the next file.
@@ -1024,16 +1120,6 @@ class DataHandler:
                 raise KeyError("File process not registered!")
         except KeyError as e:
             logger.critical(f"Error: {e}")
-
-    @classmethod
-    def image_completed(cls) -> None:
-        """
-        Closes the current image file and resolves it, to prepare for the next image.
-
-        Returns:
-            None
-        """
-        cls.file_completed("img")
 
     @classmethod
     def get_latest_data(cls, tag_name: str):
@@ -1208,14 +1294,17 @@ class DataHandler:
         return False
 
     @classmethod
-    def image_process_exists(cls) -> bool:
+    def is_file_process(cls, tag_name: str) -> bool:
         """
-        Check if the image process exists.
+        Alias for file_process_exists for clearer naming.
+
+        Parameters:
+            tag_name (str): The name of the file process.
 
         Returns:
-            bool: True if the image process exists, False otherwise.
+            bool: True if the file process exists, False otherwise.
         """
-        return cls.file_process_exists("img")
+        return cls.file_process_exists(tag_name)
 
     @classmethod
     def request_TM_path(cls, tag_name, latest=False, file_time=None):
@@ -1234,18 +1323,6 @@ class DataHandler:
                 raise KeyError("Data  process not registered!")
         except KeyError as e:
             logger.critical(f"Error: {e}")
-
-    @classmethod
-    def request_TM_path_image(cls, latest=False, file_time=None):
-        """
-        Returns the path of a designated image available for transmission.
-        If no file is available, the function returns None.
-
-        The function store the file path to be excluded in a separate list.
-        Once fully transmitted, notify_TM_path() must be called to remove the file from the exclusion list
-        and prepare for deletion.
-        """
-        return cls.request_TM_path("img", latest=latest, file_time=file_time)
 
     @classmethod
     def notify_TM_path(cls, tag_name, path):
