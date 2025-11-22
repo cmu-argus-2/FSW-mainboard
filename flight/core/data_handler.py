@@ -584,7 +584,7 @@ class FileProcess(DataProcess):
     - Reconstruction of original files on ground station
     - Efficient storage with predictable file sizes
 
-    Each packet is exactly _FIXED_PACKET_SIZE bytes (default 200), where:
+    Each packet is exactly _FIXED_PACKET_SIZE bytes (default 242), where:
     - First 2 bytes: actual data length (big-endian)
     - Next N bytes: actual packet data
     - Remaining bytes: zero padding
@@ -685,7 +685,7 @@ class FileProcess(DataProcess):
         Actual data length is stored in the header for extraction without padding.
         Maximum payload size is 240 bytes.
 
-        The first time log() is called on a new file, a 4-byte magic number is written first
+        The first time log() is called on a new file, a 5-byte magic number is written first
         to identify this as a data handler formatted file.
 
         Args:
@@ -796,7 +796,7 @@ class FileProcess(DataProcess):
         Get the number of packets in a file using O(1) calculation.
 
         For .bin files created by data handler (with magic number):
-            packet count = (filesize - 4) // _FIXED_PACKET_SIZE (242 bytes per packet)
+            packet count = (filesize - 5) // _FIXED_PACKET_SIZE (242 bytes per packet)
         For other files (raw data):
             packet count = ceil(filesize / _MAX_PAYLOAD_SIZE) (240 bytes per chunk)
 

@@ -216,7 +216,7 @@ def test_file_process_fixed_packet_structure(sd_root):
 
     filepath = file_process.current_path
 
-    # Verify file size is exactly one fixed packet size (200 bytes)
+    # Verify file size is exactly one fixed packet size (242 bytes)
     file_size = os.stat(filepath).st_size
     assert (
         file_size == dh._FIXED_PACKET_SIZE + dh._DH_FILE_HEADER_SIZE
@@ -254,7 +254,7 @@ def test_file_process_max_data_size(sd_root):
 
     file_process = DH.data_process_registry[file_tag]
 
-    # Maximum data size is FIXED_PACKET_SIZE - HEADER_SIZE = 200 - 2 = 198 bytes
+    # Maximum data size is FIXED_PACKET_SIZE - HEADER_SIZE = 242 - 2 = 240 bytes
     max_data_size = dh._FIXED_PACKET_SIZE - dh._PACKET_HEADER_SIZE
 
     # Log packet at exactly max size
@@ -379,7 +379,7 @@ def test_file_process_custom_packet_reconstruction(sd_root, tmp_path):
     original_size = len(original_bin_data)
 
     # Calculate max data per packet for FileProcess
-    max_data_size = dh._FIXED_PACKET_SIZE - dh._PACKET_HEADER_SIZE  # 238 bytes with 240 byte packets
+    max_data_size = dh._FIXED_PACKET_SIZE - dh._PACKET_HEADER_SIZE  # 240 bytes with 242 byte packets
 
     # Parse the original binary file to extract custom packets
     original_packets = []
