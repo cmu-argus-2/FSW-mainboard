@@ -55,7 +55,10 @@ _CLOSED = const(20)
 _OPEN = const(21)
 _FILE_DATA_LIMIT = const(100000)
 _PACKET_HEADER_SIZE = const(2)  # 2 bytes for packet length header
-_FIXED_PACKET_SIZE = const(240)  # Fixed packet size in bytes (includes header + data + padding)
+_MAX_PAYLOAD_SIZE = const(240)  # Maximum payload/data size in bytes (excludes header)
+_FIXED_PACKET_SIZE = const(_PACKET_HEADER_SIZE + _MAX_PAYLOAD_SIZE)  # Total packet size on disk: 242 bytes
+_DH_MAGIC_NUMBER = b"ARGUS"  # 5-byte magic number to identify data handler files
+_DH_FILE_HEADER_SIZE = const(5)  # Size of the file header (magic number)
 
 
 _PROCESS_CONFIG_FILENAME = ".data_process_configuration.json"
@@ -631,6 +634,7 @@ class FileProcess(DataProcess):
         self.file_buf = bytearray(self.buffer_size)  # Pre-allocated static buffer for file writes
         self.file_buf_index = 0  # index to track position in buffer
         self.packet_count = 0  # Number of packets in current file
+        self.file_header_written = False  # Track if magic number has been written
 
         config_file_path = join_path(self.dir_path, _PROCESS_CONFIG_FILENAME)
         if not path_exist(config_file_path):
@@ -651,6 +655,7 @@ class FileProcess(DataProcess):
         if self.status == _CLOSED:
             self.current_path = self.create_new_path()
             self.packet_count = 0
+            self.file_header_written = False
             self.open()
         elif self.status == _OPEN:
             current_file_size = self.get_current_file_size()
@@ -658,6 +663,7 @@ class FileProcess(DataProcess):
                 self.close()
                 self.current_path = self.create_new_path()
                 self.packet_count = 0
+                self.file_header_written = False
                 self.open()
 
     def create_new_path(self) -> str:
@@ -673,10 +679,14 @@ class FileProcess(DataProcess):
     def log(self, data: bytearray) -> None:
         """
         Logs the given file data as a fixed-length packet with a 2-byte length header.
-        Format: [packet_len (2 bytes, big-endian)][packet_data (variable)][padding to _FIXED_PACKET_SIZE]
+        Format: [packet_len (2 bytes, big-endian)][packet_data (up to 240 bytes)][padding to _FIXED_PACKET_SIZE]
 
-        The packet is padded to _FIXED_PACKET_SIZE bytes for constant-time access.
+        The packet is padded to _FIXED_PACKET_SIZE bytes (242) for constant-time access.
         Actual data length is stored in the header for extraction without padding.
+        Maximum payload size is 240 bytes.
+
+        The first time log() is called on a new file, a 4-byte magic number is written first
+        to identify this as a data handler formatted file.
 
         Args:
             data (bytearray): The bytes of data to be logged as a packet.
@@ -686,10 +696,9 @@ class FileProcess(DataProcess):
         """
         # Calculate data length (excluding header)
         packet_len = len(data)
-        max_data_size = _FIXED_PACKET_SIZE - _PACKET_HEADER_SIZE
 
-        if packet_len > max_data_size:
-            logger.error(f"Packet too large: {packet_len} bytes (max {max_data_size})")
+        if packet_len > _MAX_PAYLOAD_SIZE:
+            logger.error(f"Packet too large: {packet_len} bytes (max {_MAX_PAYLOAD_SIZE})")
             return
 
         # Create fixed-size packet with header, data, and padding
@@ -702,6 +711,12 @@ class FileProcess(DataProcess):
         if not DataHandler.SD_ERROR_FLAG:
             # Ensure file is open before writing
             self.resolve_current_file()
+
+            # Write magic number header on first write to new file
+            if not self.file_header_written:
+                self.file.write(_DH_MAGIC_NUMBER)
+                self.file.flush()
+                self.file_header_written = True
 
             # Add to file buffer and transmit only when buffer is full
             data_len = len(packet_data)
@@ -780,8 +795,10 @@ class FileProcess(DataProcess):
         """
         Get the number of packets in a file using O(1) calculation.
 
-        Since all packets are fixed-size (_FIXED_PACKET_SIZE), we can calculate
-        the packet count directly from the file size.
+        For .bin files created by data handler (with magic number):
+            packet count = (filesize - 4) // _FIXED_PACKET_SIZE (242 bytes per packet)
+        For other files (raw data):
+            packet count = ceil(filesize / _MAX_PAYLOAD_SIZE) (240 bytes per chunk)
 
         Args:
             filepath (str, optional): Path to the file. If None, uses current file.
@@ -800,10 +817,20 @@ class FileProcess(DataProcess):
             file_stats = os.stat(filepath)
             filesize = file_stats[6]  # size of the file in bytes
 
-            # Calculate packet count directly from file size
-            packet_count = filesize // _FIXED_PACKET_SIZE
+            # Check if this is a .bin file with data handler magic number
+            if filepath.endswith(".bin"):
+                with open(filepath, "rb") as f:
+                    magic = f.read(_DH_FILE_HEADER_SIZE)
+                    if magic == _DH_MAGIC_NUMBER:
+                        # Data handler formatted file
+                        data_size = filesize - _DH_FILE_HEADER_SIZE
+                        packet_count = data_size // _FIXED_PACKET_SIZE
+                        return packet_count
 
+            # Raw file without magic number - treat as raw data
+            packet_count = (filesize + _MAX_PAYLOAD_SIZE - 1) // _MAX_PAYLOAD_SIZE  # Ceiling division
             return packet_count
+
         except Exception as e:
             logger.error(f"Error counting packets in {filepath}: {e}")
             return 0
@@ -812,44 +839,69 @@ class FileProcess(DataProcess):
         """
         Extract a specific packet from a file by index using O(1) direct access.
 
-        Since all packets are fixed-size (_FIXED_PACKET_SIZE), we can seek directly
-        to the packet location without scanning through the file.
+        For .bin files created by data handler (with magic number):
+            - Packets are stored with 2-byte headers at fixed 242-byte intervals after the magic number
+            - Returns payload data without header or padding
+
+        For other files (raw data like .jpg):
+            - Reads 240-byte chunks directly
+            - Returns raw data as-is
 
         Args:
             filepath (str): Path to the file.
             packet_index (int): Zero-based index of the packet to extract.
 
         Returns:
-            Optional[Tuple[int, bytearray]]: The packet length and data (without padding), or None if not found.
+            Optional[Tuple[int, bytearray]]: The packet length and data, or None if not found.
         """
         if not path_exist(filepath):
             logger.warning(f"File does not exist: {filepath}")
             return None
 
         try:
-            # Calculate the byte offset for the packet
-            packet_offset = packet_index * _FIXED_PACKET_SIZE
+            # Check if this is a .bin file with data handler magic number
+            is_dh_formatted = False
+            if filepath.endswith(".bin"):
+                with open(filepath, "rb") as f:
+                    magic = f.read(_DH_FILE_HEADER_SIZE)
+                    if magic == _DH_MAGIC_NUMBER:
+                        is_dh_formatted = True
 
-            with open(filepath, "rb") as f:
-                # Seek directly to the packet location (O(1) operation)
-                f.seek(packet_offset)
+            if is_dh_formatted:
+                # Data handler formatted file - read with headers
+                packet_offset = _DH_FILE_HEADER_SIZE + (packet_index * _FIXED_PACKET_SIZE)
 
-                # Read the fixed-size packet
-                packet_data = f.read(_FIXED_PACKET_SIZE)
+                with open(filepath, "rb") as f:
+                    f.seek(packet_offset)
+                    packet_data = f.read(_FIXED_PACKET_SIZE)
 
-                if len(packet_data) < _PACKET_HEADER_SIZE:
-                    logger.warning(f"Packet index {packet_index} not found in {filepath}")
-                    return None
+                    if len(packet_data) < _PACKET_HEADER_SIZE:
+                        logger.warning(f"Packet index {packet_index} not found in {filepath}")
+                        return None
 
-                # Extract actual data length from header
-                packet_len = int.from_bytes(packet_data[0:2], "big")
+                    # Extract data length from header
+                    packet_len = int.from_bytes(packet_data[0:2], "big")
 
-                if packet_len == 0 or packet_len > (_FIXED_PACKET_SIZE - _PACKET_HEADER_SIZE):
-                    logger.error(f"Invalid packet length {packet_len} at index {packet_index}")
-                    return None
+                    if packet_len == 0 or packet_len > _MAX_PAYLOAD_SIZE:
+                        logger.error(f"Invalid packet length {packet_len} at index {packet_index}")
+                        return None
 
-                # Return the length and actual data (without header and padding)
-                return packet_len, bytearray(packet_data[2 : 2 + packet_len])
+                    # Return payload without header and padding
+                    return packet_len, bytearray(packet_data[2 : 2 + packet_len])
+            else:
+                # Raw file - read _MAX_PAYLOAD_SIZE chunks
+                raw_offset = packet_index * _MAX_PAYLOAD_SIZE
+
+                with open(filepath, "rb") as f:
+                    f.seek(raw_offset)
+                    raw_data = f.read(_MAX_PAYLOAD_SIZE)
+
+                    if len(raw_data) == 0:
+                        logger.warning(f"No data at packet index {packet_index} in {filepath}")
+                        return None
+
+                    actual_len = len(raw_data)
+                    return actual_len, bytearray(raw_data)
 
         except Exception as e:
             logger.error(f"Error extracting packet from {filepath}: {e}")

@@ -124,27 +124,27 @@ def test_file_process_nominal_log(sd_root):
 
     file_process = DH.data_process_registry[file_tag]
 
-    # Log a packet smaller than max size (200 - 2 = 198 bytes max)
+    # Log a packet smaller than max size (242 - 2 = 240 bytes max payload)
     data1 = bytearray(100)
     DH.log_file(file_tag, data1)
 
-    # Each packet is fixed at 200 bytes (dh._FIXED_PACKET_SIZE)
-    # Buffer index should be at 200
-    assert file_process.file_buf_index == 200
+    # Each packet is fixed at 242 bytes (dh._FIXED_PACKET_SIZE)
+    # Buffer index should be at 242
+    assert file_process.file_buf_index == dh._FIXED_PACKET_SIZE
     assert file_process.packet_count == 1
 
-    # Log second packet (another 200 bytes fixed)
+    # Log second packet (another 242 bytes fixed)
     data2 = bytearray(150)
     DH.log_file(file_tag, data2)
-    assert file_process.file_buf_index == 400
+    assert file_process.file_buf_index == dh._FIXED_PACKET_SIZE * 2
     assert file_process.packet_count == 2
 
-    # Log third packet (200 bytes), triggering write when buffer reaches 512
+    # Log third packet (242 bytes), triggering write when buffer reaches 512
     data3 = bytearray(120)
     DH.log_file(file_tag, data3)
-    # After 3 packets (600 bytes), buffer should have written 512 bytes and kept 88
-    assert os.stat(file_process.current_path).st_size == 512  # One block written
-    assert file_process.file_buf_index == 88  # Remaining 88 bytes in buffer
+    # After 3 packets (726 bytes), buffer should have written 512 bytes and kept the rest
+    assert os.stat(file_process.current_path).st_size == 512 + dh._DH_FILE_HEADER_SIZE  # One block written
+    assert file_process.file_buf_index == 214  # Remaining 214 bytes in buffer (726 - 512)
     assert file_process.packet_count == 3
 
 
@@ -218,23 +218,31 @@ def test_file_process_fixed_packet_structure(sd_root):
 
     # Verify file size is exactly one fixed packet size (200 bytes)
     file_size = os.stat(filepath).st_size
-    assert file_size == dh._FIXED_PACKET_SIZE, f"Expected {dh._FIXED_PACKET_SIZE} bytes, got {file_size}"
+    assert (
+        file_size == dh._FIXED_PACKET_SIZE + dh._DH_FILE_HEADER_SIZE
+    ), f"Expected {dh._FIXED_PACKET_SIZE + dh._DH_FILE_HEADER_SIZE} bytes, got {file_size}"
 
     # Read raw bytes and verify structure
     with open(filepath, "rb") as f:
         raw_packet = f.read()
 
+    # Verify file header
+    file_header = raw_packet[0 : dh._DH_FILE_HEADER_SIZE]
+    assert file_header == dh._DH_MAGIC_NUMBER, "File header magic mismatch"
+
     # First 2 bytes should be the length (3 in big-endian)
-    length = int.from_bytes(raw_packet[0:2], "big")
+    length = int.from_bytes(raw_packet[dh._DH_FILE_HEADER_SIZE : dh._DH_FILE_HEADER_SIZE + dh._PACKET_HEADER_SIZE], "big")
     assert length == 3, f"Expected length 3, got {length}"
 
     # Next 3 bytes should be the actual data
-    actual_data = raw_packet[2:5]
+    actual_data = raw_packet[
+        dh._DH_FILE_HEADER_SIZE + dh._PACKET_HEADER_SIZE : dh._DH_FILE_HEADER_SIZE + dh._PACKET_HEADER_SIZE + length
+    ]
     assert actual_data == bytes([1, 2, 3]), "Data mismatch"
 
     # Remaining bytes should be padding (zeros)
-    padding = raw_packet[5:]
-    assert len(padding) == dh._FIXED_PACKET_SIZE - 5, "Padding length mismatch"
+    padding = raw_packet[dh._DH_FILE_HEADER_SIZE + dh._PACKET_HEADER_SIZE + length :]
+    assert len(padding) == dh._FIXED_PACKET_SIZE - dh._PACKET_HEADER_SIZE - length, "Padding length mismatch"
     assert all(b == 0 for b in padding), "Padding should be all zeros"
 
 
