@@ -1,4 +1,4 @@
-from time import gmtime, monotonic, struct_time
+from time import gmtime, localtime, monotonic, struct_time
 
 from hal.drivers.errors import Errors
 from hal.drivers.failure_prob import rtc_prob
@@ -8,8 +8,17 @@ _scale_ = rtc_prob.scale
 
 
 class RTC:
-    def __init__(self, date_input: struct_time) -> None:
+    def __init__(self, date_input: struct_time, simulator=None) -> None:
         self.current_datetime = date_input
+        self.__simulator = simulator
+
+        # faults
+        self.start_time = monotonic()
+        self._all_faults = np.array([False] * 2)
+        self._time_to_each_failure = np.random.exponential(scale=_scale_)
+
+        self.lost_power = False
+        self.battery_low = False
 
         # faults
         self.start_time = monotonic()
@@ -21,7 +30,11 @@ class RTC:
 
     @property
     def datetime(self):
-        self.current_datetime = gmtime()
+        if self.__simulator is not None:
+            unix_time = self.__simulator.get_sim_time()
+            self.current_datetime = localtime(unix_time)
+        else:
+            self.current_datetime = gmtime()
         return self.current_datetime
 
     def set_datetime(self, date_input: struct_time):
