@@ -3,7 +3,7 @@ Satellite radio class for Argus-1 CubeSat.
 Message packing/unpacking for telemetry/file TX
 and acknowledgement RX.
 
-Authors: Akshat Sahay, Ibrahima S. Sow
+Authors: Akshat Sahay, Ibrahima S. Sow, Perrin Tong
 """
 
 import os
@@ -340,8 +340,10 @@ class SATELLITE_RADIO:
             # Valid filepath from DH, set size and message count
             file_stat = os.stat(cls.filepath)
 
-            # Extract file_tag from filepath
-            file_tag = cls.filepath.split("/")[2]
+            # Extract file_tag from filename (format: tag_timestamp.ext)
+            # This is more robust than path indices and works with any directory structure
+            filename = os.path.basename(cls.filepath)
+            file_tag = filename.split("_")[0]
             cls.file_ID = file_ids_str[file_tag]
 
             # Extract file_time from filepath
@@ -383,18 +385,21 @@ class SATELLITE_RADIO:
             cls.file_array = bytes([0x00])
             return 1
 
-        # Extract file_tag from filepath
-        file_tag = cls.filepath.split("/")[2]
+        # Extract file_tag from filename (format: tag_timestamp.ext)
+        # This is more robust than path indices and works with any directory structure
+        filename = os.path.basename(cls.filepath)
+        file_tag = filename.split("_")[0]
 
         # Check if this is a FileProcess (packet-based file)
         if DH.is_file_process(file_tag):
             # Use FileProcess packet extraction
             file_process = DH.data_process_registry.get(file_tag)
             if file_process:
-                packet_data = file_process.get_packet(cls.filepath, sq_cnt)
-                if packet_data is not None:
-                    cls.file_array = bytes(packet_data)
-                    return len(cls.file_array)
+                result = file_process.get_packet(cls.filepath, sq_cnt)
+                if result is not None:
+                    length, data = result
+                    cls.file_array = bytes(data)
+                    return length
                 else:
                     logger.warning(f"[COMMS ERROR] Failed to extract packet {sq_cnt}")
                     cls.file_array = bytes([0x00])
