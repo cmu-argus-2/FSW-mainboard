@@ -7,9 +7,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-import tests.cp_mock
+import tests.cp_mock  # noqa: F401
 import core.data_handler as dh
-from apps.comms.comms import COMMS_STATE, MSG_ID, SATELLITE_RADIO
+from apps.comms.comms import MSG_ID, SATELLITE_RADIO
 from core.data_handler import DataHandler as DH
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -324,4 +324,4 @@ def test_comms_check_rq_file_params(sd_root):
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    pytest.main()
