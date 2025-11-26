@@ -61,7 +61,7 @@ jobs:
         run: pip list  # Confirm that brahe and argusim are installed
       - name: Set timestamp
         run: echo "TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_ENV
-      - name: Define Runtime
+      - name: Define SIL Config file
         run: echo "SILCONFIGFILE=ci_sil_campaign_params.yaml" >> $GITHUB_ENV
       
       - name: Run flight software

@@ -41,7 +41,7 @@ def read_light_sensors():
         lux_readings: list of lux readings on each face. A "ERROR_LUX" reading comes from a dysfunctional sensor.
     """
 
-    faces = ["XP", "XM", "YP", "YM", "ZP1", "ZP2", "ZP3", "ZP4", "ZM"]
+    faces = ["XP", "XM", "YP", "YM", "ZP_1", "ZP_2", "ZP_3", "ZP_4", "ZM"]
     lux_readings = []
 
     for face in faces:

@@ -49,27 +49,31 @@ class EmulatedSatellite(CubeSat):
 
         super().__init__()
 
-        # self._radio = Radio(self.__use_socket)
+        # Radio
         self.append_device("RADIO", None, Radio(self.__use_socket), ASIL=4)
-        # self._sd_card = SD()
+
+        # SD Card
         self.append_device("SDCARD", None, SD(), ASIL=1)
-        # self._burnwires = self.init_device(BurnWires())
+
+        # Burn-wires
         self.append_device("BURN_WIRES", None, BurnWires(), ASIL=4)
 
         self.append_device("PAYLOAD_UART", None, self.init_device(Payload()))
 
+        self.append_device("PAYLOAD_UART", None, self.init_device(Payload()))
+
         # self._vfs = None
-        self.append_device("GPS", None, GPS(simulator=self.__simulated_spacecraft))
+        self.append_device("GPS", None, GPS(simulator=self.__simulated_spacecraft), ASIL=4)
         # self._charger = None
 
         self.append_device("LIGHT_XP", None, LightSensor("XP", simulator=self.__simulated_spacecraft), ASIL=2)
         self.append_device("LIGHT_XM", None, LightSensor("XM", simulator=self.__simulated_spacecraft), ASIL=2)
         self.append_device("LIGHT_YP", None, LightSensor("YP", simulator=self.__simulated_spacecraft), ASIL=2)
         self.append_device("LIGHT_YM", None, LightSensor("YM", simulator=self.__simulated_spacecraft), ASIL=2)
-        self.append_device("LIGHT_ZP1", None, LightSensor("ZP1", simulator=self.__simulated_spacecraft), ASIL=2)
-        self.append_device("LIGHT_ZP2", None, LightSensor("ZP2", simulator=self.__simulated_spacecraft), ASIL=2)
-        self.append_device("LIGHT_ZP3", None, LightSensor("ZP3", simulator=self.__simulated_spacecraft), ASIL=2)
-        self.append_device("LIGHT_ZP4", None, LightSensor("ZP4", simulator=self.__simulated_spacecraft), ASIL=2)
+        self.append_device("LIGHT_ZP_1", None, LightSensor("ZP_1", simulator=self.__simulated_spacecraft), ASIL=2)
+        self.append_device("LIGHT_ZP_2", None, LightSensor("ZP_2", simulator=self.__simulated_spacecraft), ASIL=2)
+        self.append_device("LIGHT_ZP_3", None, LightSensor("ZP_3", simulator=self.__simulated_spacecraft), ASIL=2)
+        self.append_device("LIGHT_ZP_4", None, LightSensor("ZP_4", simulator=self.__simulated_spacecraft), ASIL=2)
         self.append_device("LIGHT_ZM", None, LightSensor("ZM", simulator=self.__simulated_spacecraft), ASIL=2)
 
         self._torque_drivers = TorqueCoilArray(simulator=self.__simulated_spacecraft)
@@ -83,8 +87,11 @@ class EmulatedSatellite(CubeSat):
         self._imu = self.init_device(IMU(simulator=self.__simulated_spacecraft))
         self._imu.enable()
         self.append_device("IMU", None, self._imu, ASIL=3)
-        # Board Power monitor
+
         self.append_device("BOARD_PWR", None, PowerMonitor(device_name="BOARD", voltage=7.6, current=0.1), ASIL=1)
+        self.append_device(
+            "JETSON_PWR", None, PowerMonitor(device_name="JETSON", simulator=self.__simulated_spacecraft), ASIL=1
+        )
 
         # Solar Power monitors
         self.append_device("XP_PWR", None, PowerMonitor(device_name="XP", simulator=self.__simulated_spacecraft), ASIL=1)
@@ -93,13 +100,10 @@ class EmulatedSatellite(CubeSat):
         self.append_device("YM_PWR", None, PowerMonitor(device_name="YM", simulator=self.__simulated_spacecraft), ASIL=1)
         self.append_device("ZP_PWR", None, PowerMonitor(device_name="ZP", simulator=self.__simulated_spacecraft), ASIL=1)
 
-        # Jetson Power Monitor
-        self.append_device("JETSON_PWR", None, PowerMonitor("JETSON", simulator=self.__simulated_spacecraft), ASIL=1)
-
-        # Fuel Gauge
+        # self._fuel_gauge = self.init_device(FuelGauge())
         self.append_device("FUEL_GAUGE", None, FuelGauge(simulator=self.__simulated_spacecraft), ASIL=2)
 
-        # RTC
+        # self._rtc = self.init_device(RTC(time.gmtime()))
         self.append_device("RTC", None, RTC(time.gmtime(), simulator=self.__simulated_spacecraft), ASIL=2)
 
         # self.ERRORS = []

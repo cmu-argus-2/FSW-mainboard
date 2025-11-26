@@ -54,12 +54,6 @@ def UPLINK_TIME_REFERENCE(time_reference):
     return []
 
 
-def UPLINK_ORBIT_REFERENCE(time_reference, orbital_parameters):
-    """Sends time-referenced orbital information to update the orbit reference."""
-    # TODO: Now that AD is gone, delete this command
-    return []
-
-
 def TURN_OFF_PAYLOAD():
     """Sends a shutdown command to the payload and turns off its power line."""
     logger.info("Executing TURN_OFF_PAYLOAD")

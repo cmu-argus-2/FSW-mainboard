@@ -38,8 +38,21 @@ class Simulator:  # will be passed by reference to the emulated HAL
         self.measurement = np.zeros((49,))
         self.starting_real_epoch = time.monotonic_ns() / 1.0e9
         self.latest_real_epoch = self.starting_real_epoch
+        self.measurement = np.zeros((49,))
+        self.starting_real_epoch = time.monotonic_ns() / 1.0e9
+        self.latest_real_epoch = self.starting_real_epoch
         self.base_dt = self.cppsim.params.dt
         self.sim_time = 0
+
+        # Measurement labels
+        self.gps_idx = slice(0, 6)
+        self.gyro_idx = slice(6, 9)
+        self.mag_idx = slice(9, 12)
+        self.lux_idx = slice(12, 21)
+        self.mtb_idx = slice(21, 27)
+        self.solar_idx = slice(27, 40)
+        self.power_idx = slice(40, 48)
+        self.jetson_idx = slice(48, 49)
 
         # Measurement labels
         self.gps_idx = slice(0, 6)
@@ -68,7 +81,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
     def sun_lux(self, attr):
         self.advance_to_time()  # XP, XM, YP, YM, ZP1, ZP2, ZP3, ZP4, ZM
 
-        attr2idx = {"XP": 0, "XM": 1, "YP": 2, "YM": 3, "ZP1": 4, "ZP2": 5, "ZP3": 6, "ZP4": 7, "ZM": 8}
+        attr2idx = {"XP": 0, "XM": 1, "YP": 2, "YM": 3, "ZP_1": 4, "ZP_2": 5, "ZP_3": 6, "ZP_4": 7, "ZM": 8}
         if attr not in attr2idx.keys():
             raise Exception(f"Invalid Sun Sensor dir {attr}")
         return self.measurement[self.lux_idx][attr2idx[attr]]

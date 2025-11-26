@@ -3,7 +3,7 @@
 import apps.adcs.sensors as sensors
 from apps.adcs.acs import mcm_coil_allocator, spin_stabilizing_controller, sun_pointing_controller, zero_all_coils
 from apps.adcs.consts import Modes, StatusConst
-from apps.telemetry.constants import ADCS_IDX, CDH_IDX
+from apps.telemetry.constants import ADCS_IDX, CDH_IDX, class_length
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
@@ -15,6 +15,7 @@ from ulab import numpy as np
     ASSUMPTIONS :
         - ADCS Task runs at 5 Hz (TBD if we can't handle this)
 """
+_IDX_LENGTH = class_length(ADCS_IDX)
 
 
 class Task(TemplateTask):
@@ -35,10 +36,10 @@ class Task(TemplateTask):
         "LIGHT_SENSOR_XM",
         "LIGHT_SENSOR_YP",
         "LIGHT_SENSOR_YM",
-        "LIGHT_SENSOR_ZP1",
-        "LIGHT_SENSOR_ZP2",
-        "LIGHT_SENSOR_ZP3",
-        "LIGHT_SENSOR_ZP4",
+        "LIGHT_SENSOR_ZP_1",
+        "LIGHT_SENSOR_ZP_2",
+        "LIGHT_SENSOR_ZP_3",
+        "LIGHT_SENSOR_ZP_4",
         "LIGHT_SENSOR_ZM",
         "XP_COIL_STATUS",
         "XM_COIL_STATUS",
@@ -46,13 +47,9 @@ class Task(TemplateTask):
         "YM_COIL_STATUS",
         "ZP_COIL_STATUS",
         "ZM_COIL_STATUS",
-        "COARSE_ATTITUDE_QW",
-        "COARSE_ATTITUDE_QX",
-        "COARSE_ATTITUDE_QY",
-        "COARSE_ATTITUDE_QZ",
     ]"""
 
-    log_data = [0] * 31
+    log_data = [0] * _IDX_LENGTH
     coil_status = [0] * 6
 
     ## ADCS Modes and switching logic
@@ -81,7 +78,7 @@ class Task(TemplateTask):
 
         else:
             if not DH.data_process_exists("adcs"):
-                data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B" + 4 * "f"
+                data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B"  # + 4 * "f"
                 DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
 
             self.time = TPM.time()
@@ -240,7 +237,7 @@ class Task(TemplateTask):
 
         # Log Gyro Angular Velocities
         self.log_info(f"ADCS Mode : {self.MODE}")
-        self.log_info(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z + 1]}")
+        self.log_info(f"Gyro Ang Vel : {self.gyro_data}")
         # [TODO:] Remove later
         self.log_info(f"Mag Field : {self.log_data[ADCS_IDX.MAG_X:ADCS_IDX.MAG_Z + 1]}")
         self.log_info(f"Sun Vector : {self.log_data[ADCS_IDX.SUN_VEC_X:ADCS_IDX.SUN_VEC_Z + 1]}")
