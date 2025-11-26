@@ -1,8 +1,10 @@
+# Import this first
 import gc
 import sys
 import time
 
 from core import logger, setup_logger, state_manager
+from core.satellite_config import main_config as CONFIG
 from hal.configuration import SATELLITE
 
 
@@ -20,7 +22,7 @@ for path in ["/hal", "/apps", "/core"]:
     if path not in sys.path:
         sys.path.append(path)
 
-setup_logger(level="INFO")
+setup_logger(level=CONFIG.LOG_LEVEL)
 
 print_memory_stats(call_gc=True)
 

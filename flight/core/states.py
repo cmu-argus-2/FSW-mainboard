@@ -36,6 +36,7 @@ class TASK:
     THERMAL = const(0x07)
     GPS = const(0x08)
     PAYLOAD = const(0x09)
+    HAL_MONITOR = const(0x0A)
 
 
 class STATES:
@@ -52,8 +53,6 @@ class STATES:
         EXPERIMENT: [NOMINAL],
         LOW_POWER: [NOMINAL, LOW_POWER],
     }
-
-    DETUMBLING_TIMEOUT_DURATION = 30  # seconds - TODO: Update with actual value
 
 
 STR_STATES = ["STARTUP", "DETUMBLING", "NOMINAL", "EXPERIMENT", "LOW_POWER"]

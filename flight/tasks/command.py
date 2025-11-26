@@ -14,13 +14,14 @@ from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
+from core.satellite_config import command_config as CONFIG
 from core.states import STATES, STR_STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 from micropython import const
 
 _TPM_INIT_TIMEOUT = const(10)  # seconds
-_EXIT_STARTUP_TIMEOUT = const(5)  # seconds
+_EXIT_STARTUP_TIMEOUT = CONFIG.EXIT_STARTUP_TIMEOUT  # Already a const in satellite_config
 _BURN_WIRE_STRENGTH = const(7)  # 0-255
 _DEPLOYMENT_INTERVAL = const(5)  # seconds
 _PWM_MAX = const(3)  # Maximum PWM value for deployment
@@ -188,7 +189,7 @@ class Task(TemplateTask):
             if adcs_data:
                 self.ADCS_MODE = adcs_data[ADCS_IDX.MODE]
 
-                if not (self.ADCS_MODE >= Modes.TUMBLING and self.ADCS_MODE <= Modes.SUN_POINTED):
+                if not (self.ADCS_MODE >= Modes.TUMBLING and self.ADCS_MODE <= Modes.ACS_OFF):
                     self.log_error("ADCS returned an invalid mode, assuming STABLE ADCS mode")
                     self.ADCS_MODE = Modes.STABLE
                 else:
@@ -231,8 +232,22 @@ class Task(TemplateTask):
                 SATELLITE.NEOPIXEL.fill([255, 165, 0])
 
             # Detumbling timeout in case the ADCS is not working
-            if SM.time_since_last_state_change > STATES.DETUMBLING_TIMEOUT_DURATION:
+            if SM.time_since_last_state_change > CONFIG.DETUMBLING_TIMEOUT_DURATION:
                 self.log_info("DETUMBLING timeout - Setting Detumbling Error Flag.")
+                # Set the detumbling error flag in the NVM
+                self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1
+
+            # Detumbling impossible due to magnetorquer failure
+            working_coils = [
+                SATELLITE.TORQUE_DRIVERS_AVAILABLE("XP"),
+                SATELLITE.TORQUE_DRIVERS_AVAILABLE("XM"),
+                SATELLITE.TORQUE_DRIVERS_AVAILABLE("YP"),
+                SATELLITE.TORQUE_DRIVERS_AVAILABLE("YM"),
+                SATELLITE.TORQUE_DRIVERS_AVAILABLE("ZP"),
+                SATELLITE.TORQUE_DRIVERS_AVAILABLE("ZM"),
+            ]
+            if not any(working_coils):
+                self.log_info("DETUMBLING actuator failure - Setting Detumbling Error Flag.")
                 # Set the detumbling error flag in the NVM
                 self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1
 

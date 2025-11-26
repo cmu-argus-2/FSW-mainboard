@@ -18,25 +18,11 @@ class StatusConst:
         Failure Status Constants
     """
 
-    # Algorithm Failures
-    MEKF_INIT_FAIL = 1
-    MEKF_INIT_FORCE = 2
-    OPROP_INIT_FAIL = 3
-    TRIAD_FAIL = 4
-    POS_UPDATE_FAIL = 5
-    SUN_UPDATE_FAIL = 6
-    MAG_UPDATE_FAIL = 7
-    EKF_UPDATE_FAIL = 8
-    TRUE_SUN_MAP_FAIL = 9
-    TRUE_MAG_MAP_FAIL = 10
-
     # Sensor based Failures
     # Gyro
     GYRO_FAIL = 21
     # Magnetometer
     MAG_FAIL = 31
-    # GPS
-    GPS_FAIL = 41
     # Light Sensor
     SUN_NO_READINGS = 51
     SUN_NOT_ENOUGH_READINGS = 52
@@ -50,19 +36,8 @@ class StatusConst:
 
     # Failure Messages
     _FAIL_MESSAGES = {
-        MEKF_INIT_FAIL: "MEKF init failure",
-        MEKF_INIT_FORCE: "Force initializing MEKF",
-        OPROP_INIT_FAIL: "Orbit Prop Init failure",
-        TRIAD_FAIL: "TRIAD failure",
-        POS_UPDATE_FAIL: "Position update failure",
-        SUN_UPDATE_FAIL: "Sun update failure",
-        MAG_UPDATE_FAIL: "Mag update failure",
-        EKF_UPDATE_FAIL: "Singular Matrix",
-        TRUE_SUN_MAP_FAIL: "Invalid true sunpos",
-        TRUE_MAG_MAP_FAIL: "Invalid true mag",
         GYRO_FAIL: "Gyro failure",
         MAG_FAIL: "Magnetometer failure",
-        GPS_FAIL: "GPS failure",
         SUN_NO_READINGS: "No readings",
         SUN_NOT_ENOUGH_READINGS: "Insufficient readings",
         SUN_ECLIPSE: "In eclipse",
@@ -83,10 +58,20 @@ class Modes:
     TUMBLING = 0  # Satellite is spinning outside the "stable" bounds.
     STABLE = 1  # Satellite is spinning inside the "stable" bounds.
     SUN_POINTED = 2  # Satellite is generally pointed towards the sun.
+    ACS_OFF = 3  # Satellite has pointed to the sun and ACS can be turned off
 
     SUN_VECTOR_REF = np.array([0.0, 0.0, 1.0])
-    STABLE_TOL = 0.14  # 0.05  # "stable" if ang vel < 0.05 rad/s = 2.86 deg/s.
-    SUN_POINTED_TOL = 0.1  # "sun-pointed" if att err < 0.09 rad = 5 deg.
+
+    # Detumbling
+    TUMBLING_TOL = 0.09  # Exit detumbling into stable if ω < 0.09 rad/s (5 deg/s)
+
+    # STABLE MODE
+    STABLE_TOL_LO = 0.26  # Exit into sun_pointing if momentum less than 15 deg from major axis
+    STABLE_TOL_HI = 0.34  # Re-enter stable state if momentum more than 20 deg from major axis
+
+    # SUN POINTED MODE
+    SUN_POINTED_TOL_LO = 0.176  # Turn ACS off if momentum less than 10 deg from sun vector
+    SUN_POINTED_TOL_HI = 0.26  # Re-enter sun_pointed if momentum more than 15 deg from sun vector
 
 
 class PhysicalConst:
@@ -95,11 +80,7 @@ class PhysicalConst:
     """
 
     INERTIA_MAT = np.array(
-        [
-            [0.0033, 0.0, 0.0],
-            [0.0, 0.0033, 0.0],
-            [0.0, 0.0, 0.0066],
-        ]
+        [[3.544e-03, -1.8729e-05, -5.2467e-06], [-1.8729e-05, 3.590e-03, 1.9134e-05], [-5.2467e-06, 1.9134e-05, 4.120e-03]]
     )
 
     # Compute Major axis of inertia
@@ -145,11 +126,15 @@ class ControllerConst:
     FALLBACK_CONTROL = np.zeros(CONTROL_DIM)
 
     # Spin-stabilized Constants
-    OMEGA_MAG_TARGET = 0.1125  # Target angular velocity along major axis
-    MOMENTUM_TARGET = np.linalg.norm(np.dot(PhysicalConst.INERTIA_MAT, PhysicalConst.INERTIA_MAJOR_DIR * OMEGA_MAG_TARGET))
-    SPIN_STABILIZING_GAIN = 1.0e06
+    OMEGA_MAG_TARGET = 0.035  # Target angular velocity (2 deg/s) for spin stabilization
+    MOMENTUM_TARGET = np.dot(PhysicalConst.INERTIA_MAT, PhysicalConst.INERTIA_MAJOR_DIR * OMEGA_MAG_TARGET)
+    MOMENTUM_TARGET_MAG = np.linalg.norm(MOMENTUM_TARGET)
+    SPIN_STABILIZING_GAIN = 2.0e07
 
     # Sun Pointing Constants
+
+    # Tolerances
+    OMEGA_TOLERANCE = 0.02  # rad/s (~1.2 deg/s)
 
 
 class MCMConst:
@@ -164,10 +149,10 @@ class MCMConst:
     ALLOC_MAT = np.array(
         [
             [0.5, 0.0, 0.0],
-            [0.5, 0.0, 0.0],
+            [-0.5, 0.0, 0.0],
             [0.0, 0.5, 0.0],
-            [0.0, 0.5, 0.0],
+            [0.0, -0.5, 0.0],
             [0.0, 0.0, 0.5],
-            [0.0, 0.0, 0.5],
+            [0.0, 0.0, -0.5],
         ]
     )

@@ -1,0 +1,30 @@
+# Author: Perrin
+# Description: Flight configuration file, compiled as satellite_config module
+# Note: Add "_const: true" to any value that should be wrapped with const() in MicroPython
+
+# Commanding Task
+command:
+  EXIT_STARTUP_TIMEOUT:
+    value: 1800  # seconds, i.e., 30 minutes
+    _const: true
+
+  DETUMBLING_TIMEOUT_DURATION:
+    value: 18000  # seconds, i.e., 5 hours
+    _const: true
+
+# Time Processor Module
+time_processor:
+  time_reference: 
+    value: 1735689600  # Jan 1st 2025, 00:00:00 UTC
+    _const: false
+
+# Main Task
+main:
+  LOG_LEVEL:
+    value: "WARNING"
+
+# HAL Monitor Task
+hal_monitor:
+  REGULAR_REBOOT:
+    value: 86400 # seconds, i.e., 24 hours
+    _const: true

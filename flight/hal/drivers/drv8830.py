@@ -26,7 +26,7 @@
 A CircuitPython driver class for the DRV8830 motor controller.
 
 
-* Author(s): JG
+* Author(s): JG, Perrin Tong
 
 Adapted from Cedar Grove Maker Studio
 https://github.com/CedarGroveStudios/CircuitPython_DRV8830/tree/2b0f39ef261291129dab4d1aefb06f3385fa0ade
@@ -265,67 +265,22 @@ class DRV8830:
         self._vset = 0
         self._in_x = BridgeControl.STANDBY
 
-    """
-    ----------------------- HANDLER METHODS -----------------------
-    """
+    ######################## ERROR HANDLING ########################
 
     @property
-    def get_flags(self):
-        flags = {}
+    def device_errors(self):
+        results = []
         if self._fault:
             if self._ocp:
-                flags["ocp"] = None
+                results.append(Errors.TORQUE_COIL_OVERCURRENT_EVENT)
             if self._uvlo:
-                flags["uvlo"] = None
+                results.append(Errors.TORQUE_COIL_UNDERVOLTAGE_LOCKOUT)
             if self._ots:
-                flags["ots"] = None
+                results.append(Errors.TORQUE_COIL_THERMAL_SHUTDOWN)
             if self._ilimit:
-                flags["ilimit"] = None
-        return flags
-
-    ######################### DIAGNOSTICS #########################
-    def __check_for_faults(self) -> list[int]:
-        """_check_for_faults: Checks for any device faluts returned by fault function in DRV8830
-
-        :return: List of errors that exist in the fault register
-        """
-        faults_flag, faults = self.fault
-
-        if not faults_flag:
-            return [Errors.NO_ERROR]
-
-        errors: list[int] = []
-
-        if "OCP" in faults:
-            errors.append(Errors.TORQUE_COIL_OVERCURRENT_EVENT)
-        if "UVLO" in faults:
-            errors.append(Errors.TORQUE_COIL_UNDERVOLTAGE_LOCKOUT)
-        if "OTS" in faults:
-            errors.append(Errors.TORQUE_COIL_OVERTEMP_EVENT)
-        if "ILIMIT" in faults:
-            errors.append(Errors.TORQUE_COIL_EXTENDED_CURRENT_LIMIT_EVENT)
-
-        self.clear_faults()
-
-        return errors
-
-    def __throttle_tests(self) -> int:
-        """_throttle_tests: Checks for any throttle errors in DRV8830, whether the returned reading is
-        outside of the set range indicated in the driver file
-
-        :return: true if test passes, false if fails
-        """
-        throttle_volts_val = self.throttle_volts()
-        if throttle_volts_val is not None:
-            if (throttle_volts_val < -5.06) or (throttle_volts_val > 5.06):
-                return Errors.TORQUE_COIL_THROTTLE_OUTSIDE_RANGE
-
-        throttle_raw_val = self.throttle_raw()
-        if throttle_raw_val is not None:
-            if (throttle_raw_val < -63) or (throttle_raw_val > 63):
-                return Errors.TORQUE_COIL_THROTTLE_OUTSIDE_RANGE
-
-        return Errors.NO_ERROR
+                results.append(Errors.TORQUE_COIL_EXTENDED_CURRENT_LIMIT_EVENT)
+            self.clear_faults()
+        return results
 
     def deinit(self):
         return

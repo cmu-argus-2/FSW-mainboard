@@ -4,8 +4,7 @@ from adafruit_bus_device.i2c_device import I2CDevice
 from adafruit_register.i2c_bit import ROBit
 from adafruit_register.i2c_bits import ROBits, RWBits
 from adafruit_register.i2c_struct import Struct
-
-# from adafruit_bus_device.spi_device import SPIDevice
+from hal.drivers.errors import Errors
 from micropython import const
 from ulab.numpy import pi
 
@@ -422,7 +421,7 @@ class BMX160:
 
     ### ACTUAL API
     def gyro(self):
-        # deg/s
+        # rad/s
         return tuple(x * self.GYR_SCALAR for x in self._gyro)
 
     def accel(self):
@@ -489,7 +488,7 @@ class BMX160:
             # read out the value to see if it changed successfully
             rangeconst = self._gyro_range
             val = _BMX160_GYRO_RANGE_VALUES[rangeconst]
-            self.GYR_SCALAR = val / 32768.0
+            self.GYR_SCALAR = (val / 32768.0) * self.DEG_TO_RAD  # Convert deg/s to rad/s
         else:
             pass
 
@@ -528,8 +527,7 @@ class BMX160:
         `BMX160_GYRO_FASTSTARTUP_MODE`
         """
         if powermode not in _BMX160_GYRO_MODES:
-            print("Unknown gyroscope powermode: " + str(powermode))
-            return
+            raise ValueError("Unknown gyroscope powermode: " + str(powermode))
 
         self.write_u8(_BMX160_COMMAND_REG_ADDR, powermode)
         if int(self.query_error) == 0:
@@ -613,8 +611,7 @@ class BMX160:
         `BMI160_ACCEL_SUSPEND_MODE`
         """
         if powermode not in _BMX160_ACCEL_MODES:
-            print("Unknown accelerometer power mode: " + str(powermode))
-            return
+            raise ValueError("Unknown accelerometer power mode: " + str(powermode))
 
         self.write_u8(_BMX160_COMMAND_REG_ADDR, powermode)
         if int(self.query_error) == 0:
@@ -718,6 +715,17 @@ class BMX160:
             self._BUFFER[1] = val & 0xFF
             i2c.write(self._BUFFER, end=2)
 
+    ######################## ERROR HANDLING ########################
+
+    @property
+    def device_errors(self):
+        results = []
+        if self.drop_cmd_err:
+            results.append(Errors.IMU_DROP_COMMAND_ERROR)
+        if self.fatal_err:
+            results.append(Errors.IMU_FATAL_ERROR)
+        return results
+
     def deinit(self):
         return
 
@@ -740,7 +748,7 @@ def find_nearest_valid(desired, possible_values):
 def settingswarning(interp=""):
     if interp != "":
         interp = " --" + interp + " -- "
-    print(
+    raise Exception(
         "BMX160 error occurred during "
         + interp
         + "setting change. \nSetting not successfully changed and BMX160 may be in error state."
