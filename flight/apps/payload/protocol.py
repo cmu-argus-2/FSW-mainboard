@@ -16,12 +16,14 @@ The outgoing packet format is as follows:
 
 The incoming packet format is as follows:
 - Byte 0: Command ID
-- Byte 1-2: Sequence count
-- Byte 3: Data length.
-- Byte 4-249: Data
+- Byte 1-2: Sequence count (uint16, big-endian)
+- Byte 3: Data length (uint8)
+- Byte 4-243: Data payload (240 bytes max)
+- Byte 244-245: CRC16 (uint16, big-endian)
+Total: 246 bytes per packet
 
 
-Author: Ibrahima Sory Sow
+Author: Ibrahima Sory Sow, Perrin Tong
 
 """
 from apps.payload.definitions import (
@@ -39,8 +41,63 @@ from apps.payload.definitions import (
 _RECV_PCKT_BUF_SIZE = 256  # buffer a bit bigger on purpose
 _SEND_PCKT_BUF_SIZE = 32
 
+# Incoming packet structure constants
+_CMD_ID_IDX = 0
+_SEQ_COUNT_START = 1
+_SEQ_COUNT_END = 3
+_DATA_LEN_IDX = 3
+_DATA_START = 4
+_DATA_END = 244  # 4 + 240 bytes
+_CRC16_START = 244
+_CRC16_END = 246
+_TOTAL_PACKET_SIZE = 246
+
+# CRC16-CCITT parameters
+_CRC16_POLY = 0x1021
+_CRC16_INIT = 0xFFFF
+_CRC16_RESIDUE = 0x0000
+
 # Byte order
 _BYTE_ORDER = "big"
+
+
+def calculate_crc16(data: bytes) -> int:
+    """
+    Calculate CRC16-CCITT for the given data.
+
+    Args:
+        data: Bytes to calculate CRC over
+
+    Returns:
+        16-bit CRC value
+    """
+    crc = _CRC16_INIT
+
+    for byte in data:
+        crc ^= byte << 8
+        for _ in range(8):
+            if crc & 0x8000:
+                crc = (crc << 1) ^ _CRC16_POLY
+            else:
+                crc = crc << 1
+            crc &= 0xFFFF  # Keep it 16-bit
+
+    return crc
+
+
+def verify_crc16(data_with_crc: bytes) -> bool:
+    """
+    Verify CRC16 by checking for correct residue.
+    When CRC16 is calculated over data+CRC, the result should be the residue value.
+
+    Args:
+        data_with_crc: Complete packet including the 2-byte CRC at the end
+
+    Returns:
+        True if CRC is valid, False otherwise
+    """
+    residue = calculate_crc16(data_with_crc)
+    return residue == _CRC16_RESIDUE
 
 
 class Encoder:
@@ -204,13 +261,15 @@ class Encoder:
 class Decoder:
 
     _recv_buffer = bytearray(_RECV_PCKT_BUF_SIZE)
-    _sequence_count_idx = slice(1, 3)
-    _data_length_idx = 3
-    _data_idx = slice(4, 255)
+    _sequence_count_idx = slice(_SEQ_COUNT_START, _SEQ_COUNT_END)
+    _data_length_idx = _DATA_LEN_IDX
+    _data_idx = slice(_DATA_START, _DATA_END)
+    _crc_idx = slice(_CRC16_START, _CRC16_END)
 
     _curr_id = 0
     _sequence_count = 0
     _curr_data_length = 0
+    _crc_valid = False
 
     # specific buffer for file packet to be stored there for retrieval
     _file_recv_buffer = bytearray(_RECV_PCKT_BUF_SIZE)
@@ -219,12 +278,23 @@ class Decoder:
     def decode(cls, data):
         cls._recv_buffer = data
 
+        # Verify packet size
+        if len(data) < _TOTAL_PACKET_SIZE:
+            return ErrorCodes.INVALID_PACKET
+
+        # Verify CRC16 first - check entire packet including CRC
+        cls._crc_valid = verify_crc16(cls._recv_buffer[:_TOTAL_PACKET_SIZE])
+        if not cls._crc_valid:
+            return ErrorCodes.INVALID_PACKET
+
         # header processing
-        cls._curr_id = int(cls._recv_buffer[0])
+        cls._curr_id = int(cls._recv_buffer[_CMD_ID_IDX])
         cls._sequence_count = int.from_bytes(cls._recv_buffer[cls._sequence_count_idx], byteorder=_BYTE_ORDER)
         cls._curr_data_length = int(cls._recv_buffer[cls._data_length_idx])
-        # logger.info("Current ID: ", cls._curr_id)
-        # logger.info("Current data length: ", cls._curr_data_length)
+
+        # Validate data length doesn't exceed maximum payload
+        if cls._curr_data_length > 240:
+            return ErrorCodes.INVALID_PACKET
 
         if cls._curr_id == CommandID.PING_ACK:
             return cls.decode_ping()

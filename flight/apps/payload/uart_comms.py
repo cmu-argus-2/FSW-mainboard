@@ -7,7 +7,7 @@ from hal.configuration import SATELLITE
 class PayloadUART(PayloadCommunicationInterface):
     _connected = False
     _uart = None
-    _PCKT_SIZE = 250  # USED TO BE 250
+    _PCKT_SIZE = 246  # Incoming packets: 4 byte header + 240 byte data + 2 byte CRC16
 
     @classmethod
     def connect(cls):

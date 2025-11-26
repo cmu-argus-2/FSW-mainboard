@@ -221,7 +221,7 @@ class Resp_RequestStorageInfo:
 
 
 class Resp_RequestNextFilePacket:
-    received_data = bytearray(246)  # make a constant instead
+    received_data = bytearray(240)  # 240 bytes max payload per packet
     received_data_size = 0
     packet_nb = 0
     no_more_packet_to_receive = False
@@ -229,7 +229,7 @@ class Resp_RequestNextFilePacket:
 
     @classmethod
     def reset(cls):
-        cls.received_data = bytearray(246)
+        cls.received_data = bytearray(240)
         cls.received_data_size = 0
         cls.no_more_packet_to_receive = False
         cls.packet_nb = 0

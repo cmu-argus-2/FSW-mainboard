@@ -4,7 +4,7 @@ Payload Control Interface
 This module defines the Payload Controller class, which is responsible for managing the main interface between
 the host and the Payload.
 
-Author: Ibrahima Sory Sow
+Author: Ibrahima Sory Sow, Perrin Tong
 
 """
 
@@ -214,7 +214,7 @@ class PayloadController:
                 logger.error("File transfer already in progress. Cannot request image.")
                 return
 
-            if not DH.data_process_exists("img"):
+            if not DH.file_process_exists("img"):
                 logger.error("Image data process not found. Cannot request image.")
                 return
 
