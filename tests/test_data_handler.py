@@ -296,7 +296,7 @@ def test_file_process_image_reconstruction(sd_root, tmp_path):
     original_size = len(original_image_data)
 
     # Calculate max data per packet
-    max_data_size = dh._FIXED_PACKET_SIZE - dh._PACKET_HEADER_SIZE  # 198 bytes
+    max_data_size = dh._FIXED_PACKET_SIZE - dh._PACKET_HEADER_SIZE  # 240 bytes
 
     # Split image into packets and log them
     offset = 0

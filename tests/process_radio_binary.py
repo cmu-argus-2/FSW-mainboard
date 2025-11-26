@@ -17,7 +17,6 @@ sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, "flight"))
 
 import tests.cp_mock  # noqa: E402 F401
-import core.data_handler as dh  # noqa: E402
 from core.data_handler import DataHandler as DH  # noqa: E402
 
 
@@ -63,7 +62,7 @@ def process_custom_binary(input_path: str, output_path: str):
 
     # Create temporary directory for DataHandler
     with tempfile.TemporaryDirectory() as tmpdir:
-        dh._HOME_PATH = tmpdir
+        DH._HOME_PATH = tmpdir
         file_tag = "radio_img"
 
         # Register file process
@@ -71,7 +70,7 @@ def process_custom_binary(input_path: str, output_path: str):
         file_process = DH.data_process_registry[file_tag]
 
         # Calculate max data per packet for FileProcess
-        max_data_size = dh._FIXED_PACKET_SIZE - dh._PACKET_HEADER_SIZE  # 240 bytes
+        max_data_size = DH._FIXED_PACKET_SIZE - DH._PACKET_HEADER_SIZE  # 240 bytes
 
         print("\nParsing custom packets from input file...")
         # Parse the original binary file to extract custom packets
@@ -141,9 +140,9 @@ def process_custom_binary(input_path: str, output_path: str):
         # Verify file structure
         file_size = os.path.getsize(created_file)
         print(f"Output file size: {file_size} bytes")
-        print(f"  = {dh._DH_FILE_HEADER_SIZE} bytes (ARGUS header)")
-        print(f"  + {dh_packet_count} × {dh._FIXED_PACKET_SIZE} bytes (fixed packets)")
-        expected_size = dh._DH_FILE_HEADER_SIZE + dh_packet_count * dh._FIXED_PACKET_SIZE
+        print(f"  = {DH._DH_FILE_HEADER_SIZE} bytes (ARGUS header)")
+        print(f"  + {dh_packet_count} × {DH._FIXED_PACKET_SIZE} bytes (fixed packets)")
+        expected_size = DH._DH_FILE_HEADER_SIZE + dh_packet_count * DH._FIXED_PACKET_SIZE
         print(f"  = {expected_size} bytes")
 
         # Copy to output location

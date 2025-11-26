@@ -601,6 +601,7 @@ class FileProcess(DataProcess):
     def __init__(
         self,
         tag_name: str,
+        file_extension: str = "bin",
         data_limit: int = _FILE_DATA_LIMIT,
         circular_buffer_size: int = 20,
         buffer_size: int = 512,
@@ -617,7 +618,7 @@ class FileProcess(DataProcess):
         """
         self.tag_name = tag_name
         self.file = None
-        self.file_extension = "bin"
+        self.file_extension = file_extension
 
         self.status = _CLOSED
 
@@ -1103,7 +1104,6 @@ class DataHandler:
         Parameters:
         - tag_name (str): The name of the file process.
         - file_extension (str, optional): File extension without dot (default is 'bin').
-                                         Note: Currently not used, all files use 'bin' extension.
         - data_limit (int, optional): Maximum file size in bytes (default is 100KB).
         - circular_buffer_size (int, optional): Number of files in circular buffer (default is 20).
         - buffer_size (int, optional): Write buffer size in bytes (default is 512).
@@ -1114,6 +1114,7 @@ class DataHandler:
         try:
             cls.data_process_registry[tag_name] = FileProcess(
                 tag_name=tag_name,
+                file_extension=file_extension,
                 data_limit=data_limit,
                 circular_buffer_size=circular_buffer_size,
                 buffer_size=buffer_size,
@@ -1419,7 +1420,6 @@ class DataHandler:
         and prepare for deletion.
         """
         try:
-            print(f"Requesting TM path for tag: {tag_name}, {cls.data_process_registry}")
             if tag_name in cls.data_process_registry:
                 return cls.data_process_registry[tag_name].request_TM_path(latest=latest, file_time=file_time)
             else:
