@@ -70,7 +70,7 @@ class MSG_ID:
     """
 
     # Header ID for Argus - THIS MUST BE UNIQUE FOR EACH SPACECRAFT
-    ARGUS_ID = 0x01
+    ARGUS_ID = 0x00
 
     # Header ID for all ground stations (genericized)
     GS_ID = 0x04
@@ -342,7 +342,7 @@ class SATELLITE_RADIO:
 
             # Extract file_tag from filename (format: tag_timestamp.ext)
             # This is more robust than path indices and works with any directory structure
-            filename = os.path.basename(cls.filepath)
+            filename = cls.filepath.split("/")[-1]  # Get filename from path (CircuitPython compatible)
             file_tag = filename.split("_")[0]
             cls.file_ID = file_ids_str[file_tag]
 
@@ -387,7 +387,7 @@ class SATELLITE_RADIO:
 
         # Extract file_tag from filename (format: tag_timestamp.ext)
         # This is more robust than path indices and works with any directory structure
-        filename = os.path.basename(cls.filepath)
+        filename = cls.filepath.split("/")[-1]  # Get filename from path (CircuitPython compatible)
         file_tag = filename.split("_")[0]
 
         # Check if this is a FileProcess (packet-based file)

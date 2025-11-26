@@ -1111,12 +1111,18 @@ class DataHandler:
         Returns:
         - None
         """
-        cls.data_process_registry[tag_name] = FileProcess(
-            tag_name=tag_name,
-            data_limit=data_limit,
-            circular_buffer_size=circular_buffer_size,
-            buffer_size=buffer_size,
-        )
+        try:
+            cls.data_process_registry[tag_name] = FileProcess(
+                tag_name=tag_name,
+                data_limit=data_limit,
+                circular_buffer_size=circular_buffer_size,
+                buffer_size=buffer_size,
+            )
+            logger.info(f"Registered file process: {tag_name}")
+        except Exception as e:
+            logger.error(f"Failed to register file process '{tag_name}': {e}")
+            if cls.SD_ERROR_FLAG:
+                logger.warning(f"File process {tag_name} not registered due to SD card error.")
 
     @classmethod
     def log_data(cls, tag_name: str, data: List) -> None:
@@ -1413,6 +1419,7 @@ class DataHandler:
         and prepare for deletion.
         """
         try:
+            print(f"Requesting TM path for tag: {tag_name}, {cls.data_process_registry}")
             if tag_name in cls.data_process_registry:
                 return cls.data_process_registry[tag_name].request_TM_path(latest=latest, file_time=file_time)
             else:
