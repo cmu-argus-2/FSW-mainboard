@@ -342,7 +342,7 @@ class SATELLITE_RADIO:
 
             # Extract file_tag from filename (format: tag_timestamp.ext)
             # This is more robust than path indices and works with any directory structure
-            filename = cls.filepath.split("/")[-1]  # Get filename from path (CircuitPython compatible)
+            filename = cls.filepath.split("/")[-1]  # Get filename from path
             file_tag = filename.split("_")[0]
             cls.file_ID = file_ids_str[file_tag]
 
@@ -386,8 +386,7 @@ class SATELLITE_RADIO:
             return 1
 
         # Extract file_tag from filename (format: tag_timestamp.ext)
-        # This is more robust than path indices and works with any directory structure
-        filename = cls.filepath.split("/")[-1]  # Get filename from path (CircuitPython compatible)
+        filename = cls.filepath.split("/")[-1]  # Get filename from path
         file_tag = filename.split("_")[0]
 
         # Check if this is a FileProcess (packet-based file)
