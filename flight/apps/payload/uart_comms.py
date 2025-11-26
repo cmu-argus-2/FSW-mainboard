@@ -7,7 +7,7 @@ from hal.configuration import SATELLITE
 class PayloadUART(PayloadCommunicationInterface):
     _connected = False
     _uart = None
-    _PCKT_SIZE = 250 # USED TO BE 250
+    _PCKT_SIZE = 250  # USED TO BE 250
 
     @classmethod
     def connect(cls):
@@ -42,7 +42,7 @@ class PayloadUART(PayloadCommunicationInterface):
         """Checks if a packet is available to read."""
         if not cls._connected or cls._uart is None:
             return False
-        return cls._uart.in_waiting  >= 0
+        return cls._uart.in_waiting >= 0
 
     @classmethod
     def get_id(cls):

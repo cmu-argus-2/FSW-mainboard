@@ -1,7 +1,9 @@
-from busio import UART
+# isort: skip_file
 import time
 
-ser =  busio.UART('/dev/ttyTHS1', 115200, timeout=1)
+from busio import UART
+
+ser = UART("/dev/ttyTHS1", 115200, timeout=1)
 
 time.sleep(2)
 
@@ -11,4 +13,3 @@ print("Sent message to device")
 while True:
     received = ser.read()
     print(f"Received: {received.decode('utf-8').strip()}")
-
