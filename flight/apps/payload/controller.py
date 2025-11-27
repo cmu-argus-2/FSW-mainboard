@@ -66,6 +66,7 @@ class PayloadController:
 
     # Contains the last command IDs sent to the Payload
     cmd_sent = 0
+    last_cmd_sent = None  # Track the last command ID sent
     timestamp_cmd_sent = 0
 
     # No response counter
@@ -98,6 +99,16 @@ class PayloadController:
     no_more_file_packet_to_receive = False
     just_requested_file_packet = False
 
+    # Packet retry mechanism for CRC failures
+    packet_retry_count = 0
+    MAX_PACKET_RETRIES = 3
+
+    # Communication statistics
+    crc_failure_count = 0
+    total_packets_received = 0
+    total_packets_retried = 0
+    packets_skipped_after_max_retries = 0  # Packets filled with zeros due to persistent CRC failures
+
     # OD variables
     od_status: ODStatus = None
 
@@ -117,19 +128,19 @@ class PayloadController:
             return
 
         # Using build flag
-        if SATELLITE.BUILD == "FLIGHT":
-            from apps.payload.uart_comms import PayloadUART
+        # if SATELLITE.BUILD == "FLIGHT":
+        from apps.payload.uart_comms import PayloadUART
 
-            cls.communication_interface = PayloadUART
-            cls._interface_injected = True
-            logger.info("Payload UART communication interface injected.")
+        cls.communication_interface = PayloadUART
+        cls._interface_injected = True
+        logger.info("Payload UART communication interface injected.")
 
-        elif SATELLITE.BUILD == "SIL":
-            from apps.payload.ipc_comms import PayloadIPC
+        # elif SATELLITE.BUILD == "SIL":
+        #     from apps.payload.ipc_comms import PayloadIPC
 
-            cls.communication_interface = PayloadIPC
-            cls._interface_injected = True
-            logger.info("Payload IPC communication interface injected.")
+        #     cls.communication_interface = PayloadIPC
+        #     cls._interface_injected = True
+        #     logger.info("Payload IPC communication interface injected.")
 
         assert cls.communication_interface is not None, "Communication interface not injected. Cannot initialize controller."
 
@@ -215,7 +226,7 @@ class PayloadController:
                 return
 
             if not DH.file_process_exists("img"):
-                logger.error("Image data process not found. Cannot request image.")
+                logger.error("Image file process not found. Cannot request image.")
                 return
 
             cls.request_image_transfer()
@@ -295,8 +306,12 @@ class PayloadController:
             # logger.info(f"Cmd sent: {cls.cmd_sent}")
 
             if not cls._did_we_send_a_command():  # Add timeout for retry
-                # Check for telemetry
-                if cls._now - cls._prev_tm_time > cls.telemetry_period and not cls._not_waiting_tm_response:
+                # Check for telemetry (but not during active file transfer)
+                if (
+                    not FileTransfer.in_progress
+                    and cls._now - cls._prev_tm_time > cls.telemetry_period
+                    and not cls._not_waiting_tm_response
+                ):
                     cls.request_telemetry()
 
             if not cls._did_we_send_a_command():  # Add timeout for retry
@@ -330,11 +345,37 @@ class PayloadController:
 
     @classmethod
     def receive_response(cls):
-        recv = cls.communication_interface.receive()
-        # logger.info(recv)
+        # Poll for response with timeout
+        timeout = 0.015  # 15ms timeout
+        poll_interval = 0.001  # Check every 1ms
+        start_time = TPM.monotonic()
+
+        recv = bytearray()
+        while TPM.monotonic() - start_time < timeout:
+            recv = cls.communication_interface.receive()
+            if recv:
+                # Check if this is the response we're expecting
+                if cls.last_cmd_sent is not None:
+                    # Peek at command ID (first byte of packet)
+                    if len(recv) >= 1:
+                        received_cmd_id = recv[0]
+                        if received_cmd_id != cls.last_cmd_sent:
+                            logger.warning(
+                                f"[DEBUG] Skipping mismatched response: "
+                                f"expected cmd_id={cls.last_cmd_sent:02x}, got {received_cmd_id:02x}"
+                            )
+                            recv = bytearray()  # Clear and continue polling
+                            continue
+                # Got the right response!
+                break
+            TPM.sleep(poll_interval)
+
+        logger.info(f"[DEBUG] receive_response() called, recv length: {len(recv) if recv else 0}")
+
         if recv:
             res = Decoder.decode(recv)
             cls.cmd_sent -= 1
+            cls.last_cmd_sent = None  # Clear after receiving
         else:
             res = ErrorCodes.NO_RESPONSE
         return cls.handle_responses(res)
@@ -358,22 +399,116 @@ class PayloadController:
                 FileTransfer.start_transfer(FileTransferType.IMAGE)
                 logger.info("File transfer started.")
                 cls.just_requested_file_packet = False
+                cls.packet_retry_count = 0  # Reset retry counter for new transfer
+                cls.packets_skipped_after_max_retries = 0  # Reset skip counter
+                cls.cmd_sent = 0  # Reset command counter to allow file packet requests
                 return True
 
             elif sent_cmd_id == CommandID.REQUEST_NEXT_FILE_PACKET and resp == ErrorCodes.OK:
-                # Continue the file transfer
+                # Continue the file transfer, packet received successfully
                 cls.just_requested_file_packet = False
-                DH.log_image(Resp_RequestNextFilePacket.received_data)
-                FileTransfer.ack_packet()  # increment the counter
-                # if FileTransfer.packet_nb == 2:
-                #    FileTransfer.packet_nb = 3129
+                cls.packet_retry_count = 0  # Reset retry counter on success
+                cls.total_packets_received += 1
+                cls.cmd_sent = 0  # Reset command counter to allow next packet request
+
+                # Log the received packet data (only actual payload)
+                DH.log_file("img", Resp_RequestNextFilePacket.received_data[: Resp_RequestNextFilePacket.received_data_size])
+                FileTransfer.ack_packet()  # increment the counter to next packet
                 return True
+
+            elif sent_cmd_id == CommandID.REQUEST_NEXT_FILE_PACKET and resp == ErrorCodes.INVALID_PACKET:
+                # CRC verification failed or packet corrupted - retry same packet
+                cls.packet_retry_count += 1
+                cls.crc_failure_count += 1
+                cls.just_requested_file_packet = False  # Allow retry
+
+                if cls.packet_retry_count >= cls.MAX_PACKET_RETRIES:
+                    # Max retries exceeded, skip this packet and continue with rest of file
+                    logger.error(
+                        f"CRC failed {cls.MAX_PACKET_RETRIES} times for packet "
+                        f"{FileTransfer.packet_nb}, inserting empty packet and continuing"
+                    )
+
+                    # Log empty 240-byte packet to mark the corrupted/missing data
+                    empty_packet = bytearray(240)  # All zeros
+                    DH.log_file("img", empty_packet)
+
+                    cls.packets_skipped_after_max_retries += 1
+
+                    # Move to next packet
+                    FileTransfer.ack_packet()
+                    cls.packet_retry_count = 0  # Reset retry counter for next packet
+                    cls.last_error = ErrorCodes.INVALID_PACKET  # Still track that we had an error
+
+                    return False  # Indicate error occurred, but continue transfer
+                else:
+                    # Retry the same packet (don't increment packet_nb)
+                    cls.total_packets_retried += 1
+                    logger.warning(
+                        f"CRC failed for packet {FileTransfer.packet_nb}, "
+                        f"retry {cls.packet_retry_count}/{cls.MAX_PACKET_RETRIES}"
+                    )
+                    # DON'T call FileTransfer.ack_packet() - we want to retry the SAME packet
+                    return False
+
+            elif sent_cmd_id == CommandID.REQUEST_NEXT_FILE_PACKET and resp == ErrorCodes.NO_RESPONSE:
+                # No response or incomplete packet received - retry same packet
+                cls.packet_retry_count += 1
+                cls.just_requested_file_packet = False  # Allow retry
+
+                if cls.packet_retry_count >= cls.MAX_PACKET_RETRIES:
+                    # Max retries exceeded, skip this packet
+                    logger.error(
+                        f"No response {cls.MAX_PACKET_RETRIES} times for packet "
+                        f"{FileTransfer.packet_nb}, inserting empty packet and continuing"
+                    )
+
+                    # Log empty 240-byte packet
+                    empty_packet = bytearray(240)
+                    DH.log_file("img", empty_packet)
+
+                    cls.packets_skipped_after_max_retries += 1
+
+                    # Move to next packet
+                    FileTransfer.ack_packet()
+                    cls.packet_retry_count = 0
+
+                    return False
+                else:
+                    # Retry the same packet
+                    cls.total_packets_retried += 1
+                    logger.warning(
+                        f"No response for packet {FileTransfer.packet_nb}, "
+                        f"retry {cls.packet_retry_count}/{cls.MAX_PACKET_RETRIES}"
+                    )
+                    return False
 
             elif sent_cmd_id == CommandID.REQUEST_NEXT_FILE_PACKET and resp == ErrorCodes.NO_MORE_FILE_PACKET:
                 cls.no_more_file_packet_to_receive = True
                 FileTransfer.stop_transfer()
-                DH.image_completed()
-                logger.info("Completed image transfer. No more file packet to receive.")
+                DH.file_completed("img")
+
+                # Log comprehensive transfer statistics
+                if cls.packets_skipped_after_max_retries > 0:
+                    logger.warning(
+                        f"Completed image transfer with CORRUPTION: "
+                        f"{cls.total_packets_received} packets received, "
+                        f"{cls.packets_skipped_after_max_retries} packets corrupted (filled with zeros), "
+                        f"{cls.crc_failure_count} total CRC failures, "
+                        f"{cls.total_packets_retried} retries"
+                    )
+                else:
+                    logger.info(
+                        f"Completed image transfer: {cls.total_packets_received} packets, "
+                        f"{cls.crc_failure_count} CRC failures, {cls.total_packets_retried} retries"
+                    )
+
+                # Reset statistics for next transfer
+                cls.crc_failure_count = 0
+                cls.total_packets_received = 0
+                cls.total_packets_retried = 0
+                cls.packets_skipped_after_max_retries = 0
+                cls.packet_retry_count = 0
                 return True
 
             elif sent_cmd_id == CommandID.SHUTDOWN and resp == ErrorCodes.OK:
@@ -390,6 +525,7 @@ class PayloadController:
     @classmethod
     def ping(cls):
         cls.communication_interface.send(Encoder.encode_ping())
+        cls.last_cmd_sent = CommandID.PING  # Track command
         resp = cls.communication_interface.receive()
         if resp:  # a ping is immediate so if we don't receive a response, we assume it is not connected
             return Decoder.decode(resp) == _PING_RESP_VALUE
@@ -400,6 +536,7 @@ class PayloadController:
         # Simply send the shutdown command
         cls.communication_interface.send(Encoder.encode_shutdown())
         cls.cmd_sent += 1
+        cls.last_cmd_sent = CommandID.SHUTDOWN  # Track command
         cls.time_we_sent_shutdown = TPM.monotonic()
 
     @classmethod
@@ -407,6 +544,7 @@ class PayloadController:
         logger.info("Requesting telemetry...")
         cls.communication_interface.send(Encoder.encode_request_telemetry())
         cls.cmd_sent += 1
+        cls.last_cmd_sent = CommandID.REQUEST_TELEMETRY  # Track command
         cls._not_waiting_tm_response = True
 
     @classmethod
@@ -469,11 +607,13 @@ class PayloadController:
     def enable_cameras(cls):
         cls.communication_interface.send(Encoder.encode_enable_cameras())
         cls.cmd_sent += 1
+        cls.last_cmd_sent = CommandID.ENABLE_CAMERAS  # Track command
 
     @classmethod
     def disable_cameras(cls):
         cls.communication_interface.send(Encoder.encode_disable_cameras())
         cls.cmd_sent += 1
+        cls.last_cmd_sent = CommandID.DISABLE_CAMERAS  # Track command
 
     @classmethod
     def request_image_transfer(cls):
@@ -482,8 +622,17 @@ class PayloadController:
             logger.error("Cannot request image transfer. Payload is not ready.")
             return False
 
-        cls.communication_interface.send(Encoder.encode_request_image())
+        # Don't request new image if transfer already in progress
+        if FileTransfer.in_progress:
+            logger.warning("Image transfer already in progress, ignoring duplicate request")
+            return False
+
+        cmd_bytes = Encoder.encode_request_image()
+        hex_str = " ".join(f"{b:02x}" for b in cmd_bytes[:10])
+        logger.info(f"[DEBUG TX] Sending REQUEST_IMAGE command: {hex_str}")
+        cls.communication_interface.send(cmd_bytes)
         cls.cmd_sent += 1
+        cls.last_cmd_sent = CommandID.REQUEST_IMAGE  # Track command
         cls.no_more_file_packet_to_receive = False
         return True
 
@@ -494,8 +643,11 @@ class PayloadController:
             return False
 
         if not cls.just_requested_file_packet:
+            # Flush buffer before requesting file packet to clear any stale PING_ACKs
+            cls.communication_interface.flush_rx_buffer()
             cls.communication_interface.send(Encoder.encode_request_next_file_packet(FileTransfer.packet_nb))
             cls.cmd_sent += 1
+            cls.last_cmd_sent = CommandID.REQUEST_NEXT_FILE_PACKET  # Track command
             cls.just_requested_file_packet = True
             logger.info(f"Requesting next file packet {FileTransfer.packet_nb}...")
             return True

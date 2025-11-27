@@ -36,6 +36,7 @@ from apps.payload.definitions import (
     Resp_EnableCameras,
     Resp_RequestNextFilePacket,
 )
+from core import logger
 
 # Asymmetric sizes for send and receive buffers
 _RECV_PCKT_BUF_SIZE = 256  # buffer a bit bigger on purpose
@@ -119,70 +120,70 @@ class Encoder:
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.PING_ACK
         cls._bytes_set_last_time = 1
-        return cls._send_buffer
+        return cls._send_buffer[:1]
 
     @classmethod
     def encode_shutdown(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.SHUTDOWN
         cls._bytes_set_last_time = 1
-        return cls._send_buffer
+        return cls._send_buffer[:1]
 
     @classmethod
     def encode_request_telemetry(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.REQUEST_TELEMETRY
         cls._bytes_set_last_time = 1
-        return cls._send_buffer
+        return cls._send_buffer[:1]
 
     @classmethod
     def encode_enable_cameras(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.ENABLE_CAMERAS
         cls._bytes_set_last_time = 1
-        return cls._send_buffer
+        return cls._send_buffer[:1]
 
     @classmethod
     def encode_disable_cameras(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.DISABLE_CAMERAS
         cls._bytes_set_last_time = 1
-        return cls._send_buffer
+        return cls._send_buffer[:1]
 
     @classmethod
     def encode_capture_images(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.CAPTURE_IMAGES
         cls._bytes_set_last_time = 1
-        return cls._send_buffer
+        return cls._send_buffer[:1]
 
     @classmethod
     def encode_start_capture_images_periodically(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.START_CAPTURE_IMAGES_PERIODICALLY
         cls._bytes_set_last_time = 1
-        return cls._send_buffer
+        return cls._send_buffer[:1]
 
     @classmethod
     def encode_stop_capture_images(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.STOP_CAPTURE_IMAGES
         cls._bytes_set_last_time = 1
-        return cls._send_buffer
+        return cls._send_buffer[:1]
 
     @classmethod
     def encode_request_storage_info(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.REQUEST_STORAGE_INFO
         cls._bytes_set_last_time = 1
-        return cls._send_buffer
+        return cls._send_buffer[:1]
 
     @classmethod
     def encode_request_image(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.REQUEST_IMAGE
         cls._bytes_set_last_time = 1
-        return cls._send_buffer
+        return cls._send_buffer[:1]
 
     @classmethod
     def encode_request_next_file_packet(cls, packet_number):
@@ -190,63 +191,70 @@ class Encoder:
         cls._send_buffer[0] = CommandID.REQUEST_NEXT_FILE_PACKET
         cls._send_buffer[1:3] = packet_number.to_bytes(2, byteorder=_BYTE_ORDER)
         cls._bytes_set_last_time = 3
-        return cls._send_buffer
+
+        # Debug logging
+        from core import logger
+
+        hex_str = " ".join(f"{b:02x}" for b in cls._send_buffer[:3])
+        logger.info(f"[DEBUG TX] Encoded REQUEST_NEXT_FILE_PACKET: {hex_str} (packet_nb={packet_number})")
+
+        return cls._send_buffer[:3]  # Only return the bytes we actually set
 
     @classmethod
     def encode_clear_storage(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.CLEAR_STORAGE
         cls._bytes_set_last_time = 1
-        return cls._send_buffer
+        return cls._send_buffer[:1]
 
     @classmethod
     def encode_ping_od_status(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.PING_OD_STATUS
         cls._bytes_set_last_time = 1
-        return cls._send_buffer
+        return cls._send_buffer[:1]
 
     @classmethod
     def encode_run_od(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.RUN_OD
         cls._bytes_set_last_time = 1
-        return cls._send_buffer
+        return cls._send_buffer[:1]
 
     @classmethod
     def encode_request_od_result(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.REQUEST_OD_RESULT
         cls._bytes_set_last_time = 1
-        return cls._send_buffer
+        return cls._send_buffer[:1]
 
     @classmethod
     def encode_synchronize_time(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.SYNCHRONIZE_TIME
         cls._bytes_set_last_time = 1
-        return cls._send_buffer
+        return cls._send_buffer[:1]
 
     @classmethod
     def encode_full_reset(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.FULL_RESET
         cls._bytes_set_last_time = 1
-        return cls._send_buffer
+        return cls._send_buffer[:1]
 
     @classmethod
     def encode_debug_display_camera(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.DEBUG_DISPLAY_CAMERA
         cls._bytes_set_last_time = 1
-        return cls._send_buffer
+        return cls._send_buffer[:1]
 
     @classmethod
     def encode_debug_stop_display(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.DEBUG_STOP_DISPLAY
         cls._bytes_set_last_time = 1
-        return cls._send_buffer
+        return cls._send_buffer[:1]
 
     # Generic example without any checking
     @classmethod
@@ -278,23 +286,47 @@ class Decoder:
     def decode(cls, data):
         cls._recv_buffer = data
 
-        # Verify packet size
-        if len(data) < _TOTAL_PACKET_SIZE:
+        # Variable-length packets: header (4) + data (variable) + CRC (2, only for file packets)
+        packet_len = len(data)
+
+        if packet_len < 5:  # Minimum: 4 header + 1 status (ACK)
+            logger.error(f"[DEBUG] Invalid packet size: {packet_len} (minimum 5)")
             return ErrorCodes.INVALID_PACKET
 
-        # Verify CRC16 first - check entire packet including CRC
-        cls._crc_valid = verify_crc16(cls._recv_buffer[:_TOTAL_PACKET_SIZE])
-        if not cls._crc_valid:
-            return ErrorCodes.INVALID_PACKET
+        # Debug: print packet
+        hex_bytes = " ".join(f"{b:02x}" for b in data)
+        logger.info(f"[DEBUG] Received packet ({packet_len} bytes): {hex_bytes}")
 
-        # header processing
+        # Extract header
         cls._curr_id = int(cls._recv_buffer[_CMD_ID_IDX])
-        cls._sequence_count = int.from_bytes(cls._recv_buffer[cls._sequence_count_idx], byteorder=_BYTE_ORDER)
-        cls._curr_data_length = int(cls._recv_buffer[cls._data_length_idx])
+        cls._sequence_count = int.from_bytes(cls._recv_buffer[_SEQ_COUNT_START:_SEQ_COUNT_END], byteorder=_BYTE_ORDER)
+        cls._curr_data_length = int(cls._recv_buffer[_DATA_LEN_IDX])
 
-        # Validate data length doesn't exceed maximum payload
-        if cls._curr_data_length > 240:
-            return ErrorCodes.INVALID_PACKET
+        logger.info(f"[DEBUG] decode(): cmd_id={cls._curr_id}, seq={cls._sequence_count}, data_len={cls._curr_data_length}")
+
+        # ACKs are 5 bytes (no CRC), file packets have CRC
+        if packet_len == 5:
+            # This is an ACK/NACK - no CRC check
+            expected_size = 4 + cls._curr_data_length
+            if packet_len != expected_size:
+                logger.error(f"[DEBUG] ACK size mismatch: got {packet_len}, expected {expected_size}")
+                return ErrorCodes.INVALID_PACKET
+            cls._crc_valid = True  # No CRC for ACKs
+        else:
+            # File packet or other data - has CRC
+            expected_size = 4 + cls._curr_data_length + 2  # header + data + CRC
+            if packet_len != expected_size:
+                logger.error(
+                    f"[DEBUG] Packet size mismatch: got {packet_len}, "
+                    f"expected {expected_size} (data_len={cls._curr_data_length})"
+                )
+                return ErrorCodes.INVALID_PACKET
+
+            # Verify CRC16 over entire packet (header + data + CRC)
+            cls._crc_valid = verify_crc16(cls._recv_buffer)
+            if not cls._crc_valid:
+                logger.error("[DEBUG] CRC check failed")
+                return ErrorCodes.INVALID_PACKET
 
         if cls._curr_id == CommandID.PING_ACK:
             return cls.decode_ping()
@@ -307,6 +339,7 @@ class Decoder:
         elif cls._curr_id == CommandID.DISABLE_CAMERAS:
             return cls.decode_disable_cameras()
         elif cls._curr_id == CommandID.REQUEST_IMAGE:
+            logger.info("[DEBUG] Calling decode_request_image()")
             return cls.decode_request_image()
         elif cls._curr_id == CommandID.REQUEST_NEXT_FILE_PACKET:
             return cls.decode_request_next_file()
@@ -440,32 +473,61 @@ class Decoder:
             return ErrorCodes.INVALID_PACKET
 
         resp = int(cls._recv_buffer[cls._data_idx][0])
-        err = int(cls._recv_buffer[cls._data_idx][1])
-        if resp == ACK.ERROR:
+
+        logger.info(
+            f"[DEBUG] decode_request_image: data_length={cls._curr_data_length}, "
+            f"resp_byte={resp:#x}, ACK.SUCCESS={ACK.SUCCESS:#x}, ACK.ERROR={ACK.ERROR:#x}"
+        )
+
+        if resp == ACK.SUCCESS:
+            logger.info("[DEBUG] Decoded as SUCCESS")
+            return ErrorCodes.OK
+        elif resp == ACK.ERROR:
+            if cls._curr_data_length < 2:
+                return ErrorCodes.INVALID_PACKET
+            err = int(cls._recv_buffer[cls._data_idx][1])
+            logger.error(f"[DEBUG] Decoded as ERROR with code: {err}")
             if err == PayloadErrorCodes.FILE_NOT_AVAILABLE:
                 return ErrorCodes.FILE_NOT_AVAILABLE
             else:
                 return ErrorCodes.INVALID_RESPONSE
-        elif resp == ACK.SUCCESS:
-            return ErrorCodes.OK
+        else:
+            logger.error(f"[DEBUG] Unknown ACK type: {resp:#x}")
+            return ErrorCodes.INVALID_RESPONSE
 
     @classmethod
     def decode_request_next_file(cls):
 
         Resp_RequestNextFilePacket.reset()
 
-        if cls._curr_data_length <= 1:
+        if cls._curr_data_length < 1:
             return ErrorCodes.INVALID_PACKET
 
-        if int(cls._recv_buffer[cls._data_idx][0]) == ACK.ERROR:
-            Resp_RequestNextFilePacket.error = int(cls._recv_buffer[cls._data_idx][1])
-            if Resp_RequestNextFilePacket.error == PayloadErrorCodes.NO_MORE_PACKET_FOR_FILE:
-                Resp_RequestNextFilePacket.no_more_packet_to_receive = True
-                return ErrorCodes.NO_MORE_FILE_PACKET
-            else:
-                # TODO: maybe process other reason in the future but for now, we'll just re-ask the packet
+        # Check if this is an error response
+        # Jetson simplified error format: data_len=1, just the error code (no 0x0B prefix)
+        first_byte = int(cls._recv_buffer[cls._data_idx][0])
+
+        # If data_len is 1 and first byte looks like an error code (not ACK.SUCCESS=0x0A)
+        if cls._curr_data_length == 1:
+            if first_byte == ACK.SUCCESS:
+                # This shouldn't happen for file packets - success should have data
+                logger.warning("[DEBUG] Unexpected SUCCESS ACK for file packet request")
                 return ErrorCodes.INVALID_RESPONSE
-        else:  # success
+            else:
+                # This is an error code
+                Resp_RequestNextFilePacket.error = first_byte
+                logger.error(f"[DEBUG] File packet request failed with error code: {first_byte:#x}")
+
+                if Resp_RequestNextFilePacket.error == PayloadErrorCodes.NO_MORE_PACKET_FOR_FILE:
+                    Resp_RequestNextFilePacket.no_more_packet_to_receive = True
+                    return ErrorCodes.NO_MORE_FILE_PACKET
+                elif first_byte == 0x04:  # NO_FILE_READY
+                    logger.error("[DEBUG] Jetson reports: NO_FILE_READY - file transfer not initialized")
+                    return ErrorCodes.FILE_NOT_AVAILABLE
+                else:
+                    return ErrorCodes.INVALID_RESPONSE
+        else:
+            # This is file data (data_len = 240)
             Resp_RequestNextFilePacket.received_data_size = cls._curr_data_length
             Resp_RequestNextFilePacket.packet_nb = cls._sequence_count
             Resp_RequestNextFilePacket.received_data = cls._recv_buffer[cls._data_idx]

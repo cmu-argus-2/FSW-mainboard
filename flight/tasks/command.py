@@ -25,6 +25,7 @@ _EXIT_STARTUP_TIMEOUT = CONFIG.EXIT_STARTUP_TIMEOUT  # Already a const in satell
 _BURN_WIRE_STRENGTH = const(7)  # 0-255
 _DEPLOYMENT_INTERVAL = const(5)  # seconds
 _PWM_MAX = const(3)  # Maximum PWM value for deployment
+_GROUND_TESTING_MODE = CONFIG.GROUND_TESTING_MODE
 
 
 class Task(TemplateTask):
@@ -290,7 +291,10 @@ class Task(TemplateTask):
                 # T2.3: High SoC, engage the payload
                 self.log_info("T2.3: Transition from NOMINAL to EXPERIMENT")
                 SM.switch_to(STATES.EXPERIMENT)
-
+            elif _GROUND_TESTING_MODE:
+                # T2.4: Ground testing mode enabled, engage the payload
+                self.log_info("T2.4: Transition from NOMINAL to EXPERIMENT (Ground Testing Mode)")
+                SM.switch_to(STATES.EXPERIMENT)
             else:
                 # No transition, stay in NOMINAL
                 pass
@@ -332,7 +336,7 @@ class Task(TemplateTask):
                 pass
 
             """Transitions out of EXPERIMENT"""
-            if self.EPS_MODE != EPS_POWER_FLAG.EXPERIMENT:
+            if self.EPS_MODE != EPS_POWER_FLAG.EXPERIMENT and not _GROUND_TESTING_MODE:
                 # T4.1: Nominal or low SoC, transition back to nominal
                 self.log_info("T4.1: Transition from LOW POWER to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)

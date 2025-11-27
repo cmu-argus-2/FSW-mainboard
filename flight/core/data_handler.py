@@ -620,6 +620,7 @@ class FileProcess(DataProcess):
         self.file_extension = file_extension
 
         self.status = _CLOSED
+        self.persistent = True
 
         self.dir_path = join_path(_HOME_PATH, self.tag_name)
         self.create_folder()
@@ -1394,6 +1395,40 @@ class DataHandler:
         if tag_name in cls.data_process_registry:
             return isinstance(cls.data_process_registry[tag_name], FileProcess)
         return False
+
+    @classmethod
+    def get_file_count(cls, tag_name: str) -> int:
+        """
+        Get the number of complete files in a file process directory.
+        Excludes the configuration file and currently open file.
+
+        Parameters:
+            tag_name (str): The name of the file process.
+
+        Returns:
+            int: Number of complete files, or 0 if the process doesn't exist or isn't a FileProcess.
+
+        Example:
+            image_count = DataHandler.get_file_count('img')
+        """
+        if not cls.file_process_exists(tag_name):
+            logger.warning(f"File process '{tag_name}' does not exist.")
+            return 0
+
+        try:
+            process = cls.data_process_registry[tag_name]
+            file_list = process.get_sorted_file_list()
+
+            current_filename = None
+            if process.current_path:
+                current_filename = process.current_path.split("/")[-1]
+
+            complete_files = [f for f in file_list if f != _PROCESS_CONFIG_FILENAME and f != current_filename]
+
+            return len(complete_files)
+        except Exception as e:
+            logger.error(f"Error counting files for '{tag_name}': {e}")
+            return 0
 
     @classmethod
     def is_file_process(cls, tag_name: str) -> bool:

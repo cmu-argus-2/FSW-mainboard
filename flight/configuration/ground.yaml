@@ -11,6 +11,9 @@ command:
   DETUMBLING_TIMEOUT_DURATION:
     value: 30  # seconds, i.e., 30 seconds
     _const: true
+  
+  GROUND_TESTING_MODE:
+    value: true
 
 # Time Processor Module
 time_processor:
