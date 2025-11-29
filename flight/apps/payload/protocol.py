@@ -47,7 +47,7 @@ from apps.payload.definitions import (
 from core import logger
 
 # Asymmetric sizes for send and receive buffers
-_RECV_PCKT_BUF_SIZE = 1024  # buffer a bit bigger on purpose
+_RECV_PCKT_BUF_SIZE = 4096  # increase receive buffer to tolerate bursts from larger batches
 _SEND_PCKT_BUF_SIZE = 32
 
 # Incoming packet structure constants
@@ -317,10 +317,12 @@ class Decoder:
         packet_len = len(data)
         if packet_len == 6:
             # ACK/NACK packet: 5 header + 1 status (NO CRC)
-            logger.info("[DEBUG] Received 6-byte ACK packet")
+            # logger.info("[DEBUG] Received 6-byte ACK packet")
+            pass
         elif packet_len == _FIXED_PACKET_SIZE:
             # Data packet: 5 header + 240 data + 2 CRC
-            logger.info("[DEBUG] Received 247-byte data packet")
+            # logger.info("[DEBUG] Received 247-byte data packet")
+            pass
         else:
             logger.error(f"[DEBUG] Invalid packet size: {packet_len} (expected 6 or 247)")
             return ErrorCodes.INVALID_PACKET

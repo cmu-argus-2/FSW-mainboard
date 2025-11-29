@@ -53,7 +53,7 @@ class Task(TemplateTask):
                 file_extension="bin",
                 data_limit=5000000,  # 5MB max per image file
                 circular_buffer_size=10,  # Keep 10 images (~530KB), was 20
-                buffer_size=1024,  # 1KB write buffer for faster SD writes
+                buffer_size=8192,  # 8KB write buffer to reduce SD flush frequency during larger bursts
             )
 
         # Telemetry process
