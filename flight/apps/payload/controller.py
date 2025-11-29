@@ -101,7 +101,7 @@ class PayloadController:
 
     # Batch transfer settings
     USE_BATCH_TRANSFER = True  # Enable batch requests
-    BATCH_SIZE = 10  # Request 5 packets at a time (optimized for reliability with 30ms inter-packet delay)
+    BATCH_SIZE = 15  # Request 5 packets at a time (optimized for reliability with 30ms inter-packet delay)
     # Estimated timings for dynamic batch timeouts on RP2040 / CircuitPython
     # These are conservative defaults; tune as needed based on measured sender pacing.
     _EST_INTER_PACKET_DELAY = 0.02  # seconds (assume sender waits ~20ms between packets)
@@ -415,7 +415,7 @@ class PayloadController:
 
         # Dynamic timeout based on estimated sender pacing + transmission time with a safety margin
         per_packet_est = cls._EST_INTER_PACKET_DELAY + cls._EST_PKT_TX_TIME
-        safety_multiplier = 1.5
+        safety_multiplier = 1.65
         min_timeout = 0.08
         timeout = max(min_timeout, per_packet_est * expected_count * safety_multiplier)
         poll_interval = 0.001  # 1ms polling for lower latency
