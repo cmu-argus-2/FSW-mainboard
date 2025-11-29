@@ -15,7 +15,7 @@ from core.states import STATES
 
 # from hal.configuration import SATELLITE
 
-_NUM_IMG_TO_MAINTAIN_READY = 5  # Number of images to maintain in memory at least
+_NUM_IMG_TO_MAINTAIN_READY = 1  # Number of images to maintain in memory at least
 # image_array = b""  # Initialize byte array for image being received
 
 # PACKET_SIZE = 250  # num bytes TODO : MATCH WITH PAYLOAD UART
@@ -50,10 +50,10 @@ class Task(TemplateTask):
         if not DH.file_process_exists("img"):
             DH.register_file_process(
                 tag_name="img",
-                file_extension="jpg",  # or "bin" depending on payload output
+                file_extension="bin",
                 data_limit=5000000,  # 5MB max per image file
-                circular_buffer_size=20,  # Keep 20 images in rotation
-                buffer_size=512,  # 512-byte write buffer
+                circular_buffer_size=10,  # Keep 10 images (~530KB), was 20
+                buffer_size=1024,  # 1KB write buffer for faster SD writes
             )
 
         # Telemetry process
@@ -115,8 +115,7 @@ class Task(TemplateTask):
 
                 if complete_image_count < _NUM_IMG_TO_MAINTAIN_READY and not PC.file_transfer_in_progress():
                     self.log_info(
-                        f"Not enough images in memory "
-                        f"({complete_image_count}/{_NUM_IMG_TO_MAINTAIN_READY}), requesting new image"
+                        f"Not enough images in memory ({complete_image_count}/{_NUM_IMG_TO_MAINTAIN_READY}), requesting new image"  # noqa: E501
                     )
                     PC.add_request(ExternalRequest.REQUEST_IMAGE)
 

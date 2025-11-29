@@ -99,6 +99,14 @@ class PayloadController:
     no_more_file_packet_to_receive = False
     just_requested_file_packet = False
 
+    # Batch transfer settings
+    USE_BATCH_TRANSFER = True  # Enable batch requests
+    BATCH_SIZE = 5  # Request 5 packets at a time (optimized for reliability with 30ms inter-packet delay)
+    # Estimated timings for dynamic batch timeouts on RP2040 / CircuitPython
+    # These are conservative defaults; tune as needed based on measured sender pacing.
+    _EST_INTER_PACKET_DELAY = 0.02  # seconds (assume sender waits ~20ms between packets)
+    _EST_PKT_TX_TIME = 0.006  # seconds per 247-byte packet at ~460800 baud (≈5.4ms)
+
     # Packet retry mechanism for CRC failures
     packet_retry_count = 0
     MAX_PACKET_RETRIES = 3
@@ -316,9 +324,13 @@ class PayloadController:
 
             if not cls._did_we_send_a_command():  # Add timeout for retry
                 if FileTransfer.in_progress:
-                    # Check if we need to request the next file packet
+                    # Check if we need to request the next file packet(s)
                     if not cls.just_requested_file_packet:
-                        cls.request_next_file_packet()
+                        logger.info(f"[DEBUG] Requesting packets: USE_BATCH_TRANSFER={cls.USE_BATCH_TRANSFER}")
+                        if cls.USE_BATCH_TRANSFER:
+                            cls.request_next_file_packets()
+                        else:
+                            cls.request_next_file_packet()
 
             # Coming soon :)
             # Check OD states
@@ -345,7 +357,15 @@ class PayloadController:
 
     @classmethod
     def receive_response(cls):
-        # Poll for response with timeout
+        """
+        Poll for response with timeout.
+        For batch requests, this will receive multiple packets.
+        """
+        # Check if we're expecting a batch response
+        if cls.last_cmd_sent == CommandID.REQUEST_NEXT_FILE_PACKETS:
+            return cls.receive_batch_response()
+
+        # Regular single-packet response
         timeout = 0.015  # 15ms timeout
         poll_interval = 0.001  # Check every 1ms
         start_time = TPM.monotonic()
@@ -361,16 +381,13 @@ class PayloadController:
                         received_cmd_id = recv[0]
                         if received_cmd_id != cls.last_cmd_sent:
                             logger.warning(
-                                f"[DEBUG] Skipping mismatched response: "
-                                f"expected cmd_id={cls.last_cmd_sent:02x}, got {received_cmd_id:02x}"
+                                f"[DEBUG] Skipping mismatched response: expected cmd_id={cls.last_cmd_sent:02x}, got {received_cmd_id:02x}"  # noqa: E501
                             )
                             recv = bytearray()  # Clear and continue polling
                             continue
                 # Got the right response!
                 break
             TPM.sleep(poll_interval)
-
-        logger.info(f"[DEBUG] receive_response() called, recv length: {len(recv) if recv else 0}")
 
         if recv:
             res = Decoder.decode(recv)
@@ -379,6 +396,99 @@ class PayloadController:
         else:
             res = ErrorCodes.NO_RESPONSE
         return cls.handle_responses(res)
+
+    @classmethod
+    def receive_batch_response(cls):
+        """
+        Receive multiple packets for a batch request.
+        The Jetson sends N packets back-to-back after a batch request.
+        """
+        from apps.payload.definitions import Resp_RequestNextFilePackets
+
+        Resp_RequestNextFilePackets.reset()
+
+        # Calculate expected packet count
+        start_packet = FileTransfer.packet_nb
+        expected_count = min(cls.BATCH_SIZE, 317 - start_packet + 1)
+
+        logger.info(f"[DEBUG] Expecting {expected_count} packets in batch")
+
+        # Dynamic timeout based on estimated sender pacing + transmission time with a safety margin
+        per_packet_est = cls._EST_INTER_PACKET_DELAY + cls._EST_PKT_TX_TIME
+        safety_multiplier = 1.5
+        min_timeout = 0.08
+        timeout = max(min_timeout, per_packet_est * expected_count * safety_multiplier + 0.02)
+        poll_interval = 0.001  # 1ms polling for lower latency
+        start_time = TPM.monotonic()
+
+        packets_received = 0
+        end_of_file_reached = False
+        arrival_times = []
+        while packets_received < expected_count and TPM.monotonic() - start_time < timeout:
+            recv = cls.communication_interface.receive()
+            if recv:
+                # Decode this packet
+                res = Decoder.decode(recv)
+
+                if res == ErrorCodes.OK:
+                    packets_received += 1
+                    arrival_times.append(TPM.monotonic())
+                    logger.info(f"[DEBUG] Batch packet {packets_received}/{expected_count} received")
+                elif res == ErrorCodes.NO_MORE_FILE_PACKET:
+                    # End of file reached - this is normal when batch request extends past file end
+                    logger.info(f"[DEBUG] End of file reached after {packets_received} packets in batch")
+                    end_of_file_reached = True
+                    break  # Exit loop, process packets received so far
+                elif res != ErrorCodes.NO_RESPONSE:
+                    # Other error (CRC failure, etc.)
+                    logger.warning(f"[DEBUG] Batch response got error: {res}")
+                    cls.cmd_sent -= 1
+                    cls.last_cmd_sent = None
+                    return cls.handle_responses(res)
+
+            # Always sleep between polls to allow UART buffer to fill
+            TPM.sleep(poll_interval)
+
+        cls.cmd_sent -= 1
+        cls.last_cmd_sent = None
+
+        if end_of_file_reached:
+            # End of file reached - process packets received and mark transfer complete
+            if packets_received > 0:
+                logger.info(f"[DEBUG] Batch ended at EOF: {packets_received} packets received")
+                # Process the packets we got, but signal EOF so transfer completes
+                # We need to save packets first (via OK), then signal completion
+                cls.handle_responses(ErrorCodes.OK)  # This saves the packets
+                # Log instrumentation for this batch
+                if arrival_times:
+                    intervals = [j - i for i, j in zip(arrival_times[:-1], arrival_times[1:])]
+                    logger.info(
+                        f"[TIMING] Batch arrival times: count={len(arrival_times)}, min_interval={min(intervals) if intervals else 0:.4f}s, max_interval={max(intervals) if intervals else 0:.4f}s"  # noqa: E501
+                    )
+                return cls.handle_responses(ErrorCodes.NO_MORE_FILE_PACKET)  # This completes transfer
+            else:
+                logger.info("[DEBUG] End of file reached, no more packets")
+                return cls.handle_responses(ErrorCodes.NO_MORE_FILE_PACKET)
+        elif packets_received == 0:
+            logger.error("[DEBUG] Batch: No packets received")
+            return cls.handle_responses(ErrorCodes.NO_RESPONSE)
+        elif packets_received < expected_count:
+            logger.warning(f"[DEBUG] Batch incomplete: got {packets_received}/{expected_count} packets")
+            # Treat as CRC failure to trigger retry
+            if arrival_times:
+                intervals = [j - i for i, j in zip(arrival_times[:-1], arrival_times[1:])]
+                logger.info(
+                    f"[TIMING] Batch incomplete arrival intervals: min={min(intervals) if intervals else 0:.4f}s, max={max(intervals) if intervals else 0:.4f}s"  # noqa: E501
+                )
+            return cls.handle_responses(ErrorCodes.INVALID_PACKET)
+        else:
+            logger.info(f"[DEBUG] Batch complete: {packets_received} packets")
+            if arrival_times:
+                intervals = [j - i for i, j in zip(arrival_times[:-1], arrival_times[1:])]
+                logger.info(
+                    f"[TIMING] Batch complete arrival intervals: min={min(intervals) if intervals else 0:.4f}s, max={max(intervals) if intervals else 0:.4f}s"  # noqa: E501
+                )
+            return cls.handle_responses(ErrorCodes.OK)
 
     @classmethod
     def handle_responses(cls, resp):
@@ -425,8 +535,7 @@ class PayloadController:
                 if cls.packet_retry_count >= cls.MAX_PACKET_RETRIES:
                     # Max retries exceeded, skip this packet and continue with rest of file
                     logger.error(
-                        f"CRC failed {cls.MAX_PACKET_RETRIES} times for packet "
-                        f"{FileTransfer.packet_nb}, inserting empty packet and continuing"
+                        f"CRC failed {cls.MAX_PACKET_RETRIES} times for packet {FileTransfer.packet_nb}, inserting empty packet and continuing"  # noqa: E501
                     )
 
                     # Log empty 240-byte packet to mark the corrupted/missing data
@@ -445,8 +554,7 @@ class PayloadController:
                     # Retry the same packet (don't increment packet_nb)
                     cls.total_packets_retried += 1
                     logger.warning(
-                        f"CRC failed for packet {FileTransfer.packet_nb}, "
-                        f"retry {cls.packet_retry_count}/{cls.MAX_PACKET_RETRIES}"
+                        f"CRC failed for packet {FileTransfer.packet_nb}, retry {cls.packet_retry_count}/{cls.MAX_PACKET_RETRIES}"  # noqa: E501
                     )
                     # DON'T call FileTransfer.ack_packet() - we want to retry the SAME packet
                     return False
@@ -459,8 +567,7 @@ class PayloadController:
                 if cls.packet_retry_count >= cls.MAX_PACKET_RETRIES:
                     # Max retries exceeded, skip this packet
                     logger.error(
-                        f"No response {cls.MAX_PACKET_RETRIES} times for packet "
-                        f"{FileTransfer.packet_nb}, inserting empty packet and continuing"
+                        f"No response {cls.MAX_PACKET_RETRIES} times for packet {FileTransfer.packet_nb}, inserting empty packet and continuing"  # noqa: E501
                     )
 
                     # Log empty 240-byte packet
@@ -478,10 +585,106 @@ class PayloadController:
                     # Retry the same packet
                     cls.total_packets_retried += 1
                     logger.warning(
-                        f"No response for packet {FileTransfer.packet_nb}, "
-                        f"retry {cls.packet_retry_count}/{cls.MAX_PACKET_RETRIES}"
+                        f"No response for packet {FileTransfer.packet_nb}, retry {cls.packet_retry_count}/{cls.MAX_PACKET_RETRIES}"  # noqa: E501
                     )
                     return False
+
+            elif sent_cmd_id == CommandID.REQUEST_NEXT_FILE_PACKETS and resp == ErrorCodes.OK:
+                # Batch transfer: receive multiple packets at once
+                from apps.payload.definitions import Resp_RequestNextFilePackets
+
+                cls.just_requested_file_packet = False
+                cls.packet_retry_count = 0
+                cls.cmd_sent = 0
+
+                # Process all received packets
+                for packet_data in Resp_RequestNextFilePackets.packets:
+                    cls.total_packets_received += 1
+                    # Log packet data to file (only actual bytes)
+                    DH.log_file("img", packet_data)
+                    FileTransfer.ack_packet()  # Increment packet counter
+                return True
+
+            elif sent_cmd_id == CommandID.REQUEST_NEXT_FILE_PACKETS and resp == ErrorCodes.INVALID_PACKET:
+                # CRC failure in batch - retry the same batch
+                from apps.payload.definitions import Resp_RequestNextFilePackets
+
+                cls.packet_retry_count += 1
+                cls.crc_failure_count += 1
+                cls.just_requested_file_packet = False
+
+                # CRITICAL: Reset the partially received batch to avoid double-counting
+                Resp_RequestNextFilePackets.reset()
+
+                if cls.packet_retry_count >= cls.MAX_PACKET_RETRIES:
+                    # Skip this batch after max retries
+                    from apps.payload.definitions import Resp_RequestNextFilePackets
+
+                    batch_size = cls.BATCH_SIZE
+                    logger.error(f"Batch failed {cls.MAX_PACKET_RETRIES} times, skipping {batch_size} packets")
+
+                    # Log empty packets for the entire batch
+                    for _ in range(batch_size):
+                        empty_packet = bytearray(240)
+                        DH.log_file("img", empty_packet)
+                        FileTransfer.ack_packet()
+                        cls.packets_skipped_after_max_retries += 1
+
+                    cls.packet_retry_count = 0
+                    return False
+                else:
+                    cls.total_packets_retried += 1
+                    logger.warning(f"Batch CRC failed, retry {cls.packet_retry_count}/{cls.MAX_PACKET_RETRIES}")
+                    return False
+
+            elif sent_cmd_id == CommandID.REQUEST_NEXT_FILE_PACKETS and resp == ErrorCodes.NO_RESPONSE:
+                # No response for batch - retry
+                from apps.payload.definitions import Resp_RequestNextFilePackets
+
+                cls.packet_retry_count += 1
+                cls.just_requested_file_packet = False
+
+                # CRITICAL: Reset the partially received batch to avoid double-counting
+                Resp_RequestNextFilePackets.reset()
+
+                if cls.packet_retry_count >= cls.MAX_PACKET_RETRIES:
+                    batch_size = cls.BATCH_SIZE
+                    logger.error(f"Batch no response {cls.MAX_PACKET_RETRIES} times, skipping {batch_size} packets")
+
+                    for _ in range(batch_size):
+                        empty_packet = bytearray(240)
+                        DH.log_file("img", empty_packet)
+                        FileTransfer.ack_packet()
+                        cls.packets_skipped_after_max_retries += 1
+
+                    cls.packet_retry_count = 0
+                    return False
+                else:
+                    cls.total_packets_retried += 1
+                    logger.warning(f"Batch no response, retry {cls.packet_retry_count}/{cls.MAX_PACKET_RETRIES}")
+                    return False
+
+            elif sent_cmd_id == CommandID.REQUEST_NEXT_FILE_PACKETS and resp == ErrorCodes.NO_MORE_FILE_PACKET:
+                # Batch transfer complete
+                cls.no_more_file_packet_to_receive = True
+                FileTransfer.stop_transfer()
+                DH.file_completed("img")
+
+                if cls.packets_skipped_after_max_retries > 0:
+                    logger.warning(
+                        f"Completed image transfer with CORRUPTION: {cls.total_packets_received} packets received, {cls.packets_skipped_after_max_retries} packets corrupted, {cls.crc_failure_count} CRC failures, {cls.total_packets_retried} retries"  # noqa: E501
+                    )
+                else:
+                    logger.info(
+                        f"Completed image transfer: {cls.total_packets_received} packets, {cls.crc_failure_count} CRC failures, {cls.total_packets_retried} retries"  # noqa: E501
+                    )
+
+                cls.crc_failure_count = 0
+                cls.total_packets_received = 0
+                cls.total_packets_retried = 0
+                cls.packets_skipped_after_max_retries = 0
+                cls.packet_retry_count = 0
+                return True
 
             elif sent_cmd_id == CommandID.REQUEST_NEXT_FILE_PACKET and resp == ErrorCodes.NO_MORE_FILE_PACKET:
                 cls.no_more_file_packet_to_receive = True
@@ -491,16 +694,11 @@ class PayloadController:
                 # Log comprehensive transfer statistics
                 if cls.packets_skipped_after_max_retries > 0:
                     logger.warning(
-                        f"Completed image transfer with CORRUPTION: "
-                        f"{cls.total_packets_received} packets received, "
-                        f"{cls.packets_skipped_after_max_retries} packets corrupted (filled with zeros), "
-                        f"{cls.crc_failure_count} total CRC failures, "
-                        f"{cls.total_packets_retried} retries"
+                        f"Completed image transfer with CORRUPTION: {cls.total_packets_received} packets received, {cls.packets_skipped_after_max_retries} packets corrupted (filled with zeros), {cls.crc_failure_count} total CRC failures, {cls.total_packets_retried} retries"  # noqa: E501
                     )
                 else:
                     logger.info(
-                        f"Completed image transfer: {cls.total_packets_received} packets, "
-                        f"{cls.crc_failure_count} CRC failures, {cls.total_packets_retried} retries"
+                        f"Completed image transfer: {cls.total_packets_received} packets, {cls.crc_failure_count} CRC failures, {cls.total_packets_retried} retries"  # noqa: E501
                     )
 
                 # Reset statistics for next transfer
@@ -650,6 +848,57 @@ class PayloadController:
             cls.last_cmd_sent = CommandID.REQUEST_NEXT_FILE_PACKET  # Track command
             cls.just_requested_file_packet = True
             logger.info(f"Requesting next file packet {FileTransfer.packet_nb}...")
+            return True
+
+    @classmethod
+    def request_next_file_packets(cls):
+        """Request multiple file packets at once for faster transfer"""
+        logger.info("[DEBUG] request_next_file_packets() called - BATCH MODE")
+
+        if cls.state != PayloadState.READY:
+            logger.error("Cannot request next file packets. Payload is not ready.")
+            return False
+
+        if not cls.just_requested_file_packet:
+            # Calculate how many packets to request
+            # Don't request beyond the end of file
+            start_packet = FileTransfer.packet_nb
+            count = min(cls.BATCH_SIZE, 317 - start_packet + 1)  # 317 total packets
+
+            if count <= 0:
+                # All packets received! Complete the transfer
+                logger.info("All packets received, completing transfer")
+                cls.no_more_file_packet_to_receive = True
+                FileTransfer.stop_transfer()
+                DH.file_completed("img")
+
+                # Log comprehensive transfer statistics
+                if cls.packets_skipped_after_max_retries > 0:
+                    logger.warning(
+                        f"Completed image transfer with CORRUPTION: {cls.total_packets_received} packets received, {cls.packets_skipped_after_max_retries} packets corrupted (filled with zeros), {cls.crc_failure_count} total CRC failures, {cls.total_packets_retried} retries"  # noqa: E501
+                    )
+                else:
+                    logger.info(
+                        f"Completed image transfer: {cls.total_packets_received} packets, {cls.crc_failure_count} CRC failures, {cls.total_packets_retried} retries"  # noqa: E501
+                    )
+
+                # Reset statistics for next transfer
+                cls.crc_failure_count = 0
+                cls.total_packets_received = 0
+                cls.total_packets_retried = 0
+                cls.packets_skipped_after_max_retries = 0
+                cls.packet_retry_count = 0
+                return False
+
+            # Flush buffer before requesting
+            cls.communication_interface.flush_rx_buffer()
+
+            # Send batch request
+            cls.communication_interface.send(Encoder.encode_request_next_file_packets(start_packet, count))
+            cls.cmd_sent += 1
+            cls.last_cmd_sent = CommandID.REQUEST_NEXT_FILE_PACKETS
+            cls.just_requested_file_packet = True
+            logger.info(f"Requesting batch: packets {start_packet} to {start_packet + count - 1}")
             return True
 
     @classmethod

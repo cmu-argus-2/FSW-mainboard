@@ -57,7 +57,7 @@ _FILE_DATA_LIMIT = const(100000)
 _PACKET_HEADER_SIZE = const(2)  # 2 bytes for packet length header
 _MAX_PAYLOAD_SIZE = const(240)  # Maximum payload/data size in bytes (excludes header)
 _FIXED_PACKET_SIZE = const(_PACKET_HEADER_SIZE + _MAX_PAYLOAD_SIZE)  # Total packet size on disk: 242 bytes
-_DH_MAGIC_NUMBER = b"ARGUS"  # 5-byte magic number to identify data handler files
+_DH_MAGIC_NUMBER = b"DHGEN"  # 5-byte magic number to identify data handler files
 _DH_FILE_HEADER_SIZE = const(5)  # Size of the file header (magic number)
 
 
@@ -695,19 +695,16 @@ class FileProcess(DataProcess):
         Returns:
             None
         """
-        # Calculate data length (excluding header)
         packet_len = len(data)
 
         if packet_len > _MAX_PAYLOAD_SIZE:
             logger.error(f"Packet too large: {packet_len} bytes (max {_MAX_PAYLOAD_SIZE})")
             return
 
-        # Create fixed-size packet with header, data, and padding
         packet_header = packet_len.to_bytes(2, "big")
         packet_data = bytearray(_FIXED_PACKET_SIZE)
         packet_data[0:2] = packet_header
         packet_data[2 : 2 + packet_len] = data
-        # Remaining bytes are already zero (padding)
 
         if not DataHandler.SD_ERROR_FLAG:
             # Ensure file is open before writing
@@ -1119,7 +1116,6 @@ class DataHandler:
                 circular_buffer_size=circular_buffer_size,
                 buffer_size=buffer_size,
             )
-            logger.info(f"Registered file process: {tag_name}")
         except Exception as e:
             logger.error(f"Failed to register file process '{tag_name}': {e}")
             if cls.SD_ERROR_FLAG:

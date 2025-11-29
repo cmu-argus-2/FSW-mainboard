@@ -1,14 +1,16 @@
 # Low-Level Communication layer - UART
 
 from apps.payload.communication import PayloadCommunicationInterface
+from core import logger
+from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 
 
 class PayloadUART(PayloadCommunicationInterface):
     _connected = False
     _uart = None
-    _ACK_SIZE = 5  # ACK/NACK packets: 4 header + 1 status (NO CRC)
-    _FILE_PACKET_SIZE = 246  # File packets: 4 header + 240 data + 2 CRC
+    _ACK_PACKET_SIZE = 6  # ACK/NACK: 5 header + 1 status (NO CRC)
+    _DATA_PACKET_SIZE = 247  # Data packets: 5 header + 240 data + 2 CRC
 
     @classmethod
     def connect(cls):
@@ -17,13 +19,10 @@ class PayloadUART(PayloadCommunicationInterface):
             cls._connected = True
 
             # Flush any stale data in the buffer
-            from core import logger
-
             bytes_flushed = cls._uart.in_waiting
             if bytes_flushed > 0:
                 # Read and discard stale data
                 cls._uart.read(bytes_flushed)
-                logger.info(f"[DEBUG UART] Flushed {bytes_flushed} stale bytes from UART buffer on connect")
         else:
             cls._uart = None
             cls._connected = False
@@ -38,70 +37,63 @@ class PayloadUART(PayloadCommunicationInterface):
 
     @classmethod
     def receive(cls):
-        """Read variable-length packet from Jetson with smart header parsing"""
-        from core import logger
-
-        # Check if we have at least the header (4 bytes)
+        """Read packets from Jetson - ACKs are 6 bytes, data packets are 247 bytes"""
         if not cls._connected or cls._uart is None:
             return bytearray()
 
-        if cls._uart.in_waiting < 4:
+        # Need at least 6 bytes to read full ACK packet
+        if cls._uart.in_waiting < 6:
             return bytearray()
 
-        # Read header to determine packet type
-        header = cls._uart.read(4)
+        # Read 5-byte header first
+        header = cls._uart.read(5)
 
-        # Check for all-zero header (stale data) and flush it
+        # Check for all-zero header (stale data) and flush buffer
         if all(b == 0 for b in header):
-            logger.warning(f"[DEBUG UART] Detected all-zero header, flushing buffer ({cls._uart.in_waiting} bytes remaining)")
             if cls._uart.in_waiting > 0:
                 cls._uart.read(cls._uart.in_waiting)
             return bytearray()
 
-        cmd_id = header[0]
-        seq_count = (header[1] << 8) | header[2]
-        data_len = header[3]
+        # Parse header
+        data_len = (header[3] << 8) | header[4]
 
-        logger.info(f"[DEBUG UART] Header: cmd={cmd_id:02x}, seq={seq_count}, data_len={data_len}")
-
-        # Determine remaining bytes based on packet type
-        # ACK: 4 header + 1 status = 5 bytes (no CRC)
-        # File: 4 header + 240 data + 2 CRC = 246 bytes
+        # Determine packet type based on data_len
         if data_len == 1:
-            remaining_bytes = 1  # ACK - just status byte
-        else:
-            remaining_bytes = data_len + 2  # File packet - data + CRC
-
-        # Wait for the rest of the packet to arrive (with timeout)
-        # At 115200 baud: 246 bytes takes ~21ms, use 50ms timeout for safety
-        import time as TPM
-
-        timeout = 0.05  # 50ms
-        start_time = TPM.monotonic()
-
-        while cls._uart.in_waiting < remaining_bytes:
-            if TPM.monotonic() - start_time > timeout:
-                logger.error(
-                    f"[DEBUG UART] Timeout waiting for packet body: need {remaining_bytes} bytes, have {cls._uart.in_waiting}"
-                )
+            # This is an ACK/NACK - total 6 bytes (5 header + 1 status)
+            # Read the 1 status byte
+            status_byte = cls._uart.read(1)
+            if len(status_byte) != 1:
+                logger.error("[DEBUG UART] Failed to read ACK status byte")
                 return bytearray()
-            TPM.sleep(0.001)  # Sleep 1ms between checks
 
-        # Read the rest of the packet
-        rest = cls._uart.read(remaining_bytes)
-        if len(rest) < remaining_bytes:
-            logger.error(f"[DEBUG UART] Failed to read complete packet body: expected {remaining_bytes}, got {len(rest)}")
-            return bytearray()
+            packet = header + status_byte
+            return packet
+        else:
+            # This is a data packet - need to read remaining bytes to complete 247-byte packet
+            # Already have 5 bytes (header), need 242 more (240 data + 2 CRC)
+            remaining_bytes = 242
 
-        # Combine into complete packet
-        packet = header + rest
-        total_len = len(packet)
+            # Wait for remaining data with timeout
+            timeout = 0.05  # 50ms
+            start_time = TPM.monotonic()
 
-        # Log packet info
-        hex_str = " ".join(f"{b:02x}" for b in packet[: min(20, total_len)])
-        logger.info(f"[DEBUG UART] Received {total_len} bytes: {hex_str}")
+            while cls._uart.in_waiting < remaining_bytes:
+                if TPM.monotonic() - start_time > timeout:
+                    logger.error(
+                        f"[DEBUG UART] Timeout waiting for data packet body: need {remaining_bytes} bytes, have {cls._uart.in_waiting}"  # noqa: E501
+                    )
+                    return bytearray()
+                TPM.sleep(0.001)
 
-        return packet
+            # Read the rest of the packet
+            rest = cls._uart.read(remaining_bytes)
+            if len(rest) != remaining_bytes:
+                logger.error(f"[DEBUG UART] Failed to read complete data packet: expected {remaining_bytes}, got {len(rest)}")
+                return bytearray()
+
+            # Combine into complete 247-byte packet
+            packet = header + rest
+            return packet
 
     @classmethod
     def is_connected(cls) -> bool:
@@ -114,23 +106,16 @@ class PayloadUART(PayloadCommunicationInterface):
             bytes_flushed = cls._uart.in_waiting
             if bytes_flushed > 0:
                 cls._uart.read(bytes_flushed)
-                from core import logger
-
-                logger.info(f"[DEBUG UART] Flushed {bytes_flushed} stale bytes from RX buffer")
 
     @classmethod
     def packet_available(cls) -> bool:
-        """Checks if a complete 246-byte packet is available to read."""
+        """Checks if a complete packet is available to read (6 bytes for ACK, 247 bytes for data)."""
         if not cls._connected or cls._uart is None:
             return False
 
         bytes_waiting = cls._uart.in_waiting
-        from core import logger
-
-        if bytes_waiting > 0:
-            logger.info(f"[DEBUG UART] Bytes in buffer: {bytes_waiting}, need {cls._PACKET_SIZE}")
-
-        return bytes_waiting >= cls._PACKET_SIZE
+        # Need at least 6 bytes for minimum packet (ACK)
+        return bytes_waiting >= cls._ACK_PACKET_SIZE
 
     @classmethod
     def get_id(cls):

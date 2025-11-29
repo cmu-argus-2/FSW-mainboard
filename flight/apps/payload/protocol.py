@@ -4,7 +4,7 @@ Payload Message Encoding and Decoding
 The serialization and deserialization of messages is hardcoded through class methods
 in the Encoder and Decoder classes.
 
-The protocol is straightforward and uses a simple fixed-length message format.
+The protocol uses two packet types with fixed sizes:
 
 From the host perspective:
 - The ENCODER class will serialize a packet that the communication layer sends through its channel
@@ -14,13 +14,20 @@ The outgoing packet format is as follows:
 - Byte 0: Command ID
 - Byte 1-31: Command arguments (if any)
 
-The incoming packet format is as follows:
+ACK/NACK packets (FIXED 6 BYTES):
 - Byte 0: Command ID
 - Byte 1-2: Sequence count (uint16, big-endian)
-- Byte 3: Data length (uint8)
-- Byte 4-243: Data payload (240 bytes max)
-- Byte 244-245: CRC16 (uint16, big-endian)
-Total: 246 bytes per packet
+- Byte 3-4: Data length = 1 (uint16, big-endian)
+- Byte 5: Status byte (ACK or error code)
+Total: Always exactly 6 bytes (NO CRC)
+
+Data packets (FIXED 247 BYTES):
+- Byte 0: Command ID
+- Byte 1-2: Sequence count (uint16, big-endian)
+- Byte 3-4: Data length (uint16, big-endian) - indicates actual payload size (≤240)
+- Byte 5-244: Data payload (240 bytes, padded with zeros if needed)
+- Byte 245-246: CRC16 (uint16, big-endian) covering bytes 0-244
+Total: Always exactly 247 bytes
 
 
 Author: Ibrahima Sory Sow, Perrin Tong
@@ -35,23 +42,25 @@ from apps.payload.definitions import (
     Resp_DisableCameras,
     Resp_EnableCameras,
     Resp_RequestNextFilePacket,
+    Resp_RequestNextFilePackets,
 )
 from core import logger
 
 # Asymmetric sizes for send and receive buffers
-_RECV_PCKT_BUF_SIZE = 256  # buffer a bit bigger on purpose
+_RECV_PCKT_BUF_SIZE = 1024  # buffer a bit bigger on purpose
 _SEND_PCKT_BUF_SIZE = 32
 
 # Incoming packet structure constants
 _CMD_ID_IDX = 0
 _SEQ_COUNT_START = 1
 _SEQ_COUNT_END = 3
-_DATA_LEN_IDX = 3
-_DATA_START = 4
-_DATA_END = 244  # 4 + 240 bytes
-_CRC16_START = 244
-_CRC16_END = 246
-_TOTAL_PACKET_SIZE = 246
+_DATA_LEN_START = 3  # 2-byte data length
+_DATA_LEN_END = 5
+_DATA_START = 5
+_DATA_END = 245  # Always 240 bytes of data (with padding)
+_CRC16_START = 245
+_CRC16_END = 247
+_FIXED_PACKET_SIZE = 247  # All data packets are exactly this size
 
 # CRC16-CCITT parameters
 _CRC16_POLY = 0x1021
@@ -201,6 +210,25 @@ class Encoder:
         return cls._send_buffer[:3]  # Only return the bytes we actually set
 
     @classmethod
+    def encode_request_next_file_packets(cls, start_packet, count):
+        """
+        Encode batch request for multiple packets.
+        Format: [cmd_id][start_packet_high][start_packet_low][count]
+        """
+        cls.clear_buffer()
+        cls._send_buffer[0] = CommandID.REQUEST_NEXT_FILE_PACKETS
+        cls._send_buffer[1:3] = start_packet.to_bytes(2, byteorder=_BYTE_ORDER)
+        cls._send_buffer[3] = count
+        cls._bytes_set_last_time = 4
+
+        from core import logger
+
+        hex_str = " ".join(f"{b:02x}" for b in cls._send_buffer[:4])
+        logger.info(f"[DEBUG TX] Encoded REQUEST_NEXT_FILE_PACKETS: {hex_str} (start={start_packet}, count={count})")
+
+        return cls._send_buffer[:4]
+
+    @classmethod
     def encode_clear_storage(cls):
         cls.clear_buffer()
         cls._send_buffer[0] = CommandID.CLEAR_STORAGE
@@ -270,9 +298,8 @@ class Decoder:
 
     _recv_buffer = bytearray(_RECV_PCKT_BUF_SIZE)
     _sequence_count_idx = slice(_SEQ_COUNT_START, _SEQ_COUNT_END)
-    _data_length_idx = _DATA_LEN_IDX
-    _data_idx = slice(_DATA_START, _DATA_END)
-    _crc_idx = slice(_CRC16_START, _CRC16_END)
+    _data_length_idx = slice(_DATA_LEN_START, _DATA_LEN_END)  # 2-byte data length
+    _data_idx = None  # Will be calculated based on actual data length
 
     _curr_id = 0
     _sequence_count = 0
@@ -286,47 +313,52 @@ class Decoder:
     def decode(cls, data):
         cls._recv_buffer = data
 
-        # Variable-length packets: header (4) + data (variable) + CRC (2, only for file packets)
+        # Check packet size: must be either 6 (ACK) or 247 (data packet)
         packet_len = len(data)
-
-        if packet_len < 5:  # Minimum: 4 header + 1 status (ACK)
-            logger.error(f"[DEBUG] Invalid packet size: {packet_len} (minimum 5)")
+        if packet_len == 6:
+            # ACK/NACK packet: 5 header + 1 status (NO CRC)
+            logger.info("[DEBUG] Received 6-byte ACK packet")
+        elif packet_len == _FIXED_PACKET_SIZE:
+            # Data packet: 5 header + 240 data + 2 CRC
+            logger.info("[DEBUG] Received 247-byte data packet")
+        else:
+            logger.error(f"[DEBUG] Invalid packet size: {packet_len} (expected 6 or 247)")
             return ErrorCodes.INVALID_PACKET
 
-        # Debug: print packet
-        hex_bytes = " ".join(f"{b:02x}" for b in data)
-        logger.info(f"[DEBUG] Received packet ({packet_len} bytes): {hex_bytes}")
+        # # Debug: print first 20 bytes of packet
+        # hex_bytes = ' '.join(f'{b:02x}' for b in data[:min(20, len(data))])
+        # logger.info(f"[DEBUG] Received packet (first 20 bytes): {hex_bytes}")
 
-        # Extract header
+        # header processing
         cls._curr_id = int(cls._recv_buffer[_CMD_ID_IDX])
         cls._sequence_count = int.from_bytes(cls._recv_buffer[_SEQ_COUNT_START:_SEQ_COUNT_END], byteorder=_BYTE_ORDER)
-        cls._curr_data_length = int(cls._recv_buffer[_DATA_LEN_IDX])
+        cls._curr_data_length = int.from_bytes(cls._recv_buffer[_DATA_LEN_START:_DATA_LEN_END], byteorder=_BYTE_ORDER)
 
-        logger.info(f"[DEBUG] decode(): cmd_id={cls._curr_id}, seq={cls._sequence_count}, data_len={cls._curr_data_length}")
+        # logger.info(f"[DEBUG] decode(): cmd_id={cls._curr_id}, seq={cls._sequence_count}, data_len={cls._curr_data_length}")
 
-        # ACKs are 5 bytes (no CRC), file packets have CRC
-        if packet_len == 5:
-            # This is an ACK/NACK - no CRC check
-            expected_size = 4 + cls._curr_data_length
-            if packet_len != expected_size:
-                logger.error(f"[DEBUG] ACK size mismatch: got {packet_len}, expected {expected_size}")
+        # Validate based on packet type
+        if packet_len == 6:
+            # ACK: data_length should be 1, no CRC check
+            if cls._curr_data_length != 1:
+                logger.error(f"[DEBUG] Invalid ACK data length: {cls._curr_data_length} (expected 1)")
                 return ErrorCodes.INVALID_PACKET
             cls._crc_valid = True  # No CRC for ACKs
         else:
-            # File packet or other data - has CRC
-            expected_size = 4 + cls._curr_data_length + 2  # header + data + CRC
-            if packet_len != expected_size:
-                logger.error(
-                    f"[DEBUG] Packet size mismatch: got {packet_len}, "
-                    f"expected {expected_size} (data_len={cls._curr_data_length})"
-                )
+            # Data packet: validate data_length and verify CRC
+            if cls._curr_data_length > 240:
+                logger.error(f"[DEBUG] Invalid data length: {cls._curr_data_length} (max 240)")
                 return ErrorCodes.INVALID_PACKET
 
-            # Verify CRC16 over entire packet (header + data + CRC)
+            # Verify CRC16 over bytes 0-244 (header + data), CRC at bytes 245-246
+            # logger.info(f"[DEBUG] CRC bytes at positions 245-246: {data[245]:02x} {data[246]:02x}")
+
             cls._crc_valid = verify_crc16(cls._recv_buffer)
             if not cls._crc_valid:
                 logger.error("[DEBUG] CRC check failed")
                 return ErrorCodes.INVALID_PACKET
+
+        # Set data slice for extraction (only extract actual data, not padding)
+        cls._data_idx = slice(_DATA_START, _DATA_START + cls._curr_data_length)
 
         if cls._curr_id == CommandID.PING_ACK:
             return cls.decode_ping()
@@ -339,10 +371,11 @@ class Decoder:
         elif cls._curr_id == CommandID.DISABLE_CAMERAS:
             return cls.decode_disable_cameras()
         elif cls._curr_id == CommandID.REQUEST_IMAGE:
-            logger.info("[DEBUG] Calling decode_request_image()")
             return cls.decode_request_image()
         elif cls._curr_id == CommandID.REQUEST_NEXT_FILE_PACKET:
             return cls.decode_request_next_file()
+        elif cls._curr_id == CommandID.REQUEST_NEXT_FILE_PACKETS:
+            return cls.decode_request_next_file_packets()
         # rest is coming
 
     @classmethod
@@ -475,12 +508,10 @@ class Decoder:
         resp = int(cls._recv_buffer[cls._data_idx][0])
 
         logger.info(
-            f"[DEBUG] decode_request_image: data_length={cls._curr_data_length}, "
-            f"resp_byte={resp:#x}, ACK.SUCCESS={ACK.SUCCESS:#x}, ACK.ERROR={ACK.ERROR:#x}"
+            f"[DEBUG] decode_request_image: data_length={cls._curr_data_length}, resp_byte={resp:#x}, ACK.SUCCESS={ACK.SUCCESS:#x}, ACK.ERROR={ACK.ERROR:#x}"  # noqa: E501
         )
 
         if resp == ACK.SUCCESS:
-            logger.info("[DEBUG] Decoded as SUCCESS")
             return ErrorCodes.OK
         elif resp == ACK.ERROR:
             if cls._curr_data_length < 2:
@@ -527,8 +558,81 @@ class Decoder:
                 else:
                     return ErrorCodes.INVALID_RESPONSE
         else:
-            # This is file data (data_len = 240)
-            Resp_RequestNextFilePacket.received_data_size = cls._curr_data_length
+            # This is a 242-byte DH packet: [2B length][up to 240B payload][padding]
+            # Extract the actual payload using the 2-byte length header from the DH packet
+            dh_packet = cls._recv_buffer[cls._data_idx]
+
+            if len(dh_packet) != 242:
+                logger.error(f"[DEBUG] Expected 242-byte DH packet, got {len(dh_packet)} bytes")
+                return ErrorCodes.INVALID_PACKET
+
+            # Parse 2-byte length header from DH packet (big-endian)
+            payload_length = (dh_packet[0] << 8) | dh_packet[1]
+
+            if payload_length > 240:
+                logger.error(f"[DEBUG] Invalid DH payload length: {payload_length} (max 240)")
+                return ErrorCodes.INVALID_PACKET
+
+            # Extract actual payload (skip 2-byte length header)
+            actual_payload = dh_packet[2 : 2 + payload_length]
+
+            Resp_RequestNextFilePacket.received_data_size = len(actual_payload)
             Resp_RequestNextFilePacket.packet_nb = cls._sequence_count
-            Resp_RequestNextFilePacket.received_data = cls._recv_buffer[cls._data_idx]
+            Resp_RequestNextFilePacket.received_data = actual_payload
+            return ErrorCodes.OK
+
+    @classmethod
+    def decode_request_next_file_packets(cls):
+        """
+        Decode batch file packet response.
+        This decoder is called once per packet in the batch.
+        The controller must call receive() multiple times to get all packets.
+
+        The Jetson extracts payload from DH packets before sending over UART.
+        We receive only the payload (≤240 bytes), not the full DH packet.
+        """
+        # DON'T reset here - reset should happen once before starting batch read
+        # Resp_RequestNextFilePackets.reset()  # REMOVED
+
+        if cls._curr_data_length < 1:
+            return ErrorCodes.INVALID_PACKET
+
+        # Check if this is an error response
+        first_byte = int(cls._recv_buffer[cls._data_idx][0])
+
+        if cls._curr_data_length == 1:
+            # Error response - store error
+            # DON'T reset if NO_MORE_PACKET - we want to keep packets already received in this batch
+            if first_byte != PayloadErrorCodes.NO_MORE_PACKET_FOR_FILE:
+                Resp_RequestNextFilePackets.reset()
+
+            Resp_RequestNextFilePackets.error = first_byte
+            # NO_MORE_PACKET_FOR_FILE (0x05) is a normal EOF indicator for batch reads; log at INFO
+            if first_byte == PayloadErrorCodes.NO_MORE_PACKET_FOR_FILE:
+                logger.info(f"[DEBUG] Batch file packet request signaled EOF (code: {first_byte:#x})")
+            else:
+                logger.error(f"[DEBUG] Batch file packet request failed with error code: {first_byte:#x}")
+
+            if first_byte == 0x04:  # NO_FILE_READY
+                return ErrorCodes.FILE_NOT_AVAILABLE
+            elif first_byte == PayloadErrorCodes.NO_MORE_PACKET_FOR_FILE:
+                return ErrorCodes.NO_MORE_FILE_PACKET
+            else:
+                return ErrorCodes.INVALID_RESPONSE
+        else:
+            # Receive payload only (≤240 bytes) - Jetson extracts this from DH packet
+            payload = cls._recv_buffer[cls._data_idx]
+
+            if len(payload) > 240:
+                logger.error(f"[DEBUG] Payload too large in batch: {len(payload)} bytes (max 240)")
+                return ErrorCodes.INVALID_PACKET
+
+            # Store the payload
+            Resp_RequestNextFilePackets.packets.append(bytearray(payload))
+            Resp_RequestNextFilePackets.count_received = len(Resp_RequestNextFilePackets.packets)
+
+            # Use sequence count to track which packet this is
+            if Resp_RequestNextFilePackets.start_packet_nb == 0:
+                Resp_RequestNextFilePackets.start_packet_nb = cls._sequence_count
+
             return ErrorCodes.OK

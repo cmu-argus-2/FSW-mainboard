@@ -49,6 +49,7 @@ class CommandID:
     FULL_RESET = 0x10
     DEBUG_DISPLAY_CAMERA = 0x11
     DEBUG_STOP_DISPLAY = 0x12
+    REQUEST_NEXT_FILE_PACKETS = 0x13  # Batch request
 
 
 class ACK:
@@ -231,8 +232,24 @@ class Resp_RequestNextFilePacket:
     def reset(cls):
         cls.received_data = bytearray(240)
         cls.received_data_size = 0
-        cls.no_more_packet_to_receive = False
         cls.packet_nb = 0
+        cls.no_more_packet_to_receive = False
+        cls.error = PayloadErrorCodes.NONE
+
+
+class Resp_RequestNextFilePackets:
+    """Response for batch file packet request"""
+
+    packets = []  # List of packet data (each is bytearray of 240 bytes)
+    start_packet_nb = 0
+    count_received = 0
+    error = PayloadErrorCodes.NONE
+
+    @classmethod
+    def reset(cls):
+        cls.packets = []
+        cls.start_packet_nb = 0
+        cls.count_received = 0
         cls.error = PayloadErrorCodes.NONE
 
 
