@@ -6,6 +6,7 @@ This script is only used for compiling .py files to .mpy files
 import argparse
 import os
 import platform
+import re
 import shutil
 import sys
 
@@ -77,6 +78,13 @@ def check_clean_git():
         return None
 
 
+def parse_argus_id(value):
+    try:
+        return int(value, 0)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("Argus ID must be an integer (decimal or hex).") from exc
+
+
 BOARD_PATH = get_board_path()
 CPY_VERSION = 8  # Default to CPY 8
 BOARD_ID = "Argus"  # Default to compiling for Argus
@@ -134,13 +142,26 @@ def format_value(value):
         return result
 
 
-def generate_satellite_config(source_folder, use_flight_config=False):
+def coerce_hex(value):
+    """
+    Convert hex string literals (e.g., "0x1F") to integers; otherwise return the value unchanged.
+    """
+    if isinstance(value, str) and re.fullmatch(r"-?0[xX][0-9a-fA-F]+", value):
+        try:
+            return int(value, 16)
+        except ValueError:
+            pass
+    return value
+
+
+def generate_satellite_config(source_folder, use_flight_config=False, argus_id=None):
     """
     Generate satellite_config.py from ground.yaml or flight.yaml.
 
     Args:
         source_folder: Path to the flight source folder
         use_flight_config: If True, use flight.yaml; otherwise use ground.yaml
+        argus_id: Argus spacecraft ID to inject when building the flight configuration
     """
     if not _HAS_YAML:
         raise ImportError("PyYAML is not installed; cannot generate satellite_config.py")
@@ -158,6 +179,12 @@ def generate_satellite_config(source_folder, use_flight_config=False):
         if config_data is None:
             print(f"Configuration file {yaml_path} is empty; skipping generation of satellite_config.py")
             return
+
+        if use_flight_config:
+            if argus_id is None:
+                raise ValueError("Argus ID is required when compiling with the flight configuration.")
+            comms_config = config_data.setdefault("comms", {})
+            comms_config["ARGUS_ID"] = {"value": argus_id, "_const": True, "_hex": True}
 
         output_lines = [
             "# Auto-generated from " + config_file,
@@ -183,16 +210,20 @@ def generate_satellite_config(source_folder, use_flight_config=False):
 
             for key, value in category_data.items():
                 if isinstance(value, dict) and "value" in value:
-                    actual_value = value["value"]
+                    actual_value = coerce_hex(value["value"])
                     use_const = value.get("_const", False)
+                    use_hex = value.get("_hex", False)
 
                     if use_const and isinstance(actual_value, int):
-                        python_value = f"const({actual_value})"
+                        if use_hex:
+                            python_value = f"const(0x{actual_value:X})"
+                        else:
+                            python_value = f"const({actual_value})"
                     else:
                         python_value = format_value(actual_value)
                 else:
                     # Simple value without metadata
-                    python_value = format_value(value)
+                    python_value = format_value(coerce_hex(value))
 
                 output_lines.append(f"    {key} = {python_value}")
 
@@ -305,15 +336,26 @@ if __name__ == "__main__":
         action="store_true",
         help="Use flight.yaml configuration instead of ground.yaml",
     )
+    parser.add_argument(
+        "--argus-id",
+        type=parse_argus_id,
+        help="Argus spacecraft ID (required when using --flight)",
+    )
     args = parser.parse_args()
 
     source_folder = args.source_folder
 
     flight_build = args.flight
+    argus_id = args.argus_id
 
+    if flight_build and argus_id is None:
+        parser.error("--argus-id is required when compiling with the flight configuration.")
+
+    if flight_build and argus_id not in (0, 1):
+        parser.error("--argus-id should be 0 or 1")
     check_directory_location(source_folder)
 
-    generate_satellite_config(source_folder, use_flight_config=flight_build)
+    generate_satellite_config(source_folder, use_flight_config=flight_build, argus_id=argus_id)
 
     if GIT_BRANCH:
         print(f"Branch: {GIT_BRANCH}")
@@ -326,5 +368,7 @@ if __name__ == "__main__":
 
     print(f"CircuitPython version: {CPY_VERSION}")
     print(f"Board ID: {BOARD_ID}")
+    if flight_build:
+        print(f"Argus ID: {argus_id}")
 
     create_build(source_folder, flight_build)
