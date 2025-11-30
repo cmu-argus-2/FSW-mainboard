@@ -29,4 +29,4 @@ hal_monitor:
     value: 86400 # seconds, i.e., 24 hours
     _const: true
 
-# ARGUS ID is a argument in the build script for flight config (0 or 1)
+# ARGUS ID is an argument in the build script for flight config (0 or 1)

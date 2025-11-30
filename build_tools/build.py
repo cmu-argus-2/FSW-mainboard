@@ -81,8 +81,8 @@ def check_clean_git():
 def parse_argus_id(value):
     try:
         return int(value, 0)
-    except ValueError as exc:
-        raise argparse.ArgumentTypeError("Argus ID must be an integer (decimal or hex).") from exc
+    except ValueError:
+        raise argparse.ArgumentTypeError("Argus ID must be an integer (decimal or hex).")
 
 
 BOARD_PATH = get_board_path()
