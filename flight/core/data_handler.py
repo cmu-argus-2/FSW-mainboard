@@ -57,7 +57,7 @@ _FILE_DATA_LIMIT = const(100000)
 _PACKET_HEADER_SIZE = const(2)  # 2 bytes for packet length header
 _MAX_PAYLOAD_SIZE = const(240)  # Maximum payload/data size in bytes (excludes header)
 _FIXED_PACKET_SIZE = const(_PACKET_HEADER_SIZE + _MAX_PAYLOAD_SIZE)  # Total packet size on disk: 242 bytes
-_DH_MAGIC_NUMBER = b"ARGUS"  # 5-byte magic number to identify data handler files
+_DH_MAGIC_NUMBER = b"DHGEN"  # 5-byte magic number to identify data handler files
 _DH_FILE_HEADER_SIZE = const(5)  # Size of the file header (magic number)
 
 
@@ -134,7 +134,7 @@ class DataProcess:
         persistent: bool = True,
         data_limit: int = 100000,
         write_interval: int = 1,
-        circular_buffer_size: int = 50,
+        circular_buffer_size: int = 100,
         retrieve_latest_data: bool = True,
         append_to_current: bool = True,
         new_config_file: bool = False,
@@ -478,20 +478,21 @@ class DataProcess:
         Returns:
             None
         """
-        files = self.get_sorted_file_list()[1:]  # Ignore process configuration file
-        # Actual overflow of the buffer
-        diff = len(files) - (self.circular_buffer_size + len(self.excluded_paths) + len(self.delete_paths) - 1)
-        # -1 for the current file
-        mark_counter = 0
-        if diff > 0:
-            # diff files to mark for deletion
-            for file in files:
-                file = join_path(self.dir_path, file)
-                if file not in self.excluded_paths and file not in self.delete_paths and file != self.current_path:
-                    self.delete_paths.append(file)  # mark for deletion
-                    mark_counter += 1
-                if mark_counter == diff:
-                    break
+        if self.persistent:
+            files = self.get_sorted_file_list()[1:]  # Ignore process configuration file
+            # Actual overflow of the buffer
+            diff = len(files) - (self.circular_buffer_size + len(self.excluded_paths) + len(self.delete_paths) - 1)
+            # -1 for the current file
+            mark_counter = 0
+            if diff > 0:
+                # diff files to mark for deletion
+                for file in files:
+                    file = join_path(self.dir_path, file)
+                    if file not in self.excluded_paths and file not in self.delete_paths and file != self.current_path:
+                        self.delete_paths.append(file)  # mark for deletion
+                        mark_counter += 1
+                    if mark_counter == diff:
+                        break
 
     def get_sorted_file_list(self) -> List[str]:
         """
@@ -507,13 +508,11 @@ class DataProcess:
         Returns storage information for the current file process which includes:
         - Number of files in the directory
         - Total directory size in bytes
-        - TODO
 
         Returns:
             A tuple containing the number of files and the total directory size.
         """
         files = os.listdir(self.dir_path)
-        # TODO - implement the rest of the function
         if self.get_current_file_size() is not None:
             total_size = (len(files) - 2) * self.data_limit + self.get_current_file_size()
         else:
@@ -621,6 +620,7 @@ class FileProcess(DataProcess):
         self.file_extension = file_extension
 
         self.status = _CLOSED
+        self.persistent = True
 
         self.dir_path = join_path(_HOME_PATH, self.tag_name)
         self.create_folder()
@@ -695,19 +695,16 @@ class FileProcess(DataProcess):
         Returns:
             None
         """
-        # Calculate data length (excluding header)
         packet_len = len(data)
 
         if packet_len > _MAX_PAYLOAD_SIZE:
             logger.error(f"Packet too large: {packet_len} bytes (max {_MAX_PAYLOAD_SIZE})")
             return
 
-        # Create fixed-size packet with header, data, and padding
         packet_header = packet_len.to_bytes(2, "big")
         packet_data = bytearray(_FIXED_PACKET_SIZE)
         packet_data[0:2] = packet_header
         packet_data[2 : 2 + packet_len] = data
-        # Remaining bytes are already zero (padding)
 
         if not DataHandler.SD_ERROR_FLAG:
             # Ensure file is open before writing
@@ -1119,7 +1116,6 @@ class DataHandler:
                 circular_buffer_size=circular_buffer_size,
                 buffer_size=buffer_size,
             )
-            logger.info(f"Registered file process: {tag_name}")
         except Exception as e:
             logger.error(f"Failed to register file process '{tag_name}': {e}")
             if cls.SD_ERROR_FLAG:
@@ -1395,6 +1391,40 @@ class DataHandler:
         if tag_name in cls.data_process_registry:
             return isinstance(cls.data_process_registry[tag_name], FileProcess)
         return False
+
+    @classmethod
+    def get_file_count(cls, tag_name: str) -> int:
+        """
+        Get the number of complete files in a file process directory.
+        Excludes the configuration file and currently open file.
+
+        Parameters:
+            tag_name (str): The name of the file process.
+
+        Returns:
+            int: Number of complete files, or 0 if the process doesn't exist or isn't a FileProcess.
+
+        Example:
+            image_count = DataHandler.get_file_count('img')
+        """
+        if not cls.file_process_exists(tag_name):
+            logger.warning(f"File process '{tag_name}' does not exist.")
+            return 0
+
+        try:
+            process = cls.data_process_registry[tag_name]
+            file_list = process.get_sorted_file_list()
+
+            current_filename = None
+            if process.current_path:
+                current_filename = process.current_path.split("/")[-1]
+
+            complete_files = [f for f in file_list if f != _PROCESS_CONFIG_FILENAME and f != current_filename]
+
+            return len(complete_files)
+        except Exception as e:
+            logger.error(f"Error counting files for '{tag_name}': {e}")
+            return 0
 
     @classmethod
     def is_file_process(cls, tag_name: str) -> bool:
