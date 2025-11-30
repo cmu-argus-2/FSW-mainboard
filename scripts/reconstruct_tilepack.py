@@ -2,12 +2,13 @@ import io
 import os
 import struct
 import sys
-from dataclasses import dataclass
-from typing import List, Dict, Tuple
 from collections import defaultdict
+from dataclasses import dataclass
+from typing import Dict, List, Tuple
+
 from PIL import Image
 
-INPUT_BIN = "image_radio_file_raw.bin"
+INPUT_BIN = "img_0.bin"
 INPUT_META = "img_0.meta"
 OUTPUT_IMAGE_PNG = "tilepack/gs_reconstructed.png"
 TILES_OUTPUT_DIR = "tilepack/gs_reconstructed_tiles"

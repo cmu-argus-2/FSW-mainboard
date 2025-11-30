@@ -17,8 +17,10 @@ from apps.payload.definitions import (
     ODStatus,
     PayloadTM,
     Resp_RequestNextFilePacket,
+    Resp_RequestNextFilePackets,
 )
 from apps.payload.protocol import Decoder, Encoder
+from apps.payload.uart_comms import PayloadUART as PU
 from apps.telemetry.constants import PAYLOAD_IDX
 from core import DataHandler as DH
 from core import logger
@@ -101,11 +103,12 @@ class PayloadController:
 
     # Batch transfer settings
     USE_BATCH_TRANSFER = True  # Enable batch requests
-    BATCH_SIZE = 15  # Request 5 packets at a time (optimized for reliability with 30ms inter-packet delay)
-    # Estimated timings for dynamic batch timeouts on RP2040 / CircuitPython
-    # These are conservative defaults; tune as needed based on measured sender pacing.
-    _EST_INTER_PACKET_DELAY = 0.02  # seconds (assume sender waits ~20ms between packets)
-    _EST_PKT_TX_TIME = 0.006  # seconds per 247-byte packet at ~460800 baud (≈5.4ms)
+    BATCH_SIZE = 25  # Request 25 packets at a time
+
+    _BITS_PER_BYTE = 10  # 1 start, 8 data, 1 stop (8N1)
+    _TX_TIME = PU._DATA_PACKET_SIZE * _BITS_PER_BYTE / SATELLITE.PAYLOADUART_BAUDRATE
+    _PROCESSING_SLACK = 0.001
+    _EST_PKT_TX_TIME = _TX_TIME + _PROCESSING_SLACK
 
     # Packet retry mechanism for CRC failures
     packet_retry_count = 0
@@ -403,7 +406,6 @@ class PayloadController:
         Receive multiple packets for a batch request.
         The Jetson sends N packets back-to-back after a batch request.
         """
-        from apps.payload.definitions import Resp_RequestNextFilePackets
 
         Resp_RequestNextFilePackets.reset()
 
@@ -413,11 +415,9 @@ class PayloadController:
 
         logger.info(f"[DEBUG] Expecting {expected_count} packets in batch")
 
-        # Dynamic timeout based on estimated sender pacing + transmission time with a safety margin
-        per_packet_est = cls._EST_INTER_PACKET_DELAY + cls._EST_PKT_TX_TIME
-        safety_multiplier = 1.65
-        min_timeout = 0.08
-        timeout = max(min_timeout, per_packet_est * expected_count * safety_multiplier)
+        safety_multiplier = 1.3
+        min_timeout = 0.1
+        timeout = max(min_timeout, cls._EST_PKT_TX_TIME * expected_count * safety_multiplier)
         poll_interval = 0.001  # 1ms polling for lower latency
         start_time = TPM.monotonic()
 
@@ -458,12 +458,6 @@ class PayloadController:
                 # Process the packets we got, but signal EOF so transfer completes
                 # We need to save packets first (via OK), then signal completion
                 cls.handle_responses(ErrorCodes.OK)  # This saves the packets
-                # Log instrumentation for this batch
-                if arrival_times:
-                    intervals = [j - i for i, j in zip(arrival_times[:-1], arrival_times[1:])]
-                    logger.info(
-                        f"[TIMING] Batch arrival times: count={len(arrival_times)}, min_interval={min(intervals) if intervals else 0:.4f}s, max_interval={max(intervals) if intervals else 0:.4f}s"  # noqa: E501
-                    )
                 return cls.handle_responses(ErrorCodes.NO_MORE_FILE_PACKET)  # This completes transfer
             else:
                 logger.info("[DEBUG] End of file reached, no more packets")
@@ -474,19 +468,15 @@ class PayloadController:
         elif packets_received < expected_count:
             logger.warning(f"[DEBUG] Batch incomplete: got {packets_received}/{expected_count} packets")
             # Treat as CRC failure to trigger retry
-            if arrival_times:
-                intervals = [j - i for i, j in zip(arrival_times[:-1], arrival_times[1:])]
-                logger.info(
-                    f"[TIMING] Batch incomplete arrival intervals: min={min(intervals) if intervals else 0:.4f}s, max={max(intervals) if intervals else 0:.4f}s"  # noqa: E501
-                )
+            # If we received some packets in this (partial) batch, save them now so
+            # we don't lose progress. The next batch should start at the first
+            # packet that was not received.
+            # We received a partial batch. Leave the received packets in
+            # Resp_RequestNextFilePackets for `handle_responses()` to process
+            # (so all packet saving / acking logic is centralized there).
             return cls.handle_responses(ErrorCodes.INVALID_PACKET)
         else:
             logger.info(f"[DEBUG] Batch complete: {packets_received} packets")
-            if arrival_times:
-                intervals = [j - i for i, j in zip(arrival_times[:-1], arrival_times[1:])]
-                logger.info(
-                    f"[TIMING] Batch complete arrival intervals: min={min(intervals) if intervals else 0:.4f}s, max={max(intervals) if intervals else 0:.4f}s"  # noqa: E501
-                )
             return cls.handle_responses(ErrorCodes.OK)
 
     @classmethod
@@ -590,8 +580,6 @@ class PayloadController:
 
             elif sent_cmd_id == CommandID.REQUEST_NEXT_FILE_PACKETS and resp == ErrorCodes.OK:
                 # Batch transfer: receive multiple packets at once
-                from apps.payload.definitions import Resp_RequestNextFilePackets
-
                 cls.just_requested_file_packet = False
                 cls.packet_retry_count = 0
                 cls.cmd_sent = 0
@@ -606,8 +594,6 @@ class PayloadController:
 
             elif sent_cmd_id == CommandID.REQUEST_NEXT_FILE_PACKETS and resp == ErrorCodes.INVALID_PACKET:
                 # CRC failure in batch - retry the same batch
-                from apps.payload.definitions import Resp_RequestNextFilePackets
-
                 cls.packet_retry_count += 1
                 cls.crc_failure_count += 1
                 cls.just_requested_file_packet = False
@@ -617,8 +603,6 @@ class PayloadController:
 
                 if cls.packet_retry_count >= cls.MAX_PACKET_RETRIES:
                     # Skip this batch after max retries
-                    from apps.payload.definitions import Resp_RequestNextFilePackets
-
                     batch_size = cls.BATCH_SIZE
                     logger.error(f"Batch failed {cls.MAX_PACKET_RETRIES} times, skipping {batch_size} packets")
 
@@ -638,7 +622,6 @@ class PayloadController:
 
             elif sent_cmd_id == CommandID.REQUEST_NEXT_FILE_PACKETS and resp == ErrorCodes.NO_RESPONSE:
                 # No response for batch - retry
-                from apps.payload.definitions import Resp_RequestNextFilePackets
 
                 cls.packet_retry_count += 1
                 cls.just_requested_file_packet = False
