@@ -14,8 +14,14 @@ SOCKET_RADIO = False
 
 SimulatedSpacecraft = None
 if SIMULATION:
+    # if there is a trial flag, use it to create the simulator
+    import random
+    from datetime import datetime
+
     from hal.simulator import Simulator
 
-    SimulatedSpacecraft = Simulator()
+    trial = int(os.getenv("ARGUS_SIMULATION_TRIAL", random.randint(0, 100)))
+    trial_date = os.getenv("ARGUS_SIMULATION_DATE", datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+    SimulatedSpacecraft = Simulator(trial=trial, trial_date=trial_date)
 
 SATELLITE: CubeSat = EmulatedSatellite(debug=DEBUG_MODE, simulator=SimulatedSpacecraft, use_socket=SOCKET_RADIO)

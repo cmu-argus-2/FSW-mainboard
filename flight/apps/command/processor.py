@@ -35,7 +35,6 @@ from apps.command.commands import (
     SCHEDULE_OD_EXPERIMENT,
     SWITCH_TO_STATE,
     TURN_OFF_PAYLOAD,
-    UPLINK_ORBIT_REFERENCE,
     UPLINK_TIME_REFERENCE,
 )
 from apps.command.constants import CMD_ID
@@ -54,12 +53,6 @@ COMMANDS = [
     (CMD_ID.FORCE_REBOOT, lambda: True, [], FORCE_REBOOT),
     (CMD_ID.SWITCH_TO_STATE, valid_state, ["target_state_id", "time_in_state"], SWITCH_TO_STATE),
     (CMD_ID.UPLINK_TIME_REFERENCE, valid_time_format, ["time_reference"], UPLINK_TIME_REFERENCE),
-    (
-        CMD_ID.UPLINK_ORBIT_REFERENCE,
-        valid_time_format,
-        ["time_reference", "orbital_parameters"],
-        UPLINK_ORBIT_REFERENCE,
-    ),
     (CMD_ID.TURN_OFF_PAYLOAD, lambda: True, [], TURN_OFF_PAYLOAD),
     (CMD_ID.SCHEDULE_OD_EXPERIMENT, lambda: True, [], SCHEDULE_OD_EXPERIMENT),
     (CMD_ID.REQUEST_TM_NOMINAL, lambda: True, [], REQUEST_TM_NOMINAL),
@@ -160,17 +153,6 @@ def unpack_command_arguments(cmd_id, cmd_arglist):
 
     elif cmd_id == CMD_ID.UPLINK_TIME_REFERENCE:
         cmd_args.append(tm_helper.unpack_unsigned_long_int(cmd_arglist[0:4]))  # time_reference (uint32)
-
-    elif cmd_id == CMD_ID.UPLINK_ORBIT_REFERENCE:
-        cmd_args.append(tm_helper.unpack_unsigned_long_int(cmd_arglist[0:4]))  # time_reference (uint32)
-        orbital_parameters = []
-        orbital_parameters.append(tm_helper.unpack_signed_long_int(cmd_arglist[4:8]))  # pos_x (int32)
-        orbital_parameters.append(tm_helper.unpack_signed_long_int(cmd_arglist[8:12]))  # pos_y (int32)
-        orbital_parameters.append(tm_helper.unpack_signed_long_int(cmd_arglist[12:16]))  # pos_z (int32)
-        orbital_parameters.append(tm_helper.unpack_signed_long_int(cmd_arglist[16:20]))  # vel_x (int32)
-        orbital_parameters.append(tm_helper.unpack_signed_long_int(cmd_arglist[20:24]))  # vel_y (int32)
-        orbital_parameters.append(tm_helper.unpack_signed_long_int(cmd_arglist[24:28]))  # vel_z (int32)
-        cmd_args.append(orbital_parameters)
 
     elif cmd_id == CMD_ID.REQUEST_FILE_PKT:
         cmd_args.append(cmd_arglist[0])  # file_id (uint8)
