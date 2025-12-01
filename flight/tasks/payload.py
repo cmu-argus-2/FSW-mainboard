@@ -15,7 +15,7 @@ class Task(TemplateTask):
         if SM.current_state == STATES.STARTUP:
             pass
         else:
-            if not DH.data_process_exists("img"):
-                DH.register_image_process()  # WARNING: Image process from DH is different from regular data processes!
+            if not DH.file_process_exists("img"):
+                DH.register_file_process("img")  # WARNING: Image process from DH is different from regular data processes!
 
             # TODO: other commands and logging here
