@@ -62,6 +62,10 @@ To build:
 ```bash
 python3 build_tools/build.py
 ```
+For the flight configuration, provide the spacecraft Argus ID:
+```bash
+python3 build_tools/build.py --flight --argus-id <id>
+```
 or for emulation
 ```bash
 python3 build_tools/build-emulator.py
