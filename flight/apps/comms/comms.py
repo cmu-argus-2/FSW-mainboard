@@ -11,6 +11,7 @@ import os
 from apps.command.constants import file_ids_str
 from core import logger
 from core.data_handler import extract_time_from_filename
+from core.satellite_config import comms_config as CONFIG
 from hal.configuration import SATELLITE
 from micropython import const
 
@@ -69,7 +70,7 @@ class MSG_ID:
     """
 
     # Header ID for Argus - THIS MUST BE UNIQUE FOR EACH SPACECRAFT
-    ARGUS_ID = 0x01
+    ARGUS_ID = CONFIG.ARGUS_ID
 
     # Header ID for all ground stations (genericized)
     GS_ID = 0x04

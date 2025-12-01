@@ -4,6 +4,43 @@
 OS=$(uname -s)
 export ARGUS_ROOT=$(pwd)
 
+# Extract optional Argus ID argument and rebuild the positional args list
+ARGUS_ID_ARG=""
+REMAINING_ARGS=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --argus-id)
+            if [[ -n "${2-}" ]]; then
+                ARGUS_ID_ARG="--argus-id $2"
+                shift 2
+                continue
+            else
+                echo "Error: --argus-id requires a value."
+                exit 1
+            fi
+            ;;
+        --argus-id=*)
+            ARGUS_ID_ARG="--argus-id ${1#*=}"
+            shift
+            continue
+            ;;
+        *)
+            REMAINING_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+set -- "${REMAINING_ARGS[@]}"
+
+# Support positional Argus ID for flight builds: "./run.sh flight 0"
+if [[ -z "$ARGUS_ID_ARG" && "$1" == "flight" && -n "${2-}" ]]; then
+    if [[ "$2" =~ ^[0-9]+$ ]]; then
+        ARGUS_ID_ARG="--argus-id $2"
+        # Drop the numeric ID from the positional arguments
+        set -- "$1" "${@:3}"
+    fi
+fi
+
 # Set the correct mpy-cross executable based on the OS
 if [ "$OS" == "Linux" ]; then
     MPY_EXEC="mpy-cross"
@@ -46,8 +83,18 @@ else
     echo "Using ground configuration (ground.yaml)"
 fi
 
+if [[ -n "$FLIGHT_FLAG" && -z "$ARGUS_ID_ARG" ]]; then
+    echo "Error: --argus-id is required when building with the flight configuration."
+    exit 1
+fi
+
+BUILD_ARGS=($FLIGHT_FLAG)
+if [[ -n "$ARGUS_ID_ARG" ]]; then
+    BUILD_ARGS+=($ARGUS_ID_ARG)
+fi
+
 if [[ -z $1 ]]; then
-    $PYTHON_CMD build_tools/build.py $FLIGHT_FLAG
+    $PYTHON_CMD build_tools/build.py "${BUILD_ARGS[@]}"
     $PYTHON_CMD build_tools/move_to_board.py
 elif [ "$1" == "emulate" ]; then
     $PYTHON_CMD build_tools/build-emulator.py $FLIGHT_FLAG
@@ -82,10 +129,10 @@ elif [ "$1" == "simulate" ]; then
     cd -
 elif [ "$1" == "flight" ]; then
     # If --flight is the only argument, build with flight config
-    $PYTHON_CMD build_tools/build.py $FLIGHT_FLAG
+    $PYTHON_CMD build_tools/build.py "${BUILD_ARGS[@]}"
     $PYTHON_CMD build_tools/move_to_board.py
 else
     # Pass flight flag to build command
-    $PYTHON_CMD build_tools/build.py $FLIGHT_FLAG
+    $PYTHON_CMD build_tools/build.py "${BUILD_ARGS[@]}"
     $PYTHON_CMD build_tools/move_to_board.py -d "$1"
 fi
