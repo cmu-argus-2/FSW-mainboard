@@ -31,3 +31,10 @@ hal_monitor:
   REGULAR_REBOOT:
     value: 3600 # seconds, i.e., 1 hour
     _const: true
+
+# Comms App
+comms:
+  ARGUS_ID:
+    value: 0
+    _const: true
+    _hex: true
