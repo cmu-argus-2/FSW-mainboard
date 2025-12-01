@@ -19,3 +19,7 @@ class main_config:
 
 class hal_monitor_config:
     REGULAR_REBOOT = const(3600)
+
+
+class comms_config:
+    ARGUS_ID = const(0x0)

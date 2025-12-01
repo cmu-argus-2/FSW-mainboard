@@ -28,3 +28,5 @@ hal_monitor:
   REGULAR_REBOOT:
     value: 86400 # seconds, i.e., 24 hours
     _const: true
+
+# ARGUS ID is an argument in the build script for flight config (0 or 1)
