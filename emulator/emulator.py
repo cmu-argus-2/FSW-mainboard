@@ -60,8 +60,6 @@ class EmulatedSatellite(CubeSat):
 
         self.append_device("PAYLOAD_UART", None, self.init_device(Payload()))
 
-        self.append_device("PAYLOAD_UART", None, self.init_device(Payload()))
-
         # self._vfs = None
         self.append_device("GPS", None, GPS(simulator=self.__simulated_spacecraft), ASIL=4)
         # self._charger = None
