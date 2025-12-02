@@ -1,6 +1,11 @@
+import os
 import sys
 
-sys.path.append("./lib/hal/cp/")
+# Add the emulator/cp directory to the path
+emulator_dir = os.path.dirname(os.path.abspath(__file__))
+cp_dir = os.path.join(emulator_dir, "cp")
+sys.path.insert(0, cp_dir)
+
 sys.modules["micropython"] = __import__("micropython_mock")
 sys.modules["ulab"] = __import__("ulab_mock")
 sys.modules["rtc"] = __import__("rtc_mock")
