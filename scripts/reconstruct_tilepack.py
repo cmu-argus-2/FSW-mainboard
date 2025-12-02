@@ -294,26 +294,50 @@ def main():
     print(f"Saved {len(tiles_jpeg)} individual tile JPEGs to {TILES_OUTPUT_DIR}/")
 
     if metadata is None:
-        # Guess based on common tile sizes
+        # Guess based on number of tiles
         max_tile_idx = max(tiles_jpeg.keys())
         num_tiles = max_tile_idx + 1
-
-        # Try common aspect ratios for VGA (640x480)
-        # With 64x32 tiles: 10 tiles wide, 15 tiles tall = 150 tiles
-        # With 32x32 tiles: 20 tiles wide, 15 tiles tall = 300 tiles
 
         first_tile = Image.open(io.BytesIO(tiles_jpeg[0]))
         tile_w, tile_h = first_tile.size
 
-        tiles_x = int((num_tiles * ASPECT_RATIO_WIDTH / ASPECT_RATIO_HEIGHT) ** 0.5 * ASPECT_RATIO_HEIGHT / ASPECT_RATIO_WIDTH)
-        tiles_y = (num_tiles + tiles_x - 1) // tiles_x
+        print(f"[DEBUG] Have {num_tiles} tiles, tile size {tile_w}×{tile_h}")
+
+        # For VGA-like images with 64×32 tiles:
+        # Full VGA (640×480) = 10×15 = 150 tiles
+        # If we have 130 tiles, likely 10×13 = 130 tiles exactly
+
+        # Find factor pairs that give exactly num_tiles
+        exact_factors = []
+        for i in range(1, int(num_tiles**0.5) + 1):
+            if num_tiles % i == 0:
+                exact_factors.append((i, num_tiles // i))
+
+        print(f"[DEBUG] Exact factor pairs for {num_tiles}: {exact_factors}")
+
+        # For image aspect ratio 4:3, with tiles of 64×32 (aspect 2:1),
+        # we want: (tiles_x × 64) / (tiles_y × 32) = 4/3
+        # So: tiles_x / tiles_y = 4/3 × 32/64 = 4/3 × 1/2 = 2/3 ≈ 0.67
+        target_tile_aspect = (ASPECT_RATIO_WIDTH / ASPECT_RATIO_HEIGHT) * (tile_h / tile_w)
+
+        print(f"[DEBUG] Target tiles_x/tiles_y ratio: {target_tile_aspect:.3f}")
+
+        if exact_factors:
+            # Choose the factor pair closest to target aspect
+            best_pair = min(exact_factors, key=lambda p: abs(p[0] / p[1] - target_tile_aspect))
+            tiles_x, tiles_y = best_pair
+            print(f"[DEBUG] Best exact factor pair: {tiles_x}×{tiles_y} (aspect {tiles_x / tiles_y:.3f})")  # noqa: E501
+        else:
+            # Fallback: find oversized grid
+            tiles_x = int((num_tiles * ASPECT_RATIO_WIDTH / ASPECT_RATIO_HEIGHT) ** 0.5)
+            tiles_y = (num_tiles + tiles_x - 1) // tiles_x
 
         target_width = tiles_x * tile_w
         target_height = tiles_y * tile_h
 
         print(
-            f"[INFO] Inferred dimensions: {tiles_x}x{tiles_y} tiles, "
-            f"tile size {tile_w}x{tile_h}, target {target_width}x{target_height}"
+            f"[INFO] Inferred dimensions: {tiles_x}×{tiles_y} tiles (grid holds {tiles_x * tiles_y} cells for {num_tiles} tiles), "  # noqa: E501
+            f"tile size {tile_w}×{tile_h}, target {target_width}×{target_height}"
         )
     else:
         tiles_x = metadata.tiles_x
