@@ -20,7 +20,7 @@ from micropython import const
 
 _TPM_INIT_TIMEOUT = const(10)  # seconds
 _EXIT_STARTUP_TIMEOUT = CONFIG.EXIT_STARTUP_TIMEOUT  # Already a const in satellite_config
-_DEPLOYABLE_STRENGTH = const(7)  # 0-255
+_DEPLOYABLE_STRENGTH = const(15)  # 0-255
 _ANTENNA_STRENGTH = int(_DEPLOYABLE_STRENGTH / 2)
 _ANTENNA_PWM = const(2)
 _ANTENNA_DEPLOYMENT_TRIES = const(2)
