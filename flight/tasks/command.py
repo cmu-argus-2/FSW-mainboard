@@ -224,7 +224,7 @@ class Task(TemplateTask):
             if adcs_data:
                 self.ADCS_MODE = adcs_data[ADCS_IDX.MODE]
 
-                if not (self.ADCS_MODE >= Modes.TUMBLING and self.ADCS_MODE <= Modes.SUN_POINTED):
+                if not (self.ADCS_MODE >= Modes.TUMBLING and self.ADCS_MODE <= Modes.ACS_OFF):
                     self.log_error("ADCS returned an invalid mode, assuming STABLE ADCS mode")
                     self.ADCS_MODE = Modes.STABLE
                 else:
@@ -269,6 +269,20 @@ class Task(TemplateTask):
             # Detumbling timeout in case the ADCS is not working
             if SM.time_since_last_state_change > CONFIG.DETUMBLING_TIMEOUT_DURATION:
                 self.log_info("DETUMBLING timeout - Setting Detumbling Error Flag.")
+                # Set the detumbling error flag in the NVM
+                self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1
+
+            # Detumbling impossible due to magnetorquer failure
+            working_coils = [
+                SATELLITE.TORQUE_DRIVERS_AVAILABLE("XP"),
+                SATELLITE.TORQUE_DRIVERS_AVAILABLE("XM"),
+                SATELLITE.TORQUE_DRIVERS_AVAILABLE("YP"),
+                SATELLITE.TORQUE_DRIVERS_AVAILABLE("YM"),
+                SATELLITE.TORQUE_DRIVERS_AVAILABLE("ZP"),
+                SATELLITE.TORQUE_DRIVERS_AVAILABLE("ZM"),
+            ]
+            if not any(working_coils):
+                self.log_info("DETUMBLING actuator failure - Setting Detumbling Error Flag.")
                 # Set the detumbling error flag in the NVM
                 self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1
 

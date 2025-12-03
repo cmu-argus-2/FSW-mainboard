@@ -21,7 +21,6 @@ Author: Ibrahima S. Sow
 """
 
 import supervisor
-from apps.adcs.orbit_propagation import OrbitPropagator
 from apps.command.constants import file_tags_str
 from apps.telemetry import TelemetryPacker
 from core import logger
@@ -29,9 +28,6 @@ from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
-
-# from hal.configuration import SATELLITE
-from ulab import numpy as np
 
 FILE_PKTSIZE = 240
 
@@ -55,16 +51,6 @@ def UPLINK_TIME_REFERENCE(time_reference):
     """Sends a time reference to the spacecraft to update the time processing module."""
     logger.info(f"Executing UPLINK_TIME_REFERENCE with current_time: {time_reference}")
     TPM.set_time(time_reference)
-    return []
-
-
-def UPLINK_ORBIT_REFERENCE(time_reference, orbital_parameters):
-    """Sends time-referenced orbital information to update the orbit reference."""
-    logger.info(
-        f"Executing UPLINK_ORBIT_REFERENCE with orbital_parameters: pos({orbital_parameters}, time_reference: {time_reference}"
-    )
-    OrbitPropagator.set_last_update_time(time_reference)
-    OrbitPropagator.set_last_updated_state(np.array(orbital_parameters))
     return []
 
 
@@ -136,7 +122,8 @@ def REQUEST_FILE_METADATA(file_id, file_time=None):
     file_path = None
     file_tag = file_tags_str[file_id]
 
-    if file_time is None:
+    if file_time is None or file_time == 0:
+        # None or 0 means get the latest file
         file_path = DH.request_TM_path(file_tag, True)
     else:
         # Specify file_tag, latest = False and file_time
@@ -160,7 +147,8 @@ def DOWNLINK_ALL(file_id, file_time=None):
     file_path = None
     file_tag = file_tags_str[file_id]
 
-    if file_time is None:
+    if file_time is None or file_time == 0:
+        # None or 0 means get the latest file
         file_path = DH.request_TM_path(file_tag)
     else:
         # Specify file_tag, latest = False and file_time
