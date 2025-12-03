@@ -15,6 +15,10 @@ command:
   GROUND_TESTING_MODE:
     value: false
 
+  BURN_WIRE_TIMEOUT:
+    value: 5  # number of deployment attempts before forcing completion
+    _const: true
+
 # Time Processor Module
 time_processor:
   time_reference: 

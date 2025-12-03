@@ -409,6 +409,30 @@ class CubeSat:
         """
         return self._time_ref_boot
 
+    @property
+    def DEPLOYMENT_SENSORS(self):
+        """Returns a dictionary of deployment sensors with the direction as the key (e.g. 'XP', 'YM')"""
+        deployment_sensors = {}
+        return deployment_sensors
+
+    def DEPLOYMENT_SENSOR_AVAILABLE(self, dir: str) -> bool:
+        """Returns True if the specific deployment sensor for the given direction is available.
+
+        :param dir: The direction key (e.g., 'XP', 'YM')
+        :return: bool - True if the sensor exists and is not None, False otherwise.
+        """
+        return False
+
+    def DEPLOYMENT_SENSOR_DISTANCE(self, dir: str) -> float:
+        """Returns the distance reading for the specific deployment sensor if available and returns -1 otherwise
+
+        :param dir: The direction key (e.g., 'XP', 'YM', etc.)
+        :return: float - distance value in cm if the sensor is available else -1
+        """
+        if self.DEPLOYMENT_SENSOR_AVAILABLE(dir):
+            return self.__device_list["DEPLOYMENT_" + dir].device.distance
+        return -1
+
     ######################## ERROR HANDLING ########################
 
     def handle_error(self, device_name: str) -> int:

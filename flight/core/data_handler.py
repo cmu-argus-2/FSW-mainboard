@@ -248,15 +248,22 @@ class DataProcess:
 
         self.last_data = data
 
-        if self.persistent:
+        if self.persistent and not DataHandler.REBOOT_IN_PROGRESS:
             self.resolve_current_file()
             self.write_interval_counter += 1
 
             if self.write_interval_counter >= self.write_interval:
-                bin_data = struct.pack(self.data_format, *data)
-                self.file.write(bin_data)
-                self.file.flush()  # Flush immediately
-                self.write_interval_counter = 0
+                try:
+                    bin_data = struct.pack(self.data_format, *data)
+                    self.file.write(bin_data)
+                    self.file.flush()  # Flush immediately
+                    self.write_interval_counter = 0
+                except (ValueError, OSError) as e:
+                    # File may be deinitialized after peripheral reboot
+                    # Force status to closed so next call will reopen
+                    logger.error(f"Error writing to {self.tag_name}: {e}")
+                    self.file = None
+                    self.status = _CLOSED
 
     def get_latest_data(self) -> Optional[List]:
         """
@@ -317,10 +324,23 @@ class DataProcess:
         Attempt to reuse the latest file in the directory.
         Returns True if the file was successfully reused, False otherwise.
         """
+        if not self.persistent:
+            return False  # Non-persistent data processes don't have files
+
         latest_file = self._get_latest_file()
         if latest_file is not None:
             try:
+                # Force close any existing file handle (may be deinitialized after peripheral reboot)
+                if self.file is not None:
+                    try:
+                        self.file.close()
+                    except Exception as e:
+                        self.log_info(f"Error closing file: {e}, file already closed/deinitialized.")
+                        pass  # Ignore errors if file already closed/deinitialized
+                    self.file = None
+
                 self.current_path = latest_file
+                self.status = _CLOSED  # Ensure status is closed before opening
                 self.open()
                 return True
             except Exception as e:
@@ -375,11 +395,16 @@ class DataProcess:
         """
         Close the file.
         """
+        if not self.persistent:
+            return  # Non-persistent data processes don't have files to close
+
+        if self.file is not None:
+            try:
+                self.file.close()
+            except Exception as e:
+                self.log_info(f"Error closing file: {e}, file already closed/deinitialized.")
         if self.status == _OPEN:
-            self.file.close()
             self.status = _CLOSED
-        else:
-            logger.info("File is already closed.")
 
     def _get_latest_file(self) -> Optional[str]:
         """
@@ -480,9 +505,15 @@ class DataProcess:
         """
         if self.persistent:
             files = self.get_sorted_file_list()[1:]  # Ignore process configuration file
+
+            # Don't count currently open file (if any) since it's not complete yet
+            completed_file_count = len(files)
+            if self.status == _OPEN and self.current_path:
+                # Current file exists in the list but isn't complete, don't count it
+                completed_file_count -= 1
+
             # Actual overflow of the buffer
-            diff = len(files) - (self.circular_buffer_size + len(self.excluded_paths) + len(self.delete_paths) - 1)
-            # -1 for the current file
+            diff = completed_file_count - (self.circular_buffer_size + len(self.excluded_paths) + len(self.delete_paths))
             mark_counter = 0
             if diff > 0:
                 # diff files to mark for deletion
@@ -706,44 +737,63 @@ class FileProcess(DataProcess):
         packet_data[0:2] = packet_header
         packet_data[2 : 2 + packet_len] = data
 
+        # Skip logging if reboot is in progress
+        if DataHandler.REBOOT_IN_PROGRESS:
+            return
+
         if not DataHandler.SD_ERROR_FLAG:
             # Ensure file is open before writing
             self.resolve_current_file()
 
-            # Write magic number header on first write to new file
-            if not self.file_header_written:
-                self.file.write(_DH_MAGIC_NUMBER)
-                self.file.flush()
-                self.file_header_written = True
-
-            # Add to file buffer and transmit only when buffer is full
-            data_len = len(packet_data)
-            data_offset = 0  # Keeps track of processed data
-
-            while data_offset < data_len:
-                space_remaining = self.buffer_size - self.file_buf_index
-                chunk_size = min(data_len - data_offset, space_remaining)  # Fill as much as possible
-
-                # Copy data into buffer
-                self.file_buf[self.file_buf_index : self.file_buf_index + chunk_size] = packet_data[
-                    data_offset : data_offset + chunk_size
-                ]
-                self.file_buf_index += chunk_size
-                data_offset += chunk_size  # Move data offset
-
-                if self.file_buf_index == self.buffer_size:
-                    # Buffer is full, write to SD card
-                    self.file.write(self.file_buf[: self.buffer_size])  # Write full buffer block
+            try:
+                # Write magic number header on first write to new file
+                if not self.file_header_written:
+                    self.file.write(_DH_MAGIC_NUMBER)
                     self.file.flush()
-                    self.file_buf_index = 0  # Reset buffer index
+                    self.file_header_written = True
+
+                # Add to file buffer and transmit only when buffer is full
+                data_len = len(packet_data)
+                data_offset = 0  # Keeps track of processed data
+
+                while data_offset < data_len:
+                    space_remaining = self.buffer_size - self.file_buf_index
+                    chunk_size = min(data_len - data_offset, space_remaining)  # Fill as much as possible
+
+                    # Copy data into buffer
+                    self.file_buf[self.file_buf_index : self.file_buf_index + chunk_size] = packet_data[
+                        data_offset : data_offset + chunk_size
+                    ]
+                    self.file_buf_index += chunk_size
+                    data_offset += chunk_size  # Move data offset
+
+                    if self.file_buf_index == self.buffer_size:
+                        # Buffer is full, write to SD card
+                        self.file.write(self.file_buf[: self.buffer_size])  # Write full buffer block
+                        self.file.flush()
+                        self.file_buf_index = 0  # Reset buffer index
+            except (ValueError, OSError) as e:
+                # File may be deinitialized after peripheral reboot
+                # Force status to closed so next call will reopen
+                logger.error(f"Error writing to {self.tag_name}: {e}")
+                self.file = None
+                self.status = _CLOSED
+                self.file_header_written = False
+                self.file_buf_index = 0
 
         else:
             # Transmit each time without adding to a buf
-            self.resolve_current_file()
-            self.last_data = packet_data
+            try:
+                self.resolve_current_file()
+                self.last_data = packet_data
 
-            self.file.write(packet_data)
-            self.file.flush()
+                self.file.write(packet_data)
+                self.file.flush()
+            except (ValueError, OSError) as e:
+                # File may be deinitialized after peripheral reboot
+                logger.error(f"Error writing to {self.tag_name}: {e}")
+                self.file = None
+                self.status = _CLOSED
 
         self.packet_count += 1
 
@@ -907,8 +957,9 @@ class FileProcess(DataProcess):
 
     def file_completed(self):
         """
-        Closes the current file and resolves it, to prepare for the next file.
+        Closes the current file without creating a new one.
         Flushes any remaining buffered data before closing.
+        A new file will be created automatically when log() is called next.
 
         Returns:
             None
@@ -920,7 +971,6 @@ class FileProcess(DataProcess):
             self.file_buf_index = 0
 
         self.close()
-        self.resolve_current_file()
 
 
 class DataHandler:
@@ -935,6 +985,7 @@ class DataHandler:
     _SD_SCANNED = False
     _SD_USAGE = 0
     SD_ERROR_FLAG = False
+    REBOOT_IN_PROGRESS = False  # Flag to prevent logging during peripheral reboot
 
     # Keep track of all file processes
     data_process_registry = dict()
@@ -1286,30 +1337,43 @@ class DataHandler:
         """
         WARNING: should not be used unless for self-driven reboot.
         Gracefully shuts down all data processes by closing their files.
+        Sets REBOOT_IN_PROGRESS flag to prevent new log attempts during reboot.
 
         Returns:
             Bool
         """
+        cls.REBOOT_IN_PROGRESS = True  # Block all logging during reboot
         try:
             for tag_name in cls.data_process_registry:
-                cls.data_process_registry[tag_name].close()
+                try:
+                    cls.data_process_registry[tag_name].close()
+                except Exception as e:
+                    logger.error(f"Error closing {tag_name}: {e}")
             return True
-        except Exception:
+        except Exception as e:
+            logger.error(f"Error in graceful_shutdown: {e}")
             return False
 
     @classmethod
     def restore_data_process_files(cls) -> bool:
         """
         Restores the data process files by reinitializing them.
+        Clears REBOOT_IN_PROGRESS flag to allow logging to resume.
 
         Returns:
             Bool
         """
         try:
             for tag_name in cls.data_process_registry:
-                cls.data_process_registry[tag_name].try_to_reuse_latest_file()
+                try:
+                    cls.data_process_registry[tag_name].try_to_reuse_latest_file()
+                except Exception as e:
+                    logger.error(f"Error restoring {tag_name}: {e}")
+            cls.REBOOT_IN_PROGRESS = False  # Re-enable logging after restore
             return True
-        except Exception:
+        except Exception as e:
+            logger.error(f"Error in restore_data_process_files: {e}")
+            cls.REBOOT_IN_PROGRESS = False  # Re-enable even on error
             return False
 
     @classmethod
@@ -1416,7 +1480,9 @@ class DataHandler:
             file_list = process.get_sorted_file_list()
 
             current_filename = None
-            if process.current_path:
+            # Only exclude current_path if the file is actually open
+            # If status is CLOSED, current_path might point to a pre-generated filename that hasn't been created yet
+            if process.current_path and process.status == _OPEN:
                 current_filename = process.current_path.split("/")[-1]
 
             complete_files = [f for f in file_list if f != _PROCESS_CONFIG_FILENAME and f != current_filename]
