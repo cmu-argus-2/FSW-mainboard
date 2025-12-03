@@ -21,8 +21,8 @@ _IDX_LENGTH = class_length(HAL_IDX)
 _REGULAR_REBOOT_TIME = CONFIG.REGULAR_REBOOT
 _PERIPH_REBOOT_COUNT_IDX = getattr(HAL_IDX, "PERIPH_REBOOT_COUNT")
 _HAL_IDX_INV = {v: k for k, v in HAL_IDX.__dict__.items()}
-_GRACEFUL_REBOOT_INTERVAL = const(60 * 5)  # 1 minute interval, 5Hz task rate
-_INDIVIDUAL_REBOOT_INTERVAL = const(10 * 5)  # 10 second interval, 5Hz task rate
+_GRACEFUL_REBOOT_INTERVAL = const(60)  # 1 minute interval
+_INDIVIDUAL_REBOOT_INTERVAL = const(10)  # 10 second interval
 
 
 class Task(TemplateTask):
@@ -34,9 +34,9 @@ class Task(TemplateTask):
         self.restored = False
         self.peripheral_reboot_count = 0
         self.graceful_reboot = False
-        self.graceful_reboot_counter = 0
+        self.graceful_reboot_counter = TPM.monotonic()
         self.turn_on_device = {}
-        self.individual_reboot_counter = 0
+        self.individual_reboot_counter = TPM.monotonic()
 
     ######################## HELPER FUNCTIONS ########################
 
@@ -46,7 +46,7 @@ class Task(TemplateTask):
 
     def close_data_process(self):
         if not DH.graceful_shutdown():
-            self.log_info("Error during gracefully shutting down data process.")
+            self.log_error("Error during gracefully shutting down data process.")
 
     ######################## ERROR HANDLING ########################
 
@@ -173,18 +173,16 @@ class Task(TemplateTask):
                 self.log_error_handle_info(self.error_decision(device_name, device_error_list), device_name)
 
         # restart devices that are turned off(individual power switches)
-        if self.individual_reboot_counter >= _INDIVIDUAL_REBOOT_INTERVAL:
+        if (TPM.monotonic() - self.individual_reboot_counter) >= _INDIVIDUAL_REBOOT_INTERVAL:
             if self.turn_on_device != {}:
                 for device_name, time in self.turn_on_device.items():
                     if self.log_data[HAL_IDX.TIME_HAL] != time:
                         SATELLITE.turn_on_device(device_name)
                         self.log_info(f"Turned on {device_name} and devices on the same power line.")
                         self.turn_on_device.pop(device_name)
-            self.individual_reboot_counter = 0
-        else:
-            self.individual_reboot_counter += 1
+            self.individual_reboot_counter = TPM.monotonic()
 
-        if self.graceful_reboot_counter >= _GRACEFUL_REBOOT_INTERVAL:
+        if (TPM.monotonic() - self.graceful_reboot_counter) >= _GRACEFUL_REBOOT_INTERVAL:
             if self.graceful_reboot:
                 self.graceful_reboot = False
                 self.peripheral_reboot_count += 1
@@ -193,9 +191,7 @@ class Task(TemplateTask):
                 if not DH.restore_data_process_files():
                     self.log_error("Error restoring data process files after graceful reboot")
                 self.log_info("Gracefully rebooted peripheral power line.")
-            self.graceful_reboot_counter = 0
-        else:
-            self.graceful_reboot_counter += 1
+            self.graceful_reboot_counter = TPM.monotonic()
 
         self.log_device_status()
         DH.log_data(self.log_name, self.log_data)
