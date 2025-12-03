@@ -518,19 +518,28 @@ class CubeSat:
             return self.__device_list["DEPLOYMENT_" + dir].device.distance
         return -1
 
-    # @property
-    # def PAYLOADUART(self):
-    #     """PAYLOAD_EN: Returns the payload enable object
-    #     :return: object or None
-    #     """
-    #     return self.__payload_uart
+    @property
+    def PAYLOADUART(self):
+        """PAYLOAD_EN: Returns the payload UART object
+        :return: object or None
+        """
+        return self.__payload_uart
 
-    # @property
-    # def PAYLOADUART_AVAILABLE(self) -> bool:
-    #     """PAYLOADUART_AVAILABLE: Returns True if the payload UART is available
-    #     :return: bool
-    #     """
-    #     return self.__payload_uart is not None
+    @property
+    def PAYLOADUART_AVAILABLE(self) -> bool:
+        """PAYLOADUART_AVAILABLE: Returns True if the payload UART is available
+        :return: bool
+        """
+        return self.__payload_uart is not None
+
+    @property
+    def PAYLOADUART_BAUDRATE(self) -> bool:
+        """PAYLOADUART_BAUD: Returns the payload UART baudrate
+        :return: int or None
+        """
+        if self.PAYLOADUART_AVAILABLE:
+            return self.__payload_uart.baudrate
+        return None
 
     @property
     def BOOTTIME(self):

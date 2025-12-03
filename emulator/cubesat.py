@@ -389,6 +389,20 @@ class CubeSat:
         return self.key_in_device_list("WATCHDOG") and self.__device_list["WATCHDOG"].device is not None
 
     @property
+    def PAYLOADUART(self):
+        """PAYLOAD_EN: Returns the payload UART object
+        :return: object or None
+        """
+        return self.__device_list["PAYLOADUART"].device
+
+    @property
+    def PAYLOADUART_AVAILABLE(self) -> bool:
+        """PAYLOADUART_AVAILABLE: Returns True if the payload UART is available
+        :return: bool
+        """
+        return self.key_in_device_list("PAYLOADUART") and self.__device_list["PAYLOADUART"].device is not None
+
+    @property
     def BOOTTIME(self):
         """BOOTTIME: Returns the reference count since the board booted
         :return: object or None

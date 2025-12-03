@@ -38,10 +38,10 @@ class ArgusV2Interfaces:
     except Exception:
         I2C1 = None
 
-    JET_SPI_SCK = board.CLK1  # GPIO10
-    JET_SPI_MOSI = board.MOSI1  # GPIO11
-    JET_SPI_MISO = board.MISO1  # GPIO08
-    JET_SPI = SPI(JET_SPI_SCK, MOSI=JET_SPI_MOSI, MISO=JET_SPI_MISO)
+    # JET_SPI_SCK = board.CLK1  # GPIO10
+    # JET_SPI_MOSI = board.MOSI1  # GPIO11
+    # JET_SPI_MISO = board.MISO1  # GPIO08
+    # JET_SPI = SPI(JET_SPI_SCK, MOSI=JET_SPI_MOSI, MISO=JET_SPI_MISO)
 
     SPI_SCK = board.CLK0  # GPIO18
     SPI_MOSI = board.MOSI0  # GPIO19
@@ -205,9 +205,9 @@ class ArgusV2Components:
     ########
 
     # PAYLOAD(JETSON)
-    PAYLOAD_SPI = ArgusV2Interfaces.JET_SPI
-    PAYLOAD_CS = board.JETSON_CS  # GPIO9
-    PAYLOAD_ENABLE = board.JETSON_EN  # GPIO24
+    # PAYLOAD_SPI = ArgusV2Interfaces.JET_SPI
+    # PAYLOAD_CS = board.JETSON_CS  # GPIO9
+    # PAYLOAD_ENABLE = board.JETSON_EN  # GPIO24
 
     #########
     # UART0 #
@@ -238,6 +238,12 @@ class ArgusV2Components:
     VFS_MOUNT_POINT = "/sd"
 
     LIGHT_SENSOR_CONVERSION_TIME = 0b0000
+
+    # Jetson testing
+    JETSON_BAUD = const(57600)
+    JETSON_TX = board.MISO1
+    JETSON_RX = board.JETSON_CS
+    JETSON_UART = UART(JETSON_TX, JETSON_RX, baudrate=JETSON_BAUD, timeout=0.04)
 
 
 class ArgusV2(CubeSat):
@@ -270,6 +276,9 @@ class ArgusV2(CubeSat):
         del self.__device_list["YP_PWR"]
         del self.__device_list["YM_PWR"]
         del self.__device_list["ZP_PWR"]
+
+        # Testing set-up
+        self.__payload_uart = ArgusV2Interfaces.JETSON_UART
 
     ######################## BOOT SEQUENCE ########################
 
