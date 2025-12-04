@@ -84,7 +84,7 @@ def compute_body_sun_vector_from_lux(I_vec):
         status = StatusConst.OK
 
     # Extract body vectors and lux readings where the sensor readings are valid
-    ACTIVE_LIGHT_READINGS = [I_vec[i] for i in range(_NUM_LIGHT_SENSORS) if I_vec[i] > _THRESHOLD_ILLUMINATION_LUX]
+    ACTIVE_LIGHT_READINGS = np.array([I_vec[i] for i in range(_NUM_LIGHT_SENSORS) if I_vec[i] > _THRESHOLD_ILLUMINATION_LUX])
     ACTIVE_LIGHT_NORMALS = np.array(
         [PhysicalConst.LIGHT_SENSOR_NORMALS[i] for i in range(_NUM_LIGHT_SENSORS) if I_vec[i] > _THRESHOLD_ILLUMINATION_LUX]
     )

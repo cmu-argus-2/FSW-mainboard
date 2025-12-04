@@ -58,7 +58,11 @@ def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field
     # Do sun pointing
     else:
         # Compute pointing error
-        error = sun_vector - np.dot(PhysicalConst.INERTIA_MAT, omega) / np.linalg.norm(ControllerConst.MOMENTUM_TARGET)
+        ang_mom = np.dot(PhysicalConst.INERTIA_MAT, omega)
+        # conical projection of angular momentum onto sun vector
+        error = sun_vector - ang_mom / np.linalg.norm(ang_mom)
+        # spherical projection of angular momentum onto sun vector
+        # error = sun_vector - np.dot(PhysicalConst.INERTIA_MAT, omega) / np.linalg.norm(ControllerConst.MOMENTUM_TARGET)
 
         # Compute controller using bang-bang control law
         u_dir = np.cross(mag_field, error)
@@ -72,7 +76,7 @@ def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field
             return u_dir / u_dir_norm
 
 
-def mcm_coil_allocator(u: np.ndarray) -> np.ndarray:
+def mcm_coil_allocator(u: np.ndarray, b: np.ndarray) -> np.ndarray:
     # Query the available coil statuses
     coil_status = []
     mcm_alloc = np.zeros((6, 3))
@@ -95,9 +99,24 @@ def mcm_coil_allocator(u: np.ndarray) -> np.ndarray:
 
         coil_status = coil_status + [EP_status, EM_status]
 
+    # check full axis failure
+    axis_fail = []
+    for axis in range(3):
+        if not (coil_status[2 * axis] or coil_status[2 * axis + 1]):
+            axis_fail += [axis]
+    # if one axis failure, modify allocation matrix
+    if len(axis_fail) == 1:
+        if abs(b[axis_fail[0]]) > 1e-9:
+            mcm_mat_no_zaxis = np.zeros((3, 3))
+            mcm_mat_no_zaxis[:, axis_fail[0]] = b / b[axis_fail[0]]
+            mcm_mat_no_zaxis[:, :] = np.eye(3) - mcm_mat_no_zaxis
+            mcm_alloc = np.dot(mcm_alloc, mcm_mat_no_zaxis)
+
     # Compute Coil Voltages based on Allocation matrix and target input
     u_throttle = np.dot(mcm_alloc, u)
-    u_throttle = np.clip(u_throttle, -1, 1)
+    # Maintain direction, clip magnitude to 1
+    u_throttle = u_throttle / max(1.0, np.max(abs(u_throttle)))
+    # u_throttle = np.clip(u_throttle, -1, 1)
 
     # Apply Coil Voltages
     for n in range(MCMConst.N_MCM):

@@ -11,6 +11,29 @@ except Exception:
     _HAS_YAML = False
 
 
+def format_value(value):
+    """
+    Format a Python value as a string, using double quotes for strings.
+
+    Args:
+        value: The value to format
+
+    Returns:
+        String representation of the value
+    """
+    if isinstance(value, str):
+        return (
+            '"'
+            + value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
+            + '"'
+        )
+    else:
+        result = repr(value)
+        if len(result) >= 2 and result[0] == "'" and result[-1] == "'":
+            return '"' + result[1:-1].replace('"', '\\"') + '"'
+        return result
+
+
 def generate_satellite_config(source_folder, use_flight_config=False):
     """
     Generate satellite_config.py from ground.yaml or flight.yaml.
@@ -65,28 +88,11 @@ def generate_satellite_config(source_folder, use_flight_config=False):
 
                     if use_const and isinstance(actual_value, int):
                         python_value = f"const({actual_value})"
-                    elif isinstance(actual_value, str):
-                        python_value = repr(actual_value)
-                    elif isinstance(actual_value, (int, float, bool)):
-                        python_value = repr(actual_value)
-                    elif isinstance(actual_value, list):
-                        python_value = repr(actual_value)
-                    elif isinstance(actual_value, dict):
-                        python_value = repr(actual_value)
                     else:
-                        python_value = repr(actual_value)
+                        python_value = format_value(actual_value)
                 else:
-                    # Simple value without metadata, if no const defined
-                    if isinstance(value, str):
-                        python_value = repr(value)
-                    elif isinstance(value, (int, float, bool)):
-                        python_value = repr(value)
-                    elif isinstance(value, list):
-                        python_value = repr(value)
-                    elif isinstance(value, dict):
-                        python_value = repr(value)
-                    else:
-                        python_value = repr(value)
+                    # Simple value without metadata
+                    python_value = format_value(value)
 
                 output_lines.append(f"    {key} = {python_value}")
 
