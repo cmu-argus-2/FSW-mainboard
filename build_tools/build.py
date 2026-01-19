@@ -26,7 +26,7 @@ def get_board_path():
         BOARD_PATH = "D:\\"
     elif system == "Linux":
         username = os.getlogin()
-        BOARD_PATH = f"/media/{username}/ARGUS"
+        BOARD_PATH = f"/media/{username}/CIRCUITPY"
     elif system == "Darwin":
         BOARD_PATH = "/Volumes/ARGUS"
     elif platform.node() == "raspberrypi":
@@ -86,7 +86,7 @@ def parse_argus_id(value):
 
 
 BOARD_PATH = get_board_path()
-CPY_VERSION = 8  # Default to CPY 8
+CPY_VERSION = 9  # Default to CPY 9
 BOARD_ID = "Argus"  # Default to compiling for Argus
 if os.path.exists(BOARD_PATH):
     CPY_VERSION = get_circuitpython_version(BOARD_PATH)
