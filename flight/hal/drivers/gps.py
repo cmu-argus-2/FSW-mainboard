@@ -13,7 +13,7 @@ EPOCH_DAY = 5
 
 
 class GPS:
-    def __init__(self, uart: UART, enable=None, debug: bool = False, mock: bool = True) -> None:
+    def __init__(self, uart: UART, enable=None, debug: bool = False, mock: bool = True) -> None: # TODO GPS Enable is obsolete
         self._uart = uart
         self.debug = debug
 
@@ -24,6 +24,11 @@ class GPS:
         self._payload_len = 0
         self._msg_id = 0
         self._msg_cs = 0
+    
+        self._reset_to_factory = False
+        self._binary_set_flag = False
+        self._periodic_nav_flag = False
+        self._disable_nmea_flag = False
 
         # self._nav_data_hex = {}  # Navigation data as a dictionary of hex values
 
@@ -78,13 +83,6 @@ class GPS:
         self.ecef_vy = None  # Field 52-55, type: sint32 = signed long (l), unit: 1/100 meters per second
         self.ecef_vz = None  # Field 56-59, type: sint32 = signed long (l), unit: 1/100 meters per second
 
-        # Don't care to enable the GPS module during initialization
-        self._enable = enable
-        if self._enable is not None:
-            self._enable = DigitalInOut(enable)
-            self._enable.switch_to_output()
-            self._enable = False
-
         # TODO : This needs to be removed for any infield testing
         self.mock = mock
         if self.mock:
@@ -103,37 +101,78 @@ class GPS:
                 b"\xff\xfe\x00\x00\x00\x00\xfd\x0d\x0a"
             )
 
-        else:
-            # Module expected to actually exist, send nav_data request to module
-            self.set_to_binary()
+        # else:
+        #     # Module expected to actually exist, send nav_data request to module
+        #     # print("GPS Module Initialized, setting to binary mode")
+        #     # self.set_to_binary()
 
         super().__init__()
 
     def update(self) -> bool:
+        # if self._reset_to_factory is False:
+        #     self.reset_to_factory_defaults()
+        #     self._reset_to_factory = True
+        #     print('RESETTING TO FACTORY DEFAULTS RESETTING TO FACTORY DEFAULTS ')
+
+        # if not self._disable_nmea_flag:
+            # self.disable_nmea_GGA()
+            # self._disable_nmea_flag = True
+            # print('DISABLING NMEA DISABLING NMEA DISABLING NMEA ')
+
+        # if not self._binary_set_flag and not self.mock:
+        #     print('SETTING TO BINARY SETTING TO BINARY SETTING TO BINARY ')
+        #     self.set_to_binary()
+
+        # if not self._periodic_nav_flag:
+        #     self.enable_periodic_nav_data()
+        #     self._periodic_nav_flag = True
+        #     print('ENABLING PERIODIC NAV DATA ENABLING PERIODIC NAV DATA ')
+
         if self.mock:
+            print('mock')
             self._msg = self.mock_message
         else:
+            print('no mock')
+            # self.set_to_binary()
+            # self.query_nav_data()  # Request nav data from module
             try:
-                self._msg = self._parse_sentence()
+                self._msg = self._read_sentence()
             except UnicodeError:
+                print("Unicode Error when parsing GPS message")
                 return False
-            if self._msg is None or len(self._msg) < 11:
+            if self._msg is None:
+                print("GPS message is None")
+                return False
+            if len(self._msg) < 7:
+                print(f"GPS message too short: {len(self._msg)} bytes")
+                print(self._msg)
                 return False
 
         if self.debug:
             if self.mock:
-                print("Mock message: \n", self._msg)
+                print("Mock message: \n", ' '.join(f'{b:02X}' for b in self._msg))
             else:
-                print("Raw message: \n", self._msg)
+                print("Raw message: \n", ' '.join(f'{b:02X}' for b in self._msg))
 
+        
         # self._msg = [hex(i) for i in self._msg]
+        if self._msg[0] != 0xA0 or self._msg[1] != 0xA1:
+            if self.debug:
+                print("Invalid start bytes, expected 0xA0 0xA1, got: ", hex(self._msg[0]), hex(self._msg[1]))
+            return False
+        
         self._payload_len = int(((self._msg[2] & 0xFF) << 8) | self._msg[3])
         self._msg_id = int(self._msg[4])
         self._msg_cs = int(self._msg[-3])
-        self._payload = bytearray(self._msg[4:-3])
+        self._payload = bytearray(self._msg[4:-3]) # TODO Is this required
+
+        print(f"Message ID: {self._msg_id}")
 
         if self.debug:
-            print("Payload: \n", self._payload)
+            print("Payload:\n", ' '.join(f'{b:02X}' for b in self._payload))
+        if self._msg_id == 0x83:
+            self._binary_set_flag = True
+            return False
 
         if self._msg_id != 0xA8:
             if self.debug:
@@ -194,10 +233,7 @@ class GPS:
         #         print(f"{str(key)}: {value}")
         #     print("=" * 40)
 
-        if self.parse_data():
-            return True
-        else:
-            return False
+        return self.parse_data()
 
     def parse_data(self) -> bool:
         # if not self._nav_data_hex:
@@ -566,30 +602,30 @@ class GPS:
     #         self.data_strings["ecef_vz"] = f"{speed_meters:.2f} m/s"
     #     return ecef_vz
 
-    # def print_parsed_strings(self):
-    #     print("Parsed Message:")
-    #     print("=" * 40)
-    #     print(f"Message ID:                 {self.message_id}")
-    #     print(f"Fix Mode:                   {self.data_strings.get('fix_mode', 'N/A')}")
-    #     print(f"Number of Satellites:       {self.number_of_sv}")
-    #     print(f"GPS Week:                   {self.week}")
-    #     print(f"Time of Week:               {self.tow}")
-    #     print(f"Latitude:                   {self.data_strings.get('latitude', 'N/A')}")
-    #     print(f"Longitude:                  {self.data_strings.get('longitude', 'N/A')}")
-    #     print(f"Ellipsoid Altitude:         {self.data_strings.get('ellipsoid_altitude', 'N/A')}")
-    #     print(f"Mean Sea Level Altitude:    {self.data_strings.get('mean_sea_level_altitude', 'N/A')}")
-    #     print(f"GDOP:                       {self.data_strings.get('gdop', 'N/A')}")
-    #     print(f"PDOP:                       {self.data_strings.get('pdop', 'N/A')}")
-    #     print(f"HDOP:                       {self.data_strings.get('hdop', 'N/A')}")
-    #     print(f"VDOP:                       {self.data_strings.get('vdop', 'N/A')}")
-    #     print(f"TDOP:                       {self.data_strings.get('tdop', 'N/A')}")
-    #     print(f"ECEF X:                     {self.data_strings.get('ecef_x', 'N/A')}")
-    #     print(f"ECEF Y:                     {self.data_strings.get('ecef_y', 'N/A')}")
-    #     print(f"ECEF Z:                     {self.data_strings.get('ecef_z', 'N/A')}")
-    #     print(f"ECEF Vx:                    {self.data_strings.get('ecef_vx', 'N/A')}")
-    #     print(f"ECEF Vy:                    {self.data_strings.get('ecef_vy', 'N/A')}")
-    #     print(f"ECEF Vz:                    {self.data_strings.get('ecef_vz', 'N/A')}")
-    #     print("=" * 40)
+    def print_parsed_strings(self):
+        print("Parsed Message:")
+        print("=" * 40)
+        print(f"Message ID:                 {self.message_id}")
+        print(f"Fix Mode:                   {self.data_strings.get('fix_mode', 'N/A')}")
+        print(f"Number of Satellites:       {self.number_of_sv}")
+        print(f"GPS Week:                   {self.week}")
+        print(f"Time of Week:               {self.tow}")
+        print(f"Latitude:                   {self.data_strings.get('latitude', 'N/A')}")
+        print(f"Longitude:                  {self.data_strings.get('longitude', 'N/A')}")
+        print(f"Ellipsoid Altitude:         {self.data_strings.get('ellipsoid_altitude', 'N/A')}")
+        print(f"Mean Sea Level Altitude:    {self.data_strings.get('mean_sea_level_altitude', 'N/A')}")
+        print(f"GDOP:                       {self.data_strings.get('gdop', 'N/A')}")
+        print(f"PDOP:                       {self.data_strings.get('pdop', 'N/A')}")
+        print(f"HDOP:                       {self.data_strings.get('hdop', 'N/A')}")
+        print(f"VDOP:                       {self.data_strings.get('vdop', 'N/A')}")
+        print(f"TDOP:                       {self.data_strings.get('tdop', 'N/A')}")
+        print(f"ECEF X:                     {self.data_strings.get('ecef_x', 'N/A')}")
+        print(f"ECEF Y:                     {self.data_strings.get('ecef_y', 'N/A')}")
+        print(f"ECEF Z:                     {self.data_strings.get('ecef_z', 'N/A')}")
+        print(f"ECEF Vx:                    {self.data_strings.get('ecef_vx', 'N/A')}")
+        print(f"ECEF Vy:                    {self.data_strings.get('ecef_vy', 'N/A')}")
+        print(f"ECEF Vz:                    {self.data_strings.get('ecef_vz', 'N/A')}")
+        print("=" * 40)
 
     # def get_nav_data(self) -> dict:
     #     """Returns the current navigation data as a dictionary."""
@@ -604,24 +640,41 @@ class GPS:
     # TODO : Change this so that it always sends the binary message rather than needing set on each run
     def set_to_binary(self) -> None:
         self.write(b"\xa0\xa1\x00\x03\x09\x02\x00\x0b\x0d\x0a")
+        # self.write(b"\xA0\xA1\x00\x04\x64\x2F\x01\x00\x4A\x0D\x0A")
+
+    def enable_periodic_nav_data(self) -> None:
+        self.write(b"\xa0\xa1\x00\x03\x11\x01\x01\x11\x0d\x0a")
+
+    def disable_nmea_GGA(self) -> None:
+        self.write(b"\xa0\xa1\x00\x09\x08\x00\x00\x00\x00\x00\x00\x00\x01\x09\x0d\x0a")
+
+    def query_nav_data(self) -> None:
+        """Send Query Navigation Data command (Message ID 0x10) to request a nav message."""
+        # 0xA0 0xA1 = start, 0x00 0x01 = 1 byte payload, 0x10 = Query Nav Data, 0x10 = checksum, 0x0D 0x0A = end
+        self.write(b"\xa0\xa1\x00\x01\x10\x10\x0d\x0a") # This queries the wrong thing!
+
+    def reset_to_factory_defaults(self) -> None:
+        """Send Reset to Factory Defaults command (Message ID 0x04)."""
+        self.write(b"\xa0\xa1\x00\x02\x04\x00\x04\x0d\x0a")
 
     @property
     def in_waiting(self) -> int:
         return self._uart.in_waiting
-
+ 
     def readline(self) -> Optional[bytes]:
         return self._uart.readline()
 
+    def read(self, nbytes: int) -> Optional[bytes]:
+        return self._uart.read(nbytes)
+
     def _read_sentence(self) -> Optional[bytes]:
-        if self.in_waiting < 11:
+        # Need at least 65 bytes for nav data message: 2 start + 2 len + 59 payload + 1 cs + 2 end = 66
+        # But we check for header first        
+
+        if self.in_waiting < 8: 
             return None
-        return self.readline()
+        return self._uart.readline()
 
-    def _parse_sentence(self) -> Optional[bytes]:
-        return self._read_sentence()
-
-    # TODO : Implement the enable and disable methods
-    # TODO : CHeck if this is still possible on new board
     def enable(self) -> None:
         """Enable the GPS module through the enable pin"""
         self.__enable = True

@@ -40,7 +40,7 @@ elif board_id == "Argus3":
 
 elif board_id == "Argus4":
     from hal.argus_v4 import ArgusV4
-
+    print("Initializing Argus V4 HAL")
     SATELLITE = ArgusV4(debug=DEBUG_MODE)
 
 else:

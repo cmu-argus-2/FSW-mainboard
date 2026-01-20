@@ -123,4 +123,6 @@ class Task(TemplateTask):
 
             else:
                 # GPS is not active in HAL
+                # print(f"GPS is not available: {SATELLITE.GPS_AVAILABLE}")
+                # print(f"GPS status: {SATELLITE.DEVICE_STATUS('GPS')}")
                 self.log_warning("GPS module is no longer active on the SC")
