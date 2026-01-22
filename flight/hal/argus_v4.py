@@ -101,9 +101,9 @@ class ArgusV4Interfaces:
     UART0_BAUD = const(115200) # TODO This may be 9600 for the S1216F8 GL
     UART0_TX = board.TX0
     UART0_RX = board.RX0
-    UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD)
+    # UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD)
 
-    # UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD, receiver_buffer_size=200) # TODO Get rid of this if unnecessary
+    UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD, receiver_buffer_size=200) # TODO Tune this correctly
 
     JETSON_BAUD = const(57600)
     JETSON_TX = board.TX1

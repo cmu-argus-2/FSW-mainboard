@@ -16,7 +16,7 @@ TASK_CONFIG = {
     TASK.OBDH: {"Task": obdh, "Frequency": 0.5, "Priority": 2},
     # TASK.COMMS: {"Task": comms, "Frequency": 1, "Priority": 2, "ScheduleLater": True},
     # TASK.ADCS: {"Task": adcs, "Frequency": 5, "Priority": 1},
-    TASK.GPS: {"Task": gps, "Frequency": 1, "Priority": 3, "ScheduleLater": True},
+    TASK.GPS: {"Task": gps, "Frequency": 2, "Priority": 3, "ScheduleLater": True},
     # TASK.PAYLOAD: {"Task": payload, "Frequency": 0.1, "Priority": 3, "ScheduleLater": True},
     # Watchdog needs to have priority over HAL monitor to ensure it is serviced
     # HAL monitor can take too long on boot and cause watchdog resets

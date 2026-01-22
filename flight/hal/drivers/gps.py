@@ -1,4 +1,7 @@
+
 try:
+    import struct
+
     from typing import Optional
 
     from busio import UART
@@ -13,55 +16,134 @@ EPOCH_DAY = 5
 
 
 class GPS:
-    def __init__(self, uart: UART, enable=None, debug: bool = False, mock: bool = True) -> None: # TODO GPS Enable is obsolete
+    def __init__(self, uart: UART, enable = None, debug: bool = False, mock: bool = True) -> None: # TODO GPS Enable is obsolete
         self._uart = uart
         self.debug = debug
+
+        # Board Detection
+        self._board = None
+        self._board_detected = False
+        self._ordered_keys_map = {
+            "PX1120S": [
+                "message_id",
+                "fix_mode",
+                "number_of_sv",
+                "week",
+                "tow",
+                "latitude",
+                "longitude",
+                "ellipsoid_altitude",
+                "mean_sea_level_altitude",
+                "gdop",
+                "pdop",
+                "hdop",
+                "vdop",
+                "tdop",
+                "ecef_x",
+                "ecef_y",
+                "ecef_z",
+                "ecef_vx",
+                "ecef_vy",
+                "ecef_vz",
+                "unix_time",
+                "timestamp_utc",
+            ],
+            "S1216F8-GL": [
+                "message_id",
+                "IOD",
+                "navigation_state",
+                "week",
+                "tow",
+                "ecef_x",
+                "ecef_y",
+                "ecef_z",
+                "ecef_vx",
+                "ecef_vy",
+                "ecef_vz",
+                "clock_bias",
+                "clock_drift",
+                "GDOP",
+                "PDOP",
+                "HDOP",
+                "VDOP",
+                "TDOP",
+                "unix_time",
+                "timestamp_utc",
+            ],
+        }
 
         # Payload Buffer:
         self._payload = bytearray([0] * 59)
 
+        # Message Variables
         self._msg = None
         self._payload_len = 0
         self._msg_id = 0
         self._msg_cs = 0
-    
+
+        # Helper Flags for Receiver Hardware Configuration
         self._reset_to_factory = False
         self._binary_set_flag = False
         self._periodic_nav_flag = False
         self._disable_nmea_flag = False
+        self._queried_binary_status_flag = False
+        self._disable_unnecessary_binary_flag = False
 
-        # self._nav_data_hex = {}  # Navigation data as a dictionary of hex values
-
-        # if self.debug:
-        #     self.data_strings = {  # Navigation data as a dictionary of strings for debugging
-        #         "message_id": "None",
-        #         "fix_mode": "None",
-        #         "number_of_sv": "None",
-        #         "gps_week": "None",
-        #         "tow": "None",
-        #         "latitude": "None",
-        #         "longitude": "None",
-        #         "ellipsoid_alt": "None",
-        #         "mean_sea_lvl_alt": "None",
-        #         "gdop": "None",
-        #         "pdop": "None",
-        #         "hdop": "None",
-        #         "vdop": "None",
-        #         "tdop": "None",
-        #         "ecef_x": "None",
-        #         "ecef_y": "None",
-        #         "ecef_z": "None",
-        #         "ecef_vx": "None",
-        #         "ecef_vy": "None",
-        #         "ecef_vz": "None",
-        #     }
+        if self.debug:
+            self._nav_data_hex = {}  # Navigation data as a dictionary of hex values
+   
+            # self.data_strings = {  # Navigation data as a dictionary of strings for debugging
+            #     "message_id": "None",
+            #     "fix_mode": "None",
+            #     "number_of_sv": "None",
+            #     "gps_week": "None",
+            #     "tow": "None",
+            #     "latitude": "None",
+            #     "longitude": "None",
+            #     "ellipsoid_alt": "None",
+            #     "mean_sea_lvl_alt": "None",
+            #     "gdop": "None",
+            #     "pdop": "None",
+            #     "hdop": "None",
+            #     "vdop": "None",
+            #     "tdop": "None",
+            #     "ecef_x": "None",
+            #     "ecef_y": "None",
+            #     "ecef_z": "None",
+            #     "ecef_vx": "None",
+            #     "ecef_vy": "None",
+            #     "ecef_vz": "None",
+            # }
 
         # GPS Data Fields
         # TODO: Check the formats of these values as used in the FSW
         # Initialize null starting values for all GPS data
         # These values are used for logging and will be ints
-        # self.timestamp_utc = None  # UTC as a dictionary in the form {year, month, day, hour, minute, second}
+        self.timestamp_utc = None  # UTC as a dictionary in the form {year, month, day, hour, minute, second}
+
         self.unix_time = None  # Unix time in seconds, type: float = float (f), unit: seconds
+
+        ## For AN0030: Binary Protocol
+        self.message_id = None # Field 1, type: uint8, unit: N/A
+        self.IOD = None # Field 2, type: uint8, unit: N/A
+        self.navigation_state = None # Field 3, type: uint8, unit: N/A
+        self.week = None # Field 4-5, type: uint16, unit: N/A
+        self.tow = None # Field 6-13, type: double-precision float, unit: seconds
+        self.ecef_x = None # Field 14-21, type: double-precision float, unit: meters
+        self.ecef_y = None # Field 22-29, type: double-precision float, unit: meters
+        self.ecef_z = None # Field 30-37, type: double-precision float, unit: meters
+        self.ecef_vx = None # Field 38-41, type: single-precision float, unit: meters per second
+        self.ecef_vy = None # Field 42-45, type: single-precision float, unit: meters per second
+        self.ecef_vz = None # Field 46-49, type: single-precision float, unit: meters per second
+        self.clock_bias = None # Field 50-57, type: double-precision float, unit: seconds
+        self.clock_drift = None # Field 58-61, type: single-precision float, unit: seconds per second
+        self.GDOP = None # Field 62-65, type: single-precision float, unit: N/A
+        self.PDOP = None # Field 66-69, type: single-precision float, unit: N/A
+        self.HDOP = None # Field 70-73, type: single-precision float, unit: N/A
+        self.VDOP = None # Field 74-77, type: single-precision float, unit: N/A
+        self.TDOP = None # Field 78-81, type: single-precision float, unit: N/A
+
+        ## For AN0037: Binary Protocol
         self.message_id = None  # Field 1, type: uint8 = unsigned byte (B), unit: N/A
         self.fix_mode = None  # Field 2, type: uint8 = unsigned byte (B), unit: N/A
         self.number_of_sv = None  # Field 3, type: uint8 = unsigned byte (B), unit: N/A
@@ -103,7 +185,7 @@ class GPS:
 
         # else:
         #     # Module expected to actually exist, send nav_data request to module
-        #     # print("GPS Module Initialized, setting to binary mode")
+        #     # print("GPS Module Initi alized, setting to binary mode")
         #     # self.set_to_binary()
 
         super().__init__()
@@ -115,26 +197,33 @@ class GPS:
         #     print('RESETTING TO FACTORY DEFAULTS RESETTING TO FACTORY DEFAULTS ')
 
         # if not self._disable_nmea_flag:
-            # self.disable_nmea_GGA()
-            # self._disable_nmea_flag = True
-            # print('DISABLING NMEA DISABLING NMEA DISABLING NMEA ')
+        #     self.disable_nmea_periodic()
+        #     self._disable_nmea_flag = True
+        #     print('DISABLING NMEA DISABLING NMEA DISABLING NMEA ')
 
         # if not self._binary_set_flag and not self.mock:
-        #     print('SETTING TO BINARY SETTING TO BINARY SETTING TO BINARY ')
         #     self.set_to_binary()
+        #     self._binary_set_flag = True
+        #     print('SETTING TO BINARY SETTING TO BINARY SETTING TO BINARY ')
+
+        # if not self._queried_binary_status_flag:
+        #     self.query_binary_status()
+        #     self._queried_binary_status_flag = True
+        #     print('QUERYING BINARY STATUS QUERYING BINARY STATUS ')
 
         # if not self._periodic_nav_flag:
         #     self.enable_periodic_nav_data()
-        #     self._periodic_nav_flag = True
+        #     # self._periodic_nav_flag = True
         #     print('ENABLING PERIODIC NAV DATA ENABLING PERIODIC NAV DATA ')
 
+        if not self._disable_unnecessary_binary_flag:
+            self.disable_unnecessary_binary_data()
+            self._disable_unnecessary_binary_flag = True
+            print('DISABLING UNNECESSARY BINARY DATA DISABLING UNNECESSARY BINARY DATA ')
+
         if self.mock:
-            print('mock')
             self._msg = self.mock_message
         else:
-            print('no mock')
-            # self.set_to_binary()
-            # self.query_nav_data()  # Request nav data from module
             try:
                 self._msg = self._read_sentence()
             except UnicodeError:
@@ -152,38 +241,74 @@ class GPS:
             if self.mock:
                 print("Mock message: \n", ' '.join(f'{b:02X}' for b in self._msg))
             else:
-                print("Raw message: \n", ' '.join(f'{b:02X}' for b in self._msg))
+                print("RAW")
+                print(self._msg)
+                print("DECODE")
+                print(" ".join(f"{b:02x}" for b in self._msg))
 
-        
-        # self._msg = [hex(i) for i in self._msg]
+        ## Validate the message is correct
         if self._msg[0] != 0xA0 or self._msg[1] != 0xA1:
             if self.debug:
                 print("Invalid start bytes, expected 0xA0 0xA1, got: ", hex(self._msg[0]), hex(self._msg[1]))
             return False
         
-        self._payload_len = int(((self._msg[2] & 0xFF) << 8) | self._msg[3])
-        self._msg_id = int(self._msg[4])
-        self._msg_cs = int(self._msg[-3])
-        self._payload = bytearray(self._msg[4:-3]) # TODO Is this required
-
-        print(f"Message ID: {self._msg_id}")
+        # Parse message length, ID, checksum, and payload
+        try:
+            self._payload_len = int(((self._msg[2] & 0xFF) << 8) | self._msg[3])
+            self._msg_id = int(self._msg[4])
+            self._msg_cs = int(self._msg[-3])
+            self._payload = bytearray(self._msg[4:-3]) # TODO Is this required
+        except Exception as e:
+            if self.debug:
+                print("Error parsing message length, ID, checksum, or payload:", e)
+            return False
 
         if self.debug:
             print("Payload:\n", ' '.join(f'{b:02X}' for b in self._payload))
-        if self._msg_id == 0x83:
-            self._binary_set_flag = True
+        if self._msg_id == 0x83: # 0x83 is successful ACK of setting binary nav type
             return False
 
-        if self._msg_id != 0xA8:
+        ## Check which board/protocol this is
+        if self._msg_id != 0xA8 and self._msg_id != 0xdf:
             if self.debug:
-                print("Invalid message ID, expected 0xA8, got: ", hex(self._msg_id))
+                print("Invalid message ID, expected 0xA8 or 0xdf, got: ", hex(self._msg_id))
             return False
 
-        if self._payload_len != 59:
+        if self._msg_id == 0xA8 and not self._board_detected:
+            self._board = "PX1120S"
+            self._board_detected = True
+
+        if self._msg_id == 0xdf and not self._board_detected:
+            self._board = "S1216F8-GL"
+            self._board_detected = True
+
+        if self._board is None:
             if self.debug:
-                print("Invalid payload length, expected 59, got: ", self._payload_len)
+                print("Board type could not be detected.")
             return False
 
+        if not self.checksum():
+            if self.debug:
+                print("Checksum failed!")
+            return False
+
+        if self._board == "PX1120S":
+            if self._payload_len != 59:
+                if self.debug:
+                    print("Invalid payload length, expected 59, got: ", self._payload_len)
+                return False
+            return self.parse_data_AN0037()
+
+        if self._board == "S1216F8-GL":
+            if self._payload_len != 81:
+                if self.debug:
+                    print("Invalid payload length, expected 81, got: ", self._payload_len)
+                return False
+            return self.parse_data_AN0030()
+        
+        return False
+
+    def checksum(self) -> int: # Checksum is simply XOR sequentially of the payload ID + payload bytes
         cs = 0
         for i in self._payload:
             i = int(i)
@@ -192,50 +317,9 @@ class GPS:
             if self.debug:
                 print("Checksum failed!")
             return False
+        return cs
 
-        # # Populate _nav_data_hex as a dictionary
-        # self._nav_data_hex = {
-        #     "message_id": self._payload[0],
-        #     "fix_mode": self._payload[1],
-        #     "number_of_sv": self._payload[2],
-        #     "gps_week": (self._payload[3] << 8) | self._payload[4],
-        #     "tow": (self._payload[5] << 24) | (self._payload[6] << 16) | (self._payload[7] << 8) | self._payload[8],
-        #     "latitude": (self._payload[9] << 24) | (self._payload[10] << 16) | (self._payload[11] << 8) | self._payload[12],
-        #     "longitude": (self._payload[13] << 24) |
-        #     (self._payload[14] << 16) | (self._payload[15] << 8) | self._payload[16],
-        #     "ellipsoid_alt": (self._payload[17] << 24)
-        #     | (self._payload[18] << 16)
-        #     | (self._payload[19] << 8)
-        #     | self._payload[20],
-        #     "mean_sea_lvl_alt": (self._payload[21] << 24)
-        #     | (self._payload[22] << 16)
-        #     | (self._payload[23] << 8)
-        #     | self._payload[24],
-        #     "gdop": (self._payload[25] << 8) | self._payload[26],
-        #     "pdop": (self._payload[27] << 8) | self._payload[28],
-        #     "hdop": (self._payload[29] << 8) | self._payload[30],
-        #     "vdop": (self._payload[31] << 8) | self._payload[32],
-        #     "tdop": (self._payload[33] << 8) | self._payload[34],
-        #     "ecef_x": (self._payload[35] << 24) | (self._payload[36] << 16) | (self._payload[37] << 8) | self._payload[38],
-        #     "ecef_y": (self._payload[39] << 24) | (self._payload[40] << 16) | (self._payload[41] << 8) | self._payload[42],
-        #     "ecef_z": (self._payload[43] << 24) | (self._payload[44] << 16) | (self._payload[45] << 8) | self._payload[46],
-        #     "ecef_vx": (self._payload[47] << 24) | (self._payload[48] << 16) | (self._payload[49] << 8) | self._payload[50],
-        #     "ecef_vy": (self._payload[51] << 24) | (self._payload[52] << 16) | (self._payload[53] << 8) | self._payload[54],
-        #     "ecef_vz": (self._payload[55] << 24) | (self._payload[56] << 16) | (self._payload[57] << 8) | self._payload[58],
-        # }
-
-        # Print the navigation data if debug is enabled line by line:
-        # if self.debug:
-        #     print("~~~~DEBUG~~~~")
-        #     print("Navigation Data:")
-        #     print("=" * 40)
-        #     for key, value in self._nav_data_hex.items():
-        #         print(f"{str(key)}: {value}")
-        #     print("=" * 40)
-
-        return self.parse_data()
-
-    def parse_data(self) -> bool:
+    def parse_data_AN0037(self) -> bool:
         # if not self._nav_data_hex:
         #     return
         # self.message_id = self._nav_data_hex["message_id"]
@@ -260,11 +344,11 @@ class GPS:
         # self.ecef_vz = self.parse_ecef_vz()
         # self.timestamp_utc = self.gps_datetime(self.week, self.tow)
         try:
-            self.message_id = self._payload[0]
-            self.fix_mode = self._payload[1]
-            self.number_of_sv = self._payload[2]
-            self.week = (self._payload[3] << 8) | self._payload[4]
-            self.tow = (self._payload[5] << 24) | (self._payload[6] << 16) | (self._payload[7] << 8) | self._payload[8]
+            self.message_id = self._u8(0)
+            self.fix_mode = self._u8(1)
+            self.number_of_sv = self._u8(2)
+            self.week = self._u16(3)
+            self.tow = self._u32(5)
             self.latitude = self._signed_32bit(
                 (self._payload[9] << 24) | (self._payload[10] << 16) | (self._payload[11] << 8) | self._payload[12]
             )
@@ -277,30 +361,63 @@ class GPS:
             self.mean_sea_level_altitude = self._signed_32bit(
                 ((self._payload[21] << 24) | (self._payload[22] << 16) | (self._payload[23] << 8) | self._payload[24])
             )
-            self.gdop = (self._payload[25] << 8) | self._payload[26]
-            self.pdop = (self._payload[27] << 8) | self._payload[28]
-            self.hdop = (self._payload[29] << 8) | self._payload[30]
-            self.vdop = (self._payload[31] << 8) | self._payload[32]
-            self.tdop = (self._payload[33] << 8) | self._payload[34]
+            # Units according to AN0037 are in 1/100 scale (e.g. cm vs m)
+            self.gdop = self._u16(25)/100
+            self.pdop = self._u16(27)/100
+            self.hdop = self._u16(29)/100
+            self.vdop = self._u16(31)/100
+            self.tdop = self._u16(33)/100
             self.ecef_x = self._signed_32bit(
                 (self._payload[35] << 24) | (self._payload[36] << 16) | (self._payload[37] << 8) | self._payload[38]
-            )
+            )/100
             self.ecef_y = self._signed_32bit(
                 (self._payload[39] << 24) | (self._payload[40] << 16) | (self._payload[41] << 8) | self._payload[42]
-            )
+            )/100
             self.ecef_z = self._signed_32bit(
                 (self._payload[43] << 24) | (self._payload[44] << 16) | (self._payload[45] << 8) | self._payload[46]
-            )
+            )/100
             self.ecef_vx = self._signed_32bit(
                 (self._payload[47] << 24) | (self._payload[48] << 16) | (self._payload[49] << 8) | self._payload[50]
-            )
+            )/100
             self.ecef_vy = self._signed_32bit(
                 (self._payload[51] << 24) | (self._payload[52] << 16) | (self._payload[53] << 8) | self._payload[54]
-            )
+            )/100
             self.ecef_vz = self._signed_32bit(
                 (self._payload[55] << 24) | (self._payload[56] << 16) | (self._payload[57] << 8) | self._payload[58]
-            )
+            )/100
             self.unix_time = self.gps_time_2_unix_time(self.week, self.tow)
+            if self.debug:
+                print('PRINTING NAV DATA PRINTING NAV DATA PRINTING NAV DATA ')
+                self.print_nav_data()
+            return True
+        except Exception as e:
+            print(f"Error parsing data: {e}")
+            return False
+
+    def parse_data_AN0030(self) -> bool:
+        try:
+            self.message_id = self._u8(0)
+            self.IOD = self._u8(1)
+            self.navigation_state = self._u8(2)
+            self.week = self._u16(3)
+            self.tow = self._dpfp(5)
+            self.ecef_x = self._dpfp(13)
+            self.ecef_y = self._dpfp(21)
+            self.ecef_z = self._dpfp(29)
+            self.ecef_vx = self._spfp(37)
+            self.ecef_vy = self._spfp(41)
+            self.ecef_vz = self._spfp(45)
+            self.clock_bias = self._dpfp(49)
+            self.clock_drift = self._spfp(57)
+            self.GDOP = self._spfp(61)
+            self.PDOP = self._spfp(65)
+            self.HDOP = self._spfp(69)
+            self.VDOP = self._spfp(73)
+            self.TDOP = self._spfp(77)
+            self.unix_time = self.gps_time_2_unix_time(self.week, self.tow)
+            if self.debug:
+                print('PRINTING NAV DATA PRINTING NAV DATA PRINTING NAV DATA ')
+                self.print_nav_data()
             return True
         except Exception as e:
             print(f"Error parsing data: {e}")
@@ -309,15 +426,45 @@ class GPS:
     def _signed_32bit(self, value: int) -> int:
         return value if value < 0x80000000 else value - 0x100000000
 
+    def _u8(self, idx: int) -> int:
+        return self._payload[idx] & 0xFF
+
+    def _u16(self, idx: int) -> int:
+        return (self._payload[idx] << 8) | self._payload[idx + 1]
+
+    def _u32(self, idx: int) -> int:
+        return (
+            (self._payload[idx] << 24)
+            | (self._payload[idx + 1] << 16)
+            | (self._payload[idx + 2] << 8)
+            | self._payload[idx + 3]
+        )
+
+    def _u64(self, idx: int) -> int:
+        return (
+            (self._payload[idx] << 56)
+            | (self._payload[idx + 1] << 48)
+            | (self._payload[idx + 2] << 40)
+            | (self._payload[idx + 3] << 32)
+            | (self._payload[idx + 4] << 24)
+            | (self._payload[idx + 5] << 16)
+            | (self._payload[idx + 6] << 8)
+            | self._payload[idx + 7]
+        )
+
+    def _spfp(self, idx: int) -> float:
+        return struct.unpack(">f", bytes(self._payload[idx : idx + 4]))[0]
+
+    def _dpfp(self, idx: int) -> float:
+        return struct.unpack(">d", bytes(self._payload[idx : idx + 8]))[0]
+
     """
-    Fix Modes in GPS NMEA Message:
+    Fix Modes in GPS Binary Message:
 
     0 - No fix: The GPS receiver has not obtained a valid fix or has lost the fix.
     1 - GPS fix: A 2D fix is available (latitude and longitude, but altitude is not necessarily reliable).
-    2 - Differential GPS fix: A 2D fix is available, with differential corrections applied for improved accuracy.
     3 - 3D fix: A 3D fix is available (latitude, longitude, and altitude are all valid and reliable).
-    4 - GNSS fix: A fix using signals from multiple GNSS systems (e.g., GPS, GLONASS, Galileo, BeiDou).
-    5 - Time fix: A fix based on time synchronization, typically used in high-precision or timing applications.
+    4 - 3D + GNSS fix: A fix using signals from multiple GNSS systems (e.g., GPS, GLONASS, Galileo, BeiDou).
     """
 
     def has_fix(self) -> bool:
@@ -384,20 +531,20 @@ class GPS:
         # Add TOW (convert from 1/100 sec to seconds)
         unix_time += tow / 100
 
-        # # Calculate hours, minutes, and seconds
-        # seconds_in_day = self.unix_time % 86400
-        # hours = int(seconds_in_day // 3600)
-        # minutes = int((seconds_in_day % 3600) // 60)
-        # seconds = seconds_in_day % 60
+        # Calculate hours, minutes, and seconds
+        seconds_in_day = unix_time % 86400
+        hours = int(seconds_in_day // 3600)
+        minutes = int((seconds_in_day % 3600) // 60)
+        seconds = seconds_in_day % 60
 
-        # self.timestamp_utc = {
-        #     "year": year,
-        #     "month": month,
-        #     "day": day,
-        #     "hour": hours,
-        #     "minute": minutes,
-        #     "second": round(seconds, 2),
-        # }
+        self.timestamp_utc = {
+            "year": year,
+            "month": month,
+            "day": day,
+            "hour": hours,
+            "minute": minutes,
+            "second": round(seconds, 2),
+        }
 
         # Return the unix time
         return unix_time
@@ -499,40 +646,30 @@ class GPS:
     # def parse_gdop(self) -> int:
     #     gdop = int(self._nav_data_hex["gdop"])
     #     if self.debug:
-    #         # Convert from hundredths to decimal
-    #         temp_gdop = gdop * 0.01
-    #         self.data_strings["gdop"] = temp_gdop
+    #         self.data_strings["gdop"] = tempgdop
     #     return gdop
 
     # def parse_pdop(self) -> int:
     #     pdop = int(self._nav_data_hex["pdop"])
     #     if self.debug:
-    #         # Convert from hundredths to decimal
-    #         temp_pdop = pdop * 0.01
     #         self.data_strings["pdop"] = temp_pdop
     #     return pdop
 
     # def parse_hdop(self) -> int:
     #     hdop = int(self._nav_data_hex["hdop"])
     #     if self.debug:
-    #         # Convert from hundredths to decimal
-    #         temp_hdop = hdop * 0.01
     #         self.data_strings["hdop"] = temp_hdop
     #     return hdop
 
     # def parse_vdop(self) -> int:
     #     vdop = int(self._nav_data_hex["vdop"])
     #     if self.debug:
-    #         # Convert from hundredths to decimal
-    #         temp_vdop = vdop * 0.01
     #         self.data_strings["vdop"] = temp_vdop
     #     return vdop
 
     # def parse_tdop(self) -> int:
     #     tdop = int(self._nav_data_hex["tdop"])
     #     if self.debug:
-    #         # Convert from hundredths to decimal
-    #         temp_tdop = tdop * 0.01
     #         self.data_strings["tdop"] = temp_tdop
     #     return tdop
 
@@ -540,8 +677,6 @@ class GPS:
     #     ecef_x_hex = self._nav_data_hex["ecef_x"]
     #     ecef_x = ecef_x_hex if ecef_x_hex < 0x80000000 else ecef_x_hex - 0x100000000
     #     if self.debug:
-    #         # Convert from hundredths of a meter to meters
-    #         distance_meters = ecef_x / 100
 
     #         # Format output
     #         self.data_strings["ecef_x"] = f"{distance_meters:.2f} m"
@@ -551,8 +686,6 @@ class GPS:
     #     ecef_y_hex = self._nav_data_hex["ecef_y"]
     #     ecef_y = ecef_y_hex if ecef_y_hex < 0x80000000 else ecef_y_hex - 0x100000000
     #     if self.debug:
-    #         # Convert from hundredths of a meter to meters
-    #         distance_meters = ecef_y / 100
 
     #         # Format output
     #         self.data_strings["ecef_y"] = f"{distance_meters:.2f} m"
@@ -562,8 +695,6 @@ class GPS:
     #     ecef_z_hex = self._nav_data_hex["ecef_z"]
     #     ecef_z = ecef_z_hex if ecef_z_hex < 0x80000000 else ecef_z_hex - 0x100000000
     #     if self.debug:
-    #         # Convert from hundredths of a meter to meters
-    #         distance_meters = ecef_z / 100
 
     #         # Format output
     #         self.data_strings["ecef_z"] = f"{distance_meters:.2f} m"
@@ -573,8 +704,9 @@ class GPS:
     #     ecef_vx_hex = self._nav_data_hex["ecef_vx"]
     #     ecef_vx = ecef_vx_hex if ecef_vx_hex < 0x80000000 else ecef_vx_hex - 0x100000000
     #     if self.debug:
-    #         # Convert from hundredths of a meter to meters
-    #         speed_meters = ecef_vx / 100
+    #         if self._board == "PX1120S":
+    #             # Convert from hundredths of a meter/seconds to meters/seconds
+    #             speed_meters = ecef_vx / 100
 
     #         # Format output
     #         self.data_strings["ecef_vx"] = f"{speed_meters:.2f} m/s"
@@ -584,8 +716,9 @@ class GPS:
     #     ecef_vy_hex = self._nav_data_hex["ecef_vy"]
     #     ecef_vy = ecef_vy_hex if ecef_vy_hex < 0x80000000 else ecef_vy_hex - 0x100000000
     #     if self.debug:
-    #         # Convert from hundredths of a meter to meters
-    #         speed_meters = ecef_vy / 100
+    #         if self._board == "PX1120S":
+    #             # Convert from hundredths of a meter/seconds to meters/seconds
+    #             speed_meters = ecef_vy / 100
 
     #         # Format output
     #         self.data_strings["ecef_vy"] = f"{speed_meters:.2f} m/s"
@@ -595,41 +728,102 @@ class GPS:
     #     ecef_vz_hex = self._nav_data_hex["ecef_vz"]
     #     ecef_vz = ecef_vz_hex if ecef_vz_hex < 0x80000000 else ecef_vz_hex - 0x100000000
     #     if self.debug:
-    #         # Convert from hundredths of a meter to meters
-    #         speed_meters = ecef_vz / 100
+    #         if self._board == "PX1120S":
+    #             # Convert from hundredths of a meter/seconds to meters/seconds
+    #             speed_meters = ecef_vz / 100
 
     #         # Format output
     #         self.data_strings["ecef_vz"] = f"{speed_meters:.2f} m/s"
     #     return ecef_vz
 
-    def print_parsed_strings(self):
-        print("Parsed Message:")
-        print("=" * 40)
-        print(f"Message ID:                 {self.message_id}")
-        print(f"Fix Mode:                   {self.data_strings.get('fix_mode', 'N/A')}")
-        print(f"Number of Satellites:       {self.number_of_sv}")
-        print(f"GPS Week:                   {self.week}")
-        print(f"Time of Week:               {self.tow}")
-        print(f"Latitude:                   {self.data_strings.get('latitude', 'N/A')}")
-        print(f"Longitude:                  {self.data_strings.get('longitude', 'N/A')}")
-        print(f"Ellipsoid Altitude:         {self.data_strings.get('ellipsoid_altitude', 'N/A')}")
-        print(f"Mean Sea Level Altitude:    {self.data_strings.get('mean_sea_level_altitude', 'N/A')}")
-        print(f"GDOP:                       {self.data_strings.get('gdop', 'N/A')}")
-        print(f"PDOP:                       {self.data_strings.get('pdop', 'N/A')}")
-        print(f"HDOP:                       {self.data_strings.get('hdop', 'N/A')}")
-        print(f"VDOP:                       {self.data_strings.get('vdop', 'N/A')}")
-        print(f"TDOP:                       {self.data_strings.get('tdop', 'N/A')}")
-        print(f"ECEF X:                     {self.data_strings.get('ecef_x', 'N/A')}")
-        print(f"ECEF Y:                     {self.data_strings.get('ecef_y', 'N/A')}")
-        print(f"ECEF Z:                     {self.data_strings.get('ecef_z', 'N/A')}")
-        print(f"ECEF Vx:                    {self.data_strings.get('ecef_vx', 'N/A')}")
-        print(f"ECEF Vy:                    {self.data_strings.get('ecef_vy', 'N/A')}")
-        print(f"ECEF Vz:                    {self.data_strings.get('ecef_vz', 'N/A')}")
-        print("=" * 40)
+    # def print_parsed_strings(self):
+    #     print("Parsed Message:")
+    #     print("=" * 40)
+    #     print(f"Message ID:                 {self.message_id}")
+    #     print(f"Fix Mode:                   {self.data_strings.get('fix_mode', 'N/A')}")
+    #     print(f"Number of Satellites:       {self.number_of_sv}")
+    #     print(f"GPS Week:                   {self.week}")
+    #     print(f"Time of Week:               {self.tow}")
+    #     print(f"Latitude:                   {self.data_strings.get('latitude', 'N/A')}")
+    #     print(f"Longitude:                  {self.data_strings.get('longitude', 'N/A')}")
+    #     print(f"Ellipsoid Altitude:         {self.data_strings.get('ellipsoid_altitude', 'N/A')}")
+    #     print(f"Mean Sea Level Altitude:    {self.data_strings.get('mean_sea_level_altitude', 'N/A')}")
+    #     print(f"GDOP:                       {self.data_strings.get('gdop', 'N/A')}")
+    #     print(f"PDOP:                       {self.data_strings.get('pdop', 'N/A')}")
+    #     print(f"HDOP:                       {self.data_strings.get('hdop', 'N/A')}")
+    #     print(f"VDOP:                       {self.data_strings.get('vdop', 'N/A')}")
+    #     print(f"TDOP:                       {self.data_strings.get('tdop', 'N/A')}")
+    #     print(f"ECEF X:                     {self.data_strings.get('ecef_x', 'N/A')}")
+    #     print(f"ECEF Y:                     {self.data_strings.get('ecef_y', 'N/A')}")
+    #     print(f"ECEF Z:                     {self.data_strings.get('ecef_z', 'N/A')}")
+    #     print(f"ECEF Vx:                    {self.data_strings.get('ecef_vx', 'N/A')}")
+    #     print(f"ECEF Vy:                    {self.data_strings.get('ecef_vy', 'N/A')}")
+    #     print(f"ECEF Vz:                    {self.data_strings.get('ecef_vz', 'N/A')}")
+    #     print("=" * 40)
 
-    # def get_nav_data(self) -> dict:
-    #     """Returns the current navigation data as a dictionary."""
-    #     return self._nav_data_hex
+    def print_nav_data(self) -> None:
+        """Prints the current navigation data to the console."""
+        if self._board is not None:
+            self.nav_data = self.get_nav_data()
+            ordered_keys = self._ordered_keys_map.get(self._board, list(self.nav_data.keys()))
+
+            for key in ordered_keys:
+                if key in self.nav_data:
+                    print(f"{key}: {self.nav_data[key]}")
+
+    def get_nav_data(self) -> dict:
+        """Returns the current navigation data as a dictionary."""
+        if self._board is None:
+            return {}
+        elif self._board == "PX1120S":
+            return {
+                "message_id": self.message_id,
+                "fix_mode": self.fix_mode,
+                "number_of_sv": self.number_of_sv,
+                "week": self.week,
+                "tow": self.tow,
+                "latitude": self.latitude,
+                "longitude": self.longitude,
+                "ellipsoid_altitude": self.ellipsoid_altitude,
+                "mean_sea_level_altitude": self.mean_sea_level_altitude,
+                "gdop": self.gdop,
+                "pdop": self.pdop,
+                "hdop": self.hdop,
+                "vdop": self.vdop,
+                "tdop": self.tdop,
+                "ecef_x": self.ecef_x,
+                "ecef_y": self.ecef_y,
+                "ecef_z": self.ecef_z,
+                "ecef_vx": self.ecef_vx,
+                "ecef_vy": self.ecef_vy,
+                "ecef_vz": self.ecef_vz,
+                "unix_time": self.unix_time,
+                "timestamp_utc": self.timestamp_utc,
+            }
+        elif self._board == "S1216F8-GL":
+            return {
+                "message_id": self.message_id,
+                "IOD": self.IOD,
+                "navigation_state": self.navigation_state,
+                "week": self.week,
+                "tow": self.tow,
+                "ecef_x": self.ecef_x,
+                "ecef_y": self.ecef_y,
+                "ecef_z": self.ecef_z,
+                "ecef_vx": self.ecef_vx,
+                "ecef_vy": self.ecef_vy,
+                "ecef_vz": self.ecef_vz,
+                "clock_bias": self.clock_bias,
+                "clock_drift": self.clock_drift,
+                "GDOP": self.GDOP,
+                "PDOP": self.PDOP,
+                "HDOP": self.HDOP,
+                "VDOP": self.VDOP,
+                "TDOP": self.TDOP,
+                "unix_time": self.unix_time,
+                "timestamp_utc": self.timestamp_utc,
+            }
+        return self._nav_data_hex
 
     def write(self, bytestr) -> Optional[int]:
         return self._uart.write(bytestr)
@@ -639,23 +833,34 @@ class GPS:
 
     # TODO : Change this so that it always sends the binary message rather than needing set on each run
     def set_to_binary(self) -> None:
+        """Send Set to Binary Mode command (Message ID 0x09)."""
         self.write(b"\xa0\xa1\x00\x03\x09\x02\x00\x0b\x0d\x0a")
         # self.write(b"\xA0\xA1\x00\x04\x64\x2F\x01\x00\x4A\x0D\x0A")
 
-    def enable_periodic_nav_data(self) -> None:
-        self.write(b"\xa0\xa1\x00\x03\x11\x01\x01\x11\x0d\x0a")
+    def query_binary_status(self) -> None:
+        """Send Query Binary Status command (Message ID 0x1F)."""
+        self.write(b"\xa0\xa1\x00\x01\x1F\x1F\x0d\x0a")
 
-    def disable_nmea_GGA(self) -> None:
-        self.write(b"\xa0\xa1\x00\x09\x08\x00\x00\x00\x00\x00\x00\x00\x01\x09\x0d\x0a")
+    def enable_periodic_nav_data(self) -> None:
+        """Send Enable Periodic Navigation Data command (Message ID 0x11)."""
+        self.write(b"\xa0\xa1\x00\x03\x11\x01\x00\x10\x0d\x0a")
+
+    def disable_nmea_periodic(self) -> None:
+        """Send Disable NMEA Periodic Messages command (Message ID 0x64)."""
+        self.write(b"\xa0\xa1\x00\x0F\x64\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x67\x0d\x0a")
 
     def query_nav_data(self) -> None:
-        """Send Query Navigation Data command (Message ID 0x10) to request a nav message."""
+        """Send Query Navigation Data command (Message ID 0x10)."""
         # 0xA0 0xA1 = start, 0x00 0x01 = 1 byte payload, 0x10 = Query Nav Data, 0x10 = checksum, 0x0D 0x0A = end
         self.write(b"\xa0\xa1\x00\x01\x10\x10\x0d\x0a") # This queries the wrong thing!
 
     def reset_to_factory_defaults(self) -> None:
         """Send Reset to Factory Defaults command (Message ID 0x04)."""
         self.write(b"\xa0\xa1\x00\x02\x04\x00\x04\x0d\x0a")
+
+    def disable_unnecessary_binary_data(self) -> None:
+        """Send Disable Unecessary Nav Binary Messages command (Message ID 0x1E)."""
+        self.write(b"\xa0\xa1\x00\x09\x1e\x00\x00\x00\x00\x01\x03\x00\x00\x1c\x0d\x0a")
 
     @property
     def in_waiting(self) -> int:
