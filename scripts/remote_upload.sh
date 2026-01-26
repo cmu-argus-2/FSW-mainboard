@@ -33,7 +33,8 @@ rsync -avz --itemize-changes \
 echo "Sync complete."
 
 # === Run remote command (optional) ===
-REMOTE_CMD="cd $DEST_PATH && ./run.sh"
+REMOTE_CMD="source ~/.profile && cd $DEST_PATH && ./run.sh"
+
 
 if [ "$RUN_PROGRAM" = true ]; then
   echo "Running remote command: $REMOTE_CMD"
