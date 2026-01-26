@@ -1,6 +1,18 @@
 #!/bin/bash
 set -e  # Exit on error
 
+# === Parse arguments ===
+RUN_PROGRAM=true
+
+for arg in "$@"; do
+  case $arg in
+    --no-program)
+      RUN_PROGRAM=false
+      shift
+      ;;
+  esac
+done
+
 # === Configuration ===
 SRC_DIR="/home/$USER/schl/sat/argus/FSW-mainboard/"
 DEST_USER="argus"
@@ -20,9 +32,14 @@ rsync -avz --itemize-changes \
 
 echo "Sync complete."
 
-# === Run remote command ===
+# === Run remote command (optional) ===
 REMOTE_CMD="cd $DEST_PATH && ./run.sh"
-echo "Running remote command: $REMOTE_CMD"
-ssh "$DEST_USER@$DEST_HOST" "$REMOTE_CMD"
+
+if [ "$RUN_PROGRAM" = true ]; then
+  echo "Running remote command: $REMOTE_CMD"
+  ssh "$DEST_USER@$DEST_HOST" "$REMOTE_CMD"
+else
+  echo "Skipping remote command due to --no-program flag"
+fi
 
 echo "Done!"
