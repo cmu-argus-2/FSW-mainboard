@@ -8,7 +8,7 @@ import apps.command.processor as processor
 from apps.adcs.consts import Modes
 from apps.command import QUEUE_STATUS, CommandQueue
 from apps.eps.eps import EPS_POWER_FLAG
-from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX
+from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM

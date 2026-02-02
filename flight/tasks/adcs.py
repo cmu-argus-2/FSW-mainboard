@@ -3,7 +3,7 @@
 import apps.adcs.sensors as sensors
 from apps.adcs.acs import mcm_coil_allocator, spin_stabilizing_controller, sun_pointing_controller, zero_all_coils
 from apps.adcs.consts import Modes, StatusConst
-from apps.telemetry.constants import ADCS_IDX, CDH_IDX, class_length
+from core.dh_constants import ADCS_IDX, CDH_IDX, class_length
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM

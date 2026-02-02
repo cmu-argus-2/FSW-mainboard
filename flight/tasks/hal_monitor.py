@@ -6,7 +6,7 @@
 # The task also monitors the time since the last reboot and will reboot the system if it has been
 # more than 24 hours since the last reboot.
 
-from apps.telemetry.constants import HAL_IDX, class_length
+from core.dh_constants import HAL_IDX, class_length
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM

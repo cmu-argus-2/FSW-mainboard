@@ -12,7 +12,7 @@ except ImportError:
     def const(x):
         return x
 
-from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, STORAGE_IDX
+from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, STORAGE_IDX
 from core import DataHandler as DH
 from core import logger
 
