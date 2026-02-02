@@ -17,7 +17,7 @@ from core import DataHandler as DH
 from core import logger
 
 # Import telemetry configuration and helpers
-from apps.telemetry.telemetry_config import (
+from apps.telemetry.tid.telemetry_definition import (
     HEARTBEAT_NOMINAL_FORMAT,
     TM_STORAGE_FORMAT,
     TM_HAL_FORMAT,
@@ -27,7 +27,8 @@ from apps.telemetry.telemetry_config import (
     MSG_ID_SAT_TM_HAL,
     MSG_ID_SAT_TM_STORAGE,
     MSG_ID_SAT_TM_NOMINAL,
-    # Helper functions
+)
+from apps.telemetry.tid.telemetry_helper import (
     convert_float_to_fixed_point_hp,
     convert_float_to_fixed_point_lp,
     pack_signed_long_int,
