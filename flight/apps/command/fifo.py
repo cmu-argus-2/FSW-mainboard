@@ -35,10 +35,10 @@ class CommandQueue:
         cls._max_size = max_size
 
     @classmethod
-    def push_command(cls, cmd_id, args):
+    def push_command(cls, command):
         """Pushes a command onto the queue if not full. Returns an error code."""
         if len(cls._queue) < cls._max_size:
-            cls._queue.append((cmd_id, args))
+            cls._queue.append(command)
             return QUEUE_STATUS.OK
         else:
             return QUEUE_STATUS.OVERFLOW
@@ -52,9 +52,9 @@ class CommandQueue:
             return None, QUEUE_STATUS.EMPTY
 
     @classmethod
-    def overwrite_command(cls, cmd_id, args):
+    def overwrite_command(cls, command):
         """Overwrites the command in a 1 element queue. Returns an error code."""
-        cls._queue = [(cmd_id, args)]
+        cls._queue = [command]
 
         if len(cls._queue) == 1:
             return QUEUE_STATUS.OK

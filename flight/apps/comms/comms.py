@@ -9,6 +9,7 @@ Authors: Akshat Sahay, Ibrahima S. Sow, Perrin Tong
 import os
 
 from apps.command.constants import file_ids_str
+from apps.telemetry.splat.splat.telemetry_codec import unpack
 from core import logger
 from core.data_handler import DataHandler as DH
 from core.data_handler import extract_time_from_filename
@@ -647,102 +648,116 @@ class SATELLITE_RADIO:
             cls.rx_sq_cnt = 0
             cls.rx_gs_len = 0
             return cls.rx_gs_cmd
+        
+        
+        print("This is the received packet:", packet)
+        
+        # unpack the received packet
+        message_object = unpack(packet)  # [check] - this should be implemented in middleware
+        print("This is the unpacked message object:", message_object)
+        if message_object is None:
+            logger.warning("[COMMS ERROR] Failed to unpack received packet")
+            return None
+        
+        return message_object
+        
 
-        # Check packet integrity based on header length
-        if len(packet) < 6:
-            # Packet does not contain valid Argus header
-            logger.warning("[COMMS ERROR] RX'd packet has invalid header")
-            cls.rx_gs_cmd = 0x00
-            cls.rx_sq_cnt = 0
-            cls.rx_gs_len = 0
-            return cls.rx_gs_cmd
+    #     # Check packet integrity based on header length
+    #     if len(packet) < 6:
+    #         # Packet does not contain valid Argus header
+    #         logger.warning("[COMMS ERROR] RX'd packet has invalid header")
+    #         cls.rx_gs_cmd = 0x00
+    #         cls.rx_sq_cnt = 0
+    #         cls.rx_gs_len = 0
+    #         return cls.rx_gs_cmd
 
-        if SATELLITE.RADIO_AVAILABLE:
-            cls.rx_message_rssi = SATELLITE.RADIO.rssi()
-        else:
-            logger.error("[COMMS ERROR] RADIO no longer active on SAT")
+    #     if SATELLITE.RADIO_AVAILABLE:
+    #         cls.rx_message_rssi = SATELLITE.RADIO.rssi()
+    #     else:
+    #         logger.error("[COMMS ERROR] RADIO no longer active on SAT")
 
-        # Unpack source header
-        cls.rx_src_id = int.from_bytes(packet[0:1], _BYTE_ORDER)
-        cls.rx_dst_id = int.from_bytes(packet[1:2], _BYTE_ORDER)
-        packet = packet[2:]
+    #     # Unpack source header
+    #     cls.rx_src_id = int.from_bytes(packet[0:1], _BYTE_ORDER)
+    #     cls.rx_dst_id = int.from_bytes(packet[1:2], _BYTE_ORDER)
+    #     print("   SRC ID:", cls.rx_src_id, "DST ID:", cls.rx_dst_id)
+    #     packet = packet[2:]
 
-        # Check packet integrity based on rx_src_id
-        if cls.rx_src_id != MSG_ID.GS_ID:
-            # Packet does not contain valid CMD_ID
-            logger.warning("[COMMS ERROR] RX'd packet has invalid source")
-            cls.rx_gs_cmd = 0x00
-            cls.rx_sq_cnt = 0
-            cls.rx_gs_len = 0
-            return cls.rx_gs_cmd
+    #     # Check packet integrity based on rx_src_id
+    #     if cls.rx_src_id != MSG_ID.GS_ID:
+    #         # Packet does not contain valid CMD_ID
+    #         logger.warning("[COMMS ERROR] RX'd packet has invalid source")
+    #         cls.rx_gs_cmd = 0x00
+    #         cls.rx_sq_cnt = 0
+    #         cls.rx_gs_len = 0
+    #         return cls.rx_gs_cmd
 
-        # Check packet integrity based on rx_dst_id
-        if cls.rx_dst_id != MSG_ID.ARGUS_ID:
-            # Packet does not contain valid CMD_ID
-            logger.warning("[COMMS ERROR] RX'd packet has invalid destination")
-            cls.rx_gs_cmd = 0x00
-            cls.rx_sq_cnt = 0
-            cls.rx_gs_len = 0
-            return cls.rx_gs_cmd
+    #     # Check packet integrity based on rx_dst_id
+    #     if cls.rx_dst_id != MSG_ID.ARGUS_ID:
+    #         # Packet does not contain valid CMD_ID
+    #         logger.warning(f"[COMMS ERROR] RX'd packet dest {cls.rx_dst_id} does not match ARGUS_ID {MSG_ID.ARGUS_ID}")
+    #         cls.rx_gs_cmd = 0x00
+    #         cls.rx_sq_cnt = 0
+    #         cls.rx_gs_len = 0
+    #         return cls.rx_gs_cmd
 
-        # Unpack RX message header
-        cls.rx_gs_cmd = int.from_bytes(packet[0:1], _BYTE_ORDER)
-        cls.rx_sq_cnt = int.from_bytes(packet[1:3], _BYTE_ORDER)
-        cls.rx_gs_len = int.from_bytes(packet[3:4], _BYTE_ORDER)
+    #     # Unpack RX message header
+    #     cls.rx_gs_cmd = int.from_bytes(packet[0:1], _BYTE_ORDER)
+    #     cls.rx_sq_cnt = int.from_bytes(packet[1:3], _BYTE_ORDER)
+    #     cls.rx_gs_len = int.from_bytes(packet[3:4], _BYTE_ORDER)
 
-        # Check packet integrity based on CMD_ID
-        if (cls.rx_gs_cmd < MSG_ID.GS_CMD_ACK_L) or (cls.rx_gs_cmd > MSG_ID.GS_CMD_DOWNLINK_ALL):
-            # Packet does not contain valid CMD_ID
-            logger.warning("[COMMS ERROR] RX'd packet has invalid CMD")
-            cls.rx_gs_cmd = 0x00
-            cls.rx_sq_cnt = 0
-            cls.rx_gs_len = 0
-            return cls.rx_gs_cmd
+    #     # Check packet integrity based on CMD_ID
+    #     if (cls.rx_gs_cmd < MSG_ID.GS_CMD_ACK_L) or (cls.rx_gs_cmd > MSG_ID.GS_CMD_DOWNLINK_ALL):
+    #         # Packet does not contain valid CMD_ID
+    #         logger.warning("[COMMS ERROR] RX'd packet has invalid CMD")
+    #         cls.rx_gs_cmd = 0x00
+    #         cls.rx_sq_cnt = 0
+    #         cls.rx_gs_len = 0
+    #         return cls.rx_gs_cmd
 
-        # Check packet integrity based on message length
-        if (len(packet) - 4) != cls.rx_gs_len:
-            # Header length does not match packet length
-            logger.warning("[COMMS ERROR] RX'd packet has length mismatch with header")
-            cls.rx_gs_cmd = 0x00
-            cls.rx_sq_cnt = 0
-            cls.rx_gs_len = 0
-            return cls.rx_gs_cmd
+    #     # Check packet integrity based on message length
+    #     if (len(packet) - 4) != cls.rx_gs_len:
+    #         # Header length does not match packet length
+    #         logger.warning("[COMMS ERROR] RX'd packet has length mismatch with header")
+    #         cls.rx_gs_cmd = 0x00
+    #         cls.rx_sq_cnt = 0
+    #         cls.rx_gs_len = 0
+    #         return cls.rx_gs_cmd
 
-        # Payload will be everything in message after header, can be empty
-        if cls.rx_gs_len != 0:
-            cls.rx_payload = packet[4:]
-        else:
-            cls.rx_payload = bytearray()
+    #     # Payload will be everything in message after header, can be empty
+    #     if cls.rx_gs_len != 0:
+    #         cls.rx_payload = packet[4:]
+    #     else:
+    #         cls.rx_payload = bytearray()
 
-        # GS_CMD_FILE_PKT is handled internally in the comms task
-        if cls.rx_gs_cmd == MSG_ID.GS_CMD_FILE_PKT:
-            if cls.check_rq_file_params(packet[4:]) is False:
-                # Filepath does not match
+    #     # GS_CMD_FILE_PKT is handled internally in the comms task
+    #     if cls.rx_gs_cmd == MSG_ID.GS_CMD_FILE_PKT:
+    #         if cls.check_rq_file_params(packet[4:]) is False:
+    #             # Filepath does not match
 
-                # Error, send down empty file array to signal the error
-                logger.warning("[COMMS ERROR] Filepath requested from the GS does not exist")
-                cls.filepath = None
-                cls.rq_sq_cnt = 0
+    #             # Error, send down empty file array to signal the error
+    #             logger.warning("[COMMS ERROR] Filepath requested from the GS does not exist")
+    #             cls.filepath = None
+    #             cls.rq_sq_cnt = 0
 
-            else:
-                # Filepath matches, move forward with request
+    #         else:
+    #             # Filepath matches, move forward with request
 
-                # Get sq_cnt for the PKT
-                cls.rq_sq_cnt = int.from_bytes(packet[9:11], _BYTE_ORDER)
+    #             # Get sq_cnt for the PKT
+    #             cls.rq_sq_cnt = int.from_bytes(packet[9:11], _BYTE_ORDER)
 
-        # GS_CMD_DOWNLINK_ALL is also handled internally in the comms task
-        elif cls.rx_gs_cmd == MSG_ID.GS_CMD_DOWNLINK_ALL:
-            # Flag for state transition
-            cls.dlink_all = True
+    #     # GS_CMD_DOWNLINK_ALL is also handled internally in the comms task
+    #     elif cls.rx_gs_cmd == MSG_ID.GS_CMD_DOWNLINK_ALL:
+    #         # Flag for state transition
+    #         cls.dlink_all = True
 
-            # Flag to indicate a wait time for commanding responses
-            cls.dlink_init = False
+    #         # Flag to indicate a wait time for commanding responses
+    #         cls.dlink_init = False
 
-        else:
-            # Not a file request, do nothing
-            pass
+    #     else:
+    #         # Not a file request, do nothing
+    #         pass
 
-        return cls.rx_gs_cmd
+    #     return cls.rx_gs_cmd
 
     """
         Name: transmit_message
@@ -782,7 +797,7 @@ class SATELLITE_RADIO:
             cls.tx_message = cls.tm_frame
 
         # Add source header (source and destination) to distinguish between spacecraft
-        cls.tx_message = bytes([MSG_ID.ARGUS_ID, MSG_ID.GS_ID]) + cls.tx_message
+        cls.tx_message = bytes([MSG_ID.ARGUS_ID]) + cls.tx_message
 
         # Send a message to GS
         if SATELLITE.RADIO_AVAILABLE:
@@ -792,5 +807,5 @@ class SATELLITE_RADIO:
             logger.error("[COMMS ERROR] RADIO no longer active on SAT")
 
         # Return TX message header
-        cls.tx_message_ID = int.from_bytes(cls.tx_message[2:3], _BYTE_ORDER)
+        cls.tx_message_ID = int.from_bytes(cls.tx_message[1:2], _BYTE_ORDER)
         return cls.tx_message_ID

@@ -50,26 +50,6 @@ from micropython import const
 # - Arguments: A list of parameters that the command accepts
 # - Execute: The function that executes the command
 
-COMMANDS = [
-    (CMD_ID.FORCE_REBOOT, lambda: True, [], FORCE_REBOOT),
-    (CMD_ID.SWITCH_TO_STATE, valid_state, ["target_state_id", "time_in_state"], SWITCH_TO_STATE),
-    (CMD_ID.UPLINK_TIME_REFERENCE, valid_time_format, ["time_reference"], UPLINK_TIME_REFERENCE),
-    (CMD_ID.TURN_OFF_PAYLOAD, lambda: True, [], TURN_OFF_PAYLOAD),
-    (CMD_ID.SCHEDULE_OD_EXPERIMENT, lambda: True, [], SCHEDULE_OD_EXPERIMENT),
-    (CMD_ID.REQUEST_TM_NOMINAL, lambda: True, [], REQUEST_TM_NOMINAL),
-    (CMD_ID.REQUEST_TM_HAL, lambda: True, [], REQUEST_TM_HAL),
-    (CMD_ID.REQUEST_TM_STORAGE, lambda: True, [], REQUEST_TM_STORAGE),
-    (CMD_ID.REQUEST_TM_PAYLOAD, lambda: True, [], REQUEST_TM_PAYLOAD),
-    (
-        CMD_ID.REQUEST_FILE_METADATA,
-        file_id_exists,
-        ["file_id", "file_time"],
-        REQUEST_FILE_METADATA,
-    ),
-    (CMD_ID.REQUEST_FILE_PKT, file_id_exists, ["file_id", "file_time"], REQUEST_FILE_PKT),
-    (CMD_ID.REQUEST_IMAGE, lambda: True, [], REQUEST_IMAGE),
-    (CMD_ID.DOWNLINK_ALL, file_id_exists, ["file_id", "file_time"], DOWNLINK_ALL),
-]
 
 
 class CommandProcessingStatus:
@@ -81,32 +61,36 @@ class CommandProcessingStatus:
     ARGUMENT_UNPACKING_FAILED = const(0x05)
 
 
-def process_command(cmd_id, *args):
+def process_command(command):
     """Processes a command by ID and arguments, with lightweight validation and execution."""
-    for command in COMMANDS:
-        if command[0] == cmd_id:
-            precondition, arg_list, execute = command[1:]
+    precondition = command.precondition
+    satellite_func = command.satellite_func
+    argument_list = command.get_arguments_list()
+    print(f"Processing command: {satellite_func} with arguments: {argument_list} and precondition: {precondition}")
 
-            # Verify precondition
-            if not precondition(*args):
-                logger.error("Cmd: Precondition failed")
-                return CommandProcessingStatus.PRECONDITION_FAILED, [cmd_id]
+    # Verify precondition
+    # if not precondition(*args):
+    print("Evaluating precondition:", precondition)
+    if precondition is not None and not eval(precondition)(*argument_list):   # precondition None = no precondition for the command
+        logger.error("Cmd: Precondition failed")
+        return CommandProcessingStatus.PRECONDITION_FAILED, [command.command_id]
 
-            # Verify the argument count
-            if len(args) != len(arg_list):
-                print(arg_list)
-                logger.error(f"Cmd: Argument count mismatch for command ID {cmd_id}")
-                return CommandProcessingStatus.ARGUMENT_COUNT_MISMATCH, [cmd_id]
+    # # Verify the argument count
+    # if len(args) != len(arg_list):
+    #     print(arg_list)
+    #     logger.error(f"Cmd: Argument count mismatch for command ID {cmd_id}")
+    #     return CommandProcessingStatus.ARGUMENT_COUNT_MISMATCH, [cmd_id]
 
-            # Execute the command function with arguments
-            try:
-                response_args = execute(*args)
-                return CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS, [cmd_id] + response_args
-            except Exception as e:
-                logger.error(f"Cmd: Command execution failed: {e}")
-                # Optionally log stack trace to a file for deeper diagnostics
-                return CommandProcessingStatus.COMMAND_EXECUTION_FAILED, [cmd_id]
-
+    # Execute the command function with arguments
+    try:
+        # response_args = execute(*args)
+        print("Executing command function:", satellite_func)
+        response_args = eval(satellite_func)(*argument_list)
+        return CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS, [command.command_id] + response_args
+    except Exception as e:
+        logger.error(f"Cmd: Command execution failed: {e}")
+        # Optionally log stack trace to a file for deeper diagnostics
+        return CommandProcessingStatus.COMMAND_EXECUTION_FAILED, [command.command_id]
     logger.warning("Cmd: Unknown command ID")
     return CommandProcessingStatus.UNKNOWN_COMMAND_ID, [cmd_id]
 

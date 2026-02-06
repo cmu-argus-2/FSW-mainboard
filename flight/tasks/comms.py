@@ -1,7 +1,11 @@
 # Communication task which uses the radio to transmit and receive messages.
 from apps.command import QUEUE_STATUS, CommandQueue, ResponseQueue
 from apps.comms.comms import COMMS_STATE, MSG_ID, SATELLITE_RADIO
-from apps.telemetry import TelemetryPacker
+
+# from apps.telemetry import TelemetryPacker
+from apps.telemetry.splat.splat.telemetry_codec import Command  # this should be implemented in middleware
+from apps.telemetry.middleware import Frame as TelemetryFrame # this will substitute for the old telemetry packer
+
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
@@ -100,11 +104,11 @@ class Task(TemplateTask):
                     self.log_info(f"Response: {response_id}, with args: {response_args}")
 
                     # Assume we have telemetry packed
-                    if TelemetryPacker.TM_AVAILABLE():
-                        SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
+                    if TelemetryFrame.TM_AVAILABLE():
+                        SATELLITE_RADIO.set_tm_frame(TelemetryFrame.FRAME())
 
                         # This frame is now old, indicate this to the packer
-                        TelemetryPacker.TM_EXHAUSTED()
+                        TelemetryFrame.TM_EXHAUSTED()
 
             elif self.comms_state == COMMS_STATE.TX_METADATA:
                 # Starting a file transfer to the GS
@@ -144,42 +148,46 @@ class Task(TemplateTask):
 
     def transmit_message(self):
         if self.TX_COUNTER >= self.TX_COUNT_THRESHOLD or self.ground_pass:
+            print("Inside transmit message")
             # If heartbeat TX counter has elapsed, or currently in an active ground pass
 
-            # NOTE: A response is only expected from commanding for an ACK, frame, or file metadata
-            # Heartbeats and file packets are handled internally by comms
-            if not (
-                self.comms_state == COMMS_STATE.TX_HEARTBEAT
-                or self.comms_state == COMMS_STATE.TX_FILEPKT
-                or SATELLITE_RADIO.get_downlink_init_flag()
-            ):
-                # Get response from commanding based on the active GS command
-                cmd_response_state = self.get_command_response()
+            # # NOTE: A response is only expected from commanding for an ACK, frame, or file metadata
+            # # Heartbeats and file packets are handled internally by comms
+            # if not (
+            #     self.comms_state == COMMS_STATE.TX_HEARTBEAT
+            #     or self.comms_state == COMMS_STATE.TX_FILEPKT
+            #     or SATELLITE_RADIO.get_downlink_init_flag()
+            # ):
+            #     # Get response from commanding based on the active GS command
+            #     cmd_response_state = self.get_command_response()
 
-                if cmd_response_state == _CMD_RESPONSE_NONE:
-                    # The response to the current GS command not ready, return
-                    return
+            #     if cmd_response_state == _CMD_RESPONSE_NONE:
+            #         # The response to the current GS command not ready, return
+            #         return
 
-                else:
-                    # The response was received and comms application was updated
-                    pass
+            #     else:
+            #         # The response was received and comms application was updated
+            #         pass
 
-            else:
-                # Heartbeat or file packet TX, do nothing
-                pass
+            # else:
+            #     # Heartbeat or file packet TX, do nothing
+            #     pass
 
             # Pack telemetry
             if not self.ground_pass:
-                self.packed = TelemetryPacker.pack_tm_heartbeat()
+                print("not a ground pass packing heartbeat")
+                self.packed = TelemetryFrame.pack_tm_heartbeat()
                 if self.packed:
                     self.log_info("Telemetry heartbeat packed")
+            else:
+                print("ground passs")
 
             # Set current TM frame
-            if TelemetryPacker.TM_AVAILABLE():
-                SATELLITE_RADIO.set_tm_frame(TelemetryPacker.FRAME())
+            if TelemetryFrame.TM_AVAILABLE():
+                SATELLITE_RADIO.set_tm_frame(TelemetryFrame.FRAME())
 
                 # This frame is now old, indicate this to the packer
-                TelemetryPacker.TM_EXHAUSTED()
+                TelemetryFrame.TM_EXHAUSTED()
 
             # Transmit a message from the satellite
             self.tx_msg_id = SATELLITE_RADIO.transmit_message()
@@ -195,38 +203,64 @@ class Task(TemplateTask):
 
         else:
             # If not, do nothing
+            print("Not in ground pass")
             return
 
     def receive_message(self):
         if SATELLITE_RADIO.data_available():
+            
             # Read packet present in the RX buffer
-            self.rq_cmd = SATELLITE_RADIO.receive_message()
+            message_object = SATELLITE_RADIO.receive_message()
 
-            # Check the response from the GS
-            if self.rq_cmd != 0x00:
-                # GS requested valid message ID
-                self.log_info(f"RX message RSSI: {SATELLITE_RADIO.get_rssi()}")
-                self.log_info(f"GS requested command: {self.rq_cmd}")
+            if type(message_object) != Command:
+                self.log_warning("[COMMS ERROR] Received invalid command object from GS")  
+                return  
+            self.log_info(f"Received command from GS: {message_object}")
+                
+            CommandQueue.overwrite_command(message_object)
+            
+                
+            DH.log_data("comms", [TPM.time(), SATELLITE_RADIO.get_rssi()])
+            
+            # Set ground pass true, reset counters
+            # not sure what this is for, keeping for compatibility
+            self.ground_pass = True
+            self.TX_COUNTER = 0
+            self.RX_COUNTER = 0
+            self.RP_COUNTER = 0
+            SATELLITE_RADIO.set_rx_gs_cmd(0x47)
+            
 
-                # Get most recent payload
-                self.rx_payload = SATELLITE_RADIO.get_rx_payload()
+                
+            # # Read packet present in the RX buffer
+            # message_object = SATELLITE_RADIO.receive_message()
+            
 
-                if self.rq_cmd != MSG_ID.GS_CMD_FILE_PKT:
-                    # Push rq_cmd onto CommandQueue along with all its arguments
-                    CommandQueue.overwrite_command(self.rq_cmd, self.rx_payload)
+            # # Check the response from the GS
+            # if self.rq_cmd != 0x00:
+            #     # GS requested valid message ID
+            #     self.log_info(f"RX message RSSI: {SATELLITE_RADIO.get_rssi()}")
+            #     self.log_info(f"GS requested command: {self.rq_cmd}")
 
-                # Log RSSI
-                DH.log_data("comms", [TPM.time(), SATELLITE_RADIO.get_rssi()])
+            #     # Get most recent payload
+            #     self.rx_payload = SATELLITE_RADIO.get_rx_payload()
 
-                # Set ground pass true, reset counters
-                self.ground_pass = True
-                self.TX_COUNTER = 0
-                self.RX_COUNTER = 0
-                self.RP_COUNTER = 0
+            #     if self.rq_cmd != MSG_ID.GS_CMD_FILE_PKT:
+            #         # Push rq_cmd onto CommandQueue along with all its arguments
+            #         CommandQueue.overwrite_command(self.rq_cmd, self.rx_payload)
 
-            else:
-                # GS requested invalid message ID
-                self.log_warning(f"GS requested invalid command: {self.rq_cmd}")
+            #     # Log RSSI
+            #     DH.log_data("comms", [TPM.time(), SATELLITE_RADIO.get_rssi()])
+
+            #     # Set ground pass true, reset counters
+            #     self.ground_pass = True
+            #     self.TX_COUNTER = 0
+            #     self.RX_COUNTER = 0
+            #     self.RP_COUNTER = 0
+
+            # else:
+            #     # GS requested invalid message ID
+            #     self.log_warning(f"GS requested invalid command: {self.rq_cmd}")
 
         else:
             # Increment RX counter
@@ -238,7 +272,7 @@ class Task(TemplateTask):
         # State transition based on RX'd packet
         SATELLITE_RADIO.transition_state(self.RX_COUNTER, self.RX_COUNT_THRESHOLD)
         self.comms_state = SATELLITE_RADIO.get_state()
-
+        print(f"!!Current comms state: {self.comms_state}")
         if self.comms_state == COMMS_STATE.TX_HEARTBEAT:
             # GS response timeout
             self.ground_pass = False
@@ -272,7 +306,11 @@ class Task(TemplateTask):
 
             if self.comms_state != COMMS_STATE.RX:
                 # Current state is TX state, transmit message
+                print("TRANSMITTING MESSAGE")
                 self.transmit_message()
             else:
                 # Current state is RX, receive message
+                print("RECEIVING MESSAGE...")
                 self.receive_message()
+                print("Done rx MESSAGE...")
+                

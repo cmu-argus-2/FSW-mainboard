@@ -22,7 +22,11 @@ Author: Ibrahima S. Sow
 
 import supervisor
 from apps.command.constants import file_tags_str
-from apps.telemetry import TelemetryPacker
+
+from apps.telemetry.middleware import Frame as TelemetryFrame # this will substitute for the old telemetry packer
+
+
+
 from core import logger
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
@@ -78,33 +82,33 @@ def REQUEST_TM_NOMINAL():
     """Requests a nominal snapshot of all subsystems."""
     logger.info("Executing REQUEST_TM_NOMINAL")
     # Pack telemetry
-    packed = TelemetryPacker.pack_tm_heartbeat()
+    packed = TelemetryFrame.pack_tm_heartbeat()
     if packed:
         logger.info("Telemetry nominal packed")
+        
+    # might be interesting to differentiate between periodic hearbeats
+    # might want to add that this is a response
 
-    # Change message ID to nominal - differentiate between SAT_HEARTBEAT
-    TelemetryPacker.change_tm_id_nominal()
-    # Return TX message header
-    return [get_tx_message_header()]
+    return []
 
 
 def REQUEST_TM_HAL():
     """Requests hardware-focused telemetry, including information on HAL, EPS, and errors."""
     logger.info("Executing REQUEST_TM_HAL")
     # Pack telemetry
-    packed = TelemetryPacker.pack_tm_hal()
+    packed = TelemetryFrame.pack_tm_hal()
     if packed:
         logger.info("Telemetry hal packed")
 
     # Return TX message header
-    return [get_tx_message_header()]
+    return []
 
 
 def REQUEST_TM_STORAGE():
     """Requests full storage status of the mainboard, including details on onboard processes."""
     logger.info("Executing REQUEST_TM_STORAGE")
     # Pack telemetry
-    packed = TelemetryPacker.pack_tm_storage()
+    packed = TelemetryFrame.pack_tm_storage()
     if packed:
         logger.info("Telemetry storage packed")
 
@@ -116,7 +120,7 @@ def REQUEST_TM_PAYLOAD():
     """Requests telemetry data from the payload, provided it is on."""
     logger.info("Executing REQUEST_TM_PAYLOAD")
     # Pack telemetry
-    packed = TelemetryPacker.pack_tm_payload()
+    packed = TelemetryFrame.pack_tm_payload()
     if packed:
         logger.info("Telemetry payload packed")
 
@@ -167,4 +171,4 @@ def DOWNLINK_ALL(file_id, file_time=None):
 
 def get_tx_message_header():
     """ " Helper function to obtain the tx message header to send back"""
-    return int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
+    return int.from_bytes(TelemetryFrame.FRAME()[0:1], "big")
