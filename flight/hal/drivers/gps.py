@@ -348,19 +348,19 @@ class GPS:
             self.fix_mode = self._u8(1)
             self.number_of_sv = self._u8(2)
             self.week = self._u16(3)
-            self.tow = self._u32(5)
+            self.tow = self._u32(5)/100
             self.latitude = self._signed_32bit(
                 (self._payload[9] << 24) | (self._payload[10] << 16) | (self._payload[11] << 8) | self._payload[12]
-            )
+            )/100
             self.longitude = self._signed_32bit(
                 ((self._payload[13] << 24) | (self._payload[14] << 16) | (self._payload[15] << 8) | self._payload[16])
-            )
+            )/100
             self.ellipsoid_altitude = self._signed_32bit(
                 ((self._payload[17] << 24) | (self._payload[18] << 16) | (self._payload[19] << 8) | self._payload[20])
-            )
+            )/100
             self.mean_sea_level_altitude = self._signed_32bit(
                 ((self._payload[21] << 24) | (self._payload[22] << 16) | (self._payload[23] << 8) | self._payload[24])
-            )
+            )/100
             # Units according to AN0037 are in 1/100 scale (e.g. cm vs m)
             self.gdop = self._u16(25)/100
             self.pdop = self._u16(27)/100
@@ -528,8 +528,8 @@ class GPS:
         # Convert days to seconds
         unix_time = days_since_unix_epoch * 86400
 
-        # Add TOW (convert from 1/100 sec to seconds)
-        unix_time += tow / 100
+        # Add TOW
+        unix_time += tow
 
         # Calculate hours, minutes, and seconds
         seconds_in_day = unix_time % 86400
