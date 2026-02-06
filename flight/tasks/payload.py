@@ -1,7 +1,5 @@
 # Payload Control Task
 
-from io import BytesIO
-
 from apps.payload.controller import PayloadController as PC
 from apps.payload.controller import PayloadState, map_state
 from apps.payload.definitions import ExternalRequest
