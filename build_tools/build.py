@@ -263,6 +263,11 @@ def create_build(source_folder, flight_build):
         elif BOARD_ID.startswith("PyCubed") and os.path.relpath(root, source_folder).startswith("hal/drivers"):
             print(f"Skipping {os.path.relpath(root, source_folder)}")
             continue
+        if "splat_web" in root or "splat/examples" in root or "splat/docs" in root:   # ignore unecessary 
+            print(f"Skipping {os.path.relpath(root, source_folder)}")
+            continue
+
+        print(f"root: {root} {type(root)}, files: {files}")
 
         for file in files:
             if file.endswith(".py") or file.endswith(".mpy"):
