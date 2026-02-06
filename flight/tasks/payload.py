@@ -6,7 +6,6 @@ from io import BytesIO
 from apps.payload.controller import PayloadController as PC
 from apps.payload.controller import PayloadState, map_state
 from apps.payload.definitions import ExternalRequest
-
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH

@@ -17,8 +17,9 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, "flight"))
 
-import tests.cp_mock  # noqa: E402,F401
 import core.data_handler as dh  # noqa: E402
+
+import tests.cp_mock  # noqa: E402,F401
 
 
 def decode_dh_file(input_path: str, output_path: str) -> None:
