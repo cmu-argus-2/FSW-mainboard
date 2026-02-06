@@ -7,6 +7,18 @@ from core.state_machine import STATES
 _TIME_RANGE_LOW = 1577836800
 _TIME_RANGE_HIGH = 1893456000
 
+def valid_inputs(*args) -> bool:
+    """
+    Precondition for SUM command.
+    Checks that the inputs are integers or floats.
+    """
+    opA = args[0]
+    opB = args[1]
+    print(f"Validating inputs for SUM command: opA={opA}, opB={opB}")
+    if (isinstance(opA, (int, float))) and (isinstance(opB, (int, float))):
+        return True
+    else:
+        return False
 
 def valid_state(*args) -> bool:
     """

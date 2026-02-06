@@ -36,9 +36,10 @@ from apps.command.commands import (
     SWITCH_TO_STATE,
     TURN_OFF_PAYLOAD,
     UPLINK_TIME_REFERENCE,
+    SUM,
 )
 from apps.command.constants import CMD_ID
-from apps.command.preconditions import file_id_exists, valid_state, valid_time_format
+from apps.command.preconditions import file_id_exists, valid_state, valid_time_format, valid_inputs
 from core import logger
 from micropython import const
 

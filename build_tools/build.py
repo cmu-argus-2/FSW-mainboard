@@ -267,8 +267,6 @@ def create_build(source_folder, flight_build):
             print(f"Skipping {os.path.relpath(root, source_folder)}")
             continue
 
-        print(f"root: {root} {type(root)}, files: {files}")
-
         for file in files:
             if file.endswith(".py") or file.endswith(".mpy"):
                 source_path = os.path.join(root, file)

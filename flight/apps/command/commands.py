@@ -39,6 +39,14 @@ def FORCE_REBOOT():
     # https://learn.adafruit.com/circuitpython-essentials/circuitpython-resetting
     return []
 
+def SUM(opA, opB):
+    """
+    Test command
+    used to experiment addining new command and testing the arguments 
+    """
+    logger.info(f"Executing SUM with opA: {opA} and opB: {opB}")
+    return [opA + opB]
+    
 
 def SWITCH_TO_STATE(target_state_id, time_in_state=None):
     """Forces a switch of the spacecraft to a specific state."""
