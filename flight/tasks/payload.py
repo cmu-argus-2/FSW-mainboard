@@ -1,6 +1,5 @@
 # Payload Control Task
 
-import struct
 from io import BytesIO
 
 from apps.payload.controller import PayloadController as PC
@@ -12,6 +11,7 @@ from core.data_handler import DataHandler as DH
 from core.states import STATES
 
 _NUM_IMG_TO_MAINTAIN_READY = 1  # Number of images to maintain in memory at least
+
 
 class Task(TemplateTask):
 
@@ -142,10 +142,7 @@ class Task(TemplateTask):
                     # Check how many complete image files we have
                     complete_image_count = DH.get_file_count("img")
 
-                    if (
-                        complete_image_count < _NUM_IMG_TO_MAINTAIN_READY
-                        and not PC.file_transfer_in_progress()
-                    ):
+                    if complete_image_count < _NUM_IMG_TO_MAINTAIN_READY and not PC.file_transfer_in_progress():
                         self.log_info(
                             f"Not enough images in memory "
                             f"({complete_image_count}/{_NUM_IMG_TO_MAINTAIN_READY}), requesting new image"
@@ -155,5 +152,4 @@ class Task(TemplateTask):
         # DO NOT EXPOSE THE LOGIC IN THE TASK and KEEP EVERYTHING INTERNAL
         PC.run_control_logic()
         self.log_info(f"Payload state: {map_state(PC.state)}")
-        
         # ===== END FULL STATE MACHINE =====
