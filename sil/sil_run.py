@@ -52,6 +52,7 @@ def FSW_simulate(runtime: float, outfile: str, trial_number: int, trial_date: st
 
 def parse_FSW_logs(outfile):
     errors_detected = False
+    error_logs = []
     with open(outfile, "r") as log_file:
         for line in log_file:
             for keyword in KEYWORDS.keys():
@@ -59,9 +60,10 @@ def parse_FSW_logs(outfile):
                     print(f"{KEYWORDS[keyword]}{line}")
                     if keyword == "ERROR":
                         errors_detected = True
+                        error_logs.append(line)
 
     if errors_detected:
-        raise Exception("FSW Simulation Failed")
+        raise Exception(f"FSW Simulation Failed. Errors:\n{''.join(error_logs)}")
 
 
 def update(d, u, i):
