@@ -403,6 +403,15 @@ class CubeSat:
         return self.key_in_device_list("PAYLOADUART") and self.__device_list["PAYLOADUART"].device is not None
 
     @property
+    def PAYLOADUART_BAUDRATE(self) -> bool:
+        """PAYLOADUART_BAUD: Returns the payload UART baudrate
+        :return: int or None
+        """
+        if self.PAYLOADUART_AVAILABLE:
+            return self.__device_list["PAYLOADUART"].device.baudrate
+        return None
+
+    @property
     def BOOTTIME(self):
         """BOOTTIME: Returns the reference count since the board booted
         :return: object or None

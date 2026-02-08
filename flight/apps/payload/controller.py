@@ -705,7 +705,7 @@ class PayloadController:
     @classmethod
     def ping(cls):
         cls.communication_interface.send(Encoder.encode_ping())
-        cls.last_cmd_sent = CommandID.PING  # Track command
+        cls.last_cmd_sent = CommandID.PING_ACK  # Track command
         resp = cls.communication_interface.receive()
         if resp:  # a ping is immediate so if we don't receive a response, we assume it is not connected
             return Decoder.decode(resp) == _PING_RESP_VALUE
