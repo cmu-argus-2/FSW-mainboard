@@ -53,6 +53,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
         self.solar_idx = slice(27, 40)
         self.power_idx = slice(40, 48)
         self.jetson_idx = slice(48, 49)
+        self.deploy_idx = slice(49, 51)
 
         # Measurement labels
         self.gps_idx = slice(0, 6)
@@ -138,6 +139,13 @@ class Simulator:  # will be passed by reference to the emulated HAL
             return self.measurement[self.power_idx][attr2idx[attr]]
         else:
             raise Exception("Invalid Battery diagnostic attribute")
+
+    def deployment_sensor(self, attr):
+        self.advance_to_time()
+        attr2idx = {"XP": 0, "YM": 1}
+        if attr not in attr2idx.keys():
+            raise Exception(f"Invalid Deployable Sensor dir {attr}")
+        return self.measurement[self.deploy_idx][attr2idx[attr]]
 
     def set_control_input(self, dir, input):
         """

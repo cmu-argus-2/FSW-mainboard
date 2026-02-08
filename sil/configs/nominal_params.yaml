@@ -29,7 +29,6 @@ area :
      min_area : 0.01 # Min area [m^2]
 
 inertia :
-     # nominal without deployables at the center of mass
      nominal_inertia : [ 2.29087756e-03, -1.87290000e-05, -5.24670000e-06,
                          -1.87290000e-05,  2.33687756e-03,  1.91340000e-05,
                          -5.24670000e-06,  1.91340000e-05,  2.37975511e-03]
@@ -322,7 +321,7 @@ PlotFlags:
      pointing_plots: True
      actuator_plots: True
      att_animation : False
-     percent_to_log : 0.01 # [0,1] percent of the data to log for plotting
+     percent_to_log : 0.01 # [0,1] fraction of the data to log for plotting
 debugFlags:
      perfect_sensors: False  # Perfect measurements
      include_battery: True # Include battery in simulation

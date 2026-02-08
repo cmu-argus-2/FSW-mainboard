@@ -2,7 +2,7 @@
 
 import apps.adcs.sensors as sensors
 from apps.adcs.acs import mcm_coil_allocator, spin_stabilizing_controller, sun_pointing_controller, zero_all_coils
-from apps.adcs.consts import Modes, StatusConst
+from apps.adcs.consts import ControllerConst, Modes, StatusConst
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX, class_length
 from core import DataHandler as DH
 from core import TemplateTask
@@ -68,14 +68,19 @@ class Task(TemplateTask):
 
     mag_counter = 0
 
+    xp_deployed = False
+    ym_deployed = False
+
+    ctr_const = ControllerConst()
+
     def __init__(self, id):
         super().__init__(id)
         self.name = "ADCS"  # Override the name
 
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:
+            # check for deployment to update inertia matrix
             pass
-
         else:
             if not DH.data_process_exists("adcs"):
                 data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B"  # + 4 * "f"
@@ -83,6 +88,17 @@ class Task(TemplateTask):
 
             self.time = TPM.time()
             self.log_data[ADCS_IDX.TIME_ADCS] = self.time
+
+            if not self.xp_deployed:
+                xp_dist = sensors.read_deployment_sensors("XP")
+                self.xp_deployed = xp_dist < 0 or xp_dist > 10
+                if self.xp_deployed:
+                    self.ctr_const.update_inertia_no_deploy(xp_deployed=self.xp_deployed, ym_deployed=self.ym_deployed)
+            if not self.ym_deployed:
+                ym_dist = sensors.read_deployment_sensors("YM")
+                self.ym_deployed = ym_dist < 0 or ym_dist > 10
+                if self.ym_deployed:
+                    self.ctr_const.update_inertia_no_deploy(xp_deployed=self.xp_deployed, ym_deployed=self.ym_deployed)
 
             # ------------------------------------------------------------------------------------------------------------------------------------
             # DETUMBLING
@@ -94,12 +110,10 @@ class Task(TemplateTask):
                 # Query Magnetometer
                 if self.mag_counter == 0:
                     self.mag_status, self.mag_data = sensors.read_magnetometer()
-                    self.last_mag_time = TPM.time()
 
                 # Run Attitude Control
                 if self.mag_counter < 3:
                     self.attitude_control()
-                    self.last_mtb_time = TPM.time()
                 else:
                     zero_all_coils()
 
@@ -107,7 +121,7 @@ class Task(TemplateTask):
                 if self.mag_counter == 5:
                     self.mag_counter = 0
                 # Check if detumbling has been completed
-                if sensors.current_mode(self.MODE) != Modes.TUMBLING:
+                if sensors.current_mode(self.MODE, self.ctr_const) != Modes.TUMBLING:
                     zero_all_coils()
                     self.MODE = Modes.STABLE
 
@@ -126,7 +140,7 @@ class Task(TemplateTask):
                 if (
                     SM.current_state == STATES.NOMINAL
                     and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
-                    and sensors.current_mode(self.MODE) == Modes.TUMBLING
+                    and sensors.current_mode(self.MODE, self.ctr_const) == Modes.TUMBLING
                 ):
                     # Do not allow a switch to Detumbling from Low power
                     self.MODE = Modes.TUMBLING
@@ -138,13 +152,12 @@ class Task(TemplateTask):
                     # Query Magnetometer
                     if self.mag_counter == 0:
                         self.mag_status, self.mag_data = sensors.read_magnetometer()
-                        self.last_mag_time = TPM.time()
 
                     # Query Sun Position
                     self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
 
                     # identify Mode based on current sensor readings
-                    new_mode = sensors.current_mode(self.MODE)
+                    new_mode = sensors.current_mode(self.MODE, self.ctr_const)
                     if new_mode != self.MODE:
                         zero_all_coils()
                         self.MODE = new_mode
@@ -152,7 +165,6 @@ class Task(TemplateTask):
                     # Run attitude control if not in Low-power
                     if SM.current_state != STATES.LOW_POWER and self.MODE != Modes.ACS_OFF and self.mag_counter < 3:
                         self.attitude_control()
-                        self.last_mtb_time = TPM.time()
                     else:
                         zero_all_coils()
 
@@ -180,7 +192,7 @@ class Task(TemplateTask):
                 return
 
             # Control MCMs and obtain coil statuses
-            dipole_moment = spin_stabilizing_controller(self.gyro_data, self.mag_data)
+            dipole_moment = spin_stabilizing_controller(self.gyro_data, self.mag_data, self.ctr_const)
 
         elif self.MODE == Modes.SUN_POINTED:  # Sun-pointed controller
 
@@ -190,7 +202,9 @@ class Task(TemplateTask):
                 return
 
             # Control MCMs and obtain coil statuses
-            dipole_moment = sun_pointing_controller(self.sun_pos_body, self.gyro_data, self.mag_data)
+            dipole_moment = sun_pointing_controller(
+                self.sun_pos_body, self.gyro_data, self.mag_data, self.ctr_const.INERTIA_MAT
+            )
         else:
             # If in ACS_OFF or any other mode, do not control MCMs
             # Just zero out the dipole moment
@@ -244,6 +258,12 @@ class Task(TemplateTask):
         self.log_info(f"Sun Status : {self.log_data[ADCS_IDX.SUN_STATUS]}")
         self.log_info(f"Gyro Status : {self.gyro_status}")
         self.log_info(f"Mag Status : {self.mag_status}")
+
+        # self.log_info(f"Deployment Status (XP,YM) : {[self.xp_deployed, self.ym_deployed]}")
+        # debugging
+        # self.log_info(f"Coil Status : {self.log_data[ADCS_IDX.XP_COIL_STATUS:ADCS_IDX.ZM_COIL_STATUS + 1]}")
+        # self.log_info(f"Inertia Mat : {self.ctr_const.INERTIA_MAT}")
+        # self.log_info(f"Momentum Target : {self.ctr_const.MOMENTUM_TARGET}")
 
         # from hal.configuration import SATELLITE
         # from ulab import numpy as np

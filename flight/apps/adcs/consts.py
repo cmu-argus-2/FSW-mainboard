@@ -74,23 +74,10 @@ class Modes:
     SUN_POINTED_TOL_HI = 0.26  # Re-enter sun_pointed if momentum more than 15 deg from sun vector
 
 
-class PhysicalConst:
+class SunConst:
     """
-    Constants associated with physical satellite bus parameters.
+    Constants associated with sun sensor parameters.
     """
-
-    INERTIA_MAT = np.array(
-        [[3.544e-03, -1.8729e-05, -5.2467e-06], [-1.8729e-05, 3.590e-03, 1.9134e-05], [-5.2467e-06, 1.9134e-05, 4.120e-03]]
-    )
-
-    # Compute Major axis of inertia
-    _eigvals, _eigvecs = np.linalg.eig(INERTIA_MAT)
-    _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
-
-    INERTIA_MAJOR_DIR = _unscaled_axis / np.linalg.norm(_unscaled_axis)
-    inertia_major_dir_abs = np.array([math.fabs(dir_x) for dir_x in INERTIA_MAJOR_DIR])
-    if INERTIA_MAJOR_DIR[np.argmax(inertia_major_dir_abs)] < 0:
-        INERTIA_MAJOR_DIR = -INERTIA_MAJOR_DIR
 
     # map from light sensors to body vector
     LIGHT_SENSOR_NORMALS = [
@@ -118,6 +105,25 @@ class ControllerConst:
     Constants associated with Controller Behavior
     """
 
+    INERTIA_MAT_NOM = np.array(
+        [[3.544e-03, -1.8729e-05, -5.2467e-06], [-1.8729e-05, 3.590e-03, 1.9134e-05], [-5.2467e-06, 1.9134e-05, 4.120e-03]]
+    )
+    # change in inertia in case xp does not deploy
+    DELTA_INERTIA_NO_DEP_XP = np.array([[1.68e-05, 0.0, -1.94e-04], [0.0, 3.37e-04, 0.0], [-1.94e-04, 0.0, 3.21e-04]])
+    # change in inertia in case ym does not deploy
+    DELTA_INERTIA_NO_DEP_YM = np.array([[3.37e-04, 0.0, 0.0], [0.0, 1.68e-05, 1.94e-04], [0.0, 1.94e-04, 3.21e-04]])
+
+    INERTIA_MAT = INERTIA_MAT_NOM.copy()
+
+    # Compute Major axis of inertia
+    _eigvals, _eigvecs = np.linalg.eig(INERTIA_MAT)
+    _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
+
+    INERTIA_MAJOR_DIR = _unscaled_axis / np.linalg.norm(_unscaled_axis)
+    inertia_major_dir_abs = np.array([math.fabs(dir_x) for dir_x in INERTIA_MAJOR_DIR])
+    if INERTIA_MAJOR_DIR[np.argmax(inertia_major_dir_abs)] < 0:
+        INERTIA_MAJOR_DIR = -INERTIA_MAJOR_DIR
+
     # Dimensions of sensor readings and control input
     READING_DIM = (3,)
     CONTROL_DIM = (3,)
@@ -127,14 +133,30 @@ class ControllerConst:
 
     # Spin-stabilized Constants
     OMEGA_MAG_TARGET = 0.035  # Target angular velocity (2 deg/s) for spin stabilization
-    MOMENTUM_TARGET = np.dot(PhysicalConst.INERTIA_MAT, PhysicalConst.INERTIA_MAJOR_DIR * OMEGA_MAG_TARGET)
+    MOMENTUM_TARGET = np.dot(INERTIA_MAT, INERTIA_MAJOR_DIR * OMEGA_MAG_TARGET)
     MOMENTUM_TARGET_MAG = np.linalg.norm(MOMENTUM_TARGET)
     SPIN_STABILIZING_GAIN = 2.0e07
 
-    # Sun Pointing Constants
+    @classmethod
+    def update_inertia_no_deploy(cls, xp_deployed: bool, ym_deployed: bool):
+        """
+        Updates the inertia matrix based on deployment status of panels.
+        """
+        cls.INERTIA_MAT = cls.INERTIA_MAT_NOM.copy()
+        if not xp_deployed:
+            cls.INERTIA_MAT -= cls.DELTA_INERTIA_NO_DEP_XP
+        if not ym_deployed:
+            cls.INERTIA_MAT -= cls.DELTA_INERTIA_NO_DEP_YM
+        _eigvals, _eigvecs = np.linalg.eig(cls.INERTIA_MAT)
+        _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
 
-    # Tolerances
-    OMEGA_TOLERANCE = 0.02  # rad/s (~1.2 deg/s)
+        cls.INERTIA_MAJOR_DIR = _unscaled_axis / np.linalg.norm(_unscaled_axis)
+        inertia_major_dir_abs = np.array([math.fabs(dir_x) for dir_x in cls.INERTIA_MAJOR_DIR])
+        if cls.INERTIA_MAJOR_DIR[np.argmax(inertia_major_dir_abs)] < 0:
+            cls.INERTIA_MAJOR_DIR = -cls.INERTIA_MAJOR_DIR
+
+        cls.MOMENTUM_TARGET = np.dot(cls.INERTIA_MAT, cls.INERTIA_MAJOR_DIR * cls.OMEGA_MAG_TARGET)
+        cls.MOMENTUM_TARGET_MAG = np.linalg.norm(cls.MOMENTUM_TARGET)
 
 
 class MCMConst:

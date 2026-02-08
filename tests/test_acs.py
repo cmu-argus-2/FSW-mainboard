@@ -3,7 +3,7 @@ import pytest
 
 import tests.cp_mock  # noqa: F401
 from flight.apps.adcs.acs import spin_stabilizing_controller, sun_pointing_controller
-from flight.apps.adcs.consts import ControllerConst, PhysicalConst
+from flight.apps.adcs.consts import ControllerConst
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def tolerance() -> float:
 
 @pytest.fixture
 def zero_spin_error_omega() -> np.ndarray:
-    return np.linalg.inv(PhysicalConst.INERTIA_MAT) @ ControllerConst.MOMENTUM_TARGET
+    return np.linalg.inv(ControllerConst.INERTIA_MAT) @ ControllerConst.MOMENTUM_TARGET
 
 
 @pytest.fixture
@@ -51,7 +51,7 @@ def test_nominal_spin_stabilization(
         mag_field = request.getfixturevalue(mag_field)
 
     # Assert control input value
-    result = spin_stabilizing_controller(omega, mag_field)
+    result = spin_stabilizing_controller(omega, mag_field, ControllerConst)
     assert result.shape == (3,)
     assert result == pytest.approx(expected, abs=tolerance)
 
@@ -65,7 +65,7 @@ def nominal_sun_vector() -> np.ndarray:
 def zero_pointing_error_omega(
     nominal_sun_vector: np.ndarray,
 ) -> np.ndarray:
-    return np.linalg.norm(ControllerConst.MOMENTUM_TARGET) * np.linalg.inv(PhysicalConst.INERTIA_MAT) @ nominal_sun_vector
+    return np.linalg.norm(ControllerConst.MOMENTUM_TARGET) * np.linalg.inv(ControllerConst.INERTIA_MAT) @ nominal_sun_vector
 
 
 @pytest.fixture
@@ -127,7 +127,7 @@ def test_nominal_sun_pointing(
         mag_field = request.getfixturevalue(mag_field)
 
     # Assert control input value
-    result = sun_pointing_controller(sun_vector, omega, mag_field)
+    result = sun_pointing_controller(sun_vector, omega, mag_field, ControllerConst.INERTIA_MAT)
     assert result.shape == (3,)
     assert result == pytest.approx(expected, abs=tolerance)
 
@@ -157,12 +157,12 @@ def test_invalid_dim_spin_stabilization(
     for i in invalid_dims:
         # Test angular velocity with invalid dimensions
         invalid_omega = np.ones(i)
-        result = spin_stabilizing_controller(invalid_omega, valid_omega)
+        result = spin_stabilizing_controller(invalid_omega, valid_omega, ControllerConst)
         assert result == pytest.approx(expected, abs=tolerance)
 
         # Test magnetic field with invalid dimensions
         invalid_mag_field = np.ones(i)
-        result = spin_stabilizing_controller(valid_mag_field, invalid_mag_field)
+        result = spin_stabilizing_controller(valid_mag_field, invalid_mag_field, ControllerConst)
         assert result == pytest.approx(expected, abs=tolerance)
 
 
@@ -187,15 +187,15 @@ def test_invalid_dim_sun_pointing(
     for i in invalid_dims:
         # Test sun vector with invalid dimensions
         invalid_sun_vector = np.ones(i)
-        result = sun_pointing_controller(invalid_sun_vector, valid_omega, valid_mag_field)
+        result = sun_pointing_controller(invalid_sun_vector, valid_omega, valid_mag_field, ControllerConst.INERTIA_MAT)
         assert result == pytest.approx(expected, abs=tolerance)
 
         # Test angular velocity with invalid dimensions
         invalid_omega = np.ones(i)
-        result = sun_pointing_controller(nominal_sun_vector, invalid_omega, valid_mag_field)
+        result = sun_pointing_controller(nominal_sun_vector, invalid_omega, valid_mag_field, ControllerConst.INERTIA_MAT)
         assert result == pytest.approx(expected, abs=tolerance)
 
         # Test magnetic field with invalid dimensions
         invalid_mag_field = np.ones(i)
-        result = sun_pointing_controller(nominal_sun_vector, valid_omega, invalid_mag_field)
+        result = sun_pointing_controller(nominal_sun_vector, valid_omega, invalid_mag_field, ControllerConst.INERTIA_MAT)
         assert result == pytest.approx(expected, abs=tolerance)
