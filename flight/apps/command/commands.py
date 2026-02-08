@@ -122,7 +122,8 @@ def REQUEST_FILE_METADATA(file_id, file_time=None):
     file_path = None
     file_tag = file_tags_str[file_id]
 
-    if file_time is None:
+    if file_time is None or file_time == 0:
+        # None or 0 means get the latest file
         file_path = DH.request_TM_path(file_tag, True)
     else:
         # Specify file_tag, latest = False and file_time
@@ -146,7 +147,8 @@ def DOWNLINK_ALL(file_id, file_time=None):
     file_path = None
     file_tag = file_tags_str[file_id]
 
-    if file_time is None:
+    if file_time is None or file_time == 0:
+        # None or 0 means get the latest file
         file_path = DH.request_TM_path(file_tag)
     else:
         # Specify file_tag, latest = False and file_time
