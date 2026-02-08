@@ -59,6 +59,26 @@ def read_deployment_sensors(sens_id) -> float:
     return SATELLITE.DEPLOYMENT_SENSOR_DISTANCE(sens_id)
 
 
+def get_gyro_scale() -> int:
+    """
+    - Reads the scale configuration of the gyro
+    """
+
+    if SATELLITE.IMU_AVAILABLE:
+        return SATELLITE.IMU.gyro_range
+    else:
+        return StatusConst.GYRO_FAIL
+
+
+def set_gyro_scale(gyro_const_value: int) -> None:
+    """
+    - Sets the scale configuration of the gyro
+    """
+
+    if SATELLITE.IMU_AVAILABLE:
+        SATELLITE.IMU.gyro_range = gyro_const_value
+
+
 """
     SENSOR VALIDITY CHECKS
 """

@@ -21,7 +21,7 @@ def readings_are_valid(
 
 def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray, ctr_const: ControllerConst) -> np.ndarray:
     """
-    Spin-stabilizing angular momentum feedback law.
+    Spin-stabilizing control law.
     Augmented with tanh function for soft clipping.
     All sensor estimates are in the body-fixed reference frame.
     """
