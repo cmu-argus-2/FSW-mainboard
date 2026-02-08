@@ -70,6 +70,11 @@ class Task(TemplateTask):
     last_mag_time = 0.0
     last_mtb_time = 0.0
 
+    xp_deployed = False
+    ym_deployed = False
+
+    ctr_const = ControllerConst()
+
     def __init__(self, id):
         super().__init__(id)
         self.name = "ADCS"  # Override the name
