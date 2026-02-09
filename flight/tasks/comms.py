@@ -11,6 +11,7 @@ from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
+from apps.comms.fifo import TransmitQueue
 from micropython import const
 
 # Constants
@@ -172,6 +173,17 @@ class Task(TemplateTask):
             # else:
             #     # Heartbeat or file packet TX, do nothing
             #     pass
+            
+            if TransmitQueue.packet_available():
+                # If we have a packet to transmit, set it in the radio
+                packet, queue_error_code = TransmitQueue.pop_packet()
+
+                if queue_error_code == QUEUE_STATUS.OK:
+                    SATELLITE_RADIO.set_tx_message(packet)
+                    SATELLITE_RADIO.transmit_message(skip_check=True)
+                    self.log_info(f"Set packet for transmission: {packet}")
+                else:
+                    self.log_error("Error popping packet from TransmitQueue")
 
             # Pack telemetry
             if not self.ground_pass:
@@ -194,12 +206,18 @@ class Task(TemplateTask):
             self.TX_COUNTER = 0
             self.RX_COUNTER = 0
             self.RP_COUNTER = 0
+            
+            
+            self.log_info(f"Sent message with ID: {self.tx_msg_id}")
+            self.log_info(f"Current comms state: {self.comms_state}")
+
 
             # State transition to RX state, values for RX counter not checked
             SATELLITE_RADIO.transition_state(0, 0)
             self.comms_state = SATELLITE_RADIO.get_state()
 
             self.log_info(f"Sent message with ID: {self.tx_msg_id}")
+            self.log_info(f"Current comms state: {self.comms_state}")
 
         else:
             # If not, do nothing
@@ -217,7 +235,7 @@ class Task(TemplateTask):
                 return  
             self.log_info(f"Received command from GS: {message_object}")
                 
-            CommandQueue.overwrite_command(message_object)
+            CommandQueue.overwrite_command(message_object)   # [check] - not sure why overwrite instead of push, i copied this from the old code
             
                 
             DH.log_data("comms", [TPM.time(), SATELLITE_RADIO.get_rssi()])

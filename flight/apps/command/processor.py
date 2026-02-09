@@ -39,8 +39,10 @@ from apps.command.commands import (
     SUM,
 )
 from apps.command.constants import CMD_ID
-from apps.command.preconditions import file_id_exists, valid_state, valid_time_format, valid_inputs
+from apps.command.preconditions import file_id_exists, valid_state, valid_time_format
 from core import logger
+from apps.telemetry.splat.splat.telemetry_codec import pack, Ack
+from apps.comms.fifo import TransmitQueue, QUEUE_STATUS
 from micropython import const
 
 # See commands.py for function definitions (command functions and eventual preconditions)
@@ -66,15 +68,18 @@ def process_command(command):
     precondition = command.precondition
     satellite_func = command.satellite_func
     argument_list = command.get_arguments_list()
-    print(f"Processing command: {satellite_func} with arguments: {argument_list} and precondition: {precondition}")
+    logger.info(f"Processing command: {satellite_func} with arguments: {argument_list} and precondition: {precondition}")
 
     # Verify precondition
     # if not precondition(*args):
-    print("Evaluating precondition:", precondition)
-    if precondition is not None and not eval(precondition)(*argument_list):   # precondition None = no precondition for the command
-        logger.error("Cmd: Precondition failed")
+    try:
+        if precondition is not None and not eval(precondition)(*argument_list):   # precondition None = no precondition for the command
+            logger.error("Cmd: Precondition failed")
+            return CommandProcessingStatus.PRECONDITION_FAILED, [command.command_id]
+    except Exception as e:
+        logger.error(f"Cmd: Precondition check failed with error: {e}")
         return CommandProcessingStatus.PRECONDITION_FAILED, [command.command_id]
-
+    
     # # Verify the argument count
     # if len(args) != len(arg_list):
     #     print(arg_list)
@@ -84,13 +89,14 @@ def process_command(command):
     # Execute the command function with arguments
     try:
         # response_args = execute(*args)
-        print("Executing command function:", satellite_func)
+        logger.info(f"Executing command function: {satellite_func}")
         response_args = eval(satellite_func)(*argument_list)
         return CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS, [command.command_id] + response_args
     except Exception as e:
         logger.error(f"Cmd: Command execution failed: {e}")
         # Optionally log stack trace to a file for deeper diagnostics
         return CommandProcessingStatus.COMMAND_EXECUTION_FAILED, [command.command_id]
+    
     logger.warning("Cmd: Unknown command ID")
     return CommandProcessingStatus.UNKNOWN_COMMAND_ID, [cmd_id]
 
@@ -99,7 +105,15 @@ def handle_command_execution_status(status, response_args):
     # If the command execution was successful, send a success response to Comms via Response Queue
     # If the command execution failed, send an error response with the error code to Comms via Response Queue
 
-    ResponseQueue.overwrite_response(status, response_args)
+    ResponseQueue.overwrite_response(status, response_args)     # [check] - not sure here why they are overwritting instead of appending 
+
+    # add ack response to transmit queue for comms to pick up and send to ground station
+    # this is not the best place to do this, not sure where the best place to do this is
+    ack = Ack(status, response_args)
+    packed_ack = pack(ack)
+    TransmitQueue.push_packet(packed_ack)
+    logger.info(f"Added ack packet to transmit queue: {packed_ack}")
+    
 
     if status == CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS:
         logger.info("Command execution successful")

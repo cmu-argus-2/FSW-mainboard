@@ -10,6 +10,7 @@ import os
 
 from apps.command.constants import file_ids_str
 from apps.telemetry.splat.splat.telemetry_codec import unpack
+from apps.comms.fifo import TransmitQueue, QUEUE_STATUS
 from core import logger
 from core.data_handler import DataHandler as DH
 from core.data_handler import extract_time_from_filename
@@ -127,6 +128,9 @@ class SATELLITE_RADIO:
     file_size = 0
     file_time = 0
     file_message_count = 0
+    
+    # queue for outgoing packets to be transmitted by comms
+    TX_QUEUE = TransmitQueue()
 
     """
     NOTE: This flag can be set to force comms into DOWLINK_ALL.
@@ -250,6 +254,14 @@ class SATELLITE_RADIO:
         Name: set_tx_ack
         Description: Set internal TX ACK for GS ACKs
     """
+    
+    @classmethod    
+    def set_tx_message(cls, packet):
+        # used for now to remain compatible with the old code and support the new transmit queue
+        if type(packet) is not bytes:
+            logger.error("[COMMS ERROR] TX packet must be of type bytes")
+            return
+        cls.tx_message = packet
 
     @classmethod
     def set_tx_ack(cls, tx_ack):
@@ -765,40 +777,41 @@ class SATELLITE_RADIO:
     """
 
     @classmethod
-    def transmit_message(cls):
+    def transmit_message(cls, skip_check=False):
         # Check comms state and TX message accordingly
-        if cls.state == COMMS_STATE.TX_HEARTBEAT:
-            # Transmit SAT heartbeat
-            cls.tx_message = cls.tm_frame
+        if not skip_check:
+            if cls.state == COMMS_STATE.TX_HEARTBEAT:
+                # Transmit SAT heartbeat
+                cls.tx_message = cls.tm_frame
 
-        elif cls.state == COMMS_STATE.TX_ACK:
-            # Transmit SAT ACK
-            cls.tx_message = bytes([MSG_ID.SAT_ACK, 0x00, 0x00, 0x01, cls.tx_ack])
+            elif cls.state == COMMS_STATE.TX_ACK:
+                # Transmit SAT ACK
+                cls.tx_message = bytes(cls.tx_ack)
 
-        elif cls.state == COMMS_STATE.TX_FRAME:
-            # Transmit a specific TM frame
-            cls.tx_message = cls.tm_frame
+            elif cls.state == COMMS_STATE.TX_FRAME:
+                # Transmit a specific TM frame
+                cls.tx_message = cls.tm_frame
 
-        elif cls.state == COMMS_STATE.TX_METADATA:
-            # Transmit file metatdata
-            cls.transmit_file_metadata()
+            elif cls.state == COMMS_STATE.TX_METADATA:
+                # Transmit file metatdata
+                cls.transmit_file_metadata()
 
-        elif cls.state == COMMS_STATE.TX_FILEPKT:
-            # Transmit file packets with requested sequence count
-            cls.transmit_file_packet()
+            elif cls.state == COMMS_STATE.TX_FILEPKT:
+                # Transmit file packets with requested sequence count
+                cls.transmit_file_packet()
 
-        elif cls.state == COMMS_STATE.TX_DOWNLINK_ALL:
-            # Transmit file packets with the internal sequence count
-            cls.transmit_downlink_all()
+            elif cls.state == COMMS_STATE.TX_DOWNLINK_ALL:
+                # Transmit file packets with the internal sequence count
+                cls.transmit_downlink_all()
 
-        else:
-            # Unknown state, just send
-            logger.warning(f"[COMMS ERROR] SAT received {cls.gs_rq_message_ID}")
-            cls.tx_message = cls.tm_frame
+            else:
+                # Unknown state, just send
+                logger.warning(f"[COMMS ERROR] SAT received {cls.gs_rq_message_ID}")
+                cls.tx_message = cls.tm_frame
 
         # Add source header (source and destination) to distinguish between spacecraft
         cls.tx_message = bytes([MSG_ID.ARGUS_ID]) + cls.tx_message
-
+        logger.info(f"transmitting message: {cls.tx_message}")
         # Send a message to GS
         if SATELLITE.RADIO_AVAILABLE:
             SATELLITE.RADIO.send(cls.tx_message)
