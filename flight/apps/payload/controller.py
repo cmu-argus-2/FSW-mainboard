@@ -106,10 +106,12 @@ class PayloadController:
     BATCH_SIZE = 25  # Request 25 packets at a time
 
     _BITS_PER_BYTE = 10  # 1 start, 8 data, 1 stop (8N1)
+
     if SATELLITE.PAYLOADUART_BAUDRATE is not None:
         _TX_TIME = PU._DATA_PACKET_SIZE * _BITS_PER_BYTE / SATELLITE.PAYLOADUART_BAUDRATE
-    else: 
+    else:
         _TX_TIME = 0.01  # TODO: Default to 10ms if baudrate not set for now
+
     _PROCESSING_SLACK = 0.001
     _EST_PKT_TX_TIME = _TX_TIME + _PROCESSING_SLACK
 
