@@ -142,7 +142,7 @@ class Task(TemplateTask):
 
                     if complete_image_count < _NUM_IMG_TO_MAINTAIN_READY and not PC.file_transfer_in_progress():
                         self.log_info(
-                            f"Not enough images in memory ",
+                            "Not enough images in memory "
                             f"({complete_image_count}/{_NUM_IMG_TO_MAINTAIN_READY}), requesting new image",
                         )
                         PC.add_request(ExternalRequest.REQUEST_IMAGE)
