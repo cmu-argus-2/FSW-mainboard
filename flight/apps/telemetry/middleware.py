@@ -40,6 +40,16 @@ class Frame:
     @classmethod
     def FRAME(cls):
         return cls._FRAME
+    
+    @classmethod
+    def set_FRAME(cls, frame_bytes):
+        if len(frame_bytes) > 248:
+            logger.error("Frame size exceeds maximum limit")
+            return False
+        
+        cls._FRAME[:len(frame_bytes)] = frame_bytes
+        cls._TM_AVAILABLE = True
+        return True
 
     @classmethod
     def FRAME_SIZE(cls):
@@ -100,12 +110,12 @@ class Frame:
     @classmethod
     def pack_tm_heartbeat(cls):
         """
-        Pack a heartbeat telemetry frame into the pre-allocated FRAME buffer.
+        Pack a heartbeat telemetry frame.
         """
         # this will be a report
         report = Report("TM_HEARTBEAT")
         
-        ss_list = ["cdh", "eps", "adcs", "gps"]
+        ss_list = ["cdh", "eps", "adcs", "gps"] # we need this to get the from dh, and it is case sensitive
         idx_list = [CDH_IDX, EPS_IDX, ADCS_IDX, GPS_IDX]  # this is used to match the ss to the dh constants
         # get the latest data from each subsystem
         dh_data_list = [cls.get_dh_latest_data(x) for x in ss_list]
@@ -128,27 +138,24 @@ class Frame:
                 dh_var_idx = getattr(idx_list[ss_list.index(ss_lower)], var_name)
                 report.add_variable(var_name, ss, dh_data[dh_var_idx])
 
-        cls._FRAME[:] = pack(report)
-        logger.debug(f"Packed heartbeat telemetry frame {format_bytes(cls._FRAME)}")
-        # Mark telemetry as available
-        cls._TM_AVAILABLE = True
-        # print(f"Packed heartbeat telemetry frame {format_bytes(cls._FRAME)}")
-        
+        packed_report = pack(report)
+        logger.debug(f"Packed heartbeat telemetry frame {format_bytes(packed_report)}")
+
         gc.collect()
         
-        return True
+        return packed_report
     
 
     @classmethod
     def pack_tm_hal(cls):
         """
-        Pack a HAL telemetry frame into the pre-allocated FRAME buffer.
+        Pack a HAL telemetry frame.
         """
         print("Starting to pack HAL telemetry frame")
         # this will be a report
         report = Report("TM_HAL")
         
-        ss_list = ["cdh", "eps", "storage"]
+        ss_list = ["cdh", "eps", "storage"]  # we need this to get the from dh, and it is case sensitive
         idx_list = [CDH_IDX, EPS_IDX, STORAGE_IDX]  # this is used to match the ss to the dh constants
         # get the latest data from each subsystem
         dh_data_list = [cls.get_dh_latest_data(x) for x in ss_list]
@@ -171,14 +178,13 @@ class Frame:
             for var_name in report.variables[ss].keys():
                 dh_var_idx = getattr(idx_list[ss_list.index(ss_lower)], var_name)
                 report.add_variable(var_name, ss, dh_data[dh_var_idx])
-
-        cls._FRAME[:] = pack(report)
-        # Mark telemetry as available
-        cls._TM_AVAILABLE = True
-        print(f"Packed HAL telemetry frame {format_bytes(cls._FRAME)}")
+        packed_report = pack(report)
+        logger.debug(f"Packed HAL telemetry frame {format_bytes(packed_report)}")
         
         gc.collect()
         
+        return packed_report
+    
     @classmethod
     def pack_tm_storage(cls):
         """
@@ -194,7 +200,6 @@ class Frame:
         # get the latest data from each subsystem
         dh_data_list = [cls.get_dh_latest_data(x) for x in ss_list]  # storage subsytem works differently
         dh_storage_list = [cls.get_storage_info(x) for x in storage_ss_list]  # get the storage info for each subsystem
-        logger.info(f"[check] - dh_storage_list: {dh_storage_list}")
        
         # for each variable in the report, get the corresponding data from DH
         for ss in report.variables.keys():
@@ -244,12 +249,49 @@ class Frame:
             
             report.add_variable(var_name, "STORAGE", dh_storage_list[ss_index][dh_var_idx])   # add the variable to the report
             
-            print(f"[check] - Added variable {var_name} with value {dh_storage_list[ss_index][dh_var_idx]} to STORAGE telemetry frame")
-            
 
-            
-        print(f"[check] - Packed STORAGE telemetry frame {format_bytes(cls._FRAME)}")
+        packed_report = pack(report)
+        logger.debug(f"[check] - Packed STORAGE telemetry frame {format_bytes(packed_report)}")
         
         gc.collect()
         
-        return pack(report)
+        return packed_report
+    
+    @classmethod
+    def pack_tm_payload(cls):
+        """
+        Pack a payload telemetry frame.
+        """
+        print("Starting to pack PAYLOAD telemetry frame")
+        # this will be a report
+        report = Report("TM_PAYLOAD")
+        
+        ss_list = ["payload"]   # we need this to get the from dh, and it is case sensitive
+        idx_list = [0]  # this is used to match the ss to the dh constants, payload only has 1 variable so idx is 0
+        # get the latest data from each subsystem
+        dh_data_list = [cls.get_dh_latest_data(x) for x in ss_list]
+        
+       
+        # for each variable in the report, get the corresponding data from DH
+        for ss in report.variables.keys():
+            ss_lower = ss.lower()  # Create lowercase version for lookups
+            if ss_lower not in ss_list:
+                logger.warning(f"Subsystem {ss.upper()} not recognized for PAYLOAD")
+                continue
+        
+            dh_data = dh_data_list[ss_list.index(ss_lower)]
+            print("  DH data:", dh_data)
+            if dh_data is None:
+                logger.warning(f"No data for subsystem {ss.upper()} to pack in PAYLOAD")
+                continue
+        
+            # iterating over all the variables for the ss in the report and adding them
+            for var_name in report.variables[ss].keys():
+                dh_var_idx = idx_list[ss_list.index(ss_lower)]  # payload only has 1 variable so idx is 0
+                report.add_variable(var_name, ss, dh_data[dh_var_idx])
+        packed_report = pack(report)
+        logger.debug(f"Packed PAYLOAD telemetry frame {format_bytes(packed_report)}")
+        
+        gc.collect()
+        
+        return packed_report

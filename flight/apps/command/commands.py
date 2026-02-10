@@ -32,6 +32,7 @@ from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
+from apps.comms.fifo import TransmitQueue, QUEUE_STATUS
 
 FILE_PKTSIZE = 240
 
@@ -82,9 +83,9 @@ def REQUEST_TM_NOMINAL():
     """Requests a nominal snapshot of all subsystems."""
     logger.info("Executing REQUEST_TM_NOMINAL")
     # Pack telemetry
-    packed = TelemetryFrame.pack_tm_heartbeat()
-    if packed:
-        logger.info("Telemetry nominal packed")
+    packet = TelemetryFrame.pack_tm_heartbeat()#
+    TransmitQueue.push_packet(packet)
+    logger.info("Telemetry nominal packed and pushed to transmit queue")
         
     # might be interesting to differentiate between periodic hearbeats
     # might want to add that this is a response
@@ -96,11 +97,10 @@ def REQUEST_TM_HAL():
     """Requests hardware-focused telemetry, including information on HAL, EPS, and errors."""
     logger.info("Executing REQUEST_TM_HAL")
     # Pack telemetry
-    packed = TelemetryFrame.pack_tm_hal()
-    if packed:
-        logger.info("Telemetry hal packed")
+    packet = TelemetryFrame.pack_tm_hal()
+    TransmitQueue.push_packet(packet)
+    logger.info("Telemetry hal packed and pushed to transmit queue")
 
-    # Return TX message header
     return []
 
 
@@ -108,24 +108,22 @@ def REQUEST_TM_STORAGE():
     """Requests full storage status of the mainboard, including details on onboard processes."""
     logger.info("Executing REQUEST_TM_STORAGE")
     # Pack telemetry
-    packed = TelemetryFrame.pack_tm_storage()
-    if packed:
-        logger.info("Telemetry storage packed")
+    packet = TelemetryFrame.pack_tm_storage()
+    TransmitQueue.push_packet(packet)
+    logger.info("Telemetry storage packed and pushed to transmit queue")
 
-    # Return TX message header
-    return [get_tx_message_header()]
+    return []
 
 
 def REQUEST_TM_PAYLOAD():
     """Requests telemetry data from the payload, provided it is on."""
     logger.info("Executing REQUEST_TM_PAYLOAD")
     # Pack telemetry
-    packed = TelemetryFrame.pack_tm_payload()
-    if packed:
-        logger.info("Telemetry payload packed")
+    packet = TelemetryFrame.pack_tm_payload()
+    TransmitQueue.push_packet(packet)
+    logger.info("Telemetry payload packed and pushed to transmit queue")
 
-    # Return TX message header
-    return [get_tx_message_header()]
+    return []
 
 
 def REQUEST_FILE_METADATA(file_id, file_time=None):

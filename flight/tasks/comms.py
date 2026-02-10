@@ -174,7 +174,11 @@ class Task(TemplateTask):
             #     # Heartbeat or file packet TX, do nothing
             #     pass
             
-            if TransmitQueue.packet_available():
+            # for now lets send all of the packets that are in the queue
+            # but later on should find a better approach 
+
+            while TransmitQueue.packet_available():                  
+                self.log_info("Packet available in TransmitQueue, preparing for transmission")
                 # If we have a packet to transmit, set it in the radio
                 packet, queue_error_code = TransmitQueue.pop_packet()
 
@@ -187,12 +191,10 @@ class Task(TemplateTask):
 
             # Pack telemetry
             if not self.ground_pass:
-                print("not a ground pass packing heartbeat")
-                self.packed = TelemetryFrame.pack_tm_heartbeat()
-                if self.packed:
-                    self.log_info("Telemetry heartbeat packed")
-            else:
-                print("ground passs")
+                self.packet = TelemetryFrame.pack_tm_heartbeat()
+                TelemetryFrame.set_FRAME(self.packet)   # this is temporary until to send the telemetry frame while rebuilding this
+
+                self.log_info("Telemetry heartbeat packed")
 
             # Set current TM frame
             if TelemetryFrame.TM_AVAILABLE():
