@@ -4,4 +4,4 @@
 	branch = fsw_interface_2
 [submodule "flight/apps/telemetry/splat"]
 	path = flight/apps/telemetry/splat
-	url = git@github.com-personal:cmu-argus-2/splat.git
+	url = https://github.com/cmu-argus-2/splat.git
