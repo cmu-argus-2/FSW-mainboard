@@ -20,7 +20,6 @@ See documentation for a full description of each commands.
 Author: Ibrahima S. Sow
 """
 
-import apps.telemetry.helpers as tm_helper
 from apps.command import ResponseQueue
 from apps.command.commands import (
     DOWNLINK_ALL,
