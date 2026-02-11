@@ -8,6 +8,8 @@ import apps.command.processor as processor
 from apps.adcs.consts import Modes
 from apps.command import QUEUE_STATUS, CommandQueue
 from apps.eps.eps import EPS_POWER_FLAG
+from apps.payload.controller import PayloadController as PC
+from apps.payload.controller import PayloadState
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX
 from core import DataHandler as DH
 from core import TemplateTask
@@ -20,9 +22,16 @@ from micropython import const
 
 _TPM_INIT_TIMEOUT = const(10)  # seconds
 _EXIT_STARTUP_TIMEOUT = CONFIG.EXIT_STARTUP_TIMEOUT  # Already a const in satellite_config
-_BURN_WIRE_STRENGTH = const(7)  # 0-255
+_DEPLOYABLE_STRENGTH = const(15)  # 0-255
+_ANTENNA_STRENGTH = int(_DEPLOYABLE_STRENGTH / 2)
+_ANTENNA_PWM = const(2)
+_ANTENNA_DEPLOYMENT_TRIES = const(2)
 _DEPLOYMENT_INTERVAL = const(5)  # seconds
-_PWM_MAX = const(3)  # Maximum PWM value for deployment
+_PWM_MIN = const(0)  # Minimum PWM value for deployment
+_FIRST_PWM = const(2)  # First PWM to start deployment
+_BURN_WIRE_TIMEOUT = CONFIG.BURN_WIRE_TIMEOUT  # number of tries
+_DEPLOYMENT_DISTANCE = const(2)  # distance(cm) threshold for deployment
+_GROUND_TESTING_MODE = CONFIG.GROUND_TESTING_MODE
 
 
 class Task(TemplateTask):
@@ -49,8 +58,11 @@ class Task(TemplateTask):
         self.EPS_MODE = EPS_POWER_FLAG.NOMINAL
 
         self.deployment_done = False
-        self.deploymentPWM = 0
+        self.deploymentPWM = _FIRST_PWM
+        self.deploymentTries = 0
         self.last_deployment_time = None
+
+        self.antenna_tries = 0
 
     def get_memory_usage(self):
         return int(gc.mem_alloc() / self.total_memory * 100)
@@ -60,15 +72,38 @@ class Task(TemplateTask):
         # DEPLOYMENT SEQUENCE
         # ------------------------------------------------------------------------------------------------------------------------------------
         burn_wires = SATELLITE.BURN_WIRES
-        if self.deploymentPWM == 0:
+        if self.deploymentPWM == _FIRST_PWM:
             # Enable the first PWM
-            burn_wires.set_pwm(self.deploymentPWM, _BURN_WIRE_STRENGTH)
-        elif self.deploymentPWM < _PWM_MAX:
+            burn_wires.set_pwm(
+                self.deploymentPWM, _DEPLOYABLE_STRENGTH if self.deploymentPWM != _ANTENNA_PWM else _ANTENNA_STRENGTH
+            )
+        elif self.deploymentPWM >= _PWM_MIN:
             # Disable previous PWM and enable current one
-            burn_wires.set_pwm(self.deploymentPWM - 1, 0)
-            burn_wires.set_pwm(self.deploymentPWM, _BURN_WIRE_STRENGTH)
+            burn_wires.turn_off_pwm(self.deploymentPWM + 1)
+            burn_wires.set_pwm(
+                self.deploymentPWM, _DEPLOYABLE_STRENGTH if self.deploymentPWM != _ANTENNA_PWM else _ANTENNA_STRENGTH
+            )
         burn_wires.enable_driver()
-        self.deploymentPWM += 1  # Increment PWM for next deployment
+        if self.deploymentPWM == _ANTENNA_PWM:
+            # always try and redeploy antenna as there's no deployment sensor
+            self.antenna_tries += 1
+            if self.antenna_tries >= _ANTENNA_DEPLOYMENT_TRIES:
+                self.deploymentPWM -= 1  # Decrement PWM for next deployment
+        else:
+            self.deploymentPWM -= 1  # Decrement PWM for next deployment
+
+    def check_one_deployment(self, dir: str) -> bool:
+        # ------------------------------------------------------------------------------------------------------------------------------------
+        # CHECK DEPLOYMENT STATUS
+        # ------------------------------------------------------------------------------------------------------------------------------------
+        available = SATELLITE.DEPLOYMENT_SENSOR_AVAILABLE(dir)
+        if available:
+            return SATELLITE.DEPLOYMENT_SENSOR_DISTANCE(dir) >= _DEPLOYMENT_DISTANCE
+        else:
+            return True  # Assume deployed if sensor not available
+
+    def check_deployment_status(self):
+        return self.check_one_deployment("XP") and self.check_one_deployment("YM")
 
     def startup(self):
         # ------------------------------------------------------------------------------------------------------------------------------------
@@ -85,8 +120,6 @@ class Task(TemplateTask):
         # Neopixel for STARTUP (white)
         if SATELLITE.NEOPIXEL_AVAILABLE:
             SATELLITE.NEOPIXEL.fill([255, 255, 255])
-
-        # TODO: Deployment
 
         # Check time_since_boot
         time_since_boot = TPM.monotonic() - SATELLITE.BOOTTIME
@@ -143,12 +176,19 @@ class Task(TemplateTask):
 
                 # TODO: add deployment flag
                 if SATELLITE.BURN_WIRES_AVAILABLE:
-                    # Deployment finished when the deployment PWM reaches 3
-                    if self.deploymentPWM == _PWM_MAX and deployment_time_check:
-                        self.log_info("Deployment complete")
-                        self.deployment_done = True
-                        SATELLITE.BURN_WIRES.disable_driver()
-                    elif self.deploymentPWM < _PWM_MAX and deployment_time_check:
+                    # Deployment finished when the deployment PWM reaches 0
+                    if self.deploymentPWM < _PWM_MIN and deployment_time_check:
+                        self.deploymentTries += 1
+                        if self.check_deployment_status() or self.deploymentTries >= _BURN_WIRE_TIMEOUT:
+                            self.log_info("Deployment complete")
+                            self.deployment_done = True
+                            SATELLITE.BURN_WIRES.turn_off_pwm(self.deploymentPWM + 1)
+                            SATELLITE.BURN_WIRES.disable_driver()
+                        else:
+                            self.log_warning("Deployment not successful, retrying deployment sequence...")
+                            self.deploymentPWM = _FIRST_PWM  # Reset PWM to retry deployment
+                            self.antenna_tries = 0
+                    elif self.deploymentPWM >= _PWM_MIN and deployment_time_check:
                         self.log_info(f"Deployment sequence: {self.deploymentPWM}")
                         self.last_deployment_time = TPM.monotonic()
                         self.deployment_sequence()
@@ -288,7 +328,10 @@ class Task(TemplateTask):
                 # T2.3: High SoC, engage the payload
                 self.log_info("T2.3: Transition from NOMINAL to EXPERIMENT")
                 SM.switch_to(STATES.EXPERIMENT)
-
+            elif _GROUND_TESTING_MODE:
+                # T2.4: Ground testing mode enabled, engage the payload
+                self.log_info("T2.4: Transition from NOMINAL to EXPERIMENT (Ground Testing Mode)")
+                SM.switch_to(STATES.EXPERIMENT)
             else:
                 # No transition, stay in NOMINAL
                 pass
@@ -321,8 +364,16 @@ class Task(TemplateTask):
             if SATELLITE.NEOPIXEL_AVAILABLE:
                 SATELLITE.NEOPIXEL.fill([255, 0, 255])
 
+            # The Payload controller should be kept as autonomous as possible, since the payload task
+            # has access to the global state. External requests exists as a last resort to control the
+            # payload from the CDH (and Payload task itself =/= Payload Controller)
+
+            # Note all ground commands related to the payload are executed in the command processor
+            if PC.state == PayloadState.READY:
+                pass
+
             """Transitions out of EXPERIMENT"""
-            if self.EPS_MODE != EPS_POWER_FLAG.EXPERIMENT:
+            if self.EPS_MODE != EPS_POWER_FLAG.EXPERIMENT and not _GROUND_TESTING_MODE:
                 # T4.1: Nominal or low SoC, transition back to nominal
                 self.log_info("T4.1: Transition from LOW POWER to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)

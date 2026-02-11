@@ -110,7 +110,7 @@ class PhysicalConst:
     LIGHT_Z_IDXS = [4, 5, 6, 7, 8]
 
     # Logging only allows for a max value of 65535. Since OPT4003 has a max value of 140k, scale log data down by 3
-    LIGHT_SENSOR_LOG_FACTOR = 3
+    LIGHT_SENSOR_LOG_FACTOR = 1 / 3
 
 
 class ControllerConst:

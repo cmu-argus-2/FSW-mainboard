@@ -162,7 +162,7 @@ def unpack_command_arguments(cmd_id, cmd_arglist):
         # For all other commands with no arguments
         cmd_args = []
 
-    if False in cmd_args:
+    if any(arg is False for arg in cmd_args):
         logger.error("[COMMAND] Command argument unpacking failed")
         return CommandProcessingStatus.ARGUMENT_UNPACKING_FAILED
 

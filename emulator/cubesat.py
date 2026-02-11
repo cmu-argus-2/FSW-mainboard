@@ -389,11 +389,58 @@ class CubeSat:
         return self.key_in_device_list("WATCHDOG") and self.__device_list["WATCHDOG"].device is not None
 
     @property
+    def PAYLOADUART(self):
+        """PAYLOAD_EN: Returns the payload UART object
+        :return: object or None
+        """
+        return self.__device_list["PAYLOADUART"].device
+
+    @property
+    def PAYLOADUART_AVAILABLE(self) -> bool:
+        """PAYLOADUART_AVAILABLE: Returns True if the payload UART is available
+        :return: bool
+        """
+        return self.key_in_device_list("PAYLOADUART") and self.__device_list["PAYLOADUART"].device is not None
+
+    @property
+    def PAYLOADUART_BAUDRATE(self) -> bool:
+        """PAYLOADUART_BAUD: Returns the payload UART baudrate
+        :return: int or None
+        """
+        if self.PAYLOADUART_AVAILABLE:
+            return self.__device_list["PAYLOADUART"].device.baudrate
+        return None
+
+    @property
     def BOOTTIME(self):
         """BOOTTIME: Returns the reference count since the board booted
         :return: object or None
         """
         return self._time_ref_boot
+
+    @property
+    def DEPLOYMENT_SENSORS(self):
+        """Returns a dictionary of deployment sensors with the direction as the key (e.g. 'XP', 'YM')"""
+        deployment_sensors = {}
+        return deployment_sensors
+
+    def DEPLOYMENT_SENSOR_AVAILABLE(self, dir: str) -> bool:
+        """Returns True if the specific deployment sensor for the given direction is available.
+
+        :param dir: The direction key (e.g., 'XP', 'YM')
+        :return: bool - True if the sensor exists and is not None, False otherwise.
+        """
+        return False
+
+    def DEPLOYMENT_SENSOR_DISTANCE(self, dir: str) -> float:
+        """Returns the distance reading for the specific deployment sensor if available and returns -1 otherwise
+
+        :param dir: The direction key (e.g., 'XP', 'YM', etc.)
+        :return: float - distance value in cm if the sensor is available else -1
+        """
+        if self.DEPLOYMENT_SENSOR_AVAILABLE(dir):
+            return self.__device_list["DEPLOYMENT_" + dir].device.distance
+        return -1
 
     ######################## ERROR HANDLING ########################
 
