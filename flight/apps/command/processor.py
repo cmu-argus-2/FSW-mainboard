@@ -36,6 +36,7 @@ from apps.command.commands import (
     TURN_OFF_PAYLOAD,
     UPLINK_TIME_REFERENCE,
     SUM,
+    EVAL_STRING_COMMAND,
 )
 from apps.command.constants import CMD_ID
 from apps.command.preconditions import file_id_exists, valid_state, valid_time_format

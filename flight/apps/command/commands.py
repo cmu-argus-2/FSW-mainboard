@@ -166,6 +166,19 @@ def DOWNLINK_ALL(file_id, file_time=None):
 
     return [file_path]
 
+def EVAL_STRING_COMMAND(string_command):
+    """
+    As of right now this is just for debugging purposes
+    will receive a string, will eval it and return the results. """
+    logger.info(f"Executing EVAL_STRING_COMMAND with request: {string_command}")
+
+    try:
+        result = eval(string_command)
+        return [result]
+    except Exception as e:
+        logger.error(f"EVAL_STRING_COMMAND execution failed: {e}")
+        return ["eval_string_command_failed"]
+
 
 def get_tx_message_header():
     """ " Helper function to obtain the tx message header to send back"""
