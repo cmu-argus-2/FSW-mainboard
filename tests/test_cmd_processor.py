@@ -4,6 +4,7 @@ import pytest
 from micropython import const
 
 from flight.apps.command.constants import CMD_ID
+from flight.apps.comms.modes import COMMS_MODE
 from flight.apps.command.preconditions import valid_state, valid_time_format
 from flight.apps.command.processor import process_command  # noqa F401
 from flight.apps.command.processor import CommandProcessingStatus, check_arguments_size, unpack_command_arguments
@@ -125,6 +126,11 @@ def test_unpack_orbit_reference_arguments():
     ]
 
 
+def test_unpack_comms_mode_argument():
+    unpacked = unpack_command_arguments(CMD_ID.COMMS_MODE, bytes([COMMS_MODE.QUIET]))
+    assert unpacked == [COMMS_MODE.QUIET]
+
+
 @pytest.mark.parametrize(
     "command_id, arguments, expected_outputs",
     [
@@ -196,6 +202,9 @@ def test_unpack_orbit_reference_arguments():
         (CMD_ID.ACTIVATE_DIGIPEATER, ((1).to_bytes(1, "big")), False),
         (CMD_ID.DEACTIVATE_DIGIPEATER, (), True),
         (CMD_ID.DEACTIVATE_DIGIPEATER, ((1).to_bytes(1, "big")), False),
+        (CMD_ID.COMMS_MODE, bytes([COMMS_MODE.QUIET]), True),
+        (CMD_ID.COMMS_MODE, bytearray(), False),
+        (CMD_ID.COMMS_MODE, bytes([COMMS_MODE.QUIET, COMMS_MODE.NORMAL]), False),
     ],
 )
 def test_argument_size_check(command_id, arguments, expected_outputs):

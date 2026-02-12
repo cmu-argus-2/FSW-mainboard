@@ -24,6 +24,8 @@ import supervisor
 from apps.adcs.orbit_reference import set_orbit_reference
 from apps.command.constants import file_tags_str
 from apps.comms.comms import SATELLITE_RADIO
+from apps.comms.modes import COMMS_MODE as COMMS_MODE_ID
+from apps.comms.modes import COMMS_MODE_STR
 from apps.telemetry import TelemetryPacker
 from core import logger
 from core import state_manager as SM
@@ -83,21 +85,28 @@ def RF_STOP():
     Legal coordination command for IARU/FCC operational constraints.
     """
     logger.warning("Executing RF_STOP: disabling all satellite TX")
-    SATELLITE_RADIO.set_rf_stop(True)
+    SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.RF_STOP)
     return []
 
 
 def ACTIVATE_DIGIPEATER():
     """Enable digipeater relay mode in COMMS."""
     logger.warning("Executing ACTIVATE_DIGIPEATER: relay mode enabled")
-    SATELLITE_RADIO.set_digipeater_enabled(True)
+    SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.DIGIPEAT)
     return []
 
 
 def DEACTIVATE_DIGIPEATER():
     """Disable digipeater relay mode in COMMS."""
     logger.warning("Executing DEACTIVATE_DIGIPEATER: relay mode disabled")
-    SATELLITE_RADIO.set_digipeater_enabled(False)
+    SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.NORMAL)
+    return []
+
+
+def COMMS_MODE(mode_id):
+    """Set COMMS operating mode (QUIET/NORMAL/DIGIPEAT/RF_STOP)."""
+    SATELLITE_RADIO.set_comms_mode(mode_id)
+    logger.warning(f"Executing COMMS_MODE: {COMMS_MODE_STR.get(mode_id, 'UNKNOWN')}")
     return []
 
 

@@ -9,6 +9,7 @@ Authors: Akshat Sahay, Ibrahima S. Sow, Perrin Tong
 import os
 
 from apps.command.constants import file_ids_str
+from apps.comms.modes import COMMS_MODE, COMMS_MODE_STR
 from core import logger
 from core.data_handler import DataHandler as DH
 from core.data_handler import extract_time_from_filename
@@ -116,8 +117,9 @@ class MSG_ID:
     GS_CMD_RF_STOP = 0x60
     GS_CMD_ACTIVATE_DIGIPEATER = 0x61
     GS_CMD_DEACTIVATE_DIGIPEATER = 0x62
+    GS_CMD_COMMS_MODE = 0x63
     # Highest allowed GS command ID
-    GS_CMD_MAX = GS_CMD_DEACTIVATE_DIGIPEATER
+    GS_CMD_MAX = GS_CMD_COMMS_MODE
 
 
 class SATELLITE_RADIO:
@@ -185,13 +187,12 @@ class SATELLITE_RADIO:
     crc_count = 0
     # RF transmission inhibit latch
     rf_stop = False
+    # High-level comms operating mode
+    comms_mode = COMMS_MODE.NORMAL
     # Digipeater enable latch and pending relay payload.
     digipeater_enabled = False
     digipeat_pending = False
     digipeat_packet = bytearray()
-
-    # Legal TX inhibit latch set by RF_STOP.
-    rf_stop = False
 
     """
         Name: get_state
@@ -251,6 +252,9 @@ class SATELLITE_RADIO:
             elif cls.rx_gs_cmd == MSG_ID.GS_CMD_DEACTIVATE_DIGIPEATER:
                 cls.state = COMMS_STATE.TX_ACK
 
+            elif cls.rx_gs_cmd == MSG_ID.GS_CMD_COMMS_MODE:
+                cls.state = COMMS_STATE.TX_ACK
+
             elif rx_count < rx_threshold:
                 # No timeout yet, stay in RX state
                 cls.state = COMMS_STATE.RX
@@ -294,6 +298,35 @@ class SATELLITE_RADIO:
     @classmethod
     def tx_allowed(cls):
         return not cls.rf_stop
+
+    @classmethod
+    def set_comms_mode(cls, mode_id):
+        if mode_id == COMMS_MODE.QUIET:
+            cls.rf_stop = False
+            cls.set_digipeater_enabled(False)
+            cls.comms_mode = COMMS_MODE.QUIET
+        elif mode_id == COMMS_MODE.NORMAL:
+            cls.rf_stop = False
+            cls.set_digipeater_enabled(False)
+            cls.comms_mode = COMMS_MODE.NORMAL
+        elif mode_id == COMMS_MODE.DIGIPEAT:
+            cls.rf_stop = False
+            cls.set_digipeater_enabled(True)
+            cls.comms_mode = COMMS_MODE.DIGIPEAT
+        elif mode_id == COMMS_MODE.RF_STOP:
+            cls.set_digipeater_enabled(False)
+            cls.rf_stop = True
+            cls.comms_mode = COMMS_MODE.RF_STOP
+        else:
+            logger.warning(f"[COMMS] Invalid COMMS_MODE {mode_id}")
+            return False
+
+        logger.warning(f"[COMMS] Mode set to {COMMS_MODE_STR[cls.comms_mode]}")
+        return True
+
+    @classmethod
+    def get_comms_mode(cls):
+        return cls.comms_mode
 
     @classmethod
     def set_digipeater_enabled(cls, enabled):
@@ -825,6 +858,11 @@ class SATELLITE_RADIO:
         # Legal mute latch: no RF transmission while RF_STOP is active.
         if not cls.tx_allowed():
             cls.digipeat_pending = False
+            cls.tx_message_ID = 0x00
+            return cls.tx_message_ID
+
+        # QUIET mode suppresses periodic heartbeat TX only.
+        if cls.state == COMMS_STATE.TX_HEARTBEAT and cls.comms_mode == COMMS_MODE.QUIET:
             cls.tx_message_ID = 0x00
             return cls.tx_message_ID
 

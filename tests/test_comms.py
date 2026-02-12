@@ -10,6 +10,7 @@ import pytest
 import tests.cp_mock  # noqa: F401
 import core.data_handler as dh
 from apps.comms.comms import MSG_ID, SATELLITE_RADIO
+from apps.comms.modes import COMMS_MODE
 from core.data_handler import DataHandler as DH
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -396,6 +397,42 @@ def test_rf_stop_blocks_digipeater_transmit():
 
     SATELLITE_RADIO.set_rf_stop(False)
     SATELLITE_RADIO.set_digipeater_enabled(False)
+
+
+def test_set_comms_mode_quiet_and_heartbeat_suppressed():
+    with patch("apps.comms.comms.SATELLITE") as mock_satellite:
+        mock_satellite.RADIO_AVAILABLE = True
+        mock_satellite.RADIO.send = MagicMock()
+
+        SATELLITE_RADIO.set_comms_mode(COMMS_MODE.QUIET)
+        SATELLITE_RADIO.state = 0x01  # COMMS_STATE.TX_HEARTBEAT
+        SATELLITE_RADIO.tm_frame = bytearray([0x01, 0x00, 0x00, 0x00])
+
+        tx_id = SATELLITE_RADIO.transmit_message()
+
+        assert tx_id == 0x00
+        mock_satellite.RADIO.send.assert_not_called()
+        assert SATELLITE_RADIO.get_comms_mode() == COMMS_MODE.QUIET
+
+    SATELLITE_RADIO.set_comms_mode(COMMS_MODE.NORMAL)
+
+
+def test_set_comms_mode_digipeat_enables_relay():
+    SATELLITE_RADIO.set_comms_mode(COMMS_MODE.DIGIPEAT)
+    assert SATELLITE_RADIO.get_comms_mode() == COMMS_MODE.DIGIPEAT
+    assert SATELLITE_RADIO.digipeater_enabled is True
+    assert SATELLITE_RADIO.tx_allowed() is True
+
+    SATELLITE_RADIO.set_comms_mode(COMMS_MODE.NORMAL)
+
+
+def test_set_comms_mode_rf_stop_disables_tx():
+    SATELLITE_RADIO.set_comms_mode(COMMS_MODE.RF_STOP)
+    assert SATELLITE_RADIO.get_comms_mode() == COMMS_MODE.RF_STOP
+    assert SATELLITE_RADIO.tx_allowed() is False
+    assert SATELLITE_RADIO.digipeater_enabled is False
+
+    SATELLITE_RADIO.set_comms_mode(COMMS_MODE.NORMAL)
 
 
 if __name__ == "__main__":

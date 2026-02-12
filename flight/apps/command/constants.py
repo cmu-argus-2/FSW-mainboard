@@ -23,6 +23,7 @@ class CMD_ID:
     RF_STOP = const(0x60)
     ACTIVATE_DIGIPEATER = const(0x61)
     DEACTIVATE_DIGIPEATER = const(0x62)
+    COMMS_MODE = const(0x63)
 
     ARGS_LEN = {
         FORCE_REBOOT: 0,
@@ -41,6 +42,7 @@ class CMD_ID:
         RF_STOP: 0,
         ACTIVATE_DIGIPEATER: 0,
         DEACTIVATE_DIGIPEATER: 0,
+        COMMS_MODE: 1,
     }
 
 

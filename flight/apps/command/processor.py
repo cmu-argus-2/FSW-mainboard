@@ -35,6 +35,7 @@ from apps.command.commands import (
     REQUEST_TM_PAYLOAD,
     REQUEST_TM_STORAGE,
     RF_STOP,
+    COMMS_MODE,
     SCHEDULE_OD_EXPERIMENT,
     SWITCH_TO_STATE,
     TURN_OFF_PAYLOAD,
@@ -42,7 +43,7 @@ from apps.command.commands import (
     UPLINK_TIME_REFERENCE,
 )
 from apps.command.constants import CMD_ID
-from apps.command.preconditions import file_id_exists, valid_state, valid_time_format
+from apps.command.preconditions import file_id_exists, valid_comms_mode, valid_state, valid_time_format
 from core import logger
 from micropython import const
 
@@ -81,6 +82,7 @@ COMMANDS = [
     (CMD_ID.RF_STOP, lambda: True, [], RF_STOP),
     (CMD_ID.ACTIVATE_DIGIPEATER, lambda: True, [], ACTIVATE_DIGIPEATER),
     (CMD_ID.DEACTIVATE_DIGIPEATER, lambda: True, [], DEACTIVATE_DIGIPEATER),
+    (CMD_ID.COMMS_MODE, valid_comms_mode, ["mode_id"], COMMS_MODE),
 ]
 
 
@@ -179,6 +181,9 @@ def unpack_command_arguments(cmd_id, cmd_arglist):
     elif cmd_id == CMD_ID.REQUEST_FILE_PKT:
         cmd_args.append(cmd_arglist[0])  # file_id (uint8)
         cmd_args.append(tm_helper.unpack_unsigned_long_int(cmd_arglist[1:5]))  # file_time (uint32)
+
+    elif cmd_id == CMD_ID.COMMS_MODE:
+        cmd_args.append(cmd_arglist[0])  # mode_id (uint8)
 
     else:
         # For all other commands with no arguments
