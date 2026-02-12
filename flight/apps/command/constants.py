@@ -21,6 +21,8 @@ class CMD_ID:
 
     DOWNLINK_ALL = const(0x50)
     RF_STOP = const(0x60)
+    ACTIVATE_DIGIPEATER = const(0x61)
+    DEACTIVATE_DIGIPEATER = const(0x62)
 
     ARGS_LEN = {
         FORCE_REBOOT: 0,
@@ -37,6 +39,8 @@ class CMD_ID:
         REQUEST_FILE_PKT: 5,
         DOWNLINK_ALL: 5,
         RF_STOP: 0,
+        ACTIVATE_DIGIPEATER: 0,
+        DEACTIVATE_DIGIPEATER: 0,
     }
 
 

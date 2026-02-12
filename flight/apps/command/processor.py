@@ -23,6 +23,8 @@ Author: Ibrahima S. Sow
 import apps.telemetry.helpers as tm_helper
 from apps.command import ResponseQueue
 from apps.command.commands import (
+    ACTIVATE_DIGIPEATER,
+    DEACTIVATE_DIGIPEATER,
     DOWNLINK_ALL,
     FORCE_REBOOT,
     REQUEST_FILE_METADATA,
@@ -77,6 +79,8 @@ COMMANDS = [
     (CMD_ID.REQUEST_IMAGE, lambda: True, [], REQUEST_IMAGE),
     (CMD_ID.DOWNLINK_ALL, file_id_exists, ["file_id", "file_time"], DOWNLINK_ALL),
     (CMD_ID.RF_STOP, lambda: True, [], RF_STOP),
+    (CMD_ID.ACTIVATE_DIGIPEATER, lambda: True, [], ACTIVATE_DIGIPEATER),
+    (CMD_ID.DEACTIVATE_DIGIPEATER, lambda: True, [], DEACTIVATE_DIGIPEATER),
 ]
 
 

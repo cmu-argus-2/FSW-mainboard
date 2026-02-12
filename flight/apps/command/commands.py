@@ -87,6 +87,20 @@ def RF_STOP():
     return []
 
 
+def ACTIVATE_DIGIPEATER():
+    """Enable digipeater relay mode in COMMS."""
+    logger.warning("Executing ACTIVATE_DIGIPEATER: relay mode enabled")
+    SATELLITE_RADIO.set_digipeater_enabled(True)
+    return []
+
+
+def DEACTIVATE_DIGIPEATER():
+    """Disable digipeater relay mode in COMMS."""
+    logger.warning("Executing DEACTIVATE_DIGIPEATER: relay mode disabled")
+    SATELLITE_RADIO.set_digipeater_enabled(False)
+    return []
+
+
 def REQUEST_TM_NOMINAL():
     """Requests a nominal snapshot of all subsystems."""
     logger.info("Executing REQUEST_TM_NOMINAL")

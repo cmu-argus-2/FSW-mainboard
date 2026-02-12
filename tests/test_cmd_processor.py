@@ -192,6 +192,10 @@ def test_unpack_orbit_reference_arguments():
         (CMD_ID.REQUEST_FILE_PKT, (), False),
         (CMD_ID.RF_STOP, (), True),
         (CMD_ID.RF_STOP, ((1).to_bytes(1, "big")), False),
+        (CMD_ID.ACTIVATE_DIGIPEATER, (), True),
+        (CMD_ID.ACTIVATE_DIGIPEATER, ((1).to_bytes(1, "big")), False),
+        (CMD_ID.DEACTIVATE_DIGIPEATER, (), True),
+        (CMD_ID.DEACTIVATE_DIGIPEATER, ((1).to_bytes(1, "big")), False),
     ],
 )
 def test_argument_size_check(command_id, arguments, expected_outputs):

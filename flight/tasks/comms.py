@@ -151,6 +151,7 @@ class Task(TemplateTask):
             if not (
                 self.comms_state == COMMS_STATE.TX_HEARTBEAT
                 or self.comms_state == COMMS_STATE.TX_FILEPKT
+                or self.comms_state == COMMS_STATE.TX_DIGIPEAT
                 or SATELLITE_RADIO.get_downlink_init_flag()
             ):
                 # Get response from commanding based on the active GS command

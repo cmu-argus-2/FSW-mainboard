@@ -44,6 +44,7 @@ class COMMS_STATE:
     TX_METADATA = 0x06
 
     TX_DOWNLINK_ALL = 0x07
+    TX_DIGIPEAT = 0x08
 
 
 # Message ID database for communication protocol
@@ -111,12 +112,12 @@ class MSG_ID:
 
     # GS command for downlinking all packets for a file, no protocol
     GS_CMD_DOWNLINK_ALL = 0x50
-
-    # GS command for immediately stopping all spacecraft transmissions
+    # GS command to stop all satellite RF transmissions
     GS_CMD_RF_STOP = 0x60
-
-    # Highest supported GS command ID
-    GS_CMD_MAX = GS_CMD_RF_STOP
+    GS_CMD_ACTIVATE_DIGIPEATER = 0x61
+    GS_CMD_DEACTIVATE_DIGIPEATER = 0x62
+    # Highest allowed GS command ID
+    GS_CMD_MAX = GS_CMD_DEACTIVATE_DIGIPEATER
 
 
 class SATELLITE_RADIO:
@@ -182,6 +183,12 @@ class SATELLITE_RADIO:
 
     # CRC error count
     crc_count = 0
+    # RF transmission inhibit latch
+    rf_stop = False
+    # Digipeater enable latch and pending relay payload.
+    digipeater_enabled = False
+    digipeat_pending = False
+    digipeat_packet = bytearray()
 
     # Legal TX inhibit latch set by RF_STOP.
     rf_stop = False
@@ -206,6 +213,8 @@ class SATELLITE_RADIO:
         # Check flag and stay in TX_DOWNLINK_ALL if file TX not done
         if cls.dlink_all is True:
             cls.state = COMMS_STATE.TX_DOWNLINK_ALL
+        elif cls.digipeat_pending is True:
+            cls.state = COMMS_STATE.TX_DIGIPEAT
 
         # Check current state
         elif cls.state == COMMS_STATE.RX:
@@ -234,6 +243,12 @@ class SATELLITE_RADIO:
 
             elif cls.rx_gs_cmd == MSG_ID.GS_CMD_RF_STOP:
                 # Command nominally classified as ACK response type.
+                cls.state = COMMS_STATE.TX_ACK
+
+            elif cls.rx_gs_cmd == MSG_ID.GS_CMD_ACTIVATE_DIGIPEATER:
+                cls.state = COMMS_STATE.TX_ACK
+
+            elif cls.rx_gs_cmd == MSG_ID.GS_CMD_DEACTIVATE_DIGIPEATER:
                 cls.state = COMMS_STATE.TX_ACK
 
             elif rx_count < rx_threshold:
@@ -279,6 +294,26 @@ class SATELLITE_RADIO:
     @classmethod
     def tx_allowed(cls):
         return not cls.rf_stop
+
+    @classmethod
+    def set_digipeater_enabled(cls, enabled):
+        cls.digipeater_enabled = bool(enabled)
+        if cls.digipeater_enabled:
+            logger.warning("[COMMS] Digipeater enabled")
+        else:
+            logger.warning("[COMMS] Digipeater disabled")
+            cls.digipeat_pending = False
+            cls.digipeat_packet = bytearray()
+
+    @classmethod
+    def queue_digipeat(cls, message_wo_source_header):
+        if not cls.digipeater_enabled:
+            return
+        if len(message_wo_source_header) + 2 > 252:
+            logger.warning("[COMMS] Digipeater dropped oversized packet")
+            return
+        cls.digipeat_packet = bytearray(message_wo_source_header)
+        cls.digipeat_pending = True
 
     """
         Name: set_tm_frame
@@ -703,7 +738,14 @@ class SATELLITE_RADIO:
 
         # Check packet integrity based on rx_dst_id
         if cls.rx_dst_id != MSG_ID.ARGUS_ID:
-            # Packet does not contain valid CMD_ID
+            # If digipeater is enabled, relay packets not addressed to this SC.
+            if cls.digipeater_enabled and cls.rx_src_id == MSG_ID.GS_ID:
+                cls.queue_digipeat(packet)
+                cls.rx_gs_cmd = 0x00
+                cls.rx_sq_cnt = 0
+                cls.rx_gs_len = 0
+                return cls.rx_gs_cmd
+
             logger.warning("[COMMS ERROR] RX'd packet has invalid destination")
             cls.rx_gs_cmd = 0x00
             cls.rx_sq_cnt = 0
@@ -782,6 +824,7 @@ class SATELLITE_RADIO:
     def transmit_message(cls):
         # Legal mute latch: no RF transmission while RF_STOP is active.
         if not cls.tx_allowed():
+            cls.digipeat_pending = False
             cls.tx_message_ID = 0x00
             return cls.tx_message_ID
 
@@ -809,6 +852,11 @@ class SATELLITE_RADIO:
         elif cls.state == COMMS_STATE.TX_DOWNLINK_ALL:
             # Transmit file packets with the internal sequence count
             cls.transmit_downlink_all()
+
+        elif cls.state == COMMS_STATE.TX_DIGIPEAT:
+            # Relay packet captured in RX when digipeater is enabled.
+            cls.tx_message = cls.digipeat_packet
+            cls.digipeat_pending = False
 
         else:
             # Unknown state, just send

@@ -323,5 +323,80 @@ def test_comms_check_rq_file_params(sd_root):
     assert SATELLITE_RADIO.check_rq_file_params(invalid_time_packet) is False
 
 
+def test_digipeater_queues_non_argus_destination_packet():
+    """When digipeater is enabled, packets not addressed to ARGUS are queued for relay."""
+    packet = bytes(
+        [
+            MSG_ID.GS_ID,  # source
+            0x99,  # destination (not ARGUS_ID)
+            0x11,  # message id
+            0x00,
+            0x00,
+            0x00,  # length
+        ]
+    )
+
+    with patch("apps.comms.comms.SATELLITE") as mock_satellite:
+        mock_satellite.RADIO_AVAILABLE = True
+        mock_satellite.RADIO.recv = MagicMock(return_value=(packet, 0))
+        mock_satellite.RADIO.rssi = MagicMock(return_value=-90)
+
+        SATELLITE_RADIO.set_digipeater_enabled(True)
+        SATELLITE_RADIO.digipeat_pending = False
+        SATELLITE_RADIO.digipeat_packet = bytearray()
+
+        rq_cmd = SATELLITE_RADIO.receive_message()
+
+        assert rq_cmd == 0x00
+        assert SATELLITE_RADIO.digipeat_pending is True
+        assert SATELLITE_RADIO.digipeat_packet == packet[2:]
+
+    SATELLITE_RADIO.set_digipeater_enabled(False)
+
+
+def test_digipeater_transmit_path():
+    """Relay TX sends queued packet with satellite source header and clears pending flag."""
+    relay_payload = bytes([0x11, 0x00, 0x00, 0x00])
+
+    with patch("apps.comms.comms.SATELLITE") as mock_satellite:
+        mock_satellite.RADIO_AVAILABLE = True
+        mock_satellite.RADIO.send = MagicMock()
+
+        SATELLITE_RADIO.set_rf_stop(False)
+        SATELLITE_RADIO.set_digipeater_enabled(True)
+        SATELLITE_RADIO.state = 0x08  # COMMS_STATE.TX_DIGIPEAT
+        SATELLITE_RADIO.digipeat_packet = bytearray(relay_payload)
+        SATELLITE_RADIO.digipeat_pending = True
+
+        SATELLITE_RADIO.transmit_message()
+
+        expected = bytes([MSG_ID.ARGUS_ID, MSG_ID.GS_ID]) + relay_payload
+        mock_satellite.RADIO.send.assert_called_once_with(expected)
+        assert SATELLITE_RADIO.digipeat_pending is False
+
+    SATELLITE_RADIO.set_digipeater_enabled(False)
+
+
+def test_rf_stop_blocks_digipeater_transmit():
+    """RF_STOP latch blocks transmission even if a digipeat packet is pending."""
+    with patch("apps.comms.comms.SATELLITE") as mock_satellite:
+        mock_satellite.RADIO_AVAILABLE = True
+        mock_satellite.RADIO.send = MagicMock()
+
+        SATELLITE_RADIO.set_digipeater_enabled(True)
+        SATELLITE_RADIO.set_rf_stop(True)
+        SATELLITE_RADIO.state = 0x08  # COMMS_STATE.TX_DIGIPEAT
+        SATELLITE_RADIO.digipeat_packet = bytearray([0x11, 0x00, 0x00, 0x00])
+        SATELLITE_RADIO.digipeat_pending = True
+
+        SATELLITE_RADIO.transmit_message()
+
+        mock_satellite.RADIO.send.assert_not_called()
+        assert SATELLITE_RADIO.digipeat_pending is False
+
+    SATELLITE_RADIO.set_rf_stop(False)
+    SATELLITE_RADIO.set_digipeater_enabled(False)
+
+
 if __name__ == "__main__":
     pytest.main()
