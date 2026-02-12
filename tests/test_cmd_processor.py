@@ -7,13 +7,19 @@ from flight.apps.command.constants import CMD_ID
 from flight.apps.command.preconditions import valid_state, valid_time_format
 from flight.apps.command.processor import process_command  # noqa F401
 from flight.apps.command.processor import CommandProcessingStatus, check_arguments_size, unpack_command_arguments
-from flight.apps.telemetry.helpers import pack_unsigned_long_int
+from flight.apps.telemetry.helpers import pack_signed_long_int, pack_unsigned_long_int
 from flight.core.state_machine import STATES
 
 
 class MOCK_ARGUMENTS:
     time_in_state = 20
     time_reference = int(time.time())
+    pos_x = 123456
+    pos_y = -123456
+    pos_z = 345678
+    vel_x = -456
+    vel_y = 789
+    vel_z = -1011
 
 
 def mock_command_success(*args):
@@ -97,6 +103,28 @@ def test_unpack_two_arguments(setup_commands):
     assert two_args == [STATES.DETUMBLING, MOCK_ARGUMENTS.time_in_state]
 
 
+def test_unpack_orbit_reference_arguments():
+    orbit_args = (
+        pack_unsigned_long_int([MOCK_ARGUMENTS.time_reference], 0)
+        + pack_signed_long_int([MOCK_ARGUMENTS.pos_x], 0)
+        + pack_signed_long_int([MOCK_ARGUMENTS.pos_y], 0)
+        + pack_signed_long_int([MOCK_ARGUMENTS.pos_z], 0)
+        + pack_signed_long_int([MOCK_ARGUMENTS.vel_x], 0)
+        + pack_signed_long_int([MOCK_ARGUMENTS.vel_y], 0)
+        + pack_signed_long_int([MOCK_ARGUMENTS.vel_z], 0)
+    )
+    unpacked = unpack_command_arguments(CMD_ID.UPLINK_ORBIT_REFERENCE, orbit_args)
+    assert unpacked == [
+        MOCK_ARGUMENTS.time_reference,
+        MOCK_ARGUMENTS.pos_x,
+        MOCK_ARGUMENTS.pos_y,
+        MOCK_ARGUMENTS.pos_z,
+        MOCK_ARGUMENTS.vel_x,
+        MOCK_ARGUMENTS.vel_y,
+        MOCK_ARGUMENTS.vel_z,
+    ]
+
+
 @pytest.mark.parametrize(
     "command_id, arguments, expected_outputs",
     [
@@ -108,6 +136,32 @@ def test_unpack_two_arguments(setup_commands):
         (
             CMD_ID.UPLINK_TIME_REFERENCE,
             (pack_unsigned_long_int([1741539497], 0) + pack_unsigned_long_int([1741539497], 0)),
+            False,
+        ),
+        (
+            CMD_ID.UPLINK_ORBIT_REFERENCE,
+            (
+                pack_unsigned_long_int([1741539497], 0)
+                + pack_signed_long_int([1], 0)
+                + pack_signed_long_int([-2], 0)
+                + pack_signed_long_int([3], 0)
+                + pack_signed_long_int([-4], 0)
+                + pack_signed_long_int([5], 0)
+                + pack_signed_long_int([-6], 0)
+            ),
+            True,
+        ),
+        (CMD_ID.UPLINK_ORBIT_REFERENCE, bytearray(), False),
+        (
+            CMD_ID.UPLINK_ORBIT_REFERENCE,
+            (
+                pack_unsigned_long_int([1741539497], 0)
+                + pack_signed_long_int([1], 0)
+                + pack_signed_long_int([-2], 0)
+                + pack_signed_long_int([3], 0)
+                + pack_signed_long_int([-4], 0)
+                + pack_signed_long_int([5], 0)
+            ),
             False,
         ),
         (CMD_ID.TURN_OFF_PAYLOAD, (), True),
@@ -136,6 +190,8 @@ def test_unpack_two_arguments(setup_commands):
             False,
         ),
         (CMD_ID.REQUEST_FILE_PKT, (), False),
+        (CMD_ID.RF_STOP, (), True),
+        (CMD_ID.RF_STOP, ((1).to_bytes(1, "big")), False),
     ],
 )
 def test_argument_size_check(command_id, arguments, expected_outputs):

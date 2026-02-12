@@ -21,7 +21,9 @@ Author: Ibrahima S. Sow
 """
 
 import supervisor
+from apps.adcs.orbit_reference import set_orbit_reference
 from apps.command.constants import file_tags_str
+from apps.comms.comms import SATELLITE_RADIO
 from apps.telemetry import TelemetryPacker
 from core import logger
 from core import state_manager as SM
@@ -53,6 +55,15 @@ def UPLINK_TIME_REFERENCE(time_reference):
     TPM.set_time(time_reference)
     return []
 
+def UPLINK_ORBIT_REFERENCE(time_reference, pos_x, pos_y, pos_z, vel_x, vel_y, vel_z):
+    """Uplinks an orbit reference vector for ADCS propagation."""
+    logger.info(
+        "Executing UPLINK_ORBIT_REFERENCE with "
+        f"time={time_reference}, r=({pos_x}, {pos_y}, {pos_z}), v=({vel_x}, {vel_y}, {vel_z})"
+    )
+    set_orbit_reference(time_reference, pos_x, pos_y, pos_z, vel_x, vel_y, vel_z)
+    return []
+
 
 def TURN_OFF_PAYLOAD():
     """Sends a shutdown command to the payload and turns off its power line."""
@@ -63,6 +74,16 @@ def TURN_OFF_PAYLOAD():
 def SCHEDULE_OD_EXPERIMENT():
     """Schedules an orbit determination experiment at the next available opportunity."""
     logger.info("Executing SCHEDULE_OD_EXPERIMENT")
+    return []
+
+
+def RF_STOP():
+    """
+    Stops all satellite RF transmissions.
+    Legal coordination command for IARU/FCC operational constraints.
+    """
+    logger.warning("Executing RF_STOP: disabling all satellite TX")
+    SATELLITE_RADIO.set_rf_stop(True)
     return []
 
 

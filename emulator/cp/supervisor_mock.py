@@ -2,6 +2,14 @@ import os
 import sys
 
 
+class _RuntimeMock:
+    def __init__(self):
+        self.autoreload = False
+
+
+runtime = _RuntimeMock()
+
+
 def reload():
     """Mock function for supervisor.reload(). Restarts the current script."""
     try:

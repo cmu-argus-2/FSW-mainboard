@@ -112,6 +112,12 @@ class MSG_ID:
     # GS command for downlinking all packets for a file, no protocol
     GS_CMD_DOWNLINK_ALL = 0x50
 
+    # GS command for immediately stopping all spacecraft transmissions
+    GS_CMD_RF_STOP = 0x60
+
+    # Highest supported GS command ID
+    GS_CMD_MAX = GS_CMD_RF_STOP
+
 
 class SATELLITE_RADIO:
     # Comms state
@@ -177,6 +183,9 @@ class SATELLITE_RADIO:
     # CRC error count
     crc_count = 0
 
+    # Legal TX inhibit latch set by RF_STOP.
+    rf_stop = False
+
     """
         Name: get_state
         Description: Get internal COMMS_STATE
@@ -223,6 +232,10 @@ class SATELLITE_RADIO:
                 # GS CMD requires a file packet in response
                 cls.state = COMMS_STATE.TX_FILEPKT
 
+            elif cls.rx_gs_cmd == MSG_ID.GS_CMD_RF_STOP:
+                # Command nominally classified as ACK response type.
+                cls.state = COMMS_STATE.TX_ACK
+
             elif rx_count < rx_threshold:
                 # No timeout yet, stay in RX state
                 cls.state = COMMS_STATE.RX
@@ -254,6 +267,18 @@ class SATELLITE_RADIO:
     def set_tx_ack(cls, tx_ack):
         # Set internal TX ACK definition
         cls.tx_ack = tx_ack
+
+    @classmethod
+    def set_rf_stop(cls, stopped):
+        cls.rf_stop = bool(stopped)
+        if cls.rf_stop:
+            logger.warning("[COMMS] RF_STOP latch active: all TX disabled")
+        else:
+            logger.warning("[COMMS] RF_STOP latch cleared: TX enabled")
+
+    @classmethod
+    def tx_allowed(cls):
+        return not cls.rf_stop
 
     """
         Name: set_tm_frame
@@ -691,7 +716,7 @@ class SATELLITE_RADIO:
         cls.rx_gs_len = int.from_bytes(packet[3:4], _BYTE_ORDER)
 
         # Check packet integrity based on CMD_ID
-        if (cls.rx_gs_cmd < MSG_ID.GS_CMD_ACK_L) or (cls.rx_gs_cmd > MSG_ID.GS_CMD_DOWNLINK_ALL):
+        if (cls.rx_gs_cmd < MSG_ID.GS_CMD_ACK_L) or (cls.rx_gs_cmd > MSG_ID.GS_CMD_MAX):
             # Packet does not contain valid CMD_ID
             logger.warning("[COMMS ERROR] RX'd packet has invalid CMD")
             cls.rx_gs_cmd = 0x00
@@ -738,6 +763,10 @@ class SATELLITE_RADIO:
             # Flag to indicate a wait time for commanding responses
             cls.dlink_init = False
 
+        elif cls.rx_gs_cmd == MSG_ID.GS_CMD_RF_STOP:
+            # Immediately inhibit all future TX as soon as command is received.
+            cls.set_rf_stop(True)
+
         else:
             # Not a file request, do nothing
             pass
@@ -751,6 +780,11 @@ class SATELLITE_RADIO:
 
     @classmethod
     def transmit_message(cls):
+        # Legal mute latch: no RF transmission while RF_STOP is active.
+        if not cls.tx_allowed():
+            cls.tx_message_ID = 0x00
+            return cls.tx_message_ID
+
         # Check comms state and TX message accordingly
         if cls.state == COMMS_STATE.TX_HEARTBEAT:
             # Transmit SAT heartbeat
