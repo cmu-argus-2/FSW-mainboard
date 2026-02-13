@@ -43,7 +43,7 @@ from apps.command.preconditions import (
     valid_state,
     valid_time_format,
 )
-from apps.comms.fifo import QUEUE_STATUS, TransmitQueue  # noqa: F401
+from apps.comms.fifo import TransmitQueue
 from apps.telemetry.splat.splat.telemetry_codec import Ack, pack
 from core import logger
 from micropython import const
