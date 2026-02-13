@@ -22,6 +22,7 @@ from core import logger
 _TM_NOMINAL_SIZE = const(211)       # maybe this could be changed to be dynamic to decrease the number of changes
 _TM_HAL_SIZE = const(46)            # necessary to update telemetry
 _TM_STORAGE_SIZE = const(74)
+_TM_PAYLOAD_SIZE = const(47)  # for now
 
 
 class TelemetryPacker:
@@ -239,49 +240,90 @@ class TelemetryPacker:
     #     else:
     #         logger.warning("No CDH data available")
 
-    #     # Total SD card usage
-    #     cls._FRAME[offset:offset + 4] = pack_unsigned_long_int([DH.SD_usage()], 0)
-    #     offset += 4
+        # Total SD card usage
+        cls._FRAME[18:22] = pack_unsigned_long_int([DH.SD_usage()], 0)
 
-    #     ############ Storage info for each subsystem ############
-    #     storage_subsystems = [
-    #         ("cdh", "CDH"),
-    #         ("eps", "EPS"),
-    #         ("adcs", "ADCS"),
-    #         ("comms", "COMMS"),
-    #         ("gps", "GPS"),
-    #         ("payload", "PAYLOAD"),
-    #         ("cmd_logs", "COMMAND"),
-    #     ]
+        ############ CDH fields ###########
+        if DH.data_process_exists("cdh"):
+            cdh_storage_info = DH.get_storage_info("cdh")
+            # CDH number of files
+            cls._FRAME[22:26] = pack_unsigned_long_int(cdh_storage_info, STORAGE_IDX.NUM_FILES)
+            # CDH directory size
+            cls._FRAME[26:30] = pack_unsigned_long_int(cdh_storage_info, STORAGE_IDX.DIR_SIZE)
+        else:
+            logger.warning("CDH Data process does not exist")
 
-    #     for dh_name, prefix in storage_subsystems:
-    #         if DH.data_process_exists(dh_name):
-    #             storage_info = DH.get_storage_info(dh_name)
-    #             # Pack NUM_FILES
-    #             cls._FRAME[offset:offset + 4] = pack_unsigned_long_int(
-    #                 storage_info, STORAGE_IDX.NUM_FILES
-    #             )
-    #             offset += 4
-    #             # Pack DIR_SIZE
-    #             cls._FRAME[offset:offset + 4] = pack_unsigned_long_int(
-    #                 storage_info, STORAGE_IDX.DIR_SIZE
-    #             )
-    #             offset += 4
-    #         else:
-    #             logger.warning(f"{dh_name} Data process does not exist")
-    #             # Write zeros for missing data
-    #             cls._FRAME[offset:offset + 8] = bytearray([0x00] * 8)
-    #             offset += 8
+        ############ EPS fields ###########
+        if DH.data_process_exists("eps"):
+            eps_storage_info = DH.get_storage_info("eps")
+            # EPS number of files
+            cls._FRAME[30:34] = pack_unsigned_long_int(eps_storage_info, STORAGE_IDX.NUM_FILES)
+            # EPS directory size
+            cls._FRAME[34:38] = pack_unsigned_long_int(eps_storage_info, STORAGE_IDX.DIR_SIZE)
+        else:
+            logger.warning("EPS Data process does not exist")
 
-    #     cls._FRAME[:] = bytearray(cls._FRAME[:])
-    #     gc.collect()
+        ############ ADCS fields ###########
+        if DH.data_process_exists("adcs"):
+            adcs_storage_info = DH.get_storage_info("adcs")
+            # ADCS number of files
+            cls._FRAME[38:42] = pack_unsigned_long_int(adcs_storage_info, STORAGE_IDX.NUM_FILES)
+            # ADCS directory size
+            cls._FRAME[42:46] = pack_unsigned_long_int(adcs_storage_info, STORAGE_IDX.DIR_SIZE)
+        else:
+            logger.warning("ADCS Data process does not exist")
 
-        return True
+        ############ COMMS fields ###########
+        if DH.data_process_exists("comms"):
+            comms_storage_info = DH.get_storage_info("comms")
+            # COMMS number of files
+            cls._FRAME[46:50] = pack_unsigned_long_int(comms_storage_info, STORAGE_IDX.NUM_FILES)
+            # COMMS directory size
+            cls._FRAME[50:54] = pack_unsigned_long_int(comms_storage_info, STORAGE_IDX.DIR_SIZE)
+        else:
+            logger.warning("Comms Data process does not exist")
+
+        ############ GPS fields ###########
+        if DH.data_process_exists("gps"):
+            gps_storage_info = DH.get_storage_info("gps")
+            # GPS number of files
+            cls._FRAME[54:58] = pack_unsigned_long_int(gps_storage_info, STORAGE_IDX.NUM_FILES)
+            # GPS directory size
+            cls._FRAME[58:62] = pack_unsigned_long_int(gps_storage_info, STORAGE_IDX.DIR_SIZE)
+        else:
+            logger.warning("GPS Data process does not exist")
+
+        ############ Payload fields ###########
+        # Nothing for now
+
+        ############ Command fields ###########
+        if DH.data_process_exists("cmd_logs"):
+            cmd_logs_storage_info = DH.get_storage_info("cmd_logs")
+            # Command logs number of files
+            cls._FRAME[70:74] = pack_unsigned_long_int(cmd_logs_storage_info, STORAGE_IDX.NUM_FILES)
+            # Command logs directory size
+            cls._FRAME[74:78] = pack_unsigned_long_int(cmd_logs_storage_info, STORAGE_IDX.DIR_SIZE)
+        else:
+            logger.warning("Command logs Data process does not exist")
 
     @classmethod
     def pack_tm_payload(cls):
-        """Pack payload telemetry (TODO)"""
-        pass
+        if not cls._TM_AVAILABLE:
+            cls._TM_AVAILABLE = True
+
+        cls._FRAME = bytearray(_TM_PAYLOAD_SIZE + 4)  # pre-allocated buffer for packing
+        cls._FRAME[0] = const(0x04) & 0xFF  # message ID
+        cls._FRAME[1:3] = pack_unsigned_short_int([const(0x00)], 0)  # sequence count
+        cls._FRAME[3] = const(_TM_PAYLOAD_SIZE) & 0xFF  # packet length
+
+        if DH.data_process_exists("payload_tm"):
+            # payload_tm = DH.get_latest_data("payload_tm")
+
+            ############ Payload device fields ###########
+
+            ############ Payload controller fields ###########
+
+            pass
 
     @classmethod
     def change_tm_id_nominal(cls):
