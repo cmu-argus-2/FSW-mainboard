@@ -10,7 +10,6 @@ from apps.comms.fifo import TransmitQueue
 from apps.telemetry.splat.splat.telemetry_codec import unpack
 from apps.telemetry.splat.splat.telemetry_helper import format_bytes
 from core import logger
-from core.data_handler import DataHandler as DH
 from core.satellite_config import comms_config as CONFIG
 from hal.configuration import SATELLITE
 from micropython import const
