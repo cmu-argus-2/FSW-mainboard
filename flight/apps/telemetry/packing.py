@@ -5,6 +5,7 @@ Packs telemetry data according to telemetry_config.py definitions
 """
 
 import gc
+
 try:
     from micropython import const
 except ImportError:
@@ -12,11 +13,9 @@ except ImportError:
     def const(x):
         return x
 
-from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, STORAGE_IDX
 from core import DataHandler as DH
 from core import logger
-
-
+from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, STORAGE_IDX
 
 # Convert to const for CircuitPython optimization
 _TM_NOMINAL_SIZE = const(211)       # maybe this could be changed to be dynamic to decrease the number of changes

@@ -22,6 +22,7 @@ Author: Ibrahima S. Sow
 
 from apps.command.commands import (
     DOWNLINK_ALL,
+    EVAL_STRING_COMMAND,
     FORCE_REBOOT,
     REQUEST_FILE_METADATA,
     REQUEST_FILE_PKT,
@@ -31,17 +32,16 @@ from apps.command.commands import (
     REQUEST_TM_PAYLOAD,
     REQUEST_TM_STORAGE,
     SCHEDULE_OD_EXPERIMENT,
+    SUM,
     SWITCH_TO_STATE,
     TURN_OFF_PAYLOAD,
     UPLINK_TIME_REFERENCE,
-    SUM,
-    EVAL_STRING_COMMAND,
 )
 from apps.command.constants import CMD_ID
 from apps.command.preconditions import file_id_exists, valid_state, valid_time_format
+from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
+from apps.telemetry.splat.splat.telemetry_codec import Ack, pack
 from core import logger
-from apps.telemetry.splat.splat.telemetry_codec import pack, Ack
-from apps.comms.fifo import TransmitQueue, QUEUE_STATUS
 from micropython import const
 
 # See commands.py for function definitions (command functions and eventual preconditions)

@@ -10,10 +10,10 @@ from apps.command import QUEUE_STATUS, CommandQueue
 from apps.eps.eps import EPS_POWER_FLAG
 from apps.payload.controller import PayloadController as PC
 from apps.payload.controller import PayloadState
-from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
+from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX
 from core.satellite_config import command_config as CONFIG
 from core.states import STATES, STR_STATES
 from core.time_processor import TimeProcessor as TPM

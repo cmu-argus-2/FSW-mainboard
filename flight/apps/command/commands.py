@@ -22,17 +22,13 @@ Author: Ibrahima S. Sow
 
 import supervisor
 from apps.command.constants import file_tags_str
-
-from apps.telemetry.middleware import Frame as TelemetryFrame # this will substitute for the old telemetry packer
-
-
-
+from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
+from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
 from core import logger
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
-from apps.comms.fifo import TransmitQueue, QUEUE_STATUS
 
 FILE_PKTSIZE = 240
 

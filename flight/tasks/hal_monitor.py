@@ -6,10 +6,10 @@
 # The task also monitors the time since the last reboot and will reboot the system if it has been
 # more than 24 hours since the last reboot.
 
-from core.dh_constants import HAL_IDX, class_length
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
+from core.dh_constants import HAL_IDX, class_length
 from core.satellite_config import hal_monitor_config as CONFIG
 from core.states import STATES
 from core.time_processor import TimeProcessor as TPM

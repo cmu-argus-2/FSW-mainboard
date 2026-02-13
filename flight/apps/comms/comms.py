@@ -8,16 +8,14 @@ Authors: Akshat Sahay, Ibrahima S. Sow, Perrin Tong
 
 import os
 
+from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.telemetry.splat.splat.telemetry_codec import unpack
 from apps.telemetry.splat.splat.telemetry_helper import format_bytes
-from apps.comms.fifo import TransmitQueue, QUEUE_STATUS
 from core import logger
 from core.data_handler import DataHandler as DH
 from core.satellite_config import comms_config as CONFIG
 from hal.configuration import SATELLITE
 from micropython import const
-
-
 
 # Internal error definitions from driver
 _ERR_NONE = const(0)
