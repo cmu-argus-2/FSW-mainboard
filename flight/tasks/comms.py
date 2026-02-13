@@ -11,7 +11,6 @@ from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
-from micropython import const
 
 
 class Task(TemplateTask):
