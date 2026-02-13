@@ -8,8 +8,8 @@ Authors: Akshat Sahay, Ibrahima S. Sow, Perrin Tong
 
 import os
 
-from apps.comms.auth import AUTH_TRAILER_SIZE, get_auth_key_bytes, verify_authenticated_command
 from apps.command.constants import file_ids_str
+from apps.comms.auth import AUTH_TRAILER_SIZE, get_auth_key_bytes, verify_authenticated_command
 from core import logger
 from core.data_handler import DataHandler as DH
 from core.data_handler import extract_time_from_filename

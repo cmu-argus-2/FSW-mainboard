@@ -3,6 +3,7 @@ import hmac
 
 from flight.apps.comms.auth import AUTH_TRAILER_SIZE, compute_hmac_sha256, get_auth_key_bytes, verify_authenticated_command
 
+
 def _build_authenticated_packet(cmd_id, sq_cnt, args_bytes, nonce, key):
     md_payload = bytes([cmd_id]) + sq_cnt.to_bytes(2, "big") + bytes([len(args_bytes)]) + args_bytes
     mac_message = bytes([cmd_id]) + md_payload + nonce
