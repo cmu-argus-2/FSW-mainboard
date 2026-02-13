@@ -24,7 +24,7 @@ class Task(TemplateTask):
         self.name = "COMMS"
         
         # variables for handling periodic telemetry
-        self.periodic_telemetry_interval = 30    # amount of seconds between periodic telemetry downlink [check] - this should be a config 
+        self.periodic_telemetry_interval = SATELLITE_RADIO.HB_PERIOD    # amount of seconds between periodic telemetry downlink [check] - this should be a config 
         self.periodic_telemetry_report = TelemetryFrame.pack_tm_heartbeat         # the packing function of the report to be downlinked periodically
         self.last_periodic_telemetry_time = TPM.time()    # timestamp of the last periodic telemetry downlink
         

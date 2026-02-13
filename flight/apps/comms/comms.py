@@ -28,6 +28,7 @@ _ERR_CRC_MISMATCH = const(-7)
 class SATELLITE_RADIO:
     
     ARGUS_CS = CONFIG.ARGUS_ID
+    HB_PERIOD = CONFIG.HB_PERIOD
 
     # Init TM frame for preallocating memory
     tm_frame = bytearray(248)
