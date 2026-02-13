@@ -81,6 +81,8 @@ def REQUEST_TM_NOMINAL():
     # Pack telemetry
     packet = TelemetryFrame.pack_tm_heartbeat()#
     q_stat = TransmitQueue.push_packet(packet)
+    if q_stat != QUEUE_STATUS.OK:
+        logger.error(f"Failed to push nominal telemetry to transmit queue with status: {q_stat}")
     logger.info(f"Telemetry nominal packed and pushed to transmit queue {q_stat}")
         
     # might be interesting to differentiate between periodic hearbeats
@@ -95,6 +97,8 @@ def REQUEST_TM_HAL():
     # Pack telemetry
     packet = TelemetryFrame.pack_tm_hal()
     q_stat = TransmitQueue.push_packet(packet)
+    if q_stat != QUEUE_STATUS.OK:
+        logger.error(f"Failed to push HAL telemetry to transmit queue with status: {q_stat}")
     logger.info(f"Telemetry hal packed and pushed to transmit queue {q_stat}")
 
     return [q_stat]   # return the queue status number
@@ -106,6 +110,8 @@ def REQUEST_TM_STORAGE():
     # Pack telemetry
     packet = TelemetryFrame.pack_tm_storage()
     q_stat = TransmitQueue.push_packet(packet)
+    if q_stat != QUEUE_STATUS.OK:
+        logger.error(f"Failed to push storage telemetry to transmit queue with status: {q_stat}")
     logger.info(f"Telemetry storage packed and pushed to transmit queue {q_stat}")
 
     return [q_stat]   # return the queue status number
@@ -117,6 +123,8 @@ def REQUEST_TM_PAYLOAD():
     # Pack telemetry
     packet = TelemetryFrame.pack_tm_payload()
     q_stat = TransmitQueue.push_packet(packet)
+    if q_stat != QUEUE_STATUS.OK:
+        logger.error(f"Failed to push payload telemetry to transmit queue with status: {q_stat}")
     logger.info(f"Telemetry payload packed and pushed to transmit queue {q_stat}")
 
     return [q_stat]   # return the queue status number
