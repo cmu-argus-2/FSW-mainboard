@@ -15,30 +15,34 @@ from micropython import const
 
 
 class Task(TemplateTask):
-    
+
     def __init__(self, id):
         super().__init__(id)
 
         self.name = "COMMS"
-        
+
         # variables for handling periodic telemetry
-        self.periodic_telemetry_interval = SATELLITE_RADIO.HB_PERIOD    # amount of seconds between periodic telemetry downlink [check] - this should be a config 
-        self.periodic_telemetry_report = TelemetryFrame.pack_tm_heartbeat         # the packing function of the report to be downlinked periodically
-        self.last_periodic_telemetry_time = TPM.time()    # timestamp of the last periodic telemetry downlink
-        
+        self.periodic_telemetry_interval = (
+            SATELLITE_RADIO.HB_PERIOD
+        )  # amount of seconds between periodic telemetry downlink [check] - this should be a config
+        self.periodic_telemetry_report = (
+            TelemetryFrame.pack_tm_heartbeat
+        )  # the packing function of the report to be downlinked periodically
+        self.last_periodic_telemetry_time = TPM.time()  # timestamp of the last periodic telemetry downlink
+
         SATELLITE_RADIO.set_rx_mode()
-    
+
     def transmit_message(self):
         """
         Will transmit whatever is available on the transmit queue
         it should only be packets in bytes
         It will add to that packet the header (cs of the satellite)
         """
-        
+
         self.log_info("Checking transmit queue for packets to send...")
         self.log_info(f"  Transmit queue size: {TransmitQueue.get_size()}")
 
-        while TransmitQueue.packet_available():                  
+        while TransmitQueue.packet_available():
             self.log_info("  Packet available in TransmitQueue, preparing for transmission")
             # If we have a packet to transmit, set it in the radio
             packet, queue_error_code = TransmitQueue.pop_packet()
@@ -55,22 +59,23 @@ class Task(TemplateTask):
         Receive data from the radio. Currently it only receives commands from the GS
         records the rssi and adds the command to the command queue for processing by the command processor task.
         """
-        
+
         self.log_info("Checking for incoming messages from GS...")
         if SATELLITE_RADIO.data_available():
-            
+
             # Read packet present in the RX buffer
             message_object = SATELLITE_RADIO.receive_message()
 
             if message_object is Command:
-                self.log_warning("[COMMS ERROR] Received invalid command object from GS")  
-                return  
+                self.log_warning("[COMMS ERROR] Received invalid command object from GS")
+                return
             self.log_info(f"Received command from GS: {message_object}")
-                
-            CommandQueue.overwrite_command(message_object)   # [check] - not sure why overwrite instead of push, i copied this from the old code
+
+            CommandQueue.overwrite_command(
+                message_object
+            )  # [check] - not sure why overwrite instead of push, i copied this from the old code
 
             DH.log_data("comms", [TPM.time(), SATELLITE_RADIO.get_rssi()])
-    
 
     def check_periodic_telemetry(self):
         """
@@ -81,8 +86,10 @@ class Task(TemplateTask):
         if current_time - self.last_periodic_telemetry_time >= self.periodic_telemetry_interval:
             # Time to send periodic telemetry
             self.log_info("Preparing periodic telemetry report for downlink")
-            packet = self.periodic_telemetry_report()   # This calls the packing function implemented in the middleware
-            TransmitQueue.push_packet(packet)   # push the packet to the transmit queue, where it will be sent in the next transmission window
+            packet = self.periodic_telemetry_report()  # This calls the packing function implemented in the middleware
+            TransmitQueue.push_packet(
+                packet
+            )  # push the packet to the transmit queue, where it will be sent in the next transmission window
             self.last_periodic_telemetry_time = current_time
 
     async def main_task(self):
@@ -91,7 +98,7 @@ class Task(TemplateTask):
         if SM.current_state == STATES.STARTUP:
             # No comms in STARTUP
             return
-        
-        self.check_periodic_telemetry()   # check if it's time to send periodic telemetry
-        self.transmit_message()   # check if we have messages to transmit to GS
-        self.receive_message()    # check if we have received messages from GS
+
+        self.check_periodic_telemetry()  # check if it's time to send periodic telemetry
+        self.transmit_message()  # check if we have messages to transmit to GS
+        self.receive_message()  # check if we have received messages from GS

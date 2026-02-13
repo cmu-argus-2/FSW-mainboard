@@ -40,14 +40,15 @@ def FORCE_REBOOT():
     # https://learn.adafruit.com/circuitpython-essentials/circuitpython-resetting
     return []
 
+
 def SUM(opA, opB):
     """
     Test command
-    used to experiment adding new command and testing the arguments 
+    used to experiment adding new command and testing the arguments
     """
     logger.info(f"Executing SUM with opA: {opA} and opB: {opB}")
     return [opA + opB]
-    
+
 
 def SWITCH_TO_STATE(target_state_id, time_in_state=None):
     """Forces a switch of the spacecraft to a specific state."""
@@ -79,16 +80,16 @@ def REQUEST_TM_NOMINAL():
     """Requests a nominal snapshot of all subsystems."""
     logger.info("Executing REQUEST_TM_NOMINAL")
     # Pack telemetry
-    packet = TelemetryFrame.pack_tm_heartbeat()#
+    packet = TelemetryFrame.pack_tm_heartbeat()  #
     q_stat = TransmitQueue.push_packet(packet)
     if q_stat != QUEUE_STATUS.OK:
         logger.error(f"Failed to push nominal telemetry to transmit queue with status: {q_stat}")
     logger.info(f"Telemetry nominal packed and pushed to transmit queue {q_stat}")
-        
+
     # might be interesting to differentiate between periodic hearbeats
     # might want to add that this is a response
 
-    return [q_stat]   # return the queue status number
+    return [q_stat]  # return the queue status number
 
 
 def REQUEST_TM_HAL():
@@ -101,7 +102,7 @@ def REQUEST_TM_HAL():
         logger.error(f"Failed to push HAL telemetry to transmit queue with status: {q_stat}")
     logger.info(f"Telemetry hal packed and pushed to transmit queue {q_stat}")
 
-    return [q_stat]   # return the queue status number
+    return [q_stat]  # return the queue status number
 
 
 def REQUEST_TM_STORAGE():
@@ -114,7 +115,7 @@ def REQUEST_TM_STORAGE():
         logger.error(f"Failed to push storage telemetry to transmit queue with status: {q_stat}")
     logger.info(f"Telemetry storage packed and pushed to transmit queue {q_stat}")
 
-    return [q_stat]   # return the queue status number
+    return [q_stat]  # return the queue status number
 
 
 def REQUEST_TM_PAYLOAD():
@@ -127,7 +128,7 @@ def REQUEST_TM_PAYLOAD():
         logger.error(f"Failed to push payload telemetry to transmit queue with status: {q_stat}")
     logger.info(f"Telemetry payload packed and pushed to transmit queue {q_stat}")
 
-    return [q_stat]   # return the queue status number
+    return [q_stat]  # return the queue status number
 
 
 def REQUEST_FILE_METADATA(file_id, file_time=None):
@@ -170,10 +171,11 @@ def DOWNLINK_ALL(file_id, file_time=None):
 
     return [file_path]
 
+
 def EVAL_STRING_COMMAND(string_command):
     """
     As of right now this is just for debugging purposes
-    will receive a string, will eval it and return the results. """
+    will receive a string, will eval it and return the results."""
     logger.info(f"Executing EVAL_STRING_COMMAND with request: {string_command}")
 
     try:

@@ -51,7 +51,6 @@ from micropython import const
 # - Execute: The function that executes the command
 
 
-
 class CommandProcessingStatus:
     COMMAND_EXECUTION_SUCCESS = const(0x00)
     UNKNOWN_COMMAND_ID = const(0x01)
@@ -71,14 +70,16 @@ def process_command(command):
     # Verify precondition
     # if not precondition(*args):
     try:
-        if precondition is not None and not eval(precondition)(*argument_list):   # precondition None = no precondition for the command
+        if precondition is not None and not eval(precondition)(
+            *argument_list
+        ):  # precondition None = no precondition for the command
             logger.error("Cmd: Precondition failed")
             return CommandProcessingStatus.PRECONDITION_FAILED, [command.command_id]
     except Exception as e:
         logger.error(f"Cmd: Precondition check failed with error: {e}")
         return CommandProcessingStatus.PRECONDITION_FAILED, [command.command_id]
-    
-    # [check] - should I check argument 
+
+    # [check] - should I check argument
 
     # Execute the command function with arguments
     try:
@@ -90,7 +91,7 @@ def process_command(command):
         logger.error(f"Cmd: Command execution failed: {e}")
         # Optionally log stack trace to a file for deeper diagnostics
         return CommandProcessingStatus.COMMAND_EXECUTION_FAILED, [command.command_id]
-    
+
     logger.warning("Cmd: Unknown command ID")
     return CommandProcessingStatus.UNKNOWN_COMMAND_ID, [command.command_id]
 
@@ -105,7 +106,6 @@ def handle_command_execution_status(status, response_args):
     packed_ack = pack(ack)
     TransmitQueue.push_packet(packed_ack)
     logger.info(f"Added ack packet to transmit queue: {packed_ack}")
-    
 
     if status == CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS:
         logger.info("Command execution successful")
@@ -114,4 +114,3 @@ def handle_command_execution_status(status, response_args):
         # TODO build more detailed error response - Error messages
         logger.info(f"Command execution not successful due to error: {status}")
         pass
-

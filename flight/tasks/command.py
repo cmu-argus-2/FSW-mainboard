@@ -403,7 +403,7 @@ class Task(TemplateTask):
             if queue_error_code != QUEUE_STATUS.OK:
                 self.log_error(f"Error popping command from queue: {queue_error_code}")
                 return
-            
+
             self.log_info(f"  Arguments: {command.arguments}")
             status, response_args = processor.process_command(command)
             processor.handle_command_execution_status(status, response_args)
