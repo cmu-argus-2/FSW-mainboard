@@ -1,5 +1,5 @@
 # Communication task which uses the radio to transmit and receive messages.
-from apps.command import QUEUE_STATUS, CommandQueue, ResponseQueue
+from apps.command import QUEUE_STATUS, CommandQueue
 from apps.comms.comms import SATELLITE_RADIO
 
 # from apps.telemetry import TelemetryPacker

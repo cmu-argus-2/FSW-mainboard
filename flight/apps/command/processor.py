@@ -20,7 +20,6 @@ See documentation for a full description of each commands.
 Author: Ibrahima S. Sow
 """
 
-from apps.command import ResponseQueue
 from apps.command.commands import (
     DOWNLINK_ALL,
     FORCE_REBOOT,
@@ -104,8 +103,6 @@ def process_command(command):
 def handle_command_execution_status(status, response_args):
     # If the command execution was successful, send a success response to Comms via Response Queue
     # If the command execution failed, send an error response with the error code to Comms via Response Queue
-
-    ResponseQueue.overwrite_response(status, response_args)     # [check] - not sure here why they are overwritting instead of appending 
 
     # add ack response to transmit queue for comms to pick up and send to ground station
     # this is not the best place to do this, not sure where the best place to do this is
