@@ -6,9 +6,8 @@ and acknowledgement RX.
 Authors: Akshat Sahay, Ibrahima S. Sow, Perrin Tong
 """
 
-import os
 
-from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
+from apps.comms.fifo import TransmitQueue
 from apps.telemetry.splat.splat.telemetry_codec import unpack
 from apps.telemetry.splat.splat.telemetry_helper import format_bytes
 from core import logger
