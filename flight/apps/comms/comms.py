@@ -111,10 +111,8 @@ class SATELLITE_RADIO:
         packet = None
         err = -1  # _ERR_NONE is 0
 
-        if SATELLITE.RADIO_AVAILABLE:
-            packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
-        else:
-            logger.error("[COMMS ERROR] RADIO no longer active on SAT")
+        # no need to check if radio is available, it was already checked
+        packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
 
         # Checks on err returned by driver
         if err == _ERR_CRC_MISMATCH:
