@@ -151,7 +151,6 @@ class Frame:
         """
         Pack a HAL telemetry frame.
         """
-        print("Starting to pack HAL telemetry frame")
         # this will be a report
         report = Report("TM_HAL")
         
@@ -169,7 +168,6 @@ class Frame:
                 continue
         
             dh_data = dh_data_list[ss_list.index(ss_lower)]
-            print("  DH data:", dh_data)
             if dh_data is None:
                 logger.warning(f"No data for subsystem {ss.upper()} to pack in HAL")
                 continue
@@ -190,7 +188,6 @@ class Frame:
         """
         Pack a storage telemetry frame.
         """
-        print("[check] - Starting to pack STORAGE telemetry frame")
         # this will be a report
         report = Report("TM_STORAGE")
         
@@ -213,7 +210,6 @@ class Frame:
                 continue
         
             dh_data = dh_data_list[ss_list.index(ss_lower)]
-            print("  DH data:", dh_data)
             if dh_data is None:
                 logger.warning(f"[check] - No data for subsystem {ss.upper()} to pack in STORAGE")
                 continue
@@ -262,7 +258,6 @@ class Frame:
         """
         Pack a payload telemetry frame.
         """
-        print("Starting to pack PAYLOAD telemetry frame")
         # this will be a report
         report = Report("TM_PAYLOAD")
         
@@ -280,7 +275,6 @@ class Frame:
                 continue
         
             dh_data = dh_data_list[ss_list.index(ss_lower)]
-            print("  DH data:", dh_data)
             if dh_data is None:
                 logger.warning(f"No data for subsystem {ss.upper()} to pack in PAYLOAD")
                 continue

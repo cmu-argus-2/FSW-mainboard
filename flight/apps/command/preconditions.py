@@ -14,7 +14,6 @@ def valid_inputs(*args) -> bool:
     """
     opA = args[0]
     opB = args[1]
-    print(f"Validating inputs for SUM command: opA={opA}, opB={opB}")
     if (isinstance(opA, (int, float))) and (isinstance(opB, (int, float))):
         return True
     else:

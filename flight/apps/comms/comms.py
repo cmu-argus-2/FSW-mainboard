@@ -132,11 +132,11 @@ class SATELLITE_RADIO:
             return cls.rx_gs_cmd
         
         # hopefully we have a valid packet at this point
-        print("This is the received packet:", packet)
         
         # unpack the received packet
         message_object = unpack(packet)  # [check] - this should be implemented in middleware
-        print("This is the unpacked message object:", message_object)
+        logger.info(f"Received raw packet: {packet}")
+        logger.info(f"Unpacked message object: {message_object}")
         if message_object is None:
             cls.failed_unpack_count += 1
             logger.warning("[COMMS ERROR] Failed to unpack received packet")
