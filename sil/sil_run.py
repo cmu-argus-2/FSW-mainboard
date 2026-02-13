@@ -102,6 +102,22 @@ def generate_sim_set_params(sim_set_config):  # , i_sim_set: int):
     return sim_set_config
 
 
+def update_fsw_config(sim_set_config):
+    param_changes = sim_set_config["fsw_config_param_changes"]
+    if not param_changes:
+        return
+    fsw_config_file_path = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), "..", "flight", "configuration", "ground.yaml"
+    )
+    with open(fsw_config_file_path, "r") as file:
+        config_data = yaml.safe_load(file)
+
+    config_data = update(config_data, param_changes, 0)
+
+    with open(fsw_config_file_path, "w") as file:
+        yaml.dump(config_data, file)
+
+
 def run_simulation_trial(trial_number: int, trial_date: str, sim_set_name: str, set_config_params, args) -> None:
 
     # Run FSW Simulation
@@ -183,6 +199,8 @@ if __name__ == "__main__":
         sim_set_folder_path = os.path.join(campaign_folder_path, sim_set)
         n_trials = sil_campaign_params["sil_campaign"][sim_set]["num_sims"]
         first_trial_id = sil_campaign_params["sil_campaign"][sim_set]["first_trial_number"]
+        # Update the fsw config.yaml
+        update_fsw_config(sil_campaign_params["sil_campaign"][sim_set])
         # Run simulation set script
         for i in range(n_trials):
             run_simulation_trial(

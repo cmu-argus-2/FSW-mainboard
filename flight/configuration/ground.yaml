@@ -39,3 +39,7 @@ comms:
     value: 0
     _const: true
     _hex: true
+
+# ADCS Task
+adcs:
+  CONTROLLER_MODE: 0

@@ -15,6 +15,7 @@ from apps.telemetry.constants import ADCS_IDX, CDH_IDX, class_length
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
+from core.satellite_config import adcs_config as CONFIG
 from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 from ulab import numpy as np
@@ -63,7 +64,7 @@ class Task(TemplateTask):
     ## ADCS Modes and switching logic
     MODE = Modes.TUMBLING
 
-    CONTROLLER_MODE = ControllerModes.BDOT  # BCROSS # SUN_POINTING  #
+    CONTROLLER_MODE = CONFIG.CONTROLLER_MODE  # BCROSS # SUN_POINTING  #
 
     # Sensor Data storage
     gyro_status = StatusConst.OK
