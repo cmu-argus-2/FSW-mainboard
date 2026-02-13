@@ -80,13 +80,13 @@ def REQUEST_TM_NOMINAL():
     logger.info("Executing REQUEST_TM_NOMINAL")
     # Pack telemetry
     packet = TelemetryFrame.pack_tm_heartbeat()#
-    TransmitQueue.push_packet(packet)
-    logger.info("Telemetry nominal packed and pushed to transmit queue")
+    q_stat = TransmitQueue.push_packet(packet)
+    logger.info(f"Telemetry nominal packed and pushed to transmit queue {q_stat}")
         
     # might be interesting to differentiate between periodic hearbeats
     # might want to add that this is a response
 
-    return []
+    return [q_stat]   # return the queue status number
 
 
 def REQUEST_TM_HAL():
@@ -94,10 +94,10 @@ def REQUEST_TM_HAL():
     logger.info("Executing REQUEST_TM_HAL")
     # Pack telemetry
     packet = TelemetryFrame.pack_tm_hal()
-    TransmitQueue.push_packet(packet)
-    logger.info("Telemetry hal packed and pushed to transmit queue")
+    q_stat = TransmitQueue.push_packet(packet)
+    logger.info(f"Telemetry hal packed and pushed to transmit queue {q_stat}")
 
-    return []
+    return [q_stat]   # return the queue status number
 
 
 def REQUEST_TM_STORAGE():
@@ -105,10 +105,10 @@ def REQUEST_TM_STORAGE():
     logger.info("Executing REQUEST_TM_STORAGE")
     # Pack telemetry
     packet = TelemetryFrame.pack_tm_storage()
-    TransmitQueue.push_packet(packet)
-    logger.info("Telemetry storage packed and pushed to transmit queue")
+    q_stat = TransmitQueue.push_packet(packet)
+    logger.info(f"Telemetry storage packed and pushed to transmit queue {q_stat}")
 
-    return []
+    return [q_stat]   # return the queue status number
 
 
 def REQUEST_TM_PAYLOAD():
@@ -116,10 +116,10 @@ def REQUEST_TM_PAYLOAD():
     logger.info("Executing REQUEST_TM_PAYLOAD")
     # Pack telemetry
     packet = TelemetryFrame.pack_tm_payload()
-    TransmitQueue.push_packet(packet)
-    logger.info("Telemetry payload packed and pushed to transmit queue")
+    q_stat = TransmitQueue.push_packet(packet)
+    logger.info(f"Telemetry payload packed and pushed to transmit queue {q_stat}")
 
-    return []
+    return [q_stat]   # return the queue status number
 
 
 def REQUEST_FILE_METADATA(file_id, file_time=None):
