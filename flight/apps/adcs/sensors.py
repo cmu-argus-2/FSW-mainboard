@@ -1,4 +1,4 @@
-from apps.adcs.consts import ControllerConst, Modes, StatusConst, SunConst
+from apps.adcs.consts import StatusConst, SunConst
 from apps.adcs.sun import compute_body_sun_vector_from_lux, read_light_sensors
 from hal.configuration import SATELLITE
 from ulab import numpy as np
