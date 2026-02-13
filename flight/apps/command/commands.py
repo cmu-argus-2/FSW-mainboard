@@ -43,7 +43,7 @@ def FORCE_REBOOT():
 def SUM(opA, opB):
     """
     Test command
-    used to experiment addining new command and testing the arguments 
+    used to experiment adding new command and testing the arguments 
     """
     logger.info(f"Executing SUM with opA: {opA} and opB: {opB}")
     return [opA + opB]
