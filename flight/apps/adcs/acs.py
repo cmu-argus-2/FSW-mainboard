@@ -9,7 +9,6 @@ from hal.configuration import SATELLITE
 from ulab import numpy as np
 
 
-# TODO: test on mainboard
 def readings_are_valid(
     readings: tuple[np.ndarray],
 ) -> bool:
@@ -23,6 +22,7 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray, ctr_co
     """
     Spin-stabilizing control law.
     Augmented with tanh function for soft clipping.
+    Returns a normalized throttle command for the magnetorquers.
     All sensor estimates are in the body-fixed reference frame.
     """
     # Stop ACS if the reading values are invalid
@@ -37,13 +37,18 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray, ctr_co
         # Compute B-cross dipole moment
         u = ctr_const.SPIN_STABILIZING_GAIN * np.cross(mag_field, error)
 
-        # Smoothly normalize the control input
-        return np.tanh(u)
+        # Smooth the controller while enforcing an l2-norm upper bound on the control input
+        return smooth_throttle(u)
 
 
 def sun_pointing_controller(
     sun_vector: np.ndarray, omega: np.ndarray, mag_field: np.ndarray, inertia_mat: np.ndarray
 ) -> np.ndarray:
+    """
+    Sun pointing control law.
+    Augmented with tanh function for soft clipping.
+    All sensor estimates are in the body-fixed reference frame.
+    """
     # Stop ACS if the reading values are invalid
     if (
         not readings_are_valid((sun_vector, omega, mag_field))
@@ -72,6 +77,40 @@ def sun_pointing_controller(
         else:
             # Normalize the control input
             return u_dir / u_dir_norm
+
+
+def bdot_controller(mag_field: np.ndarray, prev_mag_field: np.ndarray, bdot_dt: float) -> np.ndarray:
+    """
+    B-dot control law.
+    """
+    if not readings_are_valid((prev_mag_field, mag_field)) or bdot_dt == 0:
+        return ControllerConst.FALLBACK_CONTROL
+
+    b_dot = (mag_field - prev_mag_field) / bdot_dt
+    u = -ControllerConst.BDOT_GAIN * b_dot
+    return smooth_throttle(u)
+
+
+def bcross_controller(mag_field: np.ndarray, omega: np.ndarray) -> np.ndarray:
+    """
+    B-cross control law.
+    """
+    if not readings_are_valid((omega, mag_field)) or np.linalg.norm(mag_field) == 0:
+        return ControllerConst.FALLBACK_CONTROL
+
+    u = -ControllerConst.BCROSS_GAIN * np.cross(mag_field, omega)
+    return smooth_throttle(u)
+
+
+def smooth_throttle(u: np.ndarray) -> np.ndarray:
+    """
+    Applies a smooth saturation function to the control input u, ensuring that
+    its magnitude does not exceed one.
+    """
+    u_norm = np.linalg.norm(u)
+    if u_norm == 0:
+        return u
+    return u * np.tanh(u_norm) / u_norm
 
 
 def mcm_coil_allocator(u: np.ndarray, b: np.ndarray) -> np.ndarray:
@@ -112,9 +151,8 @@ def mcm_coil_allocator(u: np.ndarray, b: np.ndarray) -> np.ndarray:
 
     # Compute Coil Voltages based on Allocation matrix and target input
     u_throttle = np.dot(mcm_alloc, u)
-    # Maintain direction, clip magnitude to 1
-    u_throttle = u_throttle / max(1.0, np.max(abs(u_throttle)))
-    # u_throttle = np.clip(u_throttle, -1, 1)
+    # Maintain direction, clip magnitude to 1, enforce power consumption limit
+    u_throttle = u_throttle / max(1.0, np.linalg.norm(u_throttle) * 0.707)
 
     # Apply Coil Voltages
     for n in range(MCMConst.N_MCM):
@@ -125,6 +163,9 @@ def mcm_coil_allocator(u: np.ndarray, b: np.ndarray) -> np.ndarray:
 
 
 def zero_all_coils():
+    """
+    Sets all magnetorquer coil throttles to zero.
+    """
     for face in MCMConst.MCM_FACES:
         if SATELLITE.TORQUE_DRIVERS_AVAILABLE(face):
             SATELLITE.APPLY_MAGNETIC_CONTROL(face, 0)

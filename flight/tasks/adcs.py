@@ -1,8 +1,16 @@
 # Attitude Determination and Control (ADC) task
 
 import apps.adcs.sensors as sensors
-from apps.adcs.acs import mcm_coil_allocator, spin_stabilizing_controller, sun_pointing_controller, zero_all_coils
-from apps.adcs.consts import ControllerConst, Modes, StatusConst
+from apps.adcs.acs import (
+    bcross_controller,
+    bdot_controller,
+    mcm_coil_allocator,
+    spin_stabilizing_controller,
+    sun_pointing_controller,
+    zero_all_coils,
+)
+from apps.adcs.consts import ControllerConst, ControllerModes, Modes, StatusConst
+from apps.adcs.modemanager import update_mode
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX, class_length
 from core import DataHandler as DH
 from core import TemplateTask
@@ -55,6 +63,8 @@ class Task(TemplateTask):
     ## ADCS Modes and switching logic
     MODE = Modes.TUMBLING
 
+    CONTROLLER_MODE = ControllerModes.BDOT  # BCROSS # SUN_POINTING  #
+
     # Sensor Data storage
     gyro_status = StatusConst.OK
     gyro_data = np.zeros((3,))
@@ -62,13 +72,17 @@ class Task(TemplateTask):
     mag_status = StatusConst.OK
     mag_data = np.zeros((3,))
 
+    # for bdot controller
+    prev_mag_data = np.zeros((3,))
+    bdot_dt = 0.2  # time step for bdot controller, in seconds
+
     sun_status = StatusConst.OK
     sun_pos_body = np.zeros((3,))
     sun_lux = np.zeros((9,))
 
     coils_off = True
     last_mag_time = 0.0
-    last_mtb_time = 0.0
+    last_mtq_time = 0.0
 
     xp_deployed = False
     ym_deployed = False
@@ -85,7 +99,7 @@ class Task(TemplateTask):
             pass
         else:
             if not DH.data_process_exists("adcs"):
-                data_format = "LB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B"  # + 4 * "f"
+                data_format = "LBB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B"  # + 4 * "f"
                 DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
 
             self.time = TPM.time()
@@ -118,9 +132,11 @@ class Task(TemplateTask):
 
                 # Query Magnetometer
                 if collect_mag:
+                    self.prev_mag_data = self.mag_data.copy()
                     self.mag_status, self.mag_data = sensors.read_magnetometer()
-                    self.last_mag_time = TPM.monotonic_float()
-                    # self.last_mag_time = TPM.time()
+                    new_last_mag_time = TPM.monotonic_float()
+                    self.bdot_dt = new_last_mag_time - self.last_mag_time
+                    self.last_mag_time = new_last_mag_time
 
                 # Run Attitude Control
                 if allow_coils:
@@ -128,29 +144,22 @@ class Task(TemplateTask):
                     if self.coils_off:
                         self.coils_off = False
                     # self.last_mtb_time = TPM.time()
-                    self.last_mtb_time = TPM.monotonic_float()
-                elif not self.coils_off:
-                    zero_all_coils()
-                    self.coils_off = True
-                    self.last_mtb_time = TPM.monotonic_float()
+                    self.last_mtq_time = TPM.monotonic_float()
+                else:
+                    self.ensure_coils_off()
 
                 # Check if detumbling has been completed
-                if sensors.current_mode(self.MODE) != Modes.TUMBLING:
-                    if not self.coils_off:
-                        zero_all_coils()
-                        self.coils_off = True
-                        self.last_mtb_time = TPM.monotonic_float()
-                    self.MODE = Modes.STABLE
+                self.MODE = update_mode(self.MODE, self.CONTROLLER_MODE, self.ctr_const)
+                # if update_mode(self.MODE, self.ctr_const) != Modes.TUMBLING:
+                #     self.ensure_coils_off()
+                #     self.MODE = Modes.STABLE
 
             # ------------------------------------------------------------------------------------------------------------------------------------
             # LOW POWER or EXPERIMENT
             # ------------------------------------------------------------------------------------------------------------------------------------
             elif SM.current_state == STATES.LOW_POWER or SM.current_state == STATES.EXPERIMENT:
                 # Turn coils off to conserve power
-                if not self.coils_off:
-                    zero_all_coils()
-                    self.coils_off = True
-                    self.last_mtb_time = TPM.monotonic_float()
+                self.ensure_coils_off()
 
             # ------------------------------------------------------------------------------------------------------------------------------------
             # NOMINAL
@@ -159,7 +168,7 @@ class Task(TemplateTask):
                 if (
                     SM.current_state == STATES.NOMINAL
                     and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
-                    and sensors.current_mode(self.MODE, self.ctr_const) == Modes.TUMBLING
+                    and update_mode(self.MODE, self.CONTROLLER_MODE, self.ctr_const) == Modes.TUMBLING
                 ):
                     # Do not allow a switch to Detumbling from Low power
                     self.MODE = Modes.TUMBLING
@@ -176,20 +185,19 @@ class Task(TemplateTask):
 
                     # Query Magnetometer
                     if collect_mag:
+                        self.prev_mag_data = self.mag_data.copy()
                         self.mag_status, self.mag_data = sensors.read_magnetometer()
-                        # self.last_mag_time = TPM.time()
-                        self.last_mag_time = TPM.monotonic_float()
+                        new_last_mag_time = TPM.monotonic_float()
+                        self.bdot_dt = new_last_mag_time - self.last_mag_time
+                        self.last_mag_time = new_last_mag_time
 
                     # Query Sun Position
                     self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
 
-                    # identify Mode based on current sensor readings
-                    new_mode = sensors.current_mode(self.MODE, self.ctr_const)
+                    # Identify Mode based on current sensor readings
+                    new_mode = update_mode(self.MODE, self.CONTROLLER_MODE, self.ctr_const)
                     if new_mode != self.MODE:
-                        if not self.coils_off:
-                            zero_all_coils()
-                            self.coils_off = True
-                            self.last_mtb_time = TPM.monotonic_float()
+                        self.ensure_coils_off()
                         self.MODE = new_mode
 
                     # Run attitude control if not in Low-power
@@ -198,11 +206,9 @@ class Task(TemplateTask):
                         # self.last_mtb_time = TPM.time()
                         if self.coils_off:
                             self.coils_off = False
-                        self.last_mtb_time = TPM.monotonic_float()
-                    elif not self.coils_off:
-                        zero_all_coils()
-                        self.coils_off = True
-                        self.last_mtb_time = TPM.monotonic_float()
+                        self.last_mtq_time = TPM.monotonic_float()
+                    else:
+                        self.ensure_coils_off()
 
             # Log data
             # NOTE: In detumbling, most of the log will be zeros since very few sensors are queried
@@ -210,37 +216,55 @@ class Task(TemplateTask):
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ Attitude Control Auxiliary Functions """
-
     # ------------------------------------------------------------------------------------------------------------------------------------
     def attitude_control(self):
         """
         Performs attitude control on the spacecraft
         """
-        dipole_moment = np.zeros((3,))
+        mtq_throttle = np.zeros((3,))
 
-        # Decide which controller to choose
-        if self.MODE in [Modes.TUMBLING, Modes.STABLE]:  # spin-stabilizing controller
+        if self.CONTROLLER_MODE == ControllerModes.BDOT:
+            if self.MODE != Modes.ACS_OFF:
+                if not (self.mag_status != StatusConst.OK):
+                    mtq_throttle = bdot_controller(self.mag_data, self.prev_mag_data, self.bdot_dt)
 
-            if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
-                # Control MCMs and obtain coil statuses
-                dipole_moment = spin_stabilizing_controller(self.gyro_data, self.mag_data, self.ctr_const)
+        elif self.CONTROLLER_MODE == ControllerModes.BCROSS:
+            if self.MODE != Modes.ACS_OFF:
+                if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
+                    mtq_throttle = bcross_controller(self.mag_data, self.gyro_data)
+        elif self.CONTROLLER_MODE == ControllerModes.SUN_POINTING:
+            # Decide which controller to choose
+            if self.MODE in [Modes.TUMBLING, Modes.STABLE]:  # spin-stabilizing controller
 
-        elif self.MODE == Modes.SUN_POINTED:  # Sun-pointed controller
+                if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
+                    # Control MCMs and obtain coil statuses
+                    mtq_throttle = spin_stabilizing_controller(self.gyro_data, self.mag_data, self.ctr_const)
 
-            # Perform ACS iff a sun vector measurement is valid
-            # i.e., ignore eclipses, insufficient readings etc.
-            if not (
-                self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK or self.sun_status != StatusConst.OK
-            ):
-                dipole_moment = sun_pointing_controller(
-                    self.sun_pos_body, self.gyro_data, self.mag_data, self.ctr_const.INERTIA_MAT
-                )
-        # Else, if in ACS_OFF or any other mode, do not control MCMs
-        # Commanded dipole moment stays zero
+            elif self.MODE == Modes.SUN_POINTING:  # Sun-pointed controller
 
-        self.coil_status = mcm_coil_allocator(dipole_moment, self.mag_data)
+                # Perform ACS iff a sun vector measurement is valid
+                # i.e., ignore eclipses, insufficient readings etc.
+                if not (
+                    self.gyro_status != StatusConst.OK
+                    or self.mag_status != StatusConst.OK
+                    or self.sun_status != StatusConst.OK
+                ):
+                    mtq_throttle = sun_pointing_controller(
+                        self.sun_pos_body, self.gyro_data, self.mag_data, self.ctr_const.INERTIA_MAT
+                    )
+            # Else, if in ACS_OFF, do not control MCMs
+            # Commanded dipole moment stays zero
+
+        self.coil_status = mcm_coil_allocator(mtq_throttle, self.mag_data)
 
     def alternate_coil_and_mag(self):
+        """
+        To preserve the quality of magnetometer readings, alternate between collecting from
+        the magnetometer and running the coils.
+         - If the magnetometer data was collected within the last 0.8 seconds, run the coils.
+         If not, turn the coils off to settle their current/magnetic dipole before collecting data from the magnetometer again.
+         - if the coils have been turned off for longer than 0.2 s (settling time), collect from the magnetometer
+        """
         collect_mag = True
         run_coils = True
         # If the magnetometer data was collected within the last 0.8 seconds,
@@ -255,9 +279,18 @@ class Task(TemplateTask):
 
         # if the coils have been turned off for longer than 0.2 s (settling time),
         # collect from the magnetometer
-        if self.coils_off and (TPM.monotonic_float() - self.last_mtb_time > 0.2):
+        if self.coils_off and (TPM.monotonic_float() - self.last_mtq_time > 0.2):
             collect_mag = True
         return collect_mag, run_coils
+
+    def ensure_coils_off(self):
+        """
+        If the coils are not off, turn them off and update the last_mtq_time to prevent immediate reactivation.
+        """
+        if not self.coils_off:
+            zero_all_coils()
+            self.coils_off = True
+            self.last_mtq_time = TPM.monotonic_float()
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ LOGGING """
@@ -269,6 +302,7 @@ class Task(TemplateTask):
         Takes light sensor readings as input since they are not stored in AD
         """
         self.log_data[ADCS_IDX.MODE] = int(self.MODE)
+        self.log_data[ADCS_IDX.CTRL_MODE] = int(self.CONTROLLER_MODE)
         self.log_data[ADCS_IDX.GYRO_X] = self.gyro_data[0]
         self.log_data[ADCS_IDX.GYRO_Y] = self.gyro_data[1]
         self.log_data[ADCS_IDX.GYRO_Z] = self.gyro_data[2]
@@ -298,6 +332,7 @@ class Task(TemplateTask):
 
         # Log Gyro Angular Velocities
         self.log_info(f"ADCS Mode : {self.MODE}")
+        self.log_info(f"Controller Mode : {self.CONTROLLER_MODE}")
         self.log_info(f"Gyro Ang Vel : {self.gyro_data}")
         # [TODO:] Remove later
         self.log_info(f"Mag Field : {self.log_data[ADCS_IDX.MAG_X:ADCS_IDX.MAG_Z + 1]}")
@@ -305,14 +340,3 @@ class Task(TemplateTask):
         self.log_info(f"Sun Status : {self.log_data[ADCS_IDX.SUN_STATUS]}")
         self.log_info(f"Gyro Status : {self.gyro_status}")
         self.log_info(f"Mag Status : {self.mag_status}")
-
-        # self.log_info(f"Deployment Status (XP,YM) : {[self.xp_deployed, self.ym_deployed]}")
-        # debugging
-        # self.log_info(f"Coil Status : {self.log_data[ADCS_IDX.XP_COIL_STATUS:ADCS_IDX.ZM_COIL_STATUS + 1]}")
-        # self.log_info(f"Inertia Mat : {self.ctr_const.INERTIA_MAT}")
-        # self.log_info(f"Momentum Target : {self.ctr_const.MOMENTUM_TARGET}")
-
-        # from hal.configuration import SATELLITE
-        # from ulab import numpy as np
-
-        # SATELLITE.set_fsw_state(np.concatenate((self.AD.state[0:22], self.AD.true_map)))
