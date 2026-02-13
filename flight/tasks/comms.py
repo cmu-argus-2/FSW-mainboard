@@ -226,7 +226,10 @@ class Task(TemplateTask):
 
             else:
                 # GS requested invalid message ID
-                self.log_warning(f"GS requested invalid command: {self.rq_cmd}")
+                if SATELLITE_RADIO.get_auth_status() == "failed":
+                    self.log_warning("GS command rejected due to authentication failure")
+                else:
+                    self.log_warning(f"GS requested invalid command: {self.rq_cmd}")
 
         else:
             # Increment RX counter
