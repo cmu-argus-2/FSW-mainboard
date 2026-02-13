@@ -14,7 +14,7 @@ except ImportError:
         return x
 
 
-from apps.telemetry.splat.splat.telemetry_codec import Ack, Report, pack, unpack
+from apps.telemetry.splat.splat.telemetry_codec import Report, pack
 from apps.telemetry.splat.splat.telemetry_helper import format_bytes
 from core import DataHandler as DH
 from core import logger
