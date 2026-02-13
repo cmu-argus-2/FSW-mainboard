@@ -11,6 +11,9 @@ class FuelGauge:
         self.ttf = 2500
         self.time_pwrup = 0
         self.temperature = 35.0
+        self.AIN1temperature = 35.0
+        self.AIN2temperature = 35.0
+        self.dietemperature = 35.0
 
         self.simulator = simulator
 
@@ -114,6 +117,36 @@ class FuelGauge:
         if self.simulator is not None:
             self.temperature = 100 * (self.simulator.battery_diagnostics("temperature") - 273.16)  # in cC
         return self.temperature
+    
+    def read_ain1temperature(self):
+        """
+        Reads the temperature of the battery pack 1.
+
+        :return: Temperature of the battery pack 1 in centi Celsius
+        """
+        if self.simulator is not None:
+            self.AIN1temperature = 100 * (self.simulator.battery_diagnostics("temperature_ain1") - 273.16)  # in cC
+        return self.AIN1temperature
+    
+    def read_ain2temperature(self):
+        """
+        Reads the temperature of the battery pack 2.
+
+        :return: Temperature of the battery pack 2 in centi Celsius
+        """
+        if self.simulator is not None:
+            self.AIN2temperature = 100 * (self.simulator.battery_diagnostics("temperature_ain2") - 273.16)  # in cC
+        return self.AIN2temperature
+    
+    def read_dietemperature(self):
+        """
+        Reads the temperature of the MAX17205 die.
+
+        :return: Temperature of the MAX17205 die in centi Celsius
+        """
+        if self.simulator is not None:
+            self.dietemperature = 100 * (self.simulator.battery_diagnostics("dietemperature") - 273.16)  # in cC
+        return self.dietemperature
 
     def reset(self):
         pass
