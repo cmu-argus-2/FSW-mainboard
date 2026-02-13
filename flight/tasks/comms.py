@@ -27,17 +27,8 @@ class Task(TemplateTask):
         self.periodic_telemetry_interval = 30    # amount of seconds between periodic telemetry downlink [check] - this should be a config 
         self.periodic_telemetry_report = TelemetryFrame.pack_tm_heartbeat         # the packing function of the report to be downlinked periodically
         self.last_periodic_telemetry_time = TPM.time()    # timestamp of the last periodic telemetry downlink
-
-        # Register comms process for logging RX RSSI
-        self.log_info("Attempting to init dh")  # not sure if I can init this here, dh might not be 
-        try:
-            if not DH.data_process_exists("comms"):
-                    self.log_info("Registering comms data process in DH")
-                    DH.register_data_process("comms", "Lf", True, 100000)
-            else:
-                self.log_info("Comms data process already exists in DH")
-        except Exception as e:
-            self.log_error(f"Error initializing DH data process for comms: {e}")
+        
+        SATELLITE_RADIO.set_rx_mode()
     
     def transmit_message(self):
         """

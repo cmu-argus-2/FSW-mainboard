@@ -47,6 +47,19 @@ class SATELLITE_RADIO:
     
     tx_packet_count = 0
     tx_failed_count = 0   # this is because the radio was not available
+
+    """
+        Name: set_rx_mode
+        Description: Used during task init to make sure that the radio is able to receive messages
+        as soon as the comms task starts
+    """
+    @classmethod
+    def set_rx_mode(cls):
+        # set the radio into receive mode
+        SATELLITE.RADIO.startReceive(0xFFFFFF)
+        SATELLITE.RADIO.rx_en.value = True
+        SATELLITE.RADIO.tx_en.value = False
+        
     """
         Name: get_rssi
         Description: Get RSSI of received packet
