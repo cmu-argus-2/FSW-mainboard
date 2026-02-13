@@ -37,7 +37,7 @@ from apps.command.commands import (
     TURN_OFF_PAYLOAD,
     UPLINK_TIME_REFERENCE,
 )
-from apps.command.preconditions import file_id_exists, valid_state, valid_time_format
+from apps.command.preconditions import file_id_exists, valid_inputs, valid_state, valid_time_format
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.telemetry.splat.splat.telemetry_codec import Ack, pack
 from core import logger
