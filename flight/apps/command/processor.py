@@ -37,7 +37,6 @@ from apps.command.commands import (
     TURN_OFF_PAYLOAD,
     UPLINK_TIME_REFERENCE,
 )
-from apps.command.constants import CMD_ID
 from apps.command.preconditions import file_id_exists, valid_state, valid_time_format
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.telemetry.splat.splat.telemetry_codec import Ack, pack
@@ -79,11 +78,7 @@ def process_command(command):
         logger.error(f"Cmd: Precondition check failed with error: {e}")
         return CommandProcessingStatus.PRECONDITION_FAILED, [command.command_id]
     
-    # # Verify the argument count
-    # if len(args) != len(arg_list):
-    #     print(arg_list)
-    #     logger.error(f"Cmd: Argument count mismatch for command ID {cmd_id}")
-    #     return CommandProcessingStatus.ARGUMENT_COUNT_MISMATCH, [cmd_id]
+    # [check] - should I check argument 
 
     # Execute the command function with arguments
     try:
@@ -97,7 +92,7 @@ def process_command(command):
         return CommandProcessingStatus.COMMAND_EXECUTION_FAILED, [command.command_id]
     
     logger.warning("Cmd: Unknown command ID")
-    return CommandProcessingStatus.UNKNOWN_COMMAND_ID, [cmd_id]
+    return CommandProcessingStatus.UNKNOWN_COMMAND_ID, [command.command_id]
 
 
 def handle_command_execution_status(status, response_args):
