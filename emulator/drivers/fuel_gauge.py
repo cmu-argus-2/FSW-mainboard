@@ -117,7 +117,7 @@ class FuelGauge:
         if self.simulator is not None:
             self.temperature = 100 * (self.simulator.battery_diagnostics("temperature") - 273.16)  # in cC
         return self.temperature
-    
+
     def read_ain1temperature(self):
         """
         Reads the temperature of the battery pack 1.
@@ -127,7 +127,7 @@ class FuelGauge:
         if self.simulator is not None:
             self.AIN1temperature = 100 * (self.simulator.battery_diagnostics("temperature_ain1") - 273.16)  # in cC
         return self.AIN1temperature
-    
+
     def read_ain2temperature(self):
         """
         Reads the temperature of the battery pack 2.
@@ -137,7 +137,7 @@ class FuelGauge:
         if self.simulator is not None:
             self.AIN2temperature = 100 * (self.simulator.battery_diagnostics("temperature_ain2") - 273.16)  # in cC
         return self.AIN2temperature
-    
+
     def read_dietemperature(self):
         """
         Reads the temperature of the MAX17205 die.
