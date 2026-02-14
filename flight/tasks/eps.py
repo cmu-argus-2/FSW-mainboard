@@ -288,8 +288,16 @@ class Task(TemplateTask):
             if self.log_counter % self.frequency == 0:
                 self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
                 self.log_info(f"CPU temperature: {self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE]} °cC ")
+                self.log_info(f"Battery 1 temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN1]} °cC ")
+                self.log_info(f"Battery 2 temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN2]} °cC ")
+                self.log_info(f"Battery Board temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_DIE]} °cC ")
+                
+                self.log_info("HELLLLOOOOOO")
+
+                #self.log_info(SATELLITE.FUEL_GAUGE_IN_DEVICE_LIST)
 
                 if SATELLITE.FUEL_GAUGE_AVAILABLE:
+                    self.log_info("BYEEEE")
                     self.read_fuel_gauge()
                     self.update_eps_state()
 

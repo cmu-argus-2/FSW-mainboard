@@ -42,7 +42,7 @@ from micropython import const
 # TM frame sizes as defined in message database
 # TODO: TM HAL
 # TODO: TM PAYLOAD
-_TM_NOMINAL_SIZE = const(211)
+_TM_NOMINAL_SIZE = const(215)
 _TM_HAL_SIZE = const(46)
 _TM_STORAGE_SIZE = const(74)
 _TM_PAYLOAD_SIZE = const(47)  # for now
@@ -147,7 +147,7 @@ class TelemetryPacker:
                 # Battery pack 2 temperature
                 cls._FRAME[27:29] = pack_signed_short_int(eps_data, EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN2)
                 # MAX17205 die temperature
-                cls._FRAME[29:31] = pack_signed_short_int(eps_data, EPS_IDX.BATTTERY_PACK_TEMPERATURE_DIE)
+                cls._FRAME[29:31] = pack_signed_short_int(eps_data, EPS_IDX.BATTERY_PACK_TEMPERATURE_DIE)
                 # Battery pack SOC
                 cls._FRAME[31] = eps_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC] & 0xFF
                 # Battery pack capacity

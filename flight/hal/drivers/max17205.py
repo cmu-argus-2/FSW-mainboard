@@ -13,9 +13,9 @@ _MAX1720X_VBAT_ADDR = const(0xDA)  # Battery pack voltage
 _MAX1720X_AVCELL_ADDR = const(0x17)  # Battery cycles
 _MAX1720X_TIMERH_ADDR = const(0xBE)  # Time since power up
 _MAX1720X_TEMP_ADDR = const(0x08)  # Temp register
-_MAX1720X_TEMP1_ADDR = const(0x134)  # AIN1 thermistor temperature
-_MAX1720X_TEMP2_ADDR = const(0x13B)  # AIN2 thermistor temperature
-_MAX1720X_INTTEMP_ADDR = const(0x135)  # Internal die temperature
+_MAX1720X_TEMP1_ADDR = const(0x0134)  # AIN1 thermistor temperature
+_MAX1720X_TEMP2_ADDR = const(0x013B)  # AIN2 thermistor temperature
+_MAX1720X_INTTEMP_ADDR = const(0x0135)  # Internal die temperature
 
 _MAX1720X_COMMAND_ADDR = const(0x60)  # Command register
 _MAX1720X_CONFIG2_ADDR = const(0xBB)  # Command register
@@ -51,7 +51,7 @@ class MAX17205:
         self.ttf = 0
         self.time_pwrup = 0
         self.temperature = 0.0
-        self.AIN1temperature = 0.0
+        self.AIN1temperature = 0
         self.AIN2temperature = 0.0
         self.dietemperature = 0.0
 
@@ -229,11 +229,12 @@ class MAX17205:
         :return: Temperature of the thermistor set 1 in centi-Celsius
         """
         with self.i2c_device as i2c:
-            i2c.write(bytes([_MAX1720X_TEMP1_ADDR]))
+            i2c.write(bytes([0x01, 0x34]))
             i2c.readinto(self.rx_buffer)
 
         # Scale temperature down by 256, multiply by 100 to get centi-Celsius (0.39 = 100/256)
-        self.AIN1temperature = int.from_bytes(self.rx_buffer, "little", signed=False) * 0.390625
+        #print(self.rx_buffer)
+        self.AIN1temperature = int.from_bytes(self.rx_buffer, "little", signed=False)# - 2731#* 0.390625
         return self.AIN1temperature
 
     def read_ain2temperature(self):
@@ -243,7 +244,7 @@ class MAX17205:
         :return: Temperature of the thermistor set 2 in centi-Celsius
         """
         with self.i2c_device as i2c:
-            i2c.write(bytes([_MAX1720X_TEMP2_ADDR]))
+            i2c.write(bytes([_MAX1720X_TEMP_ADDR]))
             i2c.readinto(self.rx_buffer)
 
         # Scale temperature down by 256, multiply by 100 to get centi-Celsius (0.39 = 100/256)
@@ -257,11 +258,11 @@ class MAX17205:
         :return: Temperature of the MAX17205 die in centi-Celsius
         """
         with self.i2c_device as i2c:
-            i2c.write(bytes([_MAX1720X_INTTEMP_ADDR]))
+            i2c.write(bytes([_MAX1720X_TEMP_ADDR]))
             i2c.readinto(self.rx_buffer)
 
         # Scale temperature down by 256, multiply by 100 to get centi-Celsius (0.39 = 100/256)
-        self.dietemperature = int.from_bytes(self.rx_buffer, "little", signed=False) * 0.390625
+        self.dietemperature = 20#int.from_bytes(self.rx_buffer, "little", signed=False) * 0.390625
         return self.dietemperature
 
     def reset(self):
