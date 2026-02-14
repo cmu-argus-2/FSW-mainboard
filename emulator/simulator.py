@@ -113,7 +113,22 @@ class Simulator:  # will be passed by reference to the emulated HAL
     def battery_diagnostics(self, attr: str):
         self.advance_to_time()
         attr2idx = dict(
-            zip(["soc", "capacity", "current", "voltage", "midvoltage", "tte", "ttf", "temperature", "temperature_ain1", "temperature_ain2", "temperature_die"], [i for i in range(11)])
+            zip(
+                [
+                    "soc",
+                    "capacity",
+                    "current",
+                    "voltage",
+                    "midvoltage",
+                    "tte",
+                    "ttf",
+                    "temperature",
+                    "temperature_ain1",
+                    "temperature_ain2",
+                    "temperature_die",
+                ],
+                [i for i in range(11)],
+            )
         )
 
         if self.measurement[self.power_idx][attr2idx["tte"]] > 1e7 or self.measurement[self.power_idx][attr2idx["tte"]] < 0:
