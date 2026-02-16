@@ -23,6 +23,7 @@ class hal_monitor_config:
     REGULAR_REBOOT = const(3600)
 
 # TODO: Change the auth key before flight
+
 class comms_config:
     ARGUS_ID = const(0x0)
     AUTH_ENABLED = True
