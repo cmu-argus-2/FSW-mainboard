@@ -22,6 +22,7 @@ class main_config:
 class hal_monitor_config:
     REGULAR_REBOOT = const(3600)
 
+
 # TODO: Change the auth key before flight
 
 class comms_config:
