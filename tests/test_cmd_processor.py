@@ -1,13 +1,15 @@
 import time
 
 import pytest
+
+# Setup CircuitPython mocks for testing
+import tests.cp_mock  # noqa: F401
+
 from micropython import const
 
 from flight.apps.command.constants import CMD_ID
 from flight.apps.command.preconditions import valid_state, valid_time_format
-from flight.apps.command.processor import process_command  # noqa F401
-from flight.apps.command.processor import CommandProcessingStatus, check_arguments_size, unpack_command_arguments
-from flight.apps.telemetry.helpers import pack_unsigned_long_int
+from flight.apps.command.processor import process_command, CommandProcessingStatus
 from flight.core.state_machine import STATES
 
 
@@ -24,133 +26,98 @@ def mock_command_fail(*args):
     raise Exception("Mock execution failure")
 
 
+class MockCommand:
+    """Mock command object matching the new command structure."""
+    def __init__(self, command_id, satellite_func, precondition=None, arguments=None):
+        self.command_id = command_id
+        self.satellite_func = satellite_func
+        self.precondition = precondition
+        self._arguments = arguments or []
+
+    def get_arguments_list(self):
+        return self._arguments
+
+
 @pytest.fixture
 def setup_commands(monkeypatch):
-    """Fixture to set up the COMMANDS list with mock commands."""
-    switch_to_state_args = (STATES.DETUMBLING).to_bytes(1, "big") + (MOCK_ARGUMENTS.time_in_state).to_bytes(4, "big")
-    uplink_time_ref_args = (MOCK_ARGUMENTS.time_reference).to_bytes(4, "big")
-
-    mock_cmds = [
-        (0x01, lambda: True, [], mock_command_success),  # Success command with no arguments
-        (0x02, lambda: False, [], mock_command_success),  # Command with failed precondition
-        (0x03, lambda: True, ["arg1"], mock_command_success),  # Command with one argument
-        (0x04, lambda: True, [], mock_command_fail),  # Command that fails (raises an exception)
-        (
-            CMD_ID.SWITCH_TO_STATE,
-            lambda: True,
-            switch_to_state_args,
-            mock_command_success,
-        ),  # Mock SWTICH_TO_STATE Command with 2 arguments, mixed data types
-        (
-            CMD_ID.UPLINK_TIME_REFERENCE,
-            lambda: True,
-            uplink_time_ref_args,
-            mock_command_success,
-        ),  # Mock UPLINK_TIME_REFERENCE Command with 1 arguments
-    ]
-    monkeypatch.setattr("flight.apps.command.processor.COMMANDS", mock_cmds)
-    return mock_cmds
+    """Fixture to set up mock commands for testing."""
+    # Mock the command dispatch and precondition dispatch
+    mock_dispatch = {
+        "mock_command_success": mock_command_success,
+        "mock_command_fail": mock_command_fail,
+    }
+    
+    mock_precondition_dispatch = {
+        "always_true": lambda *args: True,
+        "always_false": lambda *args: False,
+    }
+    
+    monkeypatch.setattr("flight.apps.command.processor.COMMAND_DISPATCH", mock_dispatch)
+    monkeypatch.setattr("flight.apps.command.processor.PRECONDITION_DISPATCH", mock_precondition_dispatch)
+    
+    return {
+        "mock_dispatch": mock_dispatch,
+        "mock_precondition_dispatch": mock_precondition_dispatch,
+    }
 
 
 def test_process_command_success(setup_commands):
-    cmd_id, precond, args, f = setup_commands[0]
-    result, response_args = process_command(cmd_id, *args)
+    cmd = MockCommand(
+        command_id=0x01,
+        satellite_func="mock_command_success",
+        precondition=None,
+        arguments=[]
+    )
+    result, response_args = process_command(cmd)
     assert result == CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS
     assert response_args == [0x01]
 
 
 def test_process_command_precondition_failed(setup_commands):
-    cmd_id, precond, args, f = setup_commands[1]
-    result, response_args = process_command(cmd_id, *args)
+    cmd = MockCommand(
+        command_id=0x02,
+        satellite_func="mock_command_success",
+        precondition="always_false",
+        arguments=[]
+    )
+    result, response_args = process_command(cmd)
     assert result == CommandProcessingStatus.PRECONDITION_FAILED
     assert response_args == [0x02]
 
 
-def test_process_command_argument_count_mismatch(setup_commands):
-    cmd_id, precond, args, f = setup_commands[2]
-    result, response_args = process_command(cmd_id)  # No arguments passed, but one is expected
-    assert result == CommandProcessingStatus.ARGUMENT_COUNT_MISMATCH
-    assert response_args == [0x03]
-
-
 def test_process_command_execution_failed(setup_commands):
-    cmd_id, precond, args, f = setup_commands[3]
-    result, response_args = process_command(cmd_id, *args)
+    cmd = MockCommand(
+        command_id=0x04,
+        satellite_func="mock_command_fail",
+        precondition=None,
+        arguments=[]
+    )
+    result, response_args = process_command(cmd)
     assert result == CommandProcessingStatus.COMMAND_EXECUTION_FAILED
     assert response_args == [0x04]
 
 
 def test_process_command_unknown_command(setup_commands):
-    result, response_args = process_command(0xFF)  # Command ID not in COMMANDS
+    cmd = MockCommand(
+        command_id=0xFF,
+        satellite_func="unknown_function",
+        precondition=None,
+        arguments=[]
+    )
+    result, response_args = process_command(cmd)
     assert result == CommandProcessingStatus.UNKNOWN_COMMAND_ID
-    print(response_args)
     assert response_args == [0xFF]
 
 
-def test_unpack_one_argument(setup_commands):
-    one_arg = unpack_command_arguments(setup_commands[5][0], setup_commands[5][2])
-    assert one_arg == [MOCK_ARGUMENTS.time_reference]
-
-
-def test_unpack_two_arguments(setup_commands):
-    two_args = unpack_command_arguments(setup_commands[4][0], setup_commands[4][2])
-    assert two_args == [STATES.DETUMBLING, MOCK_ARGUMENTS.time_in_state]
-
-
-@pytest.mark.parametrize(
-    "command_id, arguments, expected_outputs",
-    [
-        (CMD_ID.FORCE_REBOOT, bytearray(), True),
-        (CMD_ID.FORCE_REBOOT, [(1).to_bytes(1, "big")], False),
-        (CMD_ID.SWITCH_TO_STATE, ((1).to_bytes(1, "big") + pack_unsigned_long_int([10], 0)), True),
-        (CMD_ID.UPLINK_TIME_REFERENCE, (pack_unsigned_long_int([1741539497], 0)), True),
-        (CMD_ID.UPLINK_TIME_REFERENCE, bytearray(), False),
-        (
-            CMD_ID.UPLINK_TIME_REFERENCE,
-            (pack_unsigned_long_int([1741539497], 0) + pack_unsigned_long_int([1741539497], 0)),
-            False,
-        ),
-        (CMD_ID.TURN_OFF_PAYLOAD, (), True),
-        (CMD_ID.TURN_OFF_PAYLOAD, ((1).to_bytes(1, "big")), False),
-        (CMD_ID.SCHEDULE_OD_EXPERIMENT, (), True),
-        (CMD_ID.SCHEDULE_OD_EXPERIMENT, ((1).to_bytes(1, "big")), False),
-        (CMD_ID.REQUEST_TM_NOMINAL, (), True),
-        (CMD_ID.REQUEST_TM_NOMINAL, ((1).to_bytes(1, "big")), False),
-        (CMD_ID.REQUEST_TM_HAL, (), True),
-        (CMD_ID.REQUEST_TM_HAL, ((1).to_bytes(1, "big")), False),
-        (CMD_ID.REQUEST_TM_STORAGE, (), True),
-        (CMD_ID.REQUEST_TM_STORAGE, ((1).to_bytes(1, "big")), False),
-        (CMD_ID.REQUEST_TM_PAYLOAD, (), True),
-        (CMD_ID.REQUEST_TM_PAYLOAD, ((1).to_bytes(1, "big")), False),
-        (CMD_ID.REQUEST_FILE_METADATA, ((1).to_bytes(1, "big") + pack_unsigned_long_int([10], 0)), True),
-        (
-            CMD_ID.REQUEST_FILE_METADATA,
-            ((1).to_bytes(1, "big") + pack_unsigned_long_int([10], 0) + pack_unsigned_long_int([20], 0)),
-            False,
-        ),
-        (CMD_ID.REQUEST_FILE_METADATA, (), False),
-        (CMD_ID.REQUEST_FILE_PKT, ((1).to_bytes(1, "big") + pack_unsigned_long_int([10], 0)), True),
-        (
-            CMD_ID.REQUEST_FILE_PKT,
-            ((1).to_bytes(1, "big") + pack_unsigned_long_int([10], 0) + pack_unsigned_long_int([20], 0)),
-            False,
-        ),
-        (CMD_ID.REQUEST_FILE_PKT, (), False),
-    ],
-)
-def test_argument_size_check(command_id, arguments, expected_outputs):
-    assert check_arguments_size(command_id, arguments) == expected_outputs
-
-
 def test_valid_time_format():
-    # Test valid Unix
+    # Test valid Unix timestamps
     assert valid_time_format(1709980800)
     assert valid_time_format(1700001234)
     assert valid_time_format(1739719846)
     assert valid_time_format(1699900000)
     assert valid_time_format(1589387500)
 
-    # Test edge cases and failing
+    # Test edge cases and failing cases
     assert not valid_time_format(0)  # outside of valid mission range
     assert not valid_time_format("not_a_timestamp")  # invalid type
     assert not valid_time_format(9223372036854775807)  # beyond time_t limits
