@@ -2,6 +2,7 @@ import pytest
 
 from flight.apps.command.fifo import QUEUE_STATUS, CommandQueue
 
+
 class MockCommand:
     """Mock command object matching the new command structure."""
     def __init__(self, command_id, satellite_func, precondition=None, arguments=None):
