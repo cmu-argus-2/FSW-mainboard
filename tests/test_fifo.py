@@ -5,6 +5,7 @@ from flight.apps.command.fifo import QUEUE_STATUS, CommandQueue
 
 class MockCommand:
     """Mock command object matching the new command structure."""
+
     def __init__(self, command_id, satellite_func, precondition=None, arguments=None):
         self.command_id = command_id
         self.satellite_func = satellite_func
@@ -13,6 +14,7 @@ class MockCommand:
 
     def get_arguments_list(self):
         return self._arguments
+
 
 @pytest.fixture
 def setup_queue():

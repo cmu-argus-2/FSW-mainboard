@@ -26,6 +26,7 @@ def mock_command_fail(*args):
 
 class MockCommand:
     """Mock command object matching the new command structure."""
+
     def __init__(self, command_id, satellite_func, precondition=None, arguments=None):
         self.command_id = command_id
         self.satellite_func = satellite_func
@@ -44,15 +45,15 @@ def setup_commands(monkeypatch):
         "mock_command_success": mock_command_success,
         "mock_command_fail": mock_command_fail,
     }
-    
+
     mock_precondition_dispatch = {
         "always_true": lambda *args: True,
         "always_false": lambda *args: False,
     }
-    
+
     monkeypatch.setattr("flight.apps.command.processor.COMMAND_DISPATCH", mock_dispatch)
     monkeypatch.setattr("flight.apps.command.processor.PRECONDITION_DISPATCH", mock_precondition_dispatch)
-    
+
     return {
         "mock_dispatch": mock_dispatch,
         "mock_precondition_dispatch": mock_precondition_dispatch,
@@ -60,48 +61,28 @@ def setup_commands(monkeypatch):
 
 
 def test_process_command_success(setup_commands):
-    cmd = MockCommand(
-        command_id=0x01,
-        satellite_func="mock_command_success",
-        precondition=None,
-        arguments=[]
-    )
+    cmd = MockCommand(command_id=0x01, satellite_func="mock_command_success", precondition=None, arguments=[])
     result, response_args = process_command(cmd)
     assert result == CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS
     assert response_args == [0x01]
 
 
 def test_process_command_precondition_failed(setup_commands):
-    cmd = MockCommand(
-        command_id=0x02,
-        satellite_func="mock_command_success",
-        precondition="always_false",
-        arguments=[]
-    )
+    cmd = MockCommand(command_id=0x02, satellite_func="mock_command_success", precondition="always_false", arguments=[])
     result, response_args = process_command(cmd)
     assert result == CommandProcessingStatus.PRECONDITION_FAILED
     assert response_args == [0x02]
 
 
 def test_process_command_execution_failed(setup_commands):
-    cmd = MockCommand(
-        command_id=0x04,
-        satellite_func="mock_command_fail",
-        precondition=None,
-        arguments=[]
-    )
+    cmd = MockCommand(command_id=0x04, satellite_func="mock_command_fail", precondition=None, arguments=[])
     result, response_args = process_command(cmd)
     assert result == CommandProcessingStatus.COMMAND_EXECUTION_FAILED
     assert response_args == [0x04]
 
 
 def test_process_command_unknown_command(setup_commands):
-    cmd = MockCommand(
-        command_id=0xFF,
-        satellite_func="unknown_function",
-        precondition=None,
-        arguments=[]
-    )
+    cmd = MockCommand(command_id=0xFF, satellite_func="unknown_function", precondition=None, arguments=[])
     result, response_args = process_command(cmd)
     assert result == CommandProcessingStatus.UNKNOWN_COMMAND_ID
     assert response_args == [0xFF]
