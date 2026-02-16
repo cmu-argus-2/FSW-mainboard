@@ -16,8 +16,8 @@ command:
     value: 2  # number of deployment attempts before forcing completion
     _const: true
 
-  GROUND_TESTING_MODE:
-    value: true
+  PAYLOAD_TESTING_MODE:
+    value: false  # Set to true to enable payload testing mode (goes straight to experiment mode)
 
 # Time Processor Module
 time_processor:

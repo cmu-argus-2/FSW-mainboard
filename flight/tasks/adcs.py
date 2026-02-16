@@ -196,7 +196,7 @@ class Task(TemplateTask):
             # Just zero out the dipole moment
             dipole_moment = np.zeros((3,))
 
-        self.coil_status = mcm_coil_allocator(dipole_moment)
+        self.coil_status = mcm_coil_allocator(dipole_moment, self.mag_data)
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ LOGGING """

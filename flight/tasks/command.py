@@ -31,7 +31,7 @@ _PWM_MIN = const(0)  # Minimum PWM value for deployment
 _FIRST_PWM = const(2)  # First PWM to start deployment
 _BURN_WIRE_TIMEOUT = CONFIG.BURN_WIRE_TIMEOUT  # number of tries
 _DEPLOYMENT_DISTANCE = const(2)  # distance(cm) threshold for deployment
-_GROUND_TESTING_MODE = CONFIG.GROUND_TESTING_MODE
+_PAYLOAD_TESTING_MODE = CONFIG.PAYLOAD_TESTING_MODE
 
 
 class Task(TemplateTask):
@@ -328,9 +328,9 @@ class Task(TemplateTask):
                 # T2.3: High SoC, engage the payload
                 self.log_info("T2.3: Transition from NOMINAL to EXPERIMENT")
                 SM.switch_to(STATES.EXPERIMENT)
-            elif _GROUND_TESTING_MODE:
-                # T2.4: Ground testing mode enabled, engage the payload
-                self.log_info("T2.4: Transition from NOMINAL to EXPERIMENT (Ground Testing Mode)")
+            elif _PAYLOAD_TESTING_MODE:
+                # T2.4: Payload testing mode enabled, engage the payload
+                self.log_info("T2.4: Transition from NOMINAL to EXPERIMENT (Payload Testing Mode)")
                 SM.switch_to(STATES.EXPERIMENT)
             else:
                 # No transition, stay in NOMINAL
@@ -373,7 +373,7 @@ class Task(TemplateTask):
                 pass
 
             """Transitions out of EXPERIMENT"""
-            if self.EPS_MODE != EPS_POWER_FLAG.EXPERIMENT and not _GROUND_TESTING_MODE:
+            if self.EPS_MODE != EPS_POWER_FLAG.EXPERIMENT and not _PAYLOAD_TESTING_MODE:
                 # T4.1: Nominal or low SoC, transition back to nominal
                 self.log_info("T4.1: Transition from LOW POWER to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
