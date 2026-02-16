@@ -5,7 +5,6 @@ from micropython import const
 
 # Setup CircuitPython mocks for testing
 import tests.cp_mock  # noqa: F401
-from flight.apps.command.constants import CMD_ID
 from flight.apps.command.preconditions import valid_state, valid_time_format
 from flight.apps.command.processor import CommandProcessingStatus, process_command
 from flight.core.state_machine import STATES
