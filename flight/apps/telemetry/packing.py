@@ -263,13 +263,13 @@ class TelemetryPacker:
                 # Light sensor Y-
                 cls._FRAME[148:150] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_YM)
                 # Light sensor Z+ 1
-                cls._FRAME[150:152] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP1)
+                cls._FRAME[150:152] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP_1)
                 # Light sensor Z+ 2
-                cls._FRAME[152:154] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP2)
+                cls._FRAME[152:154] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP_2)
                 # Light sensor Z+ 3
-                cls._FRAME[154:156] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP3)
+                cls._FRAME[154:156] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP_3)
                 # Light sensor Z+ 4
-                cls._FRAME[156:158] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP4)
+                cls._FRAME[156:158] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZP_4)
                 # Light sensor Z-
                 cls._FRAME[158:160] = pack_unsigned_short_int(adcs_data, ADCS_IDX.LIGHT_SENSOR_ZM)
 
