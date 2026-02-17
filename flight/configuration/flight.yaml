@@ -12,7 +12,7 @@ command:
     value: 18000  # seconds, i.e., 5 hours
     _const: true
 
-  GROUND_TESTING_MODE:
+  PAYLOAD_TESTING_MODE:
     value: false
 
   BURN_WIRE_TIMEOUT:
