@@ -22,6 +22,7 @@ if SIMULATION:
 
     trial = int(os.getenv("ARGUS_SIMULATION_TRIAL", random.randint(0, 100)))
     trial_date = os.getenv("ARGUS_SIMULATION_DATE", datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
-    SimulatedSpacecraft = Simulator(trial=trial, trial_date=trial_date)
+    sim_set_name = os.getenv("ARGUS_SIMULATION_SET_NAME", "sil_set_1")
+    SimulatedSpacecraft = Simulator(trial=trial, trial_date=trial_date, sim_set_name=sim_set_name)
 
 SATELLITE: CubeSat = EmulatedSatellite(debug=DEBUG_MODE, simulator=SimulatedSpacecraft, use_socket=SOCKET_RADIO)

@@ -52,7 +52,9 @@ source .venv/bin/activate
 ./run.sh simulate
 ```
 
-Virtual Environment prevents any dependency conflicts with your global filesystem
+To configure more complex simulator runs, check the README.md in the sil folder.
+
+Virtual Environment prevents any dependency conflicts with your global filesystem.
 
 ### Build or move 
 
