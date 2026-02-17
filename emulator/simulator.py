@@ -35,7 +35,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
         shutil.copy(CONFIG_FILE, os.path.join(os.path.dirname(RESULTS_FOLDER), "../params.yaml"))
         self.cppsim = cppSim(trial, RESULTS_FOLDER, CONFIG_FILE, log=True)
 
-        self.measurement = np.zeros((49,))
+        self.measurement = np.zeros((52,))
         self.starting_real_epoch = time.monotonic_ns() / 1.0e9
         self.latest_real_epoch = self.starting_real_epoch
         self.base_dt = self.cppsim.params.dt
@@ -48,8 +48,8 @@ class Simulator:  # will be passed by reference to the emulated HAL
         self.lux_idx = slice(12, 21)
         self.mtb_idx = slice(21, 27)
         self.solar_idx = slice(27, 40)
-        self.power_idx = slice(40, 48)
-        self.jetson_idx = slice(48, 49)
+        self.power_idx = slice(40, 51)
+        self.jetson_idx = slice(51, 52)
 
     """
         SENSOR CALLBACKS

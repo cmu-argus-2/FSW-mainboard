@@ -55,9 +55,9 @@ class MAX17205:
         self.time_pwrup = 0
         self.temperature = 0.0
 
-        self.AIN1temperature = 0
-        self.AIN2temperature = 0
-        self.dietemperature = 0
+        self.temperature_ain1 = 0
+        self.temperature_ain2 = 0
+        self.temperature_die = 0
 
     def read_soc(self):
         """
@@ -226,7 +226,7 @@ class MAX17205:
         self.temperature = int.from_bytes(self.rx_buffer, "little", signed=False) * 0.390625
         return self.temperature
 
-    def read_ain1temperature(self):
+    def read_temperature_ain1(self):
         """
         Reads the temperature of thermistor set 1.
 
@@ -237,10 +237,10 @@ class MAX17205:
             i2c.readinto(self.rx_buffer)
 
         # Temperature reported in 10 * Kelvin. Subtract 2731 to convert 10 * Celsius. Multiply by 10 to get centi-Celsius
-        self.AIN1temperature = (int.from_bytes(self.rx_buffer, "little", signed=False) - 2731) * 10
-        return self.AIN1temperature
+        self.temperature_ain1 = (int.from_bytes(self.rx_buffer, "little", signed=False) - 2731) * 10
+        return self.temperature_ain1
 
-    def read_ain2temperature(self):
+    def read_temperature_ain2(self):
         """
         Reads the temperature of thermistor set 2.
 
@@ -251,10 +251,10 @@ class MAX17205:
             i2c.readinto(self.rx_buffer)
 
         # Temperature reported in 10 * Kelvin. Subtract 2731 to convert 10 * Celsius. Multiply by 10 to get centi-Celsius
-        self.AIN2temperature = (int.from_bytes(self.rx_buffer, "little", signed=False) - 2731) * 10
-        return self.AIN2temperature
+        self.temperature_ain2 = (int.from_bytes(self.rx_buffer, "little", signed=False) - 2731) * 10
+        return self.temperature_ain2
 
-    def read_dietemperature(self):
+    def read_temperature_die(self):
         """
         Reads the temperature of the MAX17205 die.
 
@@ -265,8 +265,8 @@ class MAX17205:
             i2c.readinto(self.rx_buffer)
 
         # Temperature reported in 10 * Kelvin. Subtract 2731 to convert 10 * Celsius. Multiply by 10 to get centi-Celsius
-        self.dietemperature = (int.from_bytes(self.rx_buffer, "little", signed=False) - 2731) * 10
-        return self.dietemperature
+        self.temperature_die = (int.from_bytes(self.rx_buffer, "little", signed=False) - 2731) * 10
+        return self.temperature_die
 
     def reset(self):
         """

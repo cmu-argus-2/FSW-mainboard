@@ -124,9 +124,9 @@ class Task(TemplateTask):
         self.log_data[EPS_IDX.BATTERY_PACK_TTE] = int(fuel_gauge.read_tte())
         self.log_data[EPS_IDX.BATTERY_PACK_TTF] = int(fuel_gauge.read_ttf())
         self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE] = int(fuel_gauge.read_temperature())
-        self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN1] = int(fuel_gauge.read_ain1temperature())
-        self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN2] = int(fuel_gauge.read_ain2temperature())
-        self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_DIE] = int(fuel_gauge.read_dietemperature())
+        self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN1] = int(fuel_gauge.read_temperature_ain1())
+        self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN2] = int(fuel_gauge.read_temperature_ain2())
+        self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_DIE] = int(fuel_gauge.read_temperature_die())
 
     # Update MAV and set alert to indicate that resource is consuming too much power
     # TODO: for v3 mainboard, add alert for peripheral power consumption
@@ -155,25 +155,26 @@ class Task(TemplateTask):
                 self.log_warning(f"ZM Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold} mW")
 
     def set_battery_heaters(self, heaters):
-        enabled = heaters.heater0_enabled() or heaters.heater1_enabled()
+        enabled1 = heaters.heater0_enabled()
+        enabled2 = heaters.heater1_enabled()
         temp1 = self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] - MAINBOARD_TEMP_OFFSET
         temp2 = self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] - MAINBOARD_TEMP_OFFSET
         if SATELLITE.FUEL_GAUGE_AVAILABLE:
             temp1 = self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN1]
             temp2 = self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN2]
-        if SHOULD_ENABLE_HEATERS(enabled, temp1):
+        if SHOULD_ENABLE_HEATERS(enabled1, temp1):
             heaters.enable_heater0()
             self.log_data[EPS_IDX.BATTERY_HEATERS1_ENABLED] = 1
             self.log_info("Enabled battery 1 heaters")
-        if SHOULD_ENABLE_HEATERS(enabled, temp2):
+        if SHOULD_ENABLE_HEATERS(enabled2, temp2):
             heaters.enable_heater1()
             self.log_data[EPS_IDX.BATTERY_HEATERS2_ENABLED] = 1
             self.log_info("Enabled battery 2 heaters")
-        if SHOULD_DISABLE_HEATERS(enabled, temp1):
+        if SHOULD_DISABLE_HEATERS(enabled1, temp1):
             heaters.disable_heater0()
             self.log_data[EPS_IDX.BATTERY_HEATERS1_ENABLED] = 0
             self.log_info("Disabled battery 1 heaters")
-        if SHOULD_DISABLE_HEATERS(enabled, temp2):
+        if SHOULD_DISABLE_HEATERS(enabled2, temp2):
             heaters.disable_heater1()
             self.log_data[EPS_IDX.BATTERY_HEATERS2_ENABLED] = 0
             self.log_info("Disabled battery 2 heaters")

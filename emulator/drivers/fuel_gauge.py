@@ -1,3 +1,6 @@
+ZERO_CELSIUS = 273.16  # In Kelvin
+
+
 class FuelGauge:
     def __init__(self, simulator=None):
         self.voltage = 7800.0
@@ -11,9 +14,9 @@ class FuelGauge:
         self.ttf = 2500
         self.time_pwrup = 0
         self.temperature = 35.0
-        self.AIN1temperature = 35.0
-        self.AIN2temperature = 35.0
-        self.dietemperature = 35.0
+        self.temperature_ain1 = 35.0
+        self.temperature_ain2 = 35.0
+        self.temperature_die = 35.0
 
         self.simulator = simulator
 
@@ -108,45 +111,53 @@ class FuelGauge:
         """
         return self.time_pwrup
 
+    def convert_kelvin_to_cc(self, temp_k):
+        """
+        Helper function that converts a temperature value in kelvin to centi-celsius
+
+        :return: Temperature in centi Celsius
+        """
+        return 100 * (temp_k - ZERO_CELSIUS)
+
     def read_temperature(self):
         """
         Reads the temperature of the battery pack.
 
-        :return: Temperature of the battery pack in Celsius
+        :return: Temperature of the battery pack in centi Celsius
         """
         if self.simulator is not None:
-            self.temperature = 100 * (self.simulator.battery_diagnostics("temperature") - 273.16)  # in cC
+            self.temperature = self.convert_kelvin_to_cc(self.simulator.battery_diagnostics("temperature"))  # in cC
         return self.temperature
 
-    def read_ain1temperature(self):
+    def read_temperature_ain1(self):
         """
         Reads the temperature of the battery pack 1.
 
         :return: Temperature of the battery pack 1 in centi Celsius
         """
         if self.simulator is not None:
-            self.AIN1temperature = 100 * (self.simulator.battery_diagnostics("temperature_ain1") - 273.16)  # in cC
-        return self.AIN1temperature
+            self.temperature_ain1 = self.convert_kelvin_to_cc(self.simulator.battery_diagnostics("temperature_ain1"))  # in cC
+        return self.temperature_ain1
 
-    def read_ain2temperature(self):
+    def read_temperature_ain2(self):
         """
         Reads the temperature of the battery pack 2.
 
         :return: Temperature of the battery pack 2 in centi Celsius
         """
         if self.simulator is not None:
-            self.AIN2temperature = 100 * (self.simulator.battery_diagnostics("temperature_ain2") - 273.16)  # in cC
-        return self.AIN2temperature
+            self.temperature_ain2 = self.convert_kelvin_to_cc(self.simulator.battery_diagnostics("temperature_ain2"))  # in cC
+        return self.temperature_ain2
 
-    def read_dietemperature(self):
+    def read_temperature_die(self):
         """
         Reads the temperature of the MAX17205 die.
 
         :return: Temperature of the MAX17205 die in centi Celsius
         """
         if self.simulator is not None:
-            self.dietemperature = 100 * (self.simulator.battery_diagnostics("dietemperature") - 273.16)  # in cC
-        return self.dietemperature
+            self.temperature_die = self.convert_kelvin_to_cc(self.simulator.battery_diagnostics("temperature_die"))  # in cC
+        return self.temperature_die
 
     def reset(self):
         pass
