@@ -112,19 +112,19 @@ class SATELLITE_RADIO:
             # CRC error, packet likely corrupted
             logger.warning("[COMMS ERROR] CRC error occured on incoming packet")
             cls.crc_error_count += 1
-            return cls.rx_gs_cmd
+            return None
 
         elif err != _ERR_NONE:
             # Undefined error, packet should never have gotten to comms task
             logger.error("[COMMS ERROR] Undefined error from radio driver")
             cls.undef_error_count += 1
-            return cls.rx_gs_cmd
+            return None
 
         # Check if packet exists
         if packet is None:
             # FIFO buffer does not contain a packet, or packet could not be read for some reason
             cls.packet_none_count += 1
-            return cls.rx_gs_cmd
+            return None
 
         # hopefully we have a valid packet at this point
 
