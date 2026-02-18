@@ -9,6 +9,7 @@ Authors: Akshat Sahay, Ibrahima S. Sow, Perrin Tong
 from apps.comms.fifo import TransmitQueue
 from apps.telemetry.splat.splat.telemetry_codec import unpack
 from apps.telemetry.splat.splat.telemetry_helper import format_bytes
+from apps.comms.auth import AUTH_TRAILER_SIZE, get_auth_key_bytes, verify_authenticated_command
 from core import logger
 from core.satellite_config import comms_config as CONFIG
 from hal.configuration import SATELLITE
@@ -28,6 +29,10 @@ class SATELLITE_RADIO:
     tm_frame = bytearray(248)
 
     rx_message_rssi = 0
+
+    auth_enabled = bool(getattr(CONFIG, "AUTH_ENABLED", False))
+    auth_key = get_auth_key_bytes(getattr(CONFIG, "AUTH_KEY_HEX", ""))
+    rx_auth_status = "not_checked"
 
     # counters to help determine comms health and performance
     rx_packet_count = 0  # this are just the valid packets
@@ -61,6 +66,10 @@ class SATELLITE_RADIO:
     def get_rssi(cls):
         # Get state
         return cls.rx_message_rssi
+
+    @classmethod
+    def get_auth_status(cls):
+        return cls.rx_auth_status
 
     """
         Name: set_tx_ack
@@ -100,6 +109,7 @@ class SATELLITE_RADIO:
 
         packet = None
         err = -1  # _ERR_NONE is 0
+        cls.rx_auth_status = "not_checked"
 
         # no need to check if radio is available, it was already checked
         packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
@@ -135,6 +145,24 @@ class SATELLITE_RADIO:
             return None
 
         cls.rx_packet_count += 1
+
+        if cls.auth_enabled:
+            # Authenticated command format:
+            # [cmd_id|sq_cnt(2)|args_len|args...|nonce(4)|mac(32)]
+            expected_packet_len = 4 + cls.rx_gs_len + AUTH_TRAILER_SIZE
+            if len(packet) != expected_packet_len:
+                logger.warning("[COMMS ERROR] RX'd authenticated packet has invalid length")
+                return None
+
+            is_valid, reason, command_args = verify_authenticated_command(packet, cls.rx_gs_cmd, cls.rx_gs_len, cls.auth_key)
+            if not is_valid:
+                logger.warning(f"[COMMS ERROR] Command authentication failed: {reason}")
+                return None
+
+            cls.rx_payload = command_args
+            cls.rx_auth_status = "passed"
+            logger.info(f"[COMMS] Command authentication passed for CMD {cls.rx_gs_cmd}")
+
         return message_object
 
     """

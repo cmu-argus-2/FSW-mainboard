@@ -11,7 +11,7 @@ command:
   DETUMBLING_TIMEOUT_DURATION:
     value: 18000  # seconds, i.e., 5 hours
     _const: true
-  
+
   PAYLOAD_TESTING_MODE:
     value: false
 
@@ -36,10 +36,12 @@ hal_monitor:
     value: 86400 # seconds, i.e., 24 hours
     _const: true
 
-# Comms App
+# ARGUS ID is an argument in the build script for flight config (0 or 1)
 comms:
   HB_PERIOD:
     value: 60  # seconds, i.e., 60 seconds
     _const: true
-
-# ARGUS ID is an argument in the build script for flight config (0 or 1)
+  AUTH_ENABLED:
+    value: true
+  AUTH_KEY_HEX:
+    value: "d6172b38acb7d2a28e21662f689d1d15ad78ccc888a9c7a78ef58cb61b0f1e32" # TODO: Change before flight
