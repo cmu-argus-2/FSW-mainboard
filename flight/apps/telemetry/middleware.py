@@ -208,16 +208,16 @@ class Frame:
                 continue
 
             if ss_lower not in ss_list:
-                logger.warning(f"[check] - Subsystem {ss.upper()} not recognized for storage")
+                logger.warning(f"Subsystem {ss.upper()} not recognized for storage")
                 continue
 
             dh_data = dh_data_list[ss_list.index(ss_lower)]
             if dh_data is None:
-                logger.warning(f"[check] - No data for subsystem {ss.upper()} to pack in STORAGE")
+                logger.warning(f"No data for subsystem {ss.upper()} to pack in STORAGE")
                 continue
 
             # iterating over all the variables for the ss in the report and adding them
-            for var_name in report.variables[ss].keys():  # [check] - should have a function in telemetry_helper to get me this
+            for var_name in report.variables[ss].keys():  # should have a function in telemetry_helper to get me this
                 dh_var_idx = getattr(idx_list[ss_list.index(ss_lower)], var_name)
                 report.add_variable(var_name, ss, dh_data[dh_var_idx])
 
@@ -233,16 +233,16 @@ class Frame:
             dh_ss_name = "_".join(var_name.split("_")[:-2]).lower()  # get the first 2/3 parts of the variable name
             dh_variable_name = "_".join(var_name.split("_")[-2:])  # get the last two parts of the variable name
             logger.info(
-                f"[check] - Processing STORAGE variable {var_name} with dh subsystem {dh_ss_name.upper()} and dh variable {dh_variable_name.upper()}"
+                f"Processing STORAGE variable {var_name} with dh subsystem {dh_ss_name.upper()} and dh variable {dh_variable_name.upper()}"
             )
             ss_index = storage_ss_list.index(dh_ss_name)
             if ss_index == -1:
-                logger.warning(f"[check] - Subsystem {dh_ss_name.upper()} not recognized for storage variable {var_name}")
+                logger.warning(f"Subsystem {dh_ss_name.upper()} not recognized for storage variable {var_name}")
                 continue
 
             dh_storage_list[ss_index]  # get the storage info for the subsystem
             if dh_storage_list[ss_index] is None:
-                logger.warning(f"[check] - No data for subsystem {dh_ss_name.upper()} to pack in STORAGE variable {var_name}")
+                logger.warning(f"No data for subsystem {dh_ss_name.upper()} to pack in STORAGE variable {var_name}")
                 continue
 
             dh_var_idx = getattr(STORAGE_IDX, dh_variable_name)  # get the index for the variable
@@ -250,7 +250,7 @@ class Frame:
             report.add_variable(var_name, "STORAGE", dh_storage_list[ss_index][dh_var_idx])  # add the variable to the report
 
         packed_report = pack(report)
-        logger.debug(f"[check] - Packed STORAGE telemetry frame {format_bytes(packed_report)}")
+        logger.debug(f"Packed STORAGE telemetry frame {format_bytes(packed_report)}")
 
         gc.collect()
 
