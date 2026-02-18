@@ -9,6 +9,7 @@ Authors: Akshat Sahay, Ibrahima S. Sow, Perrin Tong
 import os
 
 from apps.command.constants import file_ids_str
+from apps.comms.auth import AUTH_TRAILER_SIZE, get_auth_key_bytes, verify_authenticated_command
 from core import logger
 from core.data_handler import DataHandler as DH
 from core.data_handler import extract_time_from_filename
@@ -173,6 +174,9 @@ class SATELLITE_RADIO:
     rx_gs_len = 0
     rx_payload = bytearray()
     rx_message_rssi = 0
+    auth_enabled = bool(getattr(CONFIG, "AUTH_ENABLED", False))
+    auth_key = get_auth_key_bytes(getattr(CONFIG, "AUTH_KEY_HEX", ""))
+    rx_auth_status = "not_checked"
 
     # CRC error count
     crc_count = 0
@@ -244,6 +248,10 @@ class SATELLITE_RADIO:
     def get_rssi(cls):
         # Get state
         return cls.rx_message_rssi
+
+    @classmethod
+    def get_auth_status(cls):
+        return cls.rx_auth_status
 
     """
         Name: set_tx_ack
@@ -617,6 +625,7 @@ class SATELLITE_RADIO:
 
         packet = None
         err = -1  # _ERR_NONE is 0
+        cls.rx_auth_status = "not_checked"
 
         if SATELLITE.RADIO_AVAILABLE:
             packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
@@ -699,24 +708,51 @@ class SATELLITE_RADIO:
             cls.rx_gs_len = 0
             return cls.rx_gs_cmd
 
-        # Check packet integrity based on message length
-        if (len(packet) - 4) != cls.rx_gs_len:
-            # Header length does not match packet length
-            logger.warning("[COMMS ERROR] RX'd packet has length mismatch with header")
-            cls.rx_gs_cmd = 0x00
-            cls.rx_sq_cnt = 0
-            cls.rx_gs_len = 0
-            return cls.rx_gs_cmd
+        if cls.auth_enabled:
+            # Authenticated command format:
+            # [cmd_id|sq_cnt(2)|args_len|args...|nonce(4)|mac(32)]
+            expected_packet_len = 4 + cls.rx_gs_len + AUTH_TRAILER_SIZE
+            if len(packet) != expected_packet_len:
+                logger.warning("[COMMS ERROR] RX'd authenticated packet has invalid length")
+                cls.rx_auth_status = "failed"
+                cls.rx_gs_cmd = 0x00
+                cls.rx_sq_cnt = 0
+                cls.rx_gs_len = 0
+                return cls.rx_gs_cmd
 
-        # Payload will be everything in message after header, can be empty
-        if cls.rx_gs_len != 0:
-            cls.rx_payload = packet[4:]
+            is_valid, reason, command_args = verify_authenticated_command(packet, cls.rx_gs_cmd, cls.rx_gs_len, cls.auth_key)
+            if not is_valid:
+                logger.warning(f"[COMMS ERROR] Command authentication failed: {reason}")
+                cls.rx_auth_status = "failed"
+                cls.rx_gs_cmd = 0x00
+                cls.rx_sq_cnt = 0
+                cls.rx_gs_len = 0
+                return cls.rx_gs_cmd
+
+            cls.rx_payload = command_args
+            cls.rx_auth_status = "passed"
+            logger.info(f"[COMMS] Command authentication passed for CMD {cls.rx_gs_cmd}")
+
         else:
-            cls.rx_payload = bytearray()
+            # Legacy non-authenticated packet format:
+            # [cmd_id|sq_cnt(2)|args_len|args...]
+            if (len(packet) - 4) != cls.rx_gs_len:
+                # Header length does not match packet length
+                logger.warning("[COMMS ERROR] RX'd packet has length mismatch with header")
+                cls.rx_gs_cmd = 0x00
+                cls.rx_sq_cnt = 0
+                cls.rx_gs_len = 0
+                return cls.rx_gs_cmd
+
+            if cls.rx_gs_len != 0:
+                cls.rx_payload = packet[4:]
+            else:
+                cls.rx_payload = bytearray()
+            cls.rx_auth_status = "disabled"
 
         # GS_CMD_FILE_PKT is handled internally in the comms task
         if cls.rx_gs_cmd == MSG_ID.GS_CMD_FILE_PKT:
-            if cls.check_rq_file_params(packet[4:]) is False:
+            if cls.check_rq_file_params(cls.rx_payload) is False:
                 # Filepath does not match
 
                 # Error, send down empty file array to signal the error
@@ -728,7 +764,7 @@ class SATELLITE_RADIO:
                 # Filepath matches, move forward with request
 
                 # Get sq_cnt for the PKT
-                cls.rq_sq_cnt = int.from_bytes(packet[9:11], _BYTE_ORDER)
+                cls.rq_sq_cnt = int.from_bytes(cls.rx_payload[5:7], _BYTE_ORDER)
 
         # GS_CMD_DOWNLINK_ALL is also handled internally in the comms task
         elif cls.rx_gs_cmd == MSG_ID.GS_CMD_DOWNLINK_ALL:
