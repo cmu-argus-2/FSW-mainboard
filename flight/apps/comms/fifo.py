@@ -58,7 +58,6 @@ class TransmitQueue:
 
         return QUEUE_STATUS.OK
 
-
     @classmethod
     def packet_available(cls):
         """Checks if a packet is available in the queue."""

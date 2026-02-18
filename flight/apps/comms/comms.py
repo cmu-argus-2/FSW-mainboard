@@ -7,7 +7,6 @@ Authors: Akshat Sahay, Ibrahima S. Sow, Perrin Tong
 """
 
 from apps.comms.auth import AUTH_TRAILER_SIZE, get_auth_key_bytes, verify_authenticated_command
-from apps.comms.fifo import TransmitQueue
 from apps.telemetry.splat.splat.telemetry_codec import unpack
 from apps.telemetry.splat.splat.telemetry_helper import format_bytes
 from core import logger
