@@ -32,7 +32,7 @@ class Frame:
     _TM_FRAME_SIZE = const(248)  # this defines the maximum frame size
 
     # Pre-allocated frame buffer
-    _FRAME = bytearray(_TM_FRAME_SIZE)  # [check] - not sure if preallocating is the best idea here.
+    _FRAME = bytearray(_TM_FRAME_SIZE)  # [TODO] - not sure if preallocating is the best idea here.
     # what about messages that are smaller
 
     @classmethod

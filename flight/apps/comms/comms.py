@@ -126,7 +126,7 @@ class SATELLITE_RADIO:
         # hopefully we have a valid packet at this point
 
         # unpack the received packet
-        message_object = unpack(packet)  # [check] - this should be implemented in middleware
+        message_object = unpack(packet)  # [TODO] - this should be implemented in middleware
         logger.info(f"Received raw packet: {packet}")
         logger.info(f"Unpacked message object: {message_object}")
         if message_object is None:
