@@ -27,7 +27,7 @@ class TransmitQueue:
     """Used to store the packets to be transmitted by comms"""
 
     _queue = []  # The list representing the queue.
-    _max_size = 10  # The maximum size of the queue.
+    _max_size = 30  # The maximum size of the queue.
 
     @classmethod
     def configure(cls, max_size):
