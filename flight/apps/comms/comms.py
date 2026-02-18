@@ -27,9 +27,6 @@ class SATELLITE_RADIO:
     # Init TM frame for preallocating memory
     tm_frame = bytearray(248)
 
-    # queue for outgoing packets to be transmitted by comms
-    TX_QUEUE = TransmitQueue()
-
     rx_message_rssi = 0
 
     # counters to help determine comms health and performance
