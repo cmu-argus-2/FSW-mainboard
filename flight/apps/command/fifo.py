@@ -56,10 +56,7 @@ class CommandQueue:
         """Overwrites the command in a 1 element queue. Returns an error code."""
         cls._queue = [command]
 
-        if len(cls._queue) == 1:
-            return QUEUE_STATUS.OK
-        else:
-            return QUEUE_STATUS.OVERWRITE
+        return QUEUE_STATUS.OK
 
     @classmethod
     def command_available(cls):
