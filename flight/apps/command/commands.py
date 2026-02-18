@@ -30,6 +30,11 @@ from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
 
+from apps.telemetry.splat.splat.transport_layer import transaction_manager as TM
+from apps.telemetry.splat.splat.telemetry_codec import Command, pack
+
+import os
+
 FILE_PKTSIZE = 240
 
 
@@ -185,6 +190,72 @@ def EVAL_STRING_COMMAND(string_command):
         logger.error(f"EVAL_STRING_COMMAND execution failed: {e}")
         return ["eval_string_command_failed"]
 
+
+def CREATE_TRANS(string_command):
+    logger.info(f"GS requesting the following file {string_command}")
+    
+    print(os.listdir("/sd"))  # debug line to check the files on the SD card, can be removed later
+    
+    # 1. check if the file exists and get the path to the file
+    # 2. create a transaction in the transaction manager
+    transaction = TM.create_transaction(file_path=string_command, is_tx=True)
+    # 3. generate init transaction packet
+    cmd = Command("INIT_TRANS")
+    tid = transaction.tid
+    n_packets = transaction.number_of_packets
+    hash_MSB, hash_msb, hash_LSB = transaction.get_hash_as_integers()
+    
+    cmd.set_arguments(tid, n_packets, hash_MSB, hash_msb, hash_LSB)
+    packet = pack(cmd)
+    q_stat = TransmitQueue.push_packet(packet)
+    if q_stat != QUEUE_STATUS.OK:
+        logger.error(f"Failed to push INIT_TRANS command to transmit queue with status: {q_stat}")
+    
+    return [tid, n_packets, hash_MSB, hash_LSB]
+    
+def GENERATE_ALL_PACKETS(tid):
+    # 1. search for the transaction id
+    transaction = TM.get_transaction(tid)
+    if transaction is None:
+        logger.error(f"Transaction with tid {tid} not found")
+        return ["transaction_not_found"]
+    
+    # 2. generate all the packets for that transaction
+    packet_list = transaction.generate_all_packets()
+    # 3. add them to the transmit queue
+    for packet in packet_list:
+        q_stat = TransmitQueue.push_packet(packet)
+        if q_stat != QUEUE_STATUS.OK:
+            logger.error(f"Failed to push packet to transmit queue with status: {q_stat}")
+    
+    return [len(packet_list)]
+    
+def GENERATE_X_PACKETS(tid, x):
+    # 1. search for the transaction id
+    transaction = TM.get_transaction(tid)
+    if transaction is None:
+        logger.error(f"Transaction with tid {tid} not found")
+        return ["transaction_not_found"]
+    
+    packet_list = transaction.generate_x_packets(x)
+    # 3. add them to the transmit queue
+    for packet in packet_list:
+        q_stat = TransmitQueue.push_packet(packet)
+        if q_stat != QUEUE_STATUS.OK:
+            logger.error(f"Failed to push packet to transmit queue with status: {q_stat}")
+    
+    return [len(packet_list)]
+    
+def GET_SINGLE_PACKET(tid, seq_number):
+    return "please implement me"
+
+def TRANS_PAYLOAD(tid, seq_number, payload):
+    # no need to implement now, this will only be needed if sending transactions from the gs to sat
+    return "please implement me"
+
+def INIT_TRANS(tid, number_of_packets, hash_MSB, hash_LSB):
+    # no need to implement now, this will only be needed if sending transactions from the gs to sat
+    return "please implement me"
 
 def get_tx_message_header():
     """ " Helper function to obtain the tx message header to send back"""
