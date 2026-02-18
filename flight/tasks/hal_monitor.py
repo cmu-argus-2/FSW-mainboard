@@ -197,8 +197,27 @@ class Task(TemplateTask):
         DH.log_data(self.log_name, self.log_data)
         # regular reboot every 24 hours
         # TODO: delay this if the satellite is at a ground pass
-        if TPM.monotonic() - SATELLITE.BOOTTIME >= _REGULAR_REBOOT_TIME:
-            # TODO: graceful shutdown for payload if needed
-            self.log_info("Executing regular reboot")
-            self.close_data_process()
-            SATELLITE.reboot()
+        # if TPM.monotonic() - SATELLITE.BOOTTIME >= _REGULAR_REBOOT_TIME:
+        #     # TODO: graceful shutdown for payload if needed
+        #     self.log_info("Executing regular reboot")
+        #     self.close_data_process()
+        #     SATELLITE.reboot()
+        if (TPM.monotonic() - SATELLITE.BOOTTIME >= _REGULAR_REBOOT_TIME):
+            try:
+                latest_ground_pass = DH.get_latest_data("ground_pass")
+                if latest_ground_pass is not None:
+                    ground_pass_status = latest_ground_pass[0]
+                else:
+                    ground_pass_status = False
+
+                if ground_pass_status:
+                    self.log_info("Skipping regular reboot due to ground pass")
+                else:
+                    self.log_info("Executing regular reboot")
+                    self.close_data_process()
+                    SATELLITE.reboot()
+            except Exception as e:
+                # TODO: graceful shutdown for payload if needed
+                self.log_info("Executing regular reboot")
+                self.close_data_process()
+                SATELLITE.reboot()
