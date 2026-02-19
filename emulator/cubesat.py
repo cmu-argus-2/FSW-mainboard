@@ -365,34 +365,57 @@ class CubeSat:
         """BATT_HEATERS: Returns the battery heaters object
         :return: object or None
         """
-        return self._device_list["BATT_HEATERS"].device
+        return self.__device_list["BATT_HEATERS"].device
 
     @property
     def BATTERY_HEATERS_AVAILABLE(self) -> bool:
         """BATT_HEATERS_AVAILABLE: Returns True if the battery heaters are available
         :return: bool
         """
-        return self.key_in_device_list("BATT_HEATERS") and self._device_list["BATT_HEATERS"].device is not None
+        return self.key_in_device_list("BATT_HEATERS") and self.__device_list["BATT_HEATERS"].device is not None
 
     @property
     def WATCHDOG(self):
         """WATCHDOG: Returns the watchdog object
         :return: object or None
         """
-        return self._device_list["WATCHDOG"].device
+        return self.__device_list["WATCHDOG"].device
 
     @property
     def WATCHDOG_AVAILABLE(self) -> bool:
         """WATCHDOG_AVAILABLE: Returns True if the watchdog is available
         :return: bool
         """
-        return self.key_in_device_list("WATCHDOG") and self._device_list["WATCHDOG"].device is not None
+        return self.key_in_device_list("WATCHDOG") and self.__device_list["WATCHDOG"].device is not None
+
+    @property
+    def PAYLOADUART(self):
+        """PAYLOAD_EN: Returns the payload UART object
+        :return: object or None
+        """
+        return self.__device_list["PAYLOADUART"].device
+
+    @property
+    def PAYLOADUART_AVAILABLE(self) -> bool:
+        """PAYLOADUART_AVAILABLE: Returns True if the payload UART is available
+        :return: bool
+        """
+        return self.key_in_device_list("PAYLOADUART") and self.__device_list["PAYLOADUART"].device is not None
+
+    @property
+    def PAYLOADUART_BAUDRATE(self) -> bool:
+        """PAYLOADUART_BAUD: Returns the payload UART baudrate
+        :return: int or None
+        """
+        if self.PAYLOADUART_AVAILABLE:
+            return self.__device_list["PAYLOADUART"].device.baudrate
+        return None
 
     @property
     def DEPLOYMENT_SENSORS(self):
         """Returns a dictionary of deployment sensors with the direction as the key (e.g. 'XP', 'YM')"""
         deployment_sensors = {}
-        for name, device in self._device_list.items():
+        for name, device in self.__device_list.items():
             if "DEPLOYMENT_" in name:
                 deployment_sensors[name.replace("DEPLOYMENT_", "")] = device.device
         return deployment_sensors

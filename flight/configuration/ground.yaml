@@ -11,10 +11,13 @@ command:
   DETUMBLING_TIMEOUT_DURATION:
     value: 30  # seconds, i.e., 30 seconds
     _const: true
-  
+    
   BURN_WIRE_TIMEOUT:
     value: 2  # number of deployment attempts before forcing completion
     _const: true
+
+  PAYLOAD_TESTING_MODE:
+    value: false  # Set to true to enable payload testing mode (goes straight to experiment mode)
 
 # Time Processor Module
 time_processor:

@@ -12,6 +12,7 @@ class command_config:
     EXIT_STARTUP_TIMEOUT = const(5)
     DETUMBLING_TIMEOUT_DURATION = const(30)
     BURN_WIRE_TIMEOUT = const(2)
+    PAYLOAD_TESTING_MODE = False
 
 
 class time_processor_config:
@@ -27,4 +28,4 @@ class hal_monitor_config:
 
 
 class comms_config:
-    ARGUS_ID = const(0x0)
+    ARGUS_ID = const(0)

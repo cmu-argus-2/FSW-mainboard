@@ -103,10 +103,10 @@ class ArgusV4Interfaces:
     UART0_RX = board.RX0
     UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD)
 
-    JETSON_BAUD = const(57600)
+    JETSON_BAUD = const(460800)
     JETSON_TX = board.TX1
     JETSON_RX = board.RX1
-    JETSON_UART = UART(JETSON_TX, JETSON_RX, baudrate=JETSON_BAUD)
+    JETSON_UART = UART(JETSON_TX, JETSON_RX, baudrate=JETSON_BAUD, receiver_buffer_size=8192)
 
 
 class ArgusV4Components:
@@ -456,10 +456,10 @@ class ArgusV4(CubeSat):
             "LIGHT_YP": [ArgusV4Components.LIGHT_SENSOR_YP_I2C_ADDRESS, ArgusV4Components.LIGHT_SENSOR_YP_I2C],
             "LIGHT_YM": [ArgusV4Components.LIGHT_SENSOR_YM_I2C_ADDRESS, ArgusV4Components.LIGHT_SENSOR_YM_I2C],
             "LIGHT_ZM": [ArgusV4Components.LIGHT_SENSOR_ZM_I2C_ADDRESS, ArgusV4Components.LIGHT_SENSOR_ZM_I2C],
-            "LIGHT_ZP1": [ArgusV4Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
-            "LIGHT_ZP2": [ArgusV4Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
-            "LIGHT_ZP3": [ArgusV4Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
-            "LIGHT_ZP4": [ArgusV4Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_1": [ArgusV4Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_2": [ArgusV4Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_3": [ArgusV4Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_4": [ArgusV4Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
         }
 
         from hal.drivers.opt4003 import OPT4003

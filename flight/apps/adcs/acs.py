@@ -10,7 +10,7 @@ from ulab import numpy as np
 
 
 def readings_are_valid(
-    readings: tuple[np.ndarray],
+    readings,  #: tuple[np.ndarray],
 ) -> bool:
     for reading in readings:
         if not isinstance(reading, np.ndarray) or reading.shape != ControllerConst.READING_DIM:
