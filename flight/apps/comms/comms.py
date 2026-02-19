@@ -39,6 +39,7 @@ class SATELLITE_RADIO:
     crc_error_count = 0
     undef_error_count = 0
     packet_none_count = 0
+    packet_auth_fail_count = 0
 
     tx_packet_count = 0
     tx_failed_count = 0  # this is because the radio was not available
@@ -133,6 +134,22 @@ class SATELLITE_RADIO:
             return None
 
         # hopefully we have a valid packet at this point
+        header = packet[0]   # the first byte of the packet is the sc_cs [TODO] - Change this for the real cs size
+        logger.info(f"Received packet with header (sc_cs): {header}")
+        packet = packet[1:]  # remove the header from the packet
+
+        if cls.auth_enabled:
+            # Authenticated command format:
+            # [sc_cs|nonce(4)|mac(32)|msg_id|cmd_id|args_len|args...]
+            is_valid, reason, packet = verify_authenticated_command(packet, cls.auth_key)
+
+            if not is_valid:
+                logger.warning(f"[COMMS ERROR] Command authentication failed: {reason}")
+                cls.packet_auth_fail_count += 1
+                return None
+
+            cls.rx_auth_status = "passed"
+            logger.info(f"[COMMS] Command authentication passed")
 
         # unpack the received packet
         message_object = unpack(packet)  # [TODO] - this should be implemented in middleware
@@ -144,23 +161,6 @@ class SATELLITE_RADIO:
             return None
 
         cls.rx_packet_count += 1
-
-        if cls.auth_enabled:
-            # Authenticated command format:
-            # [cmd_id|sq_cnt(2)|args_len|args...|nonce(4)|mac(32)]
-            expected_packet_len = 4 + cls.rx_gs_len + AUTH_TRAILER_SIZE
-            if len(packet) != expected_packet_len:
-                logger.warning("[COMMS ERROR] RX'd authenticated packet has invalid length")
-                return None
-
-            is_valid, reason, command_args = verify_authenticated_command(packet, cls.rx_gs_cmd, cls.rx_gs_len, cls.auth_key)
-            if not is_valid:
-                logger.warning(f"[COMMS ERROR] Command authentication failed: {reason}")
-                return None
-
-            cls.rx_payload = command_args
-            cls.rx_auth_status = "passed"
-            logger.info(f"[COMMS] Command authentication passed for CMD {cls.rx_gs_cmd}")
 
         return message_object
 
