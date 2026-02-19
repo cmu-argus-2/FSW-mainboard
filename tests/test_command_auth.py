@@ -1,7 +1,6 @@
 import hashlib
 import hmac
 
-
 from flight.apps.comms.auth import compute_hmac_sha256, get_auth_key_bytes, verify_authenticated_command
 
 
