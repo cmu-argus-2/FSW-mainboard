@@ -6,7 +6,7 @@ and acknowledgement RX.
 Authors: Akshat Sahay, Ibrahima S. Sow, Perrin Tong
 """
 
-from apps.comms.fifo import TransmitQueue
+from apps.comms.auth import get_auth_key_bytes, verify_authenticated_command
 from apps.telemetry.splat.splat.telemetry_codec import unpack
 from apps.telemetry.splat.splat.telemetry_helper import format_bytes
 from core import logger
@@ -27,10 +27,11 @@ class SATELLITE_RADIO:
     # Init TM frame for preallocating memory
     tm_frame = bytearray(248)
 
-    # queue for outgoing packets to be transmitted by comms
-    TX_QUEUE = TransmitQueue()
-
     rx_message_rssi = 0
+
+    auth_enabled = bool(getattr(CONFIG, "AUTH_ENABLED", False))
+    auth_key = get_auth_key_bytes(getattr(CONFIG, "AUTH_KEY_HEX", ""))
+    rx_auth_status = "not_checked"
 
     # counters to help determine comms health and performance
     rx_packet_count = 0  # this are just the valid packets
@@ -38,6 +39,7 @@ class SATELLITE_RADIO:
     crc_error_count = 0
     undef_error_count = 0
     packet_none_count = 0
+    packet_auth_fail_count = 0
 
     tx_packet_count = 0
     tx_failed_count = 0  # this is because the radio was not available
@@ -64,6 +66,10 @@ class SATELLITE_RADIO:
     def get_rssi(cls):
         # Get state
         return cls.rx_message_rssi
+
+    @classmethod
+    def get_auth_status(cls):
+        return cls.rx_auth_status
 
     """
         Name: set_tx_ack
@@ -103,6 +109,7 @@ class SATELLITE_RADIO:
 
         packet = None
         err = -1  # _ERR_NONE is 0
+        cls.rx_auth_status = "not_checked"
 
         # no need to check if radio is available, it was already checked
         packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
@@ -112,24 +119,40 @@ class SATELLITE_RADIO:
             # CRC error, packet likely corrupted
             logger.warning("[COMMS ERROR] CRC error occured on incoming packet")
             cls.crc_error_count += 1
-            return cls.rx_gs_cmd
+            return None
 
         elif err != _ERR_NONE:
             # Undefined error, packet should never have gotten to comms task
             logger.error("[COMMS ERROR] Undefined error from radio driver")
             cls.undef_error_count += 1
-            return cls.rx_gs_cmd
+            return None
 
         # Check if packet exists
         if packet is None:
             # FIFO buffer does not contain a packet, or packet could not be read for some reason
             cls.packet_none_count += 1
-            return cls.rx_gs_cmd
+            return None
 
         # hopefully we have a valid packet at this point
+        header = packet[0]   # the first byte of the packet is the sc_cs [TODO] - Change this for the real cs size
+        logger.info(f"Received packet with header (sc_cs): {header}")
+        packet = packet[1:]  # remove the header from the packet
+
+        if cls.auth_enabled:
+            # Authenticated command format:
+            # [sc_cs|nonce(4)|mac(32)|msg_id|cmd_id|args_len|args...]
+            is_valid, reason, packet = verify_authenticated_command(packet, cls.auth_key)
+
+            if not is_valid:
+                logger.warning(f"[COMMS ERROR] Command authentication failed: {reason}")
+                cls.packet_auth_fail_count += 1
+                return None
+
+            cls.rx_auth_status = "passed"
+            logger.info("[COMMS] Command authentication passed")
 
         # unpack the received packet
-        message_object = unpack(packet)  # [check] - this should be implemented in middleware
+        message_object = unpack(packet)  # [TODO] - this should be implemented in middleware
         logger.info(f"Received raw packet: {packet}")
         logger.info(f"Unpacked message object: {message_object}")
         if message_object is None:
@@ -138,6 +161,7 @@ class SATELLITE_RADIO:
             return None
 
         cls.rx_packet_count += 1
+
         return message_object
 
     """

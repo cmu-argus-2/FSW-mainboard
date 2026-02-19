@@ -65,7 +65,7 @@ class Task(TemplateTask):
             # Read packet present in the RX buffer
             message_object = SATELLITE_RADIO.receive_message()
 
-            if message_object is Command:
+            if not isinstance(message_object, Command):
                 self.log_warning("[COMMS ERROR] Received invalid command object from GS")
                 return
             self.log_info(f"Received command from GS: {message_object}")

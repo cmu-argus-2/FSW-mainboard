@@ -180,7 +180,10 @@ def DOWNLINK_ALL(file_id, file_time=None):
 def EVAL_STRING_COMMAND(string_command):
     """
     As of right now this is just for debugging purposes
-    will receive a string, will eval it and return the results."""
+    will receive a string, will eval it and return the results.
+    [TODO] - This is a potential security risk. Should create some sort of firewall that can be controlled
+    with another command to allow/disallow evalling commands
+    """
     logger.info(f"Executing EVAL_STRING_COMMAND with request: {string_command}")
 
     try:
