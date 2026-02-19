@@ -29,6 +29,16 @@ class Task(TemplateTask):
                 circular_buffer_size=10,  # Keep 10 images (~530KB), was 20
                 buffer_size=8192,  # 8KB write buffer to reduce SD flush frequency during larger bursts
             )
+            
+        # Image Metadata
+        if not DH.file_process_exists("img_metadata"):
+            DH.register_file_process(
+                tag_name="img_metadata",
+                file_extension="bin",
+                data_limit=1000000,  # 1MB max per metadata
+                circular_buffer_size=10,  # Keep 10 metadata for images
+                buffer_size=8192,  # 8KB write buffer to reduce SD flush frequency during larger bursts
+            )
 
         # Telemetry process
         if not DH.data_process_exists("payload_tm"):
