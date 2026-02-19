@@ -24,5 +24,5 @@ class hal_monitor_config:
 
 
 class comms_config:
-    ARGUS_ID = const(0)
-    HB_PERIOD = const(60)
+    ARGUS_ID = const(0x0)
+    HB_PERIOD = const(30)

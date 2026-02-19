@@ -1,0 +1,170 @@
+---
+# -----------------------------------------------------------------------------------------------------------
+# physical properties
+# -----------------------------------------------------------------------------------------------------------
+mass : 
+     nominal_mass : 1.0 # kg
+     mass_dev : 50 # Stddev from nominal mass as a % of nominal mass [%]
+     min_mass : 0.5 # Min allowable mass [kg]
+     max_mass : 2.0 # Max allowable mass [kg]
+
+area : 
+     nominal_area : 0.01 # face area m^2
+     area_dev : 20 # stddev from nominal area as a % of nominal area [%]
+     min_area : 0.01 # Min area [m^2]
+
+inertia : 
+     nominal_inertia : [0.001796, 0.0, 0.000716, 
+                        0.0, 0.002081, 0.0,
+                        0.000716, 0.0, 0.002232]
+     principal_axis_dev : [20,20,20] # stddev of principal axis inertias about nominal as a % of nominal [%]
+
+Cd : 2.2 # Drag coefficient
+CR : 1.8 # Reflectivity coefficient
+
+# -----------------------------------------------------------------------------------------------------------
+# Reaction Wheels
+# -----------------------------------------------------------------------------------------------------------
+reaction_wheels:
+     N_rw : 1                   # number of reaction wheels
+     m_rw: 0.002                # kg mass of each reaction wheel
+     max_torque : 0.001         # N.m maximum torque that can be applied by each reaction wheel
+     max_speed : 600            # rad/s maximum speed that can be achieved by each reaction wheel
+     nom_rw_ang_vel: 30        # rad/s nominal angular velocity of the reaction wheels
+
+     rw_orientation : [0,0,1] # spin axis of each reaction wheel in the body frame
+     rw_orientation_dev : 0.001 # stddev of angular mounting error about nominal normal vector [rad]
+
+     I_rw : 6.5e-7              # kg.m^2 inertia of each reaction wheel
+     I_rw_dev : 20 # stddev from nominal I_rw as a % of nominal I_rw [%]
+
+# -----------------------------------------------------------------------------------------------------------
+# Magnetorquers
+# -----------------------------------------------------------------------------------------------------------
+magnetorquers:
+     N_mtb : 6  # number of magnetorquers
+     A_cross : 5.4326e-3 # [UNITS : m^2]
+     N_turns : 64
+     max_voltage : 5  # V maximum voltage that can be applied by each magnetorquer
+     max_current_rating : 1.0  # A
+     max_power : 1  # W
+
+     mtb_orientation : [1,0,0, 
+                        0,1,0, 
+                        0,0,1, 
+                        1,0,0, 
+                        0,1,0, 
+                        0,0,1] # alignment axis of each magnetorquer in the body frame
+     mtb_orientation_dev : 0.001 # stddev of angular mounting error about nominal normal vector for each MTB [rad]
+
+     mtb_resistance : 42 # [UNITS: Ω]
+     mtb_resistance_dev : 5 # stddev from nominal resistance as a % of nominal resistance [%]
+     mtb_resistance_lub : 10 # max allowed deviation from nominal resistance as a % of the nominal resistance [%]
+     
+
+# -----------------------------------------------------------------------------------------------------------
+# Payload
+# -----------------------------------------------------------------------------------------------------------
+nadir_cam_dir: [-1,0, 0] # direction of payload camera(s) in the body frame
+
+# -----------------------------------------------------------------------------------------------------------
+# Sensors
+# -----------------------------------------------------------------------------------------------------------
+gps:
+     gps_pos_std : 10 # [UNITS: m]
+     gps_pos_std_dev : 20 # stddev of uncertainity in GPS position error estimation as a % of nominal error stddev [%] - Is an error of an error
+
+     gps_vel_std : 1 # [UNITS: m/s]
+     gps_vel_std_dev : 20 # stddev of uncertainity in GPS position error estimation as a % of nominal error stddev [%]
+
+photodiodes:
+     num_photodiodes : 6
+     photodiode_normals : [1,0,0, 
+                           0,1,0, 
+                           0,0,1, 
+                          -1,0,0, 
+                           0,-1,0, 
+                           0,0,-1] # Light diode normals in body frame
+     photodiode_orientation_dev : 0.001 # stddev of angular mounting error about nominal normal vector for each photodiode [rad]
+
+     photodiode_std : 1000 # [UNITS: lux]
+     photodiode_std_dev : 20 # stddev of uncertainity in photodiode lux error estimation as a % of nominal error stddev [%]
+
+magnetometer:
+     magnetometer_noise_std : 0.005 # [UNITS: T]
+     magnetometer_std_dev : 20 # stddev of uncertainity in magnetometer error estimation as a % of nominal error stddev [%]
+
+gyroscope:
+     gyro_correlation_time : 500000.0 # [UNITS: s]
+     gyro_scale_factor_err : 1.0e-5
+
+     gyro_sigma_w : 2.66e-05 # Bias dynamics [UNITS: rad/s^2/√Hz]
+     gyro_sigma_w_dev : 20 # stddev of uncertainity in bias dynamics estimation as a % of nominal error stddev [%]
+
+     gyro_sigma_v : 1.87e-04 # Additive white noise [UNITS: rad/s/√Hz]
+     gyro_sigma_v_dev : 20 # stddev of uncertainity in white noise estimation as a % of nominal error stddev [%]
+     
+
+# -----------------------------------------------------------------------------------------------------------
+# Sim settings
+# -----------------------------------------------------------------------------------------------------------
+MAX_TIME: 10800 # [s]
+dt: 0.01         # [s]
+earliest_sim_start_time_UTC: 2024-10-01 12:00:00
+latest_sim_start_time_UTC: 2024-10-28 23:59:59
+useDrag : False
+useSRP : False
+
+# -----------------------------------------------------------------------------------------------------------
+# Initialization
+# -----------------------------------------------------------------------------------------------------------
+# All orbital elements in this section are expressed as the stddev from nominal parameter value as a % of nominal parameter value
+initialization:
+     semimajor_axis : 6908000 # [m]
+     semimajor_axis_dev : 1 #  [%]
+
+     eccentricity : 0.007 
+     eccentricity_dev : 20 # [%]
+
+     inclination : 97.75 # [deg]
+     inclination_dev : 1 # [%]
+
+     RAAN : 171 # [deg]
+     RAAN_dev : 20 # [%]
+
+     AOP : 63 # [deg]
+     AOP_dev : 20 # [%]
+
+     # If disperse_true_anomaly is True, true anomaly is randomly sampled between 0 and 360
+     # If False, the nominal_true_anomaly is chosen across trials
+     disperse_true_anomaly : True
+     true_anomaly : 0 # [deg] # Only accessed iff disperse_true_anomaly is False
+
+     # If disperse_initial_attitude is True, initial attitude is randomly sampled
+     # If False, the nominal_initial_attitude is chosen across trials
+     disperse_initial_attitude : True
+     initial_attitude : [1,0,0,0] # only accessed iff disperse_initial_attitude is False
+
+     # If disperse_initial_angular_rate is True, initial angular rate is randomly sampled
+     # If False, the nominal_initial_angular_rate is chosen across trials
+     disperse_initial_angular_rate : True
+     initial_angular_rate : [0.2,0.3,0.2] # [rad/s] accessed iff disperse_initial_angular_rate is True
+     initial_angular_rate_bound : 0.5 # Max initial angular rate about any axis [rad/s]
+
+
+# -----------------------------------------------------------------------------------------------------------
+# Controller Parameters
+# -----------------------------------------------------------------------------------------------------------
+algorithm: "Bcross" # "Lyapunov" # "BaseSP" # "BaseNP" # # "BCROSS" or "PID" or "BaseSP"
+bcrossgain: 0.0028
+
+mtb_att_feedback_gains: [[0.7071, 0.0, 0.0, 0.0028, 0.0, 0.0],
+                    [0.0, 0.7071, 0.0, 0.0, 0.0028, 0.0],
+                    [0.0, 0.0, 0.7071, 0.0, 0.0, 0.0028]]
+rw_att_feedback_gains: [0.7071, 0.0028]
+rw_vel_gain: 6.5e-7
+pointing_mode: "spin-stabilized" # "detumble" # "detumble" or "spin-stabilized" or "3D-stabilized"
+pointing_target: "Nadir" # "Nadir" or "Sun"
+tgt_ss_ang_vel: 10 # [deg/s]
+controller_dt: 1 # [s]
+estimator_dt: 1    # [s]
