@@ -85,11 +85,6 @@ class Task(TemplateTask):
     last_mag_time = 0.0
     last_mtq_time = 0.0
 
-    xp_deployed = False
-    ym_deployed = False
-
-    ctr_const = ControllerConst()
-
     def __init__(self, id):
         super().__init__(id)
         self.name = "ADCS"  # Override the name
@@ -105,17 +100,6 @@ class Task(TemplateTask):
 
             self.time = TPM.time()
             self.log_data[ADCS_IDX.TIME_ADCS] = self.time
-
-            if not self.xp_deployed:
-                xp_dist = sensors.read_deployment_sensors("XP")
-                self.xp_deployed = xp_dist < 0 or xp_dist > 10
-                if self.xp_deployed:
-                    self.ctr_const.update_inertia_no_deploy(xp_deployed=self.xp_deployed, ym_deployed=self.ym_deployed)
-            if not self.ym_deployed:
-                ym_dist = sensors.read_deployment_sensors("YM")
-                self.ym_deployed = ym_dist < 0 or ym_dist > 10
-                if self.ym_deployed:
-                    self.ctr_const.update_inertia_no_deploy(xp_deployed=self.xp_deployed, ym_deployed=self.ym_deployed)
 
             # ------------------------------------------------------------------------------------------------------------------------------------
             # DETUMBLING
@@ -150,7 +134,7 @@ class Task(TemplateTask):
                     self.ensure_coils_off()
 
                 # Check if detumbling has been completed
-                self.MODE = update_mode(self.MODE, self.CONTROLLER_MODE, self.ctr_const)
+                self.MODE = update_mode(self.MODE, self.CONTROLLER_MODE)
                 # if update_mode(self.MODE, self.ctr_const) != Modes.TUMBLING:
                 #     self.ensure_coils_off()
                 #     self.MODE = Modes.STABLE
@@ -169,7 +153,7 @@ class Task(TemplateTask):
                 if (
                     SM.current_state == STATES.NOMINAL
                     and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
-                    and update_mode(self.MODE, self.CONTROLLER_MODE, self.ctr_const) == Modes.TUMBLING
+                    and update_mode(self.MODE, self.CONTROLLER_MODE) == Modes.TUMBLING
                 ):
                     # Do not allow a switch to Detumbling from Low power
                     self.MODE = Modes.TUMBLING
@@ -196,7 +180,7 @@ class Task(TemplateTask):
                     self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
 
                     # Identify Mode based on current sensor readings
-                    new_mode = update_mode(self.MODE, self.CONTROLLER_MODE, self.ctr_const)
+                    new_mode = update_mode(self.MODE, self.CONTROLLER_MODE)
                     if new_mode != self.MODE:
                         self.ensure_coils_off()
                         self.MODE = new_mode
@@ -239,7 +223,7 @@ class Task(TemplateTask):
 
                 if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
                     # Control MCMs and obtain coil statuses
-                    mtq_throttle = spin_stabilizing_controller(self.gyro_data, self.mag_data, self.ctr_const)
+                    mtq_throttle = spin_stabilizing_controller(self.gyro_data, self.mag_data)
 
             elif self.MODE == Modes.SUN_POINTING:  # Sun-pointed controller
 
@@ -250,9 +234,7 @@ class Task(TemplateTask):
                     or self.mag_status != StatusConst.OK
                     or self.sun_status != StatusConst.OK
                 ):
-                    mtq_throttle = sun_pointing_controller(
-                        self.sun_pos_body, self.gyro_data, self.mag_data, self.ctr_const.INERTIA_MAT
-                    )
+                    mtq_throttle = sun_pointing_controller(self.sun_pos_body, self.gyro_data, self.mag_data)
             # Else, if in ACS_OFF, do not control MCMs
             # Commanded dipole moment stays zero
 

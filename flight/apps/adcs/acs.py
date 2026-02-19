@@ -18,7 +18,7 @@ def readings_are_valid(
     return True
 
 
-def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray, ctr_const: ControllerConst) -> np.ndarray:
+def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.ndarray:
     """
     Spin-stabilizing control law.
     Augmented with tanh function for soft clipping.
@@ -27,23 +27,21 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray, ctr_co
     """
     # Stop ACS if the reading values are invalid
     if not readings_are_valid((omega, mag_field)) or np.linalg.norm(mag_field) == 0:
-        return ctr_const.FALLBACK_CONTROL
+        return ControllerConst.FALLBACK_CONTROL
 
     # Do spin stabilization
     else:
         # Compute angular momentum error
-        error = ctr_const.MOMENTUM_TARGET - np.dot(ctr_const.INERTIA_MAT, omega)
+        error = ControllerConst.MOMENTUM_TARGET - np.dot(ControllerConst.INERTIA_MAT, omega)
 
         # Compute B-cross dipole moment
-        u = ctr_const.SPIN_STABILIZING_GAIN * np.cross(mag_field, error)
+        u = ControllerConst.SPIN_STABILIZING_GAIN * np.cross(mag_field, error)
 
         # Smooth the controller while enforcing an l2-norm upper bound on the control input
         return smooth_throttle(u)
 
 
-def sun_pointing_controller(
-    sun_vector: np.ndarray, omega: np.ndarray, mag_field: np.ndarray, inertia_mat: np.ndarray
-) -> np.ndarray:
+def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field: np.ndarray) -> np.ndarray:
     """
     Sun pointing control law.
     Augmented with tanh function for soft clipping.
@@ -61,7 +59,7 @@ def sun_pointing_controller(
     # Do sun pointing
     else:
         # Compute pointing error
-        ang_mom = np.dot(inertia_mat, omega)
+        ang_mom = np.dot(ControllerConst.INERTIA_MAT, omega)
         # conical projection of angular momentum onto sun vector
         error = sun_vector - ang_mom / np.linalg.norm(ang_mom)
         # spherical projection of angular momentum onto sun vector

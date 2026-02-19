@@ -14,7 +14,7 @@ sil_campaign:
           param_changes:
                MAX_TIME: 9000 # 96000 # [s]
           fsw_config_param_changes: # parts of the nominal file to change
-               adcs_config:
+               adcs:
                     CONTROLLER_MODE: 0
           description: "Baseline simulation campaign with nominal parameters."
      sil_set_2:

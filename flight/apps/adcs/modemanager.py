@@ -6,14 +6,14 @@ from apps.adcs.consts import ControllerConst, ControllerModes, Modes, StatusCons
 from ulab import numpy as np
 
 
-def update_mode(current_mode, ctr_mode, ctr_const: ControllerConst) -> int:
+def update_mode(current_mode, ctr_mode) -> int:
     """
     - Returns the current mode of the ADCS
     """
     if ctr_mode in [ControllerModes.BCROSS, ControllerModes.BDOT]:
         return update_mode_detumbling(current_mode)
     if ctr_mode == ControllerModes.SUN_POINTING:
-        return update_mode_sun_pointing(current_mode, ctr_const)
+        return update_mode_sun_pointing(current_mode)
     raise ValueError(f"Invalid Controller Mode {ctr_mode}")
 
 
@@ -51,7 +51,7 @@ def update_mode_detumbling(current_mode) -> int:
     raise ValueError(f"Invalid Current Mode {current_mode}")
 
 
-def update_mode_sun_pointing(current_mode, ctr_const: ControllerConst) -> int:
+def update_mode_sun_pointing(current_mode) -> int:
     """
     Returns the current mode of the ADCS for a spin-stabilized sun-pointing controller
     """
@@ -70,8 +70,8 @@ def update_mode_sun_pointing(current_mode, ctr_const: ControllerConst) -> int:
         return Modes.TUMBLING
 
     if current_mode == Modes.STABLE:
-        h_hat = np.dot(ctr_const.INERTIA_MAT, omega) / ctr_const.MOMENTUM_TARGET_MAG
-        momentum_error = np.linalg.norm(ctr_const.INERTIA_MAJOR_DIR - h_hat)
+        h_hat = np.dot(ControllerConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET_MAG
+        momentum_error = np.linalg.norm(ControllerConst.INERTIA_MAJOR_DIR - h_hat)
         if omega_norm >= Modes.TUMBLING_TOL:
             return Modes.TUMBLING
         if momentum_error <= Modes.STABLE_TOL_LO and sun_status == StatusConst.OK:
@@ -79,8 +79,8 @@ def update_mode_sun_pointing(current_mode, ctr_const: ControllerConst) -> int:
         return Modes.STABLE
 
     if current_mode == Modes.SUN_POINTING:
-        h_hat = np.dot(ctr_const.INERTIA_MAT, omega) / ctr_const.MOMENTUM_TARGET_MAG
-        momentum_error = np.linalg.norm(ctr_const.INERTIA_MAJOR_DIR - h_hat)
+        h_hat = np.dot(ControllerConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET_MAG
+        momentum_error = np.linalg.norm(ControllerConst.INERTIA_MAJOR_DIR - h_hat)
 
         if momentum_error >= Modes.STABLE_TOL_LO:
             return Modes.STABLE
@@ -88,7 +88,7 @@ def update_mode_sun_pointing(current_mode, ctr_const: ControllerConst) -> int:
         if sun_status != StatusConst.OK:
             return Modes.SUN_POINTED
 
-        h = np.dot(ctr_const.INERTIA_MAT, omega)
+        h = np.dot(ControllerConst.INERTIA_MAT, omega)
         h_norm = np.linalg.norm(h)
         if h_norm == 0:
             return Modes.SUN_POINTED
@@ -102,12 +102,12 @@ def update_mode_sun_pointing(current_mode, ctr_const: ControllerConst) -> int:
         return Modes.SUN_POINTING
 
     if current_mode == Modes.ACS_OFF:
-        h_hat = np.dot(ctr_const.INERTIA_MAT, omega) / ctr_const.MOMENTUM_TARGET_MAG
-        momentum_error = np.linalg.norm(ctr_const.INERTIA_MAJOR_DIR - h_hat)
+        h_hat = np.dot(ControllerConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET_MAG
+        momentum_error = np.linalg.norm(ControllerConst.INERTIA_MAJOR_DIR - h_hat)
         if momentum_error >= Modes.STABLE_TOL_HI:
             return Modes.STABLE
         if sun_status == StatusConst.OK:
-            h = np.dot(ctr_const.INERTIA_MAT, omega)
+            h = np.dot(ControllerConst.INERTIA_MAT, omega)
             h_norm = np.linalg.norm(h)
             if h_norm == 0:
                 return Modes.SUN_POINTED
