@@ -21,9 +21,14 @@ Author: Ibrahima S. Sow
 """
 
 from apps.command.commands import (
+    COMMS_MODE,
+    DIGIPEATER_ACTIVATE,
+    DIGIPEATER_DEACTIVATE,
     DOWNLINK_ALL,
     EVAL_STRING_COMMAND,
     FORCE_REBOOT,
+    RF_RESUME,
+    RF_STOP,
     REQUEST_FILE_METADATA,
     REQUEST_FILE_PKT,
     REQUEST_IMAGE,
@@ -37,7 +42,7 @@ from apps.command.commands import (
     TURN_OFF_PAYLOAD,
     UPLINK_TIME_REFERENCE,
 )
-from apps.command.preconditions import file_id_exists, valid_inputs, valid_state, valid_time_format
+from apps.command.preconditions import file_id_exists, valid_comms_mode, valid_inputs, valid_state, valid_time_format
 from apps.comms.fifo import TransmitQueue
 from apps.telemetry.splat.splat.telemetry_codec import Ack, pack
 from core import logger
@@ -48,9 +53,14 @@ from micropython import const
 # avoid using the eval function to execute commands
 
 COMMAND_DISPATCH = {
+    "COMMS_MODE": COMMS_MODE,
+    "DIGIPEATER_ACTIVATE": DIGIPEATER_ACTIVATE,
+    "DIGIPEATER_DEACTIVATE": DIGIPEATER_DEACTIVATE,
     "DOWNLINK_ALL": DOWNLINK_ALL,
     "EVAL_STRING_COMMAND": EVAL_STRING_COMMAND,
     "FORCE_REBOOT": FORCE_REBOOT,
+    "RF_RESUME": RF_RESUME,
+    "RF_STOP": RF_STOP,
     "REQUEST_FILE_METADATA": REQUEST_FILE_METADATA,
     "REQUEST_FILE_PKT": REQUEST_FILE_PKT,
     "REQUEST_IMAGE": REQUEST_IMAGE,
@@ -67,6 +77,7 @@ COMMAND_DISPATCH = {
 
 PRECONDITION_DISPATCH = {
     "file_id_exists": file_id_exists,
+    "valid_comms_mode": valid_comms_mode,
     "valid_inputs": valid_inputs,
     "valid_state": valid_state,
     "valid_time_format": valid_time_format,

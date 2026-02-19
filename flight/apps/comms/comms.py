@@ -7,6 +7,7 @@ Authors: Akshat Sahay, Ibrahima S. Sow, Perrin Tong
 """
 
 from apps.comms.auth import get_auth_key_bytes, verify_authenticated_command
+from apps.comms.modes import COMMS_MODE, COMMS_MODE_STR
 from apps.telemetry.splat.splat.telemetry_codec import unpack
 from apps.telemetry.splat.splat.telemetry_helper import format_bytes
 from core import logger
@@ -43,6 +44,9 @@ class SATELLITE_RADIO:
 
     tx_packet_count = 0
     tx_failed_count = 0  # this is because the radio was not available
+    comms_mode = COMMS_MODE.NORMAL
+    rf_stop = False
+    digipeater_enabled = False
 
     """
         Name: set_rx_mode
@@ -70,6 +74,23 @@ class SATELLITE_RADIO:
     @classmethod
     def get_auth_status(cls):
         return cls.rx_auth_status
+
+    @classmethod
+    def get_comms_mode(cls):
+        return cls.comms_mode
+
+    @classmethod
+    def set_comms_mode(cls, mode_id):
+        """Set COMMS operating mode and update mode latches."""
+        if mode_id not in COMMS_MODE.ALL:
+            logger.warning(f"[COMMS] Invalid mode id: {mode_id}")
+            return False
+
+        cls.comms_mode = mode_id
+        cls.rf_stop = mode_id == COMMS_MODE.RF_STOP
+        cls.digipeater_enabled = mode_id == COMMS_MODE.DIGIPEAT
+        logger.warning(f"[COMMS] Mode set to {COMMS_MODE_STR.get(mode_id, mode_id)}")
+        return True
 
     """
         Name: set_tx_ack
@@ -175,6 +196,10 @@ class SATELLITE_RADIO:
         The message has already been stored in the class variable tx_message by the comms task
         it will add the satellite cs as the header and transmit the message
         """
+
+        if cls.rf_stop:
+            logger.warning("[COMMS] RF_STOP active: dropping TX request")
+            return False
 
         # Add source header to distinguish between spacecraft
         cls.tx_message = bytes([cls.ARGUS_CS]) + cls.tx_message

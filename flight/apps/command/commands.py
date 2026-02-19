@@ -22,7 +22,10 @@ Author: Ibrahima S. Sow
 
 import supervisor
 from apps.command.constants import file_tags_str
+from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
+from apps.comms.modes import COMMS_MODE as COMMS_MODE_ID
+from apps.comms.modes import COMMS_MODE_STR
 from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
 from core import logger
 from core import state_manager as SM
@@ -73,6 +76,45 @@ def TURN_OFF_PAYLOAD():
 def SCHEDULE_OD_EXPERIMENT():
     """Schedules an orbit determination experiment at the next available opportunity."""
     logger.info("Executing SCHEDULE_OD_EXPERIMENT")
+    return []
+
+
+def RF_STOP():
+    """
+    Stops all satellite RF transmissions.
+    """
+    logger.warning("Executing RF_STOP: disabling all satellite TX")
+    SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.RF_STOP)
+    return []
+
+
+def RF_RESUME():
+    """
+    Resumes normal satellite RF transmissions.
+    """
+    logger.warning("Executing RF_RESUME: enabling normal satellite TX")
+    SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.NORMAL)
+    return []
+
+
+def DIGIPEATER_ACTIVATE():
+    """Enable digipeater relay mode in COMMS."""
+    logger.warning("Executing DIGIPEATER_ACTIVATE: relay mode enabled")
+    SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.DIGIPEAT)
+    return []
+
+
+def DIGIPEATER_DEACTIVATE():
+    """Disable digipeater relay mode in COMMS."""
+    logger.warning("Executing DIGIPEATER_DEACTIVATE: relay mode disabled")
+    SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.NORMAL)
+    return []
+
+
+def COMMS_MODE(mode_id):
+    """Set COMMS operating mode (QUIET/NORMAL/DIGIPEAT/RF_STOP)."""
+    SATELLITE_RADIO.set_comms_mode(mode_id)
+    logger.warning(f"Executing COMMS_MODE: {COMMS_MODE_STR.get(mode_id, 'UNKNOWN')}")
     return []
 
 

@@ -2,6 +2,7 @@
 from apps.command import QUEUE_STATUS, CommandQueue
 from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import TransmitQueue
+from apps.comms.modes import COMMS_MODE
 from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
 
 # from apps.telemetry import TelemetryPacker
@@ -81,6 +82,10 @@ class Task(TemplateTask):
         Checks if it's time to send periodic telemetry, and if so, prepares the telemetry report for downlink.
         """
         current_time = TPM.time()
+        mode = SATELLITE_RADIO.get_comms_mode()
+
+        if mode in (COMMS_MODE.QUIET, COMMS_MODE.RF_STOP):
+            return
 
         if current_time - self.last_periodic_telemetry_time >= self.periodic_telemetry_interval:
             # Time to send periodic telemetry

@@ -19,6 +19,11 @@ class CMD_ID:
     REQUEST_IMAGE = const(0x4C)
 
     DOWNLINK_ALL = const(0x50)
+    RF_STOP = const(0x60)
+    RF_RESUME = const(0x61)
+    DIGIPEATER_ACTIVATE = const(0x62)
+    DIGIPEATER_DEACTIVATE = const(0x63)
+    COMMS_MODE = const(0x64)
 
     ARGS_LEN = {
         FORCE_REBOOT: 0,
@@ -33,6 +38,11 @@ class CMD_ID:
         REQUEST_FILE_METADATA: 5,
         REQUEST_FILE_PKT: 5,
         DOWNLINK_ALL: 5,
+        RF_STOP: 0,
+        RF_RESUME: 0,
+        DIGIPEATER_ACTIVATE: 0,
+        DIGIPEATER_DEACTIVATE: 0,
+        COMMS_MODE: 1,
     }
 
 
