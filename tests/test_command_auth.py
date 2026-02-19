@@ -6,10 +6,10 @@ from flight.apps.comms.auth import compute_hmac_sha256, get_auth_key_bytes, veri
 
 def _build_authenticated_packet(nonce, key):
     md_payload = bytes([64, 7])   # this is a request tm hal command
-    nonce_payload = nonce + md_payload
-    mac = compute_hmac_sha256(key, nonce_payload)
+    message = md_payload + nonce
+    mac = compute_hmac_sha256(key, message)
 
-    return mac + nonce + md_payload
+    return nonce + mac + md_payload
 
 
 def test_hmac_matches_python_stdlib():
