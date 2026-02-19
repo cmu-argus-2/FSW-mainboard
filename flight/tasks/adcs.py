@@ -9,7 +9,7 @@ from apps.adcs.acs import (
     sun_pointing_controller,
     zero_all_coils,
 )
-from apps.adcs.consts import ControllerConst, ControllerModes, Modes, StatusConst
+from apps.adcs.consts import ControllerModes, Modes, StatusConst
 from apps.adcs.modemanager import update_mode
 from apps.telemetry.constants import ADCS_IDX, CDH_IDX, class_length
 from core import DataHandler as DH
