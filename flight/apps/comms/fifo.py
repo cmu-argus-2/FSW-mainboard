@@ -56,10 +56,7 @@ class TransmitQueue:
         """Overwrites the packet in a 1 element queue. Returns an error code."""
         cls._queue = [packet]
 
-        if len(cls._queue) == 1:
-            return QUEUE_STATUS.OK
-        else:
-            return QUEUE_STATUS.OVERWRITE
+        return QUEUE_STATUS.OK
 
     @classmethod
     def packet_available(cls):
