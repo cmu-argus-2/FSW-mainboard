@@ -6,7 +6,7 @@ and acknowledgement RX.
 Authors: Akshat Sahay, Ibrahima S. Sow, Perrin Tong
 """
 
-from apps.comms.auth import AUTH_TRAILER_SIZE, get_auth_key_bytes, verify_authenticated_command
+from apps.comms.auth import get_auth_key_bytes, verify_authenticated_command
 from apps.telemetry.splat.splat.telemetry_codec import unpack
 from apps.telemetry.splat.splat.telemetry_helper import format_bytes
 from core import logger
@@ -149,7 +149,7 @@ class SATELLITE_RADIO:
                 return None
 
             cls.rx_auth_status = "passed"
-            logger.info(f"[COMMS] Command authentication passed")
+            logger.info("[COMMS] Command authentication passed")
 
         # unpack the received packet
         message_object = unpack(packet)  # [TODO] - this should be implemented in middleware
