@@ -2,3 +2,6 @@
 	path = simulation
 	url = https://github.com/cmu-argus-2/GNC-Simulation.git
 	branch = fsw_interface_2
+[submodule "flight/apps/telemetry/splat"]
+	path = flight/apps/telemetry/splat
+	url = https://github.com/cmu-argus-2/splat.git

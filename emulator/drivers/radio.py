@@ -26,6 +26,11 @@ class RadioDebug:
         self.radio._rx_queue = queue.Queue()
 
 
+class MockAttribute:
+    def __init__(self, value):
+        self.value = value
+
+
 class Radio:
     def __init__(self, use_socket):
         self.use_socket = use_socket
@@ -43,6 +48,9 @@ class Radio:
 
         self._last_rssi = -147.0
         self._frequency_error = 123.45
+
+        self.rx_en = MockAttribute(False)   # here just for compatibility reasons
+        self.tx_en = MockAttribute(False)   # here just for compatibility reasons
 
         self.test = RadioDebug(self)
 
@@ -72,6 +80,9 @@ class Radio:
 
     def sleep(self):
         self.listening = False
+
+    def startReceive(self, timeout=0xFFFFFF):
+        return  # no need to do anything here
 
     def send(self, packet, destination=0x00, keep_listening=True):
         if self.use_socket:

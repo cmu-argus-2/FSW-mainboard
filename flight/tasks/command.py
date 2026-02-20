@@ -10,10 +10,10 @@ from apps.command import QUEUE_STATUS, CommandQueue
 from apps.eps.eps import EPS_POWER_FLAG
 from apps.payload.controller import PayloadController as PC
 from apps.payload.controller import PayloadState
-from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
+from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX
 from core.satellite_config import command_config as CONFIG
 from core.states import STATES, STR_STATES
 from core.time_processor import TimeProcessor as TPM
@@ -397,19 +397,22 @@ class Task(TemplateTask):
         # ------------------------------------------------------------------------------------------------------------------------------------
 
         if CommandQueue.command_available():
-            (cmd_id, cmd_arglist), queue_error_code = CommandQueue.pop_command()
-            cmd_args = processor.unpack_command_arguments(cmd_id, cmd_arglist)
+            command, queue_error_code = CommandQueue.pop_command()
+            self.log_info(f"Popped command from queue: {command} with status: {queue_error_code}")
 
-            if queue_error_code == QUEUE_STATUS.OK and cmd_args != processor.CommandProcessingStatus.ARGUMENT_UNPACKING_FAILED:
-                self.log_info(f"Processing command: {cmd_id} with args: {cmd_args}")
-                status, response_args = processor.process_command(cmd_id, *cmd_args)
-                processor.handle_command_execution_status(status, response_args)
+            if queue_error_code != QUEUE_STATUS.OK:
+                self.log_error(f"Error popping command from queue: {queue_error_code}")
+                return
 
-                # Log the command execution history
-                self.log_commands[0] = TPM.time()
-                self.log_commands[1] = cmd_id
-                self.log_commands[2] = status
-                DH.log_data("cmd_logs", self.log_commands)
+            self.log_info(f"  Arguments: {command.arguments}")
+            status, response_args = processor.process_command(command)
+            processor.handle_command_execution_status(status, response_args)
+
+            # Log the command execution history
+            self.log_commands[0] = TPM.time()
+            self.log_commands[1] = command.command_id
+            self.log_commands[2] = status
+            DH.log_data("cmd_logs", self.log_commands)
 
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:

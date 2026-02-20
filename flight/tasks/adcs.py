@@ -11,11 +11,11 @@ from apps.adcs.acs import (
 )
 from apps.adcs.consts import ControllerModes, Modes, StatusConst
 from apps.adcs.modemanager import update_mode
-from apps.telemetry.constants import ADCS_IDX, CDH_IDX, class_length
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.satellite_config import adcs_config as CONFIG
+from core.dh_constants import ADCS_IDX, CDH_IDX, class_length
 from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 from ulab import numpy as np
@@ -301,10 +301,10 @@ class Task(TemplateTask):
         self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = int(self.sun_lux[2]) & 0xFFFF
         self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = int(self.sun_lux[3]) & 0xFFFF
         self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(self.sun_lux[4]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP1] = int(self.sun_lux[5]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP2] = int(self.sun_lux[6]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP3] = int(self.sun_lux[7]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP4] = int(self.sun_lux[8]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_1] = int(self.sun_lux[5]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_2] = int(self.sun_lux[6]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_3] = int(self.sun_lux[7]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_4] = int(self.sun_lux[8]) & 0xFFFF
         self.log_data[ADCS_IDX.XP_COIL_STATUS] = int(self.coil_status[0])
         self.log_data[ADCS_IDX.XM_COIL_STATUS] = int(self.coil_status[1])
         self.log_data[ADCS_IDX.YP_COIL_STATUS] = int(self.coil_status[2])

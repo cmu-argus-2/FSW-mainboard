@@ -1,1 +1,1 @@
-from apps.telemetry.packing import TelemetryPacker
+from apps.telemetry.middleware import Frame as TelemetryFrame
