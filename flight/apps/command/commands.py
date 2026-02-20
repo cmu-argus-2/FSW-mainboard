@@ -194,14 +194,13 @@ def EVAL_STRING_COMMAND(string_command):
         return ["eval_string_command_failed"]
 
 
-def CREATE_TRANS(string_command):
-    logger.info(f"GS requesting the following file {string_command}")
+def CREATE_TRANS(tid, string_command):
+    logger.info(f"GS requesting the following file {string_command} and tid: {tid}")
     
-    print(os.listdir("/sd"))  # debug line to check the files on the SD card, can be removed later
-    
+
     # 1. check if the file exists and get the path to the file
     # 2. create a transaction in the transaction manager
-    transaction = TM.create_transaction(file_path=string_command, is_tx=True)
+    transaction = TM.create_transaction(file_path=string_command, tid=tid, is_tx=True)
     # 3. generate init transaction packet
     cmd = Command("INIT_TRANS")
     tid = transaction.tid
