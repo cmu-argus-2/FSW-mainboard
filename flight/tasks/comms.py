@@ -72,7 +72,7 @@ class Task(TemplateTask):
 
             CommandQueue.overwrite_command(
                 message_object
-            )  # [check] - not sure why overwrite instead of push, i copied this from the old code
+            )  # [TODO] - not sure why overwrite instead of push, i copied this from the old code
 
             DH.log_data("comms", [TPM.time(), SATELLITE_RADIO.get_rssi()])
 
