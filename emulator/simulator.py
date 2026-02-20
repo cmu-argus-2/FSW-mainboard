@@ -54,16 +54,6 @@ class Simulator:  # will be passed by reference to the emulated HAL
         self.power_idx = slice(40, 51)
         self.jetson_idx = slice(51, 52)
 
-        # Measurement labels
-        self.gps_idx = slice(0, 6)
-        self.gyro_idx = slice(6, 9)
-        self.mag_idx = slice(9, 12)
-        self.lux_idx = slice(12, 21)
-        self.mtb_idx = slice(21, 27)
-        self.solar_idx = slice(27, 40)
-        self.power_idx = slice(40, 48)
-        self.jetson_idx = slice(48, 49)
-
     """
         SENSOR CALLBACKS
         Populate each sensor with the appropriate readings
