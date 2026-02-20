@@ -21,9 +21,9 @@ from apps.payload.definitions import (
 )
 from apps.payload.protocol import Decoder, Encoder
 from apps.payload.uart_comms import PayloadUART as PU
-from apps.telemetry.constants import PAYLOAD_IDX
 from core import DataHandler as DH
 from core import logger
+from core.dh_constants import PAYLOAD_IDX
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 from micropython import const

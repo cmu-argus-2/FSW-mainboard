@@ -1191,7 +1191,7 @@ class DataHandler:
             if tag_name in cls.data_process_registry:
                 cls.data_process_registry[tag_name].log(data)
             else:
-                raise KeyError("Data process not registered!")
+                raise KeyError(f"Data process {tag_name} not registered!")
         except KeyError as e:
             logger.critical(f"Error: {e}")
 
@@ -1533,7 +1533,7 @@ class DataHandler:
             if tag_name in cls.data_process_registry:
                 cls.data_process_registry[tag_name].notify_TM_path(path)
             else:
-                raise KeyError("Data process not registered!")
+                raise KeyError(f"Data process {tag_name} not registered!")
         except KeyError as e:
             logger.critical(f"Error: {e}")
 

@@ -2,7 +2,6 @@ from core import hashlib as _hashlib
 
 AUTH_NONCE_SIZE = 4
 AUTH_MAC_SIZE = 32
-AUTH_TRAILER_SIZE = AUTH_NONCE_SIZE + AUTH_MAC_SIZE
 _SHA256_BLOCK_SIZE = 64
 
 
@@ -56,23 +55,21 @@ def constant_time_compare(left, right):
     return result == 0
 
 
-def verify_authenticated_command(command_packet, cmd_id, declared_payload_len, auth_key):
+def verify_authenticated_command(packet, auth_key):
     if auth_key is None:
         return False, "missing_or_invalid_auth_key", None
 
-    expected_len = 4 + declared_payload_len + AUTH_TRAILER_SIZE
-    if len(command_packet) != expected_len:
-        return False, "authenticated_packet_length_mismatch", None
+    if len(packet) < 36:
+        return False, "packet_too_short_for_authentication", None
 
-    md_payload = command_packet[: 4 + declared_payload_len]
-    command_args = command_packet[4 : 4 + declared_payload_len]
-    nonce = command_packet[4 + declared_payload_len : 4 + declared_payload_len + AUTH_NONCE_SIZE]
-    received_mac = command_packet[-AUTH_MAC_SIZE:]
+    nonce = packet[0:4]  # the next 4 bytes are the nonce, which is used for authentication
+    received_mac = packet[4:36]  # the next 32 bytes are the mac, which is used for authentication
+    cmd_payload = packet[36:]  # remove the auth info from the packet
 
-    message = cmd_id.to_bytes(1, "big") + md_payload + nonce
+    message = cmd_payload + nonce
     computed_mac = compute_hmac_sha256(auth_key, message)
 
     if not constant_time_compare(computed_mac, received_mac):
         return False, "mac_mismatch", None
 
-    return True, "auth_passed", command_args
+    return True, "auth_passed", cmd_payload

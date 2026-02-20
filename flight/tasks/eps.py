@@ -9,10 +9,10 @@ from apps.eps.eps import (
     SHOULD_DISABLE_HEATERS,
     SHOULD_ENABLE_HEATERS,
 )
-from apps.telemetry.constants import EPS_IDX, EPS_WARNING_IDX, class_length
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
+from core.dh_constants import EPS_IDX, EPS_WARNING_IDX, class_length
 from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE

@@ -36,9 +36,11 @@ hal_monitor:
     value: 86400 # seconds, i.e., 24 hours
     _const: true
 
-# Comms App
 # ARGUS ID is an argument in the build script for flight config (0 or 1)
 comms:
+  HB_PERIOD:
+    value: 60  # seconds, i.e., 60 seconds
+    _const: true
   AUTH_ENABLED:
     value: true
   AUTH_KEY_HEX:

@@ -1,10 +1,10 @@
 """
 
-CommandQueue class provides a First-In-First-Out (FIFO) queue implementation with a fixed maximum size.
+TransmitQueue class provides a First-In-First-Out (FIFO) queue implementation with a fixed maximum size.
 It includes methods to configure the queue size, push commands onto the queue, pop commands from the queue,
 and check the queue's status (empty, full, current size).
 
-There is no priority mechanism, so commands are processed in the order they are received.
+There is no priority mechanism, so transmissions are processed in the order they are received.
 
 Author: Ibrahima S. Sow
 
@@ -21,13 +21,13 @@ class QUEUE_STATUS:
     OVERWRITE = const(3)  # Error code indicating failure to overwrite a 1 element queue.
 
 
-class CommandQueue:
+class TransmitQueue:
     """First-In-First-Out (FIFO) queue implementation with a fixed maximum size."""
 
-    """Interface from Comms to CDH for the commands"""
+    """Used to store the packets to be transmitted by comms"""
 
     _queue = []  # The list representing the queue.
-    _max_size = 1  # The maximum size of the queue.
+    _max_size = 10  # The maximum size of the queue.
 
     @classmethod
     def configure(cls, max_size):
@@ -35,32 +35,32 @@ class CommandQueue:
         cls._max_size = max_size
 
     @classmethod
-    def push_command(cls, command):
+    def push_packet(cls, packet: bytes):
         """Pushes a command onto the queue if not full. Returns an error code."""
         if len(cls._queue) < cls._max_size:
-            cls._queue.append(command)
+            cls._queue.append(packet)
             return QUEUE_STATUS.OK
         else:
             return QUEUE_STATUS.OVERFLOW
 
     @classmethod
-    def pop_command(cls):
-        """Pops the first command from the queue (FIFO). Returns the command or an error code."""
+    def pop_packet(cls):
+        """Pops the first packet from the queue (FIFO). Returns the packet or an error code."""
         if cls._queue:
             return cls._queue.pop(0), QUEUE_STATUS.OK  # Pops the first element (FIFO), returns (cmd_id, args), error code
         else:
             return None, QUEUE_STATUS.EMPTY
 
     @classmethod
-    def overwrite_command(cls, command):
-        """Overwrites the command in a 1 element queue. Returns an error code."""
-        cls._queue = [command]
+    def overwrite_packet(cls, packet: bytes):
+        """Overwrites the packet in a 1 element queue. Returns an error code."""
+        cls._queue = [packet]
 
         return QUEUE_STATUS.OK
 
     @classmethod
-    def command_available(cls):
-        """Checks if a command is available in the queue."""
+    def packet_available(cls):
+        """Checks if a packet is available in the queue."""
         return len(cls._queue) > 0
 
     @classmethod
