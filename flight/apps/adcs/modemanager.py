@@ -86,12 +86,12 @@ def update_mode_sun_pointing(current_mode) -> int:
             return Modes.STABLE
 
         if sun_status != StatusConst.OK:
-            return Modes.SUN_POINTED
+            return Modes.SUN_POINTING
 
         h = np.dot(ControllerConst.INERTIA_MAT, omega)
         h_norm = np.linalg.norm(h)
         if h_norm == 0:
-            return Modes.SUN_POINTED
+            return Modes.SUN_POINTING
 
         h_hat = h / h_norm  # conical condition
         sun_error = np.linalg.norm(sun_pos_body - h_hat)
@@ -110,11 +110,11 @@ def update_mode_sun_pointing(current_mode) -> int:
             h = np.dot(ControllerConst.INERTIA_MAT, omega)
             h_norm = np.linalg.norm(h)
             if h_norm == 0:
-                return Modes.SUN_POINTED
+                return Modes.SUN_POINTING
             h_hat = h / h_norm  # conical condition
             sun_error = np.linalg.norm(sun_pos_body - h_hat)
             if sun_error >= Modes.SUN_POINTED_TOL_HI:
-                return Modes.SUN_POINTED
+                return Modes.SUN_POINTING
             return Modes.ACS_OFF
         return Modes.ACS_OFF
 

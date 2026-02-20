@@ -193,9 +193,9 @@ initialization:
   inclination: 97.75
   inclination_dev: 0.1
   initial_angular_rate:
-  - 0.05
-  - 0.05
-  - 0.05
+  - 1.0
+  - 1.0
+  - 1.0
   initial_angular_rate_bound: 0.35
   initial_angular_rate_dev: 0.175
   initial_attitude:
@@ -231,7 +231,7 @@ magnetometer:
 magnetorquers:
   A_cross: 0.0054326
   N_mtb: 6
-  N_rand_failures: 3
+  N_rand_failures: 0
   N_turns: 64
   inductance: 1.0
   inductance_dev: 5
@@ -272,7 +272,7 @@ magnetorquers:
   mtb_resistance: 25
   mtb_resistance_dev: 5
   mtb_resistance_lub: 10
-  random_failures: true
+  random_failures: false
   working_status:
   - true
   - true
