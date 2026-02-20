@@ -14,8 +14,8 @@ from apps.adcs.modemanager import update_mode
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
-from core.satellite_config import adcs_config as CONFIG
 from core.dh_constants import ADCS_IDX, CDH_IDX, class_length
+from core.satellite_config import adcs_config as CONFIG
 from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 from ulab import numpy as np
