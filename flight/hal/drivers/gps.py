@@ -12,7 +12,7 @@ except ImportError:
 
 EPOCH_YEAR = 1980
 EPOCH_MONTH = 1
-EPOCH_DAY = 5
+EPOCH_DAY = 6
 
 
 class GPS:
@@ -191,36 +191,8 @@ class GPS:
         super().__init__()
 
     def update(self) -> bool:
-        # if self._reset_to_factory is False:
-        #     self.reset_to_factory_defaults()
-        #     self._reset_to_factory = True
-        #     print('RESETTING TO FACTORY DEFAULTS RESETTING TO FACTORY DEFAULTS ')
 
-        # if not self._disable_nmea_flag:
-        #     self.disable_nmea_periodic()
-        #     self._disable_nmea_flag = True
-        #     print('DISABLING NMEA DISABLING NMEA DISABLING NMEA ')
-
-        # if not self._binary_set_flag and not self.mock:
-        #     self.set_to_binary()
-        #     self._binary_set_flag = True
-        #     print('SETTING TO BINARY SETTING TO BINARY SETTING TO BINARY ')
-
-        # if not self._queried_binary_status_flag:
-        #     self.query_binary_status()
-        #     self._queried_binary_status_flag = True
-        #     print('QUERYING BINARY STATUS QUERYING BINARY STATUS ')
-
-        # if not self._periodic_nav_flag:
-        #     self.enable_periodic_nav_data()
-        #     # self._periodic_nav_flag = True
-        #     print('ENABLING PERIODIC NAV DATA ENABLING PERIODIC NAV DATA ')
-
-        if not self._disable_unnecessary_binary_flag:
-            self.disable_unnecessary_binary_data()
-            self._disable_unnecessary_binary_flag = True
-            print('DISABLING UNNECESSARY BINARY DATA DISABLING UNNECESSARY BINARY DATA ')
-
+        ## COLLECT THE MESSAGE
         if self.mock:
             self._msg = self.mock_message
         else:
@@ -229,14 +201,17 @@ class GPS:
             except UnicodeError:
                 print("Unicode Error when parsing GPS message")
                 return False
-            if self._msg is None:
+            
+        if self._msg is None:
+            if self.debug:
                 print("GPS message is None")
-                return False
-            if len(self._msg) < 7:
+            return False
+        if len(self._msg) < 7:
+            if self.debug:
                 print(f"GPS message too short: {len(self._msg)} bytes")
-                print(self._msg)
-                return False
+            return False
 
+        # Print the raw messages
         if self.debug:
             if self.mock:
                 print("Mock message: \n", ' '.join(f'{b:02X}' for b in self._msg))
@@ -246,12 +221,90 @@ class GPS:
                 print("DECODE")
                 print(" ".join(f"{b:02x}" for b in self._msg))
 
+        ## CHECK BOARD TYPE
+        if (self._msg_id == 0xA8 or self._msg == b'$SkyTraq,Phoenix\r\n') and not self._board_detected:
+            if self.debug:
+                print("Board type detected: PX1120S")
+            self._board = "PX1120S"
+            self._board_detected = True
+
+        if (self._msg_id == 0xdf or self._msg == b'$SkyTraq,Venus\r\n') and not self._board_detected:
+            if self.debug:
+                print("Board type detected: S1216F8-GL")
+            self._board = "S1216F8-GL"
+            self._board_detected = True
+
+        if self._board is None:
+            if self.debug:
+                print("Board type could not be detected.")
+            return False
+
+        # if self._board == "PX1120S":
+        #     if self.debug:
+        #         print("Helper Functions: PX1120S")
+                # Helper Statements
+                # if self._reset_to_factory is False:
+                #     self.reset_to_factory_defaults()
+                #     self._reset_to_factory = True
+                #     print('RESETTING TO FACTORY DEFAULTS RESETTING TO FACTORY DEFAULTS ')
+
+                # if not self._disable_nmea_flag:
+                #     self.disable_nmea_periodic()
+                #     self._disable_nmea_flag = True
+                #     print('DISABLING NMEA DISABLING NMEA DISABLING NMEA ')
+
+                # if not self._binary_set_flag and not self.mock:
+                #     self.set_to_binary()
+                #     self._binary_set_flag = True
+                #     print('SETTING TO BINARY SETTING TO BINARY SETTING TO BINARY ')
+
+                # if not self._queried_binary_status_flag:
+                #     self.query_binary_status()
+                #     self._queried_binary_status_flag = True
+                #     print('QUERYING BINARY STATUS QUERYING BINARY STATUS ')
+
+                # if not self._periodic_nav_flag:
+                #     self.enable_periodic_nav_data()
+                #     self._periodic_nav_flag = True
+                #     print('ENABLING PERIODIC NAV DATA ENABLING PERIODIC NAV DATA ')
+
+        if self._board == "S1216F8-GL":
+            if self.debug:
+                print("Helper Functions: S1216F8-GL")
+                # Helper Statements
+                # if self._reset_to_factory is False:
+                #     self.reset_to_factory_defaults()
+                #     self._reset_to_factory = True
+                #     print('RESETTING TO FACTORY DEFAULTS RESETTING TO FACTORY DEFAULTS ')
+
+                # if not self._binary_set_flag and not self.mock:
+                #     self.set_to_binary()
+                #     self._binary_set_flag = True
+                #     print('SETTING TO BINARY SETTING TO BINARY SETTING TO BINARY ')
+
+                # if not self._queried_binary_status_flag:
+                #     self.query_binary_status()
+                #     self._queried_binary_status_flag = True
+                #     print('QUERYING BINARY STATUS QUERYING BINARY STATUS ')
+
+                # if not self._periodic_nav_flag:
+                #     self.enable_periodic_nav_data()
+                #     self._periodic_nav_flag = True
+                #     print('ENABLING PERIODIC NAV DATA ENABLING PERIODIC NAV DATA ')
+
+                # if not self._disable_unnecessary_binary_flag:
+                #     self.disable_unnecessary_binary_data()
+                #     self._disable_unnecessary_binary_flag = True
+                #     print('DISABLING UNNECESSARY BINARY DATA DISABLING UNNECESSARY BINARY DATA ')
+
+
         ## Validate the message is correct
         if self._msg[0] != 0xA0 or self._msg[1] != 0xA1:
             if self.debug:
                 print("Invalid start bytes, expected 0xA0 0xA1, got: ", hex(self._msg[0]), hex(self._msg[1]))
             return False
         
+        ## PARSE MESSAGE
         # Parse message length, ID, checksum, and payload
         try:
             self._payload_len = int(((self._msg[2] & 0xFF) << 8) | self._msg[3])
@@ -263,35 +316,25 @@ class GPS:
                 print("Error parsing message length, ID, checksum, or payload:", e)
             return False
 
+        ## CHECK PAYLOAD MESSAGE AND ACK
         if self.debug:
             print("Payload:\n", ' '.join(f'{b:02X}' for b in self._payload))
         if self._msg_id == 0x83: # 0x83 is successful ACK of setting binary nav type
             return False
 
-        ## Check which board/protocol this is
+        ## CHECK NAV DATA
         if self._msg_id != 0xA8 and self._msg_id != 0xdf:
             if self.debug:
                 print("Invalid message ID, expected 0xA8 or 0xdf, got: ", hex(self._msg_id))
             return False
 
-        if self._msg_id == 0xA8 and not self._board_detected:
-            self._board = "PX1120S"
-            self._board_detected = True
-
-        if self._msg_id == 0xdf and not self._board_detected:
-            self._board = "S1216F8-GL"
-            self._board_detected = True
-
-        if self._board is None:
-            if self.debug:
-                print("Board type could not be detected.")
-            return False
-
+        ## CHECKSUM
         if not self.checksum():
             if self.debug:
                 print("Checksum failed!")
             return False
 
+        ## PARSE NAV DATA
         if self._board == "PX1120S":
             if self._payload_len != 59:
                 if self.debug:
@@ -484,7 +527,7 @@ class GPS:
             return False
 
     # TODO: Check if the datetime library can be used rather than manually counting
-    def gps_time_2_unix_time(self, gps_week: int, tow: int) -> float:
+    def gps_time_2_unix_time(self, gps_week: int, tow: float) -> float:
         # Number of days in each month (non-leap year)
         days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
@@ -492,8 +535,12 @@ class GPS:
         def is_leap_year(year):
             return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
 
-        # Calculate the total number of days from GPS weeks
-        total_days = gps_week * 7
+        # Split TOW into whole-day and sub-day components
+        tow_day_offset = int(tow // 86400)
+        seconds_in_day = tow - (tow_day_offset * 86400)
+
+        # Calculate the total number of days from GPS week and TOW day rollover
+        total_days = gps_week * 7 + tow_day_offset
 
         # Start from the epoch date and add total days
         year = EPOCH_YEAR
@@ -525,14 +572,10 @@ class GPS:
             days_since_unix_epoch += days_in_month[m - 1]
         days_since_unix_epoch += day - 1
 
-        # Convert days to seconds
-        unix_time = days_since_unix_epoch * 86400
-
-        # Add TOW
-        unix_time += tow
+        # Convert days to seconds and add sub-day TOW seconds
+        unix_time = days_since_unix_epoch * 86400 + seconds_in_day
 
         # Calculate hours, minutes, and seconds
-        seconds_in_day = unix_time % 86400
         hours = int(seconds_in_day // 3600)
         minutes = int((seconds_in_day % 3600) // 60)
         seconds = seconds_in_day % 60
@@ -791,12 +834,12 @@ class GPS:
                 "hdop": self.hdop,
                 "vdop": self.vdop,
                 "tdop": self.tdop,
-                "ecef_x": self.ecef_x,
-                "ecef_y": self.ecef_y,
-                "ecef_z": self.ecef_z,
-                "ecef_vx": self.ecef_vx,
-                "ecef_vy": self.ecef_vy,
-                "ecef_vz": self.ecef_vz,
+                "ecef_x": int(self.ecef_x),
+                "ecef_y": int(self.ecef_y),
+                "ecef_z": int(self.ecef_z),
+                "ecef_vx": int(self.ecef_vx),
+                "ecef_vy": int(self.ecef_vy),
+                "ecef_vz": int(self.ecef_vz),
                 "unix_time": self.unix_time,
                 "timestamp_utc": self.timestamp_utc,
             }
@@ -807,12 +850,12 @@ class GPS:
                 "navigation_state": self.navigation_state,
                 "week": self.week,
                 "tow": self.tow,
-                "ecef_x": self.ecef_x,
-                "ecef_y": self.ecef_y,
-                "ecef_z": self.ecef_z,
-                "ecef_vx": self.ecef_vx,
-                "ecef_vy": self.ecef_vy,
-                "ecef_vz": self.ecef_vz,
+                "ecef_x": int(self.ecef_x),
+                "ecef_y": int(self.ecef_y),
+                "ecef_z": int(self.ecef_z),
+                "ecef_vx": int(self.ecef_vx),
+                "ecef_vy": int(self.ecef_vy),
+                "ecef_vz": int(self.ecef_vz),
                 "clock_bias": self.clock_bias,
                 "clock_drift": self.clock_drift,
                 "GDOP": self.GDOP,
@@ -834,16 +877,27 @@ class GPS:
     # TODO : Change this so that it always sends the binary message rather than needing set on each run
     def set_to_binary(self) -> None:
         """Send Set to Binary Mode command (Message ID 0x09)."""
-        self.write(b"\xa0\xa1\x00\x03\x09\x02\x00\x0b\x0d\x0a")
-        # self.write(b"\xA0\xA1\x00\x04\x64\x2F\x01\x00\x4A\x0D\x0A")
+        # self.write(b"\xa0\xa1\x00\x03\x09\x02\x00\x0b\x0d\x0a")
+        self.write(b"\xa0\xa1\x00\x03\x09\x02\x01\x0a\x0d\x0a") # Flash memory version
 
     def query_binary_status(self) -> None:
-        """Send Query Binary Status command (Message ID 0x1F)."""
-        self.write(b"\xa0\xa1\x00\x01\x1F\x1F\x0d\x0a")
+        """Send Query Binary Status command."""
+        if self._board == "PX1120S":
+            # (Message ID 0x16)
+            self.write(b"\xa0\xa1\x00\x01\x16\x16\x0d\x0a")
+        if self._board == "S1216F8-GL":
+            # (Message ID 0x1F)
+            self.write(b"\xa0\xa1\x00\x01\x1F\x1F\x0d\x0a")
 
     def enable_periodic_nav_data(self) -> None:
-        """Send Enable Periodic Navigation Data command (Message ID 0x11)."""
-        self.write(b"\xa0\xa1\x00\x03\x11\x01\x00\x10\x0d\x0a")
+        """Send Enable Periodic Navigation Data command."""
+        if self._board == "PX1120S":
+            # (Message ID 0x64)
+            # self.write(b"\xa0\xa1\x00\x04\x64\x2F\x01\x00\x4A\x0d\x0a")
+            self.write(b"\xa0\xa1\x00\x04\x64\x2F\x01\x01\x4B\x0d\x0a") # Flash memory version
+        if self._board == "S1216F8-GL":
+            # (Message ID 0x11)
+            self.write(b"\xa0\xa1\x00\x03\x11\x01\x00\x10\x0d\x0a")
 
     def disable_nmea_periodic(self) -> None:
         """Send Disable NMEA Periodic Messages command (Message ID 0x64)."""
@@ -851,7 +905,6 @@ class GPS:
 
     def query_nav_data(self) -> None:
         """Send Query Navigation Data command (Message ID 0x10)."""
-        # 0xA0 0xA1 = start, 0x00 0x01 = 1 byte payload, 0x10 = Query Nav Data, 0x10 = checksum, 0x0D 0x0A = end
         self.write(b"\xa0\xa1\x00\x01\x10\x10\x0d\x0a") # This queries the wrong thing!
 
     def reset_to_factory_defaults(self) -> None:
