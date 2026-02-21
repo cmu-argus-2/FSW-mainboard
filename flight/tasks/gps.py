@@ -1,9 +1,9 @@
 # GPS Task
 
-from apps.telemetry.constants import GPS_IDX
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
+from core.dh_constants import GPS_IDX
 from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE

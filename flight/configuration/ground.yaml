@@ -11,10 +11,13 @@ command:
   DETUMBLING_TIMEOUT_DURATION:
     value: 30  # seconds, i.e., 30 seconds
     _const: true
-  
+    
   BURN_WIRE_TIMEOUT:
     value: 2  # number of deployment attempts before forcing completion
     _const: true
+
+  PAYLOAD_TESTING_MODE:
+    value: false  # Set to true to enable payload testing mode (goes straight to experiment mode)
 
 # Time Processor Module
 time_processor:
@@ -39,3 +42,10 @@ comms:
     value: 0
     _const: true
     _hex: true
+  HB_PERIOD:
+    value: 30  # seconds, i.e., 30 seconds
+    _const: true
+  AUTH_ENABLED:
+    value: true
+  AUTH_KEY_HEX:
+    value: "d6172b38acb7d2a28e21662f689d1d15ad78ccc888a9c7a78ef58cb61b0f1e32" # TODO: Change before flight

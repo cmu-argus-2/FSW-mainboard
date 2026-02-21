@@ -8,10 +8,12 @@ import apps.command.processor as processor
 from apps.adcs.consts import Modes
 from apps.command import QUEUE_STATUS, CommandQueue
 from apps.eps.eps import EPS_POWER_FLAG
-from apps.telemetry.constants import ADCS_IDX, CDH_IDX, EPS_IDX
+from apps.payload.controller import PayloadController as PC
+from apps.payload.controller import PayloadState
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
+from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX
 from core.satellite_config import command_config as CONFIG
 from core.states import STATES, STR_STATES
 from core.time_processor import TimeProcessor as TPM
@@ -29,6 +31,7 @@ _PWM_MIN = const(0)  # Minimum PWM value for deployment
 _FIRST_PWM = const(2)  # First PWM to start deployment
 _BURN_WIRE_TIMEOUT = CONFIG.BURN_WIRE_TIMEOUT  # number of tries
 _DEPLOYMENT_DISTANCE = const(2)  # distance(cm) threshold for deployment
+_PAYLOAD_TESTING_MODE = CONFIG.PAYLOAD_TESTING_MODE
 
 
 class Task(TemplateTask):
@@ -325,7 +328,10 @@ class Task(TemplateTask):
                 # T2.3: High SoC, engage the payload
                 self.log_info("T2.3: Transition from NOMINAL to EXPERIMENT")
                 SM.switch_to(STATES.EXPERIMENT)
-
+            elif _PAYLOAD_TESTING_MODE:
+                # T2.4: Payload testing mode enabled, engage the payload
+                self.log_info("T2.4: Transition from NOMINAL to EXPERIMENT (Payload Testing Mode)")
+                SM.switch_to(STATES.EXPERIMENT)
             else:
                 # No transition, stay in NOMINAL
                 pass
@@ -358,8 +364,16 @@ class Task(TemplateTask):
             if SATELLITE.NEOPIXEL_AVAILABLE:
                 SATELLITE.NEOPIXEL.fill([255, 0, 255])
 
+            # The Payload controller should be kept as autonomous as possible, since the payload task
+            # has access to the global state. External requests exists as a last resort to control the
+            # payload from the CDH (and Payload task itself =/= Payload Controller)
+
+            # Note all ground commands related to the payload are executed in the command processor
+            if PC.state == PayloadState.READY:
+                pass
+
             """Transitions out of EXPERIMENT"""
-            if self.EPS_MODE != EPS_POWER_FLAG.EXPERIMENT:
+            if self.EPS_MODE != EPS_POWER_FLAG.EXPERIMENT and not _PAYLOAD_TESTING_MODE:
                 # T4.1: Nominal or low SoC, transition back to nominal
                 self.log_info("T4.1: Transition from LOW POWER to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
@@ -383,19 +397,22 @@ class Task(TemplateTask):
         # ------------------------------------------------------------------------------------------------------------------------------------
 
         if CommandQueue.command_available():
-            (cmd_id, cmd_arglist), queue_error_code = CommandQueue.pop_command()
-            cmd_args = processor.unpack_command_arguments(cmd_id, cmd_arglist)
+            command, queue_error_code = CommandQueue.pop_command()
+            self.log_info(f"Popped command from queue: {command} with status: {queue_error_code}")
 
-            if queue_error_code == QUEUE_STATUS.OK and cmd_args != processor.CommandProcessingStatus.ARGUMENT_UNPACKING_FAILED:
-                self.log_info(f"Processing command: {cmd_id} with args: {cmd_args}")
-                status, response_args = processor.process_command(cmd_id, *cmd_args)
-                processor.handle_command_execution_status(status, response_args)
+            if queue_error_code != QUEUE_STATUS.OK:
+                self.log_error(f"Error popping command from queue: {queue_error_code}")
+                return
 
-                # Log the command execution history
-                self.log_commands[0] = TPM.time()
-                self.log_commands[1] = cmd_id
-                self.log_commands[2] = status
-                DH.log_data("cmd_logs", self.log_commands)
+            self.log_info(f"  Arguments: {command.arguments}")
+            status, response_args = processor.process_command(command)
+            processor.handle_command_execution_status(status, response_args)
+
+            # Log the command execution history
+            self.log_commands[0] = TPM.time()
+            self.log_commands[1] = command.command_id
+            self.log_commands[2] = status
+            DH.log_data("cmd_logs", self.log_commands)
 
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:

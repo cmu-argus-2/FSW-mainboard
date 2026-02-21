@@ -22,7 +22,8 @@ Author: Ibrahima S. Sow
 
 import supervisor
 from apps.command.constants import file_tags_str
-from apps.telemetry import TelemetryPacker
+from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
+from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
 from core import logger
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
@@ -38,6 +39,15 @@ def FORCE_REBOOT():
     supervisor.reload()
     # https://learn.adafruit.com/circuitpython-essentials/circuitpython-resetting
     return []
+
+
+def SUM(opA, opB):
+    """
+    Test command
+    used to experiment adding new command and testing the arguments
+    """
+    logger.info(f"Executing SUM with opA: {opA} and opB: {opB}")
+    return [opA + opB]
 
 
 def SWITCH_TO_STATE(target_state_id, time_in_state=None):
@@ -70,50 +80,55 @@ def REQUEST_TM_NOMINAL():
     """Requests a nominal snapshot of all subsystems."""
     logger.info("Executing REQUEST_TM_NOMINAL")
     # Pack telemetry
-    packed = TelemetryPacker.pack_tm_heartbeat()
-    if packed:
-        logger.info("Telemetry nominal packed")
+    packet = TelemetryFrame.pack_tm_heartbeat()  #
+    q_stat = TransmitQueue.push_packet(packet)
+    if q_stat != QUEUE_STATUS.OK:
+        logger.error(f"Failed to push nominal telemetry to transmit queue with status: {q_stat}")
+    logger.info(f"Telemetry nominal packed and pushed to transmit queue {q_stat}")
 
-    # Change message ID to nominal - differentiate between SAT_HEARTBEAT
-    TelemetryPacker.change_tm_id_nominal()
-    # Return TX message header
-    return [get_tx_message_header()]
+    # might be interesting to differentiate between periodic hearbeats
+    # might want to add that this is a response
+
+    return [q_stat]  # return the queue status number
 
 
 def REQUEST_TM_HAL():
     """Requests hardware-focused telemetry, including information on HAL, EPS, and errors."""
     logger.info("Executing REQUEST_TM_HAL")
     # Pack telemetry
-    packed = TelemetryPacker.pack_tm_hal()
-    if packed:
-        logger.info("Telemetry hal packed")
+    packet = TelemetryFrame.pack_tm_hal()
+    q_stat = TransmitQueue.push_packet(packet)
+    if q_stat != QUEUE_STATUS.OK:
+        logger.error(f"Failed to push HAL telemetry to transmit queue with status: {q_stat}")
+    logger.info(f"Telemetry hal packed and pushed to transmit queue {q_stat}")
 
-    # Return TX message header
-    return [get_tx_message_header()]
+    return [q_stat]  # return the queue status number
 
 
 def REQUEST_TM_STORAGE():
     """Requests full storage status of the mainboard, including details on onboard processes."""
     logger.info("Executing REQUEST_TM_STORAGE")
     # Pack telemetry
-    packed = TelemetryPacker.pack_tm_storage()
-    if packed:
-        logger.info("Telemetry storage packed")
+    packet = TelemetryFrame.pack_tm_storage()
+    q_stat = TransmitQueue.push_packet(packet)
+    if q_stat != QUEUE_STATUS.OK:
+        logger.error(f"Failed to push storage telemetry to transmit queue with status: {q_stat}")
+    logger.info(f"Telemetry storage packed and pushed to transmit queue {q_stat}")
 
-    # Return TX message header
-    return [get_tx_message_header()]
+    return [q_stat]  # return the queue status number
 
 
 def REQUEST_TM_PAYLOAD():
     """Requests telemetry data from the payload, provided it is on."""
     logger.info("Executing REQUEST_TM_PAYLOAD")
     # Pack telemetry
-    packed = TelemetryPacker.pack_tm_payload()
-    if packed:
-        logger.info("Telemetry payload packed")
+    packet = TelemetryFrame.pack_tm_payload()
+    q_stat = TransmitQueue.push_packet(packet)
+    if q_stat != QUEUE_STATUS.OK:
+        logger.error(f"Failed to push payload telemetry to transmit queue with status: {q_stat}")
+    logger.info(f"Telemetry payload packed and pushed to transmit queue {q_stat}")
 
-    # Return TX message header
-    return [get_tx_message_header()]
+    return [q_stat]  # return the queue status number
 
 
 def REQUEST_FILE_METADATA(file_id, file_time=None):
@@ -157,6 +172,23 @@ def DOWNLINK_ALL(file_id, file_time=None):
     return [file_path]
 
 
+def EVAL_STRING_COMMAND(string_command):
+    """
+    As of right now this is just for debugging purposes
+    will receive a string, will eval it and return the results.
+    [TODO] - This is a potential security risk. Should create some sort of firewall that can be controlled
+    with another command to allow/disallow evalling commands
+    """
+    logger.info(f"Executing EVAL_STRING_COMMAND with request: {string_command}")
+
+    try:
+        result = eval(string_command)
+        return [result]
+    except Exception as e:
+        logger.error(f"EVAL_STRING_COMMAND execution failed: {e}")
+        return ["eval_string_command_failed"]
+
+
 def get_tx_message_header():
     """ " Helper function to obtain the tx message header to send back"""
-    return int.from_bytes(TelemetryPacker.FRAME()[0:1], "big")
+    return int.from_bytes(TelemetryFrame.FRAME()[0:1], "big")

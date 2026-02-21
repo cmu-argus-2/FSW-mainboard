@@ -20,10 +20,9 @@ See documentation for a full description of each commands.
 Author: Ibrahima S. Sow
 """
 
-import apps.telemetry.helpers as tm_helper
-from apps.command import ResponseQueue
 from apps.command.commands import (
     DOWNLINK_ALL,
+    EVAL_STRING_COMMAND,
     FORCE_REBOOT,
     REQUEST_FILE_METADATA,
     REQUEST_FILE_PKT,
@@ -33,42 +32,45 @@ from apps.command.commands import (
     REQUEST_TM_PAYLOAD,
     REQUEST_TM_STORAGE,
     SCHEDULE_OD_EXPERIMENT,
+    SUM,
     SWITCH_TO_STATE,
     TURN_OFF_PAYLOAD,
     UPLINK_TIME_REFERENCE,
 )
-from apps.command.constants import CMD_ID
-from apps.command.preconditions import file_id_exists, valid_state, valid_time_format
+from apps.command.preconditions import file_id_exists, valid_inputs, valid_state, valid_time_format
+from apps.comms.fifo import TransmitQueue
+from apps.telemetry.splat.splat.telemetry_codec import Ack, pack
 from core import logger
 from micropython import const
 
-# See commands.py for function definitions (command functions and eventual preconditions)
-# A command is defined as a tuple with the following elements:
-# - ID: A unique identifier for the command
-# - Precondition: A function that checks if the command can be executed
-# - Arguments: A list of parameters that the command accepts
-# - Execute: The function that executes the command
+# --- DISPATCH TABLES ---
+# These dictionaries map the string names of functions to the actual function objects.
+# avoid using the eval function to execute commands
 
-COMMANDS = [
-    (CMD_ID.FORCE_REBOOT, lambda: True, [], FORCE_REBOOT),
-    (CMD_ID.SWITCH_TO_STATE, valid_state, ["target_state_id", "time_in_state"], SWITCH_TO_STATE),
-    (CMD_ID.UPLINK_TIME_REFERENCE, valid_time_format, ["time_reference"], UPLINK_TIME_REFERENCE),
-    (CMD_ID.TURN_OFF_PAYLOAD, lambda: True, [], TURN_OFF_PAYLOAD),
-    (CMD_ID.SCHEDULE_OD_EXPERIMENT, lambda: True, [], SCHEDULE_OD_EXPERIMENT),
-    (CMD_ID.REQUEST_TM_NOMINAL, lambda: True, [], REQUEST_TM_NOMINAL),
-    (CMD_ID.REQUEST_TM_HAL, lambda: True, [], REQUEST_TM_HAL),
-    (CMD_ID.REQUEST_TM_STORAGE, lambda: True, [], REQUEST_TM_STORAGE),
-    (CMD_ID.REQUEST_TM_PAYLOAD, lambda: True, [], REQUEST_TM_PAYLOAD),
-    (
-        CMD_ID.REQUEST_FILE_METADATA,
-        file_id_exists,
-        ["file_id", "file_time"],
-        REQUEST_FILE_METADATA,
-    ),
-    (CMD_ID.REQUEST_FILE_PKT, file_id_exists, ["file_id", "file_time"], REQUEST_FILE_PKT),
-    (CMD_ID.REQUEST_IMAGE, lambda: True, [], REQUEST_IMAGE),
-    (CMD_ID.DOWNLINK_ALL, file_id_exists, ["file_id", "file_time"], DOWNLINK_ALL),
-]
+COMMAND_DISPATCH = {
+    "DOWNLINK_ALL": DOWNLINK_ALL,
+    "EVAL_STRING_COMMAND": EVAL_STRING_COMMAND,
+    "FORCE_REBOOT": FORCE_REBOOT,
+    "REQUEST_FILE_METADATA": REQUEST_FILE_METADATA,
+    "REQUEST_FILE_PKT": REQUEST_FILE_PKT,
+    "REQUEST_IMAGE": REQUEST_IMAGE,
+    "REQUEST_TM_HAL": REQUEST_TM_HAL,
+    "REQUEST_TM_NOMINAL": REQUEST_TM_NOMINAL,
+    "REQUEST_TM_PAYLOAD": REQUEST_TM_PAYLOAD,
+    "REQUEST_TM_STORAGE": REQUEST_TM_STORAGE,
+    "SCHEDULE_OD_EXPERIMENT": SCHEDULE_OD_EXPERIMENT,
+    "SUM": SUM,
+    "SWITCH_TO_STATE": SWITCH_TO_STATE,
+    "TURN_OFF_PAYLOAD": TURN_OFF_PAYLOAD,
+    "UPLINK_TIME_REFERENCE": UPLINK_TIME_REFERENCE,
+}
+
+PRECONDITION_DISPATCH = {
+    "file_id_exists": file_id_exists,
+    "valid_inputs": valid_inputs,
+    "valid_state": valid_state,
+    "valid_time_format": valid_time_format,
+}
 
 
 class CommandProcessingStatus:
@@ -80,41 +82,74 @@ class CommandProcessingStatus:
     ARGUMENT_UNPACKING_FAILED = const(0x05)
 
 
-def process_command(cmd_id, *args):
+def process_command(command):
     """Processes a command by ID and arguments, with lightweight validation and execution."""
-    for command in COMMANDS:
-        if command[0] == cmd_id:
-            precondition, arg_list, execute = command[1:]
+    precondition_name = command.precondition
+    satellite_func_name = command.satellite_func
+    argument_list = command.get_arguments_list()
 
-            # Verify precondition
-            if not precondition(*args):
+    logger.info(
+        f"Processing command: {satellite_func_name} with arguments: {argument_list}")
+    logger.info(f"and precondition: {precondition_name}")
+
+    # 1. Verify Precondition
+    if precondition_name is not None:
+        # Look up the precondition function in the dispatch table
+        precondition_func = PRECONDITION_DISPATCH.get(precondition_name)
+
+        if precondition_func is None:
+            logger.error(f"Cmd: Unknown precondition '{precondition_name}'")
+            return CommandProcessingStatus.PRECONDITION_FAILED, [command.command_id]
+
+        try:
+            # Execute the precondition function
+            if not precondition_func(*argument_list):
                 logger.error("Cmd: Precondition failed")
-                return CommandProcessingStatus.PRECONDITION_FAILED, [cmd_id]
+                return CommandProcessingStatus.PRECONDITION_FAILED, [command.command_id]
+        except Exception as e:
+            logger.error(f"Cmd: Precondition check failed with error: {e}")
+            return CommandProcessingStatus.PRECONDITION_FAILED, [command.command_id]
 
-            # Verify the argument count
-            if len(args) != len(arg_list):
-                print(arg_list)
-                logger.error(f"Cmd: Argument count mismatch for command ID {cmd_id}")
-                return CommandProcessingStatus.ARGUMENT_COUNT_MISMATCH, [cmd_id]
+    # 2. Execute the Command
+    # Look up the command function in the dispatch table
+    satellite_func = COMMAND_DISPATCH.get(satellite_func_name)
 
-            # Execute the command function with arguments
-            try:
-                response_args = execute(*args)
-                return CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS, [cmd_id] + response_args
-            except Exception as e:
-                logger.error(f"Cmd: Command execution failed: {e}")
-                # Optionally log stack trace to a file for deeper diagnostics
-                return CommandProcessingStatus.COMMAND_EXECUTION_FAILED, [cmd_id]
+    if satellite_func is None:
+        logger.warning(f"Cmd: Unknown command ID '{satellite_func_name}'")
+        return CommandProcessingStatus.UNKNOWN_COMMAND_ID, [command.command_id]
 
-    logger.warning("Cmd: Unknown command ID")
-    return CommandProcessingStatus.UNKNOWN_COMMAND_ID, [cmd_id]
+    try:
+        logger.info(f"Executing command function: {satellite_func_name}")
+        # Execute the command function directly
+        response_args = satellite_func(*argument_list)
+
+        # Ensure response_args is a list/tuple before adding to list
+        if response_args is None:
+            response_args = []
+        elif not isinstance(response_args, (list, tuple)):
+            response_args = [response_args]
+
+        return (
+            CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS,
+            [command.command_id] + list(response_args),
+        )
+
+    except Exception as e:
+        logger.error(f"Cmd: Command execution failed: {e}")
+        # Optionally log stack trace to a file for deeper diagnostics
+        return CommandProcessingStatus.COMMAND_EXECUTION_FAILED, [command.command_id]
 
 
 def handle_command_execution_status(status, response_args):
     # If the command execution was successful, send a success response to Comms via Response Queue
     # If the command execution failed, send an error response with the error code to Comms via Response Queue
 
-    ResponseQueue.overwrite_response(status, response_args)
+    # add ack response to transmit queue for comms to pick up and send to ground station
+    # this is not the best place to do this, not sure where the best place to do this is
+    ack = Ack(status, response_args)
+    packed_ack = pack(ack)
+    TransmitQueue.push_packet(packed_ack)
+    logger.info(f"Added ack packet to transmit queue: {packed_ack}")
 
     if status == CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS:
         logger.info("Command execution successful")
@@ -123,48 +158,3 @@ def handle_command_execution_status(status, response_args):
         # TODO build more detailed error response - Error messages
         logger.info(f"Command execution not successful due to error: {status}")
         pass
-
-
-def check_arguments_size(cmd_id, cmd_arglist):
-    """
-    Checks that the payload size containing the command arguments are
-    of the correct size that we expect
-    """
-    if CMD_ID.ARGS_LEN[cmd_id] != len(cmd_arglist):
-        return False
-    return True
-
-
-def unpack_command_arguments(cmd_id, cmd_arglist):
-    """This will unpack the command arguments received from Command Queue"""
-    # TODO: Need to do error handling for unpacking
-
-    cmd_arglist = list(cmd_arglist)
-    cmd_args = []
-
-    # Check that the payload is of the correct length
-    if not check_arguments_size(cmd_id, cmd_arglist):
-        logger.error(f"[COMMAND]: Incorrect payload size, expected: {CMD_ID.ARGS_LEN[cmd_id]}, received: {len(cmd_arglist)}")
-        return CommandProcessingStatus.ARGUMENT_UNPACKING_FAILED
-
-    if cmd_id == CMD_ID.SWITCH_TO_STATE or cmd_id == CMD_ID.REQUEST_FILE_METADATA or cmd_id == CMD_ID.DOWNLINK_ALL:
-        cmd_args.append(cmd_arglist[0])  # target_state_id / file_id (uint8)
-        cmd_args.append(tm_helper.unpack_unsigned_long_int(cmd_arglist[1:5]))  # time_in_state / file_time (uint32)
-
-    elif cmd_id == CMD_ID.UPLINK_TIME_REFERENCE:
-        cmd_args.append(tm_helper.unpack_unsigned_long_int(cmd_arglist[0:4]))  # time_reference (uint32)
-
-    elif cmd_id == CMD_ID.REQUEST_FILE_PKT:
-        cmd_args.append(cmd_arglist[0])  # file_id (uint8)
-        cmd_args.append(tm_helper.unpack_unsigned_long_int(cmd_arglist[1:5]))  # file_time (uint32)
-
-    else:
-        # For all other commands with no arguments
-        cmd_args = []
-
-    if any(arg is False for arg in cmd_args):
-        logger.error("[COMMAND] Command argument unpacking failed")
-        return CommandProcessingStatus.ARGUMENT_UNPACKING_FAILED
-
-    logger.info(f"[COMMAND] Unpacked arguments - CMD_ID: {cmd_id}, Argument List: {cmd_args}")
-    return cmd_args
