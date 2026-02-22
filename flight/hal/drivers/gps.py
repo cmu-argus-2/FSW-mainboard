@@ -163,8 +163,33 @@ class GPS:
         super().__init__()
 
     def update(self) -> bool:
+        if not self._collect_message():
+            return False
 
-        ## COLLECT THE MESSAGE
+        if not self._check_board_type():
+            return False
+
+        ## CONFIGURE THE RECEIVER (Once-per-cycle flags)
+        self.use_helper_functions()
+
+        if not self._validate_message():
+            return False
+
+        if not self._parse_message_header():
+            return False
+
+        if not self._check_payload_and_ack():
+            return False
+
+        if not self._check_nav_data():
+            return False
+
+        if not self.checksum():
+            return False
+
+        return self._parse_nav_data()
+
+    def _collect_message(self) -> bool:
         if self.mock:
             self._msg = self.mock_message
         else:
@@ -192,16 +217,20 @@ class GPS:
                 print(self._msg)
                 print("DECODE")
                 print(" ".join(f"{b:02x}" for b in self._msg))
+        return True
 
-        ## CHECK BOARD TYPE
-        if (self._msg_id == 0xA8 or self._msg == b"$SkyTraq,Phoenix\r\n") and not self._board_detected:
+    def _check_board_type(self) -> bool:
+        if self._msg is None or len(self._msg) < 5:
+            return False
+            
+        if (self._msg[4] == 0xA8 or self._msg == b"$SkyTraq,Phoenix\r\n") and not self._board_detected:
             if self.debug:
                 print("Board type detected: PX1120S")
             self._board = "PX1120S"
             self._board_detected = True
 
         if (
-            self._msg_id == 0xDF or self._msg == b"$PSTI,001,1*1E\r\n" or self._msg == b"$SkyTraq,Venus8\r\n"
+            self._msg[4] == 0xDF or self._msg == b"$PSTI,001,1*1E\r\n" or self._msg == b"$SkyTraq,Venus8\r\n"
         ) and not self._board_detected:
             if self.debug:
                 print("Board type detected: S1216F8-GL")
@@ -220,47 +249,42 @@ class GPS:
             if self.debug:
                 print("Board type could not be detected.")
             return False
+        return True
 
-        ## CONFIGURE THE RECEIVER (Once-per-cycle flags)
-        self.use_helper_functions
-
-        ## VALIDATE MESSAGE
+    def _validate_message(self) -> bool:
         if self._msg[0] != 0xA0 or self._msg[1] != 0xA1:
             if self.debug:
                 print("Invalid start bytes, expected 0xA0 0xA1, got: ", hex(self._msg[0]), hex(self._msg[1]))
             return False
+        return True
 
-        ## PARSE MESSAGE
-        # Parse message length, ID, checksum, and payload
+    def _parse_message_header(self) -> bool:
         try:
             self._payload_len = int(((self._msg[2] & 0xFF) << 8) | self._msg[3])
             self._msg_id = int(self._msg[4])
             self._msg_cs = int(self._msg[-3])
             self._payload = bytearray(self._msg[4:-3])  # TODO Is this required
+            return True
         except Exception as e:
             if self.debug:
                 print("Error parsing message length, ID, checksum, or payload:", e)
             return False
 
-        ## CHECK PAYLOAD MESSAGE AND ACK
+    def _check_payload_and_ack(self) -> bool:
         if self.debug:
             print("Payload:\n", " ".join(f"{b:02X}" for b in self._payload))
         if self._msg_id == 0x83:  # 0x83 is successful ACK of setting binary nav type
             return False
+        return True
 
-        ## CHECK NAV DATA
+    def _check_nav_data(self) -> bool:
         if self._msg_id != 0xA8 and self._msg_id != 0xDF:
             if self.debug:
                 print("Invalid message ID, expected 0xA8 or 0xdf, got: ", hex(self._msg_id))
             return False
+        return True
 
-        ## CHECKSUM
-        if not self.checksum():
-            if self.debug:
-                print("Checksum failed!")
-            return False
-
-        ## PARSE NAV DATA
+    def _parse_nav_data(self) -> bool:
         if self._board == "PX1120S":
             if self._payload_len != 59:
                 if self.debug:
