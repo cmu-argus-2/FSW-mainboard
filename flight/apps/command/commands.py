@@ -239,6 +239,7 @@ def GENERATE_X_PACKETS(tid, x):
         logger.error(f"Transaction with tid {tid} not found")
         return ["transaction_not_found"]
     
+    # 2. generate the packets    
     packet_list = transaction.generate_x_packets(x)
     # 3. add them to the transmit queue
     for packet in packet_list:
@@ -249,7 +250,20 @@ def GENERATE_X_PACKETS(tid, x):
     return [len(packet_list)]
     
 def GET_SINGLE_PACKET(tid, seq_number):
-    return "please implement me"
+    # 1. search for the transaction id
+    transaction = TM.get_transaction(tid)
+    if transaction is None:
+        logger.error(f"Transaction with tid {tid} not found")
+        return ["transaction_not_found"]
+    
+    # generate the packets    
+    packet = transaction.generate_specific_packet(seq_number)
+    # 3. add them to the transmit queue
+    q_stat = TransmitQueue.push_packet(packet)
+    if q_stat != QUEUE_STATUS.OK:
+        logger.error(f"Failed to push packet to transmit queue with status: {q_stat}")
+
+    return [len(packet)]
 
 def TRANS_PAYLOAD(tid, seq_number, payload):
     # no need to implement now, this will only be needed if sending transactions from the gs to sat
