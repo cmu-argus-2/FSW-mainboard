@@ -87,7 +87,7 @@ class SATELLITE_RADIO:
             return False
 
         cls.comms_mode = mode_id
-        cls.rf_stop = mode_id == COMMS_MODE.RF_STOP
+        cls.rf_stop = mode_id == COMMS_MODE.QUIET
         cls.digipeater_enabled = mode_id == COMMS_MODE.DIGIPEAT
         logger.warning(f"[COMMS] Mode set to {COMMS_MODE_STR.get(mode_id, mode_id)}")
         return True
