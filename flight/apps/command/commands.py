@@ -265,6 +265,19 @@ def GET_SINGLE_PACKET(tid, seq_number):
 
     return [len(packet)]
 
+def CONFIRM_LAST_BATCH(tid, MSB, LSB):
+    # 1. search for the transaction id
+    transaction = TM.get_transaction(tid)
+    if transaction is None:
+        logger.error(f"Transaction with tid {tid} not found")
+        return ["transaction_not_found"]
+    
+    # 2. confirm last batch
+    bitmap = (MSB << 16) | LSB
+    len_missing_fragments = transaction.confirm_last_batch(bitmap)
+
+    return [len_missing_fragments]
+
 def TRANS_PAYLOAD(tid, seq_number, payload):
     # no need to implement now, this will only be needed if sending transactions from the gs to sat
     return "please implement me"

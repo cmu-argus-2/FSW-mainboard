@@ -41,7 +41,8 @@ from apps.command.commands import (
     GENERATE_ALL_PACKETS,
     GENERATE_X_PACKETS,
     GET_SINGLE_PACKET,
-    TRANS_PAYLOAD
+    TRANS_PAYLOAD,
+    CONFIRM_LAST_BATCH
 )
 from apps.command.preconditions import file_id_exists, valid_inputs, valid_state, valid_time_format
 from apps.comms.fifo import TransmitQueue
@@ -74,7 +75,8 @@ COMMAND_DISPATCH = {
     "GENERATE_ALL_PACKETS": GENERATE_ALL_PACKETS,
     "GENERATE_X_PACKETS": GENERATE_X_PACKETS,
     "GET_SINGLE_PACKET": GET_SINGLE_PACKET,
-    "TRANS_PAYLOAD": TRANS_PAYLOAD
+    "TRANS_PAYLOAD": TRANS_PAYLOAD,
+    "CONFIRM_LAST_BATCH": CONFIRM_LAST_BATCH,
 }
 
 PRECONDITION_DISPATCH = {
