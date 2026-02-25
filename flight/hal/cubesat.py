@@ -199,6 +199,26 @@ class CubeSat:
         """key_in_device_list: Check if the key is in the device list"""
         return key in self.__device_list
 
+    def DEVICE_STATUS(self, device_name: str) -> dict:
+        """DEVICE_STATUS: Return detailed status for a device.
+
+        Intended for debugging why *_AVAILABLE flags evaluate to False.
+
+        :return: dict with fields: present, device_is_none, dead, temp_disabled, error, error_count
+        """
+        if not self.key_in_device_list(device_name):
+            return {"present": False}
+
+        device = self.__device_list[device_name]
+        return {
+            "present": True,
+            "device_is_none": device.device is None,
+            "dead": device.dead,
+            "temp_disabled": device.temp_disabled,
+            "error": device.error,
+            "error_count": device.error_count,
+        }
+
     ######################### DEVICES #########################
 
     @property

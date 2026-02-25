@@ -98,10 +98,12 @@ class ArgusV4Interfaces:
     SPI1_MISO = board.MISO1
     SPI1 = SPI(SPI1_SCK, MOSI=SPI1_MOSI, MISO=SPI1_MISO)
 
-    UART0_BAUD = const(115200)
+    UART0_BAUD = const(115200)  # TODO This may be 9600 for the S1216F8 GL
     UART0_TX = board.TX0
     UART0_RX = board.RX0
-    UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD)
+    # UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD)
+
+    UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD, receiver_buffer_size=1000)  # TODO Tune this correctly
 
     JETSON_BAUD = const(460800)
     JETSON_TX = board.TX1
@@ -338,7 +340,7 @@ class ArgusV4(CubeSat):
         from hal.drivers.gps import GPS
 
         try:
-            gps = GPS(ArgusV4Components.GPS_UART, None, False, False)
+            gps = GPS(ArgusV4Components.GPS_UART, None, False, False)  # TODO GPS Enable is obsolete
 
             return [gps, Errors.NO_ERROR]
         except Exception as e:
