@@ -21,9 +21,15 @@ Author: Ibrahima S. Sow
 """
 
 from apps.command.commands import (
+    CONFIRM_LAST_BATCH,
+    CREATE_TRANS,
     DOWNLINK_ALL,
     EVAL_STRING_COMMAND,
     FORCE_REBOOT,
+    GENERATE_ALL_PACKETS,
+    GENERATE_X_PACKETS,
+    GET_SINGLE_PACKET,
+    INIT_TRANS,
     REQUEST_FILE_METADATA,
     REQUEST_FILE_PKT,
     REQUEST_IMAGE,
@@ -34,15 +40,10 @@ from apps.command.commands import (
     SCHEDULE_OD_EXPERIMENT,
     SUM,
     SWITCH_TO_STATE,
-    TURN_OFF_PAYLOAD,
-    UPLINK_TIME_REFERENCE,
-    CREATE_TRANS,
-    INIT_TRANS,
-    GENERATE_ALL_PACKETS,
-    GENERATE_X_PACKETS,
-    GET_SINGLE_PACKET,
     TRANS_PAYLOAD,
-    CONFIRM_LAST_BATCH
+    TURN_OFF_PAYLOAD,
+    UPDATE_MISSING_FRAGMENTS,
+    UPLINK_TIME_REFERENCE,
 )
 from apps.command.preconditions import file_id_exists, valid_inputs, valid_state, valid_time_format
 from apps.comms.fifo import TransmitQueue
@@ -77,7 +78,7 @@ COMMAND_DISPATCH = {
     "GET_SINGLE_PACKET": GET_SINGLE_PACKET,
     "TRANS_PAYLOAD": TRANS_PAYLOAD,
     "CONFIRM_LAST_BATCH": CONFIRM_LAST_BATCH,
-    "UPDATE_MISSING_FRAGMENTS": UPDATE_MISSING_FRAGMENTS
+    "UPDATE_MISSING_FRAGMENTS": UPDATE_MISSING_FRAGMENTS,
 }
 
 PRECONDITION_DISPATCH = {
@@ -103,8 +104,7 @@ def process_command(command):
     satellite_func_name = command.satellite_func
     argument_list = command.get_arguments_list()
 
-    logger.info(
-        f"Processing command: {satellite_func_name} with arguments: {argument_list}")
+    logger.info(f"Processing command: {satellite_func_name} with arguments: {argument_list}")
     logger.info(f"and precondition: {precondition_name}")
 
     # 1. Verify Precondition

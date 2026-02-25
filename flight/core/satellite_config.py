@@ -25,6 +25,7 @@ class hal_monitor_config:
 
 # TODO: Change the auth key before flight
 
+
 class comms_config:
     ARGUS_ID = const(0)
     HB_PERIOD = const(60)

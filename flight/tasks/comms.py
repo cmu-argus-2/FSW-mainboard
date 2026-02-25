@@ -14,7 +14,6 @@ from core.time_processor import TimeProcessor as TPM
 
 
 class Task(TemplateTask):
-
     def __init__(self, id):
         super().__init__(id)
 

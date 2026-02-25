@@ -134,7 +134,7 @@ class SATELLITE_RADIO:
             return None
 
         # hopefully we have a valid packet at this point
-        header = packet[0]   # the first byte of the packet is the sc_cs [TODO] - Change this for the real cs size
+        header = packet[0]  # the first byte of the packet is the sc_cs [TODO] - Change this for the real cs size
         logger.info(f"Received packet with header (sc_cs): {header}")
         packet = packet[1:]  # remove the header from the packet
 
