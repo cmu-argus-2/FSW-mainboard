@@ -37,6 +37,7 @@ class Task(TemplateTask):
         Will transmit whatever is available on the transmit queue
         it should only be packets in bytes
         It will add to that packet the header (cs of the satellite)
+        TODO: add tx timeout when more information about duty cycle is available
         """
 
         self.log_info("Checking transmit queue for packets to send...")
@@ -73,7 +74,7 @@ class Task(TemplateTask):
 
             CommandQueue.overwrite_command(
                 message_object
-            )  # [check] - not sure why overwrite instead of push, i copied this from the old code
+            )  # [TODO] - not sure why overwrite instead of push, i copied this from the old code
 
             DH.log_data("comms", [TPM.time(), SATELLITE_RADIO.get_rssi()])
 
