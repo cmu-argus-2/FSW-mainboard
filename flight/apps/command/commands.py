@@ -278,6 +278,19 @@ def CONFIRM_LAST_BATCH(tid, MSB, LSB):
 
     return [len_missing_fragments]
 
+def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, MSB, LSB):
+    # 1. search for the transaction id
+    transaction = TM.get_transaction(tid)
+    if transaction is None:
+        logger.error(f"Transaction with tid {tid} not found")
+        return ["transaction_not_found"]
+    
+    # 2. update missing fragments
+    bitmap = (MSB << 16) | LSB
+    len_missing_fragments = transaction.update_missing_fragments_bitmap(seq_offset, bitmap)
+
+    return [len_missing_fragments]
+
 def TRANS_PAYLOAD(tid, seq_number, payload):
     # no need to implement now, this will only be needed if sending transactions from the gs to sat
     return "please implement me"
