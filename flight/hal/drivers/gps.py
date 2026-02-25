@@ -14,7 +14,6 @@ For final flight build, anything related to the PX1120S SHOULD be removed, as th
 try:
     import struct
     from typing import Optional
-
     from busio import UART
     from digitalio import DigitalInOut
 except ImportError:
@@ -97,11 +96,11 @@ class GPS:
         # Helper Flags for Receiver Hardware Configuration
         # Setting to True will run the configuration function once
         self._reset_to_factory = False
-        self._binary_set_flag = False  # This must be true for the S1216F8-GL
-        self._periodic_nav_flag = False  # This must be true for the S1216F8-GL
-        self._disable_nmea_flag = False
+        self._binary_set_flag = True  # This must be true for the S1216F8-GL
+        self._periodic_nav_flag = True  # This must be true for the S1216F8-GL
+        self._disable_nmea_flag = False # Must be on for first boot of new receiver
         self._queried_binary_status_flag = False
-        self._disable_unnecessary_binary_flag = False
+        self._disable_unnecessary_binary_flag = False # Must be on for first boot of new receiver
 
         if self.debug:
             self._nav_data_hex = {}  # Navigation data as a dictionary of hex values
@@ -223,27 +222,19 @@ class GPS:
         if self._msg is None or len(self._msg) < 5:
             return False
             
-        if (self._msg[4] == 0xA8 or self._msg == b"$SkyTraq,Phoenix\r\n") and not self._board_detected:
+        if (self._msg[4] == 0xA8 or b"Phoenix" in self._msg) and not self._board_detected:
             if self.debug:
                 print("Board type detected: PX1120S")
             self._board = "PX1120S"
             self._board_detected = True
 
         if (
-            self._msg[4] == 0xDF or self._msg == b"$PSTI,001,1*1E\r\n" or self._msg == b"$SkyTraq,Venus8\r\n"
+            self._msg[4] == 0xDF or self._msg == b"$PSTI,001,1*1E\r\n" or b"Venus8" in self._msg
         ) and not self._board_detected:
             if self.debug:
                 print("Board type detected: S1216F8-GL")
             self._board = "S1216F8-GL"
             self._board_detected = True
-
-            # For the S1216F8-GL, this needs to run every time the receiver is powered on, there is no way to flash it
-            self.enable_periodic_nav_data()
-            self.set_to_binary()
-
-            if self.debug:
-                # print("SET TO BINARY")
-                print("ENABLING PERIODIC NAV DATA ENABLING PERIODIC NAV DATA ")
 
         if self._board is None:
             if self.debug:
@@ -274,6 +265,12 @@ class GPS:
         if self.debug:
             print("Payload:\n", " ".join(f"{b:02X}" for b in self._payload))
         if self._msg_id == 0x83:  # 0x83 is successful ACK of setting binary nav type
+            if self.debug:
+                print("Received ACK message, not nav data")
+            return False
+        if self._msg_id == 0x84:  # 0x84 is NACK
+            if self.debug:
+                print("Received NACK message, not nav data")
             return False
         return True
 
@@ -577,8 +574,8 @@ class GPS:
 
     def set_to_binary(self) -> None:
         """Send Set to Binary Mode command (Message ID 0x09)."""
-        self.write(b"\xa0\xa1\x00\x03\x09\x02\x00\x0b\x0d\x0a")
-        # self.write(b"\xa0\xa1\x00\x03\x09\x02\x01\x0a\x0d\x0a") # Flash memory version
+        # self.write(b"\xa0\xa1\x00\x03\x09\x02\x00\x0b\x0d\x0a")
+        self.write(b"\xa0\xa1\x00\x03\x09\x02\x01\x0a\x0d\x0a") # Flash memory version
 
     def query_binary_status(self) -> None:
         """Send Query Binary Status command."""
@@ -597,8 +594,8 @@ class GPS:
             self.write(b"\xa0\xa1\x00\x04\x64\x2F\x01\x01\x4B\x0d\x0a")  # Flash memory version
         if self._board == "S1216F8-GL":
             # (Message ID 0x11)
-            self.write(b"\xa0\xa1\x00\x09\x1e\x00\x00\x00\x00\x01\x03\x00\x00\x1c\x0d\x0a")
-            # self.write(b"\xa0\xa1\x00\x09\x1e\x00\x00\x00\x00\x01\x03\x00\x01\x1d\x0d\x0a") # Flash memory version, this does not work
+            # self.write(b"\xa0\xa1\x00\x09\x1e\x00\x00\x00\x00\x01\x03\x00\x00\x1c\x0d\x0a")
+            self.write(b"\xa0\xa1\x00\x09\x1e\x00\x00\x00\x00\x01\x03\x00\x01\x1d\x0d\x0a") # Flash memory version
 
     def disable_nmea_periodic(self) -> None:
         """Send Disable NMEA Periodic Messages command (Message ID 0x64)."""
@@ -614,7 +611,8 @@ class GPS:
 
     def disable_unnecessary_binary_data(self) -> None:
         """Send Disable Unecessary Nav Binary Messages command (Message ID 0x1E)."""
-        self.write(b"\xa0\xa1\x00\x09\x1e\x00\x00\x00\x00\x01\x03\x00\x00\x1c\x0d\x0a")
+        # self.write(b"\xa0\xa1\x00\x09\x1e\x00\x00\x00\x00\x01\x03\x00\x00\x1c\x0d\x0a")
+        self.write(b"\xa0\xa1\x00\x09\x1e\x00\x00\x00\x00\x01\x03\x00\x01\x1d\x0d\x0a")  # Flash memory version
 
     def use_helper_functions(self) -> None:
         """Use helper functions to set up the receiver hardware configuration."""
@@ -628,30 +626,35 @@ class GPS:
                 self._reset_to_factory = False
                 if self.debug:
                     print("RESETTING TO FACTORY DEFAULTS RESETTING TO FACTORY DEFAULTS ")
+                return
 
             if self._disable_nmea_flag:
                 self.disable_nmea_periodic()
                 self._disable_nmea_flag = False
                 if self.debug:
                     print("DISABLING NMEA DISABLING NMEA DISABLING NMEA ")
+                return
 
             if self._binary_set_flag:
                 self.set_to_binary()
                 self._binary_set_flag = False
                 if self.debug:
                     print("SETTING TO BINARY SETTING TO BINARY SETTING TO BINARY ")
+                return
 
             if self._queried_binary_status_flag:
                 self.query_binary_status()
                 self._queried_binary_status_flag = False
                 if self.debug:
                     print("QUERYING BINARY STATUS QUERYING BINARY STATUS ")
+                return
 
             if self._periodic_nav_flag:
                 self.enable_periodic_nav_data()
                 self._periodic_nav_flag = False
                 if self.debug:
                     print("ENABLING PERIODIC NAV DATA ENABLING PERIODIC NAV DATA ")
+                return
 
         if self._board == "S1216F8-GL":
             if self.debug:
@@ -665,30 +668,42 @@ class GPS:
                 self._reset_to_factory = False
                 if self.debug:
                     print("RESETTING TO FACTORY DEFAULTS RESETTING TO FACTORY DEFAULTS ")
+                return
+
+            if self._disable_nmea_flag:
+                self.disable_nmea_periodic()
+                self._disable_nmea_flag = False
+                if self.debug:
+                    print("DISABLING NMEA DISABLING NMEA DISABLING NMEA ")
+                return
 
             if self._binary_set_flag:
                 self.set_to_binary()
                 self._binary_set_flag = False
                 if self.debug:
                     print("SETTING TO BINARY SETTING TO BINARY SETTING TO BINARY ")
+                return
 
             if self._queried_binary_status_flag:
                 self.query_binary_status()
                 self._queried_binary_status_flag = False
                 if self.debug:
                     print("QUERYING BINARY STATUS QUERYING BINARY STATUS ")
+                return
 
             if self._periodic_nav_flag:
                 self.enable_periodic_nav_data()
                 self._periodic_nav_flag = False
                 if self.debug:
                     print("ENABLING PERIODIC NAV DATA ENABLING PERIODIC NAV DATA ")
+                return
 
             if self._disable_unnecessary_binary_flag:
                 self.disable_unnecessary_binary_data()
                 self._disable_unnecessary_binary_flag = False
                 if self.debug:
                     print("DISABLING UNNECESSARY BINARY DATA DISABLING UNNECESSARY BINARY DATA ")
+                return
 
     @property
     def in_waiting(self) -> int:
