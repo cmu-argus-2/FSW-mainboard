@@ -1612,8 +1612,6 @@ class SX1262(SX126X):
 
         else:
             return b"", state
-
-
         return bytes(data), state
 
     def _transmit(self, data):
