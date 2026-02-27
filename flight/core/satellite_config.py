@@ -9,6 +9,7 @@ class command_config:
     DETUMBLING_TIMEOUT_DURATION = const(30)
     BURN_WIRE_TIMEOUT = const(2)
     PAYLOAD_TESTING_MODE = False
+    SKIP_DEPLOYMENT = True
 
 
 class time_processor_config:
@@ -23,10 +24,15 @@ class hal_monitor_config:
     REGULAR_REBOOT = const(3600)
 
 
-# TODO: Change the auth key before flight
-
 class comms_config:
-    ARGUS_ID = const(0)
-    HB_PERIOD = const(60)
+    ARGUS_ID = const(0x0)
+    HB_PERIOD = const(30)
     AUTH_ENABLED = True
     AUTH_KEY_HEX = "d6172b38acb7d2a28e21662f689d1d15ad78ccc888a9c7a78ef58cb61b0f1e32"
+
+
+class digipeater_config:
+    ENABLED = True
+    FORWARD_COMMANDS = True
+    DUPLICATE_WINDOW_S = const(30)
+    RX_QUEUE_MAX = const(20)

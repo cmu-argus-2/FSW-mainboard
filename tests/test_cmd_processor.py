@@ -5,7 +5,10 @@ from micropython import const
 
 # Setup CircuitPython mocks for testing
 import tests.cp_mock  # noqa: F401
+from flight.apps.command.commands import COMMS_MODE, DIGIPEATER_ACTIVATE, DIGIPEATER_DEACTIVATE, RF_RESUME, RF_STOP
 from flight.apps.command.preconditions import valid_state, valid_time_format
+from flight.apps.command.preconditions import valid_comms_mode
+from flight.apps.comms.modes import COMMS_MODE as COMMS_MODE_ID
 from flight.apps.command.processor import CommandProcessingStatus, process_command
 from flight.core.state_machine import STATES
 
@@ -116,3 +119,50 @@ def test_valid_state():
     assert valid_state(STATES.NOMINAL)
     assert valid_state(STATES.EXPERIMENT)
     assert valid_state(STATES.LOW_POWER)
+
+
+def test_valid_comms_mode():
+    assert valid_comms_mode(COMMS_MODE_ID.QUIET)
+    assert valid_comms_mode(COMMS_MODE_ID.NORMAL)
+    assert valid_comms_mode(COMMS_MODE_ID.DIGIPEAT)
+    assert valid_comms_mode(COMMS_MODE_ID.RF_STOP)
+    assert not valid_comms_mode(0xFF)
+
+
+def test_rf_stop_and_resume(monkeypatch):
+    mode_calls = []
+    monkeypatch.setattr(
+        "flight.apps.command.commands.SATELLITE_RADIO.set_comms_mode",
+        lambda mode: mode_calls.append(mode),
+    )
+
+    RF_STOP()
+    RF_RESUME()
+
+    assert mode_calls == [COMMS_MODE_ID.RF_STOP, COMMS_MODE_ID.NORMAL]
+
+
+def test_digipeater_toggle(monkeypatch):
+    mode_calls = []
+    monkeypatch.setattr(
+        "flight.apps.command.commands.SATELLITE_RADIO.set_comms_mode",
+        lambda mode: mode_calls.append(mode),
+    )
+
+    DIGIPEATER_ACTIVATE()
+    DIGIPEATER_DEACTIVATE()
+
+    assert mode_calls == [COMMS_MODE_ID.DIGIPEAT, COMMS_MODE_ID.NORMAL]
+
+
+def test_comms_mode_command(monkeypatch):
+    mode_calls = []
+    monkeypatch.setattr(
+        "flight.apps.command.commands.SATELLITE_RADIO.set_comms_mode",
+        lambda mode: mode_calls.append(mode),
+    )
+
+    COMMS_MODE(COMMS_MODE_ID.QUIET)
+    COMMS_MODE(COMMS_MODE_ID.NORMAL)
+
+    assert mode_calls == [COMMS_MODE_ID.QUIET, COMMS_MODE_ID.NORMAL]

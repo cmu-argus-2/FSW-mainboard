@@ -20,9 +20,12 @@ Author: Ibrahima S. Sow
 
 """
 
-import supervisor
+from apps.command.supervisor import CommandSupervisor
 from apps.command.constants import file_tags_str
+from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
+from apps.comms.modes import COMMS_MODE as COMMS_MODE_ID
+from apps.comms.modes import COMMS_MODE_STR
 from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
 from core import logger
 from core import state_manager as SM
@@ -35,9 +38,8 @@ FILE_PKTSIZE = 240
 
 def FORCE_REBOOT():
     """Forces a power cycle of the spacecraft."""
-    logger.info("Executing FORCE_REBOOT")
-    supervisor.reload()
-    # https://learn.adafruit.com/circuitpython-essentials/circuitpython-resetting
+    logger.info("Executing FORCE_REBOOT (deferred)")
+    CommandSupervisor.request_reboot()
     return []
 
 
@@ -73,6 +75,32 @@ def TURN_OFF_PAYLOAD():
 def SCHEDULE_OD_EXPERIMENT():
     """Schedules an orbit determination experiment at the next available opportunity."""
     logger.info("Executing SCHEDULE_OD_EXPERIMENT")
+    return []
+
+
+def RF_STOP():
+    """
+    Stops all satellite RF transmissions.
+    """
+    logger.warning("Executing RF_STOP (deferred): will disable TX after ACK")
+    CommandSupervisor.request_rf_stop()
+    return []
+
+
+def RF_RESUME():
+    """
+    Resumes normal satellite RF transmissions.
+    """
+    logger.warning("Executing RF_RESUME: enabling standard satellite TX")
+    CommandSupervisor.cancel_pending_rf_stop()
+    SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.STANDARD)
+    return []
+
+
+def COMMS_MODE(mode_id):
+    """Set COMMS operating mode (STANDARD/RF_STOP)."""
+    SATELLITE_RADIO.set_comms_mode(mode_id)
+    logger.warning(f"Executing COMMS_MODE: {COMMS_MODE_STR.get(mode_id, 'UNKNOWN')}")
     return []
 
 

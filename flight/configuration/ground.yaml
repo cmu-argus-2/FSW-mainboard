@@ -19,6 +19,9 @@ command:
   PAYLOAD_TESTING_MODE:
     value: false  # Set to true to enable payload testing mode (goes straight to experiment mode)
 
+  SKIP_DEPLOYMENT:
+    value: true  # Set to true to bypass deployment sequence during testing
+
 # Time Processor Module
 time_processor:
   time_reference: 
@@ -49,3 +52,16 @@ comms:
     value: true
   AUTH_KEY_HEX:
     value: "d6172b38acb7d2a28e21662f689d1d15ad78ccc888a9c7a78ef58cb61b0f1e32" # TODO: Change before flight
+
+# Digipeater Task
+digipeater:
+  ENABLED:
+    value: true
+  FORWARD_COMMANDS:
+    value: true
+  DUPLICATE_WINDOW_S:
+    value: 30
+    _const: true
+  RX_QUEUE_MAX:
+    value: 20
+    _const: true

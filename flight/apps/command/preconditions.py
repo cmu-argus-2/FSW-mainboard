@@ -1,4 +1,5 @@
 from apps.command.constants import file_tags_str
+from apps.comms.modes import COMMS_MODE
 from core.data_handler import DataHandler
 from core.state_machine import STATES
 
@@ -65,6 +66,12 @@ def file_id_exists(*args) -> bool:
     file_id = args[0]
 
     return (file_id in file_tags_str) and (DataHandler.data_process_exists(file_tags_str[file_id]))
+
+
+def valid_comms_mode(*args) -> bool:
+    """Precondition for COMMS_MODE command."""
+    mode_id = args[0]
+    return mode_id in COMMS_MODE.ALL
 
 
 # TODO: add a precondition for OD experiment (no OD should be in progress)
