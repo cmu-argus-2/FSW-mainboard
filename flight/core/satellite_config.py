@@ -29,3 +29,10 @@ class comms_config:
     HB_PERIOD = const(30)
     AUTH_ENABLED = True
     AUTH_KEY_HEX = "d6172b38acb7d2a28e21662f689d1d15ad78ccc888a9c7a78ef58cb61b0f1e32"
+
+
+class digipeater_config:
+    ENABLED = True
+    FORWARD_COMMANDS = True
+    DUPLICATE_WINDOW_S = const(30)
+    RX_QUEUE_MAX = const(20)

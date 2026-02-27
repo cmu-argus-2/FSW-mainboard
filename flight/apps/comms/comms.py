@@ -161,13 +161,14 @@ class SATELLITE_RADIO:
     """
 
     @classmethod
-    def receive_message(cls):
+    def receive_rx_frame(cls):
         # Get packet from radio over SPI
         # Assumes packet is in FIFO buffer
 
         packet = None
         err = -1  # _ERR_NONE is 0
         cls.rx_auth_status = "not_checked"
+        frame = None
 
         try:
             # no need to check if radio is available, it was already checked
@@ -195,7 +196,14 @@ class SATELLITE_RADIO:
             # hopefully we have a valid packet at this point
             header = packet[0]   # the first byte of the packet is the sc_cs [TODO] - Change this for the real cs size
             logger.info(f"Received packet with header (sc_cs): {header}")
-            packet = packet[1:]  # remove the header from the packet
+            frame = {
+                "raw_packet": packet,
+                "source_header": header,
+                "payload": packet[1:],
+                "decoded": None,
+                "auth_status": "not_checked",
+            }
+            packet = frame["payload"]
 
             if cls.auth_enabled:
                 # Authenticated command format:
@@ -205,26 +213,43 @@ class SATELLITE_RADIO:
                 if not is_valid:
                     logger.warning(f"[COMMS ERROR] Command authentication failed: {reason}")
                     cls.packet_auth_fail_count += 1
-                    return None
+                    frame["auth_status"] = reason
+                    return frame
 
                 cls.rx_auth_status = "passed"
+                frame["auth_status"] = "passed"
                 logger.info("[COMMS] Command authentication passed")
+            else:
+                frame["auth_status"] = "disabled"
 
             # unpack the received packet
-            message_object = unpack(packet)  # [TODO] - this should be implemented in middleware
+            try:
+                message_object = unpack(packet)  # [TODO] - this should be implemented in middleware
+            except Exception as e:
+                cls.failed_unpack_count += 1
+                logger.warning(f"[COMMS ERROR] Failed to unpack received packet: {e}")
+                return frame
             logger.info(f"Received raw packet: {packet}")
             logger.info(f"Unpacked message object: {message_object}")
             if message_object is None:
                 cls.failed_unpack_count += 1
                 logger.warning("[COMMS ERROR] Failed to unpack received packet")
-                return None
+                return frame
 
             cls.rx_packet_count += 1
-
-            return message_object
+            frame["decoded"] = message_object
+            return frame
         finally:
             # Keep RX explicitly armed so stale packets are not re-served when TX is disabled.
             cls.set_rx_mode()
+
+    @classmethod
+    def receive_message(cls):
+        """Backwards-compatible wrapper that returns only decoded command object."""
+        frame = cls.receive_rx_frame()
+        if frame is None:
+            return None
+        return frame.get("decoded")
 
     """
         Name: transmit_message

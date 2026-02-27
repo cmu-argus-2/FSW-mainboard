@@ -4,6 +4,7 @@ from apps.command.supervisor import CommandSupervisor
 from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import TransmitQueue
 from apps.comms.modes import COMMS_MODE
+from apps.digipeater import DIGIPEATER_QUEUE_STATUS, DigipeaterRxQueue
 from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
 
 # from apps.telemetry import TelemetryPacker
@@ -67,7 +68,21 @@ class Task(TemplateTask):
         if SATELLITE_RADIO.data_available():
 
             # Read packet present in the RX buffer
-            message_object = SATELLITE_RADIO.receive_message()
+            rx_frame = SATELLITE_RADIO.receive_rx_frame()
+            if rx_frame is None:
+                return
+
+            q_status = DigipeaterRxQueue.push_frame(
+                {
+                    "raw_packet": rx_frame["raw_packet"],
+                    "source_header": rx_frame["source_header"],
+                    "is_command": isinstance(rx_frame.get("decoded"), Command),
+                }
+            )
+            if q_status != DIGIPEATER_QUEUE_STATUS.OK:
+                self.log_warning(f"Digipeater RX queue push failed: {q_status}")
+
+            message_object = rx_frame.get("decoded")
 
             if not isinstance(message_object, Command):
                 self.log_warning("[COMMS ERROR] Received invalid command object from GS")
