@@ -20,7 +20,7 @@ Author: Ibrahima S. Sow
 
 """
 
-import supervisor
+from apps.command.supervisor import CommandSupervisor
 from apps.command.constants import file_tags_str
 from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
@@ -38,9 +38,8 @@ FILE_PKTSIZE = 240
 
 def FORCE_REBOOT():
     """Forces a power cycle of the spacecraft."""
-    logger.info("Executing FORCE_REBOOT")
-    supervisor.reload()
-    # https://learn.adafruit.com/circuitpython-essentials/circuitpython-resetting
+    logger.info("Executing FORCE_REBOOT (deferred)")
+    CommandSupervisor.request_reboot()
     return []
 
 
@@ -83,8 +82,8 @@ def RF_STOP():
     """
     Stops all satellite RF transmissions.
     """
-    logger.warning("Executing RF_STOP: disabling all satellite TX")
-    SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.RF_STOP)
+    logger.warning("Executing RF_STOP (deferred): will disable TX after ACK")
+    CommandSupervisor.request_rf_stop()
     return []
 
 
@@ -92,27 +91,14 @@ def RF_RESUME():
     """
     Resumes normal satellite RF transmissions.
     """
-    logger.warning("Executing RF_RESUME: enabling normal satellite TX")
-    SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.NORMAL)
-    return []
-
-
-def DIGIPEATER_ACTIVATE():
-    """Enable digipeater relay mode in COMMS."""
-    logger.warning("Executing DIGIPEATER_ACTIVATE: relay mode enabled")
-    SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.DIGIPEAT)
-    return []
-
-
-def DIGIPEATER_DEACTIVATE():
-    """Disable digipeater relay mode in COMMS."""
-    logger.warning("Executing DIGIPEATER_DEACTIVATE: relay mode disabled")
-    SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.NORMAL)
+    logger.warning("Executing RF_RESUME: enabling standard satellite TX")
+    CommandSupervisor.cancel_pending_rf_stop()
+    SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.STANDARD)
     return []
 
 
 def COMMS_MODE(mode_id):
-    """Set COMMS operating mode (QUIET/NORMAL/DIGIPEAT/RF_STOP)."""
+    """Set COMMS operating mode (STANDARD/RF_STOP)."""
     SATELLITE_RADIO.set_comms_mode(mode_id)
     logger.warning(f"Executing COMMS_MODE: {COMMS_MODE_STR.get(mode_id, 'UNKNOWN')}")
     return []

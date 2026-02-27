@@ -22,8 +22,6 @@ Author: Ibrahima S. Sow
 
 from apps.command.commands import (
     COMMS_MODE,
-    DIGIPEATER_ACTIVATE,
-    DIGIPEATER_DEACTIVATE,
     DOWNLINK_ALL,
     EVAL_STRING_COMMAND,
     FORCE_REBOOT,
@@ -43,8 +41,11 @@ from apps.command.commands import (
     UPLINK_TIME_REFERENCE,
 )
 from apps.command.preconditions import file_id_exists, valid_comms_mode, valid_inputs, valid_state, valid_time_format
+from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import TransmitQueue
+from apps.comms.modes import COMMS_MODE as COMMS_MODE_ID
 from apps.telemetry.splat.splat.telemetry_codec import Ack, pack
+from apps.telemetry.splat.splat.telemetry_definition import COMMAND_IDS
 from core import logger
 from micropython import const
 
@@ -54,8 +55,6 @@ from micropython import const
 
 COMMAND_DISPATCH = {
     "COMMS_MODE": COMMS_MODE,
-    "DIGIPEATER_ACTIVATE": DIGIPEATER_ACTIVATE,
-    "DIGIPEATER_DEACTIVATE": DIGIPEATER_DEACTIVATE,
     "DOWNLINK_ALL": DOWNLINK_ALL,
     "EVAL_STRING_COMMAND": EVAL_STRING_COMMAND,
     "FORCE_REBOOT": FORCE_REBOOT,
@@ -157,10 +156,17 @@ def handle_command_execution_status(status, response_args):
 
     # add ack response to transmit queue for comms to pick up and send to ground station
     # this is not the best place to do this, not sure where the best place to do this is
-    ack = Ack(status, response_args)
-    packed_ack = pack(ack)
-    TransmitQueue.push_packet(packed_ack)
-    logger.info(f"Added ack packet to transmit queue: {packed_ack}")
+    command_id = response_args[0] if response_args else None
+    in_rf_stop = SATELLITE_RADIO.get_comms_mode() == COMMS_MODE_ID.RF_STOP
+    rf_resume_id = COMMAND_IDS["RF_RESUME"]
+
+    if in_rf_stop and command_id != rf_resume_id:
+        logger.warning("RF_STOP active: suppressing command ACK")
+    else:
+        ack = Ack(status, response_args)
+        packed_ack = pack(ack)
+        TransmitQueue.push_packet(packed_ack)
+        logger.info(f"Added ack packet to transmit queue: {packed_ack}")
 
     if status == CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS:
         logger.info("Command execution successful")

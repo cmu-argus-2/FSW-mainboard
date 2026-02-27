@@ -19,6 +19,9 @@ command:
   PAYLOAD_TESTING_MODE:
     value: false  # Set to true to enable payload testing mode (goes straight to experiment mode)
 
+  SKIP_DEPLOYMENT:
+    value: true  # Set to true to bypass deployment sequence during testing
+
 # Time Processor Module
 time_processor:
   time_reference: 

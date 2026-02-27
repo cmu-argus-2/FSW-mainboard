@@ -1,5 +1,6 @@
 # Communication task which uses the radio to transmit and receive messages.
 from apps.command import QUEUE_STATUS, CommandQueue
+from apps.command.supervisor import CommandSupervisor
 from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import TransmitQueue
 from apps.comms.modes import COMMS_MODE
@@ -30,6 +31,7 @@ class Task(TemplateTask):
         )  # the packing function of the report to be downlinked periodically
         self.last_periodic_telemetry_time = TPM.time()  # timestamp of the last periodic telemetry downlink
 
+        SATELLITE_RADIO.restore_comms_mode_from_persistent_state()
         SATELLITE_RADIO.set_rx_mode()
 
     def transmit_message(self):
@@ -85,7 +87,7 @@ class Task(TemplateTask):
         current_time = TPM.time()
         mode = SATELLITE_RADIO.get_comms_mode()
 
-        if mode in (COMMS_MODE.QUIET, COMMS_MODE.RF_STOP):
+        if mode == COMMS_MODE.RF_STOP or CommandSupervisor.has_pending_action():
             return
 
         if current_time - self.last_periodic_telemetry_time >= self.periodic_telemetry_interval:
@@ -106,4 +108,5 @@ class Task(TemplateTask):
 
         self.check_periodic_telemetry()  # check if it's time to send periodic telemetry
         self.transmit_message()  # check if we have messages to transmit to GS
+        CommandSupervisor.process_pending_action()
         self.receive_message()  # check if we have received messages from GS

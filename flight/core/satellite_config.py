@@ -9,6 +9,7 @@ class command_config:
     DETUMBLING_TIMEOUT_DURATION = const(30)
     BURN_WIRE_TIMEOUT = const(2)
     PAYLOAD_TESTING_MODE = False
+    SKIP_DEPLOYMENT = True
 
 
 class time_processor_config:

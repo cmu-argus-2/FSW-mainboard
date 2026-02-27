@@ -18,6 +18,7 @@ from micropython import const
 # Internal error definitions from driver
 _ERR_NONE = const(0)
 _ERR_CRC_MISMATCH = const(-7)
+_RF_STOP_LATCH_PATH = "/sd/.rf_stop_latch"
 
 
 class SATELLITE_RADIO:
@@ -44,9 +45,8 @@ class SATELLITE_RADIO:
 
     tx_packet_count = 0
     tx_failed_count = 0  # this is because the radio was not available
-    comms_mode = COMMS_MODE.NORMAL
+    comms_mode = COMMS_MODE.STANDARD
     rf_stop = False
-    digipeater_enabled = False
 
     """
         Name: set_rx_mode
@@ -87,10 +87,47 @@ class SATELLITE_RADIO:
             return False
 
         cls.comms_mode = mode_id
-        cls.rf_stop = mode_id == COMMS_MODE.QUIET
-        cls.digipeater_enabled = mode_id == COMMS_MODE.DIGIPEAT
+        cls.rf_stop = mode_id == COMMS_MODE.RF_STOP
+        cls._persist_rf_stop_latch(cls.rf_stop)
         logger.warning(f"[COMMS] Mode set to {COMMS_MODE_STR.get(mode_id, mode_id)}")
         return True
+
+    @classmethod
+    def _persist_rf_stop_latch(cls, enabled):
+        """Persist RF_STOP latch across reboot using SD-backed state."""
+        try:
+            if enabled:
+                with open(_RF_STOP_LATCH_PATH, "w") as f:
+                    f.write("1")
+            else:
+                import os
+
+                os.remove(_RF_STOP_LATCH_PATH)
+        except OSError:
+            # Missing file when clearing, or SD not yet ready; both are non-fatal.
+            pass
+        except Exception as e:
+            logger.warning(f"[COMMS] Failed to persist RF_STOP latch: {e}")
+
+    @classmethod
+    def restore_comms_mode_from_persistent_state(cls):
+        """Restore RF_STOP latch (if present) after boot."""
+        try:
+            with open(_RF_STOP_LATCH_PATH, "r") as f:
+                latched = f.read(1) == "1"
+        except OSError:
+            latched = False
+        except Exception as e:
+            logger.warning(f"[COMMS] Failed to restore RF_STOP latch: {e}")
+            latched = False
+
+        if latched:
+            cls.comms_mode = COMMS_MODE.RF_STOP
+            cls.rf_stop = True
+            logger.warning("[COMMS] Restored RF_STOP mode from persistent latch")
+        else:
+            cls.comms_mode = COMMS_MODE.STANDARD
+            cls.rf_stop = False
 
     """
         Name: set_tx_ack
@@ -132,58 +169,62 @@ class SATELLITE_RADIO:
         err = -1  # _ERR_NONE is 0
         cls.rx_auth_status = "not_checked"
 
-        # no need to check if radio is available, it was already checked
-        packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
+        try:
+            # no need to check if radio is available, it was already checked
+            packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
 
-        # Checks on err returned by driver
-        if err == _ERR_CRC_MISMATCH:
-            # CRC error, packet likely corrupted
-            logger.warning("[COMMS ERROR] CRC error occured on incoming packet")
-            cls.crc_error_count += 1
-            return None
-
-        elif err != _ERR_NONE:
-            # Undefined error, packet should never have gotten to comms task
-            logger.error("[COMMS ERROR] Undefined error from radio driver")
-            cls.undef_error_count += 1
-            return None
-
-        # Check if packet exists
-        if packet is None:
-            # FIFO buffer does not contain a packet, or packet could not be read for some reason
-            cls.packet_none_count += 1
-            return None
-
-        # hopefully we have a valid packet at this point
-        header = packet[0]   # the first byte of the packet is the sc_cs [TODO] - Change this for the real cs size
-        logger.info(f"Received packet with header (sc_cs): {header}")
-        packet = packet[1:]  # remove the header from the packet
-
-        if cls.auth_enabled:
-            # Authenticated command format:
-            # [sc_cs|nonce(4)|mac(32)|msg_id|cmd_id|args_len|args...]
-            is_valid, reason, packet = verify_authenticated_command(packet, cls.auth_key)
-
-            if not is_valid:
-                logger.warning(f"[COMMS ERROR] Command authentication failed: {reason}")
-                cls.packet_auth_fail_count += 1
+            # Checks on err returned by driver
+            if err == _ERR_CRC_MISMATCH:
+                # CRC error, packet likely corrupted
+                logger.warning("[COMMS ERROR] CRC error occured on incoming packet")
+                cls.crc_error_count += 1
                 return None
 
-            cls.rx_auth_status = "passed"
-            logger.info("[COMMS] Command authentication passed")
+            elif err != _ERR_NONE:
+                # Undefined error, packet should never have gotten to comms task
+                logger.error("[COMMS ERROR] Undefined error from radio driver")
+                cls.undef_error_count += 1
+                return None
 
-        # unpack the received packet
-        message_object = unpack(packet)  # [TODO] - this should be implemented in middleware
-        logger.info(f"Received raw packet: {packet}")
-        logger.info(f"Unpacked message object: {message_object}")
-        if message_object is None:
-            cls.failed_unpack_count += 1
-            logger.warning("[COMMS ERROR] Failed to unpack received packet")
-            return None
+            # Check if packet exists
+            if packet is None:
+                # FIFO buffer does not contain a packet, or packet could not be read for some reason
+                cls.packet_none_count += 1
+                return None
 
-        cls.rx_packet_count += 1
+            # hopefully we have a valid packet at this point
+            header = packet[0]   # the first byte of the packet is the sc_cs [TODO] - Change this for the real cs size
+            logger.info(f"Received packet with header (sc_cs): {header}")
+            packet = packet[1:]  # remove the header from the packet
 
-        return message_object
+            if cls.auth_enabled:
+                # Authenticated command format:
+                # [sc_cs|nonce(4)|mac(32)|msg_id|cmd_id|args_len|args...]
+                is_valid, reason, packet = verify_authenticated_command(packet, cls.auth_key)
+
+                if not is_valid:
+                    logger.warning(f"[COMMS ERROR] Command authentication failed: {reason}")
+                    cls.packet_auth_fail_count += 1
+                    return None
+
+                cls.rx_auth_status = "passed"
+                logger.info("[COMMS] Command authentication passed")
+
+            # unpack the received packet
+            message_object = unpack(packet)  # [TODO] - this should be implemented in middleware
+            logger.info(f"Received raw packet: {packet}")
+            logger.info(f"Unpacked message object: {message_object}")
+            if message_object is None:
+                cls.failed_unpack_count += 1
+                logger.warning("[COMMS ERROR] Failed to unpack received packet")
+                return None
+
+            cls.rx_packet_count += 1
+
+            return message_object
+        finally:
+            # Keep RX explicitly armed so stale packets are not re-served when TX is disabled.
+            cls.set_rx_mode()
 
     """
         Name: transmit_message
