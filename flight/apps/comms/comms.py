@@ -193,6 +193,11 @@ class SATELLITE_RADIO:
                 cls.packet_none_count += 1
                 return None
 
+            if len(packet) < 1:
+                logger.warning("[COMMS ERROR] Received empty packet")
+                cls.failed_unpack_count += 1
+                return None
+
             # hopefully we have a valid packet at this point
             header = packet[0]   # the first byte of the packet is the sc_cs [TODO] - Change this for the real cs size
             logger.info(f"Received packet with header (sc_cs): {header}")
