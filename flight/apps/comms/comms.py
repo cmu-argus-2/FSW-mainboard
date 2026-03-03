@@ -23,7 +23,8 @@ class SATELLITE_RADIO:
 
     ARGUS_CS = CONFIG.ARGUS_ID
     HB_PERIOD = CONFIG.HB_PERIOD
-    CALLSIGN = CONFIG.CALLSIGN
+    SC_CALLSIGN = CONFIG.SC_CALLSIGN
+    GS_CALLSIGN = CONFIG.GS_CALLSIGN
 
     # Init TM frame for preallocating memory
     tm_frame = bytearray(248)
@@ -155,8 +156,8 @@ class SATELLITE_RADIO:
         logger.info(f"Unpacked message object: {message_object}")
         
         # [TODO] need to change this to match the station callsign
-        if callsign != cls.CALLSIGN:
-            logger.error(f"[COMMS ERROR] Received packet with incorrect callsign: {callsign}")
+        if callsign != cls.GS_CALLSIGN:
+            logger.error(f"[COMMS ERROR] Received packet with incorrect gs_callsign: {callsign}")
             return None
         
         if message_object is None:

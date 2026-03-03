@@ -45,7 +45,7 @@ class Task(TemplateTask):
             # If we have a packet to transmit, set it in the radio
             packet, queue_error_code = TransmitQueue.pop_packet()
             if queue_error_code == QUEUE_STATUS.OK:
-                packed_packet = pack(packet, callsign=SATELLITE_RADIO.CALLSIGN)   # changed and the entries in transmitqueue are no longer packed
+                packed_packet = pack(packet, callsign=SATELLITE_RADIO.SC_CALLSIGN)   # changed and the entries in transmitqueue are no longer packed
                 SATELLITE_RADIO.set_tx_message(packed_packet)
                 self.log_info(f"Set packet for transmission: {packed_packet}")
                 SATELLITE_RADIO.transmit_message()
