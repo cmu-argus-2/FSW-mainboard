@@ -31,7 +31,6 @@ class SATELLITE_RADIO:
 
     auth_enabled = bool(getattr(CONFIG, "AUTH_ENABLED", False))
     auth_key = get_auth_key_bytes(getattr(CONFIG, "AUTH_KEY_HEX", ""))
-    rx_auth_status = "not_checked"
 
     # counters to help determine comms health and performance
     rx_packet_count = 0  # this are just the valid packets
@@ -66,10 +65,6 @@ class SATELLITE_RADIO:
     def get_rssi(cls):
         # Get state
         return cls.rx_message_rssi
-
-    @classmethod
-    def get_auth_status(cls):
-        return cls.rx_auth_status
 
     """
         Name: set_tx_ack
@@ -109,7 +104,6 @@ class SATELLITE_RADIO:
 
         packet = None
         err = -1  # _ERR_NONE is 0
-        cls.rx_auth_status = "not_checked"
 
         # no need to check if radio is available, it was already checked
         packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
