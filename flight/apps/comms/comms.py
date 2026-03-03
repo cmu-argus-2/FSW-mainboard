@@ -24,9 +24,6 @@ class SATELLITE_RADIO:
     ARGUS_CS = CONFIG.ARGUS_ID
     HB_PERIOD = CONFIG.HB_PERIOD
 
-    # Init TM frame for preallocating memory
-    tm_frame = bytearray(248)
-
     rx_message_rssi = 0
 
     auth_enabled = bool(getattr(CONFIG, "AUTH_ENABLED", False))
@@ -65,19 +62,6 @@ class SATELLITE_RADIO:
     def get_rssi(cls):
         # Get state
         return cls.rx_message_rssi
-
-    """
-        Name: set_tx_ack
-        Description: Set internal TX ACK for GS ACKs
-    """
-
-    @classmethod
-    def set_tx_message(cls, packet):
-        # used for now to remain compatible with the old code and support the new transmit queue
-        if type(packet) is not bytes:
-            logger.error("[COMMS ERROR] TX packet must be of type bytes")
-            return
-        cls.tx_message = packet
 
     """
         Name: data_available
@@ -164,22 +148,21 @@ class SATELLITE_RADIO:
     """
 
     @classmethod
-    def transmit_message(cls):
+    def transmit_message(cls, packet):
         """
-        The message has already been stored in the class variable tx_message by the comms task
         it will add the satellite cs as the header and transmit the message
         """
 
         # Add source header to distinguish between spacecraft
-        cls.tx_message = bytes([cls.ARGUS_CS]) + cls.tx_message
+        packet = bytes([cls.ARGUS_CS]) + packet
 
-        logger.info(f"transmitting message: {cls.tx_message}")
+        logger.info(f"transmitting message: {packet}")
 
         # Send a message to GS
         if SATELLITE.RADIO_AVAILABLE:
-            SATELLITE.RADIO.send(cls.tx_message)
+            SATELLITE.RADIO.send(packet)
             cls.tx_packet_count += 1
-            logger.info(f"[COMMS] - Message has been transmitted: {format_bytes(cls.tx_message)}")
+            logger.info(f"[COMMS] - Message has been transmitted: {format_bytes(packet)}")
             return True
         else:
             logger.error("[COMMS ERROR] RADIO no longer active on SAT")

@@ -46,9 +46,8 @@ class Task(TemplateTask):
             packet, queue_error_code = TransmitQueue.pop_packet()
 
             if queue_error_code == QUEUE_STATUS.OK:
-                SATELLITE_RADIO.set_tx_message(packet)
                 self.log_info(f"Set packet for transmission: {packet}")
-                SATELLITE_RADIO.transmit_message()
+                SATELLITE_RADIO.transmit_message(packet)
             else:
                 self.log_error("Error popping packet from TransmitQueue")
 
