@@ -14,8 +14,7 @@ except ImportError:
         return x
 
 
-from apps.telemetry.splat.splat.telemetry_codec import Report, pack
-from apps.telemetry.splat.splat.telemetry_helper import format_bytes
+from apps.telemetry.splat.splat.telemetry_codec import Report
 from core import DataHandler as DH
 from core import logger
 from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, STORAGE_IDX
@@ -134,7 +133,6 @@ class Frame:
                 dh_var_idx = getattr(idx_list[ss_list.index(ss_lower)], var_name)
                 report.add_variable(var_name, ss, dh_data[dh_var_idx])
 
-        
         logger.debug(f"Packed heartbeat telemetry frame {report}")
 
         gc.collect()
@@ -176,7 +174,7 @@ class Frame:
         gc.collect()
 
         return report
-    
+
     @classmethod
     def pack_tm_storage(cls):
         """
@@ -249,7 +247,6 @@ class Frame:
 
             report.add_variable(var_name, "STORAGE", dh_storage_list[ss_index][dh_var_idx])  # add the variable to the report
 
-        
         logger.debug(f"Packed STORAGE telemetry frame {report}")
 
         gc.collect()

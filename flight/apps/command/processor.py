@@ -47,7 +47,7 @@ from apps.command.commands import (
 )
 from apps.command.preconditions import file_id_exists, valid_inputs, valid_state, valid_time_format
 from apps.comms.fifo import TransmitQueue
-from apps.telemetry.splat.splat.telemetry_codec import Ack, pack
+from apps.telemetry.splat.splat.telemetry_codec import Ack
 from core import logger
 from micropython import const
 

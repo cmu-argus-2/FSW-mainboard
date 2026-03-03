@@ -154,12 +154,12 @@ class SATELLITE_RADIO:
         logger.info(f"Received callsign: {callsign}")
         logger.info(f"Received raw packet: {packet}")
         logger.info(f"Unpacked message object: {message_object}")
-        
+
         # [TODO] need to change this to match the station callsign
         if callsign != cls.GS_CALLSIGN:
             logger.error(f"[COMMS ERROR] Received packet with incorrect gs_callsign: {callsign}")
             return None
-        
+
         if message_object is None:
             cls.failed_unpack_count += 1
             logger.warning("[COMMS ERROR] Failed to unpack received packet")
