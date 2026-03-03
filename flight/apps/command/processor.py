@@ -162,9 +162,8 @@ def handle_command_execution_status(status, response_args):
     # add ack response to transmit queue for comms to pick up and send to ground station
     # this is not the best place to do this, not sure where the best place to do this is
     ack = Ack(status, response_args)
-    packed_ack = pack(ack)
-    TransmitQueue.push_packet(packed_ack)
-    logger.info(f"Added ack packet to transmit queue: {packed_ack}")
+    TransmitQueue.push_packet(ack)
+    logger.info(f"Added ack obj to transmit queue: {ack}")
 
     if status == CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS:
         logger.info("Command execution successful")

@@ -204,8 +204,7 @@ def CREATE_TRANS(tid, string_command):
     hash_MSB, hash_msb, hash_LSB = transaction.get_hash_as_integers()
 
     cmd.set_arguments(tid, n_packets, hash_MSB, hash_msb, hash_LSB)
-    packet = pack(cmd)
-    q_stat = TransmitQueue.push_packet(packet)
+    q_stat = TransmitQueue.push_packet(cmd)
     if q_stat != QUEUE_STATUS.OK:
         logger.error(f"Failed to push INIT_TRANS command to transmit queue with status: {q_stat}")
 

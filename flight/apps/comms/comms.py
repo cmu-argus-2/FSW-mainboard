@@ -23,6 +23,7 @@ class SATELLITE_RADIO:
 
     ARGUS_CS = CONFIG.ARGUS_ID
     HB_PERIOD = CONFIG.HB_PERIOD
+    CALLSIGN = CONFIG.CALLSIGN
 
     # Init TM frame for preallocating memory
     tm_frame = bytearray(248)
@@ -43,6 +44,8 @@ class SATELLITE_RADIO:
 
     tx_packet_count = 0
     tx_failed_count = 0  # this is because the radio was not available
+
+    tx_message = None
 
     """
         Name: set_rx_mode
@@ -79,9 +82,6 @@ class SATELLITE_RADIO:
     @classmethod
     def set_tx_message(cls, packet):
         # used for now to remain compatible with the old code and support the new transmit queue
-        if type(packet) is not bytes:
-            logger.error("[COMMS ERROR] TX packet must be of type bytes")
-            return
         cls.tx_message = packet
 
     """
@@ -134,9 +134,6 @@ class SATELLITE_RADIO:
             return None
 
         # hopefully we have a valid packet at this point
-        header = packet[0]  # the first byte of the packet is the sc_cs [TODO] - Change this for the real cs size
-        logger.info(f"Received packet with header (sc_cs): {header}")
-        packet = packet[1:]  # remove the header from the packet
 
         if cls.auth_enabled:
             # Authenticated command format:
@@ -152,9 +149,16 @@ class SATELLITE_RADIO:
             logger.info("[COMMS] Command authentication passed")
 
         # unpack the received packet
-        message_object = unpack(packet)  # [TODO] - this should be implemented in middleware
+        callsign, message_object = unpack(packet)  # [TODO] - this should be implemented in middleware
+        logger.info(f"Received callsign: {callsign}")
         logger.info(f"Received raw packet: {packet}")
         logger.info(f"Unpacked message object: {message_object}")
+        
+        # [TODO] need to change this to match the station callsign
+        if callsign != cls.CALLSIGN:
+            logger.error(f"[COMMS ERROR] Received packet with incorrect callsign: {callsign}")
+            return None
+        
         if message_object is None:
             cls.failed_unpack_count += 1
             logger.warning("[COMMS ERROR] Failed to unpack received packet")
@@ -175,9 +179,6 @@ class SATELLITE_RADIO:
         The message has already been stored in the class variable tx_message by the comms task
         it will add the satellite cs as the header and transmit the message
         """
-
-        # Add source header to distinguish between spacecraft
-        cls.tx_message = bytes([cls.ARGUS_CS]) + cls.tx_message
 
         logger.info(f"transmitting message: {cls.tx_message}")
 
