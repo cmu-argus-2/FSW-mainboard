@@ -238,7 +238,6 @@ class Frame:
                 logger.warning(f"Subsystem {dh_ss_name.upper()} not recognized for storage variable {var_name}")
                 continue
 
-            dh_storage_list[ss_index]  # get the storage info for the subsystem
             if dh_storage_list[ss_index] is None:
                 logger.warning(f"No data for subsystem {dh_ss_name.upper()} to pack in STORAGE variable {var_name}")
                 continue
