@@ -197,6 +197,10 @@ def CREATE_TRANS(tid, string_command):
     # 1. check if the file exists and get the path to the file
     # 2. create a transaction in the transaction manager
     transaction = TM.create_transaction(file_path=string_command, tid=tid, is_tx=True)
+    if transaction is None:
+        logger.error(f"Unable to create transaction {tid}")
+        return ["transaction_creation_failed"]
+
     # 3. generate init transaction packet
     cmd = Command("INIT_TRANS")
     tid = transaction.tid
