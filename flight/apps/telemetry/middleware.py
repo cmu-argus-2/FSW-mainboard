@@ -233,7 +233,7 @@ class Frame:
             dh_ss_name = "_".join(var_name.split("_")[:-2]).lower()  # get the first 2/3 parts of the variable name
             dh_variable_name = "_".join(var_name.split("_")[-2:])  # get the last two parts of the variable name
             logger.info(
-                f"Processing STORAGE variable {var_name} with dh subsystem {dh_ss_name.upper()} and dh variable {dh_variable_name.upper()}"
+                f"Processing STORAGE var {var_name} with dh ss {dh_ss_name.upper()} and dh var {dh_variable_name.upper()}"
             )
             ss_index = storage_ss_list.index(dh_ss_name)
             if ss_index == -1:

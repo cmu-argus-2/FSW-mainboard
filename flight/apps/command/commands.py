@@ -24,6 +24,8 @@ import supervisor
 from apps.command.constants import file_tags_str
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
+from apps.telemetry.splat.splat.telemetry_codec import Command, pack
+from apps.telemetry.splat.splat.transport_layer import transaction_manager as TM
 from core import logger
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
@@ -187,6 +189,125 @@ def EVAL_STRING_COMMAND(string_command):
     except Exception as e:
         logger.error(f"EVAL_STRING_COMMAND execution failed: {e}")
         return ["eval_string_command_failed"]
+
+
+def CREATE_TRANS(tid, string_command):
+    logger.info(f"GS requesting the following file {string_command} and tid: {tid}")
+
+    # 1. check if the file exists and get the path to the file
+    # 2. create a transaction in the transaction manager
+    transaction = TM.create_transaction(file_path=string_command, tid=tid, is_tx=True)
+    if transaction is None:
+        logger.error(f"Unable to create transaction {tid}")
+        return ["transaction_creation_failed"]
+
+    # 3. generate init transaction packet
+    cmd = Command("INIT_TRANS")
+    tid = transaction.tid
+    n_packets = transaction.number_of_packets
+    hash_MSB, hash_msb, hash_LSB = transaction.get_hash_as_integers()
+
+    cmd.set_arguments(tid, n_packets, hash_MSB, hash_msb, hash_LSB)
+    packet = pack(cmd)
+    q_stat = TransmitQueue.push_packet(packet)
+    if q_stat != QUEUE_STATUS.OK:
+        logger.error(f"Failed to push INIT_TRANS command to transmit queue with status: {q_stat}")
+
+    return [tid, n_packets, hash_MSB, hash_LSB]
+
+
+def GENERATE_ALL_PACKETS(tid):
+    # 1. search for the transaction id
+    transaction = TM.get_transaction(tid)
+    if transaction is None:
+        logger.error(f"Transaction with tid {tid} not found")
+        return ["transaction_not_found"]
+
+    # 2. generate all the packets for that transaction
+    packet_list = transaction.generate_all_packets()
+    # 3. add them to the transmit queue
+    for packet in packet_list:
+        q_stat = TransmitQueue.push_packet(packet)
+        if q_stat != QUEUE_STATUS.OK:
+            logger.error(f"Failed to push packet to transmit queue with status: {q_stat}")
+
+    return [len(packet_list)]
+
+
+def GENERATE_X_PACKETS(tid, x):
+    # 1. search for the transaction id
+    transaction = TM.get_transaction(tid)
+    if transaction is None:
+        logger.error(f"Transaction with tid {tid} not found")
+        return ["transaction_not_found"]
+
+    # 2. generate the packets
+    packet_list = transaction.generate_x_packets(x)
+    # 3. add them to the transmit queue
+    for packet in packet_list:
+        q_stat = TransmitQueue.push_packet(packet)
+        if q_stat != QUEUE_STATUS.OK:
+            logger.error(f"Failed to push packet to transmit queue with status: {q_stat}")
+
+    return [len(packet_list)]
+
+
+def GET_SINGLE_PACKET(tid, seq_number):
+    # 1. search for the transaction id
+    transaction = TM.get_transaction(tid)
+    if transaction is None:
+        logger.error(f"Transaction with tid {tid} not found")
+        return ["transaction_not_found"]
+
+    # generate the packet
+    packet = transaction.generate_specific_packet(seq_number)
+    # 3. add it to the transmit queue
+    q_stat = TransmitQueue.push_packet(packet)
+    if q_stat != QUEUE_STATUS.OK:
+        logger.error(f"Failed to push packet to transmit queue with status: {q_stat}")
+
+    # Return the number of packets queued, for consistency with GENERATE_* commands
+    return [1]
+
+
+def CONFIRM_LAST_BATCH(tid, MSB, LSB):
+    # 1. search for the transaction id
+    transaction = TM.get_transaction(tid)
+    if transaction is None:
+        logger.error(f"Transaction with tid {tid} not found")
+        return ["transaction_not_found"]
+
+    # 2. confirm last batch
+    bitmap = (MSB << 16) | LSB
+    len_missing_fragments = transaction.confirm_last_batch(bitmap)
+
+    return [len_missing_fragments]
+
+
+def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, MSB, LSB):
+    # 1. search for the transaction id
+    transaction = TM.get_transaction(tid)
+    if transaction is None:
+        logger.error(f"Transaction with tid {tid} not found")
+        return ["transaction_not_found"]
+
+    # 2. update missing fragments
+    bitmap = (MSB << 16) | LSB
+    len_missing_fragments = transaction.update_missing_fragments_bitmap(seq_offset, bitmap)
+
+    return [len_missing_fragments]
+
+
+def TRANS_PAYLOAD(tid, seq_number, payload):
+    # no need to implement now, this will only be needed if sending transactions from the gs to sat
+    # return a structured "not implemented" response to avoid breaking downstream handling
+    return ["not_implemented"]
+
+
+def INIT_TRANS(tid, number_of_packets, hash_MSB, hash_LSB):
+    # no need to implement now, this will only be needed if sending transactions from the gs to sat
+    # return a structured "not implemented" response to avoid breaking downstream handling
+    return ["not_implemented"]
 
 
 def get_tx_message_header():
