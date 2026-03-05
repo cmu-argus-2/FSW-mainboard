@@ -31,3 +31,5 @@ class comms_config:
     HB_PERIOD = const(60)
     AUTH_ENABLED = True
     AUTH_KEY_HEX = "d6172b38acb7d2a28e21662f689d1d15ad78ccc888a9c7a78ef58cb61b0f1e32"
+    SC_CALLSIGN = "CT6ARG"
+    GS_CALLSIGN = "CS5CEP"

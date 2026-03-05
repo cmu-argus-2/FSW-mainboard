@@ -14,8 +14,7 @@ except ImportError:
         return x
 
 
-from apps.telemetry.splat.splat.telemetry_codec import Report, pack
-from apps.telemetry.splat.splat.telemetry_helper import format_bytes
+from apps.telemetry.splat.splat.telemetry_codec import Report
 from core import DataHandler as DH
 from core import logger
 from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, STORAGE_IDX
@@ -134,12 +133,11 @@ class Frame:
                 dh_var_idx = getattr(idx_list[ss_list.index(ss_lower)], var_name)
                 report.add_variable(var_name, ss, dh_data[dh_var_idx])
 
-        packed_report = pack(report)
-        logger.debug(f"Packed heartbeat telemetry frame {format_bytes(packed_report)}")
+        logger.debug(f"Packed heartbeat telemetry frame {report}")
 
         gc.collect()
 
-        return packed_report
+        return report
 
     @classmethod
     def pack_tm_hal(cls):
@@ -170,12 +168,12 @@ class Frame:
             for var_name in report.variables[ss].keys():
                 dh_var_idx = getattr(idx_list[ss_list.index(ss_lower)], var_name)
                 report.add_variable(var_name, ss, dh_data[dh_var_idx])
-        packed_report = pack(report)
-        logger.debug(f"Packed HAL telemetry frame {format_bytes(packed_report)}")
+
+        logger.debug(f"Packed HAL telemetry frame {report}")
 
         gc.collect()
 
-        return packed_report
+        return report
 
     @classmethod
     def pack_tm_storage(cls):
@@ -248,12 +246,11 @@ class Frame:
 
             report.add_variable(var_name, "STORAGE", dh_storage_list[ss_index][dh_var_idx])  # add the variable to the report
 
-        packed_report = pack(report)
-        logger.debug(f"Packed STORAGE telemetry frame {format_bytes(packed_report)}")
+        logger.debug(f"Packed STORAGE telemetry frame {report}")
 
         gc.collect()
 
-        return packed_report
+        return report
 
     @classmethod
     def pack_tm_payload(cls):
@@ -284,9 +281,8 @@ class Frame:
             for var_name in report.variables[ss].keys():
                 dh_var_idx = idx_list[ss_list.index(ss_lower)]  # payload only has 1 variable so idx is 0
                 report.add_variable(var_name, ss, dh_data[dh_var_idx])
-        packed_report = pack(report)
-        logger.debug(f"Packed PAYLOAD telemetry frame {format_bytes(packed_report)}")
+        logger.debug(f"Packed PAYLOAD telemetry frame {report}")
 
         gc.collect()
 
-        return packed_report
+        return report
