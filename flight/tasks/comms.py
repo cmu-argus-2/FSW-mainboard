@@ -47,9 +47,8 @@ class Task(TemplateTask):
             packet, queue_error_code = TransmitQueue.pop_packet()
             if queue_error_code == QUEUE_STATUS.OK:
                 packed_packet = pack(packet, callsign=SATELLITE_RADIO.SC_CALLSIGN)   # changed and the entries in transmitqueue are no longer packed
-                SATELLITE_RADIO.set_tx_message(packed_packet)
                 self.log_info(f"Set packet for transmission: {packed_packet}")
-                SATELLITE_RADIO.transmit_message()
+                SATELLITE_RADIO.transmit_message(packed_packet)
             else:
                 self.log_error("Error popping packet from TransmitQueue")
 
