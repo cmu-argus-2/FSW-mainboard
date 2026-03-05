@@ -200,7 +200,7 @@ def CREATE_TRANS(tid, string_command):
     if transaction is None:
         logger.error(f"Unable to create transaction {tid}")
         return ["transaction_creation_failed"]
-        
+
     # 3. generate init transaction packet
     cmd = Command("INIT_TRANS")
     tid = transaction.tid
