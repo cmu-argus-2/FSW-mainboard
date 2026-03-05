@@ -259,14 +259,15 @@ def GET_SINGLE_PACKET(tid, seq_number):
         logger.error(f"Transaction with tid {tid} not found")
         return ["transaction_not_found"]
 
-    # generate the packets
+    # generate the packet
     packet = transaction.generate_specific_packet(seq_number)
-    # 3. add them to the transmit queue
+    # 3. add it to the transmit queue
     q_stat = TransmitQueue.push_packet(packet)
     if q_stat != QUEUE_STATUS.OK:
         logger.error(f"Failed to push packet to transmit queue with status: {q_stat}")
 
-    return [len(packet)]
+    # Return the number of packets queued, for consistency with GENERATE_* commands
+    return [1]
 
 
 def CONFIRM_LAST_BATCH(tid, MSB, LSB):
@@ -299,12 +300,14 @@ def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, MSB, LSB):
 
 def TRANS_PAYLOAD(tid, seq_number, payload):
     # no need to implement now, this will only be needed if sending transactions from the gs to sat
-    return "please implement me"
+    # return a structured "not implemented" response to avoid breaking downstream handling
+    return ["not_implemented"]
 
 
 def INIT_TRANS(tid, number_of_packets, hash_MSB, hash_LSB):
     # no need to implement now, this will only be needed if sending transactions from the gs to sat
-    return "please implement me"
+    # return a structured "not implemented" response to avoid breaking downstream handling
+    return ["not_implemented"]
 
 
 def get_tx_message_header():
