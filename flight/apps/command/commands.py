@@ -298,12 +298,14 @@ def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, MSB, LSB):
 
 
 def TRANS_PAYLOAD(tid, seq_number, payload):
+    # [TODO] - implement this command if there is the necessity to uplink files to the satellite
     # no need to implement now, this will only be needed if sending transactions from the gs to sat
     # return a structured "not implemented" response to avoid breaking downstream handling
     return ["not_implemented"]
 
 
 def INIT_TRANS(tid, number_of_packets, hash_MSB, hash_LSB):
+    # [TODO] - implement this command if there is the necessity to uplink files to the satellite
     # no need to implement now, this will only be needed if sending transactions from the gs to sat
     # return a structured "not implemented" response to avoid breaking downstream handling
     return ["not_implemented"]
