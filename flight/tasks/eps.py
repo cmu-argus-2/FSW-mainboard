@@ -35,6 +35,9 @@ class Task(TemplateTask):
         "MAINBOARD_VOLTAGE",
         "MAINBOARD_CURRENT",
         "BATTERY_PACK_TEMPERATURE",
+        "BATTERY_PACK_TEMPERATURE_AIN1",
+        "BATTERY_PACK_TEMPERATURE_AIN2",
+        "BATTERY_PACK_TEMPERATURE_DIE",
         "BATTERY_PACK_REPORTED_SOC",
         "BATTERY_PACK_REPORTED_CAPACITY",
         "BATTERY_PACK_CURRENT",
@@ -72,7 +75,8 @@ class Task(TemplateTask):
         "ZP_SOLAR_CHARGE_CURRENT",
         "ZM_SOLAR_CHARGE_VOLTAGE",
         "ZM_SOLAR_CHARGE_CURRENT",
-        "BATTERY_HEATERS_ENABLED",
+        "BATTERY_HEATERS1_ENABLED",
+        "BATTERY_HEATERS2_ENABLED",
     ]"""
 
     log_data = [0] * IDX_LENGTH  # - use mV for voltage and mA for current (h = short integer 2 bytes)
@@ -120,6 +124,9 @@ class Task(TemplateTask):
         self.log_data[EPS_IDX.BATTERY_PACK_TTE] = int(fuel_gauge.read_tte())
         self.log_data[EPS_IDX.BATTERY_PACK_TTF] = int(fuel_gauge.read_ttf())
         self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE] = int(fuel_gauge.read_temperature())
+        self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN1] = int(fuel_gauge.read_temperature_ain1())
+        self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN2] = int(fuel_gauge.read_temperature_ain2())
+        self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_DIE] = int(fuel_gauge.read_temperature_die())
 
     # Update MAV and set alert to indicate that resource is consuming too much power
     # TODO: for v3 mainboard, add alert for peripheral power consumption
@@ -148,20 +155,29 @@ class Task(TemplateTask):
                 self.log_warning(f"ZM Coil Avg Power Consumption Warning: {power_avg} with threshold {threshold} mW")
 
     def set_battery_heaters(self, heaters):
-        enabled = heaters.heater0_enabled() or heaters.heater1_enabled()
-        temp = self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] - MAINBOARD_TEMP_OFFSET
+        enabled1 = heaters.heater0_enabled()
+        enabled2 = heaters.heater1_enabled()
+        temp1 = self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] - MAINBOARD_TEMP_OFFSET
+        temp2 = self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] - MAINBOARD_TEMP_OFFSET
         if SATELLITE.FUEL_GAUGE_AVAILABLE:
-            temp = self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]
-        if SHOULD_ENABLE_HEATERS(enabled, temp):
+            temp1 = self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN1]
+            temp2 = self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN2]
+        if SHOULD_ENABLE_HEATERS(enabled1, temp1):
             heaters.enable_heater0()
+            self.log_data[EPS_IDX.BATTERY_HEATERS1_ENABLED] = 1
+            self.log_info("Enabled battery 1 heaters")
+        if SHOULD_ENABLE_HEATERS(enabled2, temp2):
             heaters.enable_heater1()
-            self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED] = 1
-            self.log_info("Enabled battery heaters")
-        if SHOULD_DISABLE_HEATERS(enabled, temp):
+            self.log_data[EPS_IDX.BATTERY_HEATERS2_ENABLED] = 1
+            self.log_info("Enabled battery 2 heaters")
+        if SHOULD_DISABLE_HEATERS(enabled1, temp1):
             heaters.disable_heater0()
+            self.log_data[EPS_IDX.BATTERY_HEATERS1_ENABLED] = 0
+            self.log_info("Disabled battery 1 heaters")
+        if SHOULD_DISABLE_HEATERS(enabled2, temp2):
             heaters.disable_heater1()
-            self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED] = 0
-            self.log_info("Disabled battery heaters")
+            self.log_data[EPS_IDX.BATTERY_HEATERS2_ENABLED] = 0
+            self.log_info("Disabled battery 2 heaters")
 
     def process_pm_readings(self, location, sensor):
         if location == "BOARD":
@@ -221,7 +237,9 @@ class Task(TemplateTask):
             self.log_vc("ZM Coil", EPS_IDX.ZM_COIL_VOLTAGE, EPS_IDX.ZM_COIL_CURRENT, voltage, current)
 
     def log_fuel_gauge_readings(self):
-        self.log_info(f"Battery Pack Temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]}°cC")
+        self.log_info(f"Battery Pack Temperature AIN1: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN1]}°cC")
+        self.log_info(f"Battery Pack Temperature AIN2: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN2]}°cC")
+        self.log_info(f"Battery Pack Temperature Die: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_DIE]}°cC")
         self.log_info(f"Battery Pack Reported SOC: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]}% ")
         self.log_info(f"Battery Pack Reported Capacity: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY]} mAh ")
         self.log_info(f"Battery Pack Current: {self.log_data[EPS_IDX.BATTERY_PACK_CURRENT]} mA ")
@@ -247,7 +265,7 @@ class Task(TemplateTask):
         else:
             if not DH.data_process_exists("eps"):
                 data_format = (
-                    "Lbhhhhb" + "h" * 4 + "L" * 2 + "h" * 30 + "b"
+                    "Lbhhhhhhhb" + "h" * 4 + "L" * 2 + "h" * 30 + "b" * 2
                 )  # - use mV for voltage and mA for current (h = short integer 2 bytes, L = 4 bytes)
                 DH.register_data_process("eps", data_format, True, data_limit=1000000, write_interval=5)
 
@@ -271,6 +289,9 @@ class Task(TemplateTask):
             if self.log_counter % self.frequency == 0:
                 self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
                 self.log_info(f"CPU temperature: {self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE]} °cC ")
+                # self.log_info(f"Battery 1 temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN1]} °cC ")
+                # self.log_info(f"Battery 2 temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN2]} °cC ")
+                # self.log_info(f"Battery Board temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_DIE]} °cC ")
 
                 if SATELLITE.FUEL_GAUGE_AVAILABLE:
                     self.read_fuel_gauge()
@@ -279,7 +300,8 @@ class Task(TemplateTask):
                 if SATELLITE.BATTERY_HEATERS_AVAILABLE:
                     battery_heaters = SATELLITE.BATTERY_HEATERS
                     self.set_battery_heaters(battery_heaters)
-                    self.log_info(f"Battery Heaters Enabled: {self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED]}")
+                    self.log_info(f"Battery 1 Heaters Enabled: {self.log_data[EPS_IDX.BATTERY_HEATERS1_ENABLED]}")
+                    self.log_info(f"Battery 2 Heaters Enabled: {self.log_data[EPS_IDX.BATTERY_HEATERS2_ENABLED]}")
 
                 DH.log_data("eps", self.log_data)
 

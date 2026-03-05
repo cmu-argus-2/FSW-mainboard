@@ -227,7 +227,8 @@ class ArgusV3Components:
 
     # BATTERY BOARD FUEL GAUGE
     FUEL_GAUGE_I2C = ArgusV3Interfaces.I2C1
-    FUEL_GAUGE_I2C_ADDRESS = const(0x36)
+    FUEL_GAUGE_I2C_ADDRESS_1 = const(0x36)
+    FUEL_GAUGE_I2C_ADDRESS_2 = const(0x0B)
     FUEL_GAUGE_ALERT = board.BATT_ALRT
 
     ########
@@ -581,7 +582,8 @@ class ArgusV3(CubeSat):
         try:
             fuel_gauge = MAX17205(
                 ArgusV3Components.FUEL_GAUGE_I2C,
-                ArgusV3Components.FUEL_GAUGE_I2C_ADDRESS,
+                ArgusV3Components.FUEL_GAUGE_I2C_ADDRESS_1,
+                ArgusV3Components.FUEL_GAUGE_I2C_ADDRESS_2,
             )
 
             return [fuel_gauge, Errors.NO_ERROR]

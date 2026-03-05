@@ -22,9 +22,10 @@ if hasattr(board, "PERIPH_PWR_EN"):
     PERIPH_PWR_EN.value = True  # Enable peripherals if applicable
 
 FUEL_GAUGE_I2C = I2C0
-FUEL_GAUGE_I2C_ADDRESS = const(0x36)
+FUEL_GAUGE_I2C_ADDRESS_1 = const(0x36)
+FUEL_GAUGE_I2C_ADDRESS_2 = const(0x0B)
 
-fuel_gauge = MAX17205(FUEL_GAUGE_I2C, FUEL_GAUGE_I2C_ADDRESS)
+fuel_gauge = MAX17205(FUEL_GAUGE_I2C, FUEL_GAUGE_I2C_ADDRESS_1, FUEL_GAUGE_I2C_ADDRESS_2)
 
 while True:
     print("soc: ", fuel_gauge.read_soc())
