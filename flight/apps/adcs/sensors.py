@@ -1,4 +1,4 @@
-from apps.adcs.consts import ControllerConst, Modes, PhysicalConst, StatusConst
+from apps.adcs.consts import StatusConst, SunConst
 from apps.adcs.sun import compute_body_sun_vector_from_lux, read_light_sensors
 from hal.configuration import SATELLITE
 from ulab import numpy as np
@@ -48,7 +48,35 @@ def read_sun_position() -> tuple[int, np.ndarray, np.ndarray]:
     light_sensor_lux_readings = read_light_sensors()
     status, sun_pos_body = compute_body_sun_vector_from_lux(light_sensor_lux_readings)
 
-    return status, sun_pos_body, np.array(light_sensor_lux_readings) / PhysicalConst.LIGHT_SENSOR_LOG_FACTOR
+    return status, sun_pos_body, np.array(light_sensor_lux_readings) * SunConst.LIGHT_SENSOR_LOG_FACTOR
+
+
+def read_deployment_sensors(sens_id) -> float:
+    """
+    - Reads the deployment sensor distances from HAL
+    - Returns the distance for XP or YM sensors
+    """
+    return SATELLITE.DEPLOYMENT_SENSOR_DISTANCE(sens_id)
+
+
+def get_gyro_scale() -> int:
+    """
+    - Reads the scale configuration of the gyro
+    """
+
+    if SATELLITE.IMU_AVAILABLE:
+        return SATELLITE.IMU.gyro_range
+    else:
+        return StatusConst.GYRO_FAIL
+
+
+def set_gyro_scale(gyro_const_value: int) -> None:
+    """
+    - Sets the scale configuration of the gyro
+    """
+
+    if SATELLITE.IMU_AVAILABLE:
+        SATELLITE.IMU.gyro_range = gyro_const_value
 
 
 """
@@ -79,84 +107,3 @@ def is_valid_gyro_reading(gyro: np.ndarray) -> bool:
         return False
     else:
         return True
-
-
-"""
-    MODE DETERMINATION
-"""
-
-
-def current_mode(current_mode) -> int:
-    """
-    - Returns the current mode of the ADCS
-    """
-    gyro_status, omega = read_gyro()
-    sun_status, sun_pos_body, _ = read_sun_position()
-
-    # Fail-safe STABLE mode if IMU or sun acquisition fails
-    # if gyro_status != StatusConst.OK or sun_status != StatusConst.OK:
-    #     return Modes.STABLE
-
-    omega_norm = np.linalg.norm(omega)
-
-    if current_mode == Modes.TUMBLING:
-        if omega_norm <= Modes.TUMBLING_TOL:
-            return Modes.STABLE
-        else:
-            return Modes.TUMBLING
-
-    elif current_mode == Modes.STABLE:
-        if gyro_status != StatusConst.OK:
-            return Modes.STABLE
-        h_hat = np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET_MAG
-        momentum_error = np.linalg.norm(PhysicalConst.INERTIA_MAJOR_DIR - h_hat)
-        if omega_norm >= Modes.TUMBLING_TOL:
-            return Modes.TUMBLING
-
-        elif momentum_error <= Modes.STABLE_TOL_LO and sun_status == StatusConst.OK:
-            return Modes.SUN_POINTED
-
-        else:
-            return Modes.STABLE
-
-    elif current_mode == Modes.SUN_POINTED:
-        if gyro_status != StatusConst.OK:
-            return Modes.STABLE
-        h_hat = np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET_MAG
-        momentum_error = np.linalg.norm(PhysicalConst.INERTIA_MAJOR_DIR - h_hat)
-
-        if momentum_error >= Modes.STABLE_TOL_LO:
-            return Modes.STABLE
-
-        if sun_status != StatusConst.OK:
-            return Modes.SUN_POINTED
-
-        h = np.dot(PhysicalConst.INERTIA_MAT, omega)
-        h_hat = h / np.linalg.norm(h)  # conical condition
-        sun_error = np.linalg.norm(sun_pos_body - h_hat)
-
-        if sun_status == StatusConst.OK and sun_error <= Modes.SUN_POINTED_TOL_LO:
-            return Modes.ACS_OFF
-
-        else:
-            return Modes.SUN_POINTED
-
-    elif current_mode == Modes.ACS_OFF:
-        if gyro_status != StatusConst.OK:
-            return Modes.ACS_OFF
-        h_hat = np.dot(PhysicalConst.INERTIA_MAT, omega) / ControllerConst.MOMENTUM_TARGET_MAG
-        momentum_error = np.linalg.norm(PhysicalConst.INERTIA_MAJOR_DIR - h_hat)
-        if momentum_error >= Modes.STABLE_TOL_HI:
-            return Modes.STABLE
-        elif sun_status == StatusConst.OK:
-            h = np.dot(PhysicalConst.INERTIA_MAT, omega)
-            h_hat = h / np.linalg.norm(h)  # conical condition
-            sun_error = np.linalg.norm(sun_pos_body - h_hat)
-            if sun_error >= Modes.SUN_POINTED_TOL_HI:
-                return Modes.SUN_POINTED
-            return Modes.ACS_OFF
-        else:
-            return Modes.ACS_OFF
-
-    else:
-        raise Exception(f"Invalid Current Mode {current_mode}")

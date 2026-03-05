@@ -45,14 +45,15 @@ class Simulator:  # will be passed by reference to the emulated HAL
         self.sim_time = 0
 
         # Measurement labels
-        self.gps_idx = slice(0, 6)
-        self.gyro_idx = slice(6, 9)
-        self.mag_idx = slice(9, 12)
-        self.lux_idx = slice(12, 21)
-        self.mtb_idx = slice(21, 27)
-        self.solar_idx = slice(27, 40)
-        self.power_idx = slice(40, 48)
-        self.jetson_idx = slice(48, 49)
+        self.gps_idx = self.cppsim.Idx.SENSORS.GPS
+        self.gyro_idx = self.cppsim.Idx.SENSORS.GYRO
+        self.mag_idx = self.cppsim.Idx.SENSORS.MAG
+        self.lux_idx = self.cppsim.Idx.SENSORS.PHOTODIODES
+        self.mtb_idx = self.cppsim.Idx.SENSORS.MTB_POW
+        self.solar_idx = self.cppsim.Idx.SENSORS.SOL_POW
+        self.power_idx = self.cppsim.Idx.SENSORS.BATTERY
+        self.jetson_idx = self.cppsim.Idx.SENSORS.JET_POW
+        self.deploy_idx = self.cppsim.Idx.SENSORS.DEPLOY
 
     """
         SENSOR CALLBACKS
@@ -128,6 +129,13 @@ class Simulator:  # will be passed by reference to the emulated HAL
             return self.measurement[self.power_idx][attr2idx[attr]]
         else:
             raise Exception("Invalid Battery diagnostic attribute")
+
+    def deployment_sensor(self, attr):
+        self.advance_to_time()
+        attr2idx = {"XP": 0, "YM": 1}
+        if attr not in attr2idx.keys():
+            raise Exception(f"Invalid Deployable Sensor dir {attr}")
+        return self.measurement[self.deploy_idx][attr2idx[attr]]
 
     def set_control_input(self, dir, input):
         """

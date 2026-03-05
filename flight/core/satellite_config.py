@@ -4,6 +4,10 @@
 from micropython import const
 
 
+class adcs_config:
+    CONTROLLER_MODE = 0
+
+
 class command_config:
     EXIT_STARTUP_TIMEOUT = const(5)
     DETUMBLING_TIMEOUT_DURATION = const(30)

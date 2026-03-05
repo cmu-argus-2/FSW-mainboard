@@ -3,7 +3,7 @@ import pytest
 
 import tests.cp_mock  # noqa: F401
 from flight.apps.adcs.acs import spin_stabilizing_controller, sun_pointing_controller
-from flight.apps.adcs.consts import ControllerConst, PhysicalConst
+from flight.apps.adcs.consts import ControllerConst
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def tolerance() -> float:
 
 @pytest.fixture
 def zero_spin_error_omega() -> np.ndarray:
-    return np.linalg.inv(PhysicalConst.INERTIA_MAT) @ ControllerConst.MOMENTUM_TARGET
+    return np.linalg.inv(ControllerConst.INERTIA_MAT) @ ControllerConst.MOMENTUM_TARGET
 
 
 @pytest.fixture
@@ -65,7 +65,7 @@ def nominal_sun_vector() -> np.ndarray:
 def zero_pointing_error_omega(
     nominal_sun_vector: np.ndarray,
 ) -> np.ndarray:
-    return np.linalg.norm(ControllerConst.MOMENTUM_TARGET) * np.linalg.inv(PhysicalConst.INERTIA_MAT) @ nominal_sun_vector
+    return np.linalg.norm(ControllerConst.MOMENTUM_TARGET) * np.linalg.inv(ControllerConst.INERTIA_MAT) @ nominal_sun_vector
 
 
 @pytest.fixture

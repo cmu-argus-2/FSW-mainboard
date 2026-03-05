@@ -412,16 +412,12 @@ class CubeSat:
         return None
 
     @property
-    def BOOTTIME(self):
-        """BOOTTIME: Returns the reference count since the board booted
-        :return: object or None
-        """
-        return self._time_ref_boot
-
-    @property
     def DEPLOYMENT_SENSORS(self):
         """Returns a dictionary of deployment sensors with the direction as the key (e.g. 'XP', 'YM')"""
         deployment_sensors = {}
+        for name, device in self.__device_list.items():
+            if "DEPLOYMENT_" in name:
+                deployment_sensors[name.replace("DEPLOYMENT_", "")] = device.device
         return deployment_sensors
 
     def DEPLOYMENT_SENSOR_AVAILABLE(self, dir: str) -> bool:
@@ -430,7 +426,7 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'YM')
         :return: bool - True if the sensor exists and is not None, False otherwise.
         """
-        return False
+        return self.key_in_device_list("DEPLOYMENT_" + dir) and self.__device_list["DEPLOYMENT_" + dir].device is not None
 
     def DEPLOYMENT_SENSOR_DISTANCE(self, dir: str) -> float:
         """Returns the distance reading for the specific deployment sensor if available and returns -1 otherwise
@@ -439,8 +435,15 @@ class CubeSat:
         :return: float - distance value in cm if the sensor is available else -1
         """
         if self.DEPLOYMENT_SENSOR_AVAILABLE(dir):
-            return self.__device_list["DEPLOYMENT_" + dir].device.distance
+            return self.__device_list["DEPLOYMENT_" + dir].device.distance()
         return -1
+
+    @property
+    def BOOTTIME(self):
+        """BOOTTIME: Returns the reference count since the board booted
+        :return: object or None
+        """
+        return self._time_ref_boot
 
     ######################## ERROR HANDLING ########################
 
