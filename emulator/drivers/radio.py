@@ -49,8 +49,8 @@ class Radio:
         self._last_rssi = -147.0
         self._frequency_error = 123.45
 
-        self.rx_en = MockAttribute(False)   # here just for compatibility reasons
-        self.tx_en = MockAttribute(False)   # here just for compatibility reasons
+        self.rx_en = MockAttribute(False)  # here just for compatibility reasons
+        self.tx_en = MockAttribute(False)  # here just for compatibility reasons
 
         self.test = RadioDebug(self)
 
