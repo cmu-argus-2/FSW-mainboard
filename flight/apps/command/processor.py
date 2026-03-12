@@ -44,6 +44,7 @@ from apps.command.commands import (
     TURN_OFF_PAYLOAD,
     UPDATE_MISSING_FRAGMENTS,
     UPLINK_TIME_REFERENCE,
+    EXPERIMENT
 )
 from apps.command.preconditions import file_id_exists, valid_inputs, valid_state, valid_time_format
 from apps.comms.fifo import TransmitQueue
@@ -79,6 +80,7 @@ COMMAND_DISPATCH = {
     "TRANS_PAYLOAD": TRANS_PAYLOAD,
     "CONFIRM_LAST_BATCH": CONFIRM_LAST_BATCH,
     "UPDATE_MISSING_FRAGMENTS": UPDATE_MISSING_FRAGMENTS,
+    "EXPERIMENT": EXPERIMENT
 }
 
 PRECONDITION_DISPATCH = {

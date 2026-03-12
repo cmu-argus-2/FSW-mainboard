@@ -33,8 +33,21 @@ class PayloadUART(PayloadCommunicationInterface):
 
     @classmethod
     def send(cls, pckt):
-        cls._uart.write(pckt)
+        
+        # check the size to see if we need padding
+        # the final size should be 255
+        if len(pckt) < 255:
+            pckt += b'\x00' * (255 - len(pckt))
+            
+        logger.info(f"[PAYLOAD] - Sending packet {pckt}") 
+        logger.info(f"[PAYLOAD] -   len:{len(pckt)}") 
 
+        cls._uart.write(pckt)
+        
+    @classmethod
+    def read(cls, bytes):
+        return cls._uart.read(bytes)
+        
     @classmethod
     def receive(cls):
         """Read packets from Jetson - ACKs are 6 bytes, data packets are 247 bytes"""

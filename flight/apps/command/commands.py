@@ -32,6 +32,8 @@ from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
 
+from apps.payload.controller import PayloadController as PC 
+
 FILE_PKTSIZE = 240
 
 
@@ -309,6 +311,21 @@ def INIT_TRANS(tid, number_of_packets, hash_MSB, hash_LSB):
     # no need to implement now, this will only be needed if sending transactions from the gs to sat
     # return a structured "not implemented" response to avoid breaking downstream handling
     return ["not_implemented"]
+
+def EXPERIMENT(ts, camera_bit_flag, level_of_processing, width, height):
+    """
+    Command that will be called by the ground station to start an experiment
+    ts                    -> the time at which the command should be ran (0 is to run now)
+    camera_bit_flag       -> the first 4 bits will indicate which cameras should be used to take the picture
+    level_of_processing   -> what level of processing to run TODO - add here the options
+    resolution            -> The resolution of the images. They are taken at full resolution and scaled down
+    """
+    
+    logger.info(f"[PAYLOAD] - Experiment command received to run at {ts}")
+    result = PC.add_command(ts, camera_bit_flag, level_of_processing, width, height)
+    if not result:
+        logger.error(f"[PAYLOAD] - Failed to add experiment command for timestamp {ts}")
+    return result
 
 
 def get_tx_message_header():
