@@ -406,7 +406,7 @@ class Task(TemplateTask):
 
             self.log_info(f"  Arguments: {command.arguments}")
             status, response_args = processor.process_command(command)
-            processor.handle_command_execution_status(status, response_args)
+            processor.handle_command_execution_status(status, command.command_id, response_args)
 
             # Log the command execution history
             self.log_commands[0] = TPM.time()

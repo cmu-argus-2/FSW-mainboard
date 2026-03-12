@@ -116,16 +116,16 @@ def process_command(command):
 
         if precondition_func is None:
             logger.error(f"Cmd: Unknown precondition '{precondition_name}'")
-            return CommandProcessingStatus.PRECONDITION_FAILED, [command.command_id]
+            return CommandProcessingStatus.PRECONDITION_FAILED, []
 
         try:
             # Execute the precondition function
             if not precondition_func(*argument_list):
                 logger.error("Cmd: Precondition failed")
-                return CommandProcessingStatus.PRECONDITION_FAILED, [command.command_id]
+                return CommandProcessingStatus.PRECONDITION_FAILED, []
         except Exception as e:
             logger.error(f"Cmd: Precondition check failed with error: {e}")
-            return CommandProcessingStatus.PRECONDITION_FAILED, [command.command_id]
+            return CommandProcessingStatus.PRECONDITION_FAILED, []
 
     # 2. Execute the Command
     # Look up the command function in the dispatch table
@@ -133,7 +133,7 @@ def process_command(command):
 
     if satellite_func is None:
         logger.warning(f"Cmd: Unknown command ID '{satellite_func_name}'")
-        return CommandProcessingStatus.UNKNOWN_COMMAND_ID, [command.command_id]
+        return CommandProcessingStatus.UNKNOWN_COMMAND_ID, []
 
     try:
         logger.info(f"Executing command function: {satellite_func_name}")
@@ -147,23 +147,22 @@ def process_command(command):
             response_args = [response_args]
 
         return (
-            CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS,
-            [command.command_id] + list(response_args),
+            CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS, list(response_args)
         )
 
     except Exception as e:
         logger.error(f"Cmd: Command execution failed: {e}")
         # Optionally log stack trace to a file for deeper diagnostics
-        return CommandProcessingStatus.COMMAND_EXECUTION_FAILED, [command.command_id]
+        return CommandProcessingStatus.COMMAND_EXECUTION_FAILED, []
 
 
-def handle_command_execution_status(status, response_args):
+def handle_command_execution_status(status, command_id, response_args):
     # If the command execution was successful, send a success response to Comms via Response Queue
     # If the command execution failed, send an error response with the error code to Comms via Response Queue
 
     # add ack response to transmit queue for comms to pick up and send to ground station
     # this is not the best place to do this, not sure where the best place to do this is
-    ack = Ack(status, response_args)
+    ack = Ack(status, command_id,response_args)
     TransmitQueue.push_packet(ack)
     logger.info(f"Added ack obj to transmit queue: {ack}")
 
