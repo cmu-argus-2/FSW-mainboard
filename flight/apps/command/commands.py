@@ -24,7 +24,7 @@ import supervisor
 from apps.command.constants import file_tags_str
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
-from apps.telemetry.splat.splat.telemetry_codec import Command, pack
+from apps.telemetry.splat.splat.telemetry_codec import Command
 from apps.telemetry.splat.splat.transport_layer import transaction_manager as TM
 from core import logger
 from core import state_manager as SM
@@ -208,8 +208,7 @@ def CREATE_TRANS(tid, string_command):
     hash_MSB, hash_msb, hash_LSB = transaction.get_hash_as_integers()
 
     cmd.set_arguments(tid, n_packets, hash_MSB, hash_msb, hash_LSB)
-    packet = pack(cmd)
-    q_stat = TransmitQueue.push_packet(packet)
+    q_stat = TransmitQueue.push_packet(cmd)
     if q_stat != QUEUE_STATUS.OK:
         logger.error(f"Failed to push INIT_TRANS command to transmit queue with status: {q_stat}")
 
@@ -299,12 +298,14 @@ def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, MSB, LSB):
 
 
 def TRANS_PAYLOAD(tid, seq_number, payload):
+    # [TODO] - implement this command if there is the necessity to uplink files to the satellite
     # no need to implement now, this will only be needed if sending transactions from the gs to sat
     # return a structured "not implemented" response to avoid breaking downstream handling
     return ["not_implemented"]
 
 
 def INIT_TRANS(tid, number_of_packets, hash_MSB, hash_LSB):
+    # [TODO] - implement this command if there is the necessity to uplink files to the satellite
     # no need to implement now, this will only be needed if sending transactions from the gs to sat
     # return a structured "not implemented" response to avoid breaking downstream handling
     return ["not_implemented"]

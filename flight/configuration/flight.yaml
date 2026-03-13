@@ -45,3 +45,7 @@ comms:
     value: true
   AUTH_KEY_HEX:
     value: "d6172b38acb7d2a28e21662f689d1d15ad78ccc888a9c7a78ef58cb61b0f1e32" # TODO: Change before flight
+  SC_CALLSIGN:
+    value: "CT6ARG"
+  GS_CALLSIGN:
+    value: "CS5CEP"
