@@ -66,5 +66,11 @@ def file_id_exists(*args) -> bool:
 
     return (file_id in file_tags_str) and (DataHandler.data_process_exists(file_tags_str[file_id]))
 
-
+def valid_adcs_mode(*args) -> bool:
+    """
+    Precondition for ADCS_CTRL_MODE command.
+    Checks that the mode_id is a valid ADCS controller mode.
+    """
+    mode_id = args[0]
+    return 0 <= mode_id <= 2
 # TODO: add a precondition for OD experiment (no OD should be in progress)

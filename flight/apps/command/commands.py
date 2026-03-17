@@ -32,6 +32,8 @@ from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
 
+from apps.adcs.consts import ControllerModes as CM
+
 FILE_PKTSIZE = 240
 
 
@@ -310,6 +312,14 @@ def INIT_TRANS(tid, number_of_packets, hash_MSB, hash_LSB):
     # return a structured "not implemented" response to avoid breaking downstream handling
     return ["not_implemented"]
 
+
+def ADCS_CTRL_MODE(mode_id):
+    """Sends a command to change the ADCS controller mode."""
+    logger.info(f"Executing ADCS_CTRL_MODE with mode_id: {mode_id}")
+    
+    valid = CM.update_mode(mode_id)
+    
+    return [mode_id, valid]
 
 def get_tx_message_header():
     """ " Helper function to obtain the tx message header to send back"""

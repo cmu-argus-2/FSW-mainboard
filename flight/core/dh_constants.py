@@ -78,7 +78,7 @@ class EPS_WARNING_IDX:
 class ADCS_IDX:
     TIME_ADCS = const(0)
     MODE = const(1)
-    CTRL_MODE = const(2)
+    CONTROLLER_MODE = const(2)
     GYRO_X = const(3)
     GYRO_Y = const(4)
     GYRO_Z = const(5)

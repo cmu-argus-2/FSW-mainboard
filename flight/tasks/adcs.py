@@ -31,6 +31,7 @@ class Task(TemplateTask):
     """data_keys = [
         "TIME_ADCS",
         "MODE",
+        "CONTROLLER_MODE",
         "GYRO_X",
         "GYRO_Y",
         "GYRO_Z",
@@ -97,6 +98,10 @@ class Task(TemplateTask):
             if not DH.data_process_exists("adcs"):
                 data_format = "LBB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B"  # + 4 * "f"
                 DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
+
+            # Check for controller mode update from commands
+            if self.CONTROLLER_MODE is not ControllerModes.current_mode:
+                self.CONTROLLER_MODE = ControllerModes.current_mode
 
             self.time = TPM.time()
             self.log_data[ADCS_IDX.TIME_ADCS] = self.time
@@ -184,7 +189,7 @@ class Task(TemplateTask):
                     if new_mode != self.MODE:
                         self.ensure_coils_off()
                         self.MODE = new_mode
-
+                    
                     # Run attitude control if not in Low-power
                     if SM.current_state != STATES.LOW_POWER and self.MODE != Modes.ACS_OFF and allow_coils:
                         self.attitude_control()
@@ -274,6 +279,7 @@ class Task(TemplateTask):
             zero_all_coils()
             self.coils_off = True
             self.last_mtq_time = TPM.monotonic_float()
+    
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ LOGGING """
@@ -285,7 +291,7 @@ class Task(TemplateTask):
         Takes light sensor readings as input since they are not stored in AD
         """
         self.log_data[ADCS_IDX.MODE] = int(self.MODE)
-        self.log_data[ADCS_IDX.CTRL_MODE] = int(self.CONTROLLER_MODE)
+        self.log_data[ADCS_IDX.CONTROLLER_MODE] = int(self.CONTROLLER_MODE)
         self.log_data[ADCS_IDX.GYRO_X] = self.gyro_data[0]
         self.log_data[ADCS_IDX.GYRO_Y] = self.gyro_data[1]
         self.log_data[ADCS_IDX.GYRO_Z] = self.gyro_data[2]
