@@ -5,7 +5,7 @@ from apps.comms.fifo import TransmitQueue
 from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
 
 # from apps.telemetry import TelemetryPacker
-from apps.telemetry.splat.splat.telemetry_codec import Command  # this should be implemented in middleware
+from apps.telemetry.splat.splat.telemetry_codec import Command, pack  # this should be implemented in middleware
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
@@ -14,7 +14,6 @@ from core.time_processor import TimeProcessor as TPM
 
 
 class Task(TemplateTask):
-
     def __init__(self, id):
         super().__init__(id)
 
@@ -46,11 +45,10 @@ class Task(TemplateTask):
             self.log_info("  Packet available in TransmitQueue, preparing for transmission")
             # If we have a packet to transmit, set it in the radio
             packet, queue_error_code = TransmitQueue.pop_packet()
-
             if queue_error_code == QUEUE_STATUS.OK:
-                SATELLITE_RADIO.set_tx_message(packet)
-                self.log_info(f"Set packet for transmission: {packet}")
-                SATELLITE_RADIO.transmit_message()
+                packed_packet = pack(packet, callsign=SATELLITE_RADIO.SC_CALLSIGN)   # changed and the entries in transmitqueue are no longer packed
+                self.log_info(f"Set packet for transmission: {packed_packet}")
+                SATELLITE_RADIO.transmit_message(packed_packet)
             else:
                 self.log_error("Error popping packet from TransmitQueue")
 

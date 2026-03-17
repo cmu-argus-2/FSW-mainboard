@@ -43,9 +43,9 @@ def algorithms_available() -> List[str]:
     return ALGOS_AVAIL
 
 
-'''
+"""
 Hashlib implementation for SHA256
-'''
+"""
 
 # SHA Block size and message digest sizes, in bytes.
 SHA_BLOCKSIZE = 64
@@ -112,9 +112,7 @@ def sha_transform(sha_info: Dict[str, Union[List[int], int]]) -> None:
 
     ss = sha_info["digest"][:]
 
-    def RND(
-        a: int, b: int, c: int, d: int, e: int, f: int, g: int, h: int, i: int, ki: int
-    ) -> Tuple[int, int]:
+    def RND(a: int, b: int, c: int, d: int, e: int, f: int, g: int, h: int, i: int, ki: int) -> Tuple[int, int]:
         """Compress"""
         t0 = h + Sigma1(e) + Ch(e, f, g) + ki + W[i]
         t1 = Sigma0(a) + Maj(a, b, c)

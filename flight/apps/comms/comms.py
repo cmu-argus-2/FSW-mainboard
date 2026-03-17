@@ -23,6 +23,8 @@ class SATELLITE_RADIO:
 
     ARGUS_CS = CONFIG.ARGUS_ID
     HB_PERIOD = CONFIG.HB_PERIOD
+    SC_CALLSIGN = CONFIG.SC_CALLSIGN
+    GS_CALLSIGN = CONFIG.GS_CALLSIGN
 
     # Init TM frame for preallocating memory
     tm_frame = bytearray(248)
@@ -31,7 +33,6 @@ class SATELLITE_RADIO:
 
     auth_enabled = bool(getattr(CONFIG, "AUTH_ENABLED", False))
     auth_key = get_auth_key_bytes(getattr(CONFIG, "AUTH_KEY_HEX", ""))
-    rx_auth_status = "not_checked"
 
     # counters to help determine comms health and performance
     rx_packet_count = 0  # this are just the valid packets
@@ -43,6 +44,8 @@ class SATELLITE_RADIO:
 
     tx_packet_count = 0
     tx_failed_count = 0  # this is because the radio was not available
+
+    tx_message = None
 
     """
         Name: set_rx_mode
@@ -66,23 +69,6 @@ class SATELLITE_RADIO:
     def get_rssi(cls):
         # Get state
         return cls.rx_message_rssi
-
-    @classmethod
-    def get_auth_status(cls):
-        return cls.rx_auth_status
-
-    """
-        Name: set_tx_ack
-        Description: Set internal TX ACK for GS ACKs
-    """
-
-    @classmethod
-    def set_tx_message(cls, packet):
-        # used for now to remain compatible with the old code and support the new transmit queue
-        if type(packet) is not bytes:
-            logger.error("[COMMS ERROR] TX packet must be of type bytes")
-            return
-        cls.tx_message = packet
 
     """
         Name: data_available
@@ -109,7 +95,6 @@ class SATELLITE_RADIO:
 
         packet = None
         err = -1  # _ERR_NONE is 0
-        cls.rx_auth_status = "not_checked"
 
         # no need to check if radio is available, it was already checked
         packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
@@ -134,9 +119,6 @@ class SATELLITE_RADIO:
             return None
 
         # hopefully we have a valid packet at this point
-        header = packet[0]   # the first byte of the packet is the sc_cs [TODO] - Change this for the real cs size
-        logger.info(f"Received packet with header (sc_cs): {header}")
-        packet = packet[1:]  # remove the header from the packet
 
         if cls.auth_enabled:
             # Authenticated command format:
@@ -152,9 +134,16 @@ class SATELLITE_RADIO:
             logger.info("[COMMS] Command authentication passed")
 
         # unpack the received packet
-        message_object = unpack(packet)  # [TODO] - this should be implemented in middleware
+        callsign, message_object = unpack(packet)  # [TODO] - this should be implemented in middleware
+        logger.info(f"Received callsign: {callsign}")
         logger.info(f"Received raw packet: {packet}")
         logger.info(f"Unpacked message object: {message_object}")
+
+        # [TODO] need to change this to match the station callsign
+        if callsign != cls.GS_CALLSIGN:
+            logger.error(f"[COMMS ERROR] Received packet with incorrect gs_callsign: {callsign}")
+            return None
+
         if message_object is None:
             cls.failed_unpack_count += 1
             logger.warning("[COMMS ERROR] Failed to unpack received packet")
@@ -170,22 +159,18 @@ class SATELLITE_RADIO:
     """
 
     @classmethod
-    def transmit_message(cls):
+    def transmit_message(cls, packet):
         """
-        The message has already been stored in the class variable tx_message by the comms task
         it will add the satellite cs as the header and transmit the message
         """
 
-        # Add source header to distinguish between spacecraft
-        cls.tx_message = bytes([cls.ARGUS_CS]) + cls.tx_message
-
-        logger.info(f"transmitting message: {cls.tx_message}")
+        logger.info(f"transmitting message: {packet}")
 
         # Send a message to GS
         if SATELLITE.RADIO_AVAILABLE:
-            SATELLITE.RADIO.send(cls.tx_message)
+            SATELLITE.RADIO.send(packet)
             cls.tx_packet_count += 1
-            logger.info(f"[COMMS] - Message has been transmitted: {format_bytes(cls.tx_message)}")
+            logger.info(f"[COMMS] - Message has been transmitted: {format_bytes(packet)}")
             return True
         else:
             logger.error("[COMMS ERROR] RADIO no longer active on SAT")

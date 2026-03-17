@@ -1576,13 +1576,11 @@ class SX1262(SX126X):
             return self._receive(len, timeout_en, timeout_ms)
 
     def send(self, data):
-        # Compatibility with Radiohead
-        tx_data = bytes([0xFF, 0xFF, 0x00, 0x00]) + data
 
         if not self.blocking:
-            return self._startTransmit(tx_data)
+            return self._startTransmit(data)
         else:
-            return self._transmit(tx_data)
+            return self._transmit(data)
 
     def rssi(self):
         return super().getRSSI()
@@ -1614,13 +1612,6 @@ class SX1262(SX126X):
 
         else:
             return b"", state
-
-        radiohead_check = bytes([0xFF, 0xFF, 0x00, 0x00])
-
-        # Compatibility with Radiohead
-        if data[:4] == radiohead_check:
-            data = data[4:]
-
         return bytes(data), state
 
     def _transmit(self, data):
