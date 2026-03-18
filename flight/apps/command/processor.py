@@ -20,73 +20,16 @@ See documentation for a full description of each commands.
 Author: Ibrahima S. Sow
 """
 
-from apps.command.commands import (
-    CONFIRM_LAST_BATCH,
-    CREATE_TRANS,
-    DOWNLINK_ALL,
-    EVAL_STRING_COMMAND,
-    FORCE_REBOOT,
-    GENERATE_ALL_PACKETS,
-    GENERATE_X_PACKETS,
-    GET_SINGLE_PACKET,
-    INIT_TRANS,
-    REQUEST_FILE_METADATA,
-    REQUEST_FILE_PKT,
-    REQUEST_IMAGE,
-    REQUEST_TM_HAL,
-    REQUEST_TM_NOMINAL,
-    REQUEST_TM_PAYLOAD,
-    REQUEST_TM_STORAGE,
-    SCHEDULE_OD_EXPERIMENT,
-    SUM,
-    SWITCH_TO_STATE,
-    TRANS_PAYLOAD,
-    TURN_OFF_PAYLOAD,
-    UPDATE_MISSING_FRAGMENTS,
-    UPLINK_TIME_REFERENCE,
-)
-from apps.command.preconditions import file_id_exists, valid_inputs, valid_state, valid_time_format
+from apps.command import commands as command_handlers
+from apps.command import preconditions as precondition_handlers
 from apps.comms.fifo import TransmitQueue
 from apps.telemetry.splat.splat.telemetry_codec import Ack
 from core import logger
 from micropython import const
 
-# --- DISPATCH TABLES ---
-# These dictionaries map the string names of functions to the actual function objects.
-# avoid using the eval function to execute commands
-
-COMMAND_DISPATCH = {
-    "DOWNLINK_ALL": DOWNLINK_ALL,
-    "EVAL_STRING_COMMAND": EVAL_STRING_COMMAND,
-    "FORCE_REBOOT": FORCE_REBOOT,
-    "REQUEST_FILE_METADATA": REQUEST_FILE_METADATA,
-    "REQUEST_FILE_PKT": REQUEST_FILE_PKT,
-    "REQUEST_IMAGE": REQUEST_IMAGE,
-    "REQUEST_TM_HAL": REQUEST_TM_HAL,
-    "REQUEST_TM_NOMINAL": REQUEST_TM_NOMINAL,
-    "REQUEST_TM_PAYLOAD": REQUEST_TM_PAYLOAD,
-    "REQUEST_TM_STORAGE": REQUEST_TM_STORAGE,
-    "SCHEDULE_OD_EXPERIMENT": SCHEDULE_OD_EXPERIMENT,
-    "SUM": SUM,
-    "SWITCH_TO_STATE": SWITCH_TO_STATE,
-    "TURN_OFF_PAYLOAD": TURN_OFF_PAYLOAD,
-    "UPLINK_TIME_REFERENCE": UPLINK_TIME_REFERENCE,
-    "CREATE_TRANS": CREATE_TRANS,
-    "INIT_TRANS": INIT_TRANS,
-    "GENERATE_ALL_PACKETS": GENERATE_ALL_PACKETS,
-    "GENERATE_X_PACKETS": GENERATE_X_PACKETS,
-    "GET_SINGLE_PACKET": GET_SINGLE_PACKET,
-    "TRANS_PAYLOAD": TRANS_PAYLOAD,
-    "CONFIRM_LAST_BATCH": CONFIRM_LAST_BATCH,
-    "UPDATE_MISSING_FRAGMENTS": UPDATE_MISSING_FRAGMENTS,
-}
-
-PRECONDITION_DISPATCH = {
-    "file_id_exists": file_id_exists,
-    "valid_inputs": valid_inputs,
-    "valid_state": valid_state,
-    "valid_time_format": valid_time_format,
-}
+# Dispatch dictionaries are populated by decorators at import time.
+COMMAND_DISPATCH = command_handlers.COMMAND_REGISTRY
+PRECONDITION_DISPATCH = precondition_handlers.PRECONDITION_REGISTRY
 
 
 class CommandProcessingStatus:
