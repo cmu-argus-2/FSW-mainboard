@@ -469,13 +469,13 @@ class PayloadController:
         """
         
         # check experiment finished command (during PROCESSING)
-        if command.name == "RF_STOP":
+        if command.name == "EXPERIMENT_FINISHED":
             if cls.received_experiment_finished == True:
                 logger.error("[PAYLOAD] - EXPERIMENT FINISHED COMMAND OVERRIDDEN")
             cls.received_experiment_finished = True
         
         # check all files sent command (during DOWNLOAD)
-        if command.name == "RF_RESUME":
+        if command.name == "DOWNLOAD_FINISH":
             if cls.received_all_files_sent == True:
                 logger.error("[PAYLOAD] - ALL FILES SENT COMMAND OVERRIDDEN")
             cls.received_all_files_sent = True
