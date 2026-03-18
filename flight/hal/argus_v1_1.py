@@ -116,7 +116,8 @@ class ArgusV1Components:
 
     # BATTERY BOARD FUEL GAUGE
     FUEL_GAUGE_I2C = ArgusV1Interfaces.I2C2
-    FUEL_GAUGE_I2C_ADDRESS = const(0x6C)
+    FUEL_GAUGE_I2C_ADDRESS_1 = const(0x36)
+    FUEL_GAUGE_I2C_ADDRESS_2 = const(0x0B)
 
     # Y TORQUE COILS
     TORQUE_COILS_Y_I2C = ArgusV1Interfaces.I2C2
@@ -478,7 +479,8 @@ class ArgusV1(CubeSat):
 
             fuel_gauge = MAX17205(
                 ArgusV1Components.FUEL_GAUGE_I2C,
-                ArgusV1Components.FUEL_GAUGE_I2C_ADDRESS,
+                ArgusV1Components.FUEL_GAUGE_I2C_ADDRESS_1,
+                ArgusV1Components.FUEL_GAUGE_I2C_ADDRESS_2,
             )
             return [fuel_gauge, Errors.NO_ERROR]
         except Exception as e:

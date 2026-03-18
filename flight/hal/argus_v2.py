@@ -82,7 +82,8 @@ class ArgusV2Components:
 
     # BATTERY BOARD FUEL GAUGE
     FUEL_GAUGE_I2C = ArgusV2Interfaces.I2C0
-    FUEL_GAUGE_I2C_ADDRESS = const(0x36)
+    FUEL_GAUGE_I2C_ADDRESS_1 = const(0x36)
+    FUEL_GAUGE_I2C_ADDRESS_2 = const(0x0B)
 
     # JETSON POWER MONITOR
     JETSON_POWER_MONITOR_I2C = ArgusV2Interfaces.I2C0
@@ -562,7 +563,8 @@ class ArgusV2(CubeSat):
         try:
             fuel_gauge = MAX17205(
                 ArgusV2Components.FUEL_GAUGE_I2C,
-                ArgusV2Components.FUEL_GAUGE_I2C_ADDRESS,
+                ArgusV2Components.FUEL_GAUGE_I2C_ADDRESS_1,
+                ArgusV2Components.FUEL_GAUGE_I2C_ADDRESS_2,
             )
 
             return [fuel_gauge, Errors.NO_ERROR]
