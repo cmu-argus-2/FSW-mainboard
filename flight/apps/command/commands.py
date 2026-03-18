@@ -271,7 +271,7 @@ def GET_SINGLE_PACKET(tid, seq_number):
     return [1]
 
 
-def CONFIRM_LAST_BATCH(tid, MSB, LSB):
+def CONFIRM_LAST_BATCH(tid, bitmap_high, bitmap_low):
     # 1. search for the transaction id
     transaction = TM.get_transaction(tid)
     if transaction is None:
@@ -279,13 +279,12 @@ def CONFIRM_LAST_BATCH(tid, MSB, LSB):
         return ["transaction_not_found"]
 
     # 2. confirm last batch
-    bitmap = (MSB << 16) | LSB
-    len_missing_fragments = transaction.confirm_last_batch(bitmap)
+    len_missing_fragments = transaction.confirm_last_batch((bitmap_high, bitmap_low))
 
     return [len_missing_fragments]
 
 
-def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, MSB, LSB):
+def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, bitmap_high, bitmap_low):
     # 1. search for the transaction id
     transaction = TM.get_transaction(tid)
     if transaction is None:
@@ -293,8 +292,7 @@ def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, MSB, LSB):
         return ["transaction_not_found"]
 
     # 2. update missing fragments
-    bitmap = (MSB << 16) | LSB
-    len_missing_fragments = transaction.update_missing_fragments_bitmap(seq_offset, bitmap)
+    len_missing_fragments = transaction.update_missing_fragments_bitmap(seq_offset, (bitmap_high, bitmap_low))
 
     return [len_missing_fragments]
 

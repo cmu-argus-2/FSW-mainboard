@@ -432,7 +432,8 @@ class PayloadController:
             return False
         
         cls.transaction_dict[tid].number_of_packets = number_of_packets
-        cls.transaction_dict[tid].missing_fragments = [x for x in range(number_of_packets)]
+        # MEMORY NOTE: Use set_number_packets() which initializes bitset instead of large list allocation
+        cls.transaction_dict[tid].set_number_packets(number_of_packets)
         cls.add_transaction_for_download(tid, cls.transaction_dict[tid])
         
         

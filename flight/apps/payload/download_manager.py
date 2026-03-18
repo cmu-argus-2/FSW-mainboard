@@ -30,7 +30,7 @@ class DownloadManager:
     
     # Configuration constants
     BATCH_SIZE = 60                # packets per batch
-    LISTEN_TIMEOUT = 5             # seconds per batch listen
+    LISTEN_TIMEOUT =  3 #(BATCH_SIZE * 500 * 8) / 460800             # seconds per batch listen adding 5byte margin per packet
     SAVE_FOLDER = "sd"
     MAX_BATCH_RETRIES = 3
     
@@ -123,12 +123,12 @@ class DownloadManager:
             transaction: Transaction to check (default: current transaction)
             
         Returns:
-            True if all packets received (missing_fragments is empty)
+            True if all packets received (bitset indicates all received)
         """
         trans = transaction or self.current_transaction
         if trans is None or trans.number_of_packets is None:
             return False
-        return len(trans.missing_fragments) == 0
+        return trans._missing_fragments_count == 0
     
     def process_batch(self, uart_reader_callback):
         """
@@ -173,7 +173,7 @@ class DownloadManager:
         bitmap_low = bitmap & 0xFFFFFFFF
         
         logger.info(
-            f"[DOWNLOAD_MGR] Batch processed: tid={self.current_tid}, seq_offset={self.current_batch_offset}, width={width}, bitmap=0x{bitmap:016X}, missing_frags={len(trans.missing_fragments)}"
+            f"[DOWNLOAD_MGR] Batch processed: tid={self.current_tid}, seq_offset={self.current_batch_offset}, width={width}, bitmap=0x{bitmap:016X}, missing_frags={trans._missing_fragments_count}"
         )
         
         return bitmap_high, bitmap_low
@@ -192,6 +192,7 @@ class DownloadManager:
         
         Bit logic: 1 = missing, 0 = received
         MSB-first ordering within the window
+        MEMORY NOTE: Uses bitset _is_missing() instead of set() to avoid temporary allocation
         
         Args:
             width: Number of bits in this batch window
@@ -200,12 +201,11 @@ class DownloadManager:
             Bitmap as integer
         """
         trans = self.current_transaction
-        missing_set = set(trans.missing_fragments)
         bitmap = 0
         
         for i in range(width):
             seq_number = self.current_batch_offset + i
-            if seq_number in missing_set:
+            if trans._is_missing(seq_number):
                 bit_pos = (width - 1) - i
                 bitmap |= (1 << bit_pos)
         
@@ -317,11 +317,13 @@ class DownloadManager:
         }
         
         if self.current_transaction is not None:
+            missing_count = self.current_transaction._missing_fragments_count
             status.update({
                 'total_packets': self.current_transaction.number_of_packets,
-                'missing_fragments': len(self.current_transaction.missing_fragments),
+                # MEMORY NOTE: use bitmap-backed counter to avoid allocating missing list
+                'missing_fragments': missing_count,
                 'received_packets': (self.current_transaction.number_of_packets - 
-                                   len(self.current_transaction.missing_fragments)) 
+                                   missing_count) 
                                    if self.current_transaction.number_of_packets else 0,
                 'is_complete': self.is_file_complete(),
             })
