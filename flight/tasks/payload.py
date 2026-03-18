@@ -234,9 +234,9 @@ class Task(TemplateTask):
         
         try:
             # Process one batch: listen, save, generate bitmap
-            msb, lsb = PC.download_manager.process_batch(PC.process_uart)
+            bitmap_high, bitmap_low = PC.download_manager.process_batch(PC.process_uart)
 
-            if msb is None or lsb is None:
+            if bitmap_high is None or bitmap_low is None:
                 return
 
             status = PC.get_download_status()
@@ -244,12 +244,12 @@ class Task(TemplateTask):
             # Send confirmation to jetson
             command = Command("CONFIRM_LAST_BATCH")
             command.add_argument("tid", status['current_tid'])
-            command.add_argument("MSB", msb)
-            command.add_argument("LSB", lsb)
+            command.add_argument("bitmap_high", bitmap_high)
+            command.add_argument("bitmap_low", bitmap_low)
             PC.send_confirm_last_batch(command)
             
             self.log_info(
-                f"Sent CONFIRM_LAST_BATCH: tid={status['current_tid']}, MSB=0x{msb:04X}, LSB=0x{lsb:04X}, missing={status['missing_fragments']}"
+                f"Sent CONFIRM_LAST_BATCH: tid={status['current_tid']}, bitmap_high=0x{bitmap_high:08X}, bitmap_low=0x{bitmap_low:08X}, missing={status['missing_fragments']}"
             )
             
             # Check if file is complete

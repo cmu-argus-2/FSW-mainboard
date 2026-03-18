@@ -29,7 +29,7 @@ class DownloadManager:
     """
     
     # Configuration constants
-    BATCH_SIZE = 32                # packets per batch
+    BATCH_SIZE = 60                # packets per batch
     LISTEN_TIMEOUT = 5             # seconds per batch listen
     SAVE_FOLDER = "sd"
     MAX_BATCH_RETRIES = 3
@@ -98,14 +98,18 @@ class DownloadManager:
         Mark that at least one fragment for the active batch has been received.
         """
         if self.current_transaction is None:
+            logger.warning("[DOWNLOAD_MGR] No active transaction to mark fragment as received.")
             return
 
         if fragment.tid != self.current_tid:
+            logger.warning(f"[DOWNLOAD_MGR] Fragment tid={fragment.tid} does not match current transaction tid={self.current_tid}.")
             return
 
         batch_end = self.current_batch_offset + self.BATCH_SIZE
         if self.current_batch_offset <= fragment.seq_number < batch_end:
             self.current_batch_received_any = True
+        else:
+            logger.warning(f"[DOWNLOAD_MGR] Fragment seq_number={fragment.seq_number} is outside the current batch window.")
     
     def has_active_file(self):
         """Check if there is an active download in progress or queued"""
@@ -138,7 +142,7 @@ class DownloadManager:
                                  Should be: PC.process_uart
         
         Returns:
-            Tuple: (msb, lsb) of confirmation bitmap
+            Tuple: (bitmap_high, bitmap_low) of confirmation bitmap
             Raises: Exception if no active transaction
         """
         if self.current_transaction is None:
@@ -165,14 +169,14 @@ class DownloadManager:
         width = self._calculate_batch_width()
         bitmap = self._generate_batch_bitmap(width)
         
-        msb = (bitmap >> 16) & 0xFFFF
-        lsb = bitmap & 0xFFFF
+        bitmap_high = (bitmap >> 32) & 0xFFFFFFFF
+        bitmap_low = bitmap & 0xFFFFFFFF
         
         logger.info(
-            f"[DOWNLOAD_MGR] Batch processed: tid={self.current_tid}, seq_offset={self.current_batch_offset}, width={width}, bitmap=0x{bitmap:08X}, missing_frags={len(trans.missing_fragments)}"
+            f"[DOWNLOAD_MGR] Batch processed: tid={self.current_tid}, seq_offset={self.current_batch_offset}, width={width}, bitmap=0x{bitmap:016X}, missing_frags={len(trans.missing_fragments)}"
         )
         
-        return msb, lsb
+        return bitmap_high, bitmap_low
     
     def _calculate_batch_width(self):
         """Calculate the number of packets in the current batch"""
