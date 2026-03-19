@@ -17,7 +17,7 @@ except ImportError:
 from apps.telemetry.splat.splat.telemetry_codec import Report
 from core import DataHandler as DH
 from core import logger
-from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, STORAGE_IDX
+from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, STORAGE_IDX, PAYLOAD_IDX
 
 
 class Frame:
@@ -257,11 +257,12 @@ class Frame:
         """
         Pack a payload telemetry frame.
         """
+        logger.info("[TELEMETRY] - Packing PAYLOAD telemetry frame")
         # this will be a report
         report = Report("TM_PAYLOAD")
 
-        ss_list = ["payload"]  # we need this to get the from dh, and it is case sensitive
-        idx_list = [0]  # this is used to match the ss to the dh constants, payload only has 1 variable so idx is 0
+        ss_list = ["payload_tm"]  # we need this to get the from dh, and it is case sensitive
+        idx_list = [PAYLOAD_IDX]  # this is used to match the ss to the dh constants, payload only has 1 variable so idx is 0
         # get the latest data from each subsystem
         dh_data_list = [cls.get_dh_latest_data(x) for x in ss_list]
 
@@ -276,12 +277,14 @@ class Frame:
             if dh_data is None:
                 logger.warning(f"No data for subsystem {ss.upper()} to pack in PAYLOAD")
                 continue
+            logger.info(f"This is dh_data {dh_data}")
 
             # iterating over all the variables for the ss in the report and adding them
             for var_name in report.variables[ss].keys():
-                dh_var_idx = idx_list[ss_list.index(ss_lower)]  # payload only has 1 variable so idx is 0
-                report.add_variable(var_name, ss, dh_data[dh_var_idx])
-        logger.debug(f"Packed PAYLOAD telemetry frame {report}")
+                dh_var_idx = getattr(idx_list[ss_list.index(ss_lower)], var_name)
+                data = dh_data[dh_var_idx]
+                report.add_variable(var_name, ss, data)
+        logger.info(f"Packed PAYLOAD telemetry frame {report}")
 
         gc.collect()
 

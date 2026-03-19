@@ -24,6 +24,7 @@ class Task(TemplateTask):
     def __init__(self, id):
         super().__init__(id)
         self.name = "PAYLOAD"
+        self.init_all_data_processes()
 
     def init_all_data_processes(self):
         # Image file process (uses FileProcess for binary file storage)
@@ -40,7 +41,7 @@ class Task(TemplateTask):
         if not DH.data_process_exists("payload_tm"):
             DH.register_data_process(
                 tag_name="payload_tm",
-                data_format=PC.tm_process_data_format,
+                data_format=PC.payload_tm_data_format,
                 persistent=True,
                 data_limit=100000,
                 circular_buffer_size=200,

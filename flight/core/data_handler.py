@@ -254,6 +254,7 @@ class DataProcess:
 
             if self.write_interval_counter >= self.write_interval:
                 try:
+                    logger.warning(f"Writing data to {self.tag_name} with {self.data_format}")
                     bin_data = struct.pack(self.data_format, *data)
                     self.file.write(bin_data)
                     self.file.flush()  # Flush immediately

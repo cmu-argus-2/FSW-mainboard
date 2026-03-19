@@ -27,7 +27,7 @@ from core.dh_constants import PAYLOAD_IDX
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 
-from apps.telemetry.splat.splat.telemetry_codec import Command, pack, unpack, Ack, Fragment
+from apps.telemetry.splat.splat.telemetry_codec import Command, pack, unpack, Ack, Fragment, Report
 from apps.telemetry.splat.splat.transport_layer import Transaction
 from apps.payload.download_manager import DownloadManager
 
@@ -139,9 +139,8 @@ class PayloadController:
     timestamp_request = 0
 
     # Telemetry variables
-    payload_tm_data_format = "QQQ" + 12 * "B" + 13 * "B" + 3 * "H"
-    tm_process_data_format = payload_tm_data_format + "LBBBB"
-    log_data = [0] * len(tm_process_data_format)
+    payload_tm_data_format = "QQQ" + 15 * "B" + "H" + 2 * "B" + 3 * "H"
+    log_data = [0] * len(payload_tm_data_format)
     _prev_tm_time = TPM.monotonic()
     _now = TPM.monotonic()
     telemetry_period = const(10)  # seconds
@@ -386,7 +385,66 @@ class PayloadController:
             logger.info(f"[PAYLOAD] -   Received command: {message_object}")
         if isinstance(message_object, Fragment):
             cls.process_fragment(message_object)
+        if isinstance(message_object, Report):
+            cls.process_report(message_object)
+            
+    @classmethod
+    def process_report(cls, report):
+        """
+        This function will process the report message
+        """
+        logger.info(f"[PAYLOAD] - Processing report: {report}")
+        
+        if report.name == "TM_PAYLOAD":
+            cls.process_tm_payload_report(report)
+            
+    @classmethod 
+    def process_tm_payload_report(cls, report):
+        """
+        Process telemetry payload report and log to DataHandler.
+        Maps TM_PAYLOAD variables to PAYLOAD_IDX and adds controller metadata.
+        """
+        logger.info(f"[PAYLOAD] - Processing TM_PAYLOAD report: {report}")
 
+        # reports.variables is a dict, each entry is the subsystem and the value is another dict
+        # that has the variable names as keys and their values as values
+        
+        if not DH.data_process_exists("payload_tm"):
+            logger.error("[PAYLOAD] - Data process 'payload_tm' does not exist")
+            return
+        
+        for ss, var_dict in report.variables.items():
+            logger.info(f"[PAYLOAD] - Processing subsystem: {ss}")
+
+            for var_name, value in var_dict.items():
+                logger.info(f"[PAYLOAD] -   {var_name}: {value}")
+        
+        cls.log_data[PAYLOAD_IDX.SYSTEM_TIME] = report.variables["PAYLOAD_TM"]["SYSTEM_TIME"]
+        cls.log_data[PAYLOAD_IDX.SYSTEM_UPTIME] = report.variables["PAYLOAD_TM"]["SYSTEM_UPTIME"]
+        cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME] = report.variables["PAYLOAD_TM"]["LAST_EXECUTED_CMD_TIME"]
+        cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_ID] = report.variables["PAYLOAD_TM"]["LAST_EXECUTED_CMD_ID"]
+        cls.log_data[PAYLOAD_IDX.PD_STATE_MAINBOARD] = report.variables["PAYLOAD_TM"]["PD_STATE_MAINBOARD"]
+        cls.log_data[PAYLOAD_IDX.PD_STATE_JETSON] = report.variables["PAYLOAD_TM"]["PD_STATE_JETSON"]
+        cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = report.variables["PAYLOAD_TM"]["LATEST_ERROR"]
+        cls.log_data[PAYLOAD_IDX.DISK_USAGE] = report.variables["PAYLOAD_TM"]["DISK_USAGE"]
+        cls.log_data[PAYLOAD_IDX.RAM_USAGE] = report.variables["PAYLOAD_TM"]["RAM_USAGE"]
+        cls.log_data[PAYLOAD_IDX.SWAP_USAGE] = report.variables["PAYLOAD_TM"]["SWAP_USAGE"]
+        cls.log_data[PAYLOAD_IDX.ACTIVE_CORES] = report.variables["PAYLOAD_TM"]["ACTIVE_CORES"]
+        cls.log_data[PAYLOAD_IDX.CPU_LOAD_0] = report.variables["PAYLOAD_TM"]["CPU_LOAD_0"]
+        cls.log_data[PAYLOAD_IDX.CPU_LOAD_1] = report.variables["PAYLOAD_TM"]["CPU_LOAD_1"]
+        cls.log_data[PAYLOAD_IDX.CPU_LOAD_2] = report.variables["PAYLOAD_TM"]["CPU_LOAD_2"]
+        cls.log_data[PAYLOAD_IDX.CPU_LOAD_3] = report.variables["PAYLOAD_TM"]["CPU_LOAD_3"]
+        cls.log_data[PAYLOAD_IDX.CPU_LOAD_4] = report.variables["PAYLOAD_TM"]["CPU_LOAD_4"]
+        cls.log_data[PAYLOAD_IDX.CPU_LOAD_5] = report.variables["PAYLOAD_TM"]["CPU_LOAD_5"]
+        cls.log_data[PAYLOAD_IDX.TEGRASTATS_PROCESS_STATUS] = report.variables["PAYLOAD_TM"]["TEGRASTATS_PROCESS_STATUS"]
+        cls.log_data[PAYLOAD_IDX.GPU_FREQ] = report.variables["PAYLOAD_TM"]["GPU_FREQ"]
+        cls.log_data[PAYLOAD_IDX.CPU_TEMP] = report.variables["PAYLOAD_TM"]["CPU_TEMP"]
+        cls.log_data[PAYLOAD_IDX.GPU_TEMP] = report.variables["PAYLOAD_TM"]["GPU_TEMP"]
+        cls.log_data[PAYLOAD_IDX.VDD_IN] = report.variables["PAYLOAD_TM"]["VDD_IN"]
+        cls.log_data[PAYLOAD_IDX.VDD_CPU_GPU_CV] = report.variables["PAYLOAD_TM"]["VDD_CPU_GPU_CV"]
+        cls.log_data[PAYLOAD_IDX.VDD_SOC] = report.variables["PAYLOAD_TM"]["VDD_SOC"]
+        DH.log_data("payload_tm", cls.log_data)
+        
     @classmethod
     def process_ack(cls, ack):
         """
