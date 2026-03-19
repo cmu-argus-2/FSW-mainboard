@@ -236,7 +236,6 @@ class DownloadManager:
         """
         Finalize the current file:
         - Write final file to disk
-        - Verify hash if available
         - Mark transaction SUCCESS
         
         Returns:
@@ -259,30 +258,9 @@ class DownloadManager:
             logger.error(f"[DOWNLOAD_MGR] Final file missing for tid={self.current_tid}: {error}")
             return False
 
-        success = True
-        if trans.file_hash is not None:
-            try:
-                with open(file_path, "rb") as file_handle:
-                    file_data = file_handle.read()
-                calculated_hash = trans.calculate_hash(file_data)
-            except Exception as error:
-                logger.error(f"[DOWNLOAD_MGR] Hash verification failed to run for tid={self.current_tid}: {error}")
-                trans.change_state(7)
-                return False
-
-            if calculated_hash != trans.file_hash:
-                logger.error(f"[DOWNLOAD_MGR] Hash verification failed for tid={self.current_tid}")
-                trans.change_state(7)
-                return False
-
         trans.change_state(6)
-
-        if success:
-            logger.info(f"[DOWNLOAD_MGR] File finalized successfully for tid={self.current_tid}")
-        else:
-            logger.error(f"[DOWNLOAD_MGR] File finalization failed for tid={self.current_tid}")
-        
-        return success
+        logger.info(f"[DOWNLOAD_MGR] File finalized successfully for tid={self.current_tid}")
+        return True
     
     def advance_to_next_file(self):
         """

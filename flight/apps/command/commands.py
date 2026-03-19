@@ -207,14 +207,13 @@ def CREATE_TRANS(tid, string_command):
     cmd = Command("INIT_TRANS")
     tid = transaction.tid
     n_packets = transaction.number_of_packets
-    hash_MSB, hash_msb, hash_LSB = transaction.get_hash_as_integers()
 
-    cmd.set_arguments(tid, n_packets, hash_MSB, hash_msb, hash_LSB)
+    cmd.set_arguments(tid, n_packets)
     q_stat = TransmitQueue.push_packet(cmd)
     if q_stat != QUEUE_STATUS.OK:
         logger.error(f"Failed to push INIT_TRANS command to transmit queue with status: {q_stat}")
 
-    return [tid, n_packets, hash_MSB, hash_LSB]
+    return [tid, n_packets]
 
 
 def GENERATE_ALL_PACKETS(tid):
@@ -304,7 +303,7 @@ def TRANS_PAYLOAD(tid, seq_number, payload):
     return ["not_implemented"]
 
 
-def INIT_TRANS(tid, number_of_packets, hash_MSB, hash_LSB):
+def INIT_TRANS(tid, number_of_packets):
     # [TODO] - implement this command if there is the necessity to uplink files to the satellite
     # no need to implement now, this will only be needed if sending transactions from the gs to sat
     # return a structured "not implemented" response to avoid breaking downstream handling
