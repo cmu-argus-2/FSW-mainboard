@@ -138,7 +138,7 @@ class PAYLOAD_IDX:
     SYSTEM_TIME = const(0)
     SYSTEM_UPTIME = const(1)
     LAST_EXECUTED_CMD_TIME = const(2)
-    LAST_EXECUTED_CMD_ID = const(3)
+    NEXT_CMD_TIME = const(3)
     PD_STATE_MAINBOARD = const(4)
     PD_STATE_JETSON = const(5)
     LATEST_ERROR = const(6)

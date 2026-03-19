@@ -12,6 +12,8 @@ from core.time_processor import TimeProcessor as TPM
 
 from apps.telemetry.splat.splat.telemetry_codec import Command, pack
 
+from core.dh_constants import PAYLOAD_IDX
+
 
 _NUM_IMG_TO_MAINTAIN_READY = 1  # Number of images to maintain in memory at least
 
@@ -126,6 +128,10 @@ class Task(TemplateTask):
             self.log_info("Ping responded, switching to ACTIVE state.")
             PC.received_experiment_ack = False
             PC.switch_state("ACTIVE")
+            
+            # set the last_executed_time i
+            PC.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME] = TPM.time()
+            
             return
         
         PC.send_ping()  # if we send before checking received ping we might send twice
@@ -338,6 +344,7 @@ class Task(TemplateTask):
 
         if TPM.time() - self._last_state_print_ts >= 5:
             self._last_state_print_ts = TPM.time()
+            DH.log_data("payload_tm", PC.log_data)  # periodically log data
             print(f"[PAYLOAD] Current state: {PC.current_state}")
             
         PC.process_uart()

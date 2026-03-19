@@ -139,7 +139,7 @@ class PayloadController:
     timestamp_request = 0
 
     # Telemetry variables
-    payload_tm_data_format = "QQQ" + 15 * "B" + "H" + 2 * "B" + 3 * "H"
+    payload_tm_data_format = "QQQQ" + 14 * "B" + "H" + 2 * "B" + 3 * "H"
     log_data = [0] * len(payload_tm_data_format)
     _prev_tm_time = TPM.monotonic()
     _now = TPM.monotonic()
@@ -201,11 +201,18 @@ class PayloadController:
         It will change the current state to the desired state, and run whatever functions necessary to start that state
         """
         logger.info(f"[PAYLOAD] - Switching from {cls.current_state} to {state}")
+        previous_state = cls.current_state
         cls.current_state = map_state(state)
+        
+        # need to update the log data
+        cls.log_data[PAYLOAD_IDX.PD_STATE_MAINBOARD] = cls.current_state
+        DH.log_data("payload_tm", cls.log_data)
+        
         
         # booting state needs to turn on the satellite
         if cls.current_state == PayloadState.BOOTING:
             logger.info("[PAYLOAD] -  Turning on jetson")
+            cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = 200 # starting a new experiment resetting the error
             cls.turn_on_power()
             
         # active state, need to get the desired command
@@ -221,6 +228,10 @@ class PayloadController:
         if cls.current_state == PayloadState.OFF:
             logger.info("[PAYLOAD] -  Sending turn off command")
             cls.send_turn_off_command()
+
+        if cls.current_state == PayloadState.FAIL:
+            logger.info("[PAYLOAD] -  Switching to FAIL state")
+            cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = previous_state
             
     @classmethod
     def add_command(cls, ts, camera_bit_flag, level_of_processing, width, height):
@@ -246,6 +257,9 @@ class PayloadController:
         # it has to be ordered by timestamp
         cls.command_list.append((ts, camera_bit_flag, level_of_processing, width, height))
         cls.command_list.sort(key=lambda x: x[0])  # Sort by timestamp
+        
+        cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = ts if ts > 0 else TPM.time()
+        logger.warning(f"[PAYLOAD] - Next command time: {cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME]}")
         
         logger.info(f"[PAYLOAD] - Command added: {ts}, {camera_bit_flag}, {level_of_processing}, {width}, {height}")
         
@@ -421,11 +435,11 @@ class PayloadController:
         
         cls.log_data[PAYLOAD_IDX.SYSTEM_TIME] = report.variables["PAYLOAD_TM"]["SYSTEM_TIME"]
         cls.log_data[PAYLOAD_IDX.SYSTEM_UPTIME] = report.variables["PAYLOAD_TM"]["SYSTEM_UPTIME"]
-        cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME] = report.variables["PAYLOAD_TM"]["LAST_EXECUTED_CMD_TIME"]
-        cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_ID] = report.variables["PAYLOAD_TM"]["LAST_EXECUTED_CMD_ID"]
-        cls.log_data[PAYLOAD_IDX.PD_STATE_MAINBOARD] = report.variables["PAYLOAD_TM"]["PD_STATE_MAINBOARD"]
+        # cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME] = report.variables["PAYLOAD_TM"]["LAST_EXECUTED_CMD_TIME"] # this is not filled by jetsonz
+        # cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_ID] = report.variables["PAYLOAD_TM"]["LAST_EXECUTED_CMD_ID"]     # this is not filled by jetsonz
+        # cls.log_data[PAYLOAD_IDX.PD_STATE_MAINBOARD] = report.variables["PAYLOAD_TM"]["PD_STATE_MAINBOARD"]         # this is not filled by the jetson report data
         cls.log_data[PAYLOAD_IDX.PD_STATE_JETSON] = report.variables["PAYLOAD_TM"]["PD_STATE_JETSON"]
-        cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = report.variables["PAYLOAD_TM"]["LATEST_ERROR"]
+        # cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = report.variables["PAYLOAD_TM"]["LATEST_ERROR"]
         cls.log_data[PAYLOAD_IDX.DISK_USAGE] = report.variables["PAYLOAD_TM"]["DISK_USAGE"]
         cls.log_data[PAYLOAD_IDX.RAM_USAGE] = report.variables["PAYLOAD_TM"]["RAM_USAGE"]
         cls.log_data[PAYLOAD_IDX.SWAP_USAGE] = report.variables["PAYLOAD_TM"]["SWAP_USAGE"]
@@ -443,7 +457,6 @@ class PayloadController:
         cls.log_data[PAYLOAD_IDX.VDD_IN] = report.variables["PAYLOAD_TM"]["VDD_IN"]
         cls.log_data[PAYLOAD_IDX.VDD_CPU_GPU_CV] = report.variables["PAYLOAD_TM"]["VDD_CPU_GPU_CV"]
         cls.log_data[PAYLOAD_IDX.VDD_SOC] = report.variables["PAYLOAD_TM"]["VDD_SOC"]
-        DH.log_data("payload_tm", cls.log_data)
         
     @classmethod
     def process_ack(cls, ack):
