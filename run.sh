@@ -107,7 +107,6 @@ elif [ "$1" == "emulate-profile" ]; then
     cd -
 elif [ "$1" == "simulate" ]; then
     export ARGUS_SIMULATION_FLAG=1
-    export SIM_REAL_SPEEDUP=275
     echo "ARGUS_SIMULATION_FLAG set to 1 for simulation mode."
     if [[ -z $2 ]]; then
         echo "Running simulation with random trial number."
@@ -123,6 +122,11 @@ elif [ "$1" == "simulate" ]; then
         export ARGUS_SIMULATION_DATE=$3
         export ARGUS_SIMULATION_SET_NAME=$4
         echo "Running simulation from set $4 with trial number $2 at date $3"
+    fi
+    if [[ -n $5 ]]; then
+        export SIM_REAL_SPEEDUP=$5
+    else
+        export SIM_REAL_SPEEDUP=275
     fi
     $PYTHON_CMD build_tools/build-emulator.py $FLIGHT_FLAG
     cd build/ && rm -rf sd && $PYTHON_CMD main.py
