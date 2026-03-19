@@ -121,6 +121,14 @@ class TimeProcessor:
         return int(time.monotonic())
 
     @classmethod
+    def monotonic_float(cls) -> float:
+        """
+        Get monotonic time in seconds with floating point precision.
+        Useful for sub-second time management.
+        """
+        return time.monotonic()
+
+    @classmethod
     def localtime(cls):
         return time.localtime(cls.time())
 

@@ -7,7 +7,7 @@ Author(s): Derek Fan
 import math
 
 from ulab import numpy as np
-
+from core.satellite_config import adcs_config as CONFIG
 
 class StatusConst:
     """
@@ -57,13 +57,17 @@ class Modes:
 
     TUMBLING = 0  # Satellite is spinning outside the "stable" bounds.
     STABLE = 1  # Satellite is spinning inside the "stable" bounds.
-    SUN_POINTED = 2  # Satellite is generally pointed towards the sun.
+    SUN_POINTING = 2  # Satellite is generally pointed towards the sun.
     ACS_OFF = 3  # Satellite has pointed to the sun and ACS can be turned off
 
     SUN_VECTOR_REF = np.array([0.0, 0.0, 1.0])
 
     # Detumbling
-    TUMBLING_TOL = 0.09  # Exit detumbling into stable if ω < 0.09 rad/s (5 deg/s)
+    TUMBLING_TOL = 0.54  # Exit detumbling into stable if ω < 0.54 rad/s (30 deg/s)
+
+    # Detumbling only controllers
+    DETUMBLED_TOL_LO = 0.070  # Turn off detumbling  if ω < 0.07 rad/s (4 deg/s)
+    DETUMBLED_TOL_HI = 0.087  # Re-enter detumbling if ω > 0.087 rad/s (5 deg/s)
 
     # STABLE MODE
     STABLE_TOL_LO = 0.26  # Exit into sun_pointing if momentum less than 15 deg from major axis
@@ -74,23 +78,29 @@ class Modes:
     SUN_POINTED_TOL_HI = 0.26  # Re-enter sun_pointed if momentum more than 15 deg from sun vector
 
 
-class PhysicalConst:
+class ControllerModes:
     """
-    Constants associated with physical satellite bus parameters.
+    Controller Modes
     """
+    
+    BDOT = 0
+    BCROSS = 1
+    SUN_POINTING = 2
+    
+    current_mode = CONFIG.CONTROLLER_MODE
+    
+    def update_mode(self, new_mode):
+        if new_mode in [self.BDOT, self.BCROSS, self.SUN_POINTING]:
+            self.current_mode = new_mode
+            return True
+        else:
+            return False
 
-    INERTIA_MAT = np.array(
-        [[3.544e-03, -1.8729e-05, -5.2467e-06], [-1.8729e-05, 3.590e-03, 1.9134e-05], [-5.2467e-06, 1.9134e-05, 4.120e-03]]
-    )
 
-    # Compute Major axis of inertia
-    _eigvals, _eigvecs = np.linalg.eig(INERTIA_MAT)
-    _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
-
-    INERTIA_MAJOR_DIR = _unscaled_axis / np.linalg.norm(_unscaled_axis)
-    inertia_major_dir_abs = np.array([math.fabs(dir_x) for dir_x in INERTIA_MAJOR_DIR])
-    if INERTIA_MAJOR_DIR[np.argmax(inertia_major_dir_abs)] < 0:
-        INERTIA_MAJOR_DIR = -INERTIA_MAJOR_DIR
+class SunConst:
+    """
+    Constants associated with sun sensor parameters.
+    """
 
     # map from light sensors to body vector
     LIGHT_SENSOR_NORMALS = [
@@ -118,6 +128,19 @@ class ControllerConst:
     Constants associated with Controller Behavior
     """
 
+    INERTIA_MAT = np.array(
+        [[3.544e-03, -1.8729e-05, -5.2467e-06], [-1.8729e-05, 3.590e-03, 1.9134e-05], [-5.2467e-06, 1.9134e-05, 4.120e-03]]
+    )
+
+    # Compute Major axis of inertia
+    _eigvals, _eigvecs = np.linalg.eig(INERTIA_MAT)
+    _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
+
+    INERTIA_MAJOR_DIR = _unscaled_axis / np.linalg.norm(_unscaled_axis)
+    inertia_major_dir_abs = np.array([math.fabs(dir_x) for dir_x in INERTIA_MAJOR_DIR])
+    if INERTIA_MAJOR_DIR[np.argmax(inertia_major_dir_abs)] < 0:
+        INERTIA_MAJOR_DIR = -INERTIA_MAJOR_DIR
+
     # Dimensions of sensor readings and control input
     READING_DIM = (3,)
     CONTROL_DIM = (3,)
@@ -126,15 +149,14 @@ class ControllerConst:
     FALLBACK_CONTROL = np.zeros(CONTROL_DIM)
 
     # Spin-stabilized Constants
-    OMEGA_MAG_TARGET = 0.035  # Target angular velocity (2 deg/s) for spin stabilization
-    MOMENTUM_TARGET = np.dot(PhysicalConst.INERTIA_MAT, PhysicalConst.INERTIA_MAJOR_DIR * OMEGA_MAG_TARGET)
+    OMEGA_MAG_TARGET = 0.35  # Target angular velocity (20 deg/s) for spin stabilization
+    MOMENTUM_TARGET = np.dot(INERTIA_MAT, INERTIA_MAJOR_DIR * OMEGA_MAG_TARGET)
     MOMENTUM_TARGET_MAG = np.linalg.norm(MOMENTUM_TARGET)
     SPIN_STABILIZING_GAIN = 2.0e07
 
-    # Sun Pointing Constants
-
-    # Tolerances
-    OMEGA_TOLERANCE = 0.02  # rad/s (~1.2 deg/s)
+    # Detumbling Constants
+    BDOT_GAIN = 1.0e07
+    BCROSS_GAIN = 1.0e07
 
 
 class MCMConst:

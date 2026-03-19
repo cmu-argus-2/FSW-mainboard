@@ -49,3 +49,7 @@ comms:
     value: "CT6ARG"
   GS_CALLSIGN:
     value: "CS5CEP"
+
+# ADCS Task
+adcs:
+  CONTROLLER_MODE: 0

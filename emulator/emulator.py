@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from hal.cubesat import CubeSat
 from hal.drivers.burnwire import BurnWires
+from hal.drivers.deployment_sensor import DeploymentSensor
 from hal.drivers.errors import Errors
 from hal.drivers.fuel_gauge import FuelGauge
 from hal.drivers.gps import GPS
@@ -103,6 +104,10 @@ class EmulatedSatellite(CubeSat):
 
         # self._rtc = self.init_device(RTC(time.gmtime()))
         self.append_device("RTC", None, RTC(time.gmtime(), simulator=self.__simulated_spacecraft), ASIL=2)
+
+        # Deployment Sensors
+        self.append_device("DEPLOYMENT_XP", None, DeploymentSensor("XP", simulator=self.__simulated_spacecraft))
+        self.append_device("DEPLOYMENT_YM", None, DeploymentSensor("YM", simulator=self.__simulated_spacecraft))
 
         # self.ERRORS = []
 
