@@ -31,12 +31,14 @@ DEFAULT_CONFIGFILE = "sil_campaign_params.yaml"
 KEYWORDS = {"WARNING": "\033[93m", "ERROR": "\033[91m"}
 
 
-def FSW_simulate(runtime: float, outfile: str, trial_number: int, trial_date: str, sim_set_name: str) -> None:
+def FSW_simulate(
+    runtime: float, outfile: str, trial_number: int, trial_date: str, sim_set_name: str, sim_real_speedup: int
+) -> None:
     try:
         with open(outfile, "w") as log_file:
             # option to run a number of simulations, and to run a specific trial
             process = subprocess.Popen(
-                ["./run.sh", "simulate", str(trial_number), trial_date, sim_set_name],
+                ["./run.sh", "simulate", str(trial_number), trial_date, sim_set_name, str(sim_real_speedup)],
                 stdout=log_file,
                 stderr=log_file,
                 preexec_fn=lambda: (os.setsid(), signal.alarm(20)),
@@ -47,7 +49,7 @@ def FSW_simulate(runtime: float, outfile: str, trial_number: int, trial_date: st
             os.killpg(os.getpgid(process.pid), signal.SIGKILL)
 
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error running sim: {e}")
 
 
 def parse_FSW_logs(outfile):
@@ -91,13 +93,18 @@ def generate_sim_set_params(sim_set_config):  # , i_sim_set: int):
     shutil.copy(nominal_config_file_path, sim_set_config_file_path)
 
     if sim_set_config["param_changes"]:
-        with open(sim_set_config_file_path, "r") as file:
-            params_data = yaml.safe_load(file)
+        try:
+            with open(sim_set_config_file_path, "r") as file:
+                params_data = yaml.safe_load(file)
+        except Exception as e:
+            raise Exception(f"Error reading nominal_params.yaml: {e}")
 
         params_data = update(params_data, sim_set_config["param_changes"], 0)
-
-        with open(sim_set_config_file_path, "w") as file:
-            yaml.dump(params_data, file)
+        try:
+            with open(sim_set_config_file_path, "w") as file:
+                yaml.dump(params_data, file)
+        except Exception as e:
+            raise Exception(f"Error writing params.yaml: {e}")
 
     return sim_set_config
 
@@ -118,7 +125,9 @@ def update_fsw_config(sim_set_config):
         yaml.dump(config_data, file)
 
 
-def run_simulation_trial(trial_number: int, trial_date: str, sim_set_name: str, set_config_params, args) -> None:
+def run_simulation_trial(
+    trial_number: int, trial_date: str, sim_set_name: str, sim_real_speedup: int, set_config_params, args
+) -> None:
 
     # Run FSW Simulation
     FSW_simulate(
@@ -127,6 +136,7 @@ def run_simulation_trial(trial_number: int, trial_date: str, sim_set_name: str, 
         trial_number=trial_number,
         trial_date=trial_date,
         sim_set_name=sim_set_name,
+        sim_real_speedup=sim_real_speedup,
     )
     # Collect FSW data
     trial_result_folder_path = os.path.join(
@@ -199,6 +209,11 @@ if __name__ == "__main__":
         sim_set_folder_path = os.path.join(campaign_folder_path, sim_set)
         n_trials = sil_campaign_params["sil_campaign"][sim_set]["num_sims"]
         first_trial_id = sil_campaign_params["sil_campaign"][sim_set]["first_trial_number"]
+
+        sim_real_speedup = 1  # default
+        if "sim_real_speedup" in sil_campaign_params["sil_campaign"][sim_set]:
+            sim_real_speedup = sil_campaign_params["sil_campaign"][sim_set]["sim_real_speedup"]
+
         # Update the fsw config.yaml
         update_fsw_config(sil_campaign_params["sil_campaign"][sim_set])
         # Run simulation set script
@@ -207,6 +222,7 @@ if __name__ == "__main__":
                 trial_number=i + first_trial_id,
                 trial_date=trial_date,
                 sim_set_name=sim_set,
+                sim_real_speedup=sim_real_speedup,
                 set_config_params=set_config_params,
                 args=args,
             )

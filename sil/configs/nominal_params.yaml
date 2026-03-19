@@ -200,7 +200,7 @@ gyroscope:
      gyro_sigma_v : 0.007 # Additive white noise [UNITS: deg/s/sqrt(Hz)]
      gyro_sigma_v_dev : 3 # stddev of uncertainity in white noise estimation as a % of nominal error stddev [%]
      gyro_bias_stab: 8.3e-4 # [UNITS: deg/s] # Bias stability [UNITS: deg/s]
-     range: 125 # [UNITS: deg/s] # Range of the gyroscope [UNITS: deg/s]
+     range: 2000 # [UNITS: deg/s] # Range of the gyroscope [UNITS: deg/s]
      nbits : 16 # [UNITS: bits] # Number of bits of the gyroscope
 
 # parameters for ds3231 RTC (url at https://www.analog.com/media/en/technical-documentation/data-sheets/ds3231.pdf)
