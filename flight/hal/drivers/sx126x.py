@@ -471,8 +471,8 @@ class SX126X:
         self.rx_en.switch_to_output(value=True)
 
         # Enable RX and disable TX
-        self.rx_en.value = True
         self.tx_en.value = False
+        self.rx_en.value = True
 
         self._bwKhz = 0
         self._sf = 0
@@ -588,8 +588,8 @@ class SX126X:
         # This is the transmit fn used in FSW
 
         # Enable TX and disable RX
-        self.tx_en.value = True
         self.rx_en.value = False
+        self.tx_en.value = True
 
         state = self.standby()
         ASSERT(state)
@@ -631,8 +631,8 @@ class SX126X:
         ASSERT(state)
 
         # Enable RX and disable TX
-        self.rx_en.value = True
         self.tx_en.value = False
+        self.rx_en.value = True
 
         return state
 
