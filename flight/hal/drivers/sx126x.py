@@ -66,14 +66,14 @@ _SX126X_CMD_CLEAR_DEVICE_ERRORS = const(0x07)
 # SX126X_REG_CRC_INITIAL_LSB = const(0x06BD)
 # SX126X_REG_CRC_POLYNOMIAL_MSB = const(0x06BE)
 # SX126X_REG_CRC_POLYNOMIAL_LSB = const(0x06BF)
-# SX126X_REG_SYNC_WORD_0 = const(0x06C0)
-# SX126X_REG_SYNC_WORD_1 = const(0x06C1)
-# SX126X_REG_SYNC_WORD_2 = const(0x06C2)
-# SX126X_REG_SYNC_WORD_3 = const(0x06C3)
-# SX126X_REG_SYNC_WORD_4 = const(0x06C4)
-# SX126X_REG_SYNC_WORD_5 = const(0x06C5)
-# SX126X_REG_SYNC_WORD_6 = const(0x06C6)
-# SX126X_REG_SYNC_WORD_7 = const(0x06C7)
+_SX126X_REG_SYNC_WORD_0 = const(0x06C0)
+_SX126X_REG_SYNC_WORD_1 = const(0x06C1)
+_SX126X_REG_SYNC_WORD_2 = const(0x06C2)
+_SX126X_REG_SYNC_WORD_3 = const(0x06C3)
+_SX126X_REG_SYNC_WORD_4 = const(0x06C4)
+_SX126X_REG_SYNC_WORD_5 = const(0x06C5)
+_SX126X_REG_SYNC_WORD_6 = const(0x06C6)
+_SX126X_REG_SYNC_WORD_7 = const(0x06C7)
 # SX126X_REG_NODE_ADDRESS = const(0x06CD)
 # SX126X_REG_BROADCAST_ADDRESS = const(0x06CE)
 _SX126X_REG_LORA_SYNC_WORD_MSB = const(0x0740)
@@ -160,7 +160,7 @@ _SX126X_DIO3_OUTPUT_2_4 = const(0x04)
 _SX126X_DIO3_OUTPUT_2_7 = const(0x05)
 _SX126X_DIO3_OUTPUT_3_0 = const(0x06)
 _SX126X_DIO3_OUTPUT_3_3 = const(0x07)
-# SX126X_PACKET_TYPE_GFSK = const(0x00)
+_SX126X_PACKET_TYPE_GFSK = const(0x00)
 _SX126X_PACKET_TYPE_LORA = const(0x01)
 # SX126X_PA_RAMP_10U = const(0x00)
 # SX126X_PA_RAMP_20U = const(0x01)
@@ -170,32 +170,32 @@ _SX126X_PA_RAMP_200U = const(0x04)
 # SX126X_PA_RAMP_800U = const(0x05)
 # SX126X_PA_RAMP_1700U = const(0x06)
 # SX126X_PA_RAMP_3400U = const(0x07)
-# SX126X_GFSK_FILTER_NONE = const(0x00)
-# SX126X_GFSK_FILTER_GAUSS_0_3 = const(0x08)
-# SX126X_GFSK_FILTER_GAUSS_0_5 = const(0x09)
-# SX126X_GFSK_FILTER_GAUSS_0_7 = const(0x0A)
-# SX126X_GFSK_FILTER_GAUSS_1 = const(0x0B)
-# SX126X_GFSK_RX_BW_4_8 = const(0x1F)
-# SX126X_GFSK_RX_BW_5_8 = const(0x17)
-# SX126X_GFSK_RX_BW_7_3 = const(0x0F)
-# SX126X_GFSK_RX_BW_9_7 = const(0x1E)
-# SX126X_GFSK_RX_BW_11_7 = const(0x16)
-# SX126X_GFSK_RX_BW_14_6 = const(0x0E)
-# SX126X_GFSK_RX_BW_19_5 = const(0x1D)
-# SX126X_GFSK_RX_BW_23_4 = const(0x15)
-# SX126X_GFSK_RX_BW_29_3 = const(0x0D)
-# SX126X_GFSK_RX_BW_39_0 = const(0x1C)
-# SX126X_GFSK_RX_BW_46_9 = const(0x14)
-# SX126X_GFSK_RX_BW_58_6 = const(0x0C)
-# SX126X_GFSK_RX_BW_78_2 = const(0x1B)
-# SX126X_GFSK_RX_BW_93_8 = const(0x13)
-# SX126X_GFSK_RX_BW_117_3 = const(0x0B)
-# SX126X_GFSK_RX_BW_156_2 = const(0x1A)
-# SX126X_GFSK_RX_BW_187_2 = const(0x12)
-# SX126X_GFSK_RX_BW_234_3 = const(0x0A)
-# SX126X_GFSK_RX_BW_312_0 = const(0x19)
-# SX126X_GFSK_RX_BW_373_6 = const(0x11)
-# SX126X_GFSK_RX_BW_467_0 = const(0x09)
+_SX126X_GFSK_FILTER_NONE = const(0x00)
+_SX126X_GFSK_FILTER_GAUSS_0_3 = const(0x08)
+_SX126X_GFSK_FILTER_GAUSS_0_5 = const(0x09)
+_SX126X_GFSK_FILTER_GAUSS_0_7 = const(0x0A)
+_SX126X_GFSK_FILTER_GAUSS_1 = const(0x0B)
+_SX126X_GFSK_RX_BW_4_8 = const(0x1F)
+_SX126X_GFSK_RX_BW_5_8 = const(0x17)
+_SX126X_GFSK_RX_BW_7_3 = const(0x0F)
+_SX126X_GFSK_RX_BW_9_7 = const(0x1E)
+_SX126X_GFSK_RX_BW_11_7 = const(0x16)
+_SX126X_GFSK_RX_BW_14_6 = const(0x0E)
+_SX126X_GFSK_RX_BW_19_5 = const(0x1D)
+_SX126X_GFSK_RX_BW_23_4 = const(0x15)
+_SX126X_GFSK_RX_BW_29_3 = const(0x0D)
+_SX126X_GFSK_RX_BW_39_0 = const(0x1C)
+_SX126X_GFSK_RX_BW_46_9 = const(0x14)
+_SX126X_GFSK_RX_BW_58_6 = const(0x0C)
+_SX126X_GFSK_RX_BW_78_2 = const(0x1B)
+_SX126X_GFSK_RX_BW_93_8 = const(0x13)
+_SX126X_GFSK_RX_BW_117_3 = const(0x0B)
+_SX126X_GFSK_RX_BW_156_2 = const(0x1A)
+_SX126X_GFSK_RX_BW_187_2 = const(0x12)
+_SX126X_GFSK_RX_BW_234_3 = const(0x0A)
+_SX126X_GFSK_RX_BW_312_0 = const(0x19)
+_SX126X_GFSK_RX_BW_373_6 = const(0x11)
+_SX126X_GFSK_RX_BW_467_0 = const(0x09)
 _SX126X_LORA_BW_7_8 = const(0x00)
 _SX126X_LORA_BW_10_4 = const(0x08)
 _SX126X_LORA_BW_15_6 = const(0x01)
@@ -212,23 +212,23 @@ _SX126X_LORA_CR_4_7 = const(0x03)
 _SX126X_LORA_CR_4_8 = const(0x04)
 _SX126X_LORA_LOW_DATA_RATE_OPTIMIZE_OFF = const(0x00)
 _SX126X_LORA_LOW_DATA_RATE_OPTIMIZE_ON = const(0x01)
-# SX126X_GFSK_PREAMBLE_DETECT_OFF = const(0x00)
-# SX126X_GFSK_PREAMBLE_DETECT_8 = const(0x04)
-# SX126X_GFSK_PREAMBLE_DETECT_16 = const(0x05)
-# SX126X_GFSK_PREAMBLE_DETECT_24 = const(0x06)
-# SX126X_GFSK_PREAMBLE_DETECT_32 = const(0x07)
+_SX126X_GFSK_PREAMBLE_DETECT_OFF = const(0x00)
+_SX126X_GFSK_PREAMBLE_DETECT_8 = const(0x04)
+_SX126X_GFSK_PREAMBLE_DETECT_16 = const(0x05)
+_SX126X_GFSK_PREAMBLE_DETECT_24 = const(0x06)
+_SX126X_GFSK_PREAMBLE_DETECT_32 = const(0x07)
 _SX126X_GFSK_ADDRESS_FILT_OFF = const(0x00)
-# SX126X_GFSK_ADDRESS_FILT_NODE = const(0x01)
-# SX126X_GFSK_ADDRESS_FILT_NODE_BROADCAST = const(0x02)
-# SX126X_GFSK_PACKET_FIXED = const(0x00)
-# SX126X_GFSK_PACKET_VARIABLE = const(0x01)
-# SX126X_GFSK_CRC_OFF = const(0x01)
-# SX126X_GFSK_CRC_1_BYTE = const(0x00)
-# SX126X_GFSK_CRC_2_BYTE = const(0x02)
-# SX126X_GFSK_CRC_1_BYTE_INV = const(0x04)
-# SX126X_GFSK_CRC_2_BYTE_INV = const(0x06)
-# SX126X_GFSK_WHITENING_OFF = const(0x00)
-# SX126X_GFSK_WHITENING_ON = const(0x01)
+_SX126X_GFSK_ADDRESS_FILT_NODE = const(0x01)
+_SX126X_GFSK_ADDRESS_FILT_NODE_BROADCAST = const(0x02)
+_SX126X_GFSK_PACKET_FIXED = const(0x00)
+_SX126X_GFSK_PACKET_VARIABLE = const(0x01)
+_SX126X_GFSK_CRC_OFF = const(0x01)
+_SX126X_GFSK_CRC_1_BYTE = const(0x00)
+_SX126X_GFSK_CRC_2_BYTE = const(0x02)
+_SX126X_GFSK_CRC_1_BYTE_INV = const(0x04)
+_SX126X_GFSK_CRC_2_BYTE_INV = const(0x06)
+_SX126X_GFSK_WHITENING_OFF = const(0x00)
+_SX126X_GFSK_WHITENING_ON = const(0x01)
 _SX126X_LORA_HEADER_EXPLICIT = const(0x00)
 _SX126X_LORA_HEADER_IMPLICIT = const(0x01)
 _SX126X_LORA_CRC_OFF = const(0x00)
@@ -602,8 +602,6 @@ class SX126X:
         modem = self.getPacketType()
         if modem == _SX126X_PACKET_TYPE_LORA:
             timeout = int((self.getTimeOnAir(len_) * 3) / 2)
-        else:
-            return _ERR_UNKNOWN
 
         state = self.startTransmit(data, len_, addr)
         ASSERT(state)
@@ -764,8 +762,6 @@ class SX126X:
                     return _ERR_INVALID_PACKET_LENGTH
 
             state = self.setPacketParams(self._preambleLength, self._crcType, len_, self._headerType, self._invertIQ)
-        else:
-            return _ERR_UNKNOWN
         ASSERT(state)
 
         state = self.setDioIrqParams(_SX126X_IRQ_TX_DONE | _SX126X_IRQ_TIMEOUT, _SX126X_IRQ_TX_DONE)
@@ -803,6 +799,8 @@ class SX126X:
             state = self.setPacketParams(
                 self._preambleLength, self._crcType, self._implicitLen, self._headerType, self._invertIQ
             )
+        elif modem == _SX126X_PACKET_TYPE_GFSK:
+            pass
         else:
             return _ERR_UNKNOWN
         ASSERT(state)
@@ -877,6 +875,8 @@ class SX126X:
             state = self.setPacketParams(
                 self._preambleLength, self._crcType, self._implicitLen, self._headerType, self._invertIQ
             )
+        elif modem == _SX126X_PACKET_TYPE_GFSK:
+            pass
         else:
             return _ERR_UNKNOWN
 
@@ -1215,7 +1215,9 @@ class SX126X:
 
         return state
 
-    def setModulationParams(self, sf, bw, cr, ldro):
+    def setModulationParams(self, sf, bw, cr, ldro,):
+        ASSERT( _ERR_NONE if self._modem == _SX126X_PACKET_TYPE_LORA else _ERR_UNKNOWN)
+
         if self._ldroAuto:
             symbolLength = float((1 << self._sf)) / float(self._bwKhz)
             if symbolLength >= 16.0:
@@ -1228,11 +1230,127 @@ class SX126X:
         data = [sf, bw, cr, self._ldro]
         return self.SPIwriteCommand([_SX126X_CMD_SET_MODULATION_PARAMS], 1, data, 4)
 
+    def setModulationParamsFSK(self,bitrate,pulseShape,bandwith,frequencyDeviation):
+        ASSERT(_ERR_NONE if self._modem == _SX126X_PACKET_TYPE_GFSK else _ERR_UNKNOWN)
+
+        ASSERT( _ERR_NONE if 600 <= bitrate <= 500_000 else _ERR_UNKNOWN )
+
+        br = 32E6/bitrate
+        br = int(br*32)
+        print("BR",br)
+        modParam = [0,0,0,0,0,0,0,0]
+        modParam[0] = (br >> 16) & 0xFF
+        modParam[1] = (br >> 8) & 0xFF
+        modParam[2] = br & 0xFF
+
+        ASSERT( _ERR_NONE if pulseShape in [_SX126X_GFSK_FILTER_NONE,
+            _SX126X_GFSK_FILTER_GAUSS_0_3,
+            _SX126X_GFSK_FILTER_GAUSS_0_5,
+            _SX126X_GFSK_FILTER_GAUSS_0_7,
+            _SX126X_GFSK_FILTER_GAUSS_1] else _ERR_UNKNOWN)
+
+        modParam[3] = pulseShape
+
+        ASSERT(_ERR_NONE if bandwith in [_SX126X_GFSK_RX_BW_4_8,
+            _SX126X_GFSK_RX_BW_5_8,
+            _SX126X_GFSK_RX_BW_7_3,
+            _SX126X_GFSK_RX_BW_9_7,
+            _SX126X_GFSK_RX_BW_11_7,
+            _SX126X_GFSK_RX_BW_14_6,
+            _SX126X_GFSK_RX_BW_19_5,
+            _SX126X_GFSK_RX_BW_23_4,
+            _SX126X_GFSK_RX_BW_29_3,
+            _SX126X_GFSK_RX_BW_39_0,
+            _SX126X_GFSK_RX_BW_46_9,
+            _SX126X_GFSK_RX_BW_58_6,
+            _SX126X_GFSK_RX_BW_78_2,
+            _SX126X_GFSK_RX_BW_93_8,
+            _SX126X_GFSK_RX_BW_117_3,
+            _SX126X_GFSK_RX_BW_156_2,
+            _SX126X_GFSK_RX_BW_187_2,
+            _SX126X_GFSK_RX_BW_234_3,
+            _SX126X_GFSK_RX_BW_312_0,
+            _SX126X_GFSK_RX_BW_373_6,
+            _SX126X_GFSK_RX_BW_467_0] else _ERR_UNKNOWN)
+
+        modParam[4] = bandwith
+
+        Fdev = int(frequencyDeviation * 2**25/32E6)
+        print("FDEV",Fdev)
+        modParam[5] = (Fdev >> 16) & 0xFF
+        modParam[6] = (Fdev >> 8) & 0xFF
+        modParam[7] = Fdev & 0xFF
+
+        return self.SPIwriteCommand([_SX126X_CMD_SET_MODULATION_PARAMS],1,modParam,8)  
+
     def setPacketParams(self, preambleLength, crcType, payloadLength, headerType, invertIQ=_SX126X_LORA_IQ_STANDARD):
+        ASSERT( _ERR_NONE if self._modem == _SX126X_PACKET_TYPE_LORA else _ERR_UNKNOWN)
+
         state = self.fixInvertedIQ(invertIQ)
         ASSERT(state)
         data = [int((preambleLength >> 8) & 0xFF), int(preambleLength & 0xFF), headerType, payloadLength, crcType, invertIQ]
         return self.SPIwriteCommand([_SX126X_CMD_SET_PACKET_PARAMS], 1, data, 6)
+
+    def setPacketParamsFSK(self,preambleLength, preambleDetectorLength, syncWordLength, addrComp, packetType, payloadLength, crcType, whitening):
+        ASSERT( _ERR_NONE if self._modem == _SX126X_PACKET_TYPE_GFSK else _ERR_UNKNOWN)
+
+        packetParam = [0,0,0,0,0,0,0,0,0]
+
+        packetParam[0] = (preambleLength >> 8) & 0xFF
+        packetParam[1] = preambleLength & 0xFF
+
+        ASSERT( _ERR_NONE if preambleDetectorLength 
+            in [_SX126X_GFSK_PREAMBLE_DETECT_OFF,
+            _SX126X_GFSK_PREAMBLE_DETECT_8,
+            _SX126X_GFSK_PREAMBLE_DETECT_16,
+            _SX126X_GFSK_PREAMBLE_DETECT_24,
+            _SX126X_GFSK_PREAMBLE_DETECT_32] else _ERR_UNKNOWN)
+
+        packetParam[2] = preambleDetectorLength
+
+        ASSERT( _ERR_NONE if syncWordLength <= 64 else _ERR_UNKNOWN)
+
+        packetParam[3] = syncWordLength
+        if(syncWordLength == 32):
+            #0x1A_CF_FC_1D
+            self.writeRegister(_SX126X_REG_SYNC_WORD_0,(0x1A).to_bytes(),1)
+            self.writeRegister(_SX126X_REG_SYNC_WORD_1,(0xCF).to_bytes(),1)
+            self.writeRegister(_SX126X_REG_SYNC_WORD_2,(0xFC).to_bytes(),1)
+            self.writeRegister(_SX126X_REG_SYNC_WORD_2,(0x1D).to_bytes(),1)
+
+        ASSERT( _ERR_NONE if addrComp in 
+            [_SX126X_GFSK_ADDRESS_FILT_OFF,
+            _SX126X_GFSK_ADDRESS_FILT_NODE,
+            _SX126X_GFSK_ADDRESS_FILT_NODE_BROADCAST]
+            else _ERR_UNKNOWN)
+
+        packetParam[4] = addrComp
+
+        ASSERT( _ERR_NONE if packetType
+            in [_SX126X_GFSK_PACKET_FIXED, _SX126X_GFSK_PACKET_VARIABLE] 
+            else _ERR_UNKNOWN)
+
+        packetParam[5] = packetType
+
+        packetParam[6] = payloadLength & 0xFF
+
+        ASSERT( _ERR_NONE if 
+            crcType in [_SX126X_GFSK_CRC_OFF,
+            _SX126X_GFSK_CRC_1_BYTE,
+            _SX126X_GFSK_CRC_2_BYTE,
+            _SX126X_GFSK_CRC_1_BYTE_INV,
+            _SX126X_GFSK_CRC_2_BYTE_INV]
+            else _ERR_UNKNOWN)
+
+        packetParam[7] = crcType
+
+        ASSERT( _ERR_NONE if whitening in 
+            [_SX126X_GFSK_WHITENING_OFF, _SX126X_GFSK_WHITENING_ON]
+            else _ERR_UNKNOWN)
+
+        packetParam[8] = whitening
+
+        return self.SPIwriteCommand([_SX126X_CMD_SET_PACKET_PARAMS],1,packetParam,9)
 
     def setBufferBaseAddress(self, txBaseAddress=0x00, rxBaseAddress=0x00):
         data = [txBaseAddress, rxBaseAddress]
@@ -1324,7 +1442,8 @@ class SX126X:
         ASSERT(state)
 
         data = [0, 0, 0, 0, 0, 0, 0]
-        data[0] = modem
+
+        self._modem = data[0] = modem
         state = self.SPIwriteCommand([_SX126X_CMD_SET_PACKET_TYPE], 1, data, 1)
         ASSERT(state)
 
@@ -1332,15 +1451,16 @@ class SX126X:
         state = self.SPIwriteCommand([_SX126X_CMD_SET_RX_TX_FALLBACK_MODE], 1, data, 1)
         ASSERT(state)
 
-        data[0] = _SX126X_CAD_ON_8_SYMB
-        data[1] = self._sf + 13
-        data[2] = 10
-        data[3] = _SX126X_CAD_GOTO_STDBY
-        data[4] = 0x00
-        data[5] = 0x00
-        data[6] = 0x00
-        state = self.SPIwriteCommand([_SX126X_CMD_SET_CAD_PARAMS], 1, data, 7)
-        ASSERT(state)
+        if modem == _SX126X_PACKET_TYPE_LORA:
+            data[0] = _SX126X_CAD_ON_8_SYMB
+            data[1] = self._sf + 13
+            data[2] = 10
+            data[3] = _SX126X_CAD_GOTO_STDBY
+            data[4] = 0x00
+            data[5] = 0x00
+            data[6] = 0x00
+            state = self.SPIwriteCommand([_SX126X_CMD_SET_CAD_PARAMS], 1, data, 7)
+            ASSERT(state)
 
         state = self.clearIrqStatus()
         state |= self.setDioIrqParams(_SX126X_IRQ_NONE, _SX126X_IRQ_NONE)
@@ -1639,7 +1759,7 @@ class SX1262(SX126X):
         except AssertionError as e:
             state = list(ERROR.keys())[list(ERROR.values()).index(str(e))]
 
-        ASSERT(super().startReceive())
+        #ASSERT(super().startReceive())
 
         if state == _ERR_NONE or state == _ERR_CRC_MISMATCH:
             return bytes(data), state
