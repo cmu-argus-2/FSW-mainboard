@@ -1216,7 +1216,7 @@ class SX126X:
         return state
 
     def setModulationParams(self, sf, bw, cr, ldro,):
-        ASSERT( _ERR_NONE if self._modem == _SX126X_PACKET_TYPE_LORA else _ERR_UNKNOWN)
+        ASSERT(_ERR_NONE if self._modem == _SX126X_PACKET_TYPE_LORA else _ERR_UNKNOWN)
 
         if self._ldroAuto:
             symbolLength = float((1 << self._sf)) / float(self._bwKhz)
@@ -1230,28 +1230,31 @@ class SX126X:
         data = [sf, bw, cr, self._ldro]
         return self.SPIwriteCommand([_SX126X_CMD_SET_MODULATION_PARAMS], 1, data, 4)
 
-    def setModulationParamsFSK(self,bitrate,pulseShape,bandwith,frequencyDeviation):
+    def setModulationParamsFSK(self, bitrate, pulseShape, bandwith, frequencyDeviation):
         ASSERT(_ERR_NONE if self._modem == _SX126X_PACKET_TYPE_GFSK else _ERR_UNKNOWN)
 
-        ASSERT( _ERR_NONE if 600 <= bitrate <= 500_000 else _ERR_UNKNOWN )
+        ASSERT(_ERR_NONE if 600 <= bitrate <= 500_000 else _ERR_UNKNOWN)
 
-        br = 32E6/bitrate
-        br = int(br*32)
-        print("BR",br)
-        modParam = [0,0,0,0,0,0,0,0]
+        br = 32E6 / bitrate
+        br = int(br * 32)
+        print("BR", br)
+        modParam = [0, 0, 0, 0, 0, 0, 0, 0]
         modParam[0] = (br >> 16) & 0xFF
         modParam[1] = (br >> 8) & 0xFF
         modParam[2] = br & 0xFF
 
-        ASSERT( _ERR_NONE if pulseShape in [_SX126X_GFSK_FILTER_NONE,
+        ASSERT(_ERR_NONE if pulseShape in [
+            _SX126X_GFSK_FILTER_NONE,
             _SX126X_GFSK_FILTER_GAUSS_0_3,
             _SX126X_GFSK_FILTER_GAUSS_0_5,
             _SX126X_GFSK_FILTER_GAUSS_0_7,
-            _SX126X_GFSK_FILTER_GAUSS_1] else _ERR_UNKNOWN)
+            _SX126X_GFSK_FILTER_GAUSS_1]
+            else _ERR_UNKNOWN)
 
         modParam[3] = pulseShape
 
-        ASSERT(_ERR_NONE if bandwith in [_SX126X_GFSK_RX_BW_4_8,
+        ASSERT(_ERR_NONE if bandwith in [
+            _SX126X_GFSK_RX_BW_4_8,
             _SX126X_GFSK_RX_BW_5_8,
             _SX126X_GFSK_RX_BW_7_3,
             _SX126X_GFSK_RX_BW_9_7,
@@ -1271,71 +1274,74 @@ class SX126X:
             _SX126X_GFSK_RX_BW_234_3,
             _SX126X_GFSK_RX_BW_312_0,
             _SX126X_GFSK_RX_BW_373_6,
-            _SX126X_GFSK_RX_BW_467_0] else _ERR_UNKNOWN)
+            _SX126X_GFSK_RX_BW_467_0] 
+            else _ERR_UNKNOWN)
 
         modParam[4] = bandwith
 
-        Fdev = int(frequencyDeviation * 2**25/32E6)
-        print("FDEV",Fdev)
+        Fdev = int(frequencyDeviation * 2**25 / 32E6)
+        print("FDEV", Fdev)
         modParam[5] = (Fdev >> 16) & 0xFF
         modParam[6] = (Fdev >> 8) & 0xFF
         modParam[7] = Fdev & 0xFF
 
-        return self.SPIwriteCommand([_SX126X_CMD_SET_MODULATION_PARAMS],1,modParam,8)  
+        return self.SPIwriteCommand([_SX126X_CMD_SET_MODULATION_PARAMS], 1, modParam, 8)  
 
     def setPacketParams(self, preambleLength, crcType, payloadLength, headerType, invertIQ=_SX126X_LORA_IQ_STANDARD):
-        ASSERT( _ERR_NONE if self._modem == _SX126X_PACKET_TYPE_LORA else _ERR_UNKNOWN)
+        ASSERT(_ERR_NONE if self._modem == _SX126X_PACKET_TYPE_LORA else _ERR_UNKNOWN)
 
         state = self.fixInvertedIQ(invertIQ)
         ASSERT(state)
         data = [int((preambleLength >> 8) & 0xFF), int(preambleLength & 0xFF), headerType, payloadLength, crcType, invertIQ]
         return self.SPIwriteCommand([_SX126X_CMD_SET_PACKET_PARAMS], 1, data, 6)
 
-    def setPacketParamsFSK(self,preambleLength, preambleDetectorLength, syncWordLength, addrComp, packetType, payloadLength, crcType, whitening):
-        ASSERT( _ERR_NONE if self._modem == _SX126X_PACKET_TYPE_GFSK else _ERR_UNKNOWN)
+    def setPacketParamsFSK(self, preambleLength, preambleDetectorLength, syncWordLength, addrComp, packetType, payloadLength, crcType, whitening):
+        ASSERT(_ERR_NONE if self._modem == _SX126X_PACKET_TYPE_GFSK else _ERR_UNKNOWN)
 
-        packetParam = [0,0,0,0,0,0,0,0,0]
+        packetParam = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
         packetParam[0] = (preambleLength >> 8) & 0xFF
         packetParam[1] = preambleLength & 0xFF
 
-        ASSERT( _ERR_NONE if preambleDetectorLength 
-            in [_SX126X_GFSK_PREAMBLE_DETECT_OFF,
+        ASSERT(_ERR_NONE if preambleDetectorLength in [
+            _SX126X_GFSK_PREAMBLE_DETECT_OFF,
             _SX126X_GFSK_PREAMBLE_DETECT_8,
             _SX126X_GFSK_PREAMBLE_DETECT_16,
             _SX126X_GFSK_PREAMBLE_DETECT_24,
-            _SX126X_GFSK_PREAMBLE_DETECT_32] else _ERR_UNKNOWN)
+            _SX126X_GFSK_PREAMBLE_DETECT_32] 
+            else _ERR_UNKNOWN)
 
         packetParam[2] = preambleDetectorLength
 
-        ASSERT( _ERR_NONE if syncWordLength <= 64 else _ERR_UNKNOWN)
+        ASSERT(_ERR_NONE if syncWordLength <= 64 else _ERR_UNKNOWN)
 
         packetParam[3] = syncWordLength
-        if(syncWordLength == 32):
-            #0x1A_CF_FC_1D
-            self.writeRegister(_SX126X_REG_SYNC_WORD_0,(0x1A).to_bytes(),1)
-            self.writeRegister(_SX126X_REG_SYNC_WORD_1,(0xCF).to_bytes(),1)
-            self.writeRegister(_SX126X_REG_SYNC_WORD_2,(0xFC).to_bytes(),1)
-            self.writeRegister(_SX126X_REG_SYNC_WORD_2,(0x1D).to_bytes(),1)
+        if (syncWordLength == 32):
+            # 0x1A_CF_FC_1D
+            self.writeRegister(_SX126X_REG_SYNC_WORD_0, (0x1A).to_bytes(), 1)
+            self.writeRegister(_SX126X_REG_SYNC_WORD_1, (0xCF).to_bytes(), 1)
+            self.writeRegister(_SX126X_REG_SYNC_WORD_2, (0xFC).to_bytes(), 1)
+            self.writeRegister(_SX126X_REG_SYNC_WORD_2, (0x1D).to_bytes(), 1)
 
-        ASSERT( _ERR_NONE if addrComp in 
-            [_SX126X_GFSK_ADDRESS_FILT_OFF,
+        ASSERT(_ERR_NONE if addrComp in [
+            _SX126X_GFSK_ADDRESS_FILT_OFF,
             _SX126X_GFSK_ADDRESS_FILT_NODE,
             _SX126X_GFSK_ADDRESS_FILT_NODE_BROADCAST]
             else _ERR_UNKNOWN)
 
         packetParam[4] = addrComp
 
-        ASSERT( _ERR_NONE if packetType
-            in [_SX126X_GFSK_PACKET_FIXED, _SX126X_GFSK_PACKET_VARIABLE] 
+        ASSERT(_ERR_NONE if packetType in [
+            _SX126X_GFSK_PACKET_FIXED,
+            _SX126X_GFSK_PACKET_VARIABLE] 
             else _ERR_UNKNOWN)
 
         packetParam[5] = packetType
 
         packetParam[6] = payloadLength & 0xFF
 
-        ASSERT( _ERR_NONE if 
-            crcType in [_SX126X_GFSK_CRC_OFF,
+        ASSERT(_ERR_NONE if crcType in [
+            _SX126X_GFSK_CRC_OFF,
             _SX126X_GFSK_CRC_1_BYTE,
             _SX126X_GFSK_CRC_2_BYTE,
             _SX126X_GFSK_CRC_1_BYTE_INV,
@@ -1344,13 +1350,14 @@ class SX126X:
 
         packetParam[7] = crcType
 
-        ASSERT( _ERR_NONE if whitening in 
-            [_SX126X_GFSK_WHITENING_OFF, _SX126X_GFSK_WHITENING_ON]
+        ASSERT(_ERR_NONE if whitening in [
+            _SX126X_GFSK_WHITENING_OFF, 
+            _SX126X_GFSK_WHITENING_ON]
             else _ERR_UNKNOWN)
 
         packetParam[8] = whitening
 
-        return self.SPIwriteCommand([_SX126X_CMD_SET_PACKET_PARAMS],1,packetParam,9)
+        return self.SPIwriteCommand([_SX126X_CMD_SET_PACKET_PARAMS], 1, packetParam, 9)
 
     def setBufferBaseAddress(self, txBaseAddress=0x00, rxBaseAddress=0x00):
         data = [txBaseAddress, rxBaseAddress]
@@ -1759,7 +1766,7 @@ class SX1262(SX126X):
         except AssertionError as e:
             state = list(ERROR.keys())[list(ERROR.values()).index(str(e))]
 
-        #ASSERT(super().startReceive())
+        # ASSERT(super().startReceive())
 
         if state == _ERR_NONE or state == _ERR_CRC_MISMATCH:
             return bytes(data), state
