@@ -1274,7 +1274,7 @@ class SX126X:
             _SX126X_GFSK_RX_BW_234_3,
             _SX126X_GFSK_RX_BW_312_0,
             _SX126X_GFSK_RX_BW_373_6,
-            _SX126X_GFSK_RX_BW_467_0] 
+            _SX126X_GFSK_RX_BW_467_0]
             else _ERR_UNKNOWN)
 
         modParam[4] = bandwith
@@ -1285,7 +1285,7 @@ class SX126X:
         modParam[6] = (Fdev >> 8) & 0xFF
         modParam[7] = Fdev & 0xFF
 
-        return self.SPIwriteCommand([_SX126X_CMD_SET_MODULATION_PARAMS], 1, modParam, 8)  
+        return self.SPIwriteCommand([_SX126X_CMD_SET_MODULATION_PARAMS], 1, modParam, 8)
 
     def setPacketParams(self, preambleLength, crcType, payloadLength, headerType, invertIQ=_SX126X_LORA_IQ_STANDARD):
         ASSERT(_ERR_NONE if self._modem == _SX126X_PACKET_TYPE_LORA else _ERR_UNKNOWN)
@@ -1308,7 +1308,7 @@ class SX126X:
             _SX126X_GFSK_PREAMBLE_DETECT_8,
             _SX126X_GFSK_PREAMBLE_DETECT_16,
             _SX126X_GFSK_PREAMBLE_DETECT_24,
-            _SX126X_GFSK_PREAMBLE_DETECT_32] 
+            _SX126X_GFSK_PREAMBLE_DETECT_32]
             else _ERR_UNKNOWN)
 
         packetParam[2] = preambleDetectorLength
@@ -1333,7 +1333,7 @@ class SX126X:
 
         ASSERT(_ERR_NONE if packetType in [
             _SX126X_GFSK_PACKET_FIXED,
-            _SX126X_GFSK_PACKET_VARIABLE] 
+            _SX126X_GFSK_PACKET_VARIABLE]
             else _ERR_UNKNOWN)
 
         packetParam[5] = packetType
@@ -1351,7 +1351,7 @@ class SX126X:
         packetParam[7] = crcType
 
         ASSERT(_ERR_NONE if whitening in [
-            _SX126X_GFSK_WHITENING_OFF, 
+            _SX126X_GFSK_WHITENING_OFF,
             _SX126X_GFSK_WHITENING_ON]
             else _ERR_UNKNOWN)
 
