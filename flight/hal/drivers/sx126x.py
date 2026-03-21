@@ -135,7 +135,7 @@ _SX126X_CAL_IMG_902_MHZ_2 = const(0xE9)
 _SX126X_PA_CONFIG_HP_MAX = const(0x07)
 _SX126X_PA_CONFIG_PA_LUT = const(0x01)
 # SX126X_PA_CONFIG_SX1262_8 = const(0x00)
-# SX126X_RX_TX_FALLBACK_MODE_FS = const(0x40)
+_SX126X_RX_TX_FALLBACK_MODE_FS = const(0x40)
 # SX126X_RX_TX_FALLBACK_MODE_STDBY_XOSC = const(0x30)
 _SX126X_RX_TX_FALLBACK_MODE_STDBY_RC = const(0x20)
 _SX126X_IRQ_TIMEOUT = const(0b1000000000)
@@ -1328,7 +1328,7 @@ class SX126X:
         state = self.SPIwriteCommand([_SX126X_CMD_SET_PACKET_TYPE], 1, data, 1)
         ASSERT(state)
 
-        data[0] = _SX126X_RX_TX_FALLBACK_MODE_STDBY_RC
+        data[0] = _SX126X_RX_TX_FALLBACK_MODE_FS
         state = self.SPIwriteCommand([_SX126X_CMD_SET_RX_TX_FALLBACK_MODE], 1, data, 1)
         ASSERT(state)
 
