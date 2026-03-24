@@ -23,13 +23,13 @@ class DownloadManager:
     
     Assumptions:
     - First batch starts at packet 0
-    - Each batch contains 32 packets
+    - Each batch contains 40 packets
     - Packets received are tracked in transaction.missing_fragments
     - File complete when missing_fragments is empty
     """
     
     # Configuration constants
-    BATCH_SIZE = 60                # packets per batch
+    BATCH_SIZE = 40                # packets per batch
     LISTEN_TIMEOUT =  3 #(BATCH_SIZE * 500 * 8) / 460800             # seconds per batch listen adding 5byte margin per packet
     SAVE_FOLDER = "sd"
     MAX_BATCH_RETRIES = 3
@@ -152,9 +152,10 @@ class DownloadManager:
         trans = self.current_transaction
         
         # Listen for packets in this batch window
+        logger.info("Entering listen mode")
         start_listen_time = TPM.time()
         while TPM.time() - start_listen_time < self.LISTEN_TIMEOUT:
-            uart_reader_callback()
+            uart_reader_callback(max_packet_size=609)
 
         if not self.current_batch_received_any:
             logger.info(

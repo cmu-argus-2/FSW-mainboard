@@ -35,9 +35,9 @@ class PayloadUART(PayloadCommunicationInterface):
     def send(cls, pckt):
         
         # check the size to see if we need padding
-        # the final size should be 255
-        if len(pckt) < 255:
-            pckt += b'\x00' * (255 - len(pckt))
+        # the final size should be 609
+        if len(pckt) < 609:
+            pckt += b'\x00' * (609 - len(pckt))
             
         logger.info(f"[PAYLOAD] - Sending packet {pckt}") 
         logger.info(f"[PAYLOAD] -   len:{len(pckt)}") 
@@ -45,7 +45,7 @@ class PayloadUART(PayloadCommunicationInterface):
         cls._uart.write(pckt)
         
     @classmethod
-    def read(cls, bytes):
+    def read(cls, bytes=609):
         return cls._uart.read(bytes)
         
     @classmethod

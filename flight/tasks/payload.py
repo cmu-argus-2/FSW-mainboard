@@ -347,7 +347,7 @@ class Task(TemplateTask):
             DH.log_data("payload_tm", PC.log_data)  # periodically log data
             print(f"[PAYLOAD] Current state: {PC.current_state}")
             
-        PC.process_uart()
+        PC.process_uart(609)
             
     # async def main_task(self):
     #     if SM.current_state == STATES.STARTUP:

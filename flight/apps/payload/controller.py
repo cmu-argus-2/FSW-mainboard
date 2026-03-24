@@ -375,18 +375,18 @@ class PayloadController:
         logger.error("Please implement me")
         
     @classmethod 
-    def process_uart(cls):
+    def process_uart(cls, max_packet_size=255):
         """
         This function will read from uart and try and process the commands/ack received
         """
         
-        data = cls.read(255)   # read the max packet size
+        data = cls.read(max_packet_size)   # read the max packet size
         
         if not data:
             # nothing to be done here
             return False
 
-        logger.info(f"[PAYLOAD] - Received data from uart: {data[0:10]}")
+        logger.info(f"[PAYLOAD] - Received data from uart: {data[0:10]} size: {len(data)}")
         
         # try and unpack the data
         callsign, message_object = unpack(data)
@@ -528,7 +528,7 @@ class PayloadController:
         filename = filename.rstrip("\x00")
         
         # need to give a random number for number_of_packets
-        cls.transaction_dict[tid] = Transaction(tid, filename, number_of_packets=-1)
+        cls.transaction_dict[tid] = Transaction(tid, filename, number_of_packets=-1, max_payload_size=600)
 
         logger.info(f"[PAYLOAD] - Processing create transaction command: {tid}, {filename}")
         return True
