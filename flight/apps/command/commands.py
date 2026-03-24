@@ -69,6 +69,8 @@ def UPLINK_TIME_REFERENCE(time_reference):
 def TURN_OFF_PAYLOAD():
     """Sends a shutdown command to the payload and turns off its power line."""
     logger.info("Executing TURN_OFF_PAYLOAD")
+    # //JETSON_EN
+    
     return []
 
 
@@ -196,6 +198,9 @@ def CREATE_TRANS(tid, string_command):
 
     # 1. check if the file exists and get the path to the file
     # 2. create a transaction in the transaction manager
+    # import os
+    # print("Current files in storage:", os.listdir())
+    # __import__('os').listdir('sd/img')
     transaction = TM.create_transaction(file_path=string_command, tid=tid, is_tx=True)
     if transaction is None:
         logger.error(f"Unable to create transaction {tid}")
