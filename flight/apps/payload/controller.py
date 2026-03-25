@@ -265,9 +265,9 @@ class PayloadController:
                 cls.attempting_reboot = False
                 cls.time_we_started_booting = 0
                 cls.payload_sw_has_shutdown = False
-                cls.turn_on_jetson_power()
+                cls.turn_on_power()
             elif new_state == PayloadState.POWERING_ON:
-                cls.turn_on_jetson_power()
+                cls.turn_on_power()
             # elif new_state == PayloadState.SHUTTING_DOWN:
                 # cls.time_we_sent_shutdown = TPM.monotonic()
             elif new_state == PayloadState.OFF:
@@ -904,7 +904,7 @@ class PayloadController:
         return FileTransfer.in_progress
 
     @classmethod
-    def turn_on_jetson_power(cls):
+    def turn_on_power(cls):
         # This should enable the power line
         # If the function is called again and the power line is already on, it SHOULD do nothing
         # This will be called multiple times in a row
@@ -918,7 +918,7 @@ class PayloadController:
             return False
 
     @classmethod
-    def turn_off_jetson_power(cls):
+    def turn_off_power(cls):
         # This is an expensive and drastic operation on the HW so must be limited to strict necessity
         # Preferable after a shutdown command
         logger.debug("[PAYLOAD] Turning off Jetson power...")
