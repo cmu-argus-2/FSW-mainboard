@@ -118,8 +118,6 @@ class PayloadController:
 
     # Telemetry variables
     payload_tm_data_format = "QQQQ" + 14 * "B" + "H" + 2 * "B" + 3 * "H"
-    logger.info(f"[PAYLOAD] - Initializing telemetry variables {payload_tm_data_format}")
-    logger.info(f"[PAYLOAD] - len {len(payload_tm_data_format)}")
     log_data = [0] * len(payload_tm_data_format)
     
     _prev_tm_time = TPM.monotonic()

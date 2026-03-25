@@ -42,6 +42,7 @@ class DownloadManager:
         self.current_batch_offset = 0
         self.batch_retry_count = 0
         self.current_batch_received_any = False
+        self.current_batch_received_count = 0
         self.state = "IDLE"              # IDLE, ACTIVE, COMPLETE, ERROR
         
     def add_transaction(self, tid, transaction):
@@ -87,6 +88,7 @@ class DownloadManager:
         self.current_batch_offset = 0
         self.batch_retry_count = 0
         self.current_batch_received_any = False
+        self.current_batch_received_count = 0
         self.state = "ACTIVE"
         logger.info(
             f"[DOWNLOAD_MGR] Starting download for tid={self.current_tid}, total_packets={self.current_transaction.number_of_packets}"
@@ -108,6 +110,7 @@ class DownloadManager:
         batch_end = self.current_batch_offset + self.BATCH_SIZE
         if self.current_batch_offset <= fragment.seq_number < batch_end:
             self.current_batch_received_any = True
+            self.current_batch_received_count += 1
         else:
             logger.warning(f"[DOWNLOAD_MGR] Fragment seq_number={fragment.seq_number} is outside the current batch window.")
     
@@ -154,8 +157,14 @@ class DownloadManager:
         # Listen for packets in this batch window
         logger.info("Entering listen mode")
         start_listen_time = TPM.time()
+        target_batch_count = self._calculate_batch_width()
         while TPM.time() - start_listen_time < self.LISTEN_TIMEOUT:
             uart_reader_callback(max_packet_size=609)
+            if self.current_batch_received_count >= target_batch_count:
+                logger.info(
+                    f"[DOWNLOAD_MGR] Received {self.current_batch_received_count} fragments for tid={self.current_tid}, seq_offset={self.current_batch_offset}. Ending listen early."
+                )
+                break
 
         if not self.current_batch_received_any:
             logger.info(
@@ -222,6 +231,7 @@ class DownloadManager:
         self.current_batch_offset += self.BATCH_SIZE
         self.batch_retry_count = 0
         self.current_batch_received_any = False
+        self.current_batch_received_count = 0
         
         if self.is_file_complete():
             logger.info(f"[DOWNLOAD_MGR] File complete for tid={self.current_tid}")
@@ -317,5 +327,6 @@ class DownloadManager:
         self.current_batch_offset = 0
         self.batch_retry_count = 0
         self.current_batch_received_any = False
+        self.current_batch_received_count = 0
         self.state = "IDLE"
         logger.info("[DOWNLOAD_MGR] Download manager reset")
