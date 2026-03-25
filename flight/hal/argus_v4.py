@@ -284,6 +284,7 @@ class ArgusV4Components:
     JETSON_UART = ArgusV4Interfaces.JETSON_UART
     JETSON_ENABLE = digitalio.DigitalInOut(board.JETSON_EN)
     JETSON_ENABLE.direction = digitalio.Direction.OUTPUT
+    JETSON_ENABLE.value = True
 
     ########
     # MISC #

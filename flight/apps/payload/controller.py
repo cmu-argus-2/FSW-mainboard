@@ -905,6 +905,8 @@ class PayloadController:
 
         try:
             en_pin.value = True
+            # cls._switch_to_state(PayloadState.POWERING_ON)
+
             return True
         except Exception as e:
             logger.error(f"[PAYLOAD] Failed to enable payload power: {e}")
@@ -921,8 +923,32 @@ class PayloadController:
             return False
 
         try:
+            #Perform graceful shutdown
+            if DH.data_process_exists("payload_requests"):
+                DH.log_data("payload_requests", [ExternalRequest.TURN_OFF])
+            #TODO finalize
             en_pin.value = False
             return True
         except Exception as e:
             logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
             return False
+
+    @classmethod
+    def test_shutdown(cls):
+        logger.debug("[PAYLOAD] TEST: Simulating shutdown only by sending shutdown command without cutting power")
+        logger.info("Executing Shutdown test: sending shutdown command to payload")
+        if DH.data_process_exists("payload_requests"):
+            DH.log_data("payload_requests", [ExternalRequest.TURN_OFF])
+            return 1
+
+        # Graceful shutdown requires the payload task state machine.
+        logger.error("Shutdown test failed")
+        return 0
+
+    @classmethod
+    def test_turn_on(cls):
+        logger.debug("[PAYLOAD] TEST: Simulating turn on by directly switching to READY state without powering on or going through boot sequence")
+        cls._switch_to_state(PayloadState.READY)
+        logger.info("[PAYLOAD] TEST: Payload state forced to READY for testing purposes (power is not actually on)")
+        return True
+    

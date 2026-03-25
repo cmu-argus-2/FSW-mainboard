@@ -73,11 +73,11 @@ def TURN_OFF_PAYLOAD():
     logger.info("Executing TURN_OFF_PAYLOAD")
     if DH.data_process_exists("payload_requests"):
         DH.log_data("payload_requests", [ExternalRequest.TURN_OFF])
-        return [1]
+        return 1
 
     # Graceful shutdown requires the payload task state machine.
     logger.error("TURN_OFF_PAYLOAD failed: payload request queue unavailable")
-    return [0]
+    return 0
 
 
 def TURN_ON_PAYLOAD():
@@ -85,10 +85,10 @@ def TURN_ON_PAYLOAD():
     logger.info("Executing TURN_ON_PAYLOAD")
     if DH.data_process_exists("payload_requests"):
         DH.log_data("payload_requests", [ExternalRequest.TURN_ON])
-        return [1]
+        return 1
 
     logger.error("TURN_ON_PAYLOAD failed: payload request queue unavailable")
-    return [0]
+    return 0
 
 
 def SCHEDULE_OD_EXPERIMENT():
