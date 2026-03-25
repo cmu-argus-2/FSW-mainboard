@@ -308,7 +308,31 @@ def INIT_TRANS(tid, number_of_packets):
     # return a structured "not implemented" response to avoid breaking downstream handling
     return ["not_implemented"]
 
-def EXPERIMENT(ts, camera_bit_flag, level_of_processing, width, height):
+def EXPERIMENT(
+    ts,
+    camera_bit_flag,
+    level_of_processing,
+    width,
+    height,
+    camera_defaults_selector=-1,
+    fps=0,
+    wbmode=0,
+    aelock=0,
+    awblock=0,
+    exposuretimerange_low=0,
+    exposuretimerange_high=0,
+    gainrange_low=0.0,
+    gainrange_high=0.0,
+    ispdigitalgainrange_low=0.0,
+    ispdigitalgainrange_high=0.0,
+    ee_mode=0,
+    ee_strength=0.0,
+    aeantibanding=0,
+    exposurecompensation=0.0,
+    tnr_mode=0,
+    tnr_strength=0.0,
+    saturation=0.0,
+):
     """
     Command that will be called by the ground station to start an experiment
     ts                    -> the time at which the command should be ran (0 is to run now)
@@ -319,7 +343,31 @@ def EXPERIMENT(ts, camera_bit_flag, level_of_processing, width, height):
     from apps.payload.controller import PayloadController as PC 
     
     logger.info(f"[PAYLOAD] - Experiment command received to run at {ts}")
-    result = PC.add_command(ts, camera_bit_flag, level_of_processing, width, height)
+    result = PC.add_command(
+        ts,
+        camera_bit_flag,
+        level_of_processing,
+        width,
+        height,
+        camera_defaults_selector,
+        fps,
+        wbmode,
+        aelock,
+        awblock,
+        exposuretimerange_low,
+        exposuretimerange_high,
+        gainrange_low,
+        gainrange_high,
+        ispdigitalgainrange_low,
+        ispdigitalgainrange_high,
+        ee_mode,
+        ee_strength,
+        aeantibanding,
+        exposurecompensation,
+        tnr_mode,
+        tnr_strength,
+        saturation,
+    )
     if not result:
         logger.error(f"[PAYLOAD] - Failed to add experiment command for timestamp {ts}")
     return result

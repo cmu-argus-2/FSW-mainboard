@@ -177,12 +177,43 @@ class PayloadController:
             cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = previous_state
             
     @classmethod
-    def add_command(cls, ts, camera_bit_flag, level_of_processing, width, height):
+    def add_command(
+        cls,
+        ts,
+        camera_bit_flag,
+        level_of_processing,
+        width,
+        height,
+        camera_defaults_selector=-1,
+        fps=0,
+        wbmode=0,
+        aelock=0,
+        awblock=0,
+        exposuretimerange_low=0,
+        exposuretimerange_high=0,
+        gainrange_low=0.0,
+        gainrange_high=0.0,
+        ispdigitalgainrange_low=0.0,
+        ispdigitalgainrange_high=0.0,
+        ee_mode=0,
+        ee_strength=0.0,
+        aeantibanding=0,
+        exposurecompensation=0.0,
+        tnr_mode=0,
+        tnr_strength=0.0,
+        saturation=0.0,
+    ):
         """
         Given the information it will create the command and add it to the list
         it should add ordered by timestamp
         the command_list will be a list of lists. The inside list will contain the necessary info
-            ts, camera_bit_flag, level_of_processing, width, height 
+            ts, camera_bit_flag, level_of_processing, width, height,
+            camera_defaults_selector, fps, wbmode, aelock, awblock,
+            exposuretimerange_low, exposuretimerange_high,
+            gainrange_low, gainrange_high,
+            ispdigitalgainrange_low, ispdigitalgainrange_high,
+            ee_mode, ee_strength, aeantibanding,
+            exposurecompensation, tnr_mode, tnr_strength, saturation
         """
         
         # check the limits on the camera bit flag
@@ -198,13 +229,39 @@ class PayloadController:
 
         # need to add the data in the corerct spot in the list
         # it has to be ordered by timestamp
-        cls.command_list.append((ts, camera_bit_flag, level_of_processing, width, height))
+        cls.command_list.append(
+            (
+                ts,
+                camera_bit_flag,
+                level_of_processing,
+                width,
+                height,
+                camera_defaults_selector,
+                fps,
+                wbmode,
+                aelock,
+                awblock,
+                exposuretimerange_low,
+                exposuretimerange_high,
+                gainrange_low,
+                gainrange_high,
+                ispdigitalgainrange_low,
+                ispdigitalgainrange_high,
+                ee_mode,
+                ee_strength,
+                aeantibanding,
+                exposurecompensation,
+                tnr_mode,
+                tnr_strength,
+                saturation,
+            )
+        )
         cls.command_list.sort(key=lambda x: x[0])  # Sort by timestamp
         
         cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = ts if ts > 0 else TPM.time()
         logger.warning(f"[PAYLOAD] - Next command time: {cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME]}")
         
-        logger.info(f"[PAYLOAD] - Command added: {ts}, {camera_bit_flag}, {level_of_processing}, {width}, {height}")
+        logger.info(f"[PAYLOAD] - Command added: {cls.command_list[-1]}")
         
         return True
 
