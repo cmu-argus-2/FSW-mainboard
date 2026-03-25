@@ -27,6 +27,7 @@ from core.dh_constants import PAYLOAD_IDX
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 from micropython import const
+from hal.argus_v4 import ArgusV4Components
 
 _PING_RESP_VALUE = const(0x60)  # DO NOT CHANGE THIS VALUE
 
@@ -250,7 +251,6 @@ class PayloadController:
 
         elif cls.current_request == ExternalRequest.FORCE_POWER_OFF:
             # This is a last resort
-            cls.turn_off_power()
             cls._switch_to_state(PayloadState.OFF)
             cls._clear_request()
 
@@ -265,6 +265,17 @@ class PayloadController:
                 cls.attempting_reboot = False
                 cls.time_we_started_booting = 0
                 cls.payload_sw_has_shutdown = False
+                cls.turn_on_jetson_power()
+            elif new_state == PayloadState.POWERING_ON:
+                cls.turn_on_jetson_power()
+            # elif new_state == PayloadState.SHUTTING_DOWN:
+                # cls.time_we_sent_shutdown = TPM.monotonic()
+            elif new_state == PayloadState.OFF:
+                cls.turn_off_power()
+                # If we were attempting a reboot, start the boot sequence again after powering off
+                if cls.attempting_reboot:
+                    logger.info("Attempting reboot: starting boot sequence again.")
+                    cls._switch_to_state(PayloadState.POWERING_ON)
 
     @classmethod
     def run_control_logic(cls):
@@ -283,7 +294,7 @@ class PayloadController:
                 # We have timed out while booting
                 # Log error and reset the state
                 logger.error("Timeout booting. Resetting state.")
-                cls._switch_to_staate(PayloadState.POWERING_ON)
+                cls._switch_to_state(PayloadState.POWERING_ON)
 
         elif cls.state == PayloadState.POWERING_ON:
             # Wait for the Payload to be ready
@@ -893,30 +904,24 @@ class PayloadController:
         return FileTransfer.in_progress
 
     @classmethod
-    def turn_on_power(cls):
+    def turn_on_jetson_power(cls):
         # This should enable the power line
         # If the function is called again and the power line is already on, it SHOULD do nothing
         # This will be called multiple times in a row
-        logger.debug("[PAYLOAD] Turning on power...")
-        en_pin = getattr(SATELLITE, "JETSON_ENABLE", None)
-        if en_pin is None:
-            logger.error("[PAYLOAD] Power enable pin unavailable (JETSON_ENABLE)")
-            return False
-
+        logger.debug("[PAYLOAD] Turning on Jetson power...")
         try:
-            en_pin.value = True
-            # cls._switch_to_state(PayloadState.POWERING_ON)
-
+            ArgusV4Components.JETSON_ENABLE.value = True
+            logger.info("[PAYLOAD] Jetson power enabled successfully.")
             return True
         except Exception as e:
             logger.error(f"[PAYLOAD] Failed to enable payload power: {e}")
             return False
 
     @classmethod
-    def turn_off_power(cls):
+    def turn_off_jetson_power(cls):
         # This is an expensive and drastic operation on the HW so must be limited to strict necessity
         # Preferable after a shutdown command
-        logger.debug("[PAYLOAD] Turning off power...")
+        logger.debug("[PAYLOAD] Turning off Jetson power...")
         en_pin = getattr(SATELLITE, "JETSON_ENABLE", None)
         if en_pin is None:
             logger.error("[PAYLOAD] Power enable pin unavailable (JETSON_ENABLE)")
@@ -924,18 +929,22 @@ class PayloadController:
 
         try:
             #Perform graceful shutdown
-            if DH.data_process_exists("payload_requests"):
-                DH.log_data("payload_requests", [ExternalRequest.TURN_OFF])
-            #TODO finalize
-            en_pin.value = False
+            if (cls.shutdown_jetson_process()):
+                logger.info("[PAYLOAD] Shutdown command sent successfully, waiting for payload to shutdown before cutting power")
+            ArgusV4Components.JETSON_ENABLE.value = False
             return True
         except Exception as e:
             logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
             return False
 
     @classmethod
-    def test_shutdown(cls):
-        logger.debug("[PAYLOAD] TEST: Simulating shutdown only by sending shutdown command without cutting power")
+    def turn_on_jetson_process(cls):
+        logger.debug("[PAYLOAD] Turning on Jetson - switching to ready state")
+        return True 
+    
+    @classmethod
+    def shutdown_jetson_process(cls):
+        logger.debug("[PAYLOAD] Shutdown only by sending shutdown command without cutting power")
         logger.info("Executing Shutdown test: sending shutdown command to payload")
         if DH.data_process_exists("payload_requests"):
             DH.log_data("payload_requests", [ExternalRequest.TURN_OFF])
@@ -944,11 +953,3 @@ class PayloadController:
         # Graceful shutdown requires the payload task state machine.
         logger.error("Shutdown test failed")
         return 0
-
-    @classmethod
-    def test_turn_on(cls):
-        logger.debug("[PAYLOAD] TEST: Simulating turn on by directly switching to READY state without powering on or going through boot sequence")
-        cls._switch_to_state(PayloadState.READY)
-        logger.info("[PAYLOAD] TEST: Payload state forced to READY for testing purposes (power is not actually on)")
-        return True
-    

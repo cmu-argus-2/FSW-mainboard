@@ -61,7 +61,7 @@ class Task(TemplateTask):
 
         # ===== TESTING ONLY: Force payload to READY state =====
         # Comment this block out for real flight operations
-        # """
+        """
         if PC.state == PayloadState.OFF:
             if not PC.interface_injected():
                 PC.load_communication_interface()
@@ -71,10 +71,10 @@ class Task(TemplateTask):
             if not PC.communication_interface.is_connected():
                 PC.initialize()  # This calls connect() on the UART interface
                 self.log_info("TEST MODE: Initialized UART connection")
-            # if (PC.turn_on_power()):
+            
             PC._switch_to_state(PayloadState.READY)  # Skip power-on sequence
             self.log_info("TEST MODE: Forced payload to READY state")
-        # """
+        """
         # ===== END TESTING BLOCK =====
 
         # Check if any external requests were received irrespective of state
@@ -85,13 +85,8 @@ class Task(TemplateTask):
 
         # ===== TESTING ONLY: Skip state machine, only handle READY state =====
         # Comment out this block and uncomment the full state machine below for real flight
-        # """
+        """
         if PC.state == PayloadState.READY:
-            # PC.test_shutdown()
-
-            # PC.
-            # PC.test_turn_on()
-
             if DH.file_process_exists("img"):
                 # Check how many complete image files we have
                 complete_image_count = DH.get_file_count("img")
@@ -105,13 +100,13 @@ class Task(TemplateTask):
         # Run the control logic (handles pings, image transfers, etc.)
         PC.run_control_logic()
         self.log_info(f"Payload state: {map_state(PC.state)}")
-        # """
+        """
         # ===== END TESTING BLOCK =====
 
         # ===== FULL STATE MACHINE (commented out for testing) =====
         # Uncomment this entire section for real flight operations
         # Replace the testing block above with this
-        """
+        # """
         if SM.current_state != STATES.EXPERIMENT:
 
             if not PC.interface_injected():
@@ -156,7 +151,7 @@ class Task(TemplateTask):
                             f"({complete_image_count}/{_NUM_IMG_TO_MAINTAIN_READY}), requesting new image",
                         )
                         PC.add_request(ExternalRequest.REQUEST_IMAGE)
-        """
+        # """
         # DO NOT EXPOSE THE LOGIC IN THE TASK and KEEP EVERYTHING INTERNAL
         PC.run_control_logic()
         self.log_info(f"Payload state: {map_state(PC.state)}")

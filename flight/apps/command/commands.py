@@ -33,6 +33,7 @@ from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
+from hal.argus_v4 import ArgusV4Components
 
 FILE_PKTSIZE = 240
 
@@ -73,6 +74,7 @@ def TURN_OFF_PAYLOAD():
     logger.info("Executing TURN_OFF_PAYLOAD")
     if DH.data_process_exists("payload_requests"):
         DH.log_data("payload_requests", [ExternalRequest.TURN_OFF])
+        ArgusV4Components.JETSON_ENABLE.value = False
         return 1
 
     # Graceful shutdown requires the payload task state machine.
@@ -85,6 +87,7 @@ def TURN_ON_PAYLOAD():
     logger.info("Executing TURN_ON_PAYLOAD")
     if DH.data_process_exists("payload_requests"):
         DH.log_data("payload_requests", [ExternalRequest.TURN_ON])
+        ArgusV4Components.JETSON_ENABLE.value = True
         return 1
 
     logger.error("TURN_ON_PAYLOAD failed: payload request queue unavailable")
