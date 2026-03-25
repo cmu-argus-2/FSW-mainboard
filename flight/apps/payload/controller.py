@@ -898,11 +898,31 @@ class PayloadController:
         # If the function is called again and the power line is already on, it SHOULD do nothing
         # This will be called multiple times in a row
         logger.debug("[PAYLOAD] Turning on power...")
-        pass
+        en_pin = getattr(SATELLITE, "JETSON_ENABLE", None)
+        if en_pin is None:
+            logger.error("[PAYLOAD] Power enable pin unavailable (JETSON_ENABLE)")
+            return False
+
+        try:
+            en_pin.value = True
+            return True
+        except Exception as e:
+            logger.error(f"[PAYLOAD] Failed to enable payload power: {e}")
+            return False
 
     @classmethod
     def turn_off_power(cls):
         # This is an expensive and drastic operation on the HW so must be limited to strict necessity
         # Preferable after a shutdown command
         logger.debug("[PAYLOAD] Turning off power...")
-        pass
+        en_pin = getattr(SATELLITE, "JETSON_ENABLE", None)
+        if en_pin is None:
+            logger.error("[PAYLOAD] Power enable pin unavailable (JETSON_ENABLE)")
+            return False
+
+        try:
+            en_pin.value = False
+            return True
+        except Exception as e:
+            logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
+            return False
