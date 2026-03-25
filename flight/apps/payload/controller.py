@@ -25,6 +25,7 @@ from core import DataHandler as DH
 from core import logger
 from core.dh_constants import PAYLOAD_IDX
 from core.time_processor import TimeProcessor as TPM
+from apps.telemetry.splat.splat.telemetry_definition import COMMAND_IDS
 from hal.configuration import SATELLITE
 
 from apps.telemetry.splat.splat.telemetry_codec import Command, pack, unpack, Ack, Fragment, Report
@@ -184,6 +185,7 @@ class PayloadController:
         level_of_processing,
         width,
         height,
+        downscale_factor=2.0,
         camera_defaults_selector=-1,
         fps=0,
         wbmode=0,
@@ -208,6 +210,7 @@ class PayloadController:
         it should add ordered by timestamp
         the command_list will be a list of lists. The inside list will contain the necessary info
             ts, camera_bit_flag, level_of_processing, width, height,
+            downscale_factor,
             camera_defaults_selector, fps, wbmode, aelock, awblock,
             exposuretimerange_low, exposuretimerange_high,
             gainrange_low, gainrange_high,
@@ -236,6 +239,7 @@ class PayloadController:
                 level_of_processing,
                 width,
                 height,
+                downscale_factor,
                 camera_defaults_selector,
                 fps,
                 wbmode,
