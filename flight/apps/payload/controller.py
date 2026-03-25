@@ -458,6 +458,7 @@ class PayloadController:
         cls.log_data[PAYLOAD_IDX.VDD_CPU_GPU_CV] = report.variables["PAYLOAD_TM"]["VDD_CPU_GPU_CV"]
         cls.log_data[PAYLOAD_IDX.VDD_SOC] = report.variables["PAYLOAD_TM"]["VDD_SOC"]
         
+        
     @classmethod
     def process_ack(cls, ack):
         """
@@ -466,7 +467,7 @@ class PayloadController:
         """
         logger.info(f"[PAYLOAD] - Processing ack: {ack}")
         # see if it was a ping ack
-        if ack.cmd_id == 28:
+        if ack.cmd_id == 29:
             # it was a ping command
             if cls.received_ping_ack == True:
                 logger.error("[PAYLOAD] - PING ACK OVERRIDDEN")
@@ -475,7 +476,7 @@ class PayloadController:
             return
             
         # see if it was a experiment ack
-        if ack.cmd_id == 27:
+        if ack.cmd_id == 28:
             # it was a experiment command
             if cls.received_experiment_ack == True:
                 logger.error("[PAYLOAD] - EXPERIMENT ACK OVERRIDDEN")
@@ -483,7 +484,7 @@ class PayloadController:
             return
     
         # see if it was a off ack
-        if ack.cmd_id == 26:
+        if ack.cmd_id == 8:
             # it was a off command
             if cls.received_off_ack == True:
                 logger.error("[PAYLOAD] - OFF ACK OVERRIDDEN")
