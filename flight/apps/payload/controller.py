@@ -463,11 +463,10 @@ class PayloadController:
     def process_ack(cls, ack):
         """
         It will check the ack command id and set the corresponding variable to true
-        TODO - remove hard code command id
         """
         logger.info(f"[PAYLOAD] - Processing ack: {ack}")
         # see if it was a ping ack
-        if ack.cmd_id == 29:
+        if ack.cmd_id == COMMAND_IDS["PING"]:
             # it was a ping command
             if cls.received_ping_ack == True:
                 logger.error("[PAYLOAD] - PING ACK OVERRIDDEN")
@@ -476,7 +475,7 @@ class PayloadController:
             return
             
         # see if it was a experiment ack
-        if ack.cmd_id == 28:
+        if ack.cmd_id == COMMAND_IDS["EXPERIMENT"]:
             # it was a experiment command
             if cls.received_experiment_ack == True:
                 logger.error("[PAYLOAD] - EXPERIMENT ACK OVERRIDDEN")
@@ -484,7 +483,7 @@ class PayloadController:
             return
     
         # see if it was a off ack
-        if ack.cmd_id == 8:
+        if ack.cmd_id == COMMAND_IDS["TURN_OFF_PAYLOAD"]:
             # it was a off command
             if cls.received_off_ack == True:
                 logger.error("[PAYLOAD] - OFF ACK OVERRIDDEN")
