@@ -34,8 +34,21 @@ from core.time_processor import TimeProcessor as TPM
 
 
 FILE_PKTSIZE = 240
+COMMAND_REGISTRY = {}
 
 
+def register_command(name=None):
+    """Decorator to register a command handler in COMMAND_REGISTRY."""
+
+    def decorator(func):
+        command_name = name or func.__name__
+        COMMAND_REGISTRY[command_name] = func
+        return func
+
+    return decorator
+
+
+@register_command()
 def FORCE_REBOOT():
     """Forces a power cycle of the spacecraft."""
     logger.info("Executing FORCE_REBOOT")
@@ -44,6 +57,7 @@ def FORCE_REBOOT():
     return []
 
 
+@register_command()
 def SUM(opA, opB):
     """
     Test command
@@ -53,6 +67,7 @@ def SUM(opA, opB):
     return [opA + opB]
 
 
+@register_command()
 def SWITCH_TO_STATE(target_state_id, time_in_state=None):
     """Forces a switch of the spacecraft to a specific state."""
     logger.info(f"Executing SWITCH_TO_STATE with target_state: {STR_STATES[target_state_id]}, time_in_state: {time_in_state}")
@@ -60,6 +75,7 @@ def SWITCH_TO_STATE(target_state_id, time_in_state=None):
     return []
 
 
+@register_command()
 def UPLINK_TIME_REFERENCE(time_reference):
     """Sends a time reference to the spacecraft to update the time processing module."""
     logger.info(f"Executing UPLINK_TIME_REFERENCE with current_time: {time_reference}")
@@ -67,18 +83,21 @@ def UPLINK_TIME_REFERENCE(time_reference):
     return []
 
 
+@register_command()
 def TURN_OFF_PAYLOAD():
     """Sends a shutdown command to the payload and turns off its power line."""
     logger.info("Executing TURN_OFF_PAYLOAD")
     return []
 
 
+@register_command()
 def SCHEDULE_OD_EXPERIMENT():
     """Schedules an orbit determination experiment at the next available opportunity."""
     logger.info("Executing SCHEDULE_OD_EXPERIMENT")
     return []
 
 
+@register_command()
 def REQUEST_TM_NOMINAL():
     """Requests a nominal snapshot of all subsystems."""
     logger.info("Executing REQUEST_TM_NOMINAL")
@@ -95,6 +114,7 @@ def REQUEST_TM_NOMINAL():
     return [q_stat]  # return the queue status number
 
 
+@register_command()
 def REQUEST_TM_HAL():
     """Requests hardware-focused telemetry, including information on HAL, EPS, and errors."""
     logger.info("Executing REQUEST_TM_HAL")
@@ -108,6 +128,7 @@ def REQUEST_TM_HAL():
     return [q_stat]  # return the queue status number
 
 
+@register_command()
 def REQUEST_TM_STORAGE():
     """Requests full storage status of the mainboard, including details on onboard processes."""
     logger.info("Executing REQUEST_TM_STORAGE")
@@ -121,6 +142,7 @@ def REQUEST_TM_STORAGE():
     return [q_stat]  # return the queue status number
 
 
+@register_command()
 def REQUEST_TM_PAYLOAD():
     """Requests telemetry data from the payload, provided it is on."""
     logger.info("Executing REQUEST_TM_PAYLOAD")
@@ -134,6 +156,7 @@ def REQUEST_TM_PAYLOAD():
     return [q_stat]  # return the queue status number
 
 
+@register_command()
 def REQUEST_FILE_METADATA(file_id, file_time=None):
     """Requests metadata for a specific file from the spacecraft."""
     logger.info(f"Executing REQUEST_FILE_METADATA with file_tag: {file_id} and file_time: {file_time}")
@@ -151,14 +174,17 @@ def REQUEST_FILE_METADATA(file_id, file_time=None):
 
 
 # NOTE: REQUEST_FILE_PKT handled internally in comms
+@register_command()
 def REQUEST_FILE_PKT(file_id, file_time):
     raise NotImplementedError("Handled internally by comms subsystem")
 
 
+@register_command()
 def REQUEST_IMAGE():
     raise NotImplementedError("Not implemented")
 
 
+@register_command()
 def DOWNLINK_ALL(file_id, file_time=None):
     """Downlinks all packets for a specific file from the spacecraft."""
     logger.info(f"Executing DOWNLINK_ALL with file_tag: {file_id} and file_time: {file_time}")
@@ -175,6 +201,7 @@ def DOWNLINK_ALL(file_id, file_time=None):
     return [file_path]
 
 
+@register_command()
 def EVAL_STRING_COMMAND(string_command):
     """
     As of right now this is just for debugging purposes
@@ -192,6 +219,7 @@ def EVAL_STRING_COMMAND(string_command):
         return ["eval_string_command_failed"]
 
 
+@register_command()
 def CREATE_TRANS(tid, string_command):
     logger.info(f"GS requesting the following file {string_command} and tid: {tid}")
 
@@ -215,6 +243,7 @@ def CREATE_TRANS(tid, string_command):
     return [tid, n_packets]
 
 
+@register_command()
 def GENERATE_ALL_PACKETS(tid):
     # 1. search for the transaction id
     transaction = TM.get_transaction(tid)
@@ -233,6 +262,7 @@ def GENERATE_ALL_PACKETS(tid):
     return [len(packet_list)]
 
 
+@register_command()
 def GENERATE_X_PACKETS(tid, x):
     # 1. search for the transaction id
     transaction = TM.get_transaction(tid)
@@ -251,6 +281,7 @@ def GENERATE_X_PACKETS(tid, x):
     return [len(packet_list)]
 
 
+@register_command()
 def GET_SINGLE_PACKET(tid, seq_number):
     # 1. search for the transaction id
     transaction = TM.get_transaction(tid)
@@ -269,6 +300,7 @@ def GET_SINGLE_PACKET(tid, seq_number):
     return [1]
 
 
+@register_command()
 def CONFIRM_LAST_BATCH(tid, bitmap_high, bitmap_low):
     # 1. search for the transaction id
     transaction = TM.get_transaction(tid)
@@ -282,6 +314,7 @@ def CONFIRM_LAST_BATCH(tid, bitmap_high, bitmap_low):
     return [len_missing_fragments]
 
 
+@register_command()
 def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, bitmap_high, bitmap_low):
     # 1. search for the transaction id
     transaction = TM.get_transaction(tid)
@@ -295,6 +328,7 @@ def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, bitmap_high, bitmap_low):
     return [len_missing_fragments]
 
 
+@register_command()
 def TRANS_PAYLOAD(tid, seq_number, payload):
     # [TODO] - implement this command if there is the necessity to uplink files to the satellite
     # no need to implement now, this will only be needed if sending transactions from the gs to sat
@@ -302,11 +336,58 @@ def TRANS_PAYLOAD(tid, seq_number, payload):
     return ["not_implemented"]
 
 
+@register_command()
 def INIT_TRANS(tid, number_of_packets):
     # [TODO] - implement this command if there is the necessity to uplink files to the satellite
     # no need to implement now, this will only be needed if sending transactions from the gs to sat
     # return a structured "not implemented" response to avoid breaking downstream handling
     return ["not_implemented"]
+
+
+@register_command()
+def LIST_DIR(skip_elements, string_command):
+    """
+    Try and list whatever is on the given directory
+    the result will be sent as a string, skip_elements will skip the first x elements
+    """
+
+    import os
+
+    try:
+        file_list = os.listdir(string_command)
+    except Exception as e:
+        return [f"error: {e}"]
+
+    return file_list[skip_elements:]
+
+
+@register_command()
+def DELETE_ALL_FILES():
+    """
+    Simple command that will delete all files
+    it will call datahandler function that will deal with it
+    """
+
+    try:
+        DH.delete_all_files()
+    except Exception as e:
+        return [f"error: {e}"]
+    return ["all files deleted"]
+
+
+@register_command()
+def UPDATE_SD_USAGE():
+    """
+    Calls the DH function to compute the sd card usage and update it on the DH
+    it will also return the current sd_usage
+    """
+
+    try:
+        DH.update_SD_usage()
+        usage = DH.SD_usage()
+    except Exception as e:
+        return [f"error: {e}"]
+    return ["sd usage updated", usage]
 
 def EXPERIMENT(
     ts,
