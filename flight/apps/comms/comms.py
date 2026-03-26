@@ -7,7 +7,6 @@ Authors: Akshat Sahay, Ibrahima S. Sow, Perrin Tong
 """
 
 import microcontroller
-
 from apps.comms.auth import get_auth_key_bytes, verify_authenticated_command
 from apps.comms.modes import COMMS_MODE, COMMS_MODE_STR
 from apps.digipeater import DigipeaterRxQueue

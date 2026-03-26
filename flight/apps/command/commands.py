@@ -21,14 +21,13 @@ Author: Ibrahima S. Sow
 """
 
 import supervisor
-
 from apps.command.constants import file_tags_str
 from apps.command.supervisor import CommandSupervisor
 from apps.comms.comms import SATELLITE_RADIO
-from apps.digipeater import DigipeaterState
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.comms.modes import COMMS_MODE as COMMS_MODE_ID
 from apps.comms.modes import COMMS_MODE_STR
+from apps.digipeater import DigipeaterState
 from apps.telemetry.middleware import Frame as TelemetryFrame
 from apps.telemetry.splat.splat.telemetry_codec import Command
 from apps.telemetry.splat.splat.transport_layer import transaction_manager as TM
