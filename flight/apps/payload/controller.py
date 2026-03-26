@@ -26,6 +26,7 @@ from core import logger
 from core.dh_constants import PAYLOAD_IDX
 from core.time_processor import TimeProcessor as TPM
 from apps.telemetry.splat.splat.telemetry_definition import COMMAND_IDS
+from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from hal.configuration import SATELLITE
 
 from apps.telemetry.splat.splat.telemetry_codec import Command, pack, unpack, Ack, Fragment, Report
@@ -47,7 +48,8 @@ class PayloadState:
     FINISHED = 5
     DOWNLOAD = 6
     OFF = 7
-    FAIL = 8
+    SUCCESS = 8
+    FAIL = 9
 
 
 def map_state(state):
@@ -70,6 +72,8 @@ def map_state(state):
         return PayloadState.DOWNLOAD
     if state == "OFF":
         return PayloadState.OFF
+    if state == "SUCCESS":    # this state will only be reached if the experiment is completed succesfully
+        return PayloadState.SUCCESS  # used to send a message to the groundstation letting it know that the experiment has finished
     if state == "FAIL":
         return PayloadState.FAIL
     raise ValueError(f"Invalid state: {state}")
@@ -171,8 +175,27 @@ class PayloadController:
             logger.info("[PAYLOAD] -  Sending turn off command")
             cls.send_turn_off_command()
 
+        # success state needs to send message to the ground
+        if cls.current_state == PayloadState.SUCCESS:
+            logger.info("[PAYLOAD] -  Switching to SUCCESS state")
+            # lets generate a message to be send to the grounstation to let them know that the experiment has finished
+            # TODO - would be nice to let the gs know how many files the experiment generated
+            success_ack_message = Ack(0, COMMAND_IDS["EXPERIMENT"], f"Experiment succeeded")
+            q_stat = TransmitQueue.push_packet(success_ack_message)
+            if q_stat != QUEUE_STATUS.OK:
+                logger.error("Failed to push finished ack experiment success message to transmit queue")
+
+        # fail state needs to send message to the ground
         if cls.current_state == PayloadState.FAIL:
             logger.info("[PAYLOAD] -  Switching to FAIL state")
+            
+            # lets generate a message to be send to the grounstation to let them know that the experiment has failed
+            # and the stage at which it failed
+            failed_ack_message = Ack(4, COMMAND_IDS["EXPERIMENT"], f"Experiment failed at {previous_state}")
+            q_stat = TransmitQueue.push_packet(failed_ack_message)
+            if q_stat != QUEUE_STATUS.OK:
+                logger.error("Failed to push failed ack experiment failure message to transmit queue")
+            
             cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = previous_state
             
     @classmethod

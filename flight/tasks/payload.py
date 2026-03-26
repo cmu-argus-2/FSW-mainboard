@@ -304,11 +304,23 @@ class Task(TemplateTask):
         if PC.received_off_ack:
             # we have received response from jetson, safe to turn off
             self.log_info("Turn off ack received, cutting power to jetson.")
+            PC.switch_state("FINISHED")
         
         if PC.OFF_TS + PC.OFF_TIMEOUT <= TPM.time():
             self.log_info("Turn off timeout reached, cutting power to jetson.")
             PC.turn_off_power()
-            PC.switch_state("IDLE")
+            PC.switch_state("FAIL")
+            
+    def run_success_state(self):
+        """
+        This state will only be reached when the experiment has been succesfully completed
+        it will just be used to send a message to the groundstation to let them know that
+        the experiment has finished.
+        That will be done in the switch state function. Here we will only move on to idle
+        """
+        
+        self.log_info("Experiment completed successfully. Going to idle")
+        PC.switch_state("IDLE")
     
     def run_fail_state(self):
         """
@@ -340,6 +352,8 @@ class Task(TemplateTask):
         if PC.current_state == 7:
             self.run_off_state()
         if PC.current_state == 8:
+            self.run_success_state()
+        if PC.current_state == 9:
             self.run_fail_state()
 
         if TPM.time() - self._last_state_print_ts >= 5:
