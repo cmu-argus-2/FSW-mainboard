@@ -50,6 +50,7 @@ class CommandID:
     DEBUG_DISPLAY_CAMERA = 0x11
     DEBUG_STOP_DISPLAY = 0x12
     REQUEST_NEXT_FILE_PACKETS = 0x13  # Batch request
+    CAPTURE_AND_INFERENCE = 0x14
 
 
 class ACK:

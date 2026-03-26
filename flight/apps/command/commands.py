@@ -31,6 +31,7 @@ from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
+from apps.payload.controller import PayloadController as PC
 
 FILE_PKTSIZE = 240
 COMMAND_REGISTRY = {}
@@ -82,10 +83,35 @@ def UPLINK_TIME_REFERENCE(time_reference):
     return []
 
 
+# @register_command()
+# def TURN_OFF_PAYLOAD():
+#     """Sends a shutdown command to the payload and turns off its power line."""
+#     logger.info("Executing TURN_OFF_PAYLOAD")
+#     return []
+
 @register_command()
 def TURN_OFF_PAYLOAD():
     """Sends a shutdown command to the payload and turns off its power line."""
     logger.info("Executing TURN_OFF_PAYLOAD")
+    if DH.data_process_exists("payload_requests"):
+        DH.log_data("payload_requests", [ExternalRequest.TURN_OFF])
+        ArgusV4Components.JETSON_ENABLE.value = False
+        return []
+
+    # Graceful shutdown requires the payload task state machine.
+    logger.error("TURN_OFF_PAYLOAD failed: payload request queue unavailable")
+    return []
+
+@register_command()
+def TURN_ON_PAYLOAD():
+    """Powers on the payload by requesting the payload task state machine to turn it on."""
+    logger.info("Executing TURN_ON_PAYLOAD")
+    if DH.data_process_exists("payload_requests"):
+        DH.log_data("payload_requests", [ExternalRequest.TURN_ON])
+        ArgusV4Components.JETSON_ENABLE.value = True
+        return []
+
+    logger.error("TURN_ON_PAYLOAD failed: payload request queue unavailable")
     return []
 
 
@@ -93,6 +119,11 @@ def TURN_OFF_PAYLOAD():
 def SCHEDULE_OD_EXPERIMENT():
     """Schedules an orbit determination experiment at the next available opportunity."""
     logger.info("Executing SCHEDULE_OD_EXPERIMENT")
+    #TODO: For now, using this as capture and inference command for demo
+    # 
+    # if DH.data_process_exists("payload_requests"):
+    PC.request_capture_and_inference() 
+
     return []
 
 

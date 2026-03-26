@@ -33,7 +33,8 @@ class PayloadUART(PayloadCommunicationInterface):
 
     @classmethod
     def send(cls, pckt):
-        cls._uart.write(pckt)
+        if cls._uart is not None:
+            cls._uart.write(pckt)
 
     @classmethod
     def receive(cls):

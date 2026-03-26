@@ -293,6 +293,12 @@ class Encoder:
             cls._send_buffer[i] = arg
         return cls._send_buffer
 
+    @classmethod
+    def encode_capture_and_inference(cls):
+        cls.clear_buffer()
+        cls._send_buffer[0] = CommandID.CAPTURE_AND_INFERENCE
+        cls._bytes_set_last_time = 1
+        return cls._send_buffer[:1]
 
 class Decoder:
 
