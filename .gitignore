@@ -163,6 +163,7 @@ cython_debug/
 #.idea/
 
 sd/
+data/
 assets/*
 
 *.html

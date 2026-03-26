@@ -7,8 +7,21 @@ from core.state_machine import STATES
 
 _TIME_RANGE_LOW = 1577836800
 _TIME_RANGE_HIGH = 1893456000
+PRECONDITION_REGISTRY = {}
 
 
+def register_precondition(name=None):
+    """Decorator to register a precondition function in PRECONDITION_REGISTRY."""
+
+    def decorator(func):
+        precondition_name = name or func.__name__
+        PRECONDITION_REGISTRY[precondition_name] = func
+        return func
+
+    return decorator
+
+
+@register_precondition()
 def valid_inputs(*args) -> bool:
     """
     Precondition for SUM command.
@@ -22,6 +35,7 @@ def valid_inputs(*args) -> bool:
         return False
 
 
+@register_precondition()
 def valid_state(*args) -> bool:
     """
     Precondition for SWITCH_TO_STATE command.
@@ -31,6 +45,7 @@ def valid_state(*args) -> bool:
     return STATES.STARTUP <= target_state_id <= STATES.LOW_POWER
 
 
+@register_precondition()
 def valid_time_format(*args) -> bool:
     """
     Precondition for UPLINK_TIME_REFERENCE / UPLINK_ORBIT_TIME_REFERENCE commands.
@@ -58,6 +73,7 @@ def valid_time_format(*args) -> bool:
         return False
 
 
+@register_precondition()
 def file_id_exists(*args) -> bool:
     """
     Precondition for REQUEST_FILE_METADATA command.
@@ -68,6 +84,7 @@ def file_id_exists(*args) -> bool:
     return (file_id in file_tags_str) and (DataHandler.data_process_exists(file_tags_str[file_id]))
 
 
+@register_precondition()
 def valid_comms_mode(*args) -> bool:
     """Precondition for COMMS_MODE command."""
     mode_id = args[0]

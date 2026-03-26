@@ -1,13 +1,13 @@
 """Dedicated digipeater task.
 
-Consumes RX frames from DigipeaterRxQueue (fed by COMMS), applies relay policy,
-and enqueues selected packets into TransmitQueue.
+Consumes raw RF packets from DigipeaterRxQueue (fed by COMMS),
+validates AX.25 frame format, adds satellite callsign to the
+repeater via-path, and transmits the modified frame directly.
 """
 
 from apps.comms.comms import SATELLITE_RADIO
-from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
-from apps.comms.modes import COMMS_MODE
-from apps.digipeater import DIGIPEATER_QUEUE_STATUS, DigipeaterRxQueue
+from apps.digipeater import DIGIPEATER_QUEUE_STATUS, DigipeaterRxQueue, DigipeaterState
+from apps.digipeater.ax25 import add_digipeater_to_via_path, is_valid_ax25_frame
 from core import TemplateTask
 from core.satellite_config import digipeater_config as CONFIG
 from core.time_processor import TimeProcessor as TPM
@@ -19,20 +19,18 @@ class Task(TemplateTask):
         super().__init__(id)
         self.name = "DIGI"
 
-        # Compile-time feature gate. Runtime activation is COMMS_MODE.DIGIPEAT.
         self.enabled = bool(getattr(CONFIG, "ENABLED", True))
-        self.forward_commands = bool(getattr(CONFIG, "FORWARD_COMMANDS", False))
         self.duplicate_window_s = int(getattr(CONFIG, "DUPLICATE_WINDOW_S", 30))
         self.max_rx_queue = int(getattr(CONFIG, "RX_QUEUE_MAX", 20))
 
         DigipeaterRxQueue.configure(self.max_rx_queue)
 
-        # (fingerprint, expiry_time)
+        # (fingerprint, expiry_time) for duplicate detection
         self._recent = []
 
     @staticmethod
     def _fingerprint(data):
-        # 32-bit FNV-1a hash
+        """32-bit FNV-1a hash for duplicate detection."""
         h = 0x811C9DC5
         for b in data:
             h ^= b
@@ -42,8 +40,8 @@ class Task(TemplateTask):
     def _prune_recent(self, now):
         self._recent = [(fp, exp) for fp, exp in self._recent if exp > now]
 
-    def _seen_recently(self, frame_bytes, now):
-        fp = self._fingerprint(frame_bytes)
+    def _seen_recently(self, packet_bytes, now):
+        fp = self._fingerprint(packet_bytes)
 
         for known_fp, exp in self._recent:
             if known_fp == fp and exp > now:
@@ -52,48 +50,32 @@ class Task(TemplateTask):
         self._recent.append((fp, now + self.duplicate_window_s))
         return False
 
-    def _should_forward(self, frame):
-        raw_packet = frame.get("raw_packet")
-        if not raw_packet or len(raw_packet) < 2:
-            return False
-
-        source_header = frame.get("source_header")
-        if source_header == SATELLITE_RADIO.ARGUS_CS:
-            # Do not relay our own packets if they are overheard.
-            return False
-
-        if frame.get("is_command", False) and not self.forward_commands:
-            return False
-
-        return True
-
-    def _queue_for_transmit(self, frame):
-        raw_packet = frame["raw_packet"]
-        relay_payload = raw_packet[1:]  # transmit_message() prepends this SAT's source header.
-
-        status = TransmitQueue.push_packet(relay_payload)
-        if status != QUEUE_STATUS.OK:
-            self.log_warning(f"Digipeater TX queue push failed: {status}")
-
     async def main_task(self):
         now = TPM.time()
         self._prune_recent(now)
-        mode_active = SATELLITE_RADIO.get_comms_mode() == COMMS_MODE.DIGIPEAT
 
-        while DigipeaterRxQueue.frame_available():
-            frame, status = DigipeaterRxQueue.pop_frame()
-            if status != DIGIPEATER_QUEUE_STATUS.OK or frame is None:
+        while DigipeaterRxQueue.packet_available():
+            raw_packet, status = DigipeaterRxQueue.pop_packet()
+            if status != DIGIPEATER_QUEUE_STATUS.OK or raw_packet is None:
                 return
 
-            # Drain queue even when disabled, to avoid stale buildup.
-            if (not self.enabled) or (not mode_active):
+            # Drain queue even when inactive to prevent stale buildup
+            if not self.enabled or not DigipeaterState.is_active():
                 continue
 
-            if not self._should_forward(frame):
+            # Validate AX.25 frame format (filters out non-AX.25 packets like SPLAT commands)
+            if not is_valid_ax25_frame(raw_packet):
                 continue
 
-            raw_packet = frame["raw_packet"]
             if self._seen_recently(raw_packet, now):
                 continue
 
-            self._queue_for_transmit(frame)
+            # Add satellite callsign to the repeater via-path
+            modified_packet = add_digipeater_to_via_path(raw_packet, SATELLITE_RADIO.SC_CALLSIGN)
+            if modified_packet is None:
+                self.log_warning("Failed to modify AX.25 via-path, dropping packet")
+                continue
+
+            # Transmit directly (not via TransmitQueue, which applies SPLAT packing)
+            if not SATELLITE_RADIO.transmit_message(modified_packet):
+                self.log_warning("Digipeater TX failed (RF_STOP or radio unavailable)")

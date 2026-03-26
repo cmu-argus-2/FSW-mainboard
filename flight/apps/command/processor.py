@@ -20,67 +20,19 @@ See documentation for a full description of each commands.
 Author: Ibrahima S. Sow
 """
 
-from apps.command.commands import (
-    COMMS_MODE,
-    DOWNLINK_ALL,
-    EVAL_STRING_COMMAND,
-    FORCE_REBOOT,
-    RF_RESUME,
-    RF_STOP,
-    REQUEST_FILE_METADATA,
-    REQUEST_FILE_PKT,
-    REQUEST_IMAGE,
-    REQUEST_TM_HAL,
-    REQUEST_TM_NOMINAL,
-    REQUEST_TM_PAYLOAD,
-    REQUEST_TM_STORAGE,
-    SCHEDULE_OD_EXPERIMENT,
-    SUM,
-    SWITCH_TO_STATE,
-    TURN_OFF_PAYLOAD,
-    UPLINK_TIME_REFERENCE,
-)
-from apps.command.preconditions import file_id_exists, valid_comms_mode, valid_inputs, valid_state, valid_time_format
+from apps.command import commands as command_handlers
+from apps.command import preconditions as precondition_handlers
 from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import TransmitQueue
 from apps.comms.modes import COMMS_MODE as COMMS_MODE_ID
-from apps.telemetry.splat.splat.telemetry_codec import Ack, pack
+from apps.telemetry.splat.splat.telemetry_codec import Ack
 from apps.telemetry.splat.splat.telemetry_definition import COMMAND_IDS
 from core import logger
 from micropython import const
 
-# --- DISPATCH TABLES ---
-# These dictionaries map the string names of functions to the actual function objects.
-# avoid using the eval function to execute commands
-
-COMMAND_DISPATCH = {
-    "COMMS_MODE": COMMS_MODE,
-    "DOWNLINK_ALL": DOWNLINK_ALL,
-    "EVAL_STRING_COMMAND": EVAL_STRING_COMMAND,
-    "FORCE_REBOOT": FORCE_REBOOT,
-    "RF_RESUME": RF_RESUME,
-    "RF_STOP": RF_STOP,
-    "REQUEST_FILE_METADATA": REQUEST_FILE_METADATA,
-    "REQUEST_FILE_PKT": REQUEST_FILE_PKT,
-    "REQUEST_IMAGE": REQUEST_IMAGE,
-    "REQUEST_TM_HAL": REQUEST_TM_HAL,
-    "REQUEST_TM_NOMINAL": REQUEST_TM_NOMINAL,
-    "REQUEST_TM_PAYLOAD": REQUEST_TM_PAYLOAD,
-    "REQUEST_TM_STORAGE": REQUEST_TM_STORAGE,
-    "SCHEDULE_OD_EXPERIMENT": SCHEDULE_OD_EXPERIMENT,
-    "SUM": SUM,
-    "SWITCH_TO_STATE": SWITCH_TO_STATE,
-    "TURN_OFF_PAYLOAD": TURN_OFF_PAYLOAD,
-    "UPLINK_TIME_REFERENCE": UPLINK_TIME_REFERENCE,
-}
-
-PRECONDITION_DISPATCH = {
-    "file_id_exists": file_id_exists,
-    "valid_comms_mode": valid_comms_mode,
-    "valid_inputs": valid_inputs,
-    "valid_state": valid_state,
-    "valid_time_format": valid_time_format,
-}
+# Dispatch dictionaries are populated by decorators at import time.
+COMMAND_DISPATCH = command_handlers.COMMAND_REGISTRY
+PRECONDITION_DISPATCH = precondition_handlers.PRECONDITION_REGISTRY
 
 
 class CommandProcessingStatus:
@@ -98,8 +50,7 @@ def process_command(command):
     satellite_func_name = command.satellite_func
     argument_list = command.get_arguments_list()
 
-    logger.info(
-        f"Processing command: {satellite_func_name} with arguments: {argument_list}")
+    logger.info(f"Processing command: {satellite_func_name} with arguments: {argument_list}")
     logger.info(f"and precondition: {precondition_name}")
 
     # 1. Verify Precondition
@@ -151,11 +102,7 @@ def process_command(command):
 
 
 def handle_command_execution_status(status, response_args):
-    # If the command execution was successful, send a success response to Comms via Response Queue
-    # If the command execution failed, send an error response with the error code to Comms via Response Queue
-
-    # add ack response to transmit queue for comms to pick up and send to ground station
-    # this is not the best place to do this, not sure where the best place to do this is
+    """Push an ACK/NACK to the transmit queue, unless RF_STOP suppresses it."""
     command_id = response_args[0] if response_args else None
     in_rf_stop = SATELLITE_RADIO.get_comms_mode() == COMMS_MODE_ID.RF_STOP
     rf_resume_id = COMMAND_IDS["RF_RESUME"]
@@ -164,14 +111,11 @@ def handle_command_execution_status(status, response_args):
         logger.warning("RF_STOP active: suppressing command ACK")
     else:
         ack = Ack(status, response_args)
-        packed_ack = pack(ack)
-        TransmitQueue.push_packet(packed_ack)
-        logger.info(f"Added ack packet to transmit queue: {packed_ack}")
+        TransmitQueue.push_packet(ack)
+        logger.info(f"Added ack obj to transmit queue: {ack}")
 
     if status == CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS:
         logger.info("Command execution successful")
 
-    else:  # All other cases are errors
-        # TODO build more detailed error response - Error messages
+    else:
         logger.info(f"Command execution not successful due to error: {status}")
-        pass

@@ -6,8 +6,11 @@ and acknowledgement RX.
 Authors: Akshat Sahay, Ibrahima S. Sow, Perrin Tong
 """
 
+import microcontroller
+
 from apps.comms.auth import get_auth_key_bytes, verify_authenticated_command
 from apps.comms.modes import COMMS_MODE, COMMS_MODE_STR
+from apps.digipeater import DigipeaterRxQueue
 from apps.telemetry.splat.splat.telemetry_codec import unpack
 from apps.telemetry.splat.splat.telemetry_helper import format_bytes
 from core import logger
@@ -18,13 +21,18 @@ from micropython import const
 # Internal error definitions from driver
 _ERR_NONE = const(0)
 _ERR_CRC_MISMATCH = const(-7)
-_RF_STOP_LATCH_PATH = "/sd/.rf_stop_latch"
+
+# NVM byte 17 for RF_STOP latch (bytes 0-16 are allocated by HAL)
+_RF_STOP_NVM_BYTE = const(17)
+_RF_STOP_MAGIC = const(0xA5)  # Distinguishes from uninitialized NVM (0xFF)
 
 
 class SATELLITE_RADIO:
 
     ARGUS_CS = CONFIG.ARGUS_ID
     HB_PERIOD = CONFIG.HB_PERIOD
+    SC_CALLSIGN = CONFIG.SC_CALLSIGN
+    GS_CALLSIGN = CONFIG.GS_CALLSIGN
 
     # Init TM frame for preallocating memory
     tm_frame = bytearray(248)
@@ -33,7 +41,6 @@ class SATELLITE_RADIO:
 
     auth_enabled = bool(getattr(CONFIG, "AUTH_ENABLED", False))
     auth_key = get_auth_key_bytes(getattr(CONFIG, "AUTH_KEY_HEX", ""))
-    rx_auth_status = "not_checked"
 
     # counters to help determine comms health and performance
     rx_packet_count = 0  # this are just the valid packets
@@ -45,8 +52,13 @@ class SATELLITE_RADIO:
 
     tx_packet_count = 0
     tx_failed_count = 0  # this is because the radio was not available
+
+    # RF_STOP / COMMS mode state
     comms_mode = COMMS_MODE.STANDARD
     rf_stop = False
+
+    # Last raw packet received (used by digipeater for relay)
+    last_raw_packet = None
 
     """
         Name: set_rx_mode
@@ -72,10 +84,6 @@ class SATELLITE_RADIO:
         return cls.rx_message_rssi
 
     @classmethod
-    def get_auth_status(cls):
-        return cls.rx_auth_status
-
-    @classmethod
     def get_comms_mode(cls):
         return cls.comms_mode
 
@@ -94,53 +102,27 @@ class SATELLITE_RADIO:
 
     @classmethod
     def _persist_rf_stop_latch(cls, enabled):
-        """Persist RF_STOP latch across reboot using SD-backed state."""
+        """Persist RF_STOP latch across reboot using NVM flash."""
         try:
-            if enabled:
-                with open(_RF_STOP_LATCH_PATH, "w") as f:
-                    f.write("1")
-            else:
-                import os
-
-                os.remove(_RF_STOP_LATCH_PATH)
-        except OSError:
-            # Missing file when clearing, or SD not yet ready; both are non-fatal.
-            pass
+            microcontroller.nvm[_RF_STOP_NVM_BYTE] = _RF_STOP_MAGIC if enabled else 0x00
         except Exception as e:
-            logger.warning(f"[COMMS] Failed to persist RF_STOP latch: {e}")
+            logger.warning(f"[COMMS] Failed to persist RF_STOP latch to NVM: {e}")
 
     @classmethod
     def restore_comms_mode_from_persistent_state(cls):
         """Restore RF_STOP latch (if present) after boot."""
         try:
-            with open(_RF_STOP_LATCH_PATH, "r") as f:
-                latched = f.read(1) == "1"
-        except OSError:
-            latched = False
-        except Exception as e:
-            logger.warning(f"[COMMS] Failed to restore RF_STOP latch: {e}")
+            latched = microcontroller.nvm[_RF_STOP_NVM_BYTE] == _RF_STOP_MAGIC
+        except Exception:
             latched = False
 
         if latched:
             cls.comms_mode = COMMS_MODE.RF_STOP
             cls.rf_stop = True
-            logger.warning("[COMMS] Restored RF_STOP mode from persistent latch")
+            logger.warning("[COMMS] Restored RF_STOP mode from NVM latch")
         else:
             cls.comms_mode = COMMS_MODE.STANDARD
             cls.rf_stop = False
-
-    """
-        Name: set_tx_ack
-        Description: Set internal TX ACK for GS ACKs
-    """
-
-    @classmethod
-    def set_tx_message(cls, packet):
-        # used for now to remain compatible with the old code and support the new transmit queue
-        if type(packet) is not bytes:
-            logger.error("[COMMS ERROR] TX packet must be of type bytes")
-            return
-        cls.tx_message = packet
 
     """
         Name: data_available
@@ -155,106 +137,68 @@ class SATELLITE_RADIO:
             logger.error("[COMMS ERROR] RADIO no longer active on SAT")
             return False
 
-    """
-        Name: receive_message
-        Description: Receive and unpack message from GS
-    """
-
     @classmethod
-    def receive_rx_frame(cls):
-        # Get packet from radio over SPI
-        # Assumes packet is in FIFO buffer
+    def receive_message(cls):
+        """Receive and decode a command from the ground station.
 
+        Raw bytes are pushed to the digipeater queue before any command-layer
+        processing so that the digipeater task can independently validate and
+        relay AX.25 frames.
+
+        Returns the decoded command object, or None.
+        """
         packet = None
         err = -1  # _ERR_NONE is 0
-        cls.rx_auth_status = "not_checked"
-        frame = None
+        cls.last_raw_packet = None
 
         try:
-            # no need to check if radio is available, it was already checked
             packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
 
-            # Checks on err returned by driver
             if err == _ERR_CRC_MISMATCH:
-                # CRC error, packet likely corrupted
-                logger.warning("[COMMS ERROR] CRC error occured on incoming packet")
+                logger.warning("[COMMS ERROR] CRC error on incoming packet")
                 cls.crc_error_count += 1
                 return None
 
             elif err != _ERR_NONE:
-                # Undefined error, packet should never have gotten to comms task
                 logger.error("[COMMS ERROR] Undefined error from radio driver")
                 cls.undef_error_count += 1
                 return None
 
-            # Check if packet exists
             if packet is None:
-                # FIFO buffer does not contain a packet, or packet could not be read for some reason
                 cls.packet_none_count += 1
                 return None
 
-            if len(packet) < 1:
-                logger.warning("[COMMS ERROR] Received empty packet")
-                cls.failed_unpack_count += 1
-                return None
-
-            # hopefully we have a valid packet at this point
-            header = packet[0]   # the first byte of the packet is the sc_cs [TODO] - Change this for the real cs size
-            logger.info(f"Received packet with header (sc_cs): {header}")
-            frame = {
-                "raw_packet": packet,
-                "source_header": header,
-                "payload": packet[1:],
-                "decoded": None,
-                "auth_status": "not_checked",
-            }
-            packet = frame["payload"]
+            # Store raw bytes and feed digipeater queue before any validation
+            cls.last_raw_packet = bytes(packet)
+            DigipeaterRxQueue.push_packet(cls.last_raw_packet)
 
             if cls.auth_enabled:
-                # Authenticated command format:
-                # [sc_cs|nonce(4)|mac(32)|msg_id|cmd_id|args_len|args...]
                 is_valid, reason, packet = verify_authenticated_command(packet, cls.auth_key)
-
                 if not is_valid:
                     logger.warning(f"[COMMS ERROR] Command authentication failed: {reason}")
                     cls.packet_auth_fail_count += 1
-                    frame["auth_status"] = reason
-                    return frame
+                    return None
 
-                cls.rx_auth_status = "passed"
-                frame["auth_status"] = "passed"
                 logger.info("[COMMS] Command authentication passed")
-            else:
-                frame["auth_status"] = "disabled"
 
-            # unpack the received packet
-            try:
-                message_object = unpack(packet)  # [TODO] - this should be implemented in middleware
-            except Exception as e:
-                cls.failed_unpack_count += 1
-                logger.warning(f"[COMMS ERROR] Failed to unpack received packet: {e}")
-                return frame
+            callsign, message_object = unpack(packet)
+            logger.info(f"Received callsign: {callsign}")
             logger.info(f"Received raw packet: {packet}")
             logger.info(f"Unpacked message object: {message_object}")
+
+            if callsign != cls.GS_CALLSIGN:
+                logger.error(f"[COMMS ERROR] Received packet with incorrect callsign: {callsign}")
+                return None
+
             if message_object is None:
                 cls.failed_unpack_count += 1
                 logger.warning("[COMMS ERROR] Failed to unpack received packet")
-                return frame
+                return None
 
             cls.rx_packet_count += 1
-            frame["decoded"] = message_object
-            return frame
+            return message_object
         finally:
-            # Keep RX explicitly armed so stale packets are not re-served when TX is disabled.
             cls.set_rx_mode()
-
-    @classmethod
-    def receive_message(cls):
-        """Backwards-compatible wrapper that returns only decoded command object."""
-        frame = cls.receive_rx_frame()
-        if frame is None:
-            return None
-        return frame.get("decoded")
 
     """
         Name: transmit_message
@@ -262,9 +206,8 @@ class SATELLITE_RADIO:
     """
 
     @classmethod
-    def transmit_message(cls):
+    def transmit_message(cls, packet):
         """
-        The message has already been stored in the class variable tx_message by the comms task
         it will add the satellite cs as the header and transmit the message
         """
 
@@ -272,16 +215,13 @@ class SATELLITE_RADIO:
             logger.warning("[COMMS] RF_STOP active: dropping TX request")
             return False
 
-        # Add source header to distinguish between spacecraft
-        cls.tx_message = bytes([cls.ARGUS_CS]) + cls.tx_message
-
-        logger.info(f"transmitting message: {cls.tx_message}")
+        logger.info(f"transmitting message: {packet}")
 
         # Send a message to GS
         if SATELLITE.RADIO_AVAILABLE:
-            SATELLITE.RADIO.send(cls.tx_message)
+            SATELLITE.RADIO.send(packet)
             cls.tx_packet_count += 1
-            logger.info(f"[COMMS] - Message has been transmitted: {format_bytes(cls.tx_message)}")
+            logger.info(f"[COMMS] - Message has been transmitted: {format_bytes(packet)}")
             return True
         else:
             logger.error("[COMMS ERROR] RADIO no longer active on SAT")

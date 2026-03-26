@@ -1,14 +1,11 @@
-# Communication task which uses the radio to transmit and receive messages.
+# Communication task: radio TX/RX and periodic telemetry.
 from apps.command import QUEUE_STATUS, CommandQueue
 from apps.command.supervisor import CommandSupervisor
 from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import TransmitQueue
 from apps.comms.modes import COMMS_MODE
-from apps.digipeater import DIGIPEATER_QUEUE_STATUS, DigipeaterRxQueue
-from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
-
-# from apps.telemetry import TelemetryPacker
-from apps.telemetry.splat.splat.telemetry_codec import Command  # this should be implemented in middleware
+from apps.telemetry.middleware import Frame as TelemetryFrame
+from apps.telemetry.splat.splat.telemetry_codec import pack
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
@@ -17,88 +14,47 @@ from core.time_processor import TimeProcessor as TPM
 
 
 class Task(TemplateTask):
-
     def __init__(self, id):
         super().__init__(id)
 
         self.name = "COMMS"
 
-        # variables for handling periodic telemetry
-        self.periodic_telemetry_interval = (
-            SATELLITE_RADIO.HB_PERIOD
-        )  # amount of seconds between periodic telemetry downlink [check] - this should be a config
-        self.periodic_telemetry_report = (
-            TelemetryFrame.pack_tm_heartbeat
-        )  # the packing function of the report to be downlinked periodically
-        self.last_periodic_telemetry_time = TPM.time()  # timestamp of the last periodic telemetry downlink
+        self.periodic_telemetry_interval = SATELLITE_RADIO.HB_PERIOD
+        self.periodic_telemetry_report = TelemetryFrame.pack_tm_heartbeat
+        self.last_periodic_telemetry_time = TPM.time()
 
         SATELLITE_RADIO.restore_comms_mode_from_persistent_state()
         SATELLITE_RADIO.set_rx_mode()
 
     def transmit_message(self):
-        """
-        Will transmit whatever is available on the transmit queue
-        it should only be packets in bytes
-        It will add to that packet the header (cs of the satellite)
-        TODO: add tx timeout when more information about duty cycle is available
-        """
-
+        """Drain the transmit queue and send each packet over the radio."""
         self.log_info("Checking transmit queue for packets to send...")
         self.log_info(f"  Transmit queue size: {TransmitQueue.get_size()}")
 
         while TransmitQueue.packet_available():
             self.log_info("  Packet available in TransmitQueue, preparing for transmission")
-            # If we have a packet to transmit, set it in the radio
             packet, queue_error_code = TransmitQueue.pop_packet()
-
             if queue_error_code == QUEUE_STATUS.OK:
-                SATELLITE_RADIO.set_tx_message(packet)
-                self.log_info(f"Set packet for transmission: {packet}")
-                SATELLITE_RADIO.transmit_message()
+                packed_packet = pack(packet, callsign=SATELLITE_RADIO.SC_CALLSIGN)
+                self.log_info(f"Set packet for transmission: {packed_packet}")
+                SATELLITE_RADIO.transmit_message(packed_packet)
             else:
                 self.log_error("Error popping packet from TransmitQueue")
 
     def receive_message(self):
-        """
-        Receive data from the radio. Currently it only receives commands from the GS
-        records the rssi and adds the command to the command queue for processing by the command processor task.
-        """
-
+        """Receive commands from the ground station and enqueue for processing."""
         self.log_info("Checking for incoming messages from GS...")
         if SATELLITE_RADIO.data_available():
-
-            # Read packet present in the RX buffer
-            rx_frame = SATELLITE_RADIO.receive_rx_frame()
-            if rx_frame is None:
+            message_object = SATELLITE_RADIO.receive_message()
+            if message_object is None:
                 return
 
-            q_status = DigipeaterRxQueue.push_frame(
-                {
-                    "raw_packet": rx_frame["raw_packet"],
-                    "source_header": rx_frame["source_header"],
-                    "is_command": isinstance(rx_frame.get("decoded"), Command),
-                }
-            )
-            if q_status != DIGIPEATER_QUEUE_STATUS.OK:
-                self.log_warning(f"Digipeater RX queue push failed: {q_status}")
-
-            message_object = rx_frame.get("decoded")
-
-            if not isinstance(message_object, Command):
-                self.log_warning("[COMMS ERROR] Received invalid command object from GS")
-                return
             self.log_info(f"Received command from GS: {message_object}")
-
-            CommandQueue.overwrite_command(
-                message_object
-            )  # [TODO] - not sure why overwrite instead of push, i copied this from the old code
-
+            CommandQueue.overwrite_command(message_object)
             DH.log_data("comms", [TPM.time(), SATELLITE_RADIO.get_rssi()])
 
     def check_periodic_telemetry(self):
-        """
-        Checks if it's time to send periodic telemetry, and if so, prepares the telemetry report for downlink.
-        """
+        """Send periodic telemetry if the interval has elapsed."""
         current_time = TPM.time()
         mode = SATELLITE_RADIO.get_comms_mode()
 
@@ -106,22 +62,16 @@ class Task(TemplateTask):
             return
 
         if current_time - self.last_periodic_telemetry_time >= self.periodic_telemetry_interval:
-            # Time to send periodic telemetry
             self.log_info("Preparing periodic telemetry report for downlink")
-            packet = self.periodic_telemetry_report()  # This calls the packing function implemented in the middleware
-            TransmitQueue.push_packet(
-                packet
-            )  # push the packet to the transmit queue, where it will be sent in the next transmission window
+            packet = self.periodic_telemetry_report()
+            TransmitQueue.push_packet(packet)
             self.last_periodic_telemetry_time = current_time
 
     async def main_task(self):
-        # Main comms task loop
-
         if SM.current_state == STATES.STARTUP:
-            # No comms in STARTUP
             return
 
-        self.check_periodic_telemetry()  # check if it's time to send periodic telemetry
-        self.transmit_message()  # check if we have messages to transmit to GS
+        self.check_periodic_telemetry()
+        self.transmit_message()
         CommandSupervisor.process_pending_action()
-        self.receive_message()  # check if we have received messages from GS
+        self.receive_message()

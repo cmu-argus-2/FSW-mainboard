@@ -10,7 +10,7 @@ class DIGIPEATER_QUEUE_STATUS:
 
 
 class DigipeaterRxQueue:
-    """FIFO queue holding received RF frames for the digipeater task."""
+    """FIFO queue holding raw received RF packets for the digipeater task."""
 
     _queue = []
     _max_size = 20
@@ -20,20 +20,20 @@ class DigipeaterRxQueue:
         cls._max_size = max_size
 
     @classmethod
-    def push_frame(cls, frame):
+    def push_packet(cls, packet):
         if len(cls._queue) < cls._max_size:
-            cls._queue.append(frame)
+            cls._queue.append(packet)
             return DIGIPEATER_QUEUE_STATUS.OK
         return DIGIPEATER_QUEUE_STATUS.OVERFLOW
 
     @classmethod
-    def pop_frame(cls):
+    def pop_packet(cls):
         if cls._queue:
             return cls._queue.pop(0), DIGIPEATER_QUEUE_STATUS.OK
         return None, DIGIPEATER_QUEUE_STATUS.EMPTY
 
     @classmethod
-    def frame_available(cls):
+    def packet_available(cls):
         return len(cls._queue) > 0
 
     @classmethod
