@@ -222,13 +222,15 @@ class PayloadController:
 
         elif cls.current_request == ExternalRequest.TURN_OFF:
             cls._switch_to_state(PayloadState.SHUTTING_DOWN)
-            cls.shutdown()
+            # cls.shutdown()
+            cls.turn_off_power()
             cls._clear_request()
 
         elif cls.current_request == ExternalRequest.REBOOT:
             logger.info("Rebooting the Payload...")
             cls.attempting_reboot = True
-            cls.shutdown()
+            # cls.shutdown()
+            cls.turn_off_power()
             cls._switch_to_state(PayloadState.SHUTTING_DOWN)
             cls._clear_request()
 
@@ -270,12 +272,12 @@ class PayloadController:
                 cls.turn_on_power()
             # elif new_state == PayloadState.SHUTTING_DOWN:
                 # cls.time_we_sent_shutdown = TPM.monotonic()
-            elif new_state == PayloadState.OFF:
-                cls.turn_off_power()
-                # If we were attempting a reboot, start the boot sequence again after powering off
-                if cls.attempting_reboot:
-                    logger.info("Attempting reboot: starting boot sequence again.")
-                    cls._switch_to_state(PayloadState.POWERING_ON)
+            # elif new_state == PayloadState.OFF:
+            #     # cls.turn_off_power()
+            #     # If we were attempting a reboot, start the boot sequence again after powering off
+            #     if cls.attempting_reboot:
+            #         logger.info("Attempting reboot: starting boot sequence again.")
+            #         cls._switch_to_state(PayloadState.POWERING_ON)
 
     @classmethod
     def run_control_logic(cls):
@@ -922,10 +924,6 @@ class PayloadController:
         # This is an expensive and drastic operation on the HW so must be limited to strict necessity
         # Preferable after a shutdown command
         logger.debug("[PAYLOAD] Turning off Jetson power...")
-        en_pin = getattr(SATELLITE, "JETSON_ENABLE", None)
-        if en_pin is None:
-            logger.error("[PAYLOAD] Power enable pin unavailable (JETSON_ENABLE)")
-            return False
 
         try:
             #Perform graceful shutdown
@@ -945,10 +943,10 @@ class PayloadController:
     @classmethod
     def shutdown_jetson_process(cls):
         logger.debug("[PAYLOAD] Shutdown only by sending shutdown command without cutting power")
-        logger.info("Executing Shutdown test: sending shutdown command to payload")
+        # logger.info("Executing Shutdown test: sending shutdown command to payload")
         if DH.data_process_exists("payload_requests"):
             DH.log_data("payload_requests", [ExternalRequest.TURN_OFF])
-            return 1
+            return 1 
 
         # Graceful shutdown requires the payload task state machine.
         logger.error("Shutdown test failed")
