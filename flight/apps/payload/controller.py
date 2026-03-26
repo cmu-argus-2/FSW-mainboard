@@ -397,6 +397,13 @@ class PayloadController:
         """
         Will send the command to turn off the jetson
         """
+        
+        # create the command
+        cmd_off = Command("TURN_OFF_PAYLOAD")
+        
+        # send the command
+        PU.send(pack(cmd_off))
+        
         logger.error("Please implement me")
         
     @classmethod 

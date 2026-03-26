@@ -235,6 +235,7 @@ class Task(TemplateTask):
             if PC.received_all_files_sent:
                 self.log_info("Payload reported all files sent, transitioning to OFF state.")
                 PC.switch_state("OFF")
+                PC.OFF_TS = TPM.time()
             else:
                 self.log_info("No active file right now; waiting for next file or completion signal from payload.")
             return
@@ -304,7 +305,7 @@ class Task(TemplateTask):
         if PC.received_off_ack:
             # we have received response from jetson, safe to turn off
             self.log_info("Turn off ack received, cutting power to jetson.")
-            PC.switch_state("FINISHED")
+            PC.switch_state("SUCCESS")
         
         if PC.OFF_TS + PC.OFF_TIMEOUT <= TPM.time():
             self.log_info("Turn off timeout reached, cutting power to jetson.")
