@@ -120,6 +120,8 @@ class Task(TemplateTask):
         after that, every time this runs it will send a ping command and wait for a response
             once it has received a response it will move state ACTIVE
         it has a timeout where it will go to fail state and turn of the jetson
+        The command has been choosen when switched to this state to make sure that if boots fails, it will
+        not attempt to run the command again
         """
         
         # check to see if we got response from ping
@@ -153,7 +155,7 @@ class Task(TemplateTask):
         So here we will just send the command
         We will keep on sending the command until ack for the command has been received
             once received, it will move on to processing mode
-        command has already been choosen and removed from the list in switch state
+        command has already been choosen and removed from the list when it switched to boot state
         """
         
         # wait for a response

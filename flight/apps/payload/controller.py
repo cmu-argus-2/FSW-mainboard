@@ -166,12 +166,12 @@ class PayloadController:
         if cls.current_state == PayloadState.BOOTING:
             logger.info("[PAYLOAD] -  Turning on jetson")
             cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = 200 # starting a new experiment resetting the error
+            cls.current_command = cls.get_first_command()    # choosing the command here to make sure that if boot fails we do not run the command again
+            cls.remove_first_command()  
             cls.turn_on_power()
             
         # active state, need to get the desired command
-        if cls.current_state == PayloadState.ACTIVE:
-            cls.current_command = cls.get_first_command()
-            cls.remove_first_command()    
+        if cls.current_state == PayloadState.ACTIVE:  
             logger.info(f"[PAYLOAD] -  Selected command: {cls.current_command}")
 
         if cls.current_state == PayloadState.DOWNLOAD:
