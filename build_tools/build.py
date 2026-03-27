@@ -21,6 +21,7 @@ except Exception:
 system = platform.system()
 machine = platform.machine().lower()
 
+
 def get_board_path():
     if system == "Windows":
         BOARD_PATH = "D:\\"
