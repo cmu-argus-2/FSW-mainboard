@@ -127,6 +127,7 @@ class Task(TemplateTask):
             # means we have received a response from jetson, moving to ACTIVE state
             self.log_info("Ping responded, switching to ACTIVE state.")
             PC.received_experiment_ack = False
+            PC.ACT_TS = TPM.time()
             PC.switch_state("ACTIVE")
             
             # set the last_executed_time i
@@ -165,7 +166,13 @@ class Task(TemplateTask):
             PC.switch_state("PROCESSING")
             return
         
+        if PC.ACT_TS + PC.ACT_TIMEOUT <= TPM.time():
+            self.log_error("Active timeout reached, switching to FAIL state.")
+            PC.switch_state("FAIL")
+            return
+
         # send the command
+        # TODO - only want to send this every 5 seconds for example
         PC.send_current_command()  # current command was choosen in switch state
             
     def run_processing_state(self):
@@ -203,9 +210,10 @@ class Task(TemplateTask):
         Not sure what to do with this state, for now we will just skip onto the next state
         """
         # TODO - check if this state is needed
-        print("Finished state reached.")
+        self.log_info("Finished state reached.")
         
         # move directly to download state
+        PC.DWN_TS = TPM.time()
         PC.switch_state("DOWNLOAD")
         
         return
@@ -222,6 +230,10 @@ class Task(TemplateTask):
         5. If complete, finalize and move to next file
         6. If no more files, exit to OFF state
         """
+        if PC.DWN_LAST_FRAGMENT_TS + PC.DWN_TIMEOUT <= TPM.time():
+            self.log_error("Download fragment timeout reached, switching to FAIL state.")
+            PC.switch_state("FAIL")
+            return
         
         # If no transactions to process yet, wait for them
         if not PC.received_create_trans or not PC.received_init_trans:
@@ -305,12 +317,15 @@ class Task(TemplateTask):
         if PC.received_off_ack:
             # we have received response from jetson, safe to turn off
             self.log_info("Turn off ack received, cutting power to jetson.")
-            PC.switch_state("SUCCESS")
+            PC.OFF_TS = TPM.time()   # received the ack, lets give it time to shut down
         
         if PC.OFF_TS + PC.OFF_TIMEOUT <= TPM.time():
             self.log_info("Turn off timeout reached, cutting power to jetson.")
             PC.turn_off_power()
-            PC.switch_state("FAIL")
+            if PC.received_off_ack:
+                PC.switch_state("SUCCESS") # receive the shutdown ack, gave time and can cut power now
+            else:
+                PC.switch_state("FAIL")  # did not received the shutdown ack, failing and forcing to shutdown
             
     def run_success_state(self):
         """
@@ -360,7 +375,7 @@ class Task(TemplateTask):
         if TPM.time() - self._last_state_print_ts >= 5:
             self._last_state_print_ts = TPM.time()
             DH.log_data("payload_tm", PC.log_data)  # periodically log data
-            print(f"[PAYLOAD] Current state: {PC.current_state}")
+            self.log_info(f"Current state: {PC.current_state}")
             
         PC.process_uart(609)
             

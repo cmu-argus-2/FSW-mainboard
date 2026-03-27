@@ -92,14 +92,21 @@ class PayloadController:
     BOOT_TS = 0        # time at which switched to booting state
     BOOT_TIMEOUT = 60  # how long it will wait for jetson to respond ping
     
+    ACT_TS = 0         # time at which switched to active state
+    ACT_TIMEOUT = 20   # max amount of seconds to wait to recieve jetson ack for experiment command
+    
     PROC_TS = 0        # time at which switched to processing state
     PROC_TIMEOUT = 60  # max amounts of seconds to run the experiment
     
-    TELEM_TS = 0       # time at which last telemetry was requested
-    TELEM_PERIOD = 30  # request telemetry every 30s
+    DWN_TS = 0         # time at which switched to download state
+    DWN_TIMEOUT = 50   # max amount of time to wait for fragments
+    DWN_LAST_FRAGMENT_TS = 0  # time at which last fragment was received during download
     
     OFF_TS = 0         # time at which switched to turning off state
     OFF_TIMEOUT = 20   # time to wait for the jetson to respond to shutdown command befoer forcing shutdown
+
+    TELEM_TS = 0       # time at which last telemetry was requested
+    TELEM_PERIOD = 20  # request telemetry every 20s
 
     # Lets init uart connection.
     # TODO should this only be made once the jetson has been turned on?
@@ -169,6 +176,7 @@ class PayloadController:
 
         if cls.current_state == PayloadState.DOWNLOAD:
             cls.received_all_files_sent = False
+            cls.DWN_LAST_FRAGMENT_TS = TPM.time()
         
         # turn off state needs to send turn off command
         if cls.current_state == PayloadState.OFF:
@@ -604,6 +612,7 @@ class PayloadController:
         ideally this will only happen when in listening mode (triggered when the payload goes into download mode)
         """
         logger.info(f"[PAYLOAD] - Processing fragment: {fragment}")
+        cls.DWN_LAST_FRAGMENT_TS = TPM.time()
         cls.download_manager.note_fragment_received(fragment)
         cls.transaction_dict[fragment.tid ].add_fragment(fragment)
         
