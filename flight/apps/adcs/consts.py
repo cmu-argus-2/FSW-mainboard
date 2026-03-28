@@ -132,14 +132,17 @@ class ControllerConst:
         [[3.544e-03, -1.8729e-05, -5.2467e-06], [-1.8729e-05, 3.590e-03, 1.9134e-05], [-5.2467e-06, 1.9134e-05, 4.120e-03]]
     )
 
-    # Compute Major axis of inertia
-    _eigvals, _eigvecs = np.linalg.eig(INERTIA_MAT)
-    _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
+    # # Compute Major axis of inertia
+    # _eigvals, _eigvecs = np.linalg.eig(INERTIA_MAT)
+    # _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
 
-    INERTIA_MAJOR_DIR = _unscaled_axis / np.linalg.norm(_unscaled_axis)
-    inertia_major_dir_abs = np.array([math.fabs(dir_x) for dir_x in INERTIA_MAJOR_DIR])
-    if INERTIA_MAJOR_DIR[np.argmax(inertia_major_dir_abs)] < 0:
-        INERTIA_MAJOR_DIR = -INERTIA_MAJOR_DIR
+    # INERTIA_MAJOR_DIR = _unscaled_axis / np.linalg.norm(_unscaled_axis)
+    # inertia_major_dir_abs = np.array([math.fabs(dir_x) for dir_x in INERTIA_MAJOR_DIR])
+    # if INERTIA_MAJOR_DIR[np.argmax(inertia_major_dir_abs)] < 0:
+    #     INERTIA_MAJOR_DIR = -INERTIA_MAJOR_DIR
+        
+    # Hardcoded Inertia Major Dir
+    INERTIA_MAJOR_DIR = np.array([-0.01027212,  0.03638753,  0.99928496])
 
     # Dimensions of sensor readings and control input
     READING_DIM = (3,)
