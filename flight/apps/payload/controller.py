@@ -960,12 +960,16 @@ class PayloadController:
         if cls.state != PayloadState.READY:
             logger.error("Cannot request capture and inference. Payload is not ready.")
             return False
-
-        cmd_bytes = Encoder.encode_capture_and_inference()
+        
+        cmd_bytes = Encoder.encode_start_capture_images_periodically()
         hex_str = " ".join(f"{b:02x}" for b in cmd_bytes[:10])
         logger.info(f"[DEBUG TX] Sending CAPTURE_AND_INFERENCE command: {hex_str}")
         cls.communication_interface.send(cmd_bytes)
         cls.cmd_sent += 1
-        cls.last_cmd_sent = CommandID.CAPTURE_AND_INFERENCE  # Track command
+        # cls.last_cmd_sent = CommandID.CAPTURE_AND_INFERENCE  
+        cls.last_cmd_sent = CommandID.START_CAPTURE_IMAGES_PERIODICALLY
+
+        # print("returning")
+        # logger.info("[]")
         return True
     

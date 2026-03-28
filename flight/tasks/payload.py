@@ -8,7 +8,7 @@ from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STATES
 
-_NUM_IMG_TO_MAINTAIN_READY = 1  # Number of images to maintain in memory at least
+_NUM_IMG_TO_MAINTAIN_READY = 5  # Number of images to maintain in memory at least
 
 
 class Task(TemplateTask):
@@ -18,6 +18,7 @@ class Task(TemplateTask):
     def __init__(self, id):
         super().__init__(id)
         self.name = "PAYLOAD"
+        self.track_inference_trigger = False
 
     def init_all_data_processes(self):
         # Image file process (uses FileProcess for binary file storage)
@@ -60,7 +61,7 @@ class Task(TemplateTask):
 
         # ===== TESTING ONLY: Force payload to READY state =====
         # Comment this block out for real flight operations
-        """
+        # """
         if PC.state == PayloadState.OFF:
             if not PC.interface_injected():
                 PC.load_communication_interface()
@@ -73,7 +74,7 @@ class Task(TemplateTask):
 
             PC._switch_to_state(PayloadState.READY)  # Skip power-on sequence
             self.log_info("TEST MODE: Forced payload to READY state")
-        """
+        # """
         # ===== END TESTING BLOCK =====
 
         # Check if any external requests were received irrespective of state
@@ -84,73 +85,81 @@ class Task(TemplateTask):
 
         # ===== TESTING ONLY: Skip state machine, only handle READY state =====
         # Comment out this block and uncomment the full state machine below for real flight
-        """
+        # """
+        
         if PC.state == PayloadState.READY:
             if DH.file_process_exists("img"):
                 # Check how many complete image files we have
-                complete_image_count = DH.get_file_count("img")
+                if (not self.track_inference_trigger): 
+                    PC.request_capture_and_inference() 
+                    self.track_inference_trigger = True
 
-                if complete_image_count < _NUM_IMG_TO_MAINTAIN_READY and not PC.file_transfer_in_progress():
-                    self.log_info(
-                        f"Not enough images in memory ({complete_image_count}/{_NUM_IMG_TO_MAINTAIN_READY}), requesting new image"  # noqa: E501
-                    )
-                    PC.add_request(ExternalRequest.REQUEST_IMAGE)
+
+                # complete_image_count = DH.get_file_count("img")
+
+                # if complete_image_count < _NUM_IMG_TO_MAINTAIN_READY and not PC.file_transfer_in_progress():
+                #     self.log_info(
+                #         f"Not enough images in memory ({complete_image_count}/{_NUM_IMG_TO_MAINTAIN_READY}), requesting new image"  # noqa: E501
+                #     )
+                #     PC.add_request(ExternalRequest.REQUEST_IMAGE)
 
         # Run the control logic (handles pings, image transfers, etc.)
         PC.run_control_logic()
         self.log_info(f"Payload state: {map_state(PC.state)}")
-        """
+        # """
         # ===== END TESTING BLOCK =====
 
-        # ===== FULL STATE MACHINE (commented out for testing) =====
-        # Uncomment this entire section for real flight operations
-        # Replace the testing block above with this
+        # # ===== FULL STATE MACHINE (commented out for testing) =====
+        # # Uncomment this entire section for real flight operations
+        # # Replace the testing block above with this
 
-        if SM.current_state != STATES.EXPERIMENT:
+        # if SM.current_state != STATES.EXPERIMENT:
 
-            if not PC.interface_injected():
-                PC.load_communication_interface()
+        #     if not PC.interface_injected():
+        #         PC.load_communication_interface()
 
-            # Need to handle issues with power control eventually or log error codes for the HAL
+        #     # Need to handle issues with power control eventually or log error codes for the HAL
 
-            self.init_all_data_processes()
+        #     self.init_all_data_processes()
 
-            # Two cases:
-            #  - Satellite has booted up and we need to initialize the payload
-            #  - State transitioned out of EXPERIMENT and we need to stop the payload gracefully
-            #    (forcefully in worst-case scenarios)
+        #     # Two cases:
+        #     #  - Satellite has booted up and we need to initialize the payload
+        #     #  - State transitioned out of EXPERIMENT and we need to stop the payload gracefully
+        #     #    (forcefully in worst-case scenarios)
 
-            # TODO: This is going to change
-            if PC.state != PayloadState.OFF:  # All good
-                PC.add_request(ExternalRequest.TURN_OFF)
+        #     # TODO: This is going to change
+        #     if PC.state != PayloadState.OFF:  # All good
+        #         PC.add_request(ExternalRequest.TURN_OFF)
 
-                if PC.state == PayloadState.SHUTTING_DOWN:
-                    # TODO: check timeout just in case. However, this will be handled internally.
-                    PC.add_request(ExternalRequest.FORCE_POWER_OFF)
-                    pass
+        #         if PC.state == PayloadState.SHUTTING_DOWN:
+        #             # TODO: check timeout just in case. However, this will be handled internally.
+        #             PC.add_request(ExternalRequest.FORCE_POWER_OFF)
+        #             pass
 
-        else:  # EXPERIMENT state
+        # else:  # EXPERIMENT state
 
-            if PC.state == PayloadState.OFF:
-                # PC.add_request(ExternalRequest.TURN_ON)
-                PC._switch_to_state(PayloadState.READY)
+        #     if PC.state == PayloadState.OFF:
+        #         # PC.add_request(ExternalRequest.TURN_ON)
+        #         PC._switch_to_state(PayloadState.READY)
 
-            elif PC.state == PayloadState.READY:
-                if DH.file_process_exists("img"):
-                    # Check how many complete image files we have
-                    complete_image_count = DH.get_file_count("img")
+        #     elif PC.state == PayloadState.READY:
 
-                    if complete_image_count < _NUM_IMG_TO_MAINTAIN_READY and not PC.file_transfer_in_progress():
-                        self.log_info(
-                            "Not enough images in memory "
-                            f"({complete_image_count}/{_NUM_IMG_TO_MAINTAIN_READY}), requesting new image",
-                        )
-                        PC.add_request(ExternalRequest.REQUEST_IMAGE)
+        #         # PC.request_capture_and_inference() 
+        #         if DH.file_process_exists("img"):
+        #             # Check how many complete image files we have
+        #             complete_image_count = DH.get_file_count("img")
 
-        # DO NOT EXPOSE THE LOGIC IN THE TASK and KEEP EVERYTHING INTERNAL
-        PC.run_control_logic()
-        self.log_info(f"Payload state: {map_state(PC.state)}")
-        # ===== END FULL STATE MACHINE =====
+        #             if complete_image_count < _NUM_IMG_TO_MAINTAIN_READY and not PC.file_transfer_in_progress():
+        #                 self.log_info(
+        #                     "Not enough images in memory "
+        #                     f"({complete_image_count}/{_NUM_IMG_TO_MAINTAIN_READY}), requesting new image",
+        #                 )
+        #                 PC.add_request(ExternalRequest.REQUEST_IMAGE)
+
+        # # DO NOT EXPOSE THE LOGIC IN THE TASK and KEEP EVERYTHING INTERNAL
+        # PC.run_control_logic()
+        # self.log_info(f"Payload state: {map_state(PC.state)}")
+        # # ===== END FULL STATE MACHINE =====
 
 
 

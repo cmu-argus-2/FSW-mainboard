@@ -172,6 +172,22 @@ class Encoder:
         cls._send_buffer[0] = CommandID.START_CAPTURE_IMAGES_PERIODICALLY
         cls._bytes_set_last_time = 1
         return cls._send_buffer[:1]
+        
+        # cls.clear_buffer()
+        # # print("Encode start capture and inference with args:", args)
+        # cls._send_buffer[0] = CommandID.START_CAPTURE_IMAGES_PERIODICALLY
+        # cls._bytes_set_last_time = 1
+        # # return cls._send_buffer[:1]
+        # # def encode_capture_and_inference(cls, command_id, *args):
+        # # cls.clear_buffer()
+        # # cls._send_buffer[0] = command_id
+        # for i, arg in enumerate(args, start=1): 
+        #     cls._send_buffer[i] = arg
+
+        # # cls._send_buffer[0] = CommandID.CAPTURE_AND_INFERENCE
+        # cls._bytes_set_last_time = 1
+        # print( "looks likev hehe", cls._send_buffer)
+        # return cls._send_buffer
 
     @classmethod
     def encode_stop_capture_images(cls):
@@ -294,11 +310,15 @@ class Encoder:
         return cls._send_buffer
 
     @classmethod
-    def encode_capture_and_inference(cls):
+    def encode_capture_and_inference(cls, command_id, *args):
         cls.clear_buffer()
-        cls._send_buffer[0] = CommandID.CAPTURE_AND_INFERENCE
+        cls._send_buffer[0] = command_id
+        for i, arg in enumerate(args, start=1): 
+            cls._send_buffer[i] = arg
+
+        # cls._send_buffer[0] = CommandID.CAPTURE_AND_INFERENCE
         cls._bytes_set_last_time = 1
-        return cls._send_buffer[:1]
+        return cls._send_buffer
 
 class Decoder:
 
