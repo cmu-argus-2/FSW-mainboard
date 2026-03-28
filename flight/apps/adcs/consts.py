@@ -6,8 +6,9 @@ Author(s): Derek Fan
 
 import math
 
-from ulab import numpy as np
 from core.satellite_config import adcs_config as CONFIG
+from ulab import numpy as np
+
 
 class StatusConst:
     """
@@ -82,13 +83,13 @@ class ControllerModes:
     """
     Controller Modes
     """
-    
+
     BDOT = 0
     BCROSS = 1
     SUN_POINTING = 2
-    
+
     current_mode = CONFIG.CONTROLLER_MODE
-    
+
     def update_mode(self, new_mode):
         if new_mode in [self.BDOT, self.BCROSS, self.SUN_POINTING]:
             self.current_mode = new_mode
@@ -140,9 +141,9 @@ class ControllerConst:
     # inertia_major_dir_abs = np.array([math.fabs(dir_x) for dir_x in INERTIA_MAJOR_DIR])
     # if INERTIA_MAJOR_DIR[np.argmax(inertia_major_dir_abs)] < 0:
     #     INERTIA_MAJOR_DIR = -INERTIA_MAJOR_DIR
-        
+
     # Hardcoded Inertia Major Dir
-    INERTIA_MAJOR_DIR = np.array([-0.01027212,  0.03638753,  0.99928496])
+    INERTIA_MAJOR_DIR = np.array([-0.01027212, 0.03638753, 0.99928496])
 
     # Dimensions of sensor readings and control input
     READING_DIM = (3,)

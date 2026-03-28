@@ -151,7 +151,6 @@ class Task(TemplateTask):
                 # Turn coils off to conserve power
                 self.ensure_coils_off()
 
-
             # ------------------------------------------------------------------------------------------------------------------------------------
             # NOMINAL
             # ------------------------------------------------------------------------------------------------------------------------------------
@@ -190,7 +189,7 @@ class Task(TemplateTask):
                     if new_mode != self.MODE:
                         self.ensure_coils_off()
                         self.MODE = new_mode
-                    
+
                     # Run attitude control if not in Low-power
                     if SM.current_state != STATES.LOW_POWER and self.MODE != Modes.ACS_OFF and allow_coils:
                         self.attitude_control()
@@ -280,7 +279,6 @@ class Task(TemplateTask):
             zero_all_coils()
             self.coils_off = True
             self.last_mtq_time = TPM.monotonic_float()
-    
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ LOGGING """
@@ -291,7 +289,7 @@ class Task(TemplateTask):
         Logs data to Data Handler
         Takes light sensor readings as input since they are not stored in AD
         """
-        self.log_info*(f"Logging ADCS data at time {self.time}")
+        self.log_info * (f"Logging ADCS data at time {self.time}")
         self.log_data[ADCS_IDX.MODE] = int(self.MODE)
         self.log_data[ADCS_IDX.CONTROLLER_MODE] = int(self.CONTROLLER_MODE)
         self.log_data[ADCS_IDX.GYRO_X] = self.gyro_data[0]

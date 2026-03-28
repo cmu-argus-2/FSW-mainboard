@@ -228,7 +228,7 @@ class ArgusV4Components:
     SUN_SENSOR_ZP_XP_I2C_ADDRESS = const(0x65)
     SUN_SENSOR_ZP_YM_I2C_ADDRESS = const(0x66)
     SUN_SENSOR_ZP_XM_I2C_ADDRESS = const(0x67)
-    
+
     # BATTERY BOARD FUEL GAUGE
     FUEL_GAUGE_I2C = ArgusV4Interfaces.I2C1
     FUEL_GAUGE_I2C_ADDRESS = const(0x36)
