@@ -319,7 +319,7 @@ class Task(TemplateTask):
         DH.log_data("adcs", self.log_data)
 
         # Log Gyro Angular Velocities
-        self.log_info(f"Logging ADCS data at time {self.time}")
+        self.log_info(f"Time :  {TPM.monotonic_float()}")  # self.time}")
         self.log_info(f"ADCS Mode : {self.MODE}")
         self.log_info(f"Controller Mode : {self.CONTROLLER_MODE}")
         self.log_info(f"Gyro Ang Vel : {self.gyro_data}")
