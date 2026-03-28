@@ -4,8 +4,6 @@ Constants used in ADCS apps.
 Author(s): Derek Fan
 """
 
-import math
-
 from core.satellite_config import adcs_config as CONFIG
 from ulab import numpy as np
 
