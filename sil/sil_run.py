@@ -165,7 +165,7 @@ def arg_parse(parser):
     parser.add_argument(
         "--erase_sil_logs",
         action="store_true",
-        default=False,
+        default=True,
         help="Flag to erase SIL logs in main folder [default: False]",
     )
     parser.add_argument(

@@ -6,8 +6,9 @@ Author(s): Derek Fan
 
 import math
 
-from ulab import numpy as np
 from core.satellite_config import adcs_config as CONFIG
+from ulab import numpy as np
+
 
 class StatusConst:
     """
@@ -82,13 +83,13 @@ class ControllerModes:
     """
     Controller Modes
     """
-    
+
     BDOT = 0
     BCROSS = 1
     SUN_POINTING = 2
-    
+
     current_mode = CONFIG.CONTROLLER_MODE
-    
+
     def update_mode(self, new_mode):
         if new_mode in [self.BDOT, self.BCROSS, self.SUN_POINTING]:
             self.current_mode = new_mode

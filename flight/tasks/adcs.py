@@ -1,5 +1,6 @@
 # Attitude Determination and Control (ADC) task
 
+import apps.adcs.math as math
 import apps.adcs.sensors as sensors
 from apps.adcs.acs import (
     bcross_controller,
@@ -86,6 +87,8 @@ class Task(TemplateTask):
     last_mag_time = 0.0
     last_mtq_time = 0.0
 
+    last_mag_prop_time = 0.0
+
     def __init__(self, id):
         super().__init__(id)
         self.name = "ADCS"  # Override the name
@@ -127,6 +130,17 @@ class Task(TemplateTask):
                     new_last_mag_time = TPM.monotonic_float()
                     self.bdot_dt = new_last_mag_time - self.last_mag_time
                     self.last_mag_time = new_last_mag_time
+                    self.last_mag_prop_time = self.last_mag_time
+                elif (
+                    self.CONTROLLER_MODE != ControllerModes.BDOT
+                    and self.gyro_status == StatusConst.OK
+                    and self.mag_status == StatusConst.OK
+                ):
+                    # propagate magnetometer reading using gyro data
+                    new_last_mag_time = TPM.monotonic_float()
+                    dt = new_last_mag_time - self.last_mag_prop_time
+                    self.last_mag_prop_time = new_last_mag_time
+                    self.mag_data = np.dot(math.rotation_matrix_from_vector(-self.gyro_data * dt), self.mag_data)
 
                 # Run Attitude Control
                 if allow_coils:
@@ -180,6 +194,17 @@ class Task(TemplateTask):
                         new_last_mag_time = TPM.monotonic_float()
                         self.bdot_dt = new_last_mag_time - self.last_mag_time
                         self.last_mag_time = new_last_mag_time
+                        self.last_mag_prop_time = self.last_mag_time
+                    elif (
+                        self.CONTROLLER_MODE != ControllerModes.BDOT
+                        and self.gyro_status == StatusConst.OK
+                        and self.mag_status == StatusConst.OK
+                    ):
+                        # propagate magnetometer reading using gyro data
+                        new_last_mag_time = TPM.monotonic_float()
+                        dt = new_last_mag_time - self.last_mag_prop_time
+                        self.last_mag_prop_time = new_last_mag_time
+                        self.mag_data = np.dot(math.rotation_matrix_from_vector(-self.gyro_data * dt), self.mag_data)
 
                     # Query Sun Position
                     self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
@@ -189,7 +214,7 @@ class Task(TemplateTask):
                     if new_mode != self.MODE:
                         self.ensure_coils_off()
                         self.MODE = new_mode
-                    
+
                     # Run attitude control if not in Low-power
                     if SM.current_state != STATES.LOW_POWER and self.MODE != Modes.ACS_OFF and allow_coils:
                         self.attitude_control()
@@ -279,7 +304,6 @@ class Task(TemplateTask):
             zero_all_coils()
             self.coils_off = True
             self.last_mtq_time = TPM.monotonic_float()
-    
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ LOGGING """

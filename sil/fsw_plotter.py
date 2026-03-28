@@ -221,6 +221,53 @@ def plot_FSW(result_folder_path):
     plt.close()
     print(f"Sun Status plot saved to {output_plot_path_status}")
 
+    # Plot of x-axis: initial norm of angular velocity vs y-axis: time to detumble
+    # If final mode is detumbling, time to detumble is the last time stamp and marked red. Otherwise green
+    plt.figure(figsize=(8, 6))
+    detumbled_added = False
+    not_detumbled_added = False
+    for trial_idx, (timestamps_modes, global_modes_values) in enumerate(global_modes_list):
+        adcs_modes_values = adcs_modes_list[trial_idx][1]
+        adcs_modes_timestamps = adcs_modes_list[trial_idx][0]
+        # Find the first index where ADCS mode is not STARTUP (mode 0)
+        non_startup_idx = np.where(global_modes_values != 0)[0]
+        if len(non_startup_idx) > 0:
+            first_non_startup_idx = non_startup_idx[0]
+            first_non_startup_time = timestamps_modes[first_non_startup_idx]
+            gyro_ang_vels = gyro_ang_vels_list[trial_idx][1]
+            gyro_times = gyro_ang_vels_list[trial_idx][0]
+            # Find the gyro reading closest to the first non-startup time
+            first_gyro_idx = np.where(gyro_times >= first_non_startup_time)[0]
+            if len(first_gyro_idx) > 0:
+                first_gyro_idx = first_gyro_idx[0]
+            else:
+                continue
+            initial_gyro_norm = np.rad2deg(np.linalg.norm(gyro_ang_vels[first_gyro_idx]))
+        else:
+            continue
+
+        if adcs_modes_values[-1] != 3:  # if final mode is not ACS off, time to detumble is the last timestamp
+            time_to_detumble = adcs_modes_timestamps[-1] / 3600
+            label = "Not Detumbled" if not not_detumbled_added else ""
+            plt.scatter(initial_gyro_norm, time_to_detumble, color="red", label=label)
+            not_detumbled_added = True
+        else:
+            time_to_detumble = (
+                adcs_modes_timestamps[np.where(adcs_modes_values == 0)[0][-1]] / 3600
+            )  # last time it was in tumbling mode
+            label = "Detumbled" if not detumbled_added else ""
+            plt.scatter(initial_gyro_norm, time_to_detumble, color="green", label=label)
+            detumbled_added = True
+    plt.xlabel("Initial Norm of Angular Velocity [deg/s]")
+    plt.xlim(left=0)
+    plt.ylim(bottom=0)
+    plt.ylabel("Time to Detumble [hours]")
+    plt.title("Initial Angular Velocity vs Time to Detumble")
+    plt.legend()
+    output_plot_path_detumble = os.path.join(plots_folder_path, "fsw_initial_gyro_norm_vs_time_to_detumble.png")
+    plt.savefig(output_plot_path_detumble)
+    plt.close()
+
 
 def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False, erase_sil_logs=False, percent_to_log=1):
     """
