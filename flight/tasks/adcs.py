@@ -46,10 +46,10 @@ class Task(TemplateTask):
         "LIGHT_SENSOR_XM",
         "LIGHT_SENSOR_YP",
         "LIGHT_SENSOR_YM",
-        "LIGHT_SENSOR_ZP_1",
-        "LIGHT_SENSOR_ZP_2",
-        "LIGHT_SENSOR_ZP_3",
-        "LIGHT_SENSOR_ZP_4",
+        "LIGHT_SENSOR_ZP_XP",
+        "LIGHT_SENSOR_ZP_YP",
+        "LIGHT_SENSOR_ZP_XM",
+        "LIGHT_SENSOR_ZP_YM",
         "LIGHT_SENSOR_ZM",
         "XP_COIL_STATUS",
         "XM_COIL_STATUS",
@@ -150,6 +150,7 @@ class Task(TemplateTask):
             elif SM.current_state == STATES.LOW_POWER or SM.current_state == STATES.EXPERIMENT:
                 # Turn coils off to conserve power
                 self.ensure_coils_off()
+
 
             # ------------------------------------------------------------------------------------------------------------------------------------
             # NOMINAL
@@ -290,6 +291,7 @@ class Task(TemplateTask):
         Logs data to Data Handler
         Takes light sensor readings as input since they are not stored in AD
         """
+        self.log_info*(f"Logging ADCS data at time {self.time}")
         self.log_data[ADCS_IDX.MODE] = int(self.MODE)
         self.log_data[ADCS_IDX.CONTROLLER_MODE] = int(self.CONTROLLER_MODE)
         self.log_data[ADCS_IDX.GYRO_X] = self.gyro_data[0]
@@ -307,10 +309,10 @@ class Task(TemplateTask):
         self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = int(self.sun_lux[2]) & 0xFFFF
         self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = int(self.sun_lux[3]) & 0xFFFF
         self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(self.sun_lux[4]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_1] = int(self.sun_lux[5]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_2] = int(self.sun_lux[6]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_3] = int(self.sun_lux[7]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_4] = int(self.sun_lux[8]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_XP] = int(self.sun_lux[5]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_YP] = int(self.sun_lux[6]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_XM] = int(self.sun_lux[7]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_YM] = int(self.sun_lux[8]) & 0xFFFF
         self.log_data[ADCS_IDX.XP_COIL_STATUS] = int(self.coil_status[0])
         self.log_data[ADCS_IDX.XM_COIL_STATUS] = int(self.coil_status[1])
         self.log_data[ADCS_IDX.YP_COIL_STATUS] = int(self.coil_status[2])
