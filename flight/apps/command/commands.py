@@ -126,6 +126,11 @@ def SCHEDULE_OD_EXPERIMENT():
 
     return []
 
+# @register_command()
+# def REQUEST_CAPTURE_AND_INFERENCE():
+#     """Requests the Jetson to capture and perform inference."""
+#     PC.request_capture_and_inference() 
+#     return[]
 
 @register_command()
 def REQUEST_TM_NOMINAL():
