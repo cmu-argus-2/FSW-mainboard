@@ -20,16 +20,75 @@ See documentation for a full description of each commands.
 Author: Ibrahima S. Sow
 """
 
-from apps.command import commands as command_handlers
-from apps.command import preconditions as precondition_handlers
+from apps.command.commands import (
+    CONFIRM_LAST_BATCH,
+    CREATE_TRANS,
+    DOWNLINK_ALL,
+    EVAL_STRING_COMMAND,
+    FORCE_REBOOT,
+    GENERATE_ALL_PACKETS,
+    GENERATE_X_PACKETS,
+    GET_SINGLE_PACKET,
+    INIT_TRANS,
+    REQUEST_FILE_METADATA,
+    REQUEST_FILE_PKT,
+    REQUEST_IMAGE,
+    REQUEST_TM_HAL,
+    REQUEST_TM_NOMINAL,
+    REQUEST_TM_PAYLOAD,
+    REQUEST_TM_STORAGE,
+    SCHEDULE_OD_EXPERIMENT,
+    SUM,
+    SWITCH_TO_STATE,
+    TRANS_PAYLOAD,
+    TURN_OFF_PAYLOAD,
+    UPDATE_MISSING_FRAGMENTS,
+    UPLINK_TIME_REFERENCE,
+    EXPERIMENT
+)
+from apps.command.preconditions import file_id_exists, valid_inputs, valid_state, valid_time_format
 from apps.comms.fifo import TransmitQueue
 from apps.telemetry.splat.splat.telemetry_codec import Ack
 from core import logger
 from micropython import const
 
-# Dispatch dictionaries are populated by decorators at import time.
-COMMAND_DISPATCH = command_handlers.COMMAND_REGISTRY
-PRECONDITION_DISPATCH = precondition_handlers.PRECONDITION_REGISTRY
+# --- DISPATCH TABLES ---
+# These dictionaries map the string names of functions to the actual function objects.
+# avoid using the eval function to execute commands
+
+COMMAND_DISPATCH = {
+    "DOWNLINK_ALL": DOWNLINK_ALL,
+    "EVAL_STRING_COMMAND": EVAL_STRING_COMMAND,
+    "FORCE_REBOOT": FORCE_REBOOT,
+    "REQUEST_FILE_METADATA": REQUEST_FILE_METADATA,
+    "REQUEST_FILE_PKT": REQUEST_FILE_PKT,
+    "REQUEST_IMAGE": REQUEST_IMAGE,
+    "REQUEST_TM_HAL": REQUEST_TM_HAL,
+    "REQUEST_TM_NOMINAL": REQUEST_TM_NOMINAL,
+    "REQUEST_TM_PAYLOAD": REQUEST_TM_PAYLOAD,
+    "REQUEST_TM_STORAGE": REQUEST_TM_STORAGE,
+    "SCHEDULE_OD_EXPERIMENT": SCHEDULE_OD_EXPERIMENT,
+    "SUM": SUM,
+    "SWITCH_TO_STATE": SWITCH_TO_STATE,
+    "TURN_OFF_PAYLOAD": TURN_OFF_PAYLOAD,
+    "UPLINK_TIME_REFERENCE": UPLINK_TIME_REFERENCE,
+    "CREATE_TRANS": CREATE_TRANS,
+    "INIT_TRANS": INIT_TRANS,
+    "GENERATE_ALL_PACKETS": GENERATE_ALL_PACKETS,
+    "GENERATE_X_PACKETS": GENERATE_X_PACKETS,
+    "GET_SINGLE_PACKET": GET_SINGLE_PACKET,
+    "TRANS_PAYLOAD": TRANS_PAYLOAD,
+    "CONFIRM_LAST_BATCH": CONFIRM_LAST_BATCH,
+    "UPDATE_MISSING_FRAGMENTS": UPDATE_MISSING_FRAGMENTS,
+    "EXPERIMENT": EXPERIMENT
+}
+
+PRECONDITION_DISPATCH = {
+    "file_id_exists": file_id_exists,
+    "valid_inputs": valid_inputs,
+    "valid_state": valid_state,
+    "valid_time_format": valid_time_format,
+}
 
 
 class CommandProcessingStatus:
@@ -57,16 +116,16 @@ def process_command(command):
 
         if precondition_func is None:
             logger.error(f"Cmd: Unknown precondition '{precondition_name}'")
-            return CommandProcessingStatus.PRECONDITION_FAILED, [command.command_id]
+            return CommandProcessingStatus.PRECONDITION_FAILED, []
 
         try:
             # Execute the precondition function
             if not precondition_func(*argument_list):
                 logger.error("Cmd: Precondition failed")
-                return CommandProcessingStatus.PRECONDITION_FAILED, [command.command_id]
+                return CommandProcessingStatus.PRECONDITION_FAILED, []
         except Exception as e:
             logger.error(f"Cmd: Precondition check failed with error: {e}")
-            return CommandProcessingStatus.PRECONDITION_FAILED, [command.command_id]
+            return CommandProcessingStatus.PRECONDITION_FAILED, []
 
     # 2. Execute the Command
     # Look up the command function in the dispatch table
@@ -74,7 +133,7 @@ def process_command(command):
 
     if satellite_func is None:
         logger.warning(f"Cmd: Unknown command ID '{satellite_func_name}'")
-        return CommandProcessingStatus.UNKNOWN_COMMAND_ID, [command.command_id]
+        return CommandProcessingStatus.UNKNOWN_COMMAND_ID, []
 
     try:
         logger.info(f"Executing command function: {satellite_func_name}")
@@ -88,23 +147,22 @@ def process_command(command):
             response_args = [response_args]
 
         return (
-            CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS,
-            [command.command_id] + list(response_args),
+            CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS, list(response_args)
         )
 
     except Exception as e:
         logger.error(f"Cmd: Command execution failed: {e}")
         # Optionally log stack trace to a file for deeper diagnostics
-        return CommandProcessingStatus.COMMAND_EXECUTION_FAILED, [command.command_id]
+        return CommandProcessingStatus.COMMAND_EXECUTION_FAILED, []
 
 
-def handle_command_execution_status(status, response_args):
+def handle_command_execution_status(status, command_id, response_args):
     # If the command execution was successful, send a success response to Comms via Response Queue
     # If the command execution failed, send an error response with the error code to Comms via Response Queue
 
     # add ack response to transmit queue for comms to pick up and send to ground station
     # this is not the best place to do this, not sure where the best place to do this is
-    ack = Ack(status, response_args)
+    ack = Ack(status, command_id,response_args)
     TransmitQueue.push_packet(ack)
     logger.info(f"Added ack obj to transmit queue: {ack}")
 
