@@ -64,7 +64,7 @@ def _encode_ax25_address(callsign, ssid=0, last=False, h_bit=True):
         h_bit: If True, set the has-been-repeated bit.
     """
     # Pad callsign to 6 characters with spaces, then left-shift each byte
-    padded = callsign.upper().ljust(6)[:6]
+    padded = (callsign.upper() + "      ")[:6]
     addr = bytearray(7)
     for i in range(6):
         addr[i] = ord(padded[i]) << 1
