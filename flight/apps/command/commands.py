@@ -389,6 +389,7 @@ def UPDATE_SD_USAGE():
         return [f"error: {e}"]
     return ["sd usage updated", usage]
 
+@register_command()
 def EXPERIMENT(
     ts,
     camera_bit_flag,
