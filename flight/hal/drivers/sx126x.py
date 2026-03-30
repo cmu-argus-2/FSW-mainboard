@@ -345,7 +345,7 @@ ERROR = {
     0: "_ERR_NONE",
     -1: "_ERR_UNKNOWN",
     -2: "_ERR_CHIP_NOT_FOUND",
-    -3: '_ERR_PARAM_UNCHANGED',
+    -3: "_ERR_PARAM_UNCHANGED",
     -4: "_ERR_PACKET_TOO_LONG",
     -5: "_ERR_TX_TIMEOUT",
     -6: "_ERR_RX_TIMEOUT",
@@ -922,7 +922,7 @@ class SX126X:
 
         if self._bwKhz == bw:
             return _ERR_PARAM_UNCHANGED
-        
+
         if self.getPacketType() != _SX126X_PACKET_TYPE_LORA:
             return _ERR_WRONG_MODEM
 
@@ -951,10 +951,10 @@ class SX126X:
         return self.setModulationParams(self._sf, self._bw, self._cr, self._ldro)
 
     def setSpreadingFactor(self, sf):
-        
+
         if self._sf == sf:
             return _ERR_PARAM_UNCHANGED
-        
+
         if self.getPacketType() != _SX126X_PACKET_TYPE_LORA:
             return _ERR_WRONG_MODEM
 
@@ -967,8 +967,8 @@ class SX126X:
     def setCodingRate(self, cr):
 
         if self._cr == cr:
-            return  _ERR_PARAM_UNCHANGED
-        
+            return _ERR_PARAM_UNCHANGED
+
         if self.getPacketType() != _SX126X_PACKET_TYPE_LORA:
             return _ERR_WRONG_MODEM
 
@@ -1009,7 +1009,7 @@ class SX126X:
 
         if self._preambleLength == preambleLength:
             return _ERR_PARAM_UNCHANGED
-        
+
         modem = self.getPacketType()
         if modem == _SX126X_PACKET_TYPE_LORA:
             self._preambleLength = preambleLength
@@ -1530,11 +1530,11 @@ class SX1262(SX126X):
             return _ERR_INVALID_FREQUENCY
 
         state = _ERR_NONE
-        
+
         if self._frequency == freq:
             # frequency did not change, dont need to do anything
             return _ERR_PARAM_UNCHANGED
-        
+
         self._frequency = freq
         if calibrate:
             data = bytearray(2)

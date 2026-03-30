@@ -46,15 +46,25 @@ class SATELLITE_RADIO:
     tx_failed_count = 0  # this is because the radio was not available
 
     tx_message = None
-    
-    
+
     @classmethod
-    def config_radio(cls, freq=None, sf=None, bw=None, cr=None, power=None, preambleLength=None, syncWord=None, currentLimit=None, crcOn=None):
+    def config_radio(
+        cls,
+        freq=None,
+        sf=None,
+        bw=None,
+        cr=None,
+        power=None,
+        preambleLength=None,
+        syncWord=None,
+        currentLimit=None,
+        crcOn=None,
+    ):
         """
         Reconfigure radio parameters from ground station command.
         Does not perform hard reset to preserve runtime TCXO/regulator configuration.
         Attempts to set all provided parameters and returns list of states.
-        
+
         Args:
             freq: Frequency in MHz (required)
             sf: Spreading factor (5-12, optional)
@@ -65,12 +75,12 @@ class SATELLITE_RADIO:
             syncWord: Sync word (optional)
             currentLimit: Current limit in mA (optional)
             crcOn: CRC enabled boolean (optional)
-            
+
         Returns:
             List of states for each configuration attempt
         """
         states = []
-        
+
         # Do not hard-reset the radio here: a reset clears runtime config (e.g. TCXO/regulator)
         # and can cause subsequent SPI command failures during setFrequency().
         state = SATELLITE.RADIO.standby()
@@ -137,7 +147,6 @@ class SATELLITE_RADIO:
         logger.info(f"[COMMS] Radio configuration complete. States: {states}")
         return states
 
-   
     """
         Name: set_rx_mode
         Description: Used during task init to make sure that the radio is able to receive messages
