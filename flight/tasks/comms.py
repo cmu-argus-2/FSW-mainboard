@@ -5,7 +5,7 @@ from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import TransmitQueue
 from apps.comms.modes import COMMS_MODE
 from apps.telemetry.middleware import Frame as TelemetryFrame
-from apps.telemetry.splat.splat.telemetry_codec import pack
+from apps.telemetry.splat.splat.telemetry_codec import Command, pack
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
@@ -46,7 +46,8 @@ class Task(TemplateTask):
         self.log_info("Checking for incoming messages from GS...")
         if SATELLITE_RADIO.data_available():
             message_object = SATELLITE_RADIO.receive_message()
-            if message_object is None:
+            if not isinstance(message_object, Command):
+                self.log_warning("[COMMS ERROR] Received invalid command object from GS")
                 return
 
             self.log_info(f"Received command from GS: {message_object}")
