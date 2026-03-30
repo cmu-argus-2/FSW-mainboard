@@ -336,10 +336,17 @@ class Task(TemplateTask):
 
     async def main_task(self):
         
+        if TPM.time() - self._last_state_print_ts >= 5:
+            self._last_state_print_ts = TPM.time()
+            DH.log_data("payload_tm", PC.log_data)  # periodically log data
+            self.log_info(f"Current state: {PC.current_state}")
+        
         if PC.current_state == 0:
             self.run_idle_state()
+            return # prevent from reading from uart when not necessary
         if PC.current_state == 1:
             self.run_watching_state()
+            return # prevent from reading from uart when not necessary
         if PC.current_state == 2:
             self.run_booting_state()
         if PC.current_state == 3:
@@ -357,10 +364,6 @@ class Task(TemplateTask):
         if PC.current_state == 9:
             self.run_fail_state()
 
-        if TPM.time() - self._last_state_print_ts >= 5:
-            self._last_state_print_ts = TPM.time()
-            DH.log_data("payload_tm", PC.log_data)  # periodically log data
-            self.log_info(f"Current state: {PC.current_state}")
-            
-        PC.process_uart(609)
+        # TODO - do i really want to have this 
+        PC.process_uart()
             
