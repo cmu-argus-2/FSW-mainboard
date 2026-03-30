@@ -106,6 +106,8 @@ class PayloadController:
     received_off_ack = False
     received_experiment_finished = False
     received_all_files_sent = False
+    
+    waiting_shutdown = False  # this flag is set to true and it receives the turn off ack
 
     # Telemetry variables
     payload_tm_data_format = "QQQQ" + 14 * "B" + "H" + 2 * "B" + 3 * "H"

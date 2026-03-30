@@ -297,15 +297,17 @@ class Task(TemplateTask):
         go back to idle mode
         """
         
-        if PC.received_off_ack:
+        if PC.received_off_ack and not PC.waiting_shutdown:
             # we have received response from jetson, safe to turn off
-            self.log_info("Turn off ack received, cutting power to jetson.")
+            self.log_info("Received off ack, starting 20 sec wait to cut power")
             PC.OFF_TS = TPM.time()   # received the ack, lets give it time to shut down
-        
+            PC.waiting_shutdown = True
+            
         if PC.OFF_TS + PC.OFF_TIMEOUT <= TPM.time():
             self.log_info("Turn off timeout reached, cutting power to jetson.")
             PC.turn_off_power()
             if PC.received_off_ack:
+                PC.received_off_ack = False
                 PC.switch_state("SUCCESS") # receive the shutdown ack, gave time and can cut power now
             else:
                 PC.switch_state("FAIL")  # did not received the shutdown ack, failing and forcing to shutdown
