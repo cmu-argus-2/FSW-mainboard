@@ -46,7 +46,98 @@ class SATELLITE_RADIO:
     tx_failed_count = 0  # this is because the radio was not available
 
     tx_message = None
+    
+    
+    @classmethod
+    def config_radio(cls, freq=None, sf=None, bw=None, cr=None, power=None, preambleLength=None, syncWord=None, currentLimit=None, crcOn=None):
+        """
+        Reconfigure radio parameters from ground station command.
+        Does not perform hard reset to preserve runtime TCXO/regulator configuration.
+        Attempts to set all provided parameters and returns list of states.
+        
+        Args:
+            freq: Frequency in MHz (required)
+            sf: Spreading factor (5-12, optional)
+            bw: Bandwidth in kHz (optional)
+            cr: Coding rate (5-8, optional)
+            power: TX power in dBm (optional)
+            preambleLength: Preamble length in symbols (optional)
+            syncWord: Sync word (optional)
+            currentLimit: Current limit in mA (optional)
+            crcOn: CRC enabled boolean (optional)
+            
+        Returns:
+            List of states for each configuration attempt
+        """
+        states = []
+        
+        # Do not hard-reset the radio here: a reset clears runtime config (e.g. TCXO/regulator)
+        # and can cause subsequent SPI command failures during setFrequency().
+        state = SATELLITE.RADIO.standby()
+        states.append(state)
+        if state != _ERR_NONE:
+            logger.error(f"[COMMS] Failed to standby radio: {state}")
 
+        # Configure frequency (required)
+        if freq is not None:
+            state = SATELLITE.RADIO.setFrequency(freq)
+            states.append(state)
+            if state != _ERR_NONE:
+                logger.error(f"[COMMS] Failed to set frequency: {state}")
+
+        # Configure optional parameters
+        if sf is not None:
+            state = SATELLITE.RADIO.setSpreadingFactor(sf)
+            states.append(state)
+            if state != _ERR_NONE:
+                logger.error(f"[COMMS] Failed to set spreading factor: {state}")
+
+        if bw is not None:
+            state = SATELLITE.RADIO.setBandwidth(bw)
+            states.append(state)
+            if state != _ERR_NONE:
+                logger.error(f"[COMMS] Failed to set bandwidth: {state}")
+
+        if cr is not None:
+            state = SATELLITE.RADIO.setCodingRate(cr)
+            states.append(state)
+            if state != _ERR_NONE:
+                logger.error(f"[COMMS] Failed to set coding rate: {state}")
+
+        if power is not None:
+            state = SATELLITE.RADIO.setOutputPower(power)
+            states.append(state)
+            if state != _ERR_NONE:
+                logger.error(f"[COMMS] Failed to set output power: {state}")
+
+        if preambleLength is not None:
+            state = SATELLITE.RADIO.setPreambleLength(preambleLength)
+            states.append(state)
+            if state != _ERR_NONE:
+                logger.error(f"[COMMS] Failed to set preamble length: {state}")
+
+        if syncWord is not None:
+            state = SATELLITE.RADIO.setSyncWord(syncWord)
+            states.append(state)
+            if state != _ERR_NONE:
+                logger.error(f"[COMMS] Failed to set sync word: {state}")
+
+        if currentLimit is not None:
+            state = SATELLITE.RADIO.setCurrentLimit(currentLimit)
+            states.append(state)
+            if state != _ERR_NONE:
+                logger.error(f"[COMMS] Failed to set current limit: {state}")
+
+        if crcOn is not None:
+            state = SATELLITE.RADIO.setCRC(crcOn)
+            states.append(state)
+            if state != _ERR_NONE:
+                logger.error(f"[COMMS] Failed to set CRC: {state}")
+
+        logger.info(f"[COMMS] Radio configuration complete. States: {states}")
+        return states
+
+   
     """
         Name: set_rx_mode
         Description: Used during task init to make sure that the radio is able to receive messages

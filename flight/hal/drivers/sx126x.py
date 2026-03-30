@@ -275,7 +275,7 @@ _SX126X_SYNC_WORD_PRIVATE = const(0x12)
 _ERR_NONE = const(0)
 _ERR_UNKNOWN = const(-1)
 _ERR_CHIP_NOT_FOUND = const(-2)
-# ERR_MEMORY_ALLOCATION_FAILED = const(-3)
+_ERR_PARAM_UNCHANGED = const(-3)
 _ERR_PACKET_TOO_LONG = const(-4)
 _ERR_TX_TIMEOUT = const(-5)
 _ERR_RX_TIMEOUT = const(-6)
@@ -345,7 +345,7 @@ ERROR = {
     0: "_ERR_NONE",
     -1: "_ERR_UNKNOWN",
     -2: "_ERR_CHIP_NOT_FOUND",
-    # -3: 'ERR_MEMORY_ALLOCATION_FAILED',
+    -3: '_ERR_PARAM_UNCHANGED',
     -4: "_ERR_PACKET_TOO_LONG",
     -5: "_ERR_TX_TIMEOUT",
     -6: "_ERR_RX_TIMEOUT",
@@ -414,7 +414,7 @@ ERROR = {
 
 
 def ASSERT(state):
-    if state != _ERR_NONE:
+    if state != _ERR_NONE and state != _ERR_PARAM_UNCHANGED:
         raise RuntimeError(ERROR[state])
 
 
@@ -503,6 +503,7 @@ class SX126X:
         self._dataRate = 0
         self._packetLength = 0
         self._preambleDetectorLength = 0
+        self._frequency = 0
 
     def begin(
         self, bw, sf, cr, syncWord, currentLimit, preambleLength, tcxoVoltage, useRegulatorLDO=False, txIq=False, rxIq=False
@@ -523,10 +524,7 @@ class SX126X:
         self._rxIq = rxIq
         self._invertIQ = _SX126X_LORA_IQ_STANDARD
 
-        state = self.reset()
-        ASSERT(state)
-
-        state = self.standby()
+        state = self.reset_and_standby()
         ASSERT(state)
 
         state = self.config(_SX126X_PACKET_TYPE_LORA)
@@ -574,6 +572,23 @@ class SX126X:
 
         if not verify:
             return _ERR_NONE
+
+        start = ticks_ms()
+        while True:
+            state = self.standby()
+            if state == _ERR_NONE:
+                return _ERR_NONE
+            if abs(ticks_diff(start, ticks_ms())) >= 3000:
+                return state
+            sleep_ms(10)
+
+    def reset_and_standby(self, verify=True):
+        state = self.reset(verify=False)
+        if state != _ERR_NONE:
+            return state
+
+        if not verify:
+            return self.standby()
 
         start = ticks_ms()
         while True:
@@ -904,6 +919,10 @@ class SX126X:
         return state
 
     def setBandwidth(self, bw):
+
+        if self._bwKhz == bw:
+            return _ERR_PARAM_UNCHANGED
+        
         if self.getPacketType() != _SX126X_PACKET_TYPE_LORA:
             return _ERR_WRONG_MODEM
 
@@ -932,6 +951,10 @@ class SX126X:
         return self.setModulationParams(self._sf, self._bw, self._cr, self._ldro)
 
     def setSpreadingFactor(self, sf):
+        
+        if self._sf == sf:
+            return _ERR_PARAM_UNCHANGED
+        
         if self.getPacketType() != _SX126X_PACKET_TYPE_LORA:
             return _ERR_WRONG_MODEM
 
@@ -942,6 +965,10 @@ class SX126X:
         return self.setModulationParams(self._sf, self._bw, self._cr, self._ldro)
 
     def setCodingRate(self, cr):
+
+        if self._cr == cr:
+            return  _ERR_PARAM_UNCHANGED
+        
         if self.getPacketType() != _SX126X_PACKET_TYPE_LORA:
             return _ERR_WRONG_MODEM
 
@@ -952,6 +979,7 @@ class SX126X:
         return self.setModulationParams(self._sf, self._bw, self._cr, self._ldro)
 
     def setSyncWord(self, syncWord, *args):
+        # TODO - should this control bits be removed? are we using sync word in gs?
         if self.getPacketType() == _SX126X_PACKET_TYPE_LORA:
             if len(args) > 0:
                 controlBits = args[0]
@@ -978,6 +1006,10 @@ class SX126X:
         return float(ocp[0]) * 2.5
 
     def setPreambleLength(self, preambleLength):
+
+        if self._preambleLength == preambleLength:
+            return _ERR_PARAM_UNCHANGED
+        
         modem = self.getPacketType()
         if modem == _SX126X_PACKET_TYPE_LORA:
             self._preambleLength = preambleLength
@@ -1186,7 +1218,8 @@ class SX126X:
 
     def setRfFrequency(self, frf):
         data = [int((frf >> 24) & 0xFF), int((frf >> 16) & 0xFF), int((frf >> 8) & 0xFF), int(frf & 0xFF)]
-        return self.SPIwriteCommand([_SX126X_CMD_SET_RF_FREQUENCY], 1, data, 4)
+        result = self.SPIwriteCommand([_SX126X_CMD_SET_RF_FREQUENCY], 1, data, 4)
+        return result
 
     def calibrateImage(self, data):
         return self.SPIwriteCommand([_SX126X_CMD_CALIBRATE_IMAGE], 1, data, 2)
@@ -1497,7 +1530,12 @@ class SX1262(SX126X):
             return _ERR_INVALID_FREQUENCY
 
         state = _ERR_NONE
-
+        
+        if self._frequency == freq:
+            # frequency did not change, dont need to do anything
+            return _ERR_PARAM_UNCHANGED
+        
+        self._frequency = freq
         if calibrate:
             data = bytearray(2)
             if freq > 900.0:

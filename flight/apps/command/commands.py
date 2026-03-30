@@ -25,6 +25,7 @@ from apps.command.constants import file_tags_str
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
 from apps.telemetry.splat.splat.telemetry_codec import Command
+from apps.comms.comms import SATELLITE_RADIO
 from apps.telemetry.splat.splat.transport_layer import transaction_manager as TM
 from core import logger
 from core import state_manager as SM
@@ -344,6 +345,42 @@ def INIT_TRANS(tid, number_of_packets, hash_MSB, hash_LSB):
     # no need to implement now, this will only be needed if sending transactions from the gs to sat
     # return a structured "not implemented" response to avoid breaking downstream handling
     return ["not_implemented"]
+
+@register_command()
+def CONFIG_RADIO(freq, spreading_factor, bandwidth, coding_rate, tx_power, preamble_length, sync_word, current_limit, crc_enabled):
+    """
+    This function will change the radio parameters from ground station command.
+    All parameters will be configured.
+    
+    Args:
+        freq: Frequency in MHz
+        spreading_factor: Spreading factor (5-12)
+        bandwidth: Bandwidth in kHz
+        coding_rate: Coding rate (5-8)
+        tx_power: TX power in dBm
+        preamble_length: Preamble length in symbols
+        sync_word: Sync word value
+        current_limit: Current limit in mA
+        crc_enabled: CRC enabled boolean
+    """
+    
+    try:
+        states = SATELLITE_RADIO.config_radio(
+            freq=freq,
+            sf=spreading_factor,
+            bw=bandwidth,
+            cr=coding_rate,
+            power=tx_power,
+            preambleLength=preamble_length,
+            syncWord=sync_word,
+            currentLimit=current_limit,
+            crcOn=crc_enabled
+        )
+    except Exception as e:
+        logger.error(f"Error occurred while configuring radio: {e}")
+        return ["error"]
+
+    return states
 
 
 def get_tx_message_header():
