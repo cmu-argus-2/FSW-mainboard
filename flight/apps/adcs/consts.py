@@ -4,8 +4,6 @@ Constants used in ADCS apps.
 Author(s): Derek Fan
 """
 
-import math
-
 from core.satellite_config import adcs_config as CONFIG
 from ulab import numpy as np
 
@@ -35,20 +33,20 @@ class StatusConst:
     # Success Status Constants
     OK = 0
 
-    # Failure Messages
-    _FAIL_MESSAGES = {
-        GYRO_FAIL: "Gyro failure",
-        MAG_FAIL: "Magnetometer failure",
-        SUN_NO_READINGS: "No readings",
-        SUN_NOT_ENOUGH_READINGS: "Insufficient readings",
-        SUN_ECLIPSE: "In eclipse",
-        ZERO_NORM: "Zero-normed vector",
-        OK: "Success",
-    }
+    # # Failure Messages
+    # _FAIL_MESSAGES = {
+    #     GYRO_FAIL: "Gyro failure",
+    #     MAG_FAIL: "Magnetometer failure",
+    #     SUN_NO_READINGS: "No readings",
+    #     SUN_NOT_ENOUGH_READINGS: "Insufficient readings",
+    #     SUN_ECLIPSE: "In eclipse",
+    #     ZERO_NORM: "Zero-normed vector",
+    #     OK: "Success",
+    # }
 
-    @classmethod
-    def get_fail_message(cls, status):
-        return cls._FAIL_MESSAGES.get(status, "Unknown error code")
+    # @classmethod
+    # def get_fail_message(cls, status):
+    #     return cls._FAIL_MESSAGES.get(status, "Unknown error code")
 
 
 class Modes:
@@ -60,8 +58,6 @@ class Modes:
     STABLE = 1  # Satellite is spinning inside the "stable" bounds.
     SUN_POINTING = 2  # Satellite is generally pointed towards the sun.
     ACS_OFF = 3  # Satellite has pointed to the sun and ACS can be turned off
-
-    SUN_VECTOR_REF = np.array([0.0, 0.0, 1.0])
 
     # Detumbling
     TUMBLING_TOL = 0.54  # Exit detumbling into stable if ω < 0.54 rad/s (30 deg/s)
@@ -133,14 +129,17 @@ class ControllerConst:
         [[3.544e-03, -1.8729e-05, -5.2467e-06], [-1.8729e-05, 3.590e-03, 1.9134e-05], [-5.2467e-06, 1.9134e-05, 4.120e-03]]
     )
 
-    # Compute Major axis of inertia
-    _eigvals, _eigvecs = np.linalg.eig(INERTIA_MAT)
-    _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
+    # # Compute Major axis of inertia
+    # _eigvals, _eigvecs = np.linalg.eig(INERTIA_MAT)
+    # _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
 
-    INERTIA_MAJOR_DIR = _unscaled_axis / np.linalg.norm(_unscaled_axis)
-    inertia_major_dir_abs = np.array([math.fabs(dir_x) for dir_x in INERTIA_MAJOR_DIR])
-    if INERTIA_MAJOR_DIR[np.argmax(inertia_major_dir_abs)] < 0:
-        INERTIA_MAJOR_DIR = -INERTIA_MAJOR_DIR
+    # INERTIA_MAJOR_DIR = _unscaled_axis / np.linalg.norm(_unscaled_axis)
+    # inertia_major_dir_abs = np.array([math.fabs(dir_x) for dir_x in INERTIA_MAJOR_DIR])
+    # if INERTIA_MAJOR_DIR[np.argmax(inertia_major_dir_abs)] < 0:
+    #     INERTIA_MAJOR_DIR = -INERTIA_MAJOR_DIR
+
+    # Hardcoded Inertia Major Dir
+    INERTIA_MAJOR_DIR = np.array([-0.01027212, 0.03638753, 0.99928496])
 
     # Dimensions of sensor readings and control input
     READING_DIM = (3,)
