@@ -2,25 +2,15 @@
 
 from apps.payload.controller import PayloadController as PC
 from apps.payload.controller import PayloadState, map_state
-from apps.payload.definitions import ExternalRequest
 from core import TemplateTask
-from core import state_manager as SM
 from core.data_handler import DataHandler as DH
-from core.states import STATES
-
 from core.time_processor import TimeProcessor as TPM
-
 from apps.telemetry.splat.splat.telemetry_codec import Command, pack
-
 from core.dh_constants import PAYLOAD_IDX
-
-
-_NUM_IMG_TO_MAINTAIN_READY = 1  # Number of images to maintain in memory at least
 
 
 class Task(TemplateTask):
 
-    current_request = ExternalRequest.NO_ACTION
     _last_state_print_ts = 0  # Track last time state was printed
 
     def __init__(self, id):
@@ -29,15 +19,6 @@ class Task(TemplateTask):
         self.init_all_data_processes()
 
     def init_all_data_processes(self):
-        # # Image file process (uses FileProcess for binary file storage)
-        # if not DH.file_process_exists("img"):
-        #     DH.register_file_process(
-        #         tag_name="img",
-        #         file_extension="bin",
-        #         data_limit=5000000,  # 5MB max per image file
-        #         circular_buffer_size=2,  # Keep 10 images (~530KB), was 20
-        #         buffer_size=8192,  # 8KB write buffer to reduce SD flush frequency during larger bursts
-        #     )
 
         # Telemetry process
         if not DH.data_process_exists("payload_tm"):

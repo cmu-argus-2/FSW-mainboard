@@ -8,18 +8,6 @@ Author: Ibrahima Sory Sow, Perrin Tong
 
 """
 
-from apps.payload.definitions import (
-    CommandID,
-    ErrorCodes,
-    ExternalRequest,
-    FileTransfer,
-    FileTransferType,
-    ODStatus,
-    PayloadTM,
-    Resp_RequestNextFilePacket,
-    Resp_RequestNextFilePackets,
-)
-from apps.payload.protocol import Decoder, Encoder
 from apps.payload.uart_comms import PayloadUART as PU
 from core import DataHandler as DH
 from core import logger
@@ -119,23 +107,9 @@ class PayloadController:
     received_experiment_finished = False
     received_all_files_sent = False
 
-
-    # Last error (from the host perspective)
-    last_error = ErrorCodes.OK
-
-    # Boot variables
-    time_we_started_booting = 0
-    TIMEOUT_BOOT = 120  # seconds
-
     # Telemetry variables
     payload_tm_data_format = "QQQQ" + 14 * "B" + "H" + 2 * "B" + 3 * "H"
     log_data = [0] * len(payload_tm_data_format)
-    
-    _prev_tm_time = TPM.monotonic()
-    _now = TPM.monotonic()
-    telemetry_period = const(10)  # seconds
-    _not_waiting_tm_response = False
-
 
     # this is the dict were the transactions will be stored
     # TODO - will probably only have one transaction at a time, might not be worth having a dict
