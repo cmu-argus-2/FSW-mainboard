@@ -21,7 +21,7 @@ Author: Ibrahima S. Sow
 """
 
 import supervisor
-from apps.adcs.consts import ControllerModes as CM
+from apps.adcs.consts import CM
 from apps.command.constants import file_tags_str
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
@@ -346,7 +346,7 @@ def INIT_TRANS(tid, number_of_packets, hash_MSB, hash_LSB):
     # return a structured "not implemented" response to avoid breaking downstream handling
     return ["not_implemented"]
 
-
+@register_command()
 def ADCS_CTRL_MODE(mode_id):
     """Sends a command to change the ADCS controller mode."""
     logger.info(f"Executing ADCS_CTRL_MODE with mode_id: {mode_id}")
