@@ -93,6 +93,7 @@ class ControllerModes:
         else:
             return False
 
+
 class SunConst:
     """
     Constants associated with sun sensor parameters.
@@ -177,6 +178,7 @@ class MCMConst:
             [0.0, 0.0, -0.5],
         ]
     )
+
 
 # Instantiate ControllerModes to be used across apps and tasks
 CM = ControllerModes()

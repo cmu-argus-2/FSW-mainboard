@@ -346,6 +346,7 @@ def INIT_TRANS(tid, number_of_packets, hash_MSB, hash_LSB):
     # return a structured "not implemented" response to avoid breaking downstream handling
     return ["not_implemented"]
 
+
 @register_command()
 def ADCS_CTRL_MODE(mode_id):
     """Sends a command to change the ADCS controller mode."""
