@@ -4,14 +4,17 @@ import pytest
 import tests.cp_mock  # noqa: F401
 from flight.apps.adcs.math import rotation_matrix_from_vector
 
-@pytest.fixture(params=[
-    (np.array([0.0, 0.0, 0.0]), "identity"),
-    (np.array([np.pi / 2, 0.0, 0.0]), "x_axis"),
-    (np.array([0.0, np.pi / 2, 0.0]), "y_axis"),
-    (np.array([0.0, 0.0, np.pi / 2]), "z_axis"),
-    (np.array([0.5, 0.3, 0.2]), "orthogonal"),
-    (np.array([0.01, 0.005, 0.008]), "small_angle"),
-])
+
+@pytest.fixture(
+    params=[
+        (np.array([0.0, 0.0, 0.0]), "identity"),
+        (np.array([np.pi / 2, 0.0, 0.0]), "x_axis"),
+        (np.array([0.0, np.pi / 2, 0.0]), "y_axis"),
+        (np.array([0.0, 0.0, np.pi / 2]), "z_axis"),
+        (np.array([0.5, 0.3, 0.2]), "orthogonal"),
+        (np.array([0.01, 0.005, 0.008]), "small_angle"),
+    ]
+)
 def test_vector(request):
     """Fixture providing test vectors."""
     return request.param[0], request.param[1]
