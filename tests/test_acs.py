@@ -8,7 +8,7 @@ from flight.apps.adcs.consts import ControllerConst
 
 @pytest.fixture
 def tolerance() -> float:
-    return 1.0e-9
+    return 1.0e-5  # controller throttle output is quantized to 1/255
 
 
 @pytest.fixture

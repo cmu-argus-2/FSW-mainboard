@@ -10,7 +10,7 @@ from apps.adcs.acs import (
     sun_pointing_controller,
     zero_all_coils,
 )
-from apps.adcs.consts import ControllerModes, Modes, StatusConst
+from apps.adcs.consts import CM, Modes, StatusConst
 from apps.adcs.modemanager import update_mode
 from core import DataHandler as DH
 from core import TemplateTask
@@ -47,10 +47,10 @@ class Task(TemplateTask):
         "LIGHT_SENSOR_XM",
         "LIGHT_SENSOR_YP",
         "LIGHT_SENSOR_YM",
-        "LIGHT_SENSOR_ZP_1",
-        "LIGHT_SENSOR_ZP_2",
-        "LIGHT_SENSOR_ZP_3",
-        "LIGHT_SENSOR_ZP_4",
+        "LIGHT_SENSOR_ZP_XP",
+        "LIGHT_SENSOR_ZP_YP",
+        "LIGHT_SENSOR_ZP_XM",
+        "LIGHT_SENSOR_ZP_YM",
         "LIGHT_SENSOR_ZM",
         "XP_COIL_STATUS",
         "XM_COIL_STATUS",
@@ -103,8 +103,8 @@ class Task(TemplateTask):
                 DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
 
             # Check for controller mode update from commands
-            if self.CONTROLLER_MODE is not ControllerModes.current_mode:
-                self.CONTROLLER_MODE = ControllerModes.current_mode
+            if self.CONTROLLER_MODE is not CM.current_mode:
+                self.CONTROLLER_MODE = CM.current_mode
 
             self.time = TPM.time()
             self.log_data[ADCS_IDX.TIME_ADCS] = self.time
@@ -132,7 +132,7 @@ class Task(TemplateTask):
                     self.last_mag_time = new_last_mag_time
                     self.last_mag_prop_time = self.last_mag_time
                 elif (
-                    self.CONTROLLER_MODE != ControllerModes.BDOT
+                    self.CONTROLLER_MODE != CM.BDOT
                     and self.gyro_status == StatusConst.OK
                     and self.mag_status == StatusConst.OK
                 ):
@@ -196,7 +196,7 @@ class Task(TemplateTask):
                         self.last_mag_time = new_last_mag_time
                         self.last_mag_prop_time = self.last_mag_time
                     elif (
-                        self.CONTROLLER_MODE != ControllerModes.BDOT
+                        self.CONTROLLER_MODE != CM.BDOT
                         and self.gyro_status == StatusConst.OK
                         and self.mag_status == StatusConst.OK
                     ):
@@ -238,16 +238,16 @@ class Task(TemplateTask):
         """
         mtq_throttle = np.zeros((3,))
 
-        if self.CONTROLLER_MODE == ControllerModes.BDOT:
+        if self.CONTROLLER_MODE == CM.BDOT:
             if self.MODE != Modes.ACS_OFF:
                 if not (self.mag_status != StatusConst.OK):
                     mtq_throttle = bdot_controller(self.mag_data, self.prev_mag_data, self.bdot_dt)
 
-        elif self.CONTROLLER_MODE == ControllerModes.BCROSS:
+        elif self.CONTROLLER_MODE == CM.BCROSS:
             if self.MODE != Modes.ACS_OFF:
                 if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
                     mtq_throttle = bcross_controller(self.mag_data, self.gyro_data)
-        elif self.CONTROLLER_MODE == ControllerModes.SUN_POINTING:
+        elif self.CONTROLLER_MODE == CM.SUN_POINTING:
             # Decide which controller to choose
             if self.MODE in [Modes.TUMBLING, Modes.STABLE]:  # spin-stabilizing controller
 
@@ -331,10 +331,10 @@ class Task(TemplateTask):
         self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = int(self.sun_lux[2]) & 0xFFFF
         self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = int(self.sun_lux[3]) & 0xFFFF
         self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(self.sun_lux[4]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_1] = int(self.sun_lux[5]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_2] = int(self.sun_lux[6]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_3] = int(self.sun_lux[7]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_4] = int(self.sun_lux[8]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_XP] = int(self.sun_lux[5]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_YP] = int(self.sun_lux[6]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_XM] = int(self.sun_lux[7]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_YM] = int(self.sun_lux[8]) & 0xFFFF
         self.log_data[ADCS_IDX.XP_COIL_STATUS] = int(self.coil_status[0])
         self.log_data[ADCS_IDX.XM_COIL_STATUS] = int(self.coil_status[1])
         self.log_data[ADCS_IDX.YP_COIL_STATUS] = int(self.coil_status[2])
@@ -344,9 +344,10 @@ class Task(TemplateTask):
         DH.log_data("adcs", self.log_data)
 
         # Log Gyro Angular Velocities
+        self.log_info(f"Time :  {TPM.monotonic_float()}")  # self.time}")
         self.log_info(f"ADCS Mode : {self.MODE}")
         self.log_info(f"Controller Mode : {self.CONTROLLER_MODE}")
-        self.log_info(f"Gyro Ang Vel : {self.gyro_data}")
+        self.log_info(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z + 1]}")
         # [TODO:] Remove later
         self.log_info(f"Mag Field : {self.log_data[ADCS_IDX.MAG_X:ADCS_IDX.MAG_Z + 1]}")
         self.log_info(f"Sun Vector : {self.log_data[ADCS_IDX.SUN_VEC_X:ADCS_IDX.SUN_VEC_Z + 1]}")
