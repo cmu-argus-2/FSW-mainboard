@@ -32,6 +32,8 @@ def update_mode_detumbling(current_mode) -> int:
     if current_mode == Modes.TUMBLING:
         if omega_norm <= Modes.TUMBLING_TOL:
             return Modes.STABLE
+        if omega_norm >= Modes.VF_TUMBLING_TOL:
+            return Modes.VF_TUMBLING
         return Modes.TUMBLING
 
     if current_mode == Modes.STABLE:
@@ -42,11 +44,14 @@ def update_mode_detumbling(current_mode) -> int:
         return Modes.STABLE
 
     if current_mode == Modes.ACS_OFF:
-        if omega_norm >= Modes.TUMBLING_TOL:
-            return Modes.TUMBLING
         if omega_norm >= Modes.DETUMBLED_TOL_HI:
             return Modes.STABLE
         return Modes.ACS_OFF
+    
+    if current_mode == Modes.VF_TUMBLING:
+        if omega_norm < Modes.VF_TUMBLING_TOL:
+            return Modes.TUMBLING
+        return Modes.VF_TUMBLING
 
     raise ValueError(f"Invalid Current Mode {current_mode}")
 
@@ -67,6 +72,8 @@ def update_mode_sun_pointing(current_mode) -> int:
     if current_mode == Modes.TUMBLING:
         if omega_norm <= Modes.TUMBLING_TOL:
             return Modes.STABLE
+        if omega_norm >= Modes.VF_TUMBLING_TOL:
+            return Modes.VF_TUMBLING
         return Modes.TUMBLING
 
     if current_mode == Modes.STABLE:
@@ -117,5 +124,10 @@ def update_mode_sun_pointing(current_mode) -> int:
                 return Modes.SUN_POINTING
             return Modes.ACS_OFF
         return Modes.ACS_OFF
+    
+    if current_mode == Modes.VF_TUMBLING:
+        if omega_norm < Modes.VF_TUMBLING_TOL:
+            return Modes.TUMBLING
+        return Modes.VF_TUMBLING
 
     raise ValueError(f"Invalid Current Mode {current_mode}")
