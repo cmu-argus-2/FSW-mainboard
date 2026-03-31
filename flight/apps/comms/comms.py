@@ -27,8 +27,6 @@ class SATELLITE_RADIO:
     GS_CALLSIGN = CONFIG.GS_CALLSIGN
 
     # Init TM frame for preallocating memory
-    tm_frame = bytearray(248)
-
     rx_message_rssi = 0
 
     auth_enabled = bool(getattr(CONFIG, "AUTH_ENABLED", False))
