@@ -22,7 +22,6 @@ Author: Ibrahima S. Sow
 
 import supervisor
 from apps.adcs.consts import CM
-from apps.command.constants import file_tags_str
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
 from apps.telemetry.splat.splat.telemetry_codec import Command
@@ -154,51 +153,6 @@ def REQUEST_TM_PAYLOAD():
     logger.info(f"Telemetry payload packed and pushed to transmit queue {q_stat}")
 
     return [q_stat]  # return the queue status number
-
-
-@register_command()
-def REQUEST_FILE_METADATA(file_id, file_time=None):
-    """Requests metadata for a specific file from the spacecraft."""
-    logger.info(f"Executing REQUEST_FILE_METADATA with file_tag: {file_id} and file_time: {file_time}")
-    file_path = None
-    file_tag = file_tags_str[file_id]
-
-    if file_time is None or file_time == 0:
-        # None or 0 means get the latest file
-        file_path = DH.request_TM_path(file_tag, True)
-    else:
-        # Specify file_tag, latest = False and file_time
-        file_path = DH.request_TM_path(file_tag, False, file_time)
-
-    return [file_path]
-
-
-# NOTE: REQUEST_FILE_PKT handled internally in comms
-@register_command()
-def REQUEST_FILE_PKT(file_id, file_time):
-    raise NotImplementedError("Handled internally by comms subsystem")
-
-
-@register_command()
-def REQUEST_IMAGE():
-    raise NotImplementedError("Not implemented")
-
-
-@register_command()
-def DOWNLINK_ALL(file_id, file_time=None):
-    """Downlinks all packets for a specific file from the spacecraft."""
-    logger.info(f"Executing DOWNLINK_ALL with file_tag: {file_id} and file_time: {file_time}")
-    file_path = None
-    file_tag = file_tags_str[file_id]
-
-    if file_time is None or file_time == 0:
-        # None or 0 means get the latest file
-        file_path = DH.request_TM_path(file_tag)
-    else:
-        # Specify file_tag, latest = False and file_time
-        file_path = DH.request_TM_path(file_tag, False, file_time)
-
-    return [file_path]
 
 
 @register_command()
@@ -357,6 +311,47 @@ def ADCS_CTRL_MODE(mode_id):
     return [mode_id, valid]
 
 
-def get_tx_message_header():
-    """ " Helper function to obtain the tx message header to send back"""
-    return int.from_bytes(TelemetryFrame.FRAME()[0:1], "big")
+@register_command()
+def LIST_DIR(skip_elements, string_command):
+    """
+    Try and list whatever is on the given directory
+    the result will be sent as a string, skip_elements will skip the first x elements
+    """
+
+    import os
+
+    try:
+        file_list = os.listdir(string_command)
+    except Exception as e:
+        return [f"error: {e}"]
+
+    return file_list[skip_elements:]
+
+
+@register_command()
+def DELETE_ALL_FILES():
+    """
+    Simple command that will delete all files
+    it will call datahandler function that will deal with it
+    """
+
+    try:
+        DH.delete_all_files()
+    except Exception as e:
+        return [f"error: {e}"]
+    return ["all files deleted"]
+
+
+@register_command()
+def UPDATE_SD_USAGE():
+    """
+    Calls the DH function to compute the sd card usage and update it on the DH
+    it will also return the current sd_usage
+    """
+
+    try:
+        DH.update_SD_usage()
+        usage = DH.SD_usage()
+    except Exception as e:
+        return [f"error: {e}"]
+    return ["sd usage updated", usage]

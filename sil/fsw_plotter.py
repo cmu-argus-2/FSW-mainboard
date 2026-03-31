@@ -173,7 +173,7 @@ def plot_FSW(result_folder_path, plot_sim_mag=True):
     # Use timestamps_gyro for plotting (assuming all timestamps are aligned)
     # Plot ADCS Mode
     # Plot ADCS Mode
-    mode_names = ["TUMBLING", "STABLE", "SUN_POINTED", "ACS_OFF","VF_TUMBLING"]
+    mode_names = ["TUMBLING", "STABLE", "SUN_POINTED", "ACS_OFF", "VF_TUMBLING"]
     global_mode_names = ["STARTUP", "DETUMBLING", "NOMINAL", "EXPERIMENT", "LOW_POWER"]
 
     plt.figure(figsize=(12, 7))

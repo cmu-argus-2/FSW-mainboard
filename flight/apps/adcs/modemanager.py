@@ -47,7 +47,7 @@ def update_mode_detumbling(current_mode) -> int:
         if omega_norm >= Modes.DETUMBLED_TOL_HI:
             return Modes.STABLE
         return Modes.ACS_OFF
-    
+
     if current_mode == Modes.VF_TUMBLING:
         if omega_norm < Modes.VF_TUMBLING_TOL:
             return Modes.TUMBLING
@@ -124,7 +124,7 @@ def update_mode_sun_pointing(current_mode) -> int:
                 return Modes.SUN_POINTING
             return Modes.ACS_OFF
         return Modes.ACS_OFF
-    
+
     if current_mode == Modes.VF_TUMBLING:
         if omega_norm < Modes.VF_TUMBLING_TOL:
             return Modes.TUMBLING
