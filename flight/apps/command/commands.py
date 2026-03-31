@@ -27,6 +27,7 @@ from apps.telemetry.splat.splat.telemetry_codec import Command
 from apps.telemetry.splat.splat.transport_layer import transaction_manager as TM
 from core import logger
 from core import state_manager as SM
+from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
 
@@ -297,3 +298,49 @@ def INIT_TRANS(tid, number_of_packets, hash_MSB, hash_LSB):
     # no need to implement now, this will only be needed if sending transactions from the gs to sat
     # return a structured "not implemented" response to avoid breaking downstream handling
     return ["not_implemented"]
+
+
+@register_command()
+def LIST_DIR(skip_elements, string_command):
+    """
+    Try and list whatever is on the given directory
+    the result will be sent as a string, skip_elements will skip the first x elements
+    """
+
+    import os
+
+    try:
+        file_list = os.listdir(string_command)
+    except Exception as e:
+        return [f"error: {e}"]
+
+    return file_list[skip_elements:]
+
+
+@register_command()
+def DELETE_ALL_FILES():
+    """
+    Simple command that will delete all files
+    it will call datahandler function that will deal with it
+    """
+
+    try:
+        DH.delete_all_files()
+    except Exception as e:
+        return [f"error: {e}"]
+    return ["all files deleted"]
+
+
+@register_command()
+def UPDATE_SD_USAGE():
+    """
+    Calls the DH function to compute the sd card usage and update it on the DH
+    it will also return the current sd_usage
+    """
+
+    try:
+        DH.update_SD_usage()
+        usage = DH.SD_usage()
+    except Exception as e:
+        return [f"error: {e}"]
+    return ["sd usage updated", usage]
