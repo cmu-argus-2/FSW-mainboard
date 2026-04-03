@@ -30,7 +30,7 @@ class DownloadManager:
     
     # Configuration constants
     BATCH_SIZE = 40                # packets per batch
-    LISTEN_TIMEOUT =  3 #(BATCH_SIZE * 500 * 8) / 460800             # seconds per batch listen adding 5byte margin per packet
+    LISTEN_TIMEOUT =  5 #(BATCH_SIZE * 500 * 8) / 460800             # seconds per batch listen adding 5byte margin per packet
     SAVE_FOLDER = "sd"
     MAX_BATCH_RETRIES = 3
     

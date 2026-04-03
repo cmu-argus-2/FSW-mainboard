@@ -365,5 +365,5 @@ class Task(TemplateTask):
             self.run_fail_state()
 
         # TODO - do i really want to have this 
-        PC.process_uart()
+        PC.process_uart(609)
             
