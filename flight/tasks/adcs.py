@@ -239,12 +239,12 @@ class Task(TemplateTask):
         mtq_throttle = np.zeros((3,))
 
         if self.CONTROLLER_MODE == CM.BDOT:
-            if self.MODE != Modes.ACS_OFF or self.MODE != Modes.VF_TUMBLING:
+            if self.MODE != Modes.ACS_OFF and self.MODE != Modes.VF_TUMBLING:
                 if not (self.mag_status != StatusConst.OK):
                     mtq_throttle = bdot_controller(self.mag_data, self.prev_mag_data, self.bdot_dt)
 
         elif self.CONTROLLER_MODE == CM.BCROSS:
-            if self.MODE != Modes.ACS_OFF or self.MODE != Modes.VF_TUMBLING:
+            if self.MODE != Modes.ACS_OFF and self.MODE != Modes.VF_TUMBLING:
                 if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
                     mtq_throttle = bcross_controller(self.mag_data, self.gyro_data)
         elif self.CONTROLLER_MODE == CM.SUN_POINTING:
@@ -307,7 +307,6 @@ class Task(TemplateTask):
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ LOGGING """
-
     # ------------------------------------------------------------------------------------------------------------------------------------
     def log(self):
         """

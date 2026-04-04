@@ -58,10 +58,11 @@ class Modes:
     STABLE = 1  # Satellite is spinning inside the "stable" bounds.
     SUN_POINTING = 2  # Satellite is generally pointed towards the sun.
     ACS_OFF = 3  # Satellite has pointed to the sun and ACS can be turned off
-    VF_TUMBLING = 4 # Satellite is tumbling too fast for the ACS to work
+    VF_TUMBLING = 4  # Satellite is tumbling too fast for the ACS to work
 
     # Detumbling
-    VF_TUMBLING_TOL = 3.49  # Enter VF tumbling if ω > 0.54 rad/s (200 deg/s)
+    VF_TUMBLING_TOL_BDOT = 2.62  # 1.75  # Enter VF tumbling if ω > 1.75 rad/s (100 deg/s)
+    VF_TUMBLING_TOL = 5.24  # 3.49  # Enter VF tumbling if ω > 3.49 rad/s (200 deg/s)
     TUMBLING_TOL = 0.54  # Exit detumbling into stable if ω < 0.54 rad/s (30 deg/s)
 
     # Detumbling only controllers

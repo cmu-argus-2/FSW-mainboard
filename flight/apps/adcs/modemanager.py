@@ -11,13 +11,13 @@ def update_mode(current_mode, ctr_mode) -> int:
     - Returns the current mode of the ADCS
     """
     if ctr_mode in [ControllerModes.BCROSS, ControllerModes.BDOT]:
-        return update_mode_detumbling(current_mode)
+        return update_mode_detumbling(current_mode, ctr_mode)
     if ctr_mode == ControllerModes.SUN_POINTING:
         return update_mode_sun_pointing(current_mode)
     raise ValueError(f"Invalid Controller Mode {ctr_mode}")
 
 
-def update_mode_detumbling(current_mode) -> int:
+def update_mode_detumbling(current_mode, ctr_mode) -> int:
     """
     Returns the current mode of the ADCS for a detumbling-only controller
     """
@@ -32,7 +32,9 @@ def update_mode_detumbling(current_mode) -> int:
     if current_mode == Modes.TUMBLING:
         if omega_norm <= Modes.TUMBLING_TOL:
             return Modes.STABLE
-        if omega_norm >= Modes.VF_TUMBLING_TOL:
+        if omega_norm >= Modes.VF_TUMBLING_TOL and ctr_mode == ControllerModes.BCROSS:
+            return Modes.VF_TUMBLING
+        if omega_norm >= Modes.VF_TUMBLING_TOL_BDOT and ctr_mode == ControllerModes.BDOT:
             return Modes.VF_TUMBLING
         return Modes.TUMBLING
 
@@ -49,7 +51,9 @@ def update_mode_detumbling(current_mode) -> int:
         return Modes.ACS_OFF
 
     if current_mode == Modes.VF_TUMBLING:
-        if omega_norm < Modes.VF_TUMBLING_TOL:
+        if omega_norm < Modes.VF_TUMBLING_TOL and ctr_mode == ControllerModes.BCROSS:
+            return Modes.TUMBLING
+        if omega_norm < Modes.VF_TUMBLING_TOL_BDOT and ctr_mode == ControllerModes.BDOT:
             return Modes.TUMBLING
         return Modes.VF_TUMBLING
 
