@@ -22,6 +22,8 @@ from apps.telemetry.splat.splat.transport_layer import Transaction
 from apps.payload.download_manager import DownloadManager
 
 from micropython import const
+from hal.argus_v4 import ArgusV4Components
+
 
 _PING_RESP_VALUE = const(0x60)  # DO NOT CHANGE THIS VALUE
 
@@ -618,7 +620,14 @@ class PayloadController:
         """
         This should turn on power to the jetson
         """
-        logger.error("[PAYLOAD] - Turning on power to jetson, please implement this method")
+        logger.debug("[PAYLOAD] Turning on Jetson power...")
+        # try:
+        #     ArgusV4Components.JETSON_ENABLE.value = True #TODO:Write a jetson available function in cubesat.py? 
+        #     logger.info("[PAYLOAD] Jetson power enabled successfully.")
+        #     return True
+        # except Exception as e:
+        #     logger.error(f"[PAYLOAD] Failed to enable payload power: {e}")
+        #     return False
     
     @classmethod
     def turn_off_power(cls):
@@ -626,4 +635,24 @@ class PayloadController:
         This should turn off power to the jetson
         """
         logger.error("[PAYLOAD] - Turning off power to jetson, please implement this method")
+        # try:
+        #     #Perform graceful shutdown
+        #     if (cls.shutdown_jetson_process()):
+        #         logger.info("[PAYLOAD] Shutdown command sent successfully, waiting for payload to shutdown before cutting power")
+        #         ArgusV4Components.JETSON_ENABLE.value = False
+        #         return True
+        #     logger.error("[PAYLOAD] Graceful shutdown not successful")
+        #     return False
+        # except Exception as e:
+        #     logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
+        #     return False
+
+    @classmethod
+    def shutdown_jetson_process_gracefully(cls):
+        """
+        This should gracefully shutdown the jetson and 
+        """
+        logger.error("[PAYLOAD] - Shutting down jetson gracefully, please implement this method")
+        return False
+
 
