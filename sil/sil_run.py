@@ -1,11 +1,11 @@
 import argparse
+import atexit
 import collections.abc
 import os
 import shutil
 import signal
 import subprocess
 import sys
-import time
 from datetime import datetime
 
 import yaml
@@ -24,6 +24,23 @@ from sil.fsw_plotter import collect_FSW_data, plot_FSW, plot_results
 # DEFAULT_OUTFILE = "sil_logs.log"
 # DEFAULT_N_TRIALS = 1  # Default number of trials to run
 DEFAULT_CONFIGFILE = "sil_campaign_params.yaml"
+STARTUP_OVERHEAD_S = 60.0  # wall-clock budget for build-emulator.py before main.py starts
+
+# Module-level handle to the active simulation process so atexit and SIGTERM can clean it up.
+_active_process: "subprocess.Popen | None" = None
+
+
+def _cleanup_active_process() -> None:
+    """Kill the active sim subprocess on exit to prevent orphaned processes."""
+    if _active_process is not None and _active_process.poll() is None:
+        try:
+            os.killpg(os.getpgid(_active_process.pid), signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+
+
+atexit.register(_cleanup_active_process)
+signal.signal(signal.SIGTERM, lambda *_: sys.exit(1))  # ensure atexit runs on SIGTERM
 
 # KEYWORD SEARCHES:
 # List of all keywords to probe the log for
@@ -32,24 +49,45 @@ KEYWORDS = {"WARNING": "\033[93m", "ERROR": "\033[91m"}
 
 
 def FSW_simulate(
-    runtime: float, outfile: str, trial_number: int, trial_date: str, sim_set_name: str, sim_real_speedup: int
+    max_sim_time: float, outfile: str, trial_number: int, trial_date: str, sim_set_name: str, sim_real_speedup: int
 ) -> None:
+    # The FSW process exits naturally via SimulationComplete when MAX_TIME is reached (exit code 0).
+    # TimeoutExpired means the process hung and is a genuine error.
+    global _active_process
+    safety_timeout = STARTUP_OVERHEAD_S + max_sim_time / sim_real_speedup * 2
     try:
         with open(outfile, "w") as log_file:
-            # option to run a number of simulations, and to run a specific trial
             process = subprocess.Popen(
                 ["./run.sh", "simulate", str(trial_number), trial_date, sim_set_name, str(sim_real_speedup)],
                 stdout=log_file,
                 stderr=log_file,
-                preexec_fn=lambda: (os.setsid(), signal.alarm(20)),
+                start_new_session=True,
             )
-            print(f"Running simulation for {runtime} seconds, output written to {outfile}")
-            time.sleep(runtime)
-            print("Terminating...")
-            os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-
+            _active_process = process
+            print(
+                f"Running simulation: MAX_TIME={max_sim_time}s at {sim_real_speedup}x speedup, " f"output written to {outfile}"
+            )
+            try:
+                process.wait(timeout=safety_timeout)
+                if process.returncode != 0:
+                    raise RuntimeError(f"Simulation process exited with error (code {process.returncode})")
+            except subprocess.TimeoutExpired:
+                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                process.wait()
+                raise RuntimeError(
+                    f"Simulation hung: did not complete within {safety_timeout:.0f}s "
+                    f"(MAX_TIME={max_sim_time}s, speedup={sim_real_speedup}x)"
+                )
+            except (KeyboardInterrupt, SystemExit):
+                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                process.wait()
+                raise
+    except RuntimeError:
+        raise
     except Exception as e:
         print(f"Error running sim: {e}")
+    finally:
+        _active_process = None
 
 
 def parse_FSW_logs(outfile):
@@ -127,12 +165,14 @@ def update_fsw_config(sim_set_config):
 
 def run_simulation_trial(
     trial_number: int, trial_date: str, sim_set_name: str, sim_real_speedup: int, set_config_params, args
-) -> None:
+) -> float:
+    """Returns wall-clock elapsed time for the trial in seconds."""
+    trial_start = datetime.now()
 
     # Run FSW Simulation
     FSW_simulate(
-        int(set_config_params["runtime"]),
-        set_config_params["outfile"],
+        max_sim_time=set_config_params["param_changes"]["MAX_TIME"],
+        outfile=set_config_params["outfile"],
         trial_number=trial_number,
         trial_date=trial_date,
         sim_set_name=sim_set_name,
@@ -150,7 +190,9 @@ def run_simulation_trial(
         erase_sil_logs=args.erase_sil_logs,
         percent_to_log=set_config_params["fsw_percent_to_log"],
     )
-    print(f"Trial {trial_number} of {sim_set_name} completed. Results saved to {trial_result_folder_path}")
+    elapsed = (datetime.now() - trial_start).total_seconds()
+    print(f"Trial {trial_number} of {sim_set_name} completed in {elapsed:.1f}s. Results saved to {trial_result_folder_path}")
+    return elapsed
 
 
 def arg_parse(parser):
@@ -217,8 +259,9 @@ if __name__ == "__main__":
         # Update the fsw config.yaml
         update_fsw_config(sil_campaign_params["sil_campaign"][sim_set])
         # Run simulation set script
+        trial_times = []
         for i in range(n_trials):
-            run_simulation_trial(
+            elapsed = run_simulation_trial(
                 trial_number=i + first_trial_id,
                 trial_date=trial_date,
                 sim_set_name=sim_set,
@@ -226,6 +269,7 @@ if __name__ == "__main__":
                 set_config_params=set_config_params,
                 args=args,
             )
+            trial_times.append((i + first_trial_id, elapsed))
 
         # Run Plotting (Sim states)
         sim_set_folder_path = os.path.join("sil/results", trial_date, sim_set)
@@ -234,6 +278,23 @@ if __name__ == "__main__":
         description_file_path = os.path.join(sim_set_folder_path, "description.txt")
         with open(description_file_path, "w") as description_file:
             description_file.write(sil_campaign_params["sil_campaign"][sim_set]["description"])
+
+        # Write timing.txt
+        times = [t for _, t in trial_times]
+        timing_file_path = os.path.join(sim_set_folder_path, "timing.txt")
+        with open(timing_file_path, "w") as f:
+            f.write(f"Sim set : {sim_set}\n")
+            f.write(
+                f"MAX_TIME: {set_config_params['param_changes']['MAX_TIME']}s | speedup: {sim_real_speedup}x | trials: {n_trials}\n"
+            )
+            f.write("-" * 40 + "\n")
+            for trial_num, t in trial_times:
+                f.write(f"trial {trial_num:>4d}: {t:>8.1f}s\n")
+            f.write("-" * 40 + "\n")
+            f.write(f"total   : {sum(times):>8.1f}s\n")
+            f.write(f"mean    : {sum(times)/len(times):>8.1f}s\n")
+            f.write(f"min     : {min(times):>8.1f}s\n")
+            f.write(f"max     : {max(times):>8.1f}s\n")
 
         # os.path.join(campaign_folder_path, f"sil_set_{i_sim_set}")
         plot_results(result_folder_path=sim_set_folder_path)
