@@ -105,7 +105,10 @@ if machine in ("aarch64", "arm64"):
 if system == "Darwin":
     MPY_CROSS_NAME = "mpy-cross-macos-cpy9" if CPY_VERSION == 9 else "mpy-cross-macos"
 if platform.node() == "raspberrypi":
-    MPY_CROSS_NAME = "mpy-cross-rpi"
+    if CPY_VERSION == 9:
+        MPY_CROSS_NAME = "mpy-cross-rpi-cpy9"
+    else:
+        MPY_CROSS_NAME = "mpy-cross-rpi"
 MPY_CROSS_PATH = f"{os.getcwd()}/build_tools/{MPY_CROSS_NAME}"
 
 if system == "Windows":
