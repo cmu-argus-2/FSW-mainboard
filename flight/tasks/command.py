@@ -368,9 +368,9 @@ class Task(TemplateTask):
             # has access to the global state. External requests exists as a last resort to control the
             # payload from the CDH (and Payload task itself =/= Payload Controller)
 
-            # Note all ground commands related to the payload are executed in the command processor
-            if PC.state == PayloadState.READY:
-                pass
+            # # Note all ground commands related to the payload are executed in the command processor
+            # if PC.state == PayloadState.READY:
+            #     pass
 
             """Transitions out of EXPERIMENT"""
             if self.EPS_MODE != EPS_POWER_FLAG.EXPERIMENT and not _PAYLOAD_TESTING_MODE:

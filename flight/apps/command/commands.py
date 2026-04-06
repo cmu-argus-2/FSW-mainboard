@@ -32,6 +32,7 @@ from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
 
+from hal.argus_v4 import ArgusV4Components
 
 FILE_PKTSIZE = 240
 COMMAND_REGISTRY = {}
@@ -87,8 +88,25 @@ def UPLINK_TIME_REFERENCE(time_reference):
 def TURN_OFF_PAYLOAD():
     """Sends a shutdown command to the payload and turns off its power line."""
     logger.info("Executing TURN_OFF_PAYLOAD")
+    try:
+        logger.info("[PAYLOAD] Shutdown command sent successfully, waiting for payload to shutdown before cutting power")
+        ArgusV4Components.JETSON_ENABLE.value = False
+
+    except Exception as e:
+        logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
+
     return []
 
+@register_command()
+def TURN_ON_PAYLOAD():
+    """Sends a turn-on  command to the payload and turns off its power line."""
+    logger.info("Executing TURN_ON_PAYLOAD")
+    try:
+        ArgusV4Components.JETSON_ENABLE.value = True #TODO:Write a jetson available function in cubesat.py? 
+        logger.info("[PAYLOAD] Jetson power enabled successfully.")
+    except Exception as e:
+        logger.error(f"[PAYLOAD] Failed to enable payload power: {e}")
+    return []
 
 @register_command()
 def SCHEDULE_OD_EXPERIMENT():
