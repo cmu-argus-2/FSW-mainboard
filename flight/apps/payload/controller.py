@@ -393,7 +393,7 @@ class PayloadController:
         logger.error("Please implement me")
         
     @classmethod 
-    def process_uart(cls, max_packet_size=255):
+    def process_uart(cls, max_packet_size=609):
         """
         This function will read from uart and try and process the commands/ack received
         """

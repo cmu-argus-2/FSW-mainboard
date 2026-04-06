@@ -159,7 +159,7 @@ class DownloadManager:
         start_listen_time = TPM.time()
         target_batch_count = self._calculate_batch_width()
         while TPM.time() - start_listen_time < self.LISTEN_TIMEOUT:
-            uart_reader_callback(max_packet_size=609)
+            uart_reader_callback()
             if self.current_batch_received_count >= target_batch_count:
                 logger.info(
                     f"[DOWNLOAD_MGR] Received {self.current_batch_received_count} fragments for tid={self.current_tid}, seq_offset={self.current_batch_offset}. Ending listen early."

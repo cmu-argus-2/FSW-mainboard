@@ -32,12 +32,12 @@ class PayloadUART(PayloadCommunicationInterface):
         cls._connected = False
 
     @classmethod
-    def send(cls, pckt):
+    def send(cls, pckt, max_packet_size=609):
         
         # check the size to see if we need padding
         # the final size should be 609
-        if len(pckt) < 609:
-            pckt += b'\x00' * (609 - len(pckt))
+        if len(pckt) < max_packet_size:
+            pckt += b'\x00' * (max_packet_size - len(pckt))
             
         logger.info(f"[PAYLOAD] - Sending packet {pckt}") 
         logger.info(f"[PAYLOAD] -   len:{len(pckt)}") 
