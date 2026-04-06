@@ -419,7 +419,9 @@ class PayloadController:
             cls.process_fragment(message_object)
         if isinstance(message_object, Report):
             cls.process_report(message_object)
-            
+        
+        return True   # TODO - maybe should change this to return the received packet type
+        
     @classmethod
     def process_report(cls, report):
         """

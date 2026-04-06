@@ -29,8 +29,8 @@ class DownloadManager:
     """
     
     # Configuration constants
-    BATCH_SIZE = 40                # packets per batch
-    LISTEN_TIMEOUT =  5 #(BATCH_SIZE * 500 * 8) / 460800             # seconds per batch listen adding 5byte margin per packet
+    BATCH_SIZE = 40              # packets per batch
+    TIMEOUT_BETWEEN_PACKETS = 1  # This will be the new timeout in listening mode, if no packets are recevied within this timeout it will exit listen
     SAVE_FOLDER = "sd"
     MAX_BATCH_RETRIES = 3
     
@@ -141,7 +141,7 @@ class DownloadManager:
         3. Calculate confirmation bitmap
         
         Args:
-            uart_reader_callback: Callable that processes UART data for LISTEN_TIMEOUT seconds
+            uart_reader_callback: Callable that processes UART data
                                  Should be: PC.process_uart
         
         Returns:
@@ -156,10 +156,18 @@ class DownloadManager:
         
         # Listen for packets in this batch window
         logger.info("Entering listen mode")
-        start_listen_time = TPM.time()
+        last_received_packet = TPM.time()    # this is the time at which the last received packet has been received
         target_batch_count = self._calculate_batch_width()
-        while TPM.time() - start_listen_time < self.LISTEN_TIMEOUT:
-            uart_reader_callback()
+        
+        while TPM.time() - last_received_packet < self.TIMEOUT_BETWEEN_PACKETS:
+            
+            packet_received = uart_reader_callback()
+
+            if packet_received:
+                # we have received a packet, need to update the time
+                last_received_packet = TPM.time()
+            
+            # check to see if we have received all the packets
             if self.current_batch_received_count >= target_batch_count:
                 logger.info(
                     f"[DOWNLOAD_MGR] Received {self.current_batch_received_count} fragments for tid={self.current_tid}, seq_offset={self.current_batch_offset}. Ending listen early."
