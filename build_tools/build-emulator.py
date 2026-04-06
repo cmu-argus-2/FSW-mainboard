@@ -133,8 +133,8 @@ def get_branch_name():
         return None
 
 
-def create_build(source_folder, emulator_folder):
-    build_folder = "build/"
+def create_build(source_folder, emulator_folder, worker_id=0):
+    build_folder = "build/" if worker_id == 0 else f"build_{worker_id}/"
     # avoid deleting the whole sd so we can simulate a proper reboot
     if os.path.exists(os.path.join(build_folder, "lib/")):
         shutil.rmtree(os.path.join(build_folder, "lib/"))
@@ -185,9 +185,10 @@ def create_build(source_folder, emulator_folder):
 
     # Adding data_handler.py to the build folder
     # shutil.copy2("flight/core/data_handler.py", "build/lib/core/data_handler.py")
+    root = "build" if worker_id == 0 else f"build_{worker_id}"
     with open("flight/core/data_handler.py", "r") as file:
         updated_content = file.read().replace('_HOME_PATH = "/sd"', '_HOME_PATH = "sd"')
-    with open("build/lib/core/data_handler.py", "w") as file:
+    with open(f"{root}/lib/core/data_handler.py", "w") as file:
         file.write(updated_content)
 
     # Create main.py file with single import statement "import main_module"
@@ -232,6 +233,12 @@ if __name__ == "__main__":
         action="store_true",
         help="Use flight.yaml configuration instead of ground.yaml",
     )
+    parser.add_argument(
+        "--worker-id",
+        type=int,
+        default=0,
+        help="Worker ID for parallel builds (0 = default build/ directory, N = build_N/)",
+    )
     args = parser.parse_args()
 
     source_folder = args.source_folder
@@ -246,4 +253,4 @@ if __name__ == "__main__":
     if GIT_COMMIT:
         print(f"Commit: {GIT_COMMIT}")
 
-    build_folder = create_build(source_folder, emulator_folder)
+    build_folder = create_build(source_folder, emulator_folder, worker_id=args.worker_id)

@@ -25,9 +25,7 @@ CONFIG_FILE = os.path.join(ARGUS_ROOT, "sil/configs/params.yaml")
 
 
 class SimulationComplete(BaseException):
-    """Raised when the physics engine reaches MAX_TIME, signalling the FSW to exit cleanly.
-    Inherits from BaseException (not Exception) so task-level except Exception handlers
-    cannot swallow it."""
+    """Raised when the physics engine reaches MAX_TIME, signalling the FSW to exit cleanly."""
 
     pass
 
