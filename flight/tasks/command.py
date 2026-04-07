@@ -3,6 +3,7 @@
 # It also executes commands received from the ground station (TBD)
 
 import gc
+import os
 
 import apps.command.processor as processor
 from apps.adcs.consts import Modes
@@ -14,7 +15,9 @@ from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX
+from core.logging import LEVELS as LOG_LEVELS, RotatingFileHandler, getLogger
 from core.satellite_config import command_config as CONFIG
+from core.satellite_config import log_config as LOG_CONFIG
 from core.states import STATES, STR_STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
@@ -63,6 +66,7 @@ class Task(TemplateTask):
         self.last_deployment_time = None
 
         self.antenna_tries = 0
+        self.file_logging_enabled = False
 
     def get_memory_usage(self):
         return int(gc.mem_alloc() / self.total_memory * 100)
@@ -166,6 +170,30 @@ class Task(TemplateTask):
 
                 if not DH.data_process_exists("cmd_logs"):
                     DH.register_data_process("cmd_logs", "LBB", True, data_limit=100000)
+
+                # Enable file logging to SD card (runs once, after SD is confirmed ready)
+                if not self.file_logging_enabled:
+                    try:
+                        try:
+                            os.mkdir(LOG_CONFIG.LOG_DIR)
+                        except OSError:
+                            pass  # Directory already exists
+                        file_handler = RotatingFileHandler(
+                            LOG_CONFIG.LOG_FILENAME,
+                            mode="a",
+                            maxBytes=LOG_CONFIG.LOG_FILE_MAX_BYTES,
+                            backupCount=LOG_CONFIG.LOG_FILE_BACKUP_COUNT,
+                        )
+                        file_level = 0
+                        for lvl_int, lvl_str in LOG_LEVELS:
+                            if lvl_str == LOG_CONFIG.LOG_FILE_LEVEL:
+                                file_level = lvl_int
+                        file_handler.setLevel(file_level)
+                        getLogger("core_logger").addHandler(file_handler)
+                        self.file_logging_enabled = True
+                        self.log_info("File logging enabled on SD card")
+                    except Exception as e:
+                        self.log_warning(f"File logging not available: {e}")
 
                 # check if the deployment is ready to be performed
                 deployment_time_check = (

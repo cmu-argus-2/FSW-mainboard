@@ -33,3 +33,11 @@ class comms_config:
     AUTH_KEY_HEX = "d6172b38acb7d2a28e21662f689d1d15ad78ccc888a9c7a78ef58cb61b0f1e32"
     SC_CALLSIGN = "CT6ARG"
     GS_CALLSIGN = "CS5CEP"
+
+
+class log_config:
+    LOG_DIR = "/sd/sys_logs"
+    LOG_FILENAME = "/sd/sys_logs/fsw.log"
+    LOG_FILE_MAX_BYTES = 102400
+    LOG_FILE_BACKUP_COUNT = 9
+    LOG_FILE_LEVEL = "WARNING"

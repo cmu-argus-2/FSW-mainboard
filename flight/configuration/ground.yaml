@@ -53,3 +53,16 @@ comms:
     value: "CT6xxx"
   GS_CALLSIGN:
     value: "CSXXXX"
+
+# Flight Software Log Handler (SD card file logging)
+log:
+  LOG_DIR:
+    value: "/sd/sys_logs"
+  LOG_FILENAME:
+    value: "/sd/sys_logs/fsw.log"
+  LOG_FILE_MAX_BYTES:
+    value: 102400  # 100 KB per file
+  LOG_FILE_BACKUP_COUNT:
+    value: 9  # 10 total files x 100 KB = ~1 MB max on SD
+  LOG_FILE_LEVEL:
+    value: "WARNING"  # File captures WARNING+ only; serial stays at INFO
