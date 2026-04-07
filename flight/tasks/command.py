@@ -15,7 +15,8 @@ from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX
-from core.logging import LEVELS as LOG_LEVELS, RotatingFileHandler, getLogger
+from core.logging import LEVELS as LOG_LEVELS
+from core.logging import RotatingFileHandler, getLogger
 from core.satellite_config import command_config as CONFIG
 from core.satellite_config import log_config as LOG_CONFIG
 from core.states import STATES, STR_STATES
