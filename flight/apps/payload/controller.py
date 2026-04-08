@@ -8,6 +8,8 @@ Author: Ibrahima Sory Sow, Perrin Tong
 
 """
 
+import time
+
 from apps.payload.uart_comms import PayloadUART as PU
 from core import DataHandler as DH
 from core import logger
@@ -400,7 +402,7 @@ class PayloadController:
         
         data = cls.read(max_packet_size)   # read the max packet size
         
-        if not data:
+        if not data or len(data) < max_packet_size:
             # nothing to be done here
             return False
 

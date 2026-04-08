@@ -86,6 +86,13 @@ class Task(TemplateTask):
             self.log_info("Command time has arrived, switching to booting state.")
             PC.BOOT_TS = TPM.time()
             PC.received_ping_ack = False
+
+            # power the jetson
+            if not PC.turn_on_power():
+                self.log_warning("Failed to turn on payload power.")
+                PC.switch_state("FAIL")
+                return
+            
             PC.switch_state("BOOTING")
             return
         

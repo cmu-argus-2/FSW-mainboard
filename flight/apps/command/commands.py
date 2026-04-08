@@ -20,6 +20,8 @@ Author: Ibrahima S. Sow
 
 """
 
+import time
+
 import supervisor
 from apps.command.constants import file_tags_str
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
