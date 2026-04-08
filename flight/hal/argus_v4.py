@@ -264,7 +264,6 @@ class ArgusV4Components:
     # PAYLOAD_IO0 = board.PAYLOAD_IO0
     # PAYLOAD_IO1 = board.PAYLOAD_IO1
     # PAYLOAD_IO2 = board.PAYLOAD_IO2
-    JETSON_SD_REQ = board.JETSON_SD_REQ
     # PAYLOAD_CS = board.PAYLOAD_nCS
     # PAYLOAD_EN = board.PAYLOAD_EN
 
@@ -282,6 +281,8 @@ class ArgusV4Components:
 
     # JETSON
     JETSON_UART = ArgusV4Interfaces.JETSON_UART
+    JETSON_SD_REQ = digitalio.DigitalInOut(board.JETSON_SD_REQ)   # this have been wired to 5v dcdc enable
+    JETSON_SD_REQ.direction = digitalio.Direction.OUTPUT
     JETSON_ENABLE = digitalio.DigitalInOut(board.JETSON_EN)
     JETSON_ENABLE.direction = digitalio.Direction.OUTPUT
 

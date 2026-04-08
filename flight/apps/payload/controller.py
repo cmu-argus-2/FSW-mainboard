@@ -623,31 +623,30 @@ class PayloadController:
         This should turn on power to the jetson
         """
         logger.debug("[PAYLOAD] Turning on Jetson power...")
-        # try:
-        #     ArgusV4Components.JETSON_ENABLE.value = True #TODO:Write a jetson available function in cubesat.py? 
-        #     logger.info("[PAYLOAD] Jetson power enabled successfully.")
-        #     return True
-        # except Exception as e:
-        #     logger.error(f"[PAYLOAD] Failed to enable payload power: {e}")
-        #     return False
-    
+        try:
+            ArgusV4Components.JETSON_SD_REQ.value = True
+            time.sleep(0.1)   # TODO: probably do not need this delay
+            ArgusV4Components.JETSON_ENABLE.value = True
+            logger.info("[PAYLOAD] Jetson power enabled successfully.")
+            return True
+        except Exception as e:
+            logger.error(f"[PAYLOAD] Failed to enable payload power: {e}")
+            return False
+
     @classmethod
     def turn_off_power(cls):
         """
-        This should turn off power to the jetson
+        This function will cut the power to the jetson
         """
-        logger.error("[PAYLOAD] - Turning off power to jetson, please implement this method")
-        # try:
-        #     #Perform graceful shutdown
-        #     if (cls.shutdown_jetson_process()):
-        #         logger.info("[PAYLOAD] Shutdown command sent successfully, waiting for payload to shutdown before cutting power")
-        #         ArgusV4Components.JETSON_ENABLE.value = False
-        #         return True
-        #     logger.error("[PAYLOAD] Graceful shutdown not successful")
-        #     return False
-        # except Exception as e:
-        #     logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
-        #     return False
+        logger.error("[PAYLOAD] - Turning off power to jetson")
+        try:
+            ArgusV4Components.JETSON_ENABLE.value = False
+            time.sleep(0.1)   # TODO: probably do not need this delay
+            ArgusV4Components.JETSON_SD_REQ.value = False    # turn off the 5v regulator to save power
+            return True
+        except Exception as e:
+            logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
+            return False
 
     @classmethod
     def shutdown_jetson_process_gracefully(cls):

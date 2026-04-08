@@ -295,6 +295,9 @@ class Task(TemplateTask):
             once received it will cut the power to the jetson
         if timeout reaches it will also cut the power to the jetson
         go back to idle mode
+        
+        TODO: instead of having fixed time here, read the values reported from jetson current sensor
+            will still need to have a timeout 
         """
         
         if PC.received_off_ack and not PC.waiting_shutdown:

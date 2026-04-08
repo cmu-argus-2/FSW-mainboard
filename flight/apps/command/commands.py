@@ -91,6 +91,8 @@ def TURN_OFF_PAYLOAD():
     try:
         logger.info("[PAYLOAD] Shutdown command sent successfully, waiting for payload to shutdown before cutting power")
         ArgusV4Components.JETSON_ENABLE.value = False
+        time.sleep(0.1)
+        ArgusV4Components.JETSON_SD_REQ.value = False   # turn of 5v dcdc to save more power
 
     except Exception as e:
         logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
@@ -102,7 +104,10 @@ def TURN_ON_PAYLOAD():
     """Sends a turn-on  command to the payload and turns off its power line."""
     logger.info("Executing TURN_ON_PAYLOAD")
     try:
+        ArgusV4Components.JETSON_SD_REQ.value = True
+        time.sleep(0.1)
         ArgusV4Components.JETSON_ENABLE.value = True #TODO:Write a jetson available function in cubesat.py? 
+
         logger.info("[PAYLOAD] Jetson power enabled successfully.")
     except Exception as e:
         logger.error(f"[PAYLOAD] Failed to enable payload power: {e}")
