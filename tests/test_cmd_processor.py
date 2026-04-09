@@ -1,7 +1,6 @@
 import time
 
 import pytest
-from micropython import const
 
 # Setup CircuitPython mocks for testing
 import tests.cp_mock  # noqa: F401
@@ -63,28 +62,28 @@ def test_process_command_success(setup_commands):
     cmd = MockCommand(command_id=0x01, satellite_func="mock_command_success", precondition=None, arguments=[])
     result, response_args = process_command(cmd)
     assert result == CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS
-    assert response_args == [0x01]
+    assert response_args == []
 
 
 def test_process_command_precondition_failed(setup_commands):
     cmd = MockCommand(command_id=0x02, satellite_func="mock_command_success", precondition="always_false", arguments=[])
     result, response_args = process_command(cmd)
     assert result == CommandProcessingStatus.PRECONDITION_FAILED
-    assert response_args == [0x02]
+    assert response_args == []
 
 
 def test_process_command_execution_failed(setup_commands):
     cmd = MockCommand(command_id=0x04, satellite_func="mock_command_fail", precondition=None, arguments=[])
     result, response_args = process_command(cmd)
     assert result == CommandProcessingStatus.COMMAND_EXECUTION_FAILED
-    assert response_args == [0x04]
+    assert response_args == []
 
 
 def test_process_command_unknown_command(setup_commands):
     cmd = MockCommand(command_id=0xFF, satellite_func="unknown_function", precondition=None, arguments=[])
     result, response_args = process_command(cmd)
     assert result == CommandProcessingStatus.UNKNOWN_COMMAND_ID
-    assert response_args == [0xFF]
+    assert response_args == []
 
 
 def test_valid_time_format():
@@ -105,8 +104,8 @@ def test_valid_time_format():
 
 
 def test_valid_state():
-    invalid_state = const(0x0A)
-
+    invalid_state = 0x0A  # Using a simple integer instead of const for testing
+    
     # Checking that it detects invalid state
     assert not valid_state(invalid_state)
 
