@@ -91,7 +91,7 @@ class PayloadController:
     DWN_LAST_FRAGMENT_TS = 0  # time at which last fragment was received during download
 
     OFF_TS = 0  # time at which switched to turning off state
-    OFF_TIMEOUT = 20  # time to wait for the jetson to respond to shutdown command befoer forcing shutdown
+    OFF_TIMEOUT = 15  # time to wait for the jetson to respond to shutdown command befoer forcing shutdown
 
     TELEM_TS = 0  # time at which last telemetry was requested
     TELEM_PERIOD = 20  # request telemetry every 20s
