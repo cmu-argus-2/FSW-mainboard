@@ -32,7 +32,7 @@ from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
-from hal.argus_v4 import ArgusV4Components
+from hal.configuration import SATELLITE
 
 FILE_PKTSIZE = 240
 COMMAND_REGISTRY = {}
@@ -88,11 +88,16 @@ def UPLINK_TIME_REFERENCE(time_reference):
 def TURN_OFF_PAYLOAD():
     """Sends a shutdown command to the payload and turns off its power line."""
     logger.info("Executing TURN_OFF_PAYLOAD")
+
+    if not SATELLITE.PAYLOADPOWER_AVAILABLE:
+        logger.warning("[PAYLOAD] Payload power pins is not available.")
+        return ["payload power pins not available"]
+    
     try:
         logger.info("[PAYLOAD] Shutdown command sent successfully, waiting for payload to shutdown before cutting power")
-        ArgusV4Components.JETSON_ENABLE.value = False
+        SATELLITE.JETSON_ENABLE.value = False
         time.sleep(0.1)
-        ArgusV4Components.JETSON_SD_REQ.value = False  # turn of 5v dcdc to save more power
+        SATELLITE.JETSON_SD_REQ.value = False  # turn of 5v dcdc to save more power
 
     except Exception as e:
         logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
@@ -104,10 +109,15 @@ def TURN_OFF_PAYLOAD():
 def TURN_ON_PAYLOAD():
     """Sends a turn-on  command to the payload and turns off its power line."""
     logger.info("Executing TURN_ON_PAYLOAD")
+    
+    if not SATELLITE.PAYLOADPOWER_AVAILABLE:
+        logger.warning("[PAYLOAD] Payload power pins is not available.")
+        return ["payload power pins not available"]
+
     try:
-        ArgusV4Components.JETSON_SD_REQ.value = True
+        SATELLITE.JETSON_SD_REQ.value = True
         time.sleep(0.1)
-        ArgusV4Components.JETSON_ENABLE.value = True  # TODO:Write a jetson available function in cubesat.py?
+        SATELLITE.JETSON_ENABLE.value = True  # TODO:Write a jetson available function in cubesat.py?
 
         logger.info("[PAYLOAD] Jetson power enabled successfully.")
     except Exception as e:

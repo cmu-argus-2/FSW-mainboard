@@ -280,7 +280,7 @@ class ArgusV4Components:
     #########
 
     # JETSON
-    JETSON_UART = ArgusV4Interfaces.JETSON_UART
+    JETSON_UART = ArgusV4Interfaces.JETSON_UART    # TODO: i dont think we need this here
     JETSON_SD_REQ = digitalio.DigitalInOut(board.JETSON_SD_REQ)   # this have been wired to 5v dcdc enable
     JETSON_SD_REQ.direction = digitalio.Direction.OUTPUT
     JETSON_ENABLE = digitalio.DigitalInOut(board.JETSON_EN)
@@ -315,6 +315,8 @@ class ArgusV4(CubeSat):
         super().__init__()
 
         self.__payload_uart = ArgusV4Interfaces.JETSON_UART
+        self.__jetson_enable = ArgusV4Components.JETSON_ENABLE
+        self.__jetson_sd_req = ArgusV4Components.JETSON_SD_REQ
 
     ######################## BOOT SEQUENCE ########################
 

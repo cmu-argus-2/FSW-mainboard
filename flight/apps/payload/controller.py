@@ -20,7 +20,6 @@ from core import DataHandler as DH
 from core import logger
 from core.dh_constants import PAYLOAD_IDX
 from core.time_processor import TimeProcessor as TPM
-from hal.argus_v4 import ArgusV4Components
 from hal.configuration import SATELLITE
 from micropython import const
 
@@ -617,10 +616,15 @@ class PayloadController:
         This should turn on power to the jetson
         """
         logger.debug("[PAYLOAD] Turning on Jetson power...")
+
+        if not SATELLITE.PAYLOADPOWER_AVAILABLE:
+            logger.warning("[PAYLOAD] Payload power pins is not available.")
+            return False
+        
         try:
-            ArgusV4Components.JETSON_SD_REQ.value = True
-            time.sleep(0.1)  # TODO: probably do not need this delay
-            ArgusV4Components.JETSON_ENABLE.value = True
+            SATELLITE.JETSON_ENABLE.value = False
+            time.sleep(0.1) # TODO: probably do not need this delay
+            SATELLITE.JETSON_SD_REQ.value = False  # turn of 5v dcdc to save more power
             logger.info("[PAYLOAD] Jetson power enabled successfully.")
             return True
         except Exception as e:
@@ -633,10 +637,15 @@ class PayloadController:
         This function will cut the power to the jetson
         """
         logger.error("[PAYLOAD] - Turning off power to jetson")
+
+        if not SATELLITE.PAYLOADPOWER_AVAILABLE:
+            logger.warning("[PAYLOAD] Payload power pins is not available.")
+            return False
+        
         try:
-            ArgusV4Components.JETSON_ENABLE.value = False
+            SATELLITE.JETSON_ENABLE.value = False
             time.sleep(0.1)  # TODO: probably do not need this delay
-            ArgusV4Components.JETSON_SD_REQ.value = False  # turn off the 5v regulator to save power
+            SATELLITE.JETSON_SD_REQ.value = False  # turn off the 5v regulator to save power
             return True
         except Exception as e:
             logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
