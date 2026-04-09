@@ -272,7 +272,7 @@ def GENERATE_X_PACKETS(tid, x):
 
 
 @register_command()
-def GET_SINGLE_PACKET(tid, seq_number):
+def GENERATE_SINGLE_PACKET(tid, seq_number):
     # 1. search for the transaction id
     transaction = TM.get_transaction(tid)
     if transaction is None:
