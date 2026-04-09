@@ -650,11 +650,3 @@ class PayloadController:
         except Exception as e:
             logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
             return False
-
-    @classmethod
-    def shutdown_jetson_process_gracefully(cls):
-        """
-        This should gracefully shutdown the jetson and
-        """
-        logger.error("[PAYLOAD] - Shutting down jetson gracefully, please implement this method")
-        return False
