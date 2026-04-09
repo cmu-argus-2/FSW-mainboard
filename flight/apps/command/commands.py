@@ -32,7 +32,6 @@ from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
-
 from hal.argus_v4 import ArgusV4Components
 
 FILE_PKTSIZE = 240

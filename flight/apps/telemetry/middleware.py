@@ -17,7 +17,7 @@ except ImportError:
 from apps.telemetry.splat.splat.telemetry_codec import Report
 from core import DataHandler as DH
 from core import logger
-from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, STORAGE_IDX, PAYLOAD_IDX
+from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, PAYLOAD_IDX, STORAGE_IDX
 
 
 class Frame:

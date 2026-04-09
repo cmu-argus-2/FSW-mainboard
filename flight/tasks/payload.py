@@ -2,11 +2,11 @@
 
 from apps.payload.controller import PayloadController as PC
 from apps.payload.controller import PayloadState, map_state
+from apps.telemetry.splat.splat.telemetry_codec import Command, pack
 from core import TemplateTask
 from core.data_handler import DataHandler as DH
-from core.time_processor import TimeProcessor as TPM
-from apps.telemetry.splat.splat.telemetry_codec import Command, pack
 from core.dh_constants import PAYLOAD_IDX
+from core.time_processor import TimeProcessor as TPM
 
 
 class Task(TemplateTask):

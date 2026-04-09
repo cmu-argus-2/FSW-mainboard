@@ -10,21 +10,19 @@ Author: Ibrahima Sory Sow, Perrin Tong
 
 import time
 
+from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
+from apps.payload.download_manager import DownloadManager
 from apps.payload.uart_comms import PayloadUART as PU
+from apps.telemetry.splat.splat.telemetry_codec import Ack, Command, Fragment, Report, pack, unpack
+from apps.telemetry.splat.splat.telemetry_definition import COMMAND_IDS
+from apps.telemetry.splat.splat.transport_layer import Transaction
 from core import DataHandler as DH
 from core import logger
 from core.dh_constants import PAYLOAD_IDX
 from core.time_processor import TimeProcessor as TPM
-from apps.telemetry.splat.splat.telemetry_definition import COMMAND_IDS
-from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
-from hal.configuration import SATELLITE
-
-from apps.telemetry.splat.splat.telemetry_codec import Command, pack, unpack, Ack, Fragment, Report
-from apps.telemetry.splat.splat.transport_layer import Transaction
-from apps.payload.download_manager import DownloadManager
-
-from micropython import const
 from hal.argus_v4 import ArgusV4Components
+from hal.configuration import SATELLITE
+from micropython import const
 
 _PING_RESP_VALUE = const(0x60)  # DO NOT CHANGE THIS VALUE
 
