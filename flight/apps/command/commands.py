@@ -93,12 +93,13 @@ def TURN_OFF_PAYLOAD():
         logger.info("[PAYLOAD] Shutdown command sent successfully, waiting for payload to shutdown before cutting power")
         ArgusV4Components.JETSON_ENABLE.value = False
         time.sleep(0.1)
-        ArgusV4Components.JETSON_SD_REQ.value = False   # turn of 5v dcdc to save more power
+        ArgusV4Components.JETSON_SD_REQ.value = False  # turn of 5v dcdc to save more power
 
     except Exception as e:
         logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
 
     return []
+
 
 @register_command()
 def TURN_ON_PAYLOAD():
@@ -107,12 +108,13 @@ def TURN_ON_PAYLOAD():
     try:
         ArgusV4Components.JETSON_SD_REQ.value = True
         time.sleep(0.1)
-        ArgusV4Components.JETSON_ENABLE.value = True #TODO:Write a jetson available function in cubesat.py? 
+        ArgusV4Components.JETSON_ENABLE.value = True  # TODO:Write a jetson available function in cubesat.py?
 
         logger.info("[PAYLOAD] Jetson power enabled successfully.")
     except Exception as e:
         logger.error(f"[PAYLOAD] Failed to enable payload power: {e}")
     return []
+
 
 @register_command()
 def SCHEDULE_OD_EXPERIMENT():
@@ -368,6 +370,7 @@ def UPDATE_SD_USAGE():
         return [f"error: {e}"]
     return ["sd usage updated", usage]
 
+
 @register_command()
 def EXPERIMENT(
     ts,
@@ -402,8 +405,8 @@ def EXPERIMENT(
     level_of_processing   -> what level of processing to run TODO - add here the options
     resolution            -> The resolution of the images. They are taken at full resolution and scaled down
     """
-    from apps.payload.controller import PayloadController as PC 
-    
+    from apps.payload.controller import PayloadController as PC
+
     logger.info(f"[PAYLOAD] - Experiment command received to run at {ts}")
     result = PC.add_command(
         ts,

@@ -87,9 +87,7 @@ def process_command(command):
         elif not isinstance(response_args, (list, tuple)):
             response_args = [response_args]
 
-        return (
-            CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS, list(response_args)
-        )
+        return (CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS, list(response_args))
 
     except Exception as e:
         logger.error(f"Cmd: Command execution failed: {e}")
@@ -103,7 +101,7 @@ def handle_command_execution_status(status, command_id, response_args):
 
     # add ack response to transmit queue for comms to pick up and send to ground station
     # this is not the best place to do this, not sure where the best place to do this is
-    ack = Ack(status, command_id,response_args)
+    ack = Ack(status, command_id, response_args)
     TransmitQueue.push_packet(ack)
     logger.info(f"Added ack obj to transmit queue: {ack}")
 
