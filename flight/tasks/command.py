@@ -8,8 +8,6 @@ import apps.command.processor as processor
 from apps.adcs.consts import Modes
 from apps.command import QUEUE_STATUS, CommandQueue
 from apps.eps.eps import EPS_POWER_FLAG
-from apps.payload.controller import PayloadController as PC
-from apps.payload.controller import PayloadState
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM

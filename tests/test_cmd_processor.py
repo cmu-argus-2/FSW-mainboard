@@ -105,7 +105,7 @@ def test_valid_time_format():
 
 def test_valid_state():
     invalid_state = 0x0A  # Using a simple integer instead of const for testing
-    
+
     # Checking that it detects invalid state
     assert not valid_state(invalid_state)
 

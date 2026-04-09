@@ -2,7 +2,6 @@
 
 from apps.payload.communication import PayloadCommunicationInterface
 from core import logger
-from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 
 
@@ -33,17 +32,17 @@ class PayloadUART(PayloadCommunicationInterface):
 
     @classmethod
     def send(cls, pckt, max_packet_size=609):
-        
+
         # check the size to see if we need padding
         # the final size should be 609
         if len(pckt) < max_packet_size:
-            pckt += b'\x00' * (max_packet_size - len(pckt))
-            
-        logger.info(f"[PAYLOAD] - Sending packet {pckt}") 
-        logger.info(f"[PAYLOAD] -   len:{len(pckt)}") 
+            pckt += b"\x00" * (max_packet_size - len(pckt))
+
+        logger.info(f"[PAYLOAD] - Sending packet {pckt}")
+        logger.info(f"[PAYLOAD] -   len:{len(pckt)}")
 
         cls._uart.write(pckt)
-        
+
     @classmethod
     def read(cls, bytes=609):
         return cls._uart.read(bytes)

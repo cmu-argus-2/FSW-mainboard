@@ -92,7 +92,7 @@ def TURN_OFF_PAYLOAD():
     if not SATELLITE.PAYLOADPOWER_AVAILABLE:
         logger.warning("[PAYLOAD] Payload power pins is not available.")
         return ["payload power pins not available"]
-    
+
     try:
         logger.info("[PAYLOAD] Shutdown command sent successfully, waiting for payload to shutdown before cutting power")
         SATELLITE.JETSON_ENABLE.value = False
@@ -109,7 +109,7 @@ def TURN_OFF_PAYLOAD():
 def TURN_ON_PAYLOAD():
     """Sends a turn-on  command to the payload and turns off its power line."""
     logger.info("Executing TURN_ON_PAYLOAD")
-    
+
     if not SATELLITE.PAYLOADPOWER_AVAILABLE:
         logger.warning("[PAYLOAD] Payload power pins is not available.")
         return ["payload power pins not available"]

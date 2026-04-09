@@ -164,7 +164,7 @@ class PayloadController:
             logger.info("[PAYLOAD] -  Switching to SUCCESS state")
             # lets generate a message to be send to the grounstation to let them know that the experiment has finished
             # TODO - would be nice to let the gs know how many files the experiment generated
-            success_ack_message = Ack(0, COMMAND_IDS["EXPERIMENT"], f"Experiment succeeded")
+            success_ack_message = Ack(0, COMMAND_IDS["EXPERIMENT"], "Experiment succeeded")
             q_stat = TransmitQueue.push_packet(success_ack_message)
             if q_stat != QUEUE_STATUS.OK:
                 logger.error("Failed to push finished ack experiment success message to transmit queue")
@@ -483,7 +483,7 @@ class PayloadController:
         # see if it was a ping ack
         if ack.cmd_id == COMMAND_IDS["PING"]:
             # it was a ping command
-            if cls.received_ping_ack == True:
+            if cls.received_ping_ack:
                 logger.error("[PAYLOAD] - PING ACK OVERRIDDEN")
             cls.received_ping_ack = True
             logger.info("[PAYLOAD] - received_ping_ack set to true")
@@ -492,7 +492,7 @@ class PayloadController:
         # see if it was a experiment ack
         if ack.cmd_id == COMMAND_IDS["EXPERIMENT"]:
             # it was a experiment command
-            if cls.received_experiment_ack == True:
+            if cls.received_experiment_ack:
                 logger.error("[PAYLOAD] - EXPERIMENT ACK OVERRIDDEN")
             cls.received_experiment_ack = True
             return
@@ -500,7 +500,7 @@ class PayloadController:
         # see if it was a off ack
         if ack.cmd_id == COMMAND_IDS["TURN_OFF_PAYLOAD"]:
             # it was a off command
-            if cls.received_off_ack == True:
+            if cls.received_off_ack:
                 logger.error("[PAYLOAD] - OFF ACK OVERRIDDEN")
             cls.received_off_ack = True
             return
@@ -554,13 +554,13 @@ class PayloadController:
 
         # check experiment finished command (during PROCESSING)
         if command.name == "EXPERIMENT_FINISHED":
-            if cls.received_experiment_finished == True:
+            if cls.received_experiment_finished:
                 logger.error("[PAYLOAD] - EXPERIMENT FINISHED COMMAND OVERRIDDEN")
             cls.received_experiment_finished = True
 
         # check all files sent command (during DOWNLOAD)
         if command.name == "DOWNLOAD_FINISH":
-            if cls.received_all_files_sent == True:
+            if cls.received_all_files_sent:
                 logger.error("[PAYLOAD] - ALL FILES SENT COMMAND OVERRIDDEN")
             cls.received_all_files_sent = True
 
@@ -620,10 +620,10 @@ class PayloadController:
         if not SATELLITE.PAYLOADPOWER_AVAILABLE:
             logger.warning("[PAYLOAD] Payload power pins is not available.")
             return False
-        
+
         try:
             SATELLITE.JETSON_ENABLE.value = False
-            time.sleep(0.1) # TODO: probably do not need this delay
+            time.sleep(0.1)  # TODO: probably do not need this delay
             SATELLITE.JETSON_SD_REQ.value = False  # turn of 5v dcdc to save more power
             logger.info("[PAYLOAD] Jetson power enabled successfully.")
             return True
@@ -641,7 +641,7 @@ class PayloadController:
         if not SATELLITE.PAYLOADPOWER_AVAILABLE:
             logger.warning("[PAYLOAD] Payload power pins is not available.")
             return False
-        
+
         try:
             SATELLITE.JETSON_ENABLE.value = False
             time.sleep(0.1)  # TODO: probably do not need this delay
