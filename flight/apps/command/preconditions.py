@@ -1,5 +1,3 @@
-from apps.command.constants import file_tags_str
-from core.data_handler import DataHandler
 from core.state_machine import STATES
 
 """ Contains functions to check the preconditions of Commands """
@@ -70,17 +68,5 @@ def valid_time_format(*args) -> bool:
         return True
     else:
         return False
-
-
-@register_precondition()
-def file_id_exists(*args) -> bool:
-    """
-    Precondition for REQUEST_FILE_METADATA command.
-    Checks that it is a valid file id that is mapped to a tag and that the file tag exists as a data process.
-    """
-    file_id = args[0]
-
-    return (file_id in file_tags_str) and (DataHandler.data_process_exists(file_tags_str[file_id]))
-
 
 # TODO: add a precondition for OD experiment (no OD should be in progress)

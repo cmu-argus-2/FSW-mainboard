@@ -27,43 +27,6 @@ class Frame:
     maybe will use this for more than telemetry later on
     """
 
-    _TM_AVAILABLE = False
-    _TM_FRAME_SIZE = const(248)  # this defines the maximum frame size
-
-    # Pre-allocated frame buffer
-    _FRAME = bytearray(_TM_FRAME_SIZE)  # [TODO] - not sure if preallocating is the best idea here.
-    # what about messages that are smaller
-
-    @classmethod
-    def FRAME(cls):
-        return cls._FRAME
-
-    @classmethod
-    def set_FRAME(cls, frame_bytes):
-        if len(frame_bytes) > 248:
-            logger.error("Frame size exceeds maximum limit")
-            return False
-
-        cls._FRAME[: len(frame_bytes)] = frame_bytes
-        cls._TM_AVAILABLE = True
-        return True
-
-    @classmethod
-    def FRAME_SIZE(cls):
-        return cls._TM_FRAME_SIZE
-
-    @classmethod
-    def PACKET_LENGTH(cls):
-        return cls._FRAME[3]
-
-    @classmethod
-    def TM_AVAILABLE(cls):
-        return cls._TM_AVAILABLE
-
-    @classmethod
-    def TM_EXHAUSTED(cls):
-        cls._TM_AVAILABLE = False
-
     @classmethod
     def get_dh_latest_data(cls, ss):
         """

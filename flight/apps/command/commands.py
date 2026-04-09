@@ -23,7 +23,6 @@ Author: Ibrahima S. Sow
 import time
 
 import supervisor
-from apps.command.constants import file_tags_str
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
 from apps.telemetry.splat.splat.telemetry_codec import Command
@@ -179,51 +178,6 @@ def REQUEST_TM_PAYLOAD():
     logger.info(f"Telemetry payload packed and pushed to transmit queue {q_stat}")
 
     return [q_stat]  # return the queue status number
-
-
-@register_command()
-def REQUEST_FILE_METADATA(file_id, file_time=None):
-    """Requests metadata for a specific file from the spacecraft."""
-    logger.info(f"Executing REQUEST_FILE_METADATA with file_tag: {file_id} and file_time: {file_time}")
-    file_path = None
-    file_tag = file_tags_str[file_id]
-
-    if file_time is None or file_time == 0:
-        # None or 0 means get the latest file
-        file_path = DH.request_TM_path(file_tag, True)
-    else:
-        # Specify file_tag, latest = False and file_time
-        file_path = DH.request_TM_path(file_tag, False, file_time)
-
-    return [file_path]
-
-
-# NOTE: REQUEST_FILE_PKT handled internally in comms
-@register_command()
-def REQUEST_FILE_PKT(file_id, file_time):
-    raise NotImplementedError("Handled internally by comms subsystem")
-
-
-@register_command()
-def REQUEST_IMAGE():
-    raise NotImplementedError("Not implemented")
-
-
-@register_command()
-def DOWNLINK_ALL(file_id, file_time=None):
-    """Downlinks all packets for a specific file from the spacecraft."""
-    logger.info(f"Executing DOWNLINK_ALL with file_tag: {file_id} and file_time: {file_time}")
-    file_path = None
-    file_tag = file_tags_str[file_id]
-
-    if file_time is None or file_time == 0:
-        # None or 0 means get the latest file
-        file_path = DH.request_TM_path(file_tag)
-    else:
-        # Specify file_tag, latest = False and file_time
-        file_path = DH.request_TM_path(file_tag, False, file_time)
-
-    return [file_path]
 
 
 @register_command()
