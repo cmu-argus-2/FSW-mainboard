@@ -30,7 +30,6 @@ class Task(TemplateTask):
                 circular_buffer_size=200,
             )
 
-
         # TODO - not sure what this is for
         # OD process (should be a separate file process)
         if not DH.data_process_exists("payload_od"):
@@ -56,13 +55,13 @@ class Task(TemplateTask):
         If there are no commands, it will just return
         """
         self.log_info("Running payload")
-        
+
         if PC.command_available():
             # means that we now have a command that is available, want to switch state to watching
             self.log_info("Command available, switching to watching state.")
             PC.switch_state("WATCHING")
             return
-        
+
         # no command available, nothing to do
         return
 
@@ -72,12 +71,12 @@ class Task(TemplateTask):
         Used to allow scheduling of comamnds. It will get the first command on the list of commands
             list of commands is ordered by timestamp
         and will check the timestamp of the command to the current timestamp
-        
-        if command timestmap < current timestamp it will change to booting mode 
-        
+
+        if command timestmap < current timestamp it will change to booting mode
+
         TODO - add margin to make sure that we turn the payload a few moments before the actual time
         """
-        
+
         command = PC.get_first_command()
         self.log_info(f"Watching for command: {command}")
         # check to see if the time to execute the command has arrived
@@ -92,12 +91,12 @@ class Task(TemplateTask):
                 self.log_warning("Failed to turn on payload power.")
                 PC.switch_state("FAIL")
                 return
-            
+
             PC.switch_state("BOOTING")
             return
-        
+
         self.log_info(f"   Missing {command[0] - TPM.time()} seconds")
-    
+
         # not time to run the command yet
         return
 
@@ -111,7 +110,7 @@ class Task(TemplateTask):
         The command has been choosen when switched to this state to make sure that if boots fails, it will
         not attempt to run the command again
         """
-        
+
         # check to see if we got response from ping
         if PC.received_ping_ack:
             # means we have received a response from jetson, moving to ACTIVE state
@@ -119,15 +118,15 @@ class Task(TemplateTask):
             PC.received_experiment_ack = False
             PC.ACT_TS = TPM.time()
             PC.switch_state("ACTIVE")
-            
+
             # set the last_executed_time i
             PC.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME] = TPM.time()
-            
+
             return
-        
+
         PC.send_ping()  # if we send before checking received ping we might send twice
-        
-        # check timeout 
+
+        # check timeout
         if PC.BOOT_TS + PC.BOOT_TIMEOUT <= TPM.time():
             self.log_error("Boot timeout reached, switching to FAIL state.")
             PC.switch_state("FAIL")
@@ -135,7 +134,7 @@ class Task(TemplateTask):
 
         # no response from pign and no timeout
         return
-    
+
     def run_active_state(self):
         """
         This state will be responsible for forwarding the command to the jetson
@@ -145,7 +144,7 @@ class Task(TemplateTask):
             once received, it will move on to processing mode
         command has already been choosen and removed from the list when it switched to boot state
         """
-        
+
         # wait for a response
         if PC.received_experiment_ack:
             # means that we have received the response to the command (jetson has received command)
@@ -155,7 +154,7 @@ class Task(TemplateTask):
             PC.received_experiment_finished = False
             PC.switch_state("PROCESSING")
             return
-        
+
         if PC.ACT_TS + PC.ACT_TIMEOUT <= TPM.time():
             self.log_error("Active timeout reached, switching to FAIL state.")
             PC.switch_state("FAIL")
@@ -164,7 +163,7 @@ class Task(TemplateTask):
         # send the command
         # TODO - only want to send this every 5 seconds for example
         PC.send_current_command()  # current command was choosen in switch state
-            
+
     def run_processing_state(self):
         """
         This is the state we will be at while waiting for the jetson to run the command
@@ -190,8 +189,6 @@ class Task(TemplateTask):
             self.log_info("Processing finished, switching to FINISHED state.")
             PC.switch_state("FINISHED")
             return
-        
-        
 
     def run_finished_state(self):
         """
@@ -201,17 +198,17 @@ class Task(TemplateTask):
         """
         # TODO - check if this state is needed
         self.log_info("Finished state reached.")
-        
+
         # move directly to download state
         PC.DWN_TS = TPM.time()
         PC.switch_state("DOWNLOAD")
-        
+
         return
-    
+
     def run_download_state(self):
         """
         Download state: delegate file download orchestration to DownloadManager.
-        
+
         This state processes file downloads from the payload in batches:
         1. Receive and process one batch of packets (32 packets default)
         2. Generate confirmation bitmap
@@ -224,16 +221,16 @@ class Task(TemplateTask):
             self.log_error("Download fragment timeout reached, switching to FAIL state.")
             PC.switch_state("FAIL")
             return
-        
+
         # If no transactions to process yet, wait for them
         if not PC.received_create_trans or not PC.received_init_trans:
             return
-        
+
         # Get current download status
         status = PC.get_download_status()
 
         # Only leave DOWNLOAD when the payload explicitly reports that all files were sent
-        if not status['has_active_file']:
+        if not status["has_active_file"]:
             if PC.received_all_files_sent:
                 self.log_info("Payload reported all files sent, transitioning to OFF state.")
                 PC.switch_state("OFF")
@@ -241,7 +238,7 @@ class Task(TemplateTask):
             else:
                 self.log_info("No active file right now; waiting for next file or completion signal from payload.")
             return
-        
+
         try:
             # Process one batch: listen, save, generate bitmap
             bitmap_high, bitmap_low = PC.download_manager.process_batch(PC.process_uart)
@@ -250,49 +247,44 @@ class Task(TemplateTask):
                 return
 
             status = PC.get_download_status()
-            
+
             # Send confirmation to jetson
             command = Command("CONFIRM_LAST_BATCH")
-            command.add_argument("tid", status['current_tid'])
+            command.add_argument("tid", status["current_tid"])
             command.add_argument("bitmap_high", bitmap_high)
             command.add_argument("bitmap_low", bitmap_low)
             PC.send_confirm_last_batch(command)
-            
+
             self.log_info(
                 f"Sent CONFIRM_LAST_BATCH: tid={status['current_tid']}, bitmap_high=0x{bitmap_high:08X}, bitmap_low=0x{bitmap_low:08X}, missing={status['missing_fragments']}"
             )
-            
+
             # Check if file is complete
             if PC.download_manager.is_file_complete():
-                self.log_info(
-                    f"File complete for tid={status['current_tid']}, finalizing..."
-                )
-                
+                self.log_info(f"File complete for tid={status['current_tid']}, finalizing...")
+
                 # Finalize current file (write, verify, cleanup)
                 if PC.download_manager.finalize_file():
-                    self.log_info(
-                        f"File finalized successfully for tid={status['current_tid']}"
-                    )
-                    
+                    self.log_info(f"File finalized successfully for tid={status['current_tid']}")
+
                     # Move to next file in queue
                     if PC.download_manager.advance_to_next_file():
                         self.log_info("Advanced to next file in queue")
                     else:
-                        self.log_info("No more files currently queued; waiting for payload to send next file or completion signal")
+                        self.log_info(
+                            "No more files currently queued; waiting for payload to send next file or completion signal"
+                        )
                 else:
-                    self.log_error(
-                        f"Failed to finalize file for tid={status['current_tid']}"
-                    )
+                    self.log_error(f"Failed to finalize file for tid={status['current_tid']}")
                     PC.switch_state("FAIL")
                     return
             else:
                 # More batches to process for this file
                 PC.download_manager.advance_batch()
-        
+
         except Exception as e:
             self.log_error(f"Error during download processing: {e}")
             PC.switch_state("FAIL")
-        
 
     def run_off_state(self):
         """
@@ -302,26 +294,26 @@ class Task(TemplateTask):
             once received it will cut the power to the jetson
         if timeout reaches it will also cut the power to the jetson
         go back to idle mode
-        
+
         TODO: instead of having fixed time here, read the values reported from jetson current sensor
-            will still need to have a timeout 
+            will still need to have a timeout
         """
-        
+
         if PC.received_off_ack and not PC.waiting_shutdown:
             # we have received response from jetson, safe to turn off
             self.log_info("Received off ack, starting 20 sec wait to cut power")
-            PC.OFF_TS = TPM.time()   # received the ack, lets give it time to shut down
+            PC.OFF_TS = TPM.time()  # received the ack, lets give it time to shut down
             PC.waiting_shutdown = True
-            
+
         if PC.OFF_TS + PC.OFF_TIMEOUT <= TPM.time():
             self.log_info("Turn off timeout reached, cutting power to jetson.")
             PC.turn_off_power()
             if PC.received_off_ack:
                 PC.received_off_ack = False
-                PC.switch_state("SUCCESS") # receive the shutdown ack, gave time and can cut power now
+                PC.switch_state("SUCCESS")  # receive the shutdown ack, gave time and can cut power now
             else:
                 PC.switch_state("FAIL")  # did not received the shutdown ack, failing and forcing to shutdown
-            
+
     def run_success_state(self):
         """
         This state will only be reached when the experiment has been succesfully completed
@@ -329,34 +321,34 @@ class Task(TemplateTask):
         the experiment has finished.
         That will be done in the switch state function. Here we will only move on to idle
         """
-        
+
         self.log_info("Experiment completed successfully. Going to idle")
         PC.switch_state("IDLE")
-    
+
     def run_fail_state(self):
         """
         This is the state we will be in if there is any problem or any timeout
         It will warn that there was an error, cut the power to the jetson and
         go back to idle mode
         """
-            
+
         self.log_error("[PAYLOAD] - Fail state reached, cutting power to jetson.")
         PC.turn_off_power()
         PC.switch_state("IDLE")
 
     async def main_task(self):
-        
+
         if TPM.time() - self._last_state_print_ts >= 5:
             self._last_state_print_ts = TPM.time()
             DH.log_data("payload_tm", PC.log_data)  # periodically log data
             self.log_info(f"Current state: {PC.current_state}")
-        
+
         if PC.current_state == 0:
             self.run_idle_state()
-            return # prevent from reading from uart when not necessary
+            return  # prevent from reading from uart when not necessary
         if PC.current_state == 1:
             self.run_watching_state()
-            return # prevent from reading from uart when not necessary
+            return  # prevent from reading from uart when not necessary
         if PC.current_state == 2:
             self.run_booting_state()
         if PC.current_state == 3:
@@ -374,6 +366,5 @@ class Task(TemplateTask):
         if PC.current_state == 9:
             self.run_fail_state()
 
-        # TODO - do i really want to have this 
+        # TODO - do i really want to have this
         PC.process_uart()
-            
