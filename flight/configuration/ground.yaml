@@ -48,7 +48,7 @@ comms:
   AUTH_ENABLED:
     value: true
   AUTH_KEY_HEX:
-    value: "5764d937fc846da8e88c8abb39cbaaaa25b6c22cbbb75b79276341354f1a2e88" # AUTH_KEY_D
+    value: "d6172b38acb7d2a28e21662f689d1d15ad78ccc888a9c7a78ef58cb61b0f1e32" # AUTH_KEY_D
   SC_CALLSIGN:
     value: "CT6xxx"
   GS_CALLSIGN:
