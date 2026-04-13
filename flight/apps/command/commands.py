@@ -307,8 +307,10 @@ def ADCS_CTRL_MODE(mode_id):
     logger.info(f"Executing ADCS_CTRL_MODE with mode_id: {mode_id}")
 
     valid = CM.update_mode(mode_id)
-
-    return [mode_id, valid]
+    if valid:
+        return [CM.current_mode]
+    else:
+        return [-1]
 
 
 @register_command()
