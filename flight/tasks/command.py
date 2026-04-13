@@ -245,7 +245,7 @@ class Task(TemplateTask):
             if eps_data:
                 self.EPS_MODE = eps_data[EPS_IDX.EPS_POWER_FLAG]
 
-                if not (self.EPS_MODE >= EPS_POWER_FLAG.NONE and self.EPS_MODE <= EPS_POWER_FLAG.EXPERIMENT):
+                if not (self.EPS_MODE >= EPS_POWER_FLAG.NONE and self.EPS_MODE <= EPS_POWER_FLAG.NOMINAL):
                     self.log_error("EPS returned an invalid mode, assuming NOMINAL EPS mode")
                     self.EPS_MODE = EPS_POWER_FLAG.NOMINAL
                 else:
@@ -321,15 +321,6 @@ class Task(TemplateTask):
                 # T2.2: Low SoC, transition to low power
                 self.log_info("T2.2: Transition from NOMINAL to LOW POWER")
                 SM.switch_to(STATES.LOW_POWER)
-
-            elif self.EPS_MODE == EPS_POWER_FLAG.EXPERIMENT:
-                # T2.3: High SoC, engage the payload
-                self.log_info("T2.3: Transition from NOMINAL to EXPERIMENT")
-                SM.switch_to(STATES.EXPERIMENT)
-            elif _PAYLOAD_TESTING_MODE:
-                # T2.4: Payload testing mode enabled, engage the payload
-                self.log_info("T2.4: Transition from NOMINAL to EXPERIMENT (Payload Testing Mode)")
-                SM.switch_to(STATES.EXPERIMENT)
             else:
                 # No transition, stay in NOMINAL
                 pass
@@ -351,33 +342,6 @@ class Task(TemplateTask):
 
             else:
                 # No transition, stay in LOW_POWER
-                pass
-
-        # ------------------------------------------------------------------------------------------------------------------------------------
-        # PAYLOAD / EXPERIMENT
-        # ------------------------------------------------------------------------------------------------------------------------------------
-
-        elif SM.current_state == STATES.EXPERIMENT:
-            # Neopixel for PAYLOAD / EXPERIMENT (purple)
-            if SATELLITE.NEOPIXEL_AVAILABLE:
-                SATELLITE.NEOPIXEL.fill([255, 0, 255])
-
-            # The Payload controller should be kept as autonomous as possible, since the payload task
-            # has access to the global state. External requests exists as a last resort to control the
-            # payload from the CDH (and Payload task itself =/= Payload Controller)
-
-            # # Note all ground commands related to the payload are executed in the command processor
-            # if PC.state == PayloadState.READY:
-            #     pass
-
-            """Transitions out of EXPERIMENT"""
-            if self.EPS_MODE != EPS_POWER_FLAG.EXPERIMENT and not _PAYLOAD_TESTING_MODE:
-                # T4.1: Nominal or low SoC, transition back to nominal
-                self.log_info("T4.1: Transition from LOW POWER to NOMINAL")
-                SM.switch_to(STATES.NOMINAL)
-
-            else:
-                # No transition, stay in EXPERIMENT
                 pass
 
         # ------------------------------------------------------------------------------------------------------------------------------------
