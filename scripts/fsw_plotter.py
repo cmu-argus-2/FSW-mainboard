@@ -94,7 +94,7 @@ def plot_FSW(result_folder_path):
     # Plot ADCS Mode
     # Plot ADCS Mode
     mode_names = ["TUMBLING", "STABLE", "SUN_POINTED", "ACS_OFF"]
-    global_mode_names = ["STARTUP", "DETUMBLING", "NOMINAL", "EXPERIMENT", "LOW_POWER"]
+    global_mode_names = ["STARTUP", "DETUMBLING", "NOMINAL", "LOW_POWER"]
 
     plt.figure(figsize=(12, 7))
 
@@ -243,7 +243,6 @@ def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False, erase_sil
             "STARTUP": 0,
             "DETUMBLING": 1,
             "NOMINAL": 2,
-            "EXPERIMENT": 3,
             "LOW_POWER": 4,
         }
 
