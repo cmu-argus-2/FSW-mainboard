@@ -162,6 +162,18 @@ class STORAGE_IDX:
     DIR_SIZE = const(1)
 
 
+class COMMS_IDX:
+    RX_PACKET_COUNT = const(0)
+    FAILED_UNPACK_COUNT = const(1)
+    CRC_ERROR_COUNT = const(2)
+    UNDEF_ERROR_COUNT = const(3)
+    PACKET_NONE_COUNT = const(4)
+    PACKET_AUTH_FAIL_COUNT = const(5)
+    TX_PACKET_COUNT = const(6)
+    TX_FAILED_COUNT = const(7)
+    RX_MESSAGE_RSSI = const(8)
+
+
 class HAL_IDX:
     TIME_HAL = const(0)
     SDCARD_ERROR = const(1)

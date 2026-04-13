@@ -9,6 +9,7 @@ from apps.telemetry.splat.splat.telemetry_codec import Command, pack  # this sho
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
+from core.dh_constants import COMMS_IDX
 from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 
@@ -28,6 +29,9 @@ class Task(TemplateTask):
         )  # the packing function of the report to be downlinked periodically
         self.last_periodic_telemetry_time = TPM.time()  # timestamp of the last periodic telemetry downlink
 
+        # Initialize log_data array for telemetry
+        self.log_data = [0] * 9  # 9 COMMS variables
+
         SATELLITE_RADIO.set_rx_mode()
 
     def transmit_message(self):
@@ -40,6 +44,9 @@ class Task(TemplateTask):
 
         self.log_info("Checking transmit queue for packets to send...")
         self.log_info(f"  Transmit queue size: {TransmitQueue.get_size()}")
+        
+        if TransmitQueue.packet_available():
+            self.update_comms_telemetry()  # will only update comms data when something is sent or received
 
         while TransmitQueue.packet_available():
             self.log_info("  Packet available in TransmitQueue, preparing for transmission")
@@ -63,6 +70,8 @@ class Task(TemplateTask):
 
             # Read packet present in the RX buffer
             message_object = SATELLITE_RADIO.receive_message()
+            
+            self.update_comms_telemetry()  # will only update comms data when something is sent or received
 
             if not isinstance(message_object, Command):
                 self.log_warning("[COMMS ERROR] Received invalid command object from GS")
@@ -73,7 +82,6 @@ class Task(TemplateTask):
                 message_object
             )  # [TODO] - not sure why overwrite instead of push, i copied this from the old code
 
-            DH.log_data("comms", [TPM.time(), SATELLITE_RADIO.get_rssi()])
 
     def check_periodic_telemetry(self):
         """
@@ -90,12 +98,35 @@ class Task(TemplateTask):
             )  # push the packet to the transmit queue, where it will be sent in the next transmission window
             self.last_periodic_telemetry_time = current_time
 
+    def update_comms_telemetry(self):
+        """
+        Update telemetry data from SATELLITE_RADIO counters and write to DataHandler.
+        """
+        # Populate telemetry data from SATELLITE_RADIO
+        self.log_data[COMMS_IDX.RX_PACKET_COUNT] = SATELLITE_RADIO.rx_packet_count
+        self.log_data[COMMS_IDX.FAILED_UNPACK_COUNT] = SATELLITE_RADIO.failed_unpack_count
+        self.log_data[COMMS_IDX.CRC_ERROR_COUNT] = SATELLITE_RADIO.crc_error_count
+        self.log_data[COMMS_IDX.UNDEF_ERROR_COUNT] = SATELLITE_RADIO.undef_error_count
+        self.log_data[COMMS_IDX.PACKET_NONE_COUNT] = SATELLITE_RADIO.packet_none_count
+        self.log_data[COMMS_IDX.PACKET_AUTH_FAIL_COUNT] = SATELLITE_RADIO.packet_auth_fail_count
+        self.log_data[COMMS_IDX.TX_PACKET_COUNT] = SATELLITE_RADIO.tx_packet_count
+        self.log_data[COMMS_IDX.TX_FAILED_COUNT] = SATELLITE_RADIO.tx_failed_count
+        self.log_data[COMMS_IDX.RX_MESSAGE_RSSI] = SATELLITE_RADIO.rx_message_rssi
+
+        # Log to DataHandler
+        DH.log_data("comms", self.log_data)
+
     async def main_task(self):
         # Main comms task loop
 
         if SM.current_state == STATES.STARTUP:
             # No comms in STARTUP
             return
+
+        # Register COMMS data process if it doesn't exist
+        if not DH.data_process_exists("comms"):
+            data_format = "IHHHHHIHe"
+            DH.register_data_process("comms", data_format, True, data_limit=100000, write_interval=5)
 
         self.check_periodic_telemetry()  # check if it's time to send periodic telemetry
         self.transmit_message()  # check if we have messages to transmit to GS

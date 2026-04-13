@@ -26,9 +26,6 @@ class SATELLITE_RADIO:
     SC_CALLSIGN = CONFIG.SC_CALLSIGN
     GS_CALLSIGN = CONFIG.GS_CALLSIGN
 
-    # Init TM frame for preallocating memory
-    rx_message_rssi = 0
-
     auth_enabled = bool(getattr(CONFIG, "AUTH_ENABLED", False))
     auth_key = get_auth_key_bytes(getattr(CONFIG, "AUTH_KEY_HEX", ""))
 
@@ -42,6 +39,8 @@ class SATELLITE_RADIO:
 
     tx_packet_count = 0
     tx_failed_count = 0  # this is because the radio was not available
+
+    rx_message_rssi = 0.0  # rssi of last received message, updated in receive_message()
 
     tx_message = None
 
@@ -147,6 +146,8 @@ class SATELLITE_RADIO:
             logger.warning("[COMMS ERROR] Failed to unpack received packet")
             return None
 
+        # Capture RSSI for valid message
+        cls.rx_message_rssi = SATELLITE.RADIO.rssi()
         cls.rx_packet_count += 1
 
         return message_object
