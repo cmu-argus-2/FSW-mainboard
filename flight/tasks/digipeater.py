@@ -7,7 +7,7 @@ repeater via-path, and transmits the modified frame directly.
 
 from apps.comms.comms import SATELLITE_RADIO
 from apps.digipeater import DIGIPEATER_QUEUE_STATUS, DigipeaterRxQueue, DigipeaterState
-from apps.digipeater.ax25 import add_digipeater_to_via_path, is_valid_ax25_frame
+from apps.digipeater.aprs import build_digipeated_packet, is_valid_lora_aprs_packet
 from core import TemplateTask
 from core.satellite_config import digipeater_config as CONFIG
 from core.time_processor import TimeProcessor as TPM
@@ -63,17 +63,17 @@ class Task(TemplateTask):
             if not self.enabled or not DigipeaterState.is_active():
                 continue
 
-            # Validate AX.25 frame format (filters out non-AX.25 packets like SPLAT commands)
-            if not is_valid_ax25_frame(raw_packet):
+            # Validate LoRa APRS packet header and structure
+            if not is_valid_lora_aprs_packet(raw_packet):
                 continue
 
             if self._seen_recently(raw_packet, now):
                 continue
 
-            # Add satellite callsign to the repeater via-path
-            modified_packet = add_digipeater_to_via_path(raw_packet, SATELLITE_RADIO.SC_CALLSIGN)
+            # Replace first eligible WIDE path token with satellite callsign
+            modified_packet = build_digipeated_packet(raw_packet, SATELLITE_RADIO.SC_CALLSIGN)
             if modified_packet is None:
-                self.log_warning("Failed to modify AX.25 via-path, dropping packet")
+                self.log_warning("No eligible WIDE token in path, dropping packet")
                 continue
 
             # Transmit directly (not via TransmitQueue, which applies SPLAT packing)

@@ -33,7 +33,8 @@ class CommandSupervisor:
     @classmethod
     def request_rf_stop(cls):
         cls._arm_pending_action(_PENDING_ACTION.RF_STOP, require_ack_tx=True)
-        logger.warning("[CMD_SUP] RF_STOP requested; waiting for ACK TX + queue drain")
+        SATELLITE_RADIO._persist_rf_stop_latch(True)
+        logger.warning("[CMD_SUP] RF_STOP requested; NVM latched; waiting for ACK TX + queue drain")
         return True
 
     @classmethod
@@ -49,6 +50,7 @@ class CommandSupervisor:
         if cls._pending_action == _PENDING_ACTION.RF_STOP:
             cls._pending_action = _PENDING_ACTION.NONE
             cls._min_tx_count = 0
+            SATELLITE_RADIO._persist_rf_stop_latch(False)
             logger.warning("[CMD_SUP] Pending RF_STOP cancelled")
 
     @classmethod
