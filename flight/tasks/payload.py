@@ -3,8 +3,10 @@
 from apps.payload.controller import PayloadController as PC
 from apps.telemetry.splat.splat.telemetry_codec import Command
 from core import TemplateTask
+from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.dh_constants import PAYLOAD_IDX
+from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 
 
@@ -341,6 +343,15 @@ class Task(TemplateTask):
             self._last_state_print_ts = TPM.time()
             DH.log_data("payload_tm", PC.log_data)  # periodically log data
             self.log_info(f"Current state: {PC.current_state}")
+
+        if SM.current_state == STATES.LOW_POWER:
+            # we are in low power mode, will not run the payload task
+            # and will fail if I was in another state other then idle
+            if PC.current_state != 0:
+                self.log_warning("In LOW POWER state but payload is not in IDLE state, switching to fail.")
+                PC.switch_state("FAIL")   # this will send the fail message to gs and change to idle
+                self.run_fail_state()     # this will cut the power to the jetson and change to idle
+            return
 
         if PC.current_state == 0:
             self.run_idle_state()

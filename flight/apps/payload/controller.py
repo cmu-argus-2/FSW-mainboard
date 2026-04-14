@@ -622,9 +622,9 @@ class PayloadController:
             return False
 
         try:
-            SATELLITE.JETSON_ENABLE.value = False
+            SATELLITE.JETSON_ENABLE.value = True
             time.sleep(0.1)  # TODO: probably do not need this delay
-            SATELLITE.JETSON_SD_REQ.value = False  # turn of 5v dcdc to save more power
+            SATELLITE.JETSON_SD_REQ.value = True  # turn of 5v dcdc to save more power
             logger.info("[PAYLOAD] Jetson power enabled successfully.")
             return True
         except Exception as e:
