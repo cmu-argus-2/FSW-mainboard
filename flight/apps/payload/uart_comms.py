@@ -33,7 +33,7 @@ class PayloadUART(PayloadCommunicationInterface):
         if not cls._connected:
             logger.error("Attempted to send data over UART when not connected")
             return
-        
+
         # check the size to see if we need padding
         # the final size should be 609
         if len(pckt) < max_packet_size:
