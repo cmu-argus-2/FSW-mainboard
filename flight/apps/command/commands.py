@@ -84,7 +84,7 @@ def UPLINK_TIME_REFERENCE(time_reference):
 
 @register_command()
 def TURN_OFF_PAYLOAD():
-    """Sends a shutdown command to the payload and turns off its power line."""
+    """Cuts the power to the payload"""
     logger.info("Executing TURN_OFF_PAYLOAD")
 
     if not SATELLITE.PAYLOADPOWER_AVAILABLE:
@@ -105,7 +105,7 @@ def TURN_OFF_PAYLOAD():
 
 @register_command()
 def TURN_ON_PAYLOAD():
-    """Sends a turn-on  command to the payload and turns off its power line."""
+    """Enables power to the payload"""
     logger.info("Executing TURN_ON_PAYLOAD")
 
     if not SATELLITE.PAYLOADPOWER_AVAILABLE:

@@ -240,13 +240,13 @@ class Frame:
             if dh_data is None:
                 logger.warning(f"No data for subsystem {ss.upper()} to pack in PAYLOAD")
                 continue
-            logger.info(f"This is dh_data {dh_data}")
 
             # iterating over all the variables for the ss in the report and adding them
             for var_name in report.variables[ss].keys():
                 dh_var_idx = getattr(idx_list[ss_list.index(ss_lower)], var_name)
                 data = dh_data[dh_var_idx]
                 report.add_variable(var_name, ss, data)
+
         logger.info(f"Packed PAYLOAD telemetry frame {report}")
 
         gc.collect()

@@ -613,7 +613,6 @@ class PayloadController:
         """
         This should turn on power to the jetson
         """
-        logger.debug("[PAYLOAD] Turning on Jetson power...")
 
         if not SATELLITE.PAYLOADPOWER_AVAILABLE:
             logger.warning("[PAYLOAD] Payload power pins is not available.")
@@ -634,7 +633,6 @@ class PayloadController:
         """
         This function will cut the power to the jetson
         """
-        logger.error("[PAYLOAD] - Turning off power to jetson")
 
         if not SATELLITE.PAYLOADPOWER_AVAILABLE:
             logger.warning("[PAYLOAD] Payload power pins is not available.")
@@ -644,6 +642,7 @@ class PayloadController:
             SATELLITE.JETSON_ENABLE.value = False
             TPM.sleep(0.1)  # TODO: probably do not need this delay
             SATELLITE.JETSON_SD_REQ.value = False  # turn off the 5v regulator to save power
+            logger.info("[PAYLOAD] - Jetson power disabled successfully")
             return True
         except Exception as e:
             logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
