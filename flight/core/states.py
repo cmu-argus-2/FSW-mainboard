@@ -41,7 +41,7 @@ class STATES:
     STARTUP = const(0x00)
     DETUMBLING = const(0x01)
     NOMINAL = const(0x02)
-    LOW_POWER = const(0x04)
+    LOW_POWER = const(0x03)
 
     TRANSITIONS = {
         STARTUP: [DETUMBLING],
