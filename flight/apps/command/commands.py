@@ -48,7 +48,6 @@ def register_command(name=None):
 
     return decorator
 
-
 @register_command()
 def FORCE_REBOOT():
     """Forces a power cycle of the spacecraft."""
@@ -56,6 +55,59 @@ def FORCE_REBOOT():
     supervisor.reload()
     # https://learn.adafruit.com/circuitpython-essentials/circuitpython-resetting
     return []
+
+@register_command()
+def GRACEFUL_REBOOT():
+    """
+    Attempt to gracefully reboot the satellite
+    this is equivalente to the reboot every 24h
+    """
+
+    logger.info("Executing GRACEFUL_REBOOT")
+    try:
+        
+        # shutdown DH to make sure all files are closed properly
+        response = DH.graceful_shutdown()
+        
+        if not response:
+            logger.error("Failed to gracefully shutdown data handler, aborting reboot")
+            return ["graceful reboot failed: DH shutdown failed"]
+        
+        SATELLITE.reboot()
+        
+        return ["success"] # this will never be returned
+    except Exception as e:
+        logger.error(f"Failed to gracefully reboot the satellite: {e}")
+        return ["graceful reboot failed: {e}"]
+    
+
+@register_command()
+def MAIN_POWER_REBOOT():
+    logger.info("Executing MAIN_POWER_REBOOT")
+    try:
+        SATELLITE.reboot()
+        return ["success"] # this will never be returned
+    except Exception as e:
+        logger.error(f"Failed to reboot the satellite: {e}")
+        return ["main power reboot failed"]
+    
+@register_command()
+def PET_REBOOT():
+    """
+    This will update the _BOOT_TIME in hal_monitor to make prevent the satellite from performing
+    the regular reboot for the next 24 hours
+    """
+    logger.info("Executing PET_REBOOT")
+
+    try:
+        from tasks import hal_monitor
+
+        current_time = TPM.monotonic()
+        hal_monitor._BOOT_TIME = current_time
+        return ["pet successfull"]
+    except Exception as e:
+        logger.error(f"[PET_REBOOT] Failed to reset regular reboot timer: {e}")
+        return [f"pet failed: {e}"]
 
 
 @register_command()

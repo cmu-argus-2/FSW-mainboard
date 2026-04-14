@@ -23,6 +23,7 @@ _PERIPH_REBOOT_COUNT_IDX = getattr(HAL_IDX, "PERIPH_REBOOT_COUNT")
 _HAL_IDX_INV = {v: k for k, v in HAL_IDX.__dict__.items()}
 _GRACEFUL_REBOOT_INTERVAL = const(60)  # 1 minute interval
 _INDIVIDUAL_REBOOT_INTERVAL = const(10)  # 10 second interval
+_BOOT_TIME = SATELLITE.BOOTTIME
 
 
 class Task(TemplateTask):
@@ -197,8 +198,10 @@ class Task(TemplateTask):
         DH.log_data(self.log_name, self.log_data)
         # regular reboot every 24 hours
         # TODO: delay this if the satellite is at a ground pass
-        if TPM.monotonic() - SATELLITE.BOOTTIME >= _REGULAR_REBOOT_TIME:
+        if TPM.monotonic() - _BOOT_TIME >= _REGULAR_REBOOT_TIME:
             # TODO: graceful shutdown for payload if needed
             self.log_info("Executing regular reboot")
             self.close_data_process()
             SATELLITE.reboot()
+        
+        self.log_info(f"BOOTIME: {_BOOT_TIME}, SATELLITE_BOOT_TIME: {SATELLITE.BOOTTIME}, TIME: {TPM.monotonic()}")
