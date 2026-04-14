@@ -78,6 +78,12 @@ class Task(TemplateTask):
 
         command = PC.get_first_command()
         self.log_info(f"Watching for command: {command}")
+
+        if command is None:
+            self.log_warning("No command found in watching state, switching back to idle.")
+            PC.switch_state("IDLE")
+            return
+        
         # check to see if the time to execute the command has arrived
         if command[0] < TPM.time() or command[0] == 0:
             # means that it is time to run the command

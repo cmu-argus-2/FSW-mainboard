@@ -446,3 +446,17 @@ def EXPERIMENT(
     if not result:
         logger.error(f"[PAYLOAD] - Failed to add experiment command for timestamp {ts}")
     return result
+
+@register_command()
+def CLEAR_EXPERIMENT_LIST():
+    """
+    Command that will be called by the ground station to clear the list of scheduled experiments in the payload
+    returns the number of experiments that were cleared from the list
+    """
+    from apps.payload.controller import PayloadController as PC
+
+
+    logger.info(f"[PAYLOAD] - Clear experiment list command received")
+    cleared_count = PC.clear_experiment_list()
+    return [cleared_count]
+    
