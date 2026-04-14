@@ -449,9 +449,9 @@ class PayloadController:
 
         cls.log_data[PAYLOAD_IDX.SYSTEM_TIME] = report.variables["PAYLOAD_TM"]["SYSTEM_TIME"]
         cls.log_data[PAYLOAD_IDX.SYSTEM_UPTIME] = report.variables["PAYLOAD_TM"]["SYSTEM_UPTIME"]
-        # cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME] = report.variables["PAYLOAD_TM"]["LAST_EXECUTED_CMD_TIME"] # this is not filled by jetsonz
-        # cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_ID] = report.variables["PAYLOAD_TM"]["LAST_EXECUTED_CMD_ID"]     # this is not filled by jetsonz
-        # cls.log_data[PAYLOAD_IDX.PD_STATE_MAINBOARD] = report.variables["PAYLOAD_TM"]["PD_STATE_MAINBOARD"]         # this is not filled by the jetson report data
+        # cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME] = report.variables["PAYLOAD_TM"]["LAST_EXECUTED_CMD_TIME"]  # this is not filled by jetson
+        # cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_ID] = report.variables["PAYLOAD_TM"]["LAST_EXECUTED_CMD_ID"]      # this is not filled by jetson
+        # cls.log_data[PAYLOAD_IDX.PD_STATE_MAINBOARD] = report.variables["PAYLOAD_TM"]["PD_STATE_MAINBOARD"]          # this is not filled by the jetson report data
         cls.log_data[PAYLOAD_IDX.PD_STATE_JETSON] = report.variables["PAYLOAD_TM"]["PD_STATE_JETSON"]
         # cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = report.variables["PAYLOAD_TM"]["LATEST_ERROR"]
         cls.log_data[PAYLOAD_IDX.DISK_USAGE] = report.variables["PAYLOAD_TM"]["DISK_USAGE"]
@@ -471,6 +471,32 @@ class PayloadController:
         cls.log_data[PAYLOAD_IDX.VDD_IN] = report.variables["PAYLOAD_TM"]["VDD_IN"]
         cls.log_data[PAYLOAD_IDX.VDD_CPU_GPU_CV] = report.variables["PAYLOAD_TM"]["VDD_CPU_GPU_CV"]
         cls.log_data[PAYLOAD_IDX.VDD_SOC] = report.variables["PAYLOAD_TM"]["VDD_SOC"]
+
+    @classmethod
+    def clear_jetson_telem_data(cls):
+        """
+        This will clear the jetson telem values that are in memory. Will be called when turning off the jetson
+        """
+        cls.log_data[PAYLOAD_IDX.SYSTEM_TIME] = 0
+        cls.log_data[PAYLOAD_IDX.SYSTEM_UPTIME] = 0
+        cls.log_data[PAYLOAD_IDX.PD_STATE_JETSON] = 0
+        cls.log_data[PAYLOAD_IDX.DISK_USAGE] = 0
+        cls.log_data[PAYLOAD_IDX.RAM_USAGE] = 0
+        cls.log_data[PAYLOAD_IDX.SWAP_USAGE] = 0
+        cls.log_data[PAYLOAD_IDX.ACTIVE_CORES] = 0
+        cls.log_data[PAYLOAD_IDX.CPU_LOAD_0] = 0
+        cls.log_data[PAYLOAD_IDX.CPU_LOAD_1] = 0
+        cls.log_data[PAYLOAD_IDX.CPU_LOAD_2] = 0
+        cls.log_data[PAYLOAD_IDX.CPU_LOAD_3] = 0
+        cls.log_data[PAYLOAD_IDX.CPU_LOAD_4] = 0
+        cls.log_data[PAYLOAD_IDX.CPU_LOAD_5] = 0
+        cls.log_data[PAYLOAD_IDX.TEGRASTATS_PROCESS_STATUS] = 0
+        cls.log_data[PAYLOAD_IDX.GPU_FREQ] = 0
+        cls.log_data[PAYLOAD_IDX.CPU_TEMP] = 0
+        cls.log_data[PAYLOAD_IDX.GPU_TEMP] = 0
+        cls.log_data[PAYLOAD_IDX.VDD_IN] = 0
+        cls.log_data[PAYLOAD_IDX.VDD_CPU_GPU_CV] = 0
+        cls.log_data[PAYLOAD_IDX.VDD_SOC] = 0
 
     @classmethod
     def process_ack(cls, ack):
@@ -633,6 +659,9 @@ class PayloadController:
         """
         This function will cut the power to the jetson
         """
+
+        # clear the jetson side of telem data
+        cls.clear_jetson_telem_data()
 
         if not SATELLITE.PAYLOADPOWER_AVAILABLE:
             logger.warning("[PAYLOAD] Payload power pins is not available.")

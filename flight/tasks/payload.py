@@ -115,7 +115,7 @@ class Task(TemplateTask):
             PC.ACT_TS = TPM.time()
             PC.switch_state("ACTIVE")
 
-            # set the last_executed_time i
+            # set the last_executed_time
             PC.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME] = TPM.time()
 
             return
