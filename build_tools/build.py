@@ -19,6 +19,7 @@ except Exception:
     _HAS_YAML = False
 
 system = platform.system()
+machine = platform.machine().lower()
 
 
 def get_board_path():
@@ -96,10 +97,18 @@ GIT_COMMIT = get_commit_hash()
 GIT_CLEAN = check_clean_git()
 
 MPY_CROSS_NAME = "mpy-cross-cpy9" if CPY_VERSION == 9 else "mpy-cross"
+if machine in ("aarch64", "arm64"):
+    # Jetson Orin Nano goes here
+    MPY_CROSS_NAME = "mpy-cross-linux-aarch64-cpy9" if CPY_VERSION == 9 else "mpy-cross-linux-aarch64"
+
+
 if system == "Darwin":
     MPY_CROSS_NAME = "mpy-cross-macos-cpy9" if CPY_VERSION == 9 else "mpy-cross-macos"
 if platform.node() == "raspberrypi":
-    MPY_CROSS_NAME = "mpy-cross-rpi"
+    if CPY_VERSION == 9:
+        MPY_CROSS_NAME = "mpy-cross-rpi-cpy9"
+    else:
+        MPY_CROSS_NAME = "mpy-cross-rpi"
 MPY_CROSS_PATH = f"{os.getcwd()}/build_tools/{MPY_CROSS_NAME}"
 
 if system == "Windows":
