@@ -350,6 +350,21 @@ def LIST_DIR(skip_elements, string_command):
 
     return file_list[skip_elements:]
 
+@register_command()
+def GET_FILE_SIZE(string_command):
+    """
+    Try and get the size of a file
+    the result will be sent as a string
+    """
+
+    import os
+
+    try:
+        file_size = os.stat(string_command)[6]  # get the size of the file in bytes
+    except Exception as e:
+        return [f"error: {e}"]
+
+    return [file_size]
 
 @register_command()
 def DELETE_ALL_FILES():
