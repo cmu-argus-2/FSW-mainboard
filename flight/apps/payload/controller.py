@@ -8,8 +8,6 @@ Author: Ibrahima Sory Sow, Perrin Tong
 
 """
 
-import time
-
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.payload.download_manager import DownloadManager
 from apps.payload.uart_comms import PayloadUART as PU
@@ -386,7 +384,7 @@ class PayloadController:
         # send the command
         PU.send(pack(cmd_off))
 
-        logger.error("Please implement me")
+        logger.info("Payload turn off command has been sent")
 
     @classmethod
     def process_uart(cls, max_packet_size=609):
@@ -623,7 +621,7 @@ class PayloadController:
 
         try:
             SATELLITE.JETSON_ENABLE.value = True
-            time.sleep(0.1)  # TODO: probably do not need this delay
+            TPM.sleep(0.1)  # TODO: probably do not need this delay
             SATELLITE.JETSON_SD_REQ.value = True  # turn of 5v dcdc to save more power
             logger.info("[PAYLOAD] Jetson power enabled successfully.")
             return True
@@ -644,7 +642,7 @@ class PayloadController:
 
         try:
             SATELLITE.JETSON_ENABLE.value = False
-            time.sleep(0.1)  # TODO: probably do not need this delay
+            TPM.sleep(0.1)  # TODO: probably do not need this delay
             SATELLITE.JETSON_SD_REQ.value = False  # turn off the 5v regulator to save power
             return True
         except Exception as e:

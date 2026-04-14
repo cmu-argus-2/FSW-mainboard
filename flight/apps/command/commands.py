@@ -20,8 +20,6 @@ Author: Ibrahima S. Sow
 
 """
 
-import time
-
 import supervisor
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
@@ -96,7 +94,7 @@ def TURN_OFF_PAYLOAD():
     try:
         logger.info("[PAYLOAD] Shutdown command sent successfully, waiting for payload to shutdown before cutting power")
         SATELLITE.JETSON_ENABLE.value = False
-        time.sleep(0.1)
+        TPM.sleep(0.1)
         SATELLITE.JETSON_SD_REQ.value = False  # turn of 5v dcdc to save more power
 
     except Exception as e:
@@ -116,8 +114,8 @@ def TURN_ON_PAYLOAD():
 
     try:
         SATELLITE.JETSON_SD_REQ.value = True
-        time.sleep(0.1)
-        SATELLITE.JETSON_ENABLE.value = True  # TODO:Write a jetson available function in cubesat.py?
+        TPM.sleep(0.1)
+        SATELLITE.JETSON_ENABLE.value = True  # turn of 5v dcdc to save more power
 
         logger.info("[PAYLOAD] Jetson power enabled successfully.")
     except Exception as e:

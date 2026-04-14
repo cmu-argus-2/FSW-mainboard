@@ -42,11 +42,6 @@ class Task(TemplateTask):
                 circular_buffer_size=100,
             )
 
-        # TODO - dont need this anymore as I will have a command list
-        # # Data process for runtime external requests from the CDH
-        # if not DH.data_process_exists("payload_requests"):
-        #     DH.register_data_process(tag_name="payload_requests", data_format="B", persistent=False)
-
     def run_idle_state(self):
         """
         This is the function that will run when the payload is in idle state
