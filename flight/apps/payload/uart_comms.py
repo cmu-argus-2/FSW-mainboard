@@ -30,7 +30,10 @@ class PayloadUART(PayloadCommunicationInterface):
 
     @classmethod
     def send(cls, pckt, max_packet_size=609):
-
+        if not cls._connected:
+            logger.error("Attempted to send data over UART when not connected")
+            return
+        
         # check the size to see if we need padding
         # the final size should be 609
         if len(pckt) < max_packet_size:
@@ -43,6 +46,10 @@ class PayloadUART(PayloadCommunicationInterface):
 
     @classmethod
     def read(cls, bytes=609):
+        if not cls._connected:
+            logger.error("Attempted to read data over UART when not connected")
+            return None
+
         return cls._uart.read(bytes)
 
     @classmethod
