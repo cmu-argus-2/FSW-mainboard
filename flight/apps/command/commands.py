@@ -459,4 +459,15 @@ def CLEAR_EXPERIMENT_LIST():
     logger.info(f"[PAYLOAD] - Clear experiment list command received")
     cleared_count = PC.clear_experiment_list()
     return [cleared_count]
-    
+
+@register_command()
+def GET_EXPERIMENT_LIST(skip_elements=0):
+    """
+    Command that will be called by the ground station to get the list of scheduled experiments in the payload
+    returns a list of experiments ts
+    """
+    from apps.payload.controller import PayloadController as PC
+
+    logger.info(f"[PAYLOAD] - List experiments command received")
+    experiment_list = PC.list_experiments()
+    return experiment_list[skip_elements:]

@@ -195,6 +195,13 @@ class PayloadController:
         return cleared_count
 
     @classmethod
+    def list_experiments(cls):
+        """
+        This will return the list of scheduled experiments in the payload
+        """
+        return [command[0] for command in cls.command_list]  # return the timestamps of the scheduled commands
+
+    @classmethod
     def add_command(
         cls,
         ts,
