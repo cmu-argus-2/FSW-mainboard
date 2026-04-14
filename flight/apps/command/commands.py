@@ -375,6 +375,7 @@ def DELETE_ALL_FILES():
 
     try:
         DH.delete_all_files()
+        supervisor.reload() # reload after deleting all files to clear any references to deleted files in memory and reset the state of the satellite
     except Exception as e:
         return [f"error: {e}"]
     return ["all files deleted"]
