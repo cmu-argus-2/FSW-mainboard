@@ -120,7 +120,7 @@ class DRV8235:
     _inv_r_scale = RWBits(2, _RC_CTRL2, 6, 1, False)
 
     # Define Motor Voltage Scaling
-    _DRV_MAX_VOLT = 38.00  # Volts
+    _DRV_MAX_VOLT = 42.67  # Volts
     _COIL_MAX_VOLT = 6.0  # Volts
     _THROTTLE_MAX = _COIL_MAX_VOLT / _DRV_MAX_VOLT
 
@@ -134,9 +134,8 @@ class DRV8235:
         self._reg_ctrl = 0x3  # Sets to voltage regulation
         self._wset_vset = 0  # Sets initial voltage to 0
         self._int_vref = True
-        # TODO: check inv_r_scale and inv_r values
-        self._inv_r_scale = 0x3
-        self._inv_r = 82
+        self._inv_r_scale = 0b10
+        self._inv_r = 41
         self._en_out = True
         # Clear all fault status flags
         self.clear_faults()
@@ -260,11 +259,15 @@ class DRV8235:
     def __read_voltage(self):
         voltage_index = self._vmtr
         voltage = self.index_to_voltage(voltage_index)
+        if self.bridge_control[0] == BridgeControl.REVERSE:
+            return -1 * voltage
         return voltage
 
     def __read_current(self):
         current_index = self._imtr
         current = self.index_to_current(current_index)
+        if self.bridge_control[0] == BridgeControl.REVERSE:
+            return -1 * current
         return current
 
     @property

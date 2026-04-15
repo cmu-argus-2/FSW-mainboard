@@ -122,11 +122,11 @@ magnetorquers:
      inductance_lub : 10 # max allowed deviation from nominal  [%]
      
      mtb_orientation : [1,0,0,
-                        -1,0,0, 
+                        1,0,0, 
                         0,1,0,
-                        0,-1,0, 
+                        0,1,0, 
                         0,0,1,
-                        0,0,-1] # alignment axis of each magnetorquer in the body frame
+                        0,0,1] # alignment axis of each magnetorquer in the body frame
      mtb_orientation_dev : 0.001 # stddev of angular mounting error about nominal normal vector for each MTB [rad]
 
      mtb_resistance : 25 # [UNITS: Ω]
