@@ -388,8 +388,8 @@ class RotatingFileHandler(FileHandler):
             self.stream.flush()  # We need to call this or the file size is always zero.
             LogFileSize = os.stat(self._LogFileName)[6]
         except OSError as e:
-            if e.args[0] == 2:
-                # Log file does not exsist. This is okay.
+            if e.args[0] in (2, 22):
+                # 2: Log file does not exist. 22: Invalid argument (e.g. bad fd). Both are okay.
                 LogFileSize = None
             else:
                 raise e
@@ -400,7 +400,8 @@ class RotatingFileHandler(FileHandler):
 
         :param record: The record (message object) to be logged
         """
-        if (self.GetLogSize() >= self._maxBytes) and (self._maxBytes > 0) and (self._backupCount > 0):
+        log_size = self.GetLogSize()
+        if (log_size is not None) and (log_size >= self._maxBytes) and (self._maxBytes > 0) and (self._backupCount > 0):
             self.doRollover()
         self.stream.write(self.format(record))
         self.stream.flush()
@@ -494,7 +495,11 @@ class Logger:
         return len(self._handlers) > 0
 
     def _log(self, level: int, msg: str, *args) -> None:
-        record = _logRecordFactory(self.name, level, (msg % args) if args else msg, args)
+        try:
+            formatted = (msg % args) if args else msg
+        except TypeError:
+            formatted = msg + " " + " ".join(str(a) for a in args)
+        record = _logRecordFactory(self.name, level, formatted, args)
         self.handle(record)
 
     def handle(self, record: LogRecord) -> None:
