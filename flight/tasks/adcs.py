@@ -122,27 +122,13 @@ class Task(TemplateTask):
 
                 # Query Magnetometer
                 if collect_mag:
-                    self.prev_mag_data = self.mag_data.copy()
-                    self.mag_status, self.mag_data = sensors.read_magnetometer()
-                    new_last_mag_time = TPM.monotonic_float()
-                    self.bdot_dt = new_last_mag_time - self.last_mag_time
-                    self.last_mag_time = new_last_mag_time
+                    self._update_mag()
 
                 # Run Attitude Control
-                if allow_coils:
-                    self.attitude_control()
-                    if self.coils_off:
-                        self.coils_off = False
-                    # self.last_mtb_time = TPM.time()
-                    self.last_mtq_time = TPM.monotonic_float()
-                else:
-                    self.ensure_coils_off()
+                self._apply_control(allow_coils)
 
                 # Check if detumbling has been completed
                 self.MODE = update_mode(self.MODE, self.CONTROLLER_MODE)
-                # if update_mode(self.MODE, self.ctr_const) != Modes.TUMBLING:
-                #     self.ensure_coils_off()
-                #     self.MODE = Modes.STABLE
 
             # ------------------------------------------------------------------------------------------------------------------------------------
             # LOW POWER or EXPERIMENT
@@ -175,11 +161,7 @@ class Task(TemplateTask):
 
                     # Query Magnetometer
                     if collect_mag:
-                        self.prev_mag_data = self.mag_data.copy()
-                        self.mag_status, self.mag_data = sensors.read_magnetometer()
-                        new_last_mag_time = TPM.monotonic_float()
-                        self.bdot_dt = new_last_mag_time - self.last_mag_time
-                        self.last_mag_time = new_last_mag_time
+                        self._update_mag()
 
                     # Query Sun Position
                     self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
@@ -190,15 +172,8 @@ class Task(TemplateTask):
                         self.ensure_coils_off()
                         self.MODE = new_mode
 
-                    # Run attitude control if not in Low-power
-                    if SM.current_state != STATES.LOW_POWER and self.MODE != Modes.ACS_OFF and allow_coils:
-                        self.attitude_control()
-                        # self.last_mtb_time = TPM.time()
-                        if self.coils_off:
-                            self.coils_off = False
-                        self.last_mtq_time = TPM.monotonic_float()
-                    else:
-                        self.ensure_coils_off()
+                    # Run attitude control if not in ACS_OFF
+                    self._apply_control(allow_coils and self.MODE != Modes.ACS_OFF)
 
             # Log data
             # NOTE: In detumbling, most of the log will be zeros since very few sensors are queried
@@ -270,6 +245,24 @@ class Task(TemplateTask):
         if self.coils_off and (TPM.monotonic_float() - self.last_mtq_time > 0.2):
             collect_mag = True
         return collect_mag, run_coils
+
+    def _update_mag(self):
+        """Reads the magnetometer and updates bdot dt tracking."""
+        self.prev_mag_data = self.mag_data.copy()
+        self.mag_status, self.mag_data = sensors.read_magnetometer()
+        new_last_mag_time = TPM.monotonic_float()
+        self.bdot_dt = new_last_mag_time - self.last_mag_time
+        self.last_mag_time = new_last_mag_time
+
+    def _apply_control(self, allow_coils):
+        """Runs attitude control if allowed, otherwise ensures coils are off."""
+        if allow_coils:
+            self.attitude_control()
+            if self.coils_off:
+                self.coils_off = False
+            self.last_mtq_time = TPM.monotonic_float()
+        else:
+            self.ensure_coils_off()
 
     def ensure_coils_off(self):
         """
