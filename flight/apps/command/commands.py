@@ -21,7 +21,7 @@ Author: Ibrahima S. Sow
 """
 
 import supervisor
-from apps.adcs.consts import CM
+from apps.adcs.consts import ControllerModes
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
 from apps.telemetry.splat.splat.telemetry_codec import Command
@@ -306,9 +306,9 @@ def ADCS_CTRL_MODE(mode_id):
     """Sends a command to change the ADCS controller mode."""
     logger.info(f"Executing ADCS_CTRL_MODE with mode_id: {mode_id}")
 
-    valid = CM.update_mode(mode_id)
+    valid = ControllerModes.update_mode(mode_id)
     if valid:
-        return [CM.current_mode]
+        return [ControllerModes.current_mode]
     else:
         return [-1]
 
