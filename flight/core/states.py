@@ -13,8 +13,6 @@ States:
     This state is active until stability is achieved or a timeout occurs.
     NOMINAL: The primary operational state where all systems, excluding payload, are fully functional,
     provided sufficient power levels are maintained.
-    EXPERIMENT: This state is similar to NOMINAL with the activation of the Payload (OD). Given the high
-    power draw, this state requires a high state of charge for opportunistic transitions.
     LOW_POWER: A power-conservation state entered when battery levels drop below a critical threshold.
     Non-essential systems are turned off, and the satellite resumes nominal operations upon recharging above a
     recovery threshold.
@@ -44,16 +42,16 @@ class STATES:
     STARTUP = const(0x00)
     DETUMBLING = const(0x01)
     NOMINAL = const(0x02)
-    EXPERIMENT = const(0x03)
-    LOW_POWER = const(0x04)
+    LOW_POWER = const(0x03)
+    EXPERIMENT = const(0x04)
 
     TRANSITIONS = {
         STARTUP: [DETUMBLING],
         DETUMBLING: [NOMINAL, LOW_POWER],
         NOMINAL: [LOW_POWER, DETUMBLING, EXPERIMENT],
-        EXPERIMENT: [NOMINAL],
         LOW_POWER: [NOMINAL, LOW_POWER],
+        EXPERIMENT: [LOW_POWER, DETUMBLING, NOMINAL]
     }
 
 
-STR_STATES = ["STARTUP", "DETUMBLING", "NOMINAL", "EXPERIMENT", "LOW_POWER"]
+STR_STATES = ["STARTUP", "DETUMBLING", "NOMINAL", "LOW_POWER", "EXPERIMENT"]

@@ -112,9 +112,9 @@ class Task(TemplateTask):
                     self.MODE = Modes.STABLE
 
             # ------------------------------------------------------------------------------------------------------------------------------------
-            # LOW POWER or EXPERIMENT
+            # LOW POWER
             # ------------------------------------------------------------------------------------------------------------------------------------
-            elif SM.current_state == STATES.LOW_POWER or SM.current_state == STATES.EXPERIMENT:
+            elif SM.current_state == STATES.LOW_POWER:
                 # Turn coils off to conserve power
                 zero_all_coils()
                 self.mag_counter = 0
