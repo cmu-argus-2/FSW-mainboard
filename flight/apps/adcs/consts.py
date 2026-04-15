@@ -157,7 +157,7 @@ class ControllerConst:
 
     # Detumbling Constants
     BDOT_GAIN = 2.0e4
-    BCROSS_GAIN = 1.0e07
+    BCROSS_GAIN = 2.0e4
 
 
 class MCMConst:
