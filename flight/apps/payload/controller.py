@@ -16,7 +16,9 @@ from apps.telemetry.splat.splat.telemetry_definition import COMMAND_IDS
 from apps.telemetry.splat.splat.transport_layer import Transaction
 from core import DataHandler as DH
 from core import logger
+from core import state_manager as SM
 from core.dh_constants import PAYLOAD_IDX
+from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 from micropython import const
@@ -134,15 +136,24 @@ class PayloadController:
         cls.log_data[PAYLOAD_IDX.PD_STATE_MAINBOARD] = cls.current_state
         DH.log_data("payload_tm", cls.log_data)
 
+        # idle state, need to reset some of the telemtry variables
+        if cls.current_state == PayloadState.IDLE:
+            # set the last_executed_time
+            cls.current_command = None
+            cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = 30  # arbitrary number to distinguish from command time 0
+
         # booting state needs to turn on the satellite
         if cls.current_state == PayloadState.BOOTING:
             logger.info("[PAYLOAD] -  Turning on jetson")
             cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = 200  # starting a new experiment resetting the error
-            cls.current_command = (
-                cls.get_first_command()
-            )  # choosing the command here to make sure that if boot fails we do not run the command again
+            cls.current_command = (cls.get_first_command())  # choosing the command here, if boot fails we do not run the command again
             cls.remove_first_command()
-            cls.turn_on_power()
+            logger.info(f"[PAYLOAD] -  Selected command: {cls.current_command}")
+            logger.info(f"[PAYLOAD] - command list size: {len(cls.command_list)}")
+            response = cls.turn_on_power()
+            if not response:
+                logger.error("[PAYLOAD] - Failed to turn on jetson")
+                return False
 
         # active state, need to get the desired command
         if cls.current_state == PayloadState.ACTIVE:
@@ -179,6 +190,8 @@ class PayloadController:
                 logger.error("Failed to push failed ack experiment failure message to transmit queue")
 
             cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = previous_state
+
+        return True
 
     @classmethod
     def add_command(
@@ -476,6 +489,9 @@ class PayloadController:
     def clear_jetson_telem_data(cls):
         """
         This will clear the jetson telem values that are in memory. Will be called when turning off the jetson
+
+        TODO: do we really want this? we will lose the last telemetry data from the jetson
+
         """
         cls.log_data[PAYLOAD_IDX.SYSTEM_TIME] = 0
         cls.log_data[PAYLOAD_IDX.SYSTEM_UPTIME] = 0
@@ -642,6 +658,10 @@ class PayloadController:
 
         if not SATELLITE.PAYLOADPOWER_AVAILABLE:
             logger.warning("[PAYLOAD] Payload power pins is not available.")
+            return False
+
+        if SM.current_state != STATES.EXPERIMENT:
+            logger.error("[PAYLOAD] - Unable to turn on power, not in EXPERIMENT state.")
             return False
 
         try:

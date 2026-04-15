@@ -70,11 +70,14 @@ class Task(TemplateTask):
 
         if command timestmap < current timestamp it will change to booting mode
 
-        TODO - add margin to make sure that we turn the payload a few moments before the actual time
         """
 
         command = PC.get_first_command()
         self.log_info(f"Watching for command: {command}")
+
+        # update next command time
+        PC.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = command[0]
+
         # check to see if the time to execute the command has arrived
         if command[0] < TPM.time() or command[0] == 0:
             # means that it is time to run the command
@@ -82,13 +85,11 @@ class Task(TemplateTask):
             PC.BOOT_TS = TPM.time()
             PC.received_ping_ack = False
 
-            # power the jetson
-            if not PC.turn_on_power():
-                self.log_warning("Failed to turn on payload power.")
+            status = PC.switch_state("BOOTING")
+            if not status:
+                self.log_warning("Failed to switch to BOOTING state.")
                 PC.switch_state("FAIL")
                 return
-
-            PC.switch_state("BOOTING")
             return
 
         self.log_info(f"   Missing {command[0] - TPM.time()} seconds")
@@ -337,6 +338,7 @@ class Task(TemplateTask):
         if TPM.time() - self._last_state_print_ts >= 5:
             self._last_state_print_ts = TPM.time()
             DH.log_data("payload_tm", PC.log_data)  # periodically log data
+            self.log_info(f"Last command time: {PC.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME]}")
             self.log_info(f"Current state: {PC.current_state}")
 
         if SM.current_state == STATES.LOW_POWER:
