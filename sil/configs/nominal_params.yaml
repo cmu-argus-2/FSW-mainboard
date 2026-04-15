@@ -114,19 +114,20 @@ magnetorquers:
      N_mtb : 6  # number of magnetorquers
      A_cross : 5.4326e-3 # [UNITS : m^2]
      N_turns : 64
-     max_voltage : 5  # V maximum voltage that can be applied by each magnetorquer
+     max_voltage : 6  # V maximum voltage that can be applied by each magnetorquer
      max_current_rating : 1.0  # A
-     max_power : 1  # W
+     max_power : 1.5  # W
      inductance : 1.0 # [UNITS: H] # nominal inductance of each magnetorquer
      inductance_dev : 5 # stddev from nominal [%]
      inductance_lub : 10 # max allowed deviation from nominal  [%]
+     resolution: 0.167 # [UNITS: V] voltage resolution of the magnetorquer driver
      
      mtb_orientation : [1,0,0,
-                        -1,0,0, 
+                        1,0,0, 
                         0,1,0,
-                        0,-1,0, 
+                        0,1,0, 
                         0,0,1,
-                        0,0,-1] # alignment axis of each magnetorquer in the body frame
+                        0,0,1] # alignment axis of each magnetorquer in the body frame
      mtb_orientation_dev : 0.001 # stddev of angular mounting error about nominal normal vector for each MTB [rad]
 
      mtb_resistance : 25 # [UNITS: Ω]
