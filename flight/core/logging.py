@@ -352,6 +352,16 @@ class RotatingFileHandler(FileHandler):
         # Open the file and save the handle to self.stream
         super().__init__(self._LogFileName, mode=self._WriteMode)
 
+    def force_rollover(self) -> None:
+        """Force an immediate rollover regardless of file size.
+
+        Call this before downlinking the log file so the active log rotates to
+        fsw.log.1 (static, nothing will write to it) and logging resumes on a
+        fresh fsw.log.  The downlink should then target fsw.log.1.
+        """
+        if self._backupCount > 0:
+            self.doRollover()
+
     def doRollover(self) -> None:
         """Roll over the log files. This should not need to be called directly"""
         # At this point, we have already determined that we need to roll the log files.
@@ -387,8 +397,8 @@ class RotatingFileHandler(FileHandler):
         try:
             self.stream.flush()  # We need to call this or the file size is always zero.
             LogFileSize = os.stat(self._LogFileName)[6]
-        except OSError:
-            # Can't determine size (file deleted, bad fd, I/O error, etc.) — skip rotation.
+        except (OSError, ValueError):
+            # Can't determine size (file deleted, bad fd, deinitialized stream, etc.) — skip rotation.
             LogFileSize = None
         return LogFileSize
 
@@ -403,13 +413,13 @@ class RotatingFileHandler(FileHandler):
         try:
             self.stream.write(self.format(record))
             self.stream.flush()
-        except OSError:
-            # Stream is stale (e.g. file was deleted). Try to reopen and retry once.
+        except (OSError, ValueError):
+            # Stream is stale (file deleted, SD deinitialized, etc.). Try to reopen and retry once.
             try:
                 self.stream = open(self._LogFileName, mode=self._WriteMode)
                 self.stream.write(self.format(record))
                 self.stream.flush()
-            except OSError:
+            except (OSError, ValueError):
                 pass  # Can't write — silently drop rather than crash
 
 
