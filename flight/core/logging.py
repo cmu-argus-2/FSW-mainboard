@@ -387,12 +387,9 @@ class RotatingFileHandler(FileHandler):
         try:
             self.stream.flush()  # We need to call this or the file size is always zero.
             LogFileSize = os.stat(self._LogFileName)[6]
-        except OSError as e:
-            if e.args[0] in (2, 22):
-                # 2: Log file does not exist. 22: Invalid argument (e.g. bad fd). Both are okay.
-                LogFileSize = None
-            else:
-                raise e
+        except OSError:
+            # Can't determine size (file deleted, bad fd, I/O error, etc.) — skip rotation.
+            LogFileSize = None
         return LogFileSize
 
     def emit(self, record: LogRecord) -> None:
@@ -403,8 +400,17 @@ class RotatingFileHandler(FileHandler):
         log_size = self.GetLogSize()
         if (log_size is not None) and (log_size >= self._maxBytes) and (self._maxBytes > 0) and (self._backupCount > 0):
             self.doRollover()
-        self.stream.write(self.format(record))
-        self.stream.flush()
+        try:
+            self.stream.write(self.format(record))
+            self.stream.flush()
+        except OSError:
+            # Stream is stale (e.g. file was deleted). Try to reopen and retry once.
+            try:
+                self.stream = open(self._LogFileName, mode=self._WriteMode)
+                self.stream.write(self.format(record))
+                self.stream.flush()
+            except OSError:
+                pass  # Can't write — silently drop rather than crash
 
 
 class NullHandler(Handler):
