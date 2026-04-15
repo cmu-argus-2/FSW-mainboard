@@ -158,7 +158,7 @@ class ControllerConst:
     SPIN_STABILIZING_GAIN = 2.0e07
 
     # Detumbling Constants
-    BDOT_GAIN = 1.0e07
+    BDOT_GAIN = 2.0e04
     BCROSS_GAIN = 1.0e07
 
 
@@ -174,11 +174,11 @@ class MCMConst:
     ALLOC_MAT = np.array(
         [
             [0.5, 0.0, 0.0],
-            [-0.5, 0.0, 0.0],
+            [0.5, 0.0, 0.0],
             [0.0, 0.5, 0.0],
-            [0.0, -0.5, 0.0],
+            [0.0, 0.5, 0.0],
             [0.0, 0.0, 0.5],
-            [0.0, 0.0, -0.5],
+            [0.0, 0.0, 0.5],
         ]
     )
 
