@@ -203,5 +203,3 @@ class Task(TemplateTask):
             self.log_info("Executing regular reboot")
             self.close_data_process()
             SATELLITE.reboot()
-        
-        self.log_info(f"BOOTIME: {_BOOT_TIME}, SATELLITE_BOOT_TIME: {SATELLITE.BOOTTIME}, TIME: {TPM.monotonic()}")

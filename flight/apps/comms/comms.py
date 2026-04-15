@@ -133,10 +133,9 @@ class SATELLITE_RADIO:
         # unpack the received packet
         callsign, message_object = unpack(packet)  # [TODO] - this should be implemented in middleware
         logger.info(f"Received callsign: {callsign}")
-        logger.info(f"Received raw packet: {packet}")
+        logger.info(f"Received raw packet: {packet[0:20]}")
         logger.info(f"Unpacked message object: {message_object}")
 
-        # [TODO] need to change this to match the station callsign
         if callsign != cls.GS_CALLSIGN:
             logger.error(f"[COMMS ERROR] Received packet with incorrect gs_callsign: {callsign}")
             return None
@@ -163,13 +162,11 @@ class SATELLITE_RADIO:
         it will add the satellite cs as the header and transmit the message
         """
 
-        logger.info(f"transmitting message: {packet}")
-
         # Send a message to GS
         if SATELLITE.RADIO_AVAILABLE:
             SATELLITE.RADIO.send(packet)
             cls.tx_packet_count += 1
-            logger.info(f"[COMMS] - Message has been transmitted: {format_bytes(packet)}")
+            logger.info(f"[COMMS] - Message has been transmitted: {format_bytes(packet[:20])}...")
             return True
         else:
             logger.error("[COMMS ERROR] RADIO no longer active on SAT")

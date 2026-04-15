@@ -54,7 +54,6 @@ class Task(TemplateTask):
             packet, queue_error_code = TransmitQueue.pop_packet()
             if queue_error_code == QUEUE_STATUS.OK:
                 packed_packet = pack(packet, callsign=SATELLITE_RADIO.SC_CALLSIGN)   # changed and the entries in transmitqueue are no longer packed
-                self.log_info(f"Set packet for transmission: {packed_packet}")
                 SATELLITE_RADIO.transmit_message(packed_packet)
             else:
                 self.log_error("Error popping packet from TransmitQueue")
@@ -76,7 +75,6 @@ class Task(TemplateTask):
             if not isinstance(message_object, Command):
                 self.log_warning("[COMMS ERROR] Received invalid command object from GS")
                 return
-            self.log_info(f"Received command from GS: {message_object}")
 
             CommandQueue.overwrite_command(
                 message_object
