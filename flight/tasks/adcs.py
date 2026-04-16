@@ -233,15 +233,14 @@ class Task(TemplateTask):
         # If the magnetometer data was collected within the last 0.8 seconds,
         # run the coils. If not, turn the coils off to settle their
         # current/magnetic dipole before collecting data from the magnetometer again.
-        if TPM.monotonic_float() - self.last_mag_time <= 0.8:
-            run_coils = True
-        else:
+        if TPM.monotonic_float() - self.last_mag_time >= 0.4:
             run_coils = False
 
             # if the coils have been turned off for longer than 0.2 s (settling time),
             # collect from the magnetometer
             if self.coils_off and (TPM.monotonic_float() - self.last_mtq_time > 0.2):
                 collect_mag = True
+                run_coils = True
 
         return collect_mag, run_coils
 
