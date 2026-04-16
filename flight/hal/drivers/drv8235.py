@@ -176,11 +176,12 @@ class DRV8235:
             return
         # Constrain throttle value
         self._throttle_normalized = min(max(new_throttle * self._THROTTLE_MAX, -self._THROTTLE_MAX), self._THROTTLE_MAX)
-        if new_throttle < 0:
-            self._wset_vset = int(abs(self._throttle_normalized * 0xFF))
+        _wset_vset = int(self._throttle_normalized * 0xFF)
+        if _wset_vset < 0:
+            self._wset_vset = abs(_wset_vset)
             self._dir = BridgeControl.REVERSE
-        elif new_throttle > 0:
-            self._wset_vset = int(self._throttle_normalized * 0xFF)
+        elif _wset_vset > 0:
+            self._wset_vset = _wset_vset
             self._dir = BridgeControl.FORWARD
         else:
             self._wset_vset = 0

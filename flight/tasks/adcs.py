@@ -120,7 +120,7 @@ class Task(TemplateTask):
                 coils_were_on = not self.coils_off
                 self.ensure_coils_off()
                 if coils_were_on:
-                    TPM.sleep(0.05)
+                    TPM.sleep(0.1)
                 self._update_mag()
 
                 # Run Attitude Control
@@ -164,7 +164,7 @@ class Task(TemplateTask):
                     if collect_mag:
                         # nominally this shouldn't occur, if it does this prevents the coils from skewing the mag reading
                         if coils_were_on:
-                            TPM.sleep(0.05)
+                            TPM.sleep(0.1)
                         self._update_mag()
 
                     # Query Sun Position
