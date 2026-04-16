@@ -84,7 +84,6 @@ class Task(TemplateTask):
 
     coils_off = True
     last_mag_time = 0.0
-    last_mtq_time = 0.0
 
     def __init__(self, id):
         super().__init__(id)
@@ -117,15 +116,15 @@ class Task(TemplateTask):
                 # Query the Gyro
                 self.gyro_status, self.gyro_data = sensors.read_gyro()
 
-                # Flags on whether to run coils or collect from magnetometer
-                collect_mag, allow_coils = self.alternate_coil_and_mag()
-
-                # Query Magnetometer
-                if collect_mag:
-                    self._update_mag()
+                # Turn coils off if needed, wait 50ms for field to settle, then query magnetometer
+                coils_were_on = not self.coils_off
+                self.ensure_coils_off()
+                if coils_were_on:
+                    TPM.sleep(0.05)
+                self._update_mag()
 
                 # Run Attitude Control
-                self._apply_control(allow_coils)
+                self._apply_control(True)
 
                 # Check if detumbling has been completed
                 self.MODE = update_mode(self.MODE, self.CONTROLLER_MODE)
@@ -156,11 +155,16 @@ class Task(TemplateTask):
                     # Query the Gyro
                     self.gyro_status, self.gyro_data = sensors.read_gyro()
 
-                    # Flags on whether to run coils or collect from magnetometer
-                    collect_mag, allow_coils = self.alternate_coil_and_mag()
+                    # Turn coils off; sleep to let the field settle only if coils were on and it's time to read the magnetometer
+                    coils_were_on = not self.coils_off
+                    self.ensure_coils_off()
 
-                    # Query Magnetometer
+                    # Query magnetometer only if enough time has passed since last reading
+                    collect_mag = TPM.monotonic_float() - self.last_mag_time >= 0.8
                     if collect_mag:
+                        # nominally this shouldn't occur, if it does this prevents the coils from skewing the mag reading
+                        if coils_were_on:
+                            TPM.sleep(0.05)
                         self._update_mag()
 
                     # Query Sun Position
@@ -169,11 +173,10 @@ class Task(TemplateTask):
                     # Identify Mode based on current sensor readings
                     new_mode = update_mode(self.MODE, self.CONTROLLER_MODE)
                     if new_mode != self.MODE:
-                        self.ensure_coils_off()
                         self.MODE = new_mode
 
-                    # Run attitude control if not in ACS_OFF
-                    self._apply_control(allow_coils and self.MODE != Modes.ACS_OFF)
+                    # Run attitude control only if magnetometer was queried this cycle and not in ACS_OFF
+                    self._apply_control(collect_mag and self.MODE != Modes.ACS_OFF)
 
             # Log data
             # NOTE: In detumbling, most of the log will be zeros since very few sensors are queried
@@ -220,30 +223,6 @@ class Task(TemplateTask):
 
         self.coil_status = mcm_coil_allocator(mtq_throttle, self.mag_data)
 
-    def alternate_coil_and_mag(self):
-        """
-        To preserve the quality of magnetometer readings, alternate between collecting from
-        the magnetometer and running the coils.
-         - If the magnetometer data was collected within the last 0.8 seconds, run the coils.
-         If not, turn the coils off to settle their current/magnetic dipole before collecting data from the magnetometer again.
-         - if the coils have been turned off for longer than 0.2 s (settling time), collect from the magnetometer
-        """
-        collect_mag = False
-        run_coils = True
-        # If the magnetometer data was collected within the last 0.8 seconds,
-        # run the coils. If not, turn the coils off to settle their
-        # current/magnetic dipole before collecting data from the magnetometer again.
-        if TPM.monotonic_float() - self.last_mag_time >= 0.4:
-            run_coils = False
-
-            # if the coils have been turned off for longer than 0.2 s (settling time),
-            # collect from the magnetometer
-            if self.coils_off and (TPM.monotonic_float() - self.last_mtq_time > 0.2):
-                collect_mag = True
-                run_coils = True
-
-        return collect_mag, run_coils
-
     def _update_mag(self):
         """Reads the magnetometer and updates bdot dt tracking."""
         self.prev_mag_data = self.mag_data.copy()
@@ -256,20 +235,17 @@ class Task(TemplateTask):
         """Runs attitude control if allowed, otherwise ensures coils are off."""
         if allow_coils:
             self.attitude_control()
-            if self.coils_off:
-                self.coils_off = False
-            self.last_mtq_time = TPM.monotonic_float()
+            self.coils_off = False
         else:
             self.ensure_coils_off()
 
     def ensure_coils_off(self):
         """
-        If the coils are not off, turn them off and update the last_mtq_time to prevent immediate reactivation.
+        If the coils are not off, turn them off.
         """
         if not self.coils_off:
             zero_all_coils()
             self.coils_off = True
-            self.last_mtq_time = TPM.monotonic_float()
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ LOGGING """
@@ -320,3 +296,9 @@ class Task(TemplateTask):
         self.log_info(f"Sun Status : {self.log_data[ADCS_IDX.SUN_STATUS]}")
         self.log_info(f"Gyro Status : {self.gyro_status}")
         self.log_info(f"Mag Status : {self.mag_status}")
+        # Bdot debugging
+        self.log_info(f"Bdot : {bdot_controller(self.mag_data, self.prev_mag_data, self.bdot_dt)}")
+
+        self.log_info(f"Prev Mag : {self.prev_mag_data}")
+        self.log_info(f"Current Mag : {self.mag_data}")
+        self.log_info(f"Bdot dt : {self.bdot_dt}")
