@@ -156,41 +156,13 @@ def RF_RESUME():
 def DIGIPEATER_ACTIVATE():
     """Activates the digipeater relay subsystem."""
     logger.warning("Executing DIGIPEATER_ACTIVATE")
-
-    # check to see if we are in nominal mode
-    if SM.current_state != STATES.NOMINAL:
-        logger.warning("Cannot activate digipeater outside of NOMINAL state")
-        return ["invalid_state_for_digipeater_activation"]
-    
-    task = SM.scheduled_tasks.get(TASK.DIGIPEATER)
-    if task is None:
-        logger.error("DIGIPEATER task not found in scheduled_tasks")
-        return ["digipeater_task_not_scheduled"]
-
-    task.start()
-    logger.info("DIGIPEATER task started")
-    
-    DigipeaterState.activate()
-
-    return ["digipeater_activated"]
-
+    return DigipeaterState.activate()
 
 @register_command()
 def DIGIPEATER_DEACTIVATE():
     """Deactivates the digipeater relay subsystem."""
     logger.warning("Executing DIGIPEATER_DEACTIVATE")
-
-    task = SM.scheduled_tasks.get(TASK.DIGIPEATER)
-    if task is None:
-        logger.error("DIGIPEATER task not found in scheduled_tasks")
-        return ["digipeater_task_not_scheduled"]
-
-    task.stop()
-    logger.info("DIGIPEATER task stopped")
-
-    DigipeaterState.deactivate()
-
-    return ["digipeater_deactivated"]
+    return DigipeaterState.deactivate()
 
 
 @register_command()
