@@ -36,7 +36,7 @@ class Task(TemplateTask):
     async def main_task(self):
 
         # print digipeater status
-        self.log_info(f"Digipeater active: {DigipeaterState.is_active()}  Recent packets: {len(self._recent)}  RX queue: {DigipeaterRxQueue.get_size()}")
+        self.log_info(f"RX queue: {DigipeaterRxQueue.get_size()}")
 
         while DigipeaterRxQueue.packet_available():
             raw_packet, status = DigipeaterRxQueue.pop_packet()
