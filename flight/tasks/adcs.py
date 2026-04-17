@@ -235,7 +235,7 @@ class Task(TemplateTask):
           settle   = 0.1 s  (20 %, skipped on first cycle)
         """
         coil_on_time = 0.8 * cycle_duration  # 400 ms at 0.5 s
-        settle_time = 0.2 * cycle_duration   # 100 ms at 0.5 s
+        settle_time = 0.2 * cycle_duration  # 100 ms at 0.5 s
 
         for i in range(num_cycles):
             if i > 0:
