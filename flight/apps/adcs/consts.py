@@ -89,9 +89,10 @@ class ControllerModes:
 
     current_mode = CONFIG.CONTROLLER_MODE
 
-    def update_mode(self, new_mode):
-        if new_mode in [self.BDOT, self.BCROSS, self.SUN_POINTING]:
-            self.current_mode = new_mode
+    @classmethod
+    def update_mode(cls, new_mode):
+        if new_mode in [cls.BDOT, cls.BCROSS, cls.SUN_POINTING]:
+            cls.current_mode = new_mode
             return True
         else:
             return False
@@ -158,8 +159,8 @@ class ControllerConst:
     SPIN_STABILIZING_GAIN = 2.0e07
 
     # Detumbling Constants
-    BDOT_GAIN = 2.0e04
-    BCROSS_GAIN = 1.0e07
+    BDOT_GAIN = 2.0e4
+    BCROSS_GAIN = 2.0e4
 
 
 class MCMConst:
@@ -181,7 +182,3 @@ class MCMConst:
             [0.0, 0.0, 0.5],
         ]
     )
-
-
-# Instantiate ControllerModes to be used across apps and tasks
-CM = ControllerModes()

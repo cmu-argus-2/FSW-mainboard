@@ -150,6 +150,25 @@ class Simulator:  # will be passed by reference to the emulated HAL
         dir_2_idx_map = {"XP": 0, "XM": 1, "YP": 2, "YM": 3, "ZP": 4, "ZM": 5}
         self.cppsim.control_input[dir_2_idx_map[dir]] = input * 5
 
+    def advance_by_simtime(self, sim_seconds):
+        """
+        Advance the simulation by exactly sim_seconds of simulation time.
+        Called by MockTime.sleep() so that FSW sleeps advance the dynamics
+        rather than only sensor reads doing so.
+        """
+        iters = int(sim_seconds / self.base_dt)
+        if iters == 0:
+            return
+        if iters > 20:
+            dt = sim_seconds / 20
+            iters = 20
+        else:
+            dt = self.base_dt
+        for _ in range(iters):
+            self.measurement = self.cppsim.step(self.sim_time, dt)
+            self.sim_time += dt
+        self.latest_real_epoch = time.monotonic_ns() / 1.0e9
+
     def get_time_diff_since_last(self):
         """
         Time since last simulation advance

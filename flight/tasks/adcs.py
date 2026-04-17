@@ -10,7 +10,7 @@ from apps.adcs.acs import (
     sun_pointing_controller,
     zero_all_coils,
 )
-from apps.adcs.consts import CM, Modes, StatusConst
+from apps.adcs.consts import ControllerModes, Modes, StatusConst
 from apps.adcs.modemanager import update_mode
 from core import DataHandler as DH
 from core import TemplateTask
@@ -85,7 +85,6 @@ class Task(TemplateTask):
 
     coils_off = True
     last_mag_time = 0.0
-    last_mtq_time = 0.0
 
     last_mag_prop_time = 0.0
 
@@ -103,8 +102,8 @@ class Task(TemplateTask):
                 DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
 
             # Check for controller mode update from commands
-            if self.CONTROLLER_MODE is not CM.current_mode:
-                self.CONTROLLER_MODE = CM.current_mode
+            if self.CONTROLLER_MODE is not ControllerModes.current_mode:
+                self.CONTROLLER_MODE = ControllerModes.current_mode
 
             self.time = TPM.time()
             self.log_data[ADCS_IDX.TIME_ADCS] = self.time
@@ -117,46 +116,11 @@ class Task(TemplateTask):
                 if sensors.get_gyro_scale != 0:
                     sensors.set_gyro_scale(0)
 
-                # Query the Gyro
-                self.gyro_status, self.gyro_data = sensors.read_gyro()
-
-                # Flags on whether to run coils or collect from magnetometer
-                collect_mag, allow_coils = self.alternate_coil_and_mag()
-
-                # Query Magnetometer
-                if collect_mag:
-                    self.prev_mag_data = self.mag_data.copy()
-                    self.mag_status, self.mag_data = sensors.read_magnetometer()
-                    new_last_mag_time = TPM.monotonic_float()
-                    self.bdot_dt = new_last_mag_time - self.last_mag_time
-                    self.last_mag_time = new_last_mag_time
-                    self.last_mag_prop_time = self.last_mag_time
-                elif (
-                    self.CONTROLLER_MODE != CM.BDOT
-                    and self.gyro_status == StatusConst.OK
-                    and self.mag_status == StatusConst.OK
-                ):
-                    # propagate magnetometer reading using gyro data
-                    new_last_mag_time = TPM.monotonic_float()
-                    dt = new_last_mag_time - self.last_mag_prop_time
-                    self.last_mag_prop_time = new_last_mag_time
-                    self.mag_data = np.dot(math.rotation_matrix_from_vector(-self.gyro_data * dt), self.mag_data)
-
-                # Run Attitude Control
-                if allow_coils:
-                    self.attitude_control()
-                    if self.coils_off:
-                        self.coils_off = False
-                    # self.last_mtb_time = TPM.time()
-                    self.last_mtq_time = TPM.monotonic_float()
-                else:
-                    self.ensure_coils_off()
+                # Run 1.2 s control cycle (4 cycles × 300 ms)
+                self._run_control_cycle(0.3, 4)
 
                 # Check if detumbling has been completed
                 self.MODE = update_mode(self.MODE, self.CONTROLLER_MODE)
-                # if update_mode(self.MODE, self.ctr_const) != Modes.TUMBLING:
-                #     self.ensure_coils_off()
-                #     self.MODE = Modes.STABLE
 
             # ------------------------------------------------------------------------------------------------------------------------------------
             # LOW POWER or EXPERIMENT
@@ -181,49 +145,14 @@ class Task(TemplateTask):
                     # Set bmx160 scale to 125 deg/s, max resolution
                     if sensors.get_gyro_scale != 4:
                         sensors.set_gyro_scale(4)
-                    # Query the Gyro
-                    self.gyro_status, self.gyro_data = sensors.read_gyro()
 
-                    # Flags on whether to run coils or collect from magnetometer
-                    collect_mag, allow_coils = self.alternate_coil_and_mag()
-
-                    # Query Magnetometer
-                    if collect_mag:
-                        self.prev_mag_data = self.mag_data.copy()
-                        self.mag_status, self.mag_data = sensors.read_magnetometer()
-                        new_last_mag_time = TPM.monotonic_float()
-                        self.bdot_dt = new_last_mag_time - self.last_mag_time
-                        self.last_mag_time = new_last_mag_time
-                        self.last_mag_prop_time = self.last_mag_time
-                    elif (
-                        self.CONTROLLER_MODE != CM.BDOT
-                        and self.gyro_status == StatusConst.OK
-                        and self.mag_status == StatusConst.OK
-                    ):
-                        # propagate magnetometer reading using gyro data
-                        new_last_mag_time = TPM.monotonic_float()
-                        dt = new_last_mag_time - self.last_mag_prop_time
-                        self.last_mag_prop_time = new_last_mag_time
-                        self.mag_data = np.dot(math.rotation_matrix_from_vector(-self.gyro_data * dt), self.mag_data)
-
-                    # Query Sun Position
-                    self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
+                    # Run two 300ms control cycles
+                    self._run_control_cycle(0.3, 2)
 
                     # Identify Mode based on current sensor readings
                     new_mode = update_mode(self.MODE, self.CONTROLLER_MODE)
                     if new_mode != self.MODE:
-                        self.ensure_coils_off()
                         self.MODE = new_mode
-
-                    # Run attitude control if not in Low-power
-                    if SM.current_state != STATES.LOW_POWER and self.MODE != Modes.ACS_OFF and allow_coils:
-                        self.attitude_control()
-                        # self.last_mtb_time = TPM.time()
-                        if self.coils_off:
-                            self.coils_off = False
-                        self.last_mtq_time = TPM.monotonic_float()
-                    else:
-                        self.ensure_coils_off()
 
             # Log data
             # NOTE: In detumbling, most of the log will be zeros since very few sensors are queried
@@ -238,16 +167,16 @@ class Task(TemplateTask):
         """
         mtq_throttle = np.zeros((3,))
 
-        if self.CONTROLLER_MODE == CM.BDOT:
+        if self.CONTROLLER_MODE == ControllerModes.BDOT:
             if self.MODE != Modes.ACS_OFF and self.MODE != Modes.VF_TUMBLING:
                 if not (self.mag_status != StatusConst.OK):
                     mtq_throttle = bdot_controller(self.mag_data, self.prev_mag_data, self.bdot_dt)
 
-        elif self.CONTROLLER_MODE == CM.BCROSS:
+        elif self.CONTROLLER_MODE == ControllerModes.BCROSS:
             if self.MODE != Modes.ACS_OFF and self.MODE != Modes.VF_TUMBLING:
                 if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
                     mtq_throttle = bcross_controller(self.mag_data, self.gyro_data)
-        elif self.CONTROLLER_MODE == CM.SUN_POINTING:
+        elif self.CONTROLLER_MODE == ControllerModes.SUN_POINTING:
             # Decide which controller to choose
             if self.MODE in [Modes.TUMBLING, Modes.STABLE]:  # spin-stabilizing controller
 
@@ -270,40 +199,101 @@ class Task(TemplateTask):
 
         self.coil_status = mcm_coil_allocator(mtq_throttle, self.mag_data)
 
-    def alternate_coil_and_mag(self):
-        """
-        To preserve the quality of magnetometer readings, alternate between collecting from
-        the magnetometer and running the coils.
-         - If the magnetometer data was collected within the last 0.8 seconds, run the coils.
-         If not, turn the coils off to settle their current/magnetic dipole before collecting data from the magnetometer again.
-         - if the coils have been turned off for longer than 0.2 s (settling time), collect from the magnetometer
-        """
-        collect_mag = True
-        run_coils = True
-        # If the magnetometer data was collected within the last 0.8 seconds,
-        # run the coils. If not, turn the coils off to settle their
-        # current/magnetic dipole before collecting data from the magnetometer again.
-        if TPM.monotonic_float() - self.last_mag_time <= 0.8:
-            collect_mag = False
-            run_coils = True
-        else:
-            collect_mag = False
-            run_coils = False
+    def _update_mag(self):
+        """Reads the magnetometer and updates bdot dt tracking."""
+        self.prev_mag_data = self.mag_data.copy()
+        self.mag_status, self.mag_data = sensors.read_magnetometer()
+        new_last_mag_time = TPM.monotonic_float()
+        if self.last_mag_time != 0.0:
+            self.bdot_dt = new_last_mag_time - self.last_mag_time
+        self.last_mag_time = new_last_mag_time
 
-        # if the coils have been turned off for longer than 0.2 s (settling time),
-        # collect from the magnetometer
-        if self.coils_off and (TPM.monotonic_float() - self.last_mtq_time > 0.2):
-            collect_mag = True
-        return collect_mag, run_coils
+    def _apply_control(self, allow_coils):
+        """Runs attitude control if allowed, otherwise ensures coils are off."""
+        if allow_coils:
+            self.attitude_control()
+            self.coils_off = False
+        else:
+            self.ensure_coils_off()
+
+    def _run_control_cycle(self, cycle_duration, num_cycles):
+        """
+        Dispatches to the appropriate control cycle.
+        cycle_duration: duration of one cycle in seconds (0.5 s nominal).
+        num_cycles: how many cycles to execute (2 for detumbling, 1 for nominal).
+        """
+        if self.CONTROLLER_MODE == ControllerModes.BDOT:
+            self._bdot_cycle(cycle_duration, num_cycles)
+        else:
+            self._bcross_sun_cycle(cycle_duration * num_cycles)
+
+    def _bdot_cycle(self, cycle_duration, num_cycles):
+        """
+        B-dot control cycle.  Each cycle = read_mag → coils on → coils off.
+        A settle wait (20% of cycle_duration) is inserted before each cycle
+        after the first so the magnetometer field is clean; with num_cycles=1
+        no settle is needed at all.
+
+        Timing per cycle_duration=0.3 s:
+          coil_on  = 0.2 s  (66.67 %)
+          settle   = 0.1 s  (33.33 %, skipped on first cycle)
+        """
+        coil_on_time = 0.66 * cycle_duration  # 200 ms at 0.3 s
+        settle_time = 0.33 * cycle_duration  # 100 ms at 0.3 s
+
+        for i in range(num_cycles):
+            if i == 0:
+                self._update_mag()
+            self._apply_control(True)
+            TPM.sleep(coil_on_time)
+            self.ensure_coils_off()
+            TPM.sleep(settle_time)  # let field settle before next mag read
+            self._update_mag()
+
+        self.gyro_status, self.gyro_data = sensors.read_gyro()
+
+    def _bcross_sun_cycle(self, duration):
+        """
+        B-cross / Sun-pointing control cycle:
+          1. Read magnetometer and sun sensor at the beginning
+          2. Update ADCS mode based on fresh readings
+          3. Every 50 ms for duration seconds:
+             read gyro and update the control law / coils
+             (future: propagate sun and mag vectors with gyro)
+          4. Coils off at the end
+        """
+        self._update_mag()
+        self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
+        self.gyro_status, self.gyro_data = sensors.read_gyro()
+
+        new_mode = update_mode(self.MODE, self.CONTROLLER_MODE)
+        if new_mode != self.MODE:
+            self.MODE = new_mode
+
+        GYRO_INTERVAL = 0.05  # 50 ms
+        t_start = TPM.monotonic_float()
+
+        while TPM.monotonic_float() - t_start < duration:
+            loop_start = TPM.monotonic_float()
+
+            self.gyro_status, self.gyro_data = sensors.read_gyro()
+            # TODO: Propagate sun vector and magnetometer with gyro reading
+            self._apply_control(self.MODE != Modes.ACS_OFF)
+
+            elapsed = TPM.monotonic_float() - loop_start
+            remaining = GYRO_INTERVAL - elapsed
+            if remaining > 0:
+                TPM.sleep(remaining)
+
+        self.ensure_coils_off()
 
     def ensure_coils_off(self):
         """
-        If the coils are not off, turn them off and update the last_mtq_time to prevent immediate reactivation.
+        If the coils are not off, turn them off.
         """
         if not self.coils_off:
             zero_all_coils()
             self.coils_off = True
-            self.last_mtq_time = TPM.monotonic_float()
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ LOGGING """
@@ -353,3 +343,8 @@ class Task(TemplateTask):
         self.log_info(f"Sun Status : {self.log_data[ADCS_IDX.SUN_STATUS]}")
         self.log_info(f"Gyro Status : {self.gyro_status}")
         self.log_info(f"Mag Status : {self.mag_status}")
+        # Bdot debugging
+        # self.log_info(f"Bdot : {bdot_controller(self.mag_data, self.prev_mag_data, self.bdot_dt)}")
+        # self.log_info(f"Prev Mag : {self.prev_mag_data}")
+        # self.log_info(f"Current Mag : {self.mag_data}")
+        # self.log_info(f"Bdot dt : {self.bdot_dt}")

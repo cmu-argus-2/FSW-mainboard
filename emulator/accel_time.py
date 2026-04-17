@@ -14,6 +14,7 @@ real_time_module = real_time
 class MockTime:
     def __init__(self):
         self.acceleration = int(os.environ["SIM_REAL_SPEEDUP"])
+        self.__simulator = None
 
         # Datum references for Speedup
         self.start_real_time = real_time.time_ns() / 1.0e9
@@ -37,7 +38,12 @@ class MockTime:
         self.spedup_time_ns = self.start_real_time_ns + real_elapsed * self.acceleration
         return self.spedup_time_ns
 
+    def set_simulator(self, simulator):
+        self.__simulator = simulator
+
     def sleep(self, seconds):
+        if self.__simulator is not None:
+            self.__simulator.advance_by_simtime(seconds)
         real_time.sleep(seconds / self.acceleration)
 
     def localtime(self, secs=None):
