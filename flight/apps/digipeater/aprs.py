@@ -21,21 +21,17 @@ def is_valid_lora_aprs_packet(data, re_obj):
     if not data or len(data) < _HEADER_LEN + 1:
         return 1
 
-    # Check if the header matches special lora aprs header
-    if data[:_HEADER_LEN] != _LORA_APRS_HEADER:
-        return 2
     # try an decode using ascii
     try:
-    
         aprs_str = data[_HEADER_LEN:].decode("ascii")
     except (UnicodeDecodeError, ValueError):
         return 3
-    
+
     # use re_obj to check if the satellite callsing is in the string
     result = re_obj.search(aprs_str)
     if result is None:
         return 4
-    
+
     # ind max size: 10 (because of ssid)
     # dst max size: 6
     # extra chars: header + > = 4
@@ -43,12 +39,11 @@ def is_valid_lora_aprs_packet(data, re_obj):
     # check if the callsign is in the first 20 characters of the string
     if result.start() > 20:
         return 5
-    
+
     return 6
 
 def add_asterisk_packet(data, re_obj):
     """
     Will simply add an asterisk to the end of callsign in the path to indicate that the packed has been repeated
     """
-    
     return re_obj.sub(r"\g<0>*", data)
