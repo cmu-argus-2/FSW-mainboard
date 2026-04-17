@@ -32,9 +32,8 @@ from apps.telemetry.splat.splat.telemetry_codec import Command
 from apps.telemetry.splat.splat.transport_layer import transaction_manager as TM
 from core import logger
 from core import state_manager as SM
-from core.states import STATES
 from core.data_handler import DataHandler as DH
-from core.states import STR_STATES, TASK
+from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 

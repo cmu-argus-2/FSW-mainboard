@@ -111,6 +111,11 @@ class StateManager:
                 SATELLITE.JETSON_ENABLE.value = False
                 SATELLITE.JETSON_SD_REQ.value = False
 
+        # if we are leaving nomimal mode, we want to turn make sure digipeater is turned off
+        if self.__current_state == STATES.NOMINAL and new_state_id != STATES.NOMINAL:
+            logger.warning("Leaving NOMINAL state - ensuring digipeater is turned off")
+            DigipeaterState.deactivate(False)
+
         self.__previous_state = self.__current_state
         self.__current_state = new_state_id
         self.__time_since_last_state_change = time.monotonic()
