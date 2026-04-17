@@ -6,7 +6,7 @@ Author(s): Derek Fan
 
 from core.satellite_config import adcs_config as CONFIG
 from ulab import numpy as np
-
+import math
 
 class StatusConst:
     """
@@ -77,6 +77,27 @@ class Modes:
     SUN_POINTED_TOL_LO = 0.176  # Turn ACS off if momentum less than 10 deg from sun vector
     SUN_POINTED_TOL_HI = 0.26  # Re-enter sun_pointed if momentum more than 15 deg from sun vector
 
+    @classmethod
+    def update_vf_tumbling_tols(cls, bdot, vf):
+        cls.VF_TUMBLING_TOL_BDOT = bdot
+        cls.VF_TUMBLING_TOL = vf
+
+    @classmethod
+    def update_detumbling_tols(cls, tumbling, lo, hi):
+        cls.TUMBLING_TOL = tumbling
+        cls.DETUMBLED_TOL_LO = lo
+        cls.DETUMBLED_TOL_HI = hi
+
+    @classmethod
+    def update_stable_tols(cls, lo, hi):
+        cls.STABLE_TOL_LO = lo
+        cls.STABLE_TOL_HI = hi
+
+    @classmethod
+    def update_sun_pointed_tols(cls, lo, hi):
+        cls.SUN_POINTED_TOL_LO = lo
+        cls.SUN_POINTED_TOL_HI = hi
+
 
 class ControllerModes:
     """
@@ -89,12 +110,12 @@ class ControllerModes:
 
     current_mode = CONFIG.CONTROLLER_MODE
 
-    def update_mode(self, new_mode):
-        if new_mode in [self.BDOT, self.BCROSS, self.SUN_POINTING]:
-            self.current_mode = new_mode
+    @classmethod
+    def update_mode(cls, new_mode):
+        if new_mode in [cls.BDOT, cls.BCROSS, cls.SUN_POINTING]:
+            cls.current_mode = new_mode
             return True
-        else:
-            return False
+        return False
 
 
 class SunConst:
@@ -132,15 +153,6 @@ class ControllerConst:
         [[3.544e-03, -1.8729e-05, -5.2467e-06], [-1.8729e-05, 3.590e-03, 1.9134e-05], [-5.2467e-06, 1.9134e-05, 4.120e-03]]
     )
 
-    # # Compute Major axis of inertia
-    # _eigvals, _eigvecs = np.linalg.eig(INERTIA_MAT)
-    # _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
-
-    # INERTIA_MAJOR_DIR = _unscaled_axis / np.linalg.norm(_unscaled_axis)
-    # inertia_major_dir_abs = np.array([math.fabs(dir_x) for dir_x in INERTIA_MAJOR_DIR])
-    # if INERTIA_MAJOR_DIR[np.argmax(inertia_major_dir_abs)] < 0:
-    #     INERTIA_MAJOR_DIR = -INERTIA_MAJOR_DIR
-
     # Hardcoded Inertia Major Dir
     INERTIA_MAJOR_DIR = np.array([-0.01027212, 0.03638753, 0.99928496])
 
@@ -158,8 +170,33 @@ class ControllerConst:
     SPIN_STABILIZING_GAIN = 2.0e07
 
     # Detumbling Constants
-    BDOT_GAIN = 1.0e07
-    BCROSS_GAIN = 1.0e07
+    DETUMB_GAIN = 1.0e07
+
+    @classmethod
+    def update_gains(cls, spin_gain, detumb_gain):
+        cls.SPIN_STABILIZING_GAIN = spin_gain
+        cls.DETUMB_GAIN = detumb_gain
+
+    @classmethod
+    def update_omega_target(cls, omega_mag_target):
+        cls.OMEGA_MAG_TARGET = omega_mag_target
+        cls.MOMENTUM_TARGET = np.dot(cls.INERTIA_MAT, cls.INERTIA_MAJOR_DIR * omega_mag_target)
+        cls.MOMENTUM_TARGET_MAG = np.linalg.norm(cls.MOMENTUM_TARGET)
+
+    @classmethod
+    def update_inertia(cls, ixx, ixy, ixz, iyy, iyz, izz):
+        cls.INERTIA_MAT = np.array([[ixx, ixy, ixz], [ixy, iyy, iyz], [ixz, iyz, izz]])
+        
+        # Compute Major axis of inertia
+        _eigvals, _eigvecs = np.linalg.eig(cls.INERTIA_MAT)
+        _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
+        cls.INERTIA_MAJOR_DIR = _unscaled_axis / np.linalg.norm(_unscaled_axis)
+        inertia_major_dir_abs = np.array([math.fabs(dir_x) for dir_x in cls.INERTIA_MAJOR_DIR])
+        if cls.INERTIA_MAJOR_DIR[np.argmax(inertia_major_dir_abs)] < 0:
+            cls.INERTIA_MAJOR_DIR = -cls.INERTIA_MAJOR_DIR
+        
+        cls.MOMENTUM_TARGET = np.dot(cls.INERTIA_MAT, cls.INERTIA_MAJOR_DIR * cls.OMEGA_MAG_TARGET)
+        cls.MOMENTUM_TARGET_MAG = np.linalg.norm(cls.MOMENTUM_TARGET)
 
 
 class MCMConst:
@@ -183,5 +220,4 @@ class MCMConst:
     )
 
 
-# Instantiate ControllerModes to be used across apps and tasks
-CM = ControllerModes()
+CM = ControllerModes  # Alias kept for backwards compatibility with command and task imports

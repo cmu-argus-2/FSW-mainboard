@@ -85,7 +85,7 @@ def bdot_controller(mag_field: np.ndarray, prev_mag_field: np.ndarray, bdot_dt: 
         return ControllerConst.FALLBACK_CONTROL
 
     b_dot = (mag_field - prev_mag_field) / bdot_dt
-    u = -ControllerConst.BDOT_GAIN * b_dot
+    u = -ControllerConst.DETUMB_GAIN * b_dot
     return smooth_throttle(u)
 
 
@@ -96,7 +96,7 @@ def bcross_controller(mag_field: np.ndarray, omega: np.ndarray) -> np.ndarray:
     if not readings_are_valid((omega, mag_field)) or np.linalg.norm(mag_field) == 0:
         return ControllerConst.FALLBACK_CONTROL
 
-    u = -ControllerConst.BCROSS_GAIN * np.cross(mag_field, omega)
+    u = -ControllerConst.DETUMB_GAIN * np.cross(mag_field, omega)
     return smooth_throttle(u)
 
 

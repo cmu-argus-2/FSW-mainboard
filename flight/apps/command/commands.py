@@ -21,7 +21,7 @@ Author: Ibrahima S. Sow
 """
 
 import supervisor
-from apps.adcs.consts import CM
+from apps.adcs.consts import CM, ControllerConst, Modes
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
 from apps.telemetry.splat.splat.telemetry_codec import Command
@@ -311,6 +311,62 @@ def ADCS_CTRL_MODE(mode_id):
         return [CM.current_mode]
     else:
         return [-1]
+
+
+@register_command()
+def ADCS_UPDATE_GAINS(spin_gain, detumb_gain):
+    """Updates the spin-stabilizing and detumbling controller gains."""
+    logger.info(f"Executing ADCS_UPDATE_GAINS with spin_gain: {spin_gain}, detumb_gain: {detumb_gain}")
+    ControllerConst.update_gains(spin_gain, detumb_gain)
+    return [ControllerConst.SPIN_STABILIZING_GAIN, ControllerConst.DETUMB_GAIN]
+
+
+@register_command()
+def ADCS_UPDATE_OMEGA_TARGET(omega_mag_target):
+    """Updates the target spin rate and recomputes derived momentum targets."""
+    logger.info(f"Executing ADCS_UPDATE_OMEGA_TARGET with omega_mag_target: {omega_mag_target}")
+    ControllerConst.update_omega_target(omega_mag_target)
+    return [ControllerConst.OMEGA_MAG_TARGET, ControllerConst.MOMENTUM_TARGET_MAG]
+
+
+@register_command()
+def ADCS_UPDATE_INERTIA(ixx, ixy, ixz, iyy, iyz, izz):
+    """Updates the inertia matrix (symmetric, 6 unique values) and recomputes momentum targets."""
+    logger.info(f"Executing ADCS_UPDATE_INERTIA")
+    ControllerConst.update_inertia(ixx, ixy, ixz, iyy, iyz, izz)
+    return [1]
+
+
+@register_command()
+def ADCS_UPDATE_VF_TUMBLING_TOLS(bdot, vf):
+    """Updates the very-fast-tumbling entry thresholds (bdot and gyro)."""
+    logger.info(f"Executing ADCS_UPDATE_VF_TUMBLING_TOLS with bdot: {bdot}, vf: {vf}")
+    Modes.update_vf_tumbling_tols(bdot, vf)
+    return [Modes.VF_TUMBLING_TOL_BDOT, Modes.VF_TUMBLING_TOL]
+
+
+@register_command()
+def ADCS_UPDATE_DETUMBLING_TOLS(tumbling, lo, hi):
+    """Updates the detumbling mode thresholds (exit-to-stable, turn-off, re-enter)."""
+    logger.info(f"Executing ADCS_UPDATE_DETUMBLING_TOLS with tumbling: {tumbling}, lo: {lo}, hi: {hi}")
+    Modes.update_detumbling_tols(tumbling, lo, hi)
+    return [Modes.TUMBLING_TOL, Modes.DETUMBLED_TOL_LO, Modes.DETUMBLED_TOL_HI]
+
+
+@register_command()
+def ADCS_UPDATE_STABLE_TOLS(lo, hi):
+    """Updates the stable mode entry/exit thresholds."""
+    logger.info(f"Executing ADCS_UPDATE_STABLE_TOLS with lo: {lo}, hi: {hi}")
+    Modes.update_stable_tols(lo, hi)
+    return [Modes.STABLE_TOL_LO, Modes.STABLE_TOL_HI]
+
+
+@register_command()
+def ADCS_UPDATE_SUN_POINTED_TOLS(lo, hi):
+    """Updates the sun-pointed mode entry/exit thresholds."""
+    logger.info(f"Executing ADCS_UPDATE_SUN_POINTED_TOLS with lo: {lo}, hi: {hi}")
+    Modes.update_sun_pointed_tols(lo, hi)
+    return [Modes.SUN_POINTED_TOL_LO, Modes.SUN_POINTED_TOL_HI]
 
 
 @register_command()
