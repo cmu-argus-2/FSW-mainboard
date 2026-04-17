@@ -57,3 +57,4 @@ class Task(TemplateTask):
             # Transmit directly (not via TransmitQueue, which applies SPLAT packing)
             if not SATELLITE_RADIO.transmit_message(final_packet):
                 self.log_warning("Digipeater TX failed (RF_STOP or radio unavailable)")
+

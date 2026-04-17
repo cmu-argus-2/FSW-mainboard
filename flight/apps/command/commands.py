@@ -157,6 +157,7 @@ def DIGIPEATER_ACTIVATE():
     logger.warning("Executing DIGIPEATER_ACTIVATE")
     return DigipeaterState.activate()
 
+
 @register_command()
 def DIGIPEATER_DEACTIVATE():
     """Deactivates the digipeater relay subsystem."""
