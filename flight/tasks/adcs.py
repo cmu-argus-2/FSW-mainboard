@@ -238,12 +238,13 @@ class Task(TemplateTask):
         settle_time = 0.2 * cycle_duration  # 100 ms at 0.5 s
 
         for i in range(num_cycles):
-            if i > 0:
-                TPM.sleep(settle_time)  # let field settle before next mag read
-            self._update_mag()
+            if i == 0:
+                self._update_mag()
             self._apply_control(True)
             TPM.sleep(coil_on_time)
             self.ensure_coils_off()
+            TPM.sleep(settle_time)  # let field settle before next mag read
+            self._update_mag()
 
     def _bcross_sun_cycle(self, duration):
         """
