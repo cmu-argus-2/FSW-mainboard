@@ -81,7 +81,7 @@ def bdot_controller(mag_field: np.ndarray, prev_mag_field: np.ndarray, bdot_dt: 
     """
     B-dot control law.
     """
-    if not readings_are_valid((prev_mag_field, mag_field)) or bdot_dt == 0 or bdot_dt > 1.5:
+    if not readings_are_valid((prev_mag_field, mag_field)) or bdot_dt <= 0 or bdot_dt > 1.5:
         return ControllerConst.FALLBACK_CONTROL
 
     b_dot = (mag_field - prev_mag_field) / bdot_dt

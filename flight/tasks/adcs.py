@@ -113,8 +113,8 @@ class Task(TemplateTask):
                 if sensors.get_gyro_scale != 0:
                     sensors.set_gyro_scale(0)
 
-                # Run 1-second control cycle (2 cycles × 500 ms)
-                self._run_control_cycle(0.5, 2)
+                # Run 1.2 s control cycle (4 cycles × 300 ms)
+                self._run_control_cycle(0.3, 4)
 
                 # Check if detumbling has been completed
                 self.MODE = update_mode(self.MODE, self.CONTROLLER_MODE)
@@ -143,8 +143,8 @@ class Task(TemplateTask):
                     if sensors.get_gyro_scale != 4:
                         sensors.set_gyro_scale(4)
 
-                    # Run one 500ms control cycle
-                    self._run_control_cycle(0.5, 1)
+                    # Run two 300ms control cycles
+                    self._run_control_cycle(0.3, 2)
 
                     # Identify Mode based on current sensor readings
                     new_mode = update_mode(self.MODE, self.CONTROLLER_MODE)
@@ -201,7 +201,8 @@ class Task(TemplateTask):
         self.prev_mag_data = self.mag_data.copy()
         self.mag_status, self.mag_data = sensors.read_magnetometer()
         new_last_mag_time = TPM.monotonic_float()
-        self.bdot_dt = new_last_mag_time - self.last_mag_time
+        if self.last_mag_time != 0.0:
+            self.bdot_dt = new_last_mag_time - self.last_mag_time
         self.last_mag_time = new_last_mag_time
 
     def _apply_control(self, allow_coils):
@@ -230,12 +231,12 @@ class Task(TemplateTask):
         after the first so the magnetometer field is clean; with num_cycles=1
         no settle is needed at all.
 
-        Timing per cycle_duration=0.5 s:
-          coil_on  = 0.4 s  (80 %)
-          settle   = 0.1 s  (20 %, skipped on first cycle)
+        Timing per cycle_duration=0.3 s:
+          coil_on  = 0.2 s  (66.67 %)
+          settle   = 0.1 s  (33.33 %, skipped on first cycle)
         """
-        coil_on_time = 0.8 * cycle_duration  # 400 ms at 0.5 s
-        settle_time = 0.2 * cycle_duration  # 100 ms at 0.5 s
+        coil_on_time = 0.66 * cycle_duration  # 200 ms at 0.3 s
+        settle_time = 0.33 * cycle_duration  # 100 ms at 0.3 s
 
         for i in range(num_cycles):
             if i == 0:
@@ -245,6 +246,8 @@ class Task(TemplateTask):
             self.ensure_coils_off()
             TPM.sleep(settle_time)  # let field settle before next mag read
             self._update_mag()
+
+        self.gyro_status, self.gyro_data = sensors.read_gyro()
 
     def _bcross_sun_cycle(self, duration):
         """
@@ -258,6 +261,7 @@ class Task(TemplateTask):
         """
         self._update_mag()
         self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
+        self.gyro_status, self.gyro_data = sensors.read_gyro()
 
         new_mode = update_mode(self.MODE, self.CONTROLLER_MODE)
         if new_mode != self.MODE:
@@ -338,8 +342,7 @@ class Task(TemplateTask):
         self.log_info(f"Gyro Status : {self.gyro_status}")
         self.log_info(f"Mag Status : {self.mag_status}")
         # Bdot debugging
-        self.log_info(f"Bdot : {bdot_controller(self.mag_data, self.prev_mag_data, self.bdot_dt)}")
-
-        self.log_info(f"Prev Mag : {self.prev_mag_data}")
-        self.log_info(f"Current Mag : {self.mag_data}")
-        self.log_info(f"Bdot dt : {self.bdot_dt}")
+        # self.log_info(f"Bdot : {bdot_controller(self.mag_data, self.prev_mag_data, self.bdot_dt)}")
+        # self.log_info(f"Prev Mag : {self.prev_mag_data}")
+        # self.log_info(f"Current Mag : {self.mag_data}")
+        # self.log_info(f"Bdot dt : {self.bdot_dt}")
