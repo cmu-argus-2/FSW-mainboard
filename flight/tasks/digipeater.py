@@ -14,7 +14,7 @@ It will not check the overall validity of the packet (apart from the special hea
 import re
 
 from apps.comms.comms import SATELLITE_RADIO
-from apps.digipeater import DIGIPEATER_QUEUE_STATUS, DigipeaterRxQueue, DigipeaterState
+from apps.digipeater import DIGIPEATER_QUEUE_STATUS, DigipeaterRxQueue
 from apps.digipeater.aprs import is_valid_lora_aprs_packet, add_asterisk_packet
 from core import TemplateTask
 from core.satellite_config import digipeater_config as CONFIG

@@ -33,6 +33,4 @@ class comms_config:
 
 
 class digipeater_config:
-    ENABLED = True
-    DUPLICATE_WINDOW_S = const(30)
     RX_QUEUE_MAX = const(20)

@@ -56,11 +56,6 @@ comms:
 
 # Digipeater Task
 digipeater:
-  ENABLED:
-    value: true
-  DUPLICATE_WINDOW_S:
-    value: 30
-    _const: true
   RX_QUEUE_MAX:
-    value: 20
+    value: 5
     _const: true
