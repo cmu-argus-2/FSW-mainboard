@@ -113,18 +113,8 @@ class Task(TemplateTask):
                 if sensors.get_gyro_scale != 0:
                     sensors.set_gyro_scale(0)
 
-                # Query the Gyro
-                self.gyro_status, self.gyro_data = sensors.read_gyro()
-
-                # Turn coils off if needed, wait 50ms for field to settle, then query magnetometer
-                coils_were_on = not self.coils_off
-                self.ensure_coils_off()
-                if coils_were_on:
-                    TPM.sleep(0.1)
-                self._update_mag()
-
-                # Run Attitude Control
-                self._apply_control(True)
+                # Run 1-second control cycle (2 cycles × 500 ms)
+                self._run_control_cycle(0.5, 2)
 
                 # Check if detumbling has been completed
                 self.MODE = update_mode(self.MODE, self.CONTROLLER_MODE)
@@ -152,31 +142,14 @@ class Task(TemplateTask):
                     # Set bmx160 scale to 125 deg/s, max resolution
                     if sensors.get_gyro_scale != 4:
                         sensors.set_gyro_scale(4)
-                    # Query the Gyro
-                    self.gyro_status, self.gyro_data = sensors.read_gyro()
 
-                    # Turn coils off; sleep to let the field settle only if coils were on and it's time to read the magnetometer
-                    coils_were_on = not self.coils_off
-                    self.ensure_coils_off()
-
-                    # Query magnetometer only if enough time has passed since last reading
-                    collect_mag = TPM.monotonic_float() - self.last_mag_time >= 0.8
-                    if collect_mag:
-                        # nominally this shouldn't occur, if it does this prevents the coils from skewing the mag reading
-                        if coils_were_on:
-                            TPM.sleep(0.1)
-                        self._update_mag()
-
-                    # Query Sun Position
-                    self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
+                    # Run one 500ms control cycle
+                    self._run_control_cycle(0.5, 1)
 
                     # Identify Mode based on current sensor readings
                     new_mode = update_mode(self.MODE, self.CONTROLLER_MODE)
                     if new_mode != self.MODE:
                         self.MODE = new_mode
-
-                    # Run attitude control only if magnetometer was queried this cycle and not in ACS_OFF
-                    self._apply_control(collect_mag and self.MODE != Modes.ACS_OFF)
 
             # Log data
             # NOTE: In detumbling, most of the log will be zeros since very few sensors are queried
@@ -238,6 +211,73 @@ class Task(TemplateTask):
             self.coils_off = False
         else:
             self.ensure_coils_off()
+
+    def _run_control_cycle(self, cycle_duration, num_cycles):
+        """
+        Dispatches to the appropriate control cycle.
+        cycle_duration: duration of one cycle in seconds (0.5 s nominal).
+        num_cycles: how many cycles to execute (2 for detumbling, 1 for nominal).
+        """
+        if self.CONTROLLER_MODE == ControllerModes.BDOT:
+            self._bdot_cycle(cycle_duration, num_cycles)
+        else:
+            self._bcross_sun_cycle(cycle_duration * num_cycles)
+
+    def _bdot_cycle(self, cycle_duration, num_cycles):
+        """
+        B-dot control cycle.  Each cycle = read_mag → coils on → coils off.
+        A settle wait (20% of cycle_duration) is inserted before each cycle
+        after the first so the magnetometer field is clean; with num_cycles=1
+        no settle is needed at all.
+
+        Timing per cycle_duration=0.5 s:
+          coil_on  = 0.4 s  (80 %)
+          settle   = 0.1 s  (20 %, skipped on first cycle)
+        """
+        coil_on_time = 0.8 * cycle_duration  # 400 ms at 0.5 s
+        settle_time = 0.2 * cycle_duration   # 100 ms at 0.5 s
+
+        for i in range(num_cycles):
+            if i > 0:
+                TPM.sleep(settle_time)  # let field settle before next mag read
+            self._update_mag()
+            self._apply_control(True)
+            TPM.sleep(coil_on_time)
+            self.ensure_coils_off()
+
+    def _bcross_sun_cycle(self, duration):
+        """
+        B-cross / Sun-pointing control cycle:
+          1. Read magnetometer and sun sensor at the beginning
+          2. Update ADCS mode based on fresh readings
+          3. Every 50 ms for duration seconds:
+             read gyro and update the control law / coils
+             (future: propagate sun and mag vectors with gyro)
+          4. Coils off at the end
+        """
+        self._update_mag()
+        self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
+
+        new_mode = update_mode(self.MODE, self.CONTROLLER_MODE)
+        if new_mode != self.MODE:
+            self.MODE = new_mode
+
+        GYRO_INTERVAL = 0.05  # 50 ms
+        t_start = TPM.monotonic_float()
+
+        while TPM.monotonic_float() - t_start < duration:
+            loop_start = TPM.monotonic_float()
+
+            self.gyro_status, self.gyro_data = sensors.read_gyro()
+            # TODO: Propagate sun vector and magnetometer with gyro reading
+            self._apply_control(self.MODE != Modes.ACS_OFF)
+
+            elapsed = TPM.monotonic_float() - loop_start
+            remaining = GYRO_INTERVAL - elapsed
+            if remaining > 0:
+                TPM.sleep(remaining)
+
+        self.ensure_coils_off()
 
     def ensure_coils_off(self):
         """
