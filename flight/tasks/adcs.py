@@ -230,16 +230,16 @@ class Task(TemplateTask):
     def _bdot_cycle(self, cycle_duration, num_cycles):
         """
         B-dot control cycle.  Each cycle = read_mag → coils on → coils off.
-        A settle wait (20% of cycle_duration) is inserted before each cycle
+        A settle wait of 100 ms is inserted before each cycle
         after the first so the magnetometer field is clean; with num_cycles=1
         no settle is needed at all.
 
-        Timing per cycle_duration=0.3 s:
-          coil_on  = 0.2 s  (66.67 %)
-          settle   = 0.1 s  (33.33 %, skipped on first cycle)
+        Timing per cycle_duration=X s:
+          coil_on  = X - 0.1 s
+          settle   = 0.1 s
         """
-        coil_on_time = 0.66 * cycle_duration  # 200 ms at 0.3 s
-        settle_time = 0.33 * cycle_duration  # 100 ms at 0.3 s
+        settle_time = 0.1
+        coil_on_time = cycle_duration - settle_time  # 200 ms at 0.3 s
 
         for i in range(num_cycles):
             if i == 0:
@@ -265,6 +265,7 @@ class Task(TemplateTask):
         self._update_mag()
         self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
         self.gyro_status, self.gyro_data = sensors.read_gyro()
+        self.last_mag_prop_time = TPM.monotonic_float()
 
         new_mode = update_mode(self.MODE, self.CONTROLLER_MODE)
         if new_mode != self.MODE:
@@ -277,7 +278,15 @@ class Task(TemplateTask):
             loop_start = TPM.monotonic_float()
 
             self.gyro_status, self.gyro_data = sensors.read_gyro()
-            # TODO: Propagate sun vector and magnetometer with gyro reading
+
+            if self.gyro_status == StatusConst.OK:
+                dt = loop_start - self.last_mag_prop_time
+                R = math.rotation_matrix_from_vector(-self.gyro_data * dt)
+                self.mag_data = np.dot(R, self.mag_data)
+                if self.sun_status == StatusConst.OK:
+                    self.sun_pos_body = np.dot(R, self.sun_pos_body)
+            self.last_mag_prop_time = loop_start
+
             self._apply_control(self.MODE != Modes.ACS_OFF)
 
             elapsed = TPM.monotonic_float() - loop_start
