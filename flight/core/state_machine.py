@@ -132,6 +132,10 @@ class StateManager:
 
             self.__scheduled_tasks[task_id] = schedule(frequency, task_fn, priority)
 
+            if task_params.get("StartStopped", False):
+                self.__scheduled_tasks[task_id].stop()
+                logger.info(f"Task {task_id} scheduled in stopped state")
+
     def stop_all_tasks(self):
         for name, task in self.__scheduled_tasks.items():
             task.stop()
