@@ -146,8 +146,8 @@ class Task(TemplateTask):
                     if sensors.get_gyro_scale != 4:
                         sensors.set_gyro_scale(4)
 
-                    # Run two 300ms control cycles
-                    self._run_control_cycle(0.3, 2)
+                    # Run two 500ms control cycles
+                    self._run_control_cycle(0.5, 2)
 
                     # Identify Mode based on current sensor readings
                     new_mode = update_mode(self.MODE, self.CONTROLLER_MODE)
