@@ -53,9 +53,8 @@ class SATELLITE_RADIO:
     # RF_STOP / COMMS mode state
     comms_mode = COMMS_MODE.STANDARD
     rf_stop = False
-
-    # Last raw packet received (used by digipeater for relay)
-    last_raw_packet = None
+    
+    digipeater_header = b"\x3c\xff\x01"   # have it here as well to facilitate checking
 
     """
         Name: set_rx_mode
@@ -146,7 +145,6 @@ class SATELLITE_RADIO:
         """
         packet = None
         err = -1  # _ERR_NONE is 0
-        cls.last_raw_packet = None
 
         try:
             packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
@@ -166,8 +164,9 @@ class SATELLITE_RADIO:
                 return None
 
             # Store raw bytes and feed digipeater queue before any validation
-            cls.last_raw_packet = bytes(packet)
-            DigipeaterRxQueue.push_packet(cls.last_raw_packet)
+            if packet[:3] == cls.digipeater_header:
+                logger.info(f"Received lora aprs packet {packet[:20]}")
+                DigipeaterRxQueue.push_packet(packet)
 
             if cls.auth_enabled:
                 is_valid, reason, packet = verify_authenticated_command(packet, cls.auth_key)
