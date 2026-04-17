@@ -21,10 +21,11 @@ class DigipeaterRxQueue:
 
     @classmethod
     def push_packet(cls, packet):
-        if len(cls._queue) < cls._max_size:
-            cls._queue.append(packet)
-            return DIGIPEATER_QUEUE_STATUS.OK
-        return DIGIPEATER_QUEUE_STATUS.OVERFLOW
+        # Circular behavior: when full, overwrite the oldest packet.
+        if len(cls._queue) >= cls._max_size:
+            cls._queue.pop(0)
+        cls._queue.append(packet)
+        return DIGIPEATER_QUEUE_STATUS.OK
 
     @classmethod
     def pop_packet(cls):
