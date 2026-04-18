@@ -109,7 +109,7 @@ class StateManager:
             logger.warning("Entering LOW POWER state - cutting power to payload")
             if SATELLITE.PAYLOADPOWER_AVAILABLE:
                 SATELLITE.JETSON_ENABLE.value = False
-                SATELLITE.JETSON_SD_REQ.value = False
+                # SATELLITE.JETSON_SD_REQ.value = False
 
         self.__previous_state = self.__current_state
         self.__current_state = new_state_id

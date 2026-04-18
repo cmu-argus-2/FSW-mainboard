@@ -283,7 +283,7 @@ class ArgusV4Components:
     JETSON_UART = ArgusV4Interfaces.JETSON_UART    # TODO: i dont think we need this here
     JETSON_SD_REQ = digitalio.DigitalInOut(board.JETSON_SD_REQ)   # this has been wired to 5v dcdc enable
     JETSON_SD_REQ.direction = digitalio.Direction.OUTPUT
-    JETSON_SD_REQ.value = False     # Not necessary, suggested by copilot, added just to be sure
+    JETSON_SD_REQ.value = True     # Not necessary, suggested by copilot, added just to be sure
     JETSON_ENABLE = digitalio.DigitalInOut(board.JETSON_EN)
     JETSON_ENABLE.direction = digitalio.Direction.OUTPUT
     JETSON_ENABLE.value = False     # Not necessary, suggested by copilot, added just to be sure

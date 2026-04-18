@@ -94,8 +94,8 @@ def TURN_OFF_PAYLOAD():
     try:
         logger.info("[PAYLOAD] Shutdown command sent successfully, waiting for payload to shutdown before cutting power")
         SATELLITE.JETSON_ENABLE.value = False
-        TPM.sleep(0.1)
-        SATELLITE.JETSON_SD_REQ.value = False  # turn of 5v dcdc to save more power
+        # TPM.sleep(0.1)
+        # SATELLITE.JETSON_SD_REQ.value = False  # turn of 5v dcdc to save more power
 
     except Exception as e:
         logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
@@ -113,8 +113,8 @@ def TURN_ON_PAYLOAD():
         return ["payload power pins not available"]
 
     try:
-        SATELLITE.JETSON_SD_REQ.value = True
-        TPM.sleep(0.1)
+        # SATELLITE.JETSON_SD_REQ.value = True
+        # TPM.sleep(0.1)
         SATELLITE.JETSON_ENABLE.value = True  # turn of 5v dcdc to save more power
 
         logger.info("[PAYLOAD] Jetson power enabled successfully.")

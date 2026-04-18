@@ -176,22 +176,24 @@ class Task(TemplateTask):
 
                 # TODO: add deployment flag
                 if SATELLITE.BURN_WIRES_AVAILABLE:
-                    # Deployment finished when the deployment PWM reaches 0
-                    if self.deploymentPWM < _PWM_MIN and deployment_time_check:
-                        self.deploymentTries += 1
-                        if self.check_deployment_status() or self.deploymentTries >= _BURN_WIRE_TIMEOUT:
-                            self.log_info("Deployment complete")
-                            self.deployment_done = True
-                            SATELLITE.BURN_WIRES.turn_off_pwm(self.deploymentPWM + 1)
-                            SATELLITE.BURN_WIRES.disable_driver()
-                        else:
-                            self.log_warning("Deployment not successful, retrying deployment sequence...")
-                            self.deploymentPWM = _FIRST_PWM  # Reset PWM to retry deployment
-                            self.antenna_tries = 0
-                    elif self.deploymentPWM >= _PWM_MIN and deployment_time_check:
-                        self.log_info(f"Deployment sequence: {self.deploymentPWM}")
-                        self.last_deployment_time = TPM.monotonic()
-                        self.deployment_sequence()
+                    self.deployment_done = True
+
+                    # # Deployment finished when the deployment PWM reaches 0
+                    # if self.deploymentPWM < _PWM_MIN and deployment_time_check:
+                    #     self.deploymentTries += 1
+                    #     if self.check_deployment_status() or self.deploymentTries >= _BURN_WIRE_TIMEOUT:
+                    #         self.log_info("Deployment complete")
+                    #         self.deployment_done = True
+                    #         SATELLITE.BURN_WIRES.turn_off_pwm(self.deploymentPWM + 1)
+                    #         SATELLITE.BURN_WIRES.disable_driver()
+                    #     else:
+                    #         self.log_warning("Deployment not successful, retrying deployment sequence...")
+                    #         self.deploymentPWM = _FIRST_PWM  # Reset PWM to retry deployment
+                    #         self.antenna_tries = 0
+                    # elif self.deploymentPWM >= _PWM_MIN and deployment_time_check:
+                    #     self.log_info(f"Deployment sequence: {self.deploymentPWM}")
+                    #     self.last_deployment_time = TPM.monotonic()
+                    #     self.deployment_sequence()
                 else:
                     self.log_info("Burn wires not available, skipping deployment sequence...")
                     self.deployment_done = True

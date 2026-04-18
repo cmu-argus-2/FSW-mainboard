@@ -1,0 +1,221 @@
+Branch: controller_mode
+Commit: ca609cf splat update
+
+diff --git a/.gitignore b/.gitignore
+index 476b3c6..b1f4bdc 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -170,4 +170,5 @@ assets/*
+ 
+ flight/build/
+ 
+-temp_test.py
+\ No newline at end of file
++temp_test.py
++ditl_logs/
+\ No newline at end of file
+diff --git a/flight/apps/command/commands.py b/flight/apps/command/commands.py
+index 9317bbe..f0b1ce0 100644
+--- a/flight/apps/command/commands.py
++++ b/flight/apps/command/commands.py
+@@ -307,8 +307,10 @@ def ADCS_CTRL_MODE(mode_id):
+     logger.info(f"Executing ADCS_CTRL_MODE with mode_id: {mode_id}")
+ 
+     valid = CM.update_mode(mode_id)
+-
+-    return [mode_id, valid]
++    if valid:
++        return [CM.current_mode]
++    else:
++        return [-1]
+ 
+ 
+ @register_command()
+diff --git a/flight/apps/command/processor.py b/flight/apps/command/processor.py
+index a37d818..b3d416d 100644
+--- a/flight/apps/command/processor.py
++++ b/flight/apps/command/processor.py
+@@ -57,16 +57,16 @@ def process_command(command):
+ 
+         if precondition_func is None:
+             logger.error(f"Cmd: Unknown precondition '{precondition_name}'")
+-            return CommandProcessingStatus.PRECONDITION_FAILED, [command.command_id]
++            return CommandProcessingStatus.PRECONDITION_FAILED, []
+ 
+         try:
+             # Execute the precondition function
+             if not precondition_func(*argument_list):
+                 logger.error("Cmd: Precondition failed")
+-                return CommandProcessingStatus.PRECONDITION_FAILED, [command.command_id]
++                return CommandProcessingStatus.PRECONDITION_FAILED, []
+         except Exception as e:
+             logger.error(f"Cmd: Precondition check failed with error: {e}")
+-            return CommandProcessingStatus.PRECONDITION_FAILED, [command.command_id]
++            return CommandProcessingStatus.PRECONDITION_FAILED, []
+ 
+     # 2. Execute the Command
+     # Look up the command function in the dispatch table
+@@ -74,7 +74,7 @@ def process_command(command):
+ 
+     if satellite_func is None:
+         logger.warning(f"Cmd: Unknown command ID '{satellite_func_name}'")
+-        return CommandProcessingStatus.UNKNOWN_COMMAND_ID, [command.command_id]
++        return CommandProcessingStatus.UNKNOWN_COMMAND_ID, []
+ 
+     try:
+         logger.info(f"Executing command function: {satellite_func_name}")
+@@ -89,22 +89,22 @@ def process_command(command):
+ 
+         return (
+             CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS,
+-            [command.command_id] + list(response_args),
++            list(response_args),
+         )
+ 
+     except Exception as e:
+         logger.error(f"Cmd: Command execution failed: {e}")
+         # Optionally log stack trace to a file for deeper diagnostics
+-        return CommandProcessingStatus.COMMAND_EXECUTION_FAILED, [command.command_id]
++        return CommandProcessingStatus.COMMAND_EXECUTION_FAILED, []
+ 
+ 
+-def handle_command_execution_status(status, response_args):
++def handle_command_execution_status(status, command_id, response_args):
+     # If the command execution was successful, send a success response to Comms via Response Queue
+     # If the command execution failed, send an error response with the error code to Comms via Response Queue
+ 
+     # add ack response to transmit queue for comms to pick up and send to ground station
+     # this is not the best place to do this, not sure where the best place to do this is
+-    ack = Ack(status, response_args)
++    ack = Ack(status, command_id, response_args)
+     TransmitQueue.push_packet(ack)
+     logger.info(f"Added ack obj to transmit queue: {ack}")
+ 
+diff --git a/flight/configuration/flight.yaml b/flight/configuration/flight.yaml
+index 4628a95..619b79d 100644
+--- a/flight/configuration/flight.yaml
++++ b/flight/configuration/flight.yaml
+@@ -15,6 +15,9 @@ command:
+   PAYLOAD_TESTING_MODE:
+     value: false
+ 
++  SKIP_DEPLOYMENT:
++    value: false  # Must be false for flight - deployment must execute
++
+   BURN_WIRE_TIMEOUT:
+     value: 5  # number of deployment attempts before forcing completion
+     _const: true
+diff --git a/flight/configuration/ground.yaml b/flight/configuration/ground.yaml
+index 86a6326..cf4aeb5 100644
+--- a/flight/configuration/ground.yaml
++++ b/flight/configuration/ground.yaml
+@@ -13,12 +13,15 @@ command:
+     _const: true
+     
+   BURN_WIRE_TIMEOUT:
+-    value: 2  # number of deployment attempts before forcing completion
++    value: 0  # number of deployment attempts before forcing completion
+     _const: true
+ 
+   PAYLOAD_TESTING_MODE:
+     value: false  # Set to true to enable payload testing mode (goes straight to experiment mode)
+ 
++  SKIP_DEPLOYMENT:
++    value: true  # Set to true to skip the burn wire deployment sequence entirely (ground testing)
++
+ # Time Processor Module
+ time_processor:
+   time_reference: 
+diff --git a/flight/core/satellite_config.py b/flight/core/satellite_config.py
+index ee1a457..043c3ce 100644
+--- a/flight/core/satellite_config.py
++++ b/flight/core/satellite_config.py
+@@ -4,15 +4,12 @@
+ from micropython import const
+ 
+ 
+-class adcs_config:
+-    CONTROLLER_MODE = 0
+-
+-
+ class command_config:
+     EXIT_STARTUP_TIMEOUT = const(5)
+     DETUMBLING_TIMEOUT_DURATION = const(30)
+-    BURN_WIRE_TIMEOUT = const(2)
++    BURN_WIRE_TIMEOUT = const(0)
+     PAYLOAD_TESTING_MODE = False
++    SKIP_DEPLOYMENT = True
+ 
+ 
+ class time_processor_config:
+@@ -27,13 +24,14 @@ class hal_monitor_config:
+     REGULAR_REBOOT = const(3600)
+ 
+ 
+-# TODO: Change the auth key before flight
+-
+-
+ class comms_config:
+-    ARGUS_ID = const(0)
+-    HB_PERIOD = const(60)
++    ARGUS_ID = const(0x0)
++    HB_PERIOD = const(30)
+     AUTH_ENABLED = True
+     AUTH_KEY_HEX = "d6172b38acb7d2a28e21662f689d1d15ad78ccc888a9c7a78ef58cb61b0f1e32"
+-    SC_CALLSIGN = "CT6ARG"
+-    GS_CALLSIGN = "CS5CEP"
++    SC_CALLSIGN = "CT6xxx"
++    GS_CALLSIGN = "CSXXXX"
++
++
++class adcs_config:
++    CONTROLLER_MODE = 0
+diff --git a/flight/main.py b/flight/main.py
+index b2d90df..2fc8a93 100644
+--- a/flight/main.py
++++ b/flight/main.py
+@@ -48,9 +48,9 @@ print_memory_stats(call_gc=True)
+ try:
+     # Run forever
+ 
+-    # from core import DataHandler as DH
++    from core import DataHandler as DH
+ 
+-    # DH.delete_all_files()
++    DH.delete_all_files()
+ 
+     logger.info("Starting state manager")
+     state_manager.start()
+diff --git a/flight/tasks/command.py b/flight/tasks/command.py
+index 3fb0be0..dfad539 100644
+--- a/flight/tasks/command.py
++++ b/flight/tasks/command.py
+@@ -32,6 +32,7 @@ _FIRST_PWM = const(2)  # First PWM to start deployment
+ _BURN_WIRE_TIMEOUT = CONFIG.BURN_WIRE_TIMEOUT  # number of tries
+ _DEPLOYMENT_DISTANCE = const(2)  # distance(cm) threshold for deployment
+ _PAYLOAD_TESTING_MODE = CONFIG.PAYLOAD_TESTING_MODE
++_SKIP_DEPLOYMENT = CONFIG.SKIP_DEPLOYMENT
+ 
+ 
+ class Task(TemplateTask):
+@@ -175,7 +176,10 @@ class Task(TemplateTask):
+                 )
+ 
+                 # TODO: add deployment flag
+-                if SATELLITE.BURN_WIRES_AVAILABLE:
++                if _SKIP_DEPLOYMENT:
++                    self.log_info("Deployment skipped (SKIP_DEPLOYMENT=True)")
++                    self.deployment_done = True
++                elif SATELLITE.BURN_WIRES_AVAILABLE:
+                     # Deployment finished when the deployment PWM reaches 0
+                     if self.deploymentPWM < _PWM_MIN and deployment_time_check:
+                         self.deploymentTries += 1
+@@ -406,7 +410,7 @@ class Task(TemplateTask):
+ 
+             self.log_info(f"  Arguments: {command.arguments}")
+             status, response_args = processor.process_command(command)
+-            processor.handle_command_execution_status(status, response_args)
++            processor.handle_command_execution_status(status, command.command_id, response_args)
+ 
+             # Log the command execution history
+             self.log_commands[0] = TPM.time()

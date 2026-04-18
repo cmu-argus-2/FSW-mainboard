@@ -1,0 +1,4 @@
+send "^C"
+sleep 1
+send "^D"
+sleep 1
