@@ -80,4 +80,50 @@ def valid_adcs_mode(*args) -> bool:
     return (isinstance(mode_id, int)) and 0 <= mode_id <= 2
 
 
+@register_precondition()
+def valid_adcs_mode(*args) -> bool:
+    """
+    Precondition for ADCS_CTRL_MODE command.
+    Checks that the mode_id is a valid ADCS controller mode.
+    """
+    mode_id = args[0]
+    return (isinstance(mode_id, int)) and 0 <= mode_id <= 2
+
+
+@register_precondition()
+def valid_gains(*args) -> bool:
+    """
+    Precondition for ADCS_UPDATE_GAINS command.
+    Checks that the gains are valid.
+    """
+    return 
+
+
+@register_precondition()
+def valid_omega_mag_target(*args) -> bool:
+    """
+    Precondition for ADCS_UPDATE_OMEGA_TARGET command.
+    Checks that the omega magnitude target is valid.
+    """
+    omega_mag_target = args[0]
+    return (isinstance(omega_mag_target, (int, float))) 
+
+@register_precondition()
+def valid_inertia(*args) -> bool:
+    """
+    Precondition for ADCS_UPDATE_OMEGA_TARGET command.
+    Checks that the omega magnitude target is valid.
+    """
+    omega_mag_target = args[0]
+    return (isinstance(omega_mag_target, (int, float))) 
+
+
+@register_precondition()
+def valid_vfd_tols(*args) -> bool:
+    return
+
+# valid_det_tols
+
+# valid_tols
+
 # TODO: add a precondition for OD experiment (no OD should be in progress)
