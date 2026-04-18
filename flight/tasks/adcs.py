@@ -143,8 +143,8 @@ class Task(TemplateTask):
                     if sensors.get_gyro_scale != 4:
                         sensors.set_gyro_scale(4)
 
-                    # Run two 300ms control cycles
-                    self._run_control_cycle(0.3, 2)
+                    # Run two 500ms control cycles
+                    self._run_control_cycle(0.5, 2)
 
                     # Identify Mode based on current sensor readings
                     new_mode = update_mode(self.MODE, self.CONTROLLER_MODE)
@@ -167,7 +167,12 @@ class Task(TemplateTask):
         if self.CONTROLLER_MODE == ControllerModes.BDOT:
             if self.MODE != Modes.ACS_OFF:
                 if not (self.mag_status != StatusConst.OK):
-                    mtq_throttle = bdot_controller(self.mag_data, self.prev_mag_data, self.bdot_dt)
+                    if self.MODE == Modes.TUMBLING:
+                        mtq_throttle = bdot_controller(
+                            self.mag_data, self.prev_mag_data, 0.1 * self.bdot_dt
+                        )  # equal to using a 10x gain for faster detumbling
+                    else:
+                        mtq_throttle = bdot_controller(self.mag_data, self.prev_mag_data, self.bdot_dt)
 
         elif self.CONTROLLER_MODE == ControllerModes.BCROSS:
             if self.MODE != Modes.ACS_OFF:
@@ -235,8 +240,8 @@ class Task(TemplateTask):
           coil_on  = 0.2 s  (66.67 %)
           settle   = 0.1 s  (33.33 %, skipped on first cycle)
         """
-        coil_on_time = 0.66 * cycle_duration  # 200 ms at 0.3 s
-        settle_time = 0.33 * cycle_duration  # 100 ms at 0.3 s
+        settle_time = 0.1  # 100 ms at 0.3 s
+        coil_on_time = cycle_duration - 0.1  # 200 ms at 0.3 s
 
         for i in range(num_cycles):
             if i == 0:
