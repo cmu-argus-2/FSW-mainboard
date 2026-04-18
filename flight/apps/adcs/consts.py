@@ -75,6 +75,26 @@ class Modes:
     SUN_POINTED_TOL_HI = 0.26  # Re-enter sun_pointed if momentum more than 15 deg from sun vector
 
 
+_CONTROLLER_MODE_FILE = "/sd/adcs_controller_mode"
+
+
+def _load_controller_mode():
+    try:
+        with open(_CONTROLLER_MODE_FILE, "r") as f:
+            mode = int(f.read().strip())
+            if mode in (0, 1, 2):
+                return mode
+    except Exception:
+        pass
+    mode = CONFIG.CONTROLLER_MODE
+    try:
+        with open(_CONTROLLER_MODE_FILE, "w") as f:
+            f.write(str(mode))
+    except Exception:
+        pass
+    return mode
+
+
 class ControllerModes:
     """
     Controller Modes
@@ -84,15 +104,19 @@ class ControllerModes:
     BCROSS = 1
     SUN_POINTING = 2
 
-    current_mode = CONFIG.CONTROLLER_MODE
+    current_mode = _load_controller_mode()
 
     @classmethod
     def update_mode(cls, new_mode):
         if new_mode in [cls.BDOT, cls.BCROSS, cls.SUN_POINTING]:
             cls.current_mode = new_mode
+            try:
+                with open(_CONTROLLER_MODE_FILE, "w") as f:
+                    f.write(str(new_mode))
+            except Exception:
+                pass
             return True
-        else:
-            return False
+        return False
 
 
 class SunConst:
