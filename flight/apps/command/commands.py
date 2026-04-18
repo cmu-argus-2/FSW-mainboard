@@ -21,7 +21,7 @@ Author: Ibrahima S. Sow
 """
 
 import supervisor
-from apps.adcs.consts import ControllerModes, ControllerConst, Modes
+from apps.adcs.consts import ControllerConst, ControllerModes, Modes
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
 from apps.telemetry.splat.splat.telemetry_codec import Command
@@ -314,42 +314,42 @@ def ADCS_CTRL_MODE(mode_id):
 
 
 @register_command()
-def ADCS_UPDATE_GAINS(spin_gain, detumb_gain):
+def ADCS_UPDATE_GAINS(k_ss, k_dtb):
     """Updates the spin-stabilizing and detumbling controller gains."""
-    logger.info(f"Executing ADCS_UPDATE_GAINS with spin_gain: {spin_gain}, detumb_gain: {detumb_gain}")
-    ControllerConst.update_gains(spin_gain, detumb_gain)
+    logger.info(f"Executing ADCS_UPDATE_GAINS with k_ss: {k_ss}, k_dtb: {k_dtb}")
+    ControllerConst.update_gains(float(k_ss), float(k_dtb))
     return [ControllerConst.SPIN_STABILIZING_GAIN, ControllerConst.DETUMB_GAIN]
 
 
 @register_command()
-def ADCS_UPDATE_OMEGA_TARGET(omega_mag_target):
-    """Updates the target spin rate and recomputes derived momentum targets."""
-    logger.info(f"Executing ADCS_UPDATE_OMEGA_TARGET with omega_mag_target: {omega_mag_target}")
-    ControllerConst.update_omega_target(omega_mag_target)
+def ADCS_UPDATE_TARGET_SPIN(w_tgt):
+    """Updates the target spin rate and recomputes derived momentum targets. Input in radps"""
+    logger.info(f"Executing ADCS_UPDATE_TARGET_SPIN with target spin rate: {w_tgt} radps")
+    ControllerConst.update_omega_target(float(w_tgt))
     return [ControllerConst.OMEGA_MAG_TARGET, ControllerConst.MOMENTUM_TARGET_MAG]
 
 
 @register_command()
 def ADCS_UPDATE_INERTIA(ixx, ixy, ixz, iyy, iyz, izz):
     """Updates the inertia matrix (symmetric, 6 unique values) and recomputes momentum targets."""
-    logger.info(f"Executing ADCS_UPDATE_INERTIA")
+    logger.info(f"Executing ADCS_UPDATE_INERTIA with ixx: {ixx}, ixy: {ixy}, ixz: {ixz}, iyy: {iyy}, iyz: {iyz}, izz: {izz}")
     ControllerConst.update_inertia(ixx, ixy, ixz, iyy, iyz, izz)
     return [1]
 
 
 @register_command()
-def ADCS_UPDATE_VF_TUMBLING_TOLS(bdot, vf):
+def ADCS_UPDATE_VF_TUMB_TOLS(vf_bdot, vf):
     """Updates the very-fast-tumbling entry thresholds (bdot and gyro)."""
-    logger.info(f"Executing ADCS_UPDATE_VF_TUMBLING_TOLS with bdot: {bdot}, vf: {vf}")
-    Modes.update_vf_tumbling_tols(bdot, vf)
+    logger.info(f"Executing ADCS_UPDATE_VF_TUMB_TOLS with vf_tol_bdot: {vf_bdot}, vf_tol: {vf}")
+    Modes.update_vf_tumbling_tols(float(vf_bdot), float(vf))
     return [Modes.VF_TUMBLING_TOL_BDOT, Modes.VF_TUMBLING_TOL]
 
 
 @register_command()
-def ADCS_UPDATE_DETUMBLING_TOLS(tumbling, lo, hi):
+def ADCS_UPDATE_DETUMB_TOLS(tb, dtb_lo, dtb_hi):
     """Updates the detumbling mode thresholds (exit-to-stable, turn-off, re-enter)."""
-    logger.info(f"Executing ADCS_UPDATE_DETUMBLING_TOLS with tumbling: {tumbling}, lo: {lo}, hi: {hi}")
-    Modes.update_detumbling_tols(tumbling, lo, hi)
+    logger.info(f"Executing ADCS_UPDATE_DETUMB_TOLS with tb_tol: {tb}, dtb_tol_lo: {dtb_lo}, dtb_tol_hi: {dtb_hi}")
+    Modes.update_detumbling_tols(float(tb), float(dtb_lo), float(dtb_hi))
     return [Modes.TUMBLING_TOL, Modes.DETUMBLED_TOL_LO, Modes.DETUMBLED_TOL_HI]
 
 
@@ -362,9 +362,9 @@ def ADCS_UPDATE_STABLE_TOLS(lo, hi):
 
 
 @register_command()
-def ADCS_UPDATE_SUN_POINTED_TOLS(lo, hi):
+def ADCS_UPDATE_SUN_POINT_TOLS(lo, hi):
     """Updates the sun-pointed mode entry/exit thresholds."""
-    logger.info(f"Executing ADCS_UPDATE_SUN_POINTED_TOLS with lo: {lo}, hi: {hi}")
+    logger.info(f"Executing ADCS_UPDATE_SUN_POINT_TOLS with lo: {lo}, hi: {hi}")
     Modes.update_sun_pointed_tols(lo, hi)
     return [Modes.SUN_POINTED_TOL_LO, Modes.SUN_POINTED_TOL_HI]
 

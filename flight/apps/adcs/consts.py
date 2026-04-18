@@ -4,9 +4,11 @@ Constants used in ADCS apps.
 Author(s): Derek Fan
 """
 
+import math
+
 from core.satellite_config import adcs_config as CONFIG
 from ulab import numpy as np
-import math
+
 
 class StatusConst:
     """
@@ -186,7 +188,7 @@ class ControllerConst:
     @classmethod
     def update_inertia(cls, ixx, ixy, ixz, iyy, iyz, izz):
         cls.INERTIA_MAT = np.array([[ixx, ixy, ixz], [ixy, iyy, iyz], [ixz, iyz, izz]])
-        
+
         # Compute Major axis of inertia
         _eigvals, _eigvecs = np.linalg.eig(cls.INERTIA_MAT)
         _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
@@ -194,7 +196,7 @@ class ControllerConst:
         inertia_major_dir_abs = np.array([math.fabs(dir_x) for dir_x in cls.INERTIA_MAJOR_DIR])
         if cls.INERTIA_MAJOR_DIR[np.argmax(inertia_major_dir_abs)] < 0:
             cls.INERTIA_MAJOR_DIR = -cls.INERTIA_MAJOR_DIR
-        
+
         cls.MOMENTUM_TARGET = np.dot(cls.INERTIA_MAT, cls.INERTIA_MAJOR_DIR * cls.OMEGA_MAG_TARGET)
         cls.MOMENTUM_TARGET_MAG = np.linalg.norm(cls.MOMENTUM_TARGET)
 
