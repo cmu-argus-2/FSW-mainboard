@@ -5,6 +5,7 @@
 import gc
 
 import apps.command.processor as processor
+import microcontroller
 from apps.adcs.consts import Modes
 from apps.command import QUEUE_STATUS, CommandQueue
 from apps.eps.eps import EPS_POWER_FLAG
@@ -19,7 +20,6 @@ from core.states import STATES, STR_STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 from micropython import const
-import microcontroller
 
 _TPM_INIT_TIMEOUT = const(10)  # seconds
 _EXIT_STARTUP_TIMEOUT = CONFIG.EXIT_STARTUP_TIMEOUT  # Already a const in satellite_config
@@ -35,7 +35,8 @@ _DEPLOYMENT_DISTANCE = const(2)  # distance(cm) threshold for deployment
 _PAYLOAD_TESTING_MODE = CONFIG.PAYLOAD_TESTING_MODE
 
 _DEPLOYMENT_NVM_BYTE = const(18)
-_DEPLOYMENT_MAGIC = const(0xD3) # Arbitrary -- non 0x00-0xFF
+_DEPLOYMENT_MAGIC = const(0xD3)  # Arbitrary -- non 0x00-0xFF
+
 
 class Task(TemplateTask):
     # To be removed
@@ -71,9 +72,7 @@ class Task(TemplateTask):
     def _persist_deployment_latch(self, enabled):
         """Persist deployment completion across reboot using NVM flash."""
         try:
-            microcontroller.nvm[_DEPLOYMENT_NVM_BYTE] = (
-                _DEPLOYMENT_MAGIC if enabled else 0x00
-            )
+            microcontroller.nvm[_DEPLOYMENT_NVM_BYTE] = _DEPLOYMENT_MAGIC if enabled else 0x00
         except Exception as e:
             self.log_warning(f"Failed to persist DEPLOYMENT latch to NVM: {e}")
 
@@ -207,7 +206,7 @@ class Task(TemplateTask):
                         if self.check_deployment_status() or self.deploymentTries >= _BURN_WIRE_TIMEOUT:
                             self.log_info("Deployment complete")
                             self.deployment_done = True
-                            self._persist_deployment_latch(True) 
+                            self._persist_deployment_latch(True)
                             SATELLITE.BURN_WIRES.turn_off_pwm(self.deploymentPWM + 1)
                             SATELLITE.BURN_WIRES.disable_driver()
                         else:
@@ -221,7 +220,7 @@ class Task(TemplateTask):
                 else:
                     self.log_info("Burn wires not available, skipping deployment sequence...")
                     self.deployment_done = True
-                    self._persist_deployment_latch(True) 
+                    self._persist_deployment_latch(True)
 
                 if self.deployment_done:
                     # T0: Boot over and deployment complete
