@@ -44,3 +44,4 @@ class StateFlags:
     f_lowbtout = bitFlag(register=FLAG, bit=3)
     f_gpsfix = bitFlag(register=FLAG, bit=4)
     f_shtdwn = bitFlag(register=FLAG, bit=5)
+    f_rf_stop = bitFlag(register=FLAG, bit=6)
