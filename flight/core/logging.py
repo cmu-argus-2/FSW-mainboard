@@ -411,13 +411,13 @@ class RotatingFileHandler(FileHandler):
         if (log_size is not None) and (log_size >= self._maxBytes) and (self._maxBytes > 0) and (self._backupCount > 0):
             self.doRollover()
         try:
-            self.stream.write(self.format(record))
+            self.stream.write(self.format(record) + self.terminator)
             self.stream.flush()
         except (OSError, ValueError):
             # Stream is stale (file deleted, SD deinitialized, etc.). Try to reopen and retry once.
             try:
                 self.stream = open(self._LogFileName, mode=self._WriteMode)
-                self.stream.write(self.format(record))
+                self.stream.write(self.format(record) + self.terminator)
                 self.stream.flush()
             except (OSError, ValueError):
                 pass  # Can't write — silently drop rather than crash
