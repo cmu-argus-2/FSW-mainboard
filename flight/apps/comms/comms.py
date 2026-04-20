@@ -53,7 +53,7 @@ class SATELLITE_RADIO:
     # RF_STOP / COMMS mode state
     comms_mode = COMMS_MODE.STANDARD
     rf_stop = False
-    
+
     digipeater_header = b"\x3c\xff\x01"   # have it here as well to facilitate checking
 
     """

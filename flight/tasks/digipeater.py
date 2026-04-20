@@ -27,7 +27,7 @@ class Task(TemplateTask):
         self.name = "DIGI"
 
         self.max_rx_queue = int(getattr(CONFIG, "RX_QUEUE_MAX", 20))
-        
+
         # create the RE to find satellite CS in the path
         self._satellite_cs_re = re.compile(f"{SATELLITE_RADIO.SC_CALLSIGN}")
 
@@ -41,7 +41,7 @@ class Task(TemplateTask):
         while DigipeaterRxQueue.packet_available():
             raw_packet, status = DigipeaterRxQueue.pop_packet()
             self.log_info(f"Looking at packet: {raw_packet[:20]}")
-            
+
             if status != DIGIPEATER_QUEUE_STATUS.OK or raw_packet is None:
                 return
 
@@ -50,11 +50,10 @@ class Task(TemplateTask):
             if not result == 6:
                 self.log_warning(f"  Invalid packet format, dropping {result}")
                 continue
-            
+
             # Add asterik to callsign to indicate digipeating
             final_packet = add_asterisk_packet(raw_packet, self._satellite_cs_re)
 
             # Transmit directly (not via TransmitQueue, which applies SPLAT packing)
             if not SATELLITE_RADIO.transmit_message(final_packet):
                 self.log_warning("Digipeater TX failed (RF_STOP or radio unavailable)")
-
