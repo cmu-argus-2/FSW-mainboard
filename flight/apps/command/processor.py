@@ -22,11 +22,8 @@ Author: Ibrahima S. Sow
 
 from apps.command import commands as command_handlers
 from apps.command import preconditions as precondition_handlers
-from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import TransmitQueue
-from apps.comms.modes import COMMS_MODE as COMMS_MODE_ID
 from apps.telemetry.splat.splat.telemetry_codec import Ack
-from apps.telemetry.splat.splat.telemetry_definition import COMMAND_IDS
 from core import logger
 from micropython import const
 
@@ -99,16 +96,11 @@ def process_command(command):
 
 
 def handle_command_execution_status(status, command_id, response_args):
-    """Push an ACK/NACK to the transmit queue, unless RF_STOP suppresses it."""
-    in_rf_stop = SATELLITE_RADIO.get_comms_mode() == COMMS_MODE_ID.RF_STOP
-    rf_resume_id = COMMAND_IDS["RF_RESUME"]
+    """Push an ACK/NACK to the transmit queue"""
 
-    if in_rf_stop and command_id != rf_resume_id:
-        logger.warning("RF_STOP active: suppressing command ACK")
-    else:
-        ack = Ack(status, command_id, response_args)
-        TransmitQueue.push_packet(ack)
-        logger.info(f"Added ack obj to transmit queue: {ack}")
+    ack = Ack(status, command_id, response_args)
+    TransmitQueue.push_packet(ack)
+    logger.info(f"Added ack obj to transmit queue: {ack}")
 
     if status == CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS:
         logger.info("Command execution successful")
