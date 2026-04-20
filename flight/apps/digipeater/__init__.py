@@ -1,9 +1,8 @@
 """Digipeater app package."""
 
 from apps.digipeater.fifo import DIGIPEATER_QUEUE_STATUS, DigipeaterRxQueue
-from core.states import TASK
-from core.states import STATES
 from core import state_manager as SM
+from core.states import STATES, TASK
 
 
 class DigipeaterState:

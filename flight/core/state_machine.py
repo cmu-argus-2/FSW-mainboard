@@ -1,10 +1,10 @@
 import time
 
 import core.scheduler as scheduler
+from apps.digipeater import DigipeaterState
 from core import logger
 from core.states import STATES, STR_STATES
 from hal.configuration import SATELLITE
-from apps.digipeater import DigipeaterState
 
 
 class StateManager:
