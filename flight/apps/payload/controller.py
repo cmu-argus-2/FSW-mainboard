@@ -8,8 +8,6 @@ Author: Ibrahima Sory Sow, Perrin Tong
 
 """
 
-import time
-
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.payload.download_manager import DownloadManager
 from apps.payload.uart_comms import PayloadUART as PU
@@ -18,7 +16,9 @@ from apps.telemetry.splat.splat.telemetry_definition import COMMAND_IDS
 from apps.telemetry.splat.splat.transport_layer import Transaction
 from core import DataHandler as DH
 from core import logger
+from core import state_manager as SM
 from core.dh_constants import PAYLOAD_IDX
+from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 from micropython import const
@@ -136,15 +136,24 @@ class PayloadController:
         cls.log_data[PAYLOAD_IDX.PD_STATE_MAINBOARD] = cls.current_state
         DH.log_data("payload_tm", cls.log_data)
 
+        # idle state, need to reset some of the telemtry variables
+        if cls.current_state == PayloadState.IDLE:
+            # set the last_executed_time
+            cls.current_command = None
+            cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = 30  # arbitrary number to distinguish from command time 0
+
         # booting state needs to turn on the satellite
         if cls.current_state == PayloadState.BOOTING:
             logger.info("[PAYLOAD] -  Turning on jetson")
             cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = 200  # starting a new experiment resetting the error
-            cls.current_command = (
-                cls.get_first_command()
-            )  # choosing the command here to make sure that if boot fails we do not run the command again
+            cls.current_command = (cls.get_first_command())  # choosing the command here, if boot fails we do not run the command again
             cls.remove_first_command()
-            cls.turn_on_power()
+            logger.info(f"[PAYLOAD] -  Selected command: {cls.current_command}")
+            logger.info(f"[PAYLOAD] - command list size: {len(cls.command_list)}")
+            response = cls.turn_on_power()
+            if not response:
+                logger.error("[PAYLOAD] - Failed to turn on jetson")
+                return False
 
         # active state, need to get the desired command
         if cls.current_state == PayloadState.ACTIVE:
@@ -200,6 +209,8 @@ class PayloadController:
         This will return the list of scheduled experiments in the payload
         """
         return [command[0] for command in cls.command_list]  # return the timestamps of the scheduled commands
+
+        return True
 
     @classmethod
     def add_command(
@@ -405,7 +416,7 @@ class PayloadController:
         # send the command
         PU.send(pack(cmd_off))
 
-        logger.error("Please implement me")
+        logger.info("Payload turn off command has been sent")
 
     @classmethod
     def process_uart(cls, max_packet_size=609):
@@ -470,9 +481,9 @@ class PayloadController:
 
         cls.log_data[PAYLOAD_IDX.SYSTEM_TIME] = report.variables["PAYLOAD_TM"]["SYSTEM_TIME"]
         cls.log_data[PAYLOAD_IDX.SYSTEM_UPTIME] = report.variables["PAYLOAD_TM"]["SYSTEM_UPTIME"]
-        # cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME] = report.variables["PAYLOAD_TM"]["LAST_EXECUTED_CMD_TIME"] # this is not filled by jetsonz
-        # cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_ID] = report.variables["PAYLOAD_TM"]["LAST_EXECUTED_CMD_ID"]     # this is not filled by jetsonz
-        # cls.log_data[PAYLOAD_IDX.PD_STATE_MAINBOARD] = report.variables["PAYLOAD_TM"]["PD_STATE_MAINBOARD"]         # this is not filled by the jetson report data
+        # cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME] = report.variables["PAYLOAD_TM"]["LAST_EXECUTED_CMD_TIME"]  # this is not filled by jetson
+        # cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_ID] = report.variables["PAYLOAD_TM"]["LAST_EXECUTED_CMD_ID"]      # this is not filled by jetson
+        # cls.log_data[PAYLOAD_IDX.PD_STATE_MAINBOARD] = report.variables["PAYLOAD_TM"]["PD_STATE_MAINBOARD"]          # this is not filled by the jetson report data
         cls.log_data[PAYLOAD_IDX.PD_STATE_JETSON] = report.variables["PAYLOAD_TM"]["PD_STATE_JETSON"]
         # cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = report.variables["PAYLOAD_TM"]["LATEST_ERROR"]
         cls.log_data[PAYLOAD_IDX.DISK_USAGE] = report.variables["PAYLOAD_TM"]["DISK_USAGE"]
@@ -492,6 +503,35 @@ class PayloadController:
         cls.log_data[PAYLOAD_IDX.VDD_IN] = report.variables["PAYLOAD_TM"]["VDD_IN"]
         cls.log_data[PAYLOAD_IDX.VDD_CPU_GPU_CV] = report.variables["PAYLOAD_TM"]["VDD_CPU_GPU_CV"]
         cls.log_data[PAYLOAD_IDX.VDD_SOC] = report.variables["PAYLOAD_TM"]["VDD_SOC"]
+
+    @classmethod
+    def clear_jetson_telem_data(cls):
+        """
+        This will clear the jetson telem values that are in memory. Will be called when turning off the jetson
+
+        TODO: do we really want this? we will lose the last telemetry data from the jetson
+
+        """
+        cls.log_data[PAYLOAD_IDX.SYSTEM_TIME] = 0
+        cls.log_data[PAYLOAD_IDX.SYSTEM_UPTIME] = 0
+        cls.log_data[PAYLOAD_IDX.PD_STATE_JETSON] = 0
+        cls.log_data[PAYLOAD_IDX.DISK_USAGE] = 0
+        cls.log_data[PAYLOAD_IDX.RAM_USAGE] = 0
+        cls.log_data[PAYLOAD_IDX.SWAP_USAGE] = 0
+        cls.log_data[PAYLOAD_IDX.ACTIVE_CORES] = 0
+        cls.log_data[PAYLOAD_IDX.CPU_LOAD_0] = 0
+        cls.log_data[PAYLOAD_IDX.CPU_LOAD_1] = 0
+        cls.log_data[PAYLOAD_IDX.CPU_LOAD_2] = 0
+        cls.log_data[PAYLOAD_IDX.CPU_LOAD_3] = 0
+        cls.log_data[PAYLOAD_IDX.CPU_LOAD_4] = 0
+        cls.log_data[PAYLOAD_IDX.CPU_LOAD_5] = 0
+        cls.log_data[PAYLOAD_IDX.TEGRASTATS_PROCESS_STATUS] = 0
+        cls.log_data[PAYLOAD_IDX.GPU_FREQ] = 0
+        cls.log_data[PAYLOAD_IDX.CPU_TEMP] = 0
+        cls.log_data[PAYLOAD_IDX.GPU_TEMP] = 0
+        cls.log_data[PAYLOAD_IDX.VDD_IN] = 0
+        cls.log_data[PAYLOAD_IDX.VDD_CPU_GPU_CV] = 0
+        cls.log_data[PAYLOAD_IDX.VDD_SOC] = 0
 
     @classmethod
     def process_ack(cls, ack):
@@ -634,16 +674,19 @@ class PayloadController:
         """
         This should turn on power to the jetson
         """
-        logger.debug("[PAYLOAD] Turning on Jetson power...")
 
         if not SATELLITE.PAYLOADPOWER_AVAILABLE:
             logger.warning("[PAYLOAD] Payload power pins is not available.")
             return False
 
+        if SM.current_state != STATES.EXPERIMENT:
+            logger.error("[PAYLOAD] - Unable to turn on power, not in EXPERIMENT state.")
+            return False
+
         try:
-            SATELLITE.JETSON_ENABLE.value = False
-            time.sleep(0.1)  # TODO: probably do not need this delay
-            SATELLITE.JETSON_SD_REQ.value = False  # turn of 5v dcdc to save more power
+            SATELLITE.JETSON_ENABLE.value = True
+            TPM.sleep(0.1)  # TODO: probably do not need this delay
+            SATELLITE.JETSON_SD_REQ.value = True  # turn of 5v dcdc to save more power
             logger.info("[PAYLOAD] Jetson power enabled successfully.")
             return True
         except Exception as e:
@@ -655,7 +698,9 @@ class PayloadController:
         """
         This function will cut the power to the jetson
         """
-        logger.error("[PAYLOAD] - Turning off power to jetson")
+
+        # clear the jetson side of telem data
+        cls.clear_jetson_telem_data()
 
         if not SATELLITE.PAYLOADPOWER_AVAILABLE:
             logger.warning("[PAYLOAD] Payload power pins is not available.")
@@ -663,8 +708,9 @@ class PayloadController:
 
         try:
             SATELLITE.JETSON_ENABLE.value = False
-            time.sleep(0.1)  # TODO: probably do not need this delay
+            TPM.sleep(0.1)  # TODO: probably do not need this delay
             SATELLITE.JETSON_SD_REQ.value = False  # turn off the 5v regulator to save power
+            logger.info("[PAYLOAD] - Jetson power disabled successfully")
             return True
         except Exception as e:
             logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")

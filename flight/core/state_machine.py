@@ -3,6 +3,7 @@ import time
 import core.scheduler as scheduler
 from core import logger
 from core.states import STATES, STR_STATES
+from hal.configuration import SATELLITE
 
 
 class StateManager:
@@ -66,7 +67,7 @@ class StateManager:
         from core.task_configuration import TASK_CONFIG
 
         self.__task_config = TASK_CONFIG
-        self.__states = [STATES.STARTUP, STATES.DETUMBLING, STATES.NOMINAL, STATES.LOW_POWER]
+        self.__states = [STATES.STARTUP, STATES.DETUMBLING, STATES.NOMINAL, STATES.LOW_POWER, STATES.EXPERIMENT]
 
         # init task objects
         for task_id, task_params in self.__task_config.items():
@@ -103,6 +104,12 @@ class StateManager:
         else:
             self.schedule_tasks()
             self.__initialized = True
+
+        if new_state_id == STATES.LOW_POWER:
+            logger.warning("Entering LOW POWER state - cutting power to payload")
+            if SATELLITE.PAYLOADPOWER_AVAILABLE:
+                SATELLITE.JETSON_ENABLE.value = False
+                SATELLITE.JETSON_SD_REQ.value = False
 
         self.__previous_state = self.__current_state
         self.__current_state = new_state_id

@@ -243,7 +243,7 @@ def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False, erase_sil
             "STARTUP": 0,
             "DETUMBLING": 1,
             "NOMINAL": 2,
-            "LOW_POWER": 4,
+            "LOW_POWER": 3,
         }
 
         if adcs_mode:

@@ -3,8 +3,10 @@
 from apps.payload.controller import PayloadController as PC
 from apps.telemetry.splat.splat.telemetry_codec import Command
 from core import TemplateTask
+from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.dh_constants import PAYLOAD_IDX
+from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 
 
@@ -40,11 +42,6 @@ class Task(TemplateTask):
                 circular_buffer_size=100,
             )
 
-        # TODO - dont need this anymore as I will have a command list
-        # # Data process for runtime external requests from the CDH
-        # if not DH.data_process_exists("payload_requests"):
-        #     DH.register_data_process(tag_name="payload_requests", data_format="B", persistent=False)
-
     def run_idle_state(self):
         """
         This is the function that will run when the payload is in idle state
@@ -73,17 +70,14 @@ class Task(TemplateTask):
 
         if command timestmap < current timestamp it will change to booting mode
 
-        TODO - add margin to make sure that we turn the payload a few moments before the actual time
         """
 
         command = PC.get_first_command()
         self.log_info(f"Watching for command: {command}")
 
-        if command is None:
-            self.log_warning("No command found in watching state, switching back to idle.")
-            PC.switch_state("IDLE")
-            return
-        
+        # update next command time
+        PC.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = command[0]
+
         # check to see if the time to execute the command has arrived
         if command[0] < TPM.time() or command[0] == 0:
             # means that it is time to run the command
@@ -91,13 +85,11 @@ class Task(TemplateTask):
             PC.BOOT_TS = TPM.time()
             PC.received_ping_ack = False
 
-            # power the jetson
-            if not PC.turn_on_power():
-                self.log_warning("Failed to turn on payload power.")
+            status = PC.switch_state("BOOTING")
+            if not status:
+                self.log_warning("Failed to switch to BOOTING state.")
                 PC.switch_state("FAIL")
                 return
-
-            PC.switch_state("BOOTING")
             return
 
         self.log_info(f"   Missing {command[0] - TPM.time()} seconds")
@@ -124,7 +116,7 @@ class Task(TemplateTask):
             PC.ACT_TS = TPM.time()
             PC.switch_state("ACTIVE")
 
-            # set the last_executed_time i
+            # set the last_executed_time
             PC.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME] = TPM.time()
 
             return
@@ -346,7 +338,17 @@ class Task(TemplateTask):
         if TPM.time() - self._last_state_print_ts >= 5:
             self._last_state_print_ts = TPM.time()
             DH.log_data("payload_tm", PC.log_data)  # periodically log data
+            self.log_info(f"Last command time: {PC.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME]}")
             self.log_info(f"Current state: {PC.current_state}")
+
+        if SM.current_state == STATES.LOW_POWER:
+            # we are in low power mode, will not run the payload task
+            # and will fail if I was in another state other then idle
+            if PC.current_state != 0:
+                self.log_warning("In LOW POWER state but payload is not in IDLE state, switching to fail.")
+                PC.switch_state("FAIL")   # this will send the fail message to gs and change to idle
+                self.run_fail_state()     # this will cut the power to the jetson and change to idle
+            return
 
         if PC.current_state == 0:
             self.run_idle_state()

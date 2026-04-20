@@ -3,7 +3,7 @@ Payload File Download Manager
 
 Handles the orchestration of file downloads from the payload:
 - Manages transaction queue
-- Processes batches of packets (32 packets per batch)
+- Processes batches of packets (40 packets per batch)
 - Detects file completion
 - Generates confirmation bitmaps
 - Finalizes files to disk
