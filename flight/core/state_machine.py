@@ -1,7 +1,6 @@
 import time
 
 import core.scheduler as scheduler
-from apps.digipeater import DigipeaterState
 from core import logger
 from core.states import STATES, STR_STATES
 from hal.configuration import SATELLITE
@@ -115,6 +114,7 @@ class StateManager:
         # if we are leaving nomimal mode, we want to turn make sure digipeater is turned off
         if self.__current_state == STATES.NOMINAL and new_state_id != STATES.NOMINAL:
             logger.warning("Leaving NOMINAL state - ensuring digipeater is turned off")
+            from apps.digipeater import DigipeaterState
             DigipeaterState.deactivate(False)
 
         self.__previous_state = self.__current_state
