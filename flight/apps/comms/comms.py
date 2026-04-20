@@ -56,27 +56,28 @@ class SATELLITE_RADIO:
 
     digipeater_header = b"\x3c\xff\x01"   # have it here as well to facilitate checking
 
-    """
-        Name: set_rx_mode
-        Description: Used during task init to make sure that the radio is able to receive messages
-        as soon as the comms task starts
-    """
+
 
     @classmethod
     def set_rx_mode(cls):
+        """
+        Name: set_rx_mode
+        Description: Used during task init to make sure that the radio is able to receive messages
+        as soon as the comms task starts
+        """
         # set the radio into receive mode
         SATELLITE.RADIO.startReceive(0xFFFFFF)
         SATELLITE.RADIO.rx_en.value = True
         SATELLITE.RADIO.tx_en.value = False
 
-    """
-        Name: get_rssi
-        Description: Get RSSI of received packet
-    """
 
     @classmethod
     def get_rssi(cls):
-        # Get state
+        """
+        Name: get_rssi
+        Description: Get RSSI of received packet
+        """
+
         return cls.rx_message_rssi
 
     @classmethod
@@ -120,13 +121,14 @@ class SATELLITE_RADIO:
             cls.comms_mode = COMMS_MODE.STANDARD
             cls.rf_stop = False
 
-    """
-        Name: data_available
-        Description: Check if data is available in FIFO buffer
-    """
 
     @classmethod
     def data_available(cls):
+        """
+        Name: data_available
+        Description: Check if data is available in FIFO buffer
+        """
+
         if SATELLITE.RADIO_AVAILABLE:
             return SATELLITE.RADIO.RX_available()
         else:
@@ -210,8 +212,6 @@ class SATELLITE_RADIO:
         if cls.rf_stop:
             logger.warning("[COMMS] RF_STOP active: dropping TX request")
             return False
-
-        logger.info(f"transmitting message: {packet}")
 
         # Send a message to GS
         if SATELLITE.RADIO_AVAILABLE:

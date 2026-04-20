@@ -74,5 +74,5 @@ class Task(TemplateTask):
 
         self.check_periodic_telemetry()
         self.transmit_message()
-        CommandSupervisor.process_pending_action()
+        CommandSupervisor.process_pending_action()   # TODO - should be its own task. Keeping this way because of time constraints
         self.receive_message()
