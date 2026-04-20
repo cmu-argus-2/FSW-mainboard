@@ -35,6 +35,7 @@ class DigipeaterState:
             return ["digipeater_task_not_scheduled"]
 
         task.stop()
+        return ["digipeater_deactivated"]
 
     @classmethod
     def is_active(cls):
