@@ -1,3 +1,4 @@
+from apps.comms.modes import COMMS_MODE
 from core.state_machine import STATES
 
 """ Contains functions to check the preconditions of Commands """
@@ -68,5 +69,13 @@ def valid_time_format(*args) -> bool:
         return True
     else:
         return False
+
+
+@register_precondition()
+def valid_comms_mode(*args) -> bool:
+    """Precondition for COMMS_MODE command."""
+    mode_id = args[0]
+    return mode_id in COMMS_MODE.ALL
+
 
 # TODO: add a precondition for OD experiment (no OD should be in progress)

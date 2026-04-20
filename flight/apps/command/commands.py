@@ -21,8 +21,13 @@ Author: Ibrahima S. Sow
 """
 
 import supervisor
+from apps.command.supervisor import CommandSupervisor
+from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
-from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
+from apps.comms.modes import COMMS_MODE as COMMS_MODE_ID
+from apps.comms.modes import COMMS_MODE_STR
+from apps.digipeater import DigipeaterState
+from apps.telemetry.middleware import Frame as TelemetryFrame
 from apps.telemetry.splat.splat.telemetry_codec import Command
 from apps.telemetry.splat.splat.transport_layer import transaction_manager as TM
 from core import logger
@@ -51,7 +56,6 @@ def FORCE_REBOOT():
     """Forces a power cycle of the spacecraft."""
     logger.info("Executing FORCE_REBOOT")
     supervisor.reload()
-    # https://learn.adafruit.com/circuitpython-essentials/circuitpython-resetting
     return []
 
 @register_command()
@@ -183,20 +187,64 @@ def SCHEDULE_OD_EXPERIMENT():
 
 
 @register_command()
+def RF_STOP():
+    """Stops all satellite RF transmissions."""
+    logger.warning("Executing RF_STOP (deferred): will disable TX after ACK")
+    CommandSupervisor.request_rf_stop()
+    return []
+
+
+@register_command()
+def RF_RESUME():
+    """Resumes normal satellite RF transmissions."""
+    logger.warning("Executing RF_RESUME: enabling standard satellite TX")
+    CommandSupervisor.cancel_pending_rf_stop()
+    SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.STANDARD)
+    return []
+
+
+@register_command()
+def DIGIPEATER_ACTIVATE():
+    """Activates the digipeater relay subsystem."""
+    logger.warning("Executing DIGIPEATER_ACTIVATE")
+    return DigipeaterState.activate()
+
+
+@register_command()
+def DIGIPEATER_DEACTIVATE():
+    """Deactivates the digipeater relay subsystem."""
+    logger.warning("Executing DIGIPEATER_DEACTIVATE")
+    return DigipeaterState.deactivate()
+
+
+@register_command()
+def COMMS_MODE(mode_id):
+    """Set COMMS operating mode (STANDARD/RF_STOP).
+
+    RF_STOP is routed through CommandSupervisor for deferred execution
+    (ACK first, then drain queue, then activate).
+    """
+    if mode_id == COMMS_MODE_ID.RF_STOP:
+        logger.warning("Executing COMMS_MODE(RF_STOP) via deferred path")
+        CommandSupervisor.request_rf_stop()
+    else:
+        SATELLITE_RADIO.set_comms_mode(mode_id)
+        logger.warning(f"Executing COMMS_MODE: {COMMS_MODE_STR.get(mode_id, 'UNKNOWN')}")
+    return []
+
+
+@register_command()
 def REQUEST_TM_NOMINAL():
     """Requests a nominal snapshot of all subsystems."""
     logger.info("Executing REQUEST_TM_NOMINAL")
     # Pack telemetry
-    packet = TelemetryFrame.pack_tm_heartbeat()  #
+    packet = TelemetryFrame.pack_tm_heartbeat()
     q_stat = TransmitQueue.push_packet(packet)
     if q_stat != QUEUE_STATUS.OK:
         logger.error(f"Failed to push nominal telemetry to transmit queue with status: {q_stat}")
     logger.info(f"Telemetry nominal packed and pushed to transmit queue {q_stat}")
 
-    # might be interesting to differentiate between periodic hearbeats
-    # might want to add that this is a response
-
-    return [q_stat]  # return the queue status number
+    return [q_stat]
 
 
 @register_command()
@@ -210,7 +258,7 @@ def REQUEST_TM_HAL():
         logger.error(f"Failed to push HAL telemetry to transmit queue with status: {q_stat}")
     logger.info(f"Telemetry hal packed and pushed to transmit queue {q_stat}")
 
-    return [q_stat]  # return the queue status number
+    return [q_stat]
 
 
 @register_command()
@@ -224,7 +272,7 @@ def REQUEST_TM_STORAGE():
         logger.error(f"Failed to push storage telemetry to transmit queue with status: {q_stat}")
     logger.info(f"Telemetry storage packed and pushed to transmit queue {q_stat}")
 
-    return [q_stat]  # return the queue status number
+    return [q_stat]
 
 
 @register_command()
@@ -238,7 +286,7 @@ def REQUEST_TM_PAYLOAD():
         logger.error(f"Failed to push payload telemetry to transmit queue with status: {q_stat}")
     logger.info(f"Telemetry payload packed and pushed to transmit queue {q_stat}")
 
-    return [q_stat]  # return the queue status number
+    return [q_stat]
 
 
 @register_command()

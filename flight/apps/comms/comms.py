@@ -6,7 +6,10 @@ and acknowledgement RX.
 Authors: Akshat Sahay, Ibrahima S. Sow, Perrin Tong
 """
 
+import microcontroller
 from apps.comms.auth import get_auth_key_bytes, verify_authenticated_command
+from apps.comms.modes import COMMS_MODE, COMMS_MODE_STR
+from apps.digipeater import DigipeaterRxQueue
 from apps.telemetry.splat.splat.telemetry_codec import unpack
 from apps.telemetry.splat.splat.telemetry_helper import format_bytes
 from core import logger
@@ -17,6 +20,10 @@ from micropython import const
 # Internal error definitions from driver
 _ERR_NONE = const(0)
 _ERR_CRC_MISMATCH = const(-7)
+
+# NVM byte 17 for RF_STOP latch (bytes 0-16 are allocated by HAL)
+_RF_STOP_NVM_BYTE = const(17)
+_RF_STOP_MAGIC = const(0xA5)  # Distinguishes from uninitialized NVM (0xFF)
 
 
 class SATELLITE_RADIO:
@@ -42,38 +49,80 @@ class SATELLITE_RADIO:
 
     rx_message_rssi = 0.0  # rssi of last received message, updated in receive_message()
 
-    tx_message = None
+    # RF_STOP / COMMS mode state
+    comms_mode = COMMS_MODE.STANDARD
+    rf_stop = False
 
-    """
-        Name: set_rx_mode
-        Description: Used during task init to make sure that the radio is able to receive messages
-        as soon as the comms task starts
-    """
+    digipeater_header = b"\x3c\xff\x01"   # have it here as well to facilitate checking
 
     @classmethod
     def set_rx_mode(cls):
+        """
+        Name: set_rx_mode
+        Description: Used during task init to make sure that the radio is able to receive messages
+        as soon as the comms task starts
+        """
         # set the radio into receive mode
         SATELLITE.RADIO.startReceive(0xFFFFFF)
         SATELLITE.RADIO.rx_en.value = True
         SATELLITE.RADIO.tx_en.value = False
 
-    """
-        Name: get_rssi
-        Description: Get RSSI of received packet
-    """
-
     @classmethod
     def get_rssi(cls):
-        # Get state
+        """
+        Name: get_rssi
+        Description: Get RSSI of received packet
+        """
         return cls.rx_message_rssi
 
-    """
-        Name: data_available
-        Description: Check if data is available in FIFO buffer
-    """
+    @classmethod
+    def get_comms_mode(cls):
+        return cls.comms_mode
+
+    @classmethod
+    def set_comms_mode(cls, mode_id):
+        """Set COMMS operating mode and update mode latches."""
+        if mode_id not in COMMS_MODE.ALL:
+            logger.warning(f"[COMMS] Invalid mode id: {mode_id}")
+            return False
+
+        cls.comms_mode = mode_id
+        cls.rf_stop = mode_id == COMMS_MODE.RF_STOP
+        cls._persist_rf_stop_latch(cls.rf_stop)
+        logger.warning(f"[COMMS] Mode set to {COMMS_MODE_STR.get(mode_id, mode_id)}")
+        return True
+
+    @classmethod
+    def _persist_rf_stop_latch(cls, enabled):
+        """Persist RF_STOP latch across reboot using NVM flash."""
+        try:
+            microcontroller.nvm[_RF_STOP_NVM_BYTE] = _RF_STOP_MAGIC if enabled else 0x00
+        except Exception as e:
+            logger.warning(f"[COMMS] Failed to persist RF_STOP latch to NVM: {e}")
+
+    @classmethod
+    def restore_comms_mode_from_persistent_state(cls):
+        """Restore RF_STOP latch (if present) after boot."""
+        try:
+            latched = microcontroller.nvm[_RF_STOP_NVM_BYTE] == _RF_STOP_MAGIC
+        except Exception:
+            latched = False
+
+        if latched:
+            cls.comms_mode = COMMS_MODE.RF_STOP
+            cls.rf_stop = True
+            logger.warning("[COMMS] Restored RF_STOP mode from NVM latch")
+        else:
+            cls.comms_mode = COMMS_MODE.STANDARD
+            cls.rf_stop = False
 
     @classmethod
     def data_available(cls):
+        """
+        Name: data_available
+        Description: Check if data is available in FIFO buffer
+        """
+
         if SATELLITE.RADIO_AVAILABLE:
             return SATELLITE.RADIO.RX_available()
         else:
@@ -95,6 +144,8 @@ class SATELLITE_RADIO:
 
         # no need to check if radio is available, it was already checked
         packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
+        
+        logger.info(f"[COMMS] Received raw packet: {packet[-15:]}, err code: {err}")
 
         # Checks on err returned by driver
         if err == _ERR_CRC_MISMATCH:
@@ -116,6 +167,11 @@ class SATELLITE_RADIO:
             return None
 
         # hopefully we have a valid packet at this point
+        
+        # Store raw bytes and feed digipeater queue before any validation
+        if packet[:3] == cls.digipeater_header:
+            logger.info(f"Received lora aprs packet {packet[:20]}")
+            DigipeaterRxQueue.push_packet(packet)
 
         if cls.auth_enabled:
             # Authenticated command format:
@@ -161,6 +217,9 @@ class SATELLITE_RADIO:
         """
         it will add the satellite cs as the header and transmit the message
         """
+        if cls.rf_stop:
+            logger.warning("[COMMS] RF_STOP active: dropping TX request")
+            return False
 
         # Send a message to GS
         if SATELLITE.RADIO_AVAILABLE:

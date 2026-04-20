@@ -3,8 +3,8 @@ from apps.command import QUEUE_STATUS, CommandQueue
 from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import TransmitQueue
 from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
-
-# from apps.telemetry import TelemetryPacker
+from apps.command.supervisor import CommandSupervisor
+from apps.comms.modes import COMMS_MODE
 from apps.telemetry.splat.splat.telemetry_codec import Command, pack  # this should be implemented in middleware
 from core import TemplateTask
 from core import state_manager as SM
@@ -32,6 +32,7 @@ class Task(TemplateTask):
         # Initialize log_data array for telemetry
         self.log_data = [0] * 9  # 9 COMMS variables
 
+        SATELLITE_RADIO.restore_comms_mode_from_persistent_state()
         SATELLITE_RADIO.set_rx_mode()
 
     def transmit_message(self):
@@ -86,6 +87,10 @@ class Task(TemplateTask):
         Checks if it's time to send periodic telemetry, and if so, prepares the telemetry report for downlink.
         """
         current_time = TPM.time()
+        
+        mode = SATELLITE_RADIO.get_comms_mode()
+        if mode == COMMS_MODE.RF_STOP or CommandSupervisor.has_pending_action():
+            return
 
         if current_time - self.last_periodic_telemetry_time >= self.periodic_telemetry_interval:
             # Time to send periodic telemetry
@@ -129,3 +134,4 @@ class Task(TemplateTask):
         self.check_periodic_telemetry()  # check if it's time to send periodic telemetry
         self.transmit_message()  # check if we have messages to transmit to GS
         self.receive_message()  # check if we have received messages from GS
+        CommandSupervisor.process_pending_action()   # TODO - should be its own task. Keeping this way because of time constraints

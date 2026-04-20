@@ -1616,6 +1616,7 @@ class SX1262(SX126X):
 
         else:
             return b"", state
+        print(f"[COMMS] - Read Data: {data[-15:]}, State: {state}")
         return bytes(data), state
 
     def _transmit(self, data):
