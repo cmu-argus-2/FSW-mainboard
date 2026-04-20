@@ -56,8 +56,6 @@ class SATELLITE_RADIO:
 
     digipeater_header = b"\x3c\xff\x01"   # have it here as well to facilitate checking
 
-
-
     @classmethod
     def set_rx_mode(cls):
         """
@@ -69,7 +67,6 @@ class SATELLITE_RADIO:
         SATELLITE.RADIO.startReceive(0xFFFFFF)
         SATELLITE.RADIO.rx_en.value = True
         SATELLITE.RADIO.tx_en.value = False
-
 
     @classmethod
     def get_rssi(cls):
@@ -120,7 +117,6 @@ class SATELLITE_RADIO:
         else:
             cls.comms_mode = COMMS_MODE.STANDARD
             cls.rf_stop = False
-
 
     @classmethod
     def data_available(cls):
