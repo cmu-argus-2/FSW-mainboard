@@ -288,7 +288,7 @@ class FileHandler(StreamHandler):
     :param str mode: Whether to write ('w') or append ('a'); default is to append
     """
 
-    terminator = "\r\n"
+    terminator = "|"
 
     def __init__(self, filename: str, mode: str = "a") -> None:
         # pylint: disable=consider-using-with
