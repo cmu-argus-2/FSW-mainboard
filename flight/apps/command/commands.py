@@ -191,7 +191,7 @@ def RF_STOP():
     """Stops all satellite RF transmissions."""
     logger.warning("Executing RF_STOP (deferred): will disable TX after ACK")
     CommandSupervisor.request_rf_stop()
-    return []
+    return ["rf_stop_requested"]
 
 
 @register_command()
@@ -200,7 +200,7 @@ def RF_RESUME():
     logger.warning("Executing RF_RESUME: enabling standard satellite TX")
     CommandSupervisor.cancel_pending_rf_stop()
     SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.STANDARD)
-    return []
+    return ["rf_resume_executed"]
 
 
 @register_command()
