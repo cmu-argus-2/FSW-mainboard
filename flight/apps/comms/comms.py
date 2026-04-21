@@ -6,7 +6,6 @@ and acknowledgement RX.
 Authors: Akshat Sahay, Ibrahima S. Sow, Perrin Tong
 """
 
-import microcontroller
 from apps.comms.auth import get_auth_key_bytes, verify_authenticated_command
 from apps.comms.modes import COMMS_MODE, COMMS_MODE_STR
 from apps.digipeater import DigipeaterRxQueue
@@ -20,10 +19,6 @@ from micropython import const
 # Internal error definitions from driver
 _ERR_NONE = const(0)
 _ERR_CRC_MISMATCH = const(-7)
-
-# NVM byte 17 for RF_STOP latch (bytes 0-16 are allocated by HAL)
-_RF_STOP_NVM_BYTE = const(17)
-_RF_STOP_MAGIC = const(0xA5)  # Distinguishes from uninitialized NVM (0xFF)
 
 
 class SATELLITE_RADIO:
@@ -96,7 +91,7 @@ class SATELLITE_RADIO:
     def _persist_rf_stop_latch(cls, enabled):
         """Persist RF_STOP latch across reboot using NVM flash."""
         try:
-            microcontroller.nvm[_RF_STOP_NVM_BYTE] = _RF_STOP_MAGIC if enabled else 0x00
+            SATELLITE.FLAGS.f_rf_stop = enabled
         except Exception as e:
             logger.warning(f"[COMMS] Failed to persist RF_STOP latch to NVM: {e}")
 
@@ -104,7 +99,7 @@ class SATELLITE_RADIO:
     def restore_comms_mode_from_persistent_state(cls):
         """Restore RF_STOP latch (if present) after boot."""
         try:
-            latched = microcontroller.nvm[_RF_STOP_NVM_BYTE] == _RF_STOP_MAGIC
+            latched = SATELLITE.FLAGS.f_rf_stop
         except Exception:
             latched = False
 
