@@ -500,24 +500,25 @@ class ArgusV4(CubeSat):
                 rx_en=ArgusV4Components.RADIO_RX_EN,
             )
 
-            radio.begin(
-                freq=435,
-                bw=125,
-                sf=7,
-                cr=5,
-                syncWord=0x12,
+            radio.beginFSK(
+                freq=434.707,
                 power=22,
+                bR=20_000,
+                pS=0x08,  # BT=0.3
+                bW=0x1B,  # RX_BW = 78k
+                fDev=5_000,
+                preLength=512,
+                preDetect=0x05,  # PREAMBLE DETECT 16
+                syncLength=32,
+                addrComp=0x00,  # ADDR FILT OFF
+                packType=0x01,  # PACK VAR
+                plLength=0,
+                crcType=0x06,  # CRC 2 BYTE INV (CCITT)
+                whitening=0x01,  # WHITE ON
                 currentLimit=140.0,
-                preambleLength=8,
-                implicit=False,
-                implicitLen=0xFF,
-                crcOn=True,
-                txIq=False,
-                rxIq=False,
                 tcxoVoltage=1.7,
                 useRegulatorLDO=False,
-                blocking=True,
-            )
+                blocking=True)
 
             return [radio, Errors.NO_ERROR]
 

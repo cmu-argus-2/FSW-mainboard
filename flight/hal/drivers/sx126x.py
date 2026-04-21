@@ -564,6 +564,38 @@ class SX126X:
 
         return state
 
+    def beginFSK(self, bR, pS, bW, fDev, preLength, preDetect, syncLength, addrComp, packType, plLength,
+                 crcType, whitening, currentLimit, tcxoVoltage, useRegulatorLDO=False):
+        
+        state = self.reset()
+        ASSERT(state)
+
+        state = self.standby()
+        ASSERT(state)
+
+        self.config(_SX126X_PACKET_TYPE_GFSK)
+
+        if tcxoVoltage > 0.0:
+            state = self.setTCXO(tcxoVoltage)
+            ASSERT(state)
+
+        state = self.setCurrentLimit(currentLimit)
+        ASSERT(state)
+
+        state = self.setDio2AsRfSwitch(True)
+        ASSERT(state)
+
+        self.setWhiteningSeed()
+
+        self.setModulationParamsFSK(bR, pS, bW, fDev)
+
+        self.setPacketParamsFSK(preLength, preDetect, syncLength, addrComp, packType, plLength, crcType, whitening)
+
+        if useRegulatorLDO:
+            state = self.setRegulatorLDO()
+        else:
+            state = self.setRegulatorDCDC()
+
     def reset(self, verify=True):
         self.rst.value = True
         sleep_us(150)
@@ -1619,6 +1651,44 @@ class SX1262(SX126X):
 
         state = super().setCRC(crcOn)
         ASSERT(state)
+
+        state = self.setFrequency(freq)
+        ASSERT(state)
+
+        state = self.setOutputPower(power)
+        ASSERT(state)
+
+        state = super().fixPaClamping()
+        ASSERT(state)
+
+        state = self.setBlockingCallback(blocking)
+
+        return state
+
+    def beginFSK(
+        self,
+        freq=434.707,
+        power=14,
+        bR=20_000,
+        pS=0x08,  # BT=0.3
+        bW=0x1B,  # RX_BW = 78k
+        fDev=5_000,
+        preLength=512,
+        preDetect=0x05,  # PREAMBLE DETECT 16
+        syncLength=32,
+        addrComp=0x00,  # ADDR FILT OFF
+        packType=0x01,  # PACK VAR
+        plLength=0,
+        crcType=0x06,  # CRC 2 BYTE INV (CCITT)
+        whitening=0x01,  # WHITE ON
+        currentLimit=140.0,
+        tcxoVoltage=1.7,
+        useRegulatorLDO=False,
+        blocking=True
+    ):
+
+        state = super().begin(bR, pS, bW, fDev, preLength, preDetect, syncLength, addrComp,
+                              packType, plLength, crcType, whitening, currentLimit, useRegulatorLDO, tcxoVoltage)
 
         state = self.setFrequency(freq)
         ASSERT(state)
