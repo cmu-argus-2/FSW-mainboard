@@ -318,9 +318,9 @@ class PayloadController:
         """
 
         # 1. create the ping command
-        command = Command("PING")
+        command = Command("PING_EXP")
         command.add_argument("ts", TPM.time())
-        logger.info("[PAYLOAD] - Sending ping command")
+        logger.info("[PAYLOAD] - Sending ping_exp command")
         # 2. send to uart
         PU.send(pack(command))
 
@@ -521,10 +521,10 @@ class PayloadController:
         """
         logger.info(f"[PAYLOAD] - Processing ack: {ack}")
         # see if it was a ping ack
-        if ack.cmd_id == COMMAND_IDS["PING"]:
+        if ack.cmd_id == COMMAND_IDS["PING_EXP"]:
             # it was a ping command
             if cls.received_ping_ack:
-                logger.error("[PAYLOAD] - PING ACK OVERRIDDEN")
+                logger.error("[PAYLOAD] - PING_EXP ACK OVERRIDDEN")
             cls.received_ping_ack = True
             logger.info("[PAYLOAD] - received_ping_ack set to true")
             return
