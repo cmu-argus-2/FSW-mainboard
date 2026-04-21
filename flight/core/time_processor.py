@@ -87,7 +87,7 @@ class TimeProcessor:
         unix_timestamp = cls._normalize_timestamp(unix_timestamp)
         if SATELLITE.RTC_AVAILABLE:
             current_time = cls.time()
-            if abs(current_time - unix_timestamp) > 1: # 1 second tolerance between GPS and RTC
+            if abs(current_time - unix_timestamp) > 1:  # 1 second tolerance between GPS and RTC
                 SATELLITE.RTC.set_datetime(time.localtime(unix_timestamp))
             else:
                 # Time references are the same, save a write cycle

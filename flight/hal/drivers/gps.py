@@ -413,8 +413,8 @@ class GPS:
 
     0 - No fix: The GPS receiver has not obtained a valid fix or has lost the fix.
     1 - Predicted fix: Still not valid, but the receiver is indicating a prediction
-    2 - 2D fix: A 2D fix is available 
-    3 - 3D fix: A 3D fix is available 
+    2 - 2D fix: A 2D fix is available
+    3 - 3D fix: A 3D fix is available
     4 - 3D + GNSS fix: A fix using signals from multiple GNSS systems
     """
 
