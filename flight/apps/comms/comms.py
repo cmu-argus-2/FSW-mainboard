@@ -205,6 +205,8 @@ class SATELLITE_RADIO:
         cls.rx_message_rssi = SATELLITE.RADIO.rssi()
         cls.rx_packet_count += 1
 
+        cls.set_rx_mode()  # Ensure we go back to receive mode after processing the packet
+
         return message_object
 
     """
