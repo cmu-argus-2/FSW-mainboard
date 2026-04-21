@@ -14,8 +14,7 @@ except ImportError:
         return x
 
 
-from apps.telemetry.splat.splat.telemetry_codec import Report, pack
-from apps.telemetry.splat.splat.telemetry_helper import format_bytes
+from apps.telemetry.splat.splat.telemetry_codec import Report
 from core import DataHandler as DH
 from core import logger
 from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, STORAGE_IDX
@@ -27,43 +26,6 @@ class Frame:
 
     maybe will use this for more than telemetry later on
     """
-
-    _TM_AVAILABLE = False
-    _TM_FRAME_SIZE = const(248)  # this defines the maximum frame size
-
-    # Pre-allocated frame buffer
-    _FRAME = bytearray(_TM_FRAME_SIZE)  # [TODO] - not sure if preallocating is the best idea here.
-    # what about messages that are smaller
-
-    @classmethod
-    def FRAME(cls):
-        return cls._FRAME
-
-    @classmethod
-    def set_FRAME(cls, frame_bytes):
-        if len(frame_bytes) > 248:
-            logger.error("Frame size exceeds maximum limit")
-            return False
-
-        cls._FRAME[: len(frame_bytes)] = frame_bytes
-        cls._TM_AVAILABLE = True
-        return True
-
-    @classmethod
-    def FRAME_SIZE(cls):
-        return cls._TM_FRAME_SIZE
-
-    @classmethod
-    def PACKET_LENGTH(cls):
-        return cls._FRAME[3]
-
-    @classmethod
-    def TM_AVAILABLE(cls):
-        return cls._TM_AVAILABLE
-
-    @classmethod
-    def TM_EXHAUSTED(cls):
-        cls._TM_AVAILABLE = False
 
     @classmethod
     def get_dh_latest_data(cls, ss):
@@ -134,12 +96,11 @@ class Frame:
                 dh_var_idx = getattr(idx_list[ss_list.index(ss_lower)], var_name)
                 report.add_variable(var_name, ss, dh_data[dh_var_idx])
 
-        packed_report = pack(report)
-        logger.debug(f"Packed heartbeat telemetry frame {format_bytes(packed_report)}")
+        logger.debug(f"Packed heartbeat telemetry frame {report}")
 
         gc.collect()
 
-        return packed_report
+        return report
 
     @classmethod
     def pack_tm_hal(cls):
@@ -170,12 +131,12 @@ class Frame:
             for var_name in report.variables[ss].keys():
                 dh_var_idx = getattr(idx_list[ss_list.index(ss_lower)], var_name)
                 report.add_variable(var_name, ss, dh_data[dh_var_idx])
-        packed_report = pack(report)
-        logger.debug(f"Packed HAL telemetry frame {format_bytes(packed_report)}")
+
+        logger.debug(f"Packed HAL telemetry frame {report}")
 
         gc.collect()
 
-        return packed_report
+        return report
 
     @classmethod
     def pack_tm_storage(cls):
@@ -233,7 +194,7 @@ class Frame:
             dh_ss_name = "_".join(var_name.split("_")[:-2]).lower()  # get the first 2/3 parts of the variable name
             dh_variable_name = "_".join(var_name.split("_")[-2:])  # get the last two parts of the variable name
             logger.info(
-                f"Processing STORAGE variable {var_name} with dh subsystem {dh_ss_name.upper()} and dh variable {dh_variable_name.upper()}"
+                f"Processing STORAGE var {var_name} with dh ss {dh_ss_name.upper()} and dh var {dh_variable_name.upper()}"
             )
             ss_index = storage_ss_list.index(dh_ss_name)
             if ss_index == -1:
@@ -248,12 +209,11 @@ class Frame:
 
             report.add_variable(var_name, "STORAGE", dh_storage_list[ss_index][dh_var_idx])  # add the variable to the report
 
-        packed_report = pack(report)
-        logger.debug(f"Packed STORAGE telemetry frame {format_bytes(packed_report)}")
+        logger.debug(f"Packed STORAGE telemetry frame {report}")
 
         gc.collect()
 
-        return packed_report
+        return report
 
     @classmethod
     def pack_tm_payload(cls):
@@ -284,9 +244,8 @@ class Frame:
             for var_name in report.variables[ss].keys():
                 dh_var_idx = idx_list[ss_list.index(ss_lower)]  # payload only has 1 variable so idx is 0
                 report.add_variable(var_name, ss, dh_data[dh_var_idx])
-        packed_report = pack(report)
-        logger.debug(f"Packed PAYLOAD telemetry frame {format_bytes(packed_report)}")
+        logger.debug(f"Packed PAYLOAD telemetry frame {report}")
 
         gc.collect()
 
-        return packed_report
+        return report
