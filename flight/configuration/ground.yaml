@@ -60,3 +60,8 @@ comms:
 # ADCS Task
 adcs:
   CONTROLLER_MODE: 0
+
+# Watchdog Task
+watchdog:
+  ENABLED:
+    value: false  # Disable hardware watchdog during ground testing to prevent USB resets mid-flash

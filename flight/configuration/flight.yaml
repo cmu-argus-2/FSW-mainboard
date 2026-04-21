@@ -56,3 +56,8 @@ comms:
 # ADCS Task
 adcs:
   CONTROLLER_MODE: 0
+
+# Watchdog Task
+watchdog:
+  ENABLED:
+    value: true  # Hardware watchdog must be enabled in flight
