@@ -134,8 +134,8 @@ class GPS:
         self._BINARY_SET_FLAG = True  # MUST ALWAYS BE TRUE for the S1216F8-GL
         self._QUERIED_BINARY_STATUS_FLAG = False
         self._PERIODIC_NAV_FLAG = True  # MUST ALWAYS BE TRUE for the S1216F8-GL
-        self._DISABLE_NMEA_FLAG = True  # MUST BE TRUE for FIRST BOOT of new receiver
-        self._DISABLE_UNNECESSARY_BINARY_FLAG = True  # MUST BE TRUE for FIRST BOOT of new receiver
+        self._DISABLE_NMEA_FLAG = True  # MUST BE TRUE
+        self._DISABLE_UNNECESSARY_BINARY_FLAG = True  # MUST BE TRUE
 
         ################################################
         # INITIALIZE GPS DATA FIELDS

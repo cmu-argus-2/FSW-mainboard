@@ -110,8 +110,7 @@ class ArgusV4Interfaces:
         UART0_RX,
         baudrate=UART0_BAUD,
         receiver_buffer_size=GPS_UART_RX_BUFFER_SIZE,
-    )  # TODO Tune this correctly
-
+    )
     JETSON_BAUD = const(460800)
     JETSON_TX = board.TX1
     JETSON_RX = board.RX1
