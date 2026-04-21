@@ -29,7 +29,7 @@ from micropython import const
     NOTE: For the PX1120S, _FIX_MODE_THR should be set to 2 for replicate the same fix_mode as S1216F8-GL
 """
 
-_FIX_MODE_THR = const(3) # 3D Fix with S1216F8-GL
+_FIX_MODE_THR = const(3)  # 3D Fix with S1216F8-GL
 
 
 class Task(TemplateTask):
@@ -70,7 +70,7 @@ class Task(TemplateTask):
 
                 # Check if the module sent a valid nav data message
                 if SATELLITE.GPS.update():
-                    # Check if the fix is at least a 2D fix (fix_mode >= 2) 
+                    # Check if the fix is at least a 2D fix (fix_mode >= 2)
                     if SATELLITE.GPS.has_fix():
                         self.log_data[GPS_IDX.TIME_GPS] = int(SATELLITE.GPS.unix_time)
                         self.log_data[GPS_IDX.GPS_MESSAGE_ID] = int(SATELLITE.GPS.message_id)

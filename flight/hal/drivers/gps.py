@@ -14,6 +14,7 @@ For final flight build, anything related to the PX1120S SHOULD be removed, as th
 try:
     import struct
     from typing import Optional
+
     from busio import UART
     from digitalio import DigitalInOut, Direction
 except ImportError:
@@ -33,12 +34,12 @@ _FRAME_END = b"\x0D\x0A"
 _MIN_FRAME_LEN = 8
 _MAX_FRAME_PAYLOAD_LEN = 256
 _MAX_RX_BUFFER_LEN = 4096
-_RX_BUFFER_WARN_FRACTION = 4 # Warn if buffer is 1/{this value} of max length
-_GPS_UTC_OFFSET_SECONDS = 18 # GPS Counts leap seconds, there are 18 as of June 2026
+_RX_BUFFER_WARN_FRACTION = 4  # Warn if buffer is 1/{this value} of max length
+_GPS_UTC_OFFSET_SECONDS = 18  # GPS Counts leap seconds, there are 18 as of June 2026
 
 
 class GPS:
-    def __init__(self, uart: UART, enable = None, debug: bool = False, rx_buffer_size: Optional[int] = None) -> None:
+    def __init__(self, uart: UART, enable=None, debug: bool = False, rx_buffer_size: Optional[int] = None) -> None:
         self._uart = uart
         self._debug = debug
         if rx_buffer_size is None or int(rx_buffer_size) < _MIN_FRAME_LEN:
@@ -59,7 +60,9 @@ class GPS:
 
         # NOTE: ENSURE THE BOARD IS SET TO S1216F8-GL BEFORE FLIGHT
         self._board = "S1216F8-GL"  # "PX1120S" Defaulting to the flight module, otherwise needs to be set to PX1120S
-        self._board_detected = True  # This is set to true with hardcoded board type regardless, _check_board_type is removed from update()
+        self._board_detected = (
+            True  # This is set to true with hardcoded board type regardless, _check_board_type is removed from update()
+        )
         self._ordered_keys_map = {
             "PX1120S": [
                 "message_id",
@@ -231,13 +234,13 @@ class GPS:
             if self._msg is None or len(self._msg) < 5:
                 return False
 
-            if (self._msg[4] == 0xA8 or b"Phoenix" in self._msg):
+            if self._msg[4] == 0xA8 or b"Phoenix" in self._msg:
                 if self._debug:
                     self._log("debug", "Board type detected: PX1120S")
                 self._board = "PX1120S"
                 self._board_detected = True
 
-            if (self._msg[4] == 0xDF or self._msg == b"$PSTI,001,1*1E\r\n" or b"Venus8" in self._msg):
+            if self._msg[4] == 0xDF or self._msg == b"$PSTI,001,1*1E\r\n" or b"Venus8" in self._msg:
                 if self._debug:
                     self._log("debug", "Board type detected: S1216F8-GL")
                 self._board = "S1216F8-GL"
@@ -247,7 +250,6 @@ class GPS:
             self.last_update_status = "Board type could not be detected."
             return False
         return True
-
 
     def _parse_message_header(self) -> bool:
         try:
@@ -418,7 +420,7 @@ class GPS:
 
     def has_fix(self) -> bool:
         """True if a current fix for location information is available."""
-        if self.fix_mode is not None and self.fix_mode >= 2: 
+        if self.fix_mode is not None and self.fix_mode >= 2:
             return True
         else:
             return False
@@ -433,7 +435,7 @@ class GPS:
             return False
 
     def _is_leap_year(self, year):
-            return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+        return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
 
     def _gps_time_2_unix_time(self, gps_week: int, tow: float) -> int:
         # Number of days in each month (non-leap year)
