@@ -16,7 +16,7 @@ from core import TemplateTask
 from core import state_manager as SM
 from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX
 from core.logging import LEVELS as LOG_LEVELS
-from core.logging import RotatingFileHandler, getLogger
+from core.logging import Formatter, RotatingFileHandler, getLogger
 from core.satellite_config import command_config as CONFIG
 from core.satellite_config import log_config as LOG_CONFIG
 from core.states import STATES, STR_STATES
@@ -179,17 +179,26 @@ class Task(TemplateTask):
                             os.mkdir(LOG_CONFIG.LOG_DIR)
                         except OSError:
                             pass  # Directory already exists
+                        # Resolve and validate log level BEFORE opening the handler
+                        # (avoids file-handle leak on bad config and prevents silent
+                        # NOTSET fallback that would flood the SD with DEBUG output).
+                        file_level = None
+                        for lvl_int, lvl_str in LOG_LEVELS:
+                            if lvl_str == LOG_CONFIG.LOG_FILE_LEVEL:
+                                file_level = lvl_int
+                                break
+                        if file_level is None:
+                            raise ValueError(f"Invalid LOG_FILE_LEVEL: {LOG_CONFIG.LOG_FILE_LEVEL!r}")
+
                         file_handler = RotatingFileHandler(
                             LOG_CONFIG.LOG_FILENAME,
                             mode="a",
                             maxBytes=LOG_CONFIG.LOG_FILE_MAX_BYTES,
                             backupCount=LOG_CONFIG.LOG_FILE_BACKUP_COUNT,
                         )
-                        file_level = 0
-                        for lvl_int, lvl_str in LOG_LEVELS:
-                            if lvl_str == LOG_CONFIG.LOG_FILE_LEVEL:
-                                file_level = lvl_int
                         file_handler.setLevel(file_level)
+                        formatter = Formatter(fmt="[{asctime}][{levelname}] {message}", style="{")
+                        file_handler.setFormatter(formatter)
                         getLogger("core_logger").addHandler(file_handler)
                         self.file_logging_enabled = True
                         self.log_info("File logging enabled on SD card")

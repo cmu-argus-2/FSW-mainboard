@@ -20,6 +20,8 @@ Author: Ibrahima S. Sow
 
 """
 
+import os
+
 import supervisor
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
@@ -28,6 +30,8 @@ from apps.telemetry.splat.splat.transport_layer import transaction_manager as TM
 from core import logger
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
+from core.logging import RotatingFileHandler, getLogger
+from core.satellite_config import log_config as LOG_CONFIG
 from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
 
@@ -170,6 +174,94 @@ def EVAL_STRING_COMMAND(string_command):
     except Exception as e:
         logger.error(f"EVAL_STRING_COMMAND execution failed: {e}")
         return ["eval_string_command_failed"]
+
+
+@register_command()
+def PREPARE_LOG_DOWNLINK():
+    """Freeze current system logs into a staging file safe from rotation.
+
+    Rotates the active log (fsw.log -> fsw.log.1) and moves that rotated file
+    to a stable path (fsw.log.downlink) that the rotation sequence will never
+    touch. The ground station then runs the standard CREATE_TRANS /
+    GENERATE_X_PACKETS / CONFIRM_LAST_BATCH loop against that staging path.
+    Logging continues normally on a fresh fsw.log throughout.
+
+    Returns:
+        [staging_path, file_size]                 on success
+        ["empty"]                                 if nothing to downlink
+        ["no_file_handler"]                       if file logging isn't up
+        ["rollover_failed"] / ["rename_failed"]   on filesystem failure
+    """
+    logger.info("Executing PREPARE_LOG_DOWNLINK")
+
+    core_logger = getLogger("core_logger")
+    file_handler = None
+    for h in core_logger._handlers:
+        if isinstance(h, RotatingFileHandler):
+            file_handler = h
+            break
+    if file_handler is None:
+        logger.error("PREPARE_LOG_DOWNLINK: no file handler registered")
+        return ["no_file_handler"]
+
+    staging_path = LOG_CONFIG.LOG_FILENAME + ".downlink"
+    rotated_path = LOG_CONFIG.LOG_FILENAME + ".1"
+
+    # Best-effort remove of any stale staging file from a prior session
+    # (e.g. previous downlink interrupted before CLEANUP).
+    try:
+        os.remove(staging_path)
+    except OSError:
+        pass
+
+    # Rotate fsw.log -> fsw.log.1 (no-op if log is empty).
+    try:
+        file_handler.force_rollover()
+    except Exception as e:
+        logger.error(f"PREPARE_LOG_DOWNLINK: rollover failed: {e}")
+        return ["rollover_failed"]
+
+    # Move fsw.log.1 out of the rotation sequence into the staging path.
+    try:
+        os.rename(rotated_path, staging_path)
+    except OSError as e:
+        # ENOENT (errno 2) means no .1 existed — log was empty and no prior
+        # rotation had occurred. Legitimate "nothing to downlink" case.
+        if e.args and e.args[0] == 2:
+            return ["empty"]
+        logger.error(f"PREPARE_LOG_DOWNLINK: rename failed: {e}")
+        return ["rename_failed"]
+
+    try:
+        size = os.stat(staging_path)[6]
+    except OSError:
+        size = 0
+
+    return [staging_path, size]
+
+
+@register_command()
+def CLEANUP_LOG_DOWNLINK():
+    """Remove the log downlink staging file after a successful transfer.
+
+    Should be called by the ground station after CONFIRM_LAST_BATCH indicates
+    zero missing fragments. Safe (idempotent) if the file is already gone.
+
+    Returns:
+        ["cleaned"]     on success
+        ["not_found"]   if no staging file existed (idempotent)
+        ["error: ..."]  on other filesystem failures
+    """
+    logger.info("Executing CLEANUP_LOG_DOWNLINK")
+    staging_path = LOG_CONFIG.LOG_FILENAME + ".downlink"
+    try:
+        os.remove(staging_path)
+    except OSError as e:
+        if e.args and e.args[0] == 2:
+            return ["not_found"]
+        logger.error(f"CLEANUP_LOG_DOWNLINK: remove failed: {e}")
+        return [f"error: {e}"]
+    return ["cleaned"]
 
 
 @register_command()

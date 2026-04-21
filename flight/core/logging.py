@@ -353,14 +353,22 @@ class RotatingFileHandler(FileHandler):
         super().__init__(self._LogFileName, mode=self._WriteMode)
 
     def force_rollover(self) -> None:
-        """Force an immediate rollover regardless of file size.
+        """Force rollover only when the active log has content to rotate.
 
         Call this before downlinking the log file so the active log rotates to
         fsw.log.1 (static, nothing will write to it) and logging resumes on a
         fresh fsw.log.  The downlink should then target fsw.log.1.
+
+        Skips rollover if the current log is empty or size cannot be determined
+        — this avoids producing a 0-byte rotated file and preserves any prior
+        .1 backup for downlink.
         """
-        if self._backupCount > 0:
-            self.doRollover()
+        if self._backupCount <= 0:
+            return
+        log_size = self.GetLogSize()
+        if not log_size:  # None (error) or 0 (empty) — nothing to rotate
+            return
+        self.doRollover()
 
     def doRollover(self) -> None:
         """Roll over the log files. This should not need to be called directly"""
@@ -385,12 +393,22 @@ class RotatingFileHandler(FileHandler):
                 else:
                     raise e
 
-        # Rename the current log to the first backup
-        os.rename(self._LogFileName, CurrentFileName)
+        # Rename the current log to the first backup. If this fails, the log
+        # still exists at its original path; the reopen below simply re-attaches
+        # to it. emit()'s size check will retrigger rollover on the next write.
+        try:
+            os.rename(self._LogFileName, CurrentFileName)
+        except OSError as e:
+            sys.stderr.write(f"[LOG] doRollover rename failed: {e}\n")
 
-        # Reopen the file.
+        # Reopen the file. On failure, leave self.stream as the closed handle
+        # from self.close() above — emit()'s except path will reopen on its
+        # next write attempt.
         # pylint: disable=consider-using-with
-        self.stream = open(self._LogFileName, mode=self._WriteMode)
+        try:
+            self.stream = open(self._LogFileName, mode=self._WriteMode)
+        except (OSError, ValueError) as e:
+            sys.stderr.write(f"[LOG] doRollover reopen failed: {e}\n")
 
     def GetLogSize(self) -> int:
         """Check the size of the log file."""
