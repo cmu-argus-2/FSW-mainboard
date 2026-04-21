@@ -9,6 +9,7 @@ from apps.telemetry.splat.splat.telemetry_codec import Command, pack  # this sho
 from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
+from core.scheduler import sleep
 from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 
@@ -30,7 +31,7 @@ class Task(TemplateTask):
 
         SATELLITE_RADIO.set_rx_mode()
 
-    def transmit_message(self):
+    async def transmit_message(self):
         """
         Will transmit whatever is available on the transmit queue
         it should only be packets in bytes
@@ -51,6 +52,10 @@ class Task(TemplateTask):
                 SATELLITE_RADIO.transmit_message(packed_packet)
             else:
                 self.log_error("Error popping packet from TransmitQueue")
+            # Yield to scheduler between packets so watchdog (and other tasks)
+            # get CPU time. Each transmit_message above is synchronous so packet
+            # integrity is preserved — the yield only happens between packets.
+            await sleep(0)
 
     def receive_message(self):
         """
@@ -98,5 +103,5 @@ class Task(TemplateTask):
             return
 
         self.check_periodic_telemetry()  # check if it's time to send periodic telemetry
-        self.transmit_message()  # check if we have messages to transmit to GS
+        await self.transmit_message()  # check if we have messages to transmit to GS
         self.receive_message()  # check if we have received messages from GS

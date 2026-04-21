@@ -5,6 +5,8 @@
 import gc
 import os
 
+import microcontroller
+
 import apps.command.processor as processor
 from apps.adcs.consts import Modes
 from apps.command import QUEUE_STATUS, CommandQueue
@@ -202,6 +204,7 @@ class Task(TemplateTask):
                         getLogger("core_logger").addHandler(file_handler)
                         self.file_logging_enabled = True
                         self.log_info("File logging enabled on SD card")
+                        self.log_warning(f"Reset reason: {microcontroller.cpu.reset_reason}")
                     except Exception as e:
                         self.log_warning(f"File logging not available: {e}")
 
