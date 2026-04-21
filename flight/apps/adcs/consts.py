@@ -4,8 +4,12 @@ Constants used in ADCS apps.
 Author(s): Derek Fan
 """
 
+import os
+
 from core.satellite_config import adcs_config as CONFIG
 from ulab import numpy as np
+
+_CTRL_MODE_PATH = "sd/adcs/controller_mode.txt"
 
 
 class StatusConst:
@@ -75,23 +79,6 @@ class Modes:
     SUN_POINTED_TOL_HI = 0.26  # Re-enter sun_pointed if momentum more than 15 deg from sun vector
 
 
-def _load_controller_mode():
-    try:
-        with open("/sd/adcs/controller_mode.txt", "r") as f:
-            mode = int(f.read().strip())
-            if mode in (0, 1, 2):
-                return mode
-    except Exception:
-        pass
-    mode = CONFIG.CONTROLLER_MODE
-    try:
-        with open("/sd/adcs/controller_mode.txt", "w") as f:
-            f.write(str(mode))
-    except Exception:
-        pass
-    return mode
-
-
 class ControllerModes:
     """
     Controller Modes
@@ -101,15 +88,46 @@ class ControllerModes:
     BCROSS = 1
     SUN_POINTING = 2
 
-    current_mode = _load_controller_mode()
+    current_mode = CONFIG.CONTROLLER_MODE
+    _loaded = False
+
+    @classmethod
+    def load(cls):
+        if cls._loaded:
+            return
+        try:
+            with open(_CTRL_MODE_PATH, "r") as f:
+                mode = int(f.read(16).replace("\x00", "").strip())
+                if mode in (cls.BDOT, cls.BCROSS, cls.SUN_POINTING):
+                    cls.current_mode = mode
+                    cls._loaded = True
+                    return
+        except Exception:
+            pass
+        try:
+            os.remove(_CTRL_MODE_PATH)
+        except Exception:
+            pass
+        try:
+            with open(_CTRL_MODE_PATH, "w") as f:
+                f.write(str(CONFIG.CONTROLLER_MODE))
+            os.sync()
+            cls._loaded = True
+        except Exception:
+            pass
 
     @classmethod
     def update_mode(cls, new_mode):
         if new_mode in [cls.BDOT, cls.BCROSS, cls.SUN_POINTING]:
             cls.current_mode = new_mode
             try:
-                with open("/sd/adcs/controller_mode.txt", "w") as f:
+                os.remove(_CTRL_MODE_PATH)
+            except Exception:
+                pass
+            try:
+                with open(_CTRL_MODE_PATH, "w") as f:
                     f.write(str(new_mode))
+                os.sync()
             except Exception:
                 pass
             return True

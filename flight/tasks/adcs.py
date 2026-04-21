@@ -98,6 +98,8 @@ class Task(TemplateTask):
                 data_format = "LBB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B"  # + 4 * "f"
                 DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
 
+            ControllerModes.load()
+
             # Check for controller mode update from commands
             if self.CONTROLLER_MODE is not ControllerModes.current_mode:
                 self.CONTROLLER_MODE = ControllerModes.current_mode

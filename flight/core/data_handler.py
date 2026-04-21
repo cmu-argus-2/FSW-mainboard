@@ -532,7 +532,7 @@ class DataProcess:
         Returns:
             A list of filenames.
         """
-        return sorted(os.listdir(self.dir_path))
+        return sorted(f for f in os.listdir(self.dir_path) if not f.endswith(".txt"))
 
     def get_storage_info(self) -> Tuple[int, int]:
         """
