@@ -683,6 +683,10 @@ class SX126X:
         if modem == _SX126X_PACKET_TYPE_LORA:
             symbolLength = float(1 << self._sf) / float(self._bwKhz)
             timeout = int(symbolLength * 100.0 * 1000.0)
+        
+        elif modem == _SX126X_PACKET_TYPE_GFSK:
+            # TODO: CALCULATE GFSK TIMEOUT
+            pass
         else:
             return _ERR_UNKNOWN
 
