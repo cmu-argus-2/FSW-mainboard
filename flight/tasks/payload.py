@@ -50,7 +50,6 @@ class Task(TemplateTask):
             if there are commands, it will change to watching state
         If there are no commands, it will just return
         """
-        self.log_info("Running payload")
 
         if PC.command_available():
             # means that we now have a command that is available, want to switch state to watching
@@ -91,8 +90,6 @@ class Task(TemplateTask):
                 PC.switch_state("FAIL")
                 return
             return
-
-        self.log_info(f"   Missing {command[0] - TPM.time()} seconds")
 
         # not time to run the command yet
         return
@@ -336,11 +333,15 @@ class Task(TemplateTask):
 
     async def main_task(self):
 
+        # Do not run in startup
+        if SM.current_state == STATES.STARTUP:
+            return
+
         if TPM.time() - self._last_state_print_ts >= 5:
             self._last_state_print_ts = TPM.time()
             DH.log_data("payload_tm", PC.log_data)  # periodically log data
-            self.log_info(f"Last command time: {PC.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME]}")
             self.log_info(f"Current state: {PC.current_state}")
+            self.log_info(f"  next command time: {PC.log_data[PAYLOAD_IDX.NEXT_CMD_TIME]}")
 
         if SM.current_state == STATES.LOW_POWER:
             # we are in low power mode, will not run the payload task

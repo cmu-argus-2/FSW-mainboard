@@ -268,7 +268,6 @@ class Task(TemplateTask):
 
             if payload_data:
                 self.PAYLOAD_MODE = payload_data[PAYLOAD_IDX.PD_STATE_MAINBOARD]
-                self.log_info(f"PAYLOAD MODE: {self.PAYLOAD_MODE}")
 
             # check to see if we have a valid payload mode, if not assume IDLE
             if not (self.PAYLOAD_MODE >= PayloadState.IDLE and self.PAYLOAD_MODE <= PayloadState.FAIL):

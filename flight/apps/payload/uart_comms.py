@@ -39,9 +39,7 @@ class PayloadUART(PayloadCommunicationInterface):
         if len(pckt) < max_packet_size:
             pckt += b"\x00" * (max_packet_size - len(pckt))
 
-        logger.info(f"[PAYLOAD] - Sending packet {pckt[:20]}")
-        logger.info(f"[PAYLOAD] -   len:{len(pckt)}")
-
+        logger.debug(f"[PAYLOAD] - Sending packet {pckt[:20]}")
         cls._uart.write(pckt)
 
     @classmethod

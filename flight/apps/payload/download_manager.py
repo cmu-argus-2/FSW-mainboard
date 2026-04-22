@@ -159,7 +159,7 @@ class DownloadManager:
         trans = self.current_transaction
 
         # Listen for packets in this batch window
-        logger.info("Entering listen mode")
+        logger.info("Entering listen mode (cpu blocking)")
         last_received_packet = TPM.time()  # this is the time at which the last received packet has been received
         target_batch_count = self._calculate_batch_width()
 
