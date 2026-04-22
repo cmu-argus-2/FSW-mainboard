@@ -113,6 +113,16 @@ def PET_REBOOT():
 
 
 @register_command()
+def PING(string="Hello From Space!"):
+    """
+    Command to test the communication with the satellite
+    will respond with whatever string it received
+    """
+    logger.info(f"Executing PING with string: {string}")
+    return [string]
+
+
+@register_command()
 def SUM(opA, opB):
     """
     Test command
