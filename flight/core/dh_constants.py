@@ -166,14 +166,15 @@ class STORAGE_IDX:
 
 class COMMS_IDX:
     RX_PACKET_COUNT = const(0)
-    FAILED_UNPACK_COUNT = const(1)
-    CRC_ERROR_COUNT = const(2)
-    UNDEF_ERROR_COUNT = const(3)
-    PACKET_NONE_COUNT = const(4)
-    PACKET_AUTH_FAIL_COUNT = const(5)
-    TX_PACKET_COUNT = const(6)
-    TX_FAILED_COUNT = const(7)
-    RX_MESSAGE_RSSI = const(8)
+    RX_DIGIPEATER_COUNT = const(1)
+    FAILED_UNPACK_COUNT = const(2)
+    CRC_ERROR_COUNT = const(3)
+    UNDEF_ERROR_COUNT = const(4)
+    PACKET_NONE_COUNT = const(5)
+    PACKET_AUTH_FAIL_COUNT = const(6)
+    TX_PACKET_COUNT = const(7)
+    TX_FAILED_COUNT = const(8)
+    RX_MESSAGE_RSSI = const(9)
 
 
 class HAL_IDX:

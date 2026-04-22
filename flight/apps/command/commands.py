@@ -51,12 +51,14 @@ def register_command(name=None):
 
     return decorator
 
+
 @register_command()
 def FORCE_REBOOT():
     """Forces a power cycle of the spacecraft."""
     logger.info("Executing FORCE_REBOOT")
     supervisor.reload()
     return []
+
 
 @register_command()
 def GRACEFUL_REBOOT():
@@ -67,28 +69,28 @@ def GRACEFUL_REBOOT():
 
     logger.info("Executing GRACEFUL_REBOOT")
     try:
-        
+
         # shutdown DH to make sure all files are closed properly
         response = DH.graceful_shutdown()
-        
+
         if not response:
             logger.error("Failed to gracefully shutdown data handler, aborting reboot")
             return ["graceful reboot failed: DH shutdown failed"]
-        
+
         SATELLITE.reboot()
-        
-        return ["success"] # this will never be returned
+
+        return ["success"]  # this will never be returned
     except Exception as e:
         logger.error(f"Failed to gracefully reboot the satellite: {e}")
         return ["graceful reboot failed: {e}"]
-    
+
 
 @register_command()
 def MAIN_POWER_REBOOT():
     logger.info("Executing MAIN_POWER_REBOOT")
     try:
         SATELLITE.reboot()
-        return ["success"] # this will never be returned
+        return ["success"]  # this will never be returned
     except Exception as e:
         logger.error(f"Failed to reboot the satellite: {e}")
         return ["main power reboot failed"]
@@ -101,7 +103,7 @@ def REBOOT_ACK():
     This reboot is equivalente to force reboot but it will wait for the ack to be sent before rebooting
     """
     CommandSupervisor.request_reboot()
-    
+
     return ["reboot requested"]
 
 
@@ -463,6 +465,7 @@ def LIST_DIR(skip_elements, string_command):
 
     return file_list[skip_elements:]
 
+
 @register_command()
 def GET_FILE_SIZE(string_command):
     """
@@ -479,6 +482,7 @@ def GET_FILE_SIZE(string_command):
 
     return [file_size]
 
+
 @register_command()
 def DELETE_ALL_FILES():
     """
@@ -488,7 +492,7 @@ def DELETE_ALL_FILES():
 
     try:
         DH.delete_all_files()
-        supervisor.reload() # reload after deleting all files to clear any references to deleted files in memory and reset the state of the satellite
+        supervisor.reload()  # reload after deleting all files to clear any references to deleted files in memory and reset the state of the satellite
     except Exception as e:
         return [f"error: {e}"]
     return ["all files deleted"]
@@ -576,6 +580,7 @@ def EXPERIMENT(
         logger.error(f"[PAYLOAD] - Failed to add experiment command for timestamp {ts}")
     return result
 
+
 @register_command()
 def CLEAR_EXPERIMENT_LIST():
     """
@@ -584,10 +589,10 @@ def CLEAR_EXPERIMENT_LIST():
     """
     from apps.payload.controller import PayloadController as PC
 
-
-    logger.info(f"[PAYLOAD] - Clear experiment list command received")
+    logger.info("[PAYLOAD] - Clear experiment list command received")
     cleared_count = PC.clear_experiment_list()
     return [cleared_count]
+
 
 @register_command()
 def GET_EXPERIMENT_LIST(skip_elements=0):
@@ -597,6 +602,6 @@ def GET_EXPERIMENT_LIST(skip_elements=0):
     """
     from apps.payload.controller import PayloadController as PC
 
-    logger.info(f"[PAYLOAD] - List experiments command received")
+    logger.info("[PAYLOAD] - List experiments command received")
     experiment_list = PC.list_experiments()
     return experiment_list[skip_elements:]

@@ -37,6 +37,7 @@ class SATELLITE_RADIO:
     undef_error_count = 0
     packet_none_count = 0
     packet_auth_fail_count = 0
+    rx_digipeater_count = 0    # the number of packets that match the digipeater header
 
     tx_packet_count = 0
     tx_failed_count = 0  # this is because the radio was not available
@@ -138,7 +139,7 @@ class SATELLITE_RADIO:
 
         # no need to check if radio is available, it was already checked
         packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
-        
+
         logger.info(f"[COMMS] Received raw packet: {packet[-15:]}, err code: {err}")
 
         # Checks on err returned by driver
@@ -161,10 +162,11 @@ class SATELLITE_RADIO:
             return None
 
         # hopefully we have a valid packet at this point
-        
+
         # Store raw bytes and feed digipeater queue before any validation
         if packet[:3] == cls.digipeater_header:
             logger.info(f"Received lora aprs packet {packet[:20]}")
+            cls.rx_digipeater_count += 1
             DigipeaterRxQueue.push_packet(packet)
 
         if cls.auth_enabled:

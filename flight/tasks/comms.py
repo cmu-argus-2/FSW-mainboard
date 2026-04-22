@@ -30,7 +30,7 @@ class Task(TemplateTask):
         self.last_periodic_telemetry_time = TPM.time()  # timestamp of the last periodic telemetry downlink
 
         # Initialize log_data array for telemetry
-        self.log_data = [0] * 9  # 9 COMMS variables
+        self.log_data = [0] * 10  # 10 COMMS variables
 
         SATELLITE_RADIO.restore_comms_mode_from_persistent_state()
         SATELLITE_RADIO.set_rx_mode()
@@ -45,7 +45,7 @@ class Task(TemplateTask):
 
         self.log_info("Checking transmit queue for packets to send...")
         self.log_info(f"  Transmit queue size: {TransmitQueue.get_size()}")
-        
+
         if TransmitQueue.packet_available():
             self.update_comms_telemetry()  # will only update comms data when something is sent or received
 
@@ -70,7 +70,7 @@ class Task(TemplateTask):
 
             # Read packet present in the RX buffer
             message_object = SATELLITE_RADIO.receive_message()
-            
+
             self.update_comms_telemetry()  # will only update comms data when something is sent or received
 
             if not isinstance(message_object, Command):
@@ -81,13 +81,12 @@ class Task(TemplateTask):
                 message_object
             )  # [TODO] - not sure why overwrite instead of push, i copied this from the old code
 
-
     def check_periodic_telemetry(self):
         """
         Checks if it's time to send periodic telemetry, and if so, prepares the telemetry report for downlink.
         """
         current_time = TPM.time()
-        
+
         mode = SATELLITE_RADIO.get_comms_mode()
         if mode == COMMS_MODE.RF_STOP or CommandSupervisor.has_pending_action():
             return
@@ -107,6 +106,7 @@ class Task(TemplateTask):
         """
         # Populate telemetry data from SATELLITE_RADIO
         self.log_data[COMMS_IDX.RX_PACKET_COUNT] = SATELLITE_RADIO.rx_packet_count
+        self.log_data[COMMS_IDX.RX_DIGIPEATER_COUNT] = SATELLITE_RADIO.rx_digipeater_count
         self.log_data[COMMS_IDX.FAILED_UNPACK_COUNT] = SATELLITE_RADIO.failed_unpack_count
         self.log_data[COMMS_IDX.CRC_ERROR_COUNT] = SATELLITE_RADIO.crc_error_count
         self.log_data[COMMS_IDX.UNDEF_ERROR_COUNT] = SATELLITE_RADIO.undef_error_count
@@ -128,7 +128,7 @@ class Task(TemplateTask):
 
         # Register COMMS data process if it doesn't exist
         if not DH.data_process_exists("comms"):
-            data_format = "IHHHHHIHe"
+            data_format = "HHHHHHHHHe"
             DH.register_data_process("comms", data_format, True, data_limit=100000, write_interval=5)
 
         self.check_periodic_telemetry()  # check if it's time to send periodic telemetry

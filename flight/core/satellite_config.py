@@ -30,5 +30,6 @@ class comms_config:
     SC_CALLSIGN = "CT6ARG"
     GS_CALLSIGN = "CS5CEP"
 
+
 class digipeater_config:
     RX_QUEUE_MAX = const(20)

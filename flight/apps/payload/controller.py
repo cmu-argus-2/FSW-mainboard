@@ -188,7 +188,7 @@ class PayloadController:
                 logger.error("Failed to push failed ack experiment failure message to transmit queue")
 
             cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = previous_state
-    
+
     @classmethod
     def clear_experiment_list(cls):
         """
@@ -198,7 +198,7 @@ class PayloadController:
         cls.command_list = []
         logger.info(f"[PAYLOAD] - Cleared experiment list (count: {cleared_count})")
         cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = 0
-        
+
         return cleared_count
 
     @classmethod
