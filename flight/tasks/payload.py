@@ -31,17 +31,6 @@ class Task(TemplateTask):
                 circular_buffer_size=200,
             )
 
-        # TODO - not sure what this is for
-        # OD process (should be a separate file process)
-        if not DH.data_process_exists("payload_od"):
-            DH.register_data_process(
-                tag_name="payload_od",
-                data_format="B" * 10,  # TODO: define proper format
-                persistent=True,
-                data_limit=1000,
-                circular_buffer_size=100,
-            )
-
     def run_idle_state(self):
         """
         This is the function that will run when the payload is in idle state
