@@ -18,7 +18,7 @@ def is_valid_lora_aprs_packet(data, re_obj):
     """Return True if data is a structurally valid LoRa APRS packet."""
 
     # check if there are enough bytes
-    if not data or len(data) < _HEADER_LEN + 1:
+    if len(data) < _HEADER_LEN + 20:  # header + minimum APRS string length
         return 1
 
     # try an decode using ascii

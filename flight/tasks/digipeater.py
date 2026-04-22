@@ -9,6 +9,17 @@ We will change how this will be implemented to avoid congesting the network
 Packets should be addressed directly to the satellite callsign
 And to simplify the checks, it will only look that the satellite callsign is in the path
 It will not check the overall validity of the packet (apart from the special header)
+
+TX ASCII: <ÿCS5CEP-1>APRS4;CT6xxx:ARGUS TEST MESSAGE
+RX ASCII: <�CS5CEP-1>APRS4;CT6xxx*:ARGUS TEST MESSAGE
+
+This is the current structure. For a message to be repeated, it will have to be addressed to the satellite
+Overall format of the packet is not checked
+    - checks the lora aprs special header
+    - it has at least 20 characters
+    - if data is ascii decodable
+    - if satellite calsign is in the path
+    - if the position of the callsign is in the first 20 characters of the string
 """
 
 import re
