@@ -38,7 +38,7 @@ class Task(TemplateTask):
     # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "REBOOT_COUNT",
     # "WATCHDOG_TIMER", "HAL_BITFLAGS", "DETUMBLING_ERROR_FLAG"]
 
-    log_data = [0] * 8
+    log_data = [0] * 9
 
     log_commands = [0] * 3
 
@@ -161,7 +161,7 @@ class Task(TemplateTask):
             # If the DH successfully scanned the SD card, and it has been 5 secs since FSW boot
             if DH.SD_SCANNED() and time_since_boot > _EXIT_STARTUP_TIMEOUT:
                 if not DH.data_process_exists("cdh"):
-                    data_format = "LbLbbbbb"
+                    data_format = "LLbLbbbbb"
                     DH.register_data_process("cdh", data_format, True, data_limit=100000)
 
                 if not DH.data_process_exists("cmd_logs"):

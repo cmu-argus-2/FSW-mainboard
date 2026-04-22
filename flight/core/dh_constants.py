@@ -5,13 +5,14 @@ from micropython import const
 
 class CDH_IDX:
     TIME = const(0)
-    SC_STATE = const(1)
-    SD_USAGE = const(2)
-    CURRENT_RAM_USAGE = const(3)
-    REBOOT_COUNT = const(4)
-    WATCHDOG_TIMER = const(5)
-    HAL_BITFLAGS = const(6)
-    DETUMBLING_ERROR_FLAG = const(7)
+    BOOT_TIME = const(1)
+    SC_STATE = const(2)
+    SD_USAGE = const(3)
+    CURRENT_RAM_USAGE = const(4)
+    REBOOT_COUNT = const(5)
+    WATCHDOG_TIMER = const(6)
+    HAL_BITFLAGS = const(7)
+    DETUMBLING_ERROR_FLAG = const(8)
 
 
 class EPS_IDX:
