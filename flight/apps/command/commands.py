@@ -190,13 +190,6 @@ def TURN_ON_PAYLOAD():
 
 
 @register_command()
-def SCHEDULE_OD_EXPERIMENT():
-    """Schedules an orbit determination experiment at the next available opportunity."""
-    logger.info("Executing SCHEDULE_OD_EXPERIMENT")
-    return []
-
-
-@register_command()
 def RF_STOP():
     """Stops all satellite RF transmissions."""
     logger.warning("Executing RF_STOP (deferred): will disable TX after ACK")

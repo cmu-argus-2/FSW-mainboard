@@ -30,7 +30,6 @@ _PWM_MIN = const(0)  # Minimum PWM value for deployment
 _FIRST_PWM = const(2)  # First PWM to start deployment
 _BURN_WIRE_TIMEOUT = CONFIG.BURN_WIRE_TIMEOUT  # number of tries
 _DEPLOYMENT_DISTANCE = const(2)  # distance(cm) threshold for deployment
-_PAYLOAD_TESTING_MODE = CONFIG.PAYLOAD_TESTING_MODE
 
 
 class Task(TemplateTask):
