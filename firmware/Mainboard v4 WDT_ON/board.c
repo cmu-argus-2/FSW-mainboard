@@ -5,16 +5,16 @@
 // SPDX-License-Identifier: MIT
 
 #include "supervisor/board.h"
-#include "common-hal/digitalio/DigitalInOut.h"
-#include "shared-bindings/digitalio/DigitalInOut.h"
+#include "shared-bindings/microcontroller/Pin.h"
+#include "hardware/gpio.h"
 
-digitalio_digitalinout_obj_t wdt_en;
+#define WDT_EN_PIN 15
 
 void board_init(void) {
-    wdt_en.base.type = &digitalio_digitalinout_type;
-    common_hal_digitalio_digitalinout_construct(&wdt_en, &pin_GPIO15);
-    common_hal_digitalio_digitalinout_switch_to_output(&wdt_en, true, DRIVE_MODE_PUSH_PULL);
-    common_hal_digitalio_digitalinout_never_reset(&wdt_en);
+    gpio_init(WDT_EN_PIN);
+    gpio_set_dir(WDT_EN_PIN, GPIO_OUT);
+    gpio_put(WDT_EN_PIN, true);
+    common_hal_never_reset_pin(&pin_GPIO15);
 }
 
 bool board_requests_safe_mode(void) {
@@ -22,6 +22,10 @@ bool board_requests_safe_mode(void) {
 }
 
 void reset_board(void) {
+    gpio_deinit(WDT_EN_PIN);
+    gpio_init(WDT_EN_PIN);
+    gpio_set_dir(WDT_EN_PIN, GPIO_OUT);
+    gpio_put(WDT_EN_PIN, true);
 }
 
 void board_deinit(void) {
