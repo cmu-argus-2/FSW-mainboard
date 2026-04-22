@@ -7,6 +7,7 @@ class Watchdog:
         self.__enable_pin = enable_pin
 
         self.__enable = digitalio.DigitalInOut(enable_pin)
+        self.__enable.switch_to_output(True, digitalio.DriveMode.PUSH_PULL)
         self.__en_val = True  # Error handling
 
         self.__input = digitalio.DigitalInOut(input)
