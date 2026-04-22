@@ -175,7 +175,7 @@ class Task(TemplateTask):
                 )
 
                 # TODO: add deployment flag
-                if SATELLITE.BURN_WIRES_AVAILABLE:
+                if SATELLITE.BURN_WIRES_AVAILABLE and 1 == 0:
                     # Deployment finished when the deployment PWM reaches 0
                     if self.deploymentPWM < _PWM_MIN and deployment_time_check:
                         self.deploymentTries += 1
@@ -417,9 +417,11 @@ class Task(TemplateTask):
     async def main_task(self):
         if SM.current_state == STATES.STARTUP:
             # Startup sequence
-            self.startup()
+            SM.switch_to(STATES.NOMINAL)  # force going to nomimal
+            
 
         else:
+            return
             # Run command processor
             self.command_processor_execution()
 

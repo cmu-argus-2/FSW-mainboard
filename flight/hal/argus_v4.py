@@ -512,7 +512,7 @@ class ArgusV4(CubeSat):
                 syncLength=32,
                 addrComp=0x00,  # ADDR FILT OFF
                 packType=0x01,  # PACK VAR
-                plLength=0,
+                plLength=255,
                 crcType=0x06,  # CRC 2 BYTE INV (CCITT)
                 whitening=0x01,  # WHITE ON
                 currentLimit=140.0,

@@ -11,6 +11,8 @@ from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
+from core import state_manager as SM
+
 
 
 class Task(TemplateTask):
@@ -29,7 +31,7 @@ class Task(TemplateTask):
         self.last_periodic_telemetry_time = TPM.time()  # timestamp of the last periodic telemetry downlink
 
         SATELLITE_RADIO.set_rx_mode()
-
+        
     def transmit_message(self):
         """
         Will transmit whatever is available on the transmit queue

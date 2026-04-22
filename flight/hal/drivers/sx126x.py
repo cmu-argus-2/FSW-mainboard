@@ -643,7 +643,7 @@ class SX126X:
         start = ticks_us()
         while not self.irq.value:
             yield_()
-            if abs(ticks_diff(start, ticks_us())) > timeout:
+            if abs(ticks_diff(start, ticks_us())) > timeout and timeout != 0:
                 self.clearIrqStatus()
                 self.standby()
                 return _ERR_TX_TIMEOUT
@@ -1364,10 +1364,10 @@ class SX126X:
         packetParam[3] = syncWordLength
         if (syncWordLength == 32):
             # 0x1A_CF_FC_1D
-            self.writeRegister(_SX126X_REG_SYNC_WORD_0, (0x1A).to_bytes(), 1)
-            self.writeRegister(_SX126X_REG_SYNC_WORD_1, (0xCF).to_bytes(), 1)
-            self.writeRegister(_SX126X_REG_SYNC_WORD_2, (0xFC).to_bytes(), 1)
-            self.writeRegister(_SX126X_REG_SYNC_WORD_3, (0x1D).to_bytes(), 1)
+            self.writeRegister(_SX126X_REG_SYNC_WORD_0, [0x1A], 1)
+            self.writeRegister(_SX126X_REG_SYNC_WORD_1, [0xCF], 1)
+            self.writeRegister(_SX126X_REG_SYNC_WORD_2, [0xFC], 1)
+            self.writeRegister(_SX126X_REG_SYNC_WORD_3, [0x1D], 1)
 
         ASSERT(_ERR_NONE if addrComp in [
             _SX126X_GFSK_ADDRESS_FILT_OFF,
@@ -1402,7 +1402,7 @@ class SX126X:
             else _ERR_UNKNOWN)
 
         packetParam[8] = whitening
-
+        print(f"Packet params: {packetParam}")
         return self.SPIwriteCommand([_SX126X_CMD_SET_PACKET_PARAMS], 1, packetParam, 9)
 
     def setBufferBaseAddress(self, txBaseAddress=0x00, rxBaseAddress=0x00):
@@ -1687,8 +1687,8 @@ class SX1262(SX126X):
         blocking=True
     ):
 
-        state = super().begin(bR, pS, bW, fDev, preLength, preDetect, syncLength, addrComp,
-                              packType, plLength, crcType, whitening, currentLimit, useRegulatorLDO, tcxoVoltage)
+        state = super().beginFSK(bR=bR, pS=pS, bW=bW, fDev=fDev, preLength=preLength, preDetect=preDetect, syncLength=syncLength, addrComp=addrComp,
+                              packType=packType, plLength=plLength, crcType=crcType, whitening=whitening, currentLimit=currentLimit, useRegulatorLDO=useRegulatorLDO, tcxoVoltage=tcxoVoltage)
 
         state = self.setFrequency(freq)
         ASSERT(state)

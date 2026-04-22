@@ -125,6 +125,7 @@ class DataProcess:
         "Q": 8,  # unsigned long long
         "f": 4,  # float
         "d": 8,  # double
+        "e": 2  
     }
 
     def __init__(
