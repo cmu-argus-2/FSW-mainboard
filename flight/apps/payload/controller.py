@@ -21,9 +21,6 @@ from core.dh_constants import PAYLOAD_IDX
 from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
-from micropython import const
-
-_PING_RESP_VALUE = const(0x60)  # DO NOT CHANGE THIS VALUE
 
 
 class PayloadState:
@@ -94,7 +91,7 @@ class PayloadController:
     OFF_TIMEOUT = 15  # time to wait for the jetson to respond to shutdown command befoer forcing shutdown
 
     TELEM_TS = 0  # time at which last telemetry was requested
-    TELEM_PERIOD = 20  # request telemetry every 20s
+    TELEM_PERIOD = 10  # request telemetry every 10s
 
     # Lets init uart connection.
     # TODO should this only be made once the jetson has been turned on?
@@ -110,7 +107,7 @@ class PayloadController:
     waiting_shutdown = False  # this flag is set to true and it receives the turn off ack
 
     # Telemetry variables
-    payload_tm_data_format = "QQQQ" + 14 * "B" + "H" + 2 * "B" + 3 * "H"
+    payload_tm_data_format = "QQQQ" + 3 * "B" + "b" + 11 * "B" + "H" + 2 * "B" + 3 * "H"
     log_data = [0] * len(payload_tm_data_format)
 
     # this is the dict were the transactions will be stored
@@ -140,6 +137,7 @@ class PayloadController:
         if cls.current_state == PayloadState.IDLE:
             # set the last_executed_time
             cls.current_command = None
+            # TODO: maybe should change this not interesting to know that next command is at time  0, not enough resolution for it
             cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = 30  # arbitrary number to distinguish from command time 0
 
         # booting state needs to turn on the satellite
@@ -337,9 +335,9 @@ class PayloadController:
         """
 
         # 1. create the ping command
-        command = Command("PING")
+        command = Command("PING_EXP")
         command.add_argument("ts", TPM.time())
-        logger.info("[PAYLOAD] - Sending ping command")
+        logger.info("[PAYLOAD] - Sending ping_exp command")
         # 2. send to uart
         PU.send(pack(command))
 
@@ -374,7 +372,7 @@ class PayloadController:
         """
         Will send a command requestin the telemetry command
         """
-
+        logger.info("[PAYLOAD] - Sending telemetry request command")
         # 1. create the command
         command = Command("REQUEST_TM_PAYLOAD")
 
@@ -430,20 +428,22 @@ class PayloadController:
             # nothing to be done here
             return False
 
-        logger.info(f"[PAYLOAD] - Received data from uart: {data[0:10]} size: {len(data)}")
+        logger.debug(f"[PAYLOAD] - Received data from uart: {data[0:10]} size: {len(data)}")
 
         # try and unpack the data
-        callsign, message_object = unpack(data)
+        _, message_object = unpack(data)
 
         if isinstance(message_object, Ack):
             logger.info(f"[PAYLOAD] -   Received ack: {message_object}")
             cls.process_ack(message_object)
         if isinstance(message_object, Command):
-            cls.process_command(message_object)
             logger.info(f"[PAYLOAD] -   Received command: {message_object}")
+            cls.process_command(message_object)
         if isinstance(message_object, Fragment):
+            logger.info(f"[PAYLOAD] -   Received fragment: {message_object}")
             cls.process_fragment(message_object)
         if isinstance(message_object, Report):
+            logger.info(f"[PAYLOAD] -   Received report telemetry: {message_object}")
             cls.process_report(message_object)
 
         return True  # TODO - maybe should change this to return the received packet type
@@ -453,7 +453,6 @@ class PayloadController:
         """
         This function will process the report message
         """
-        logger.info(f"[PAYLOAD] - Processing report: {report}")
 
         if report.name == "TM_PAYLOAD":
             cls.process_tm_payload_report(report)
@@ -464,7 +463,6 @@ class PayloadController:
         Process telemetry payload report and log to DataHandler.
         Maps TM_PAYLOAD variables to PAYLOAD_IDX and adds controller metadata.
         """
-        logger.info(f"[PAYLOAD] - Processing TM_PAYLOAD report: {report}")
 
         # reports.variables is a dict, each entry is the subsystem and the value is another dict
         # that has the variable names as keys and their values as values
@@ -473,12 +471,7 @@ class PayloadController:
             logger.error("[PAYLOAD] - Data process 'payload_tm' does not exist")
             return
 
-        for ss, var_dict in report.variables.items():
-            logger.info(f"[PAYLOAD] - Processing subsystem: {ss}")
-
-            for var_name, value in var_dict.items():
-                logger.info(f"[PAYLOAD] -   {var_name}: {value}")
-
+        cls.log_data[PAYLOAD_IDX.INFERENCE_RETURN_CODE] = report.variables["PAYLOAD_TM"]["INFERENCE_RETURN_CODE"]
         cls.log_data[PAYLOAD_IDX.SYSTEM_TIME] = report.variables["PAYLOAD_TM"]["SYSTEM_TIME"]
         cls.log_data[PAYLOAD_IDX.SYSTEM_UPTIME] = report.variables["PAYLOAD_TM"]["SYSTEM_UPTIME"]
         # cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME] = report.variables["PAYLOAD_TM"]["LAST_EXECUTED_CMD_TIME"]  # this is not filled by jetson
@@ -508,10 +501,10 @@ class PayloadController:
     def clear_jetson_telem_data(cls):
         """
         This will clear the jetson telem values that are in memory. Will be called when turning off the jetson
-
         TODO: do we really want this? we will lose the last telemetry data from the jetson
 
         """
+        # cls.log_data[PAYLOAD_IDX.INFERENCE_RETURN_CODE] = 0   # do not want to reset this value
         cls.log_data[PAYLOAD_IDX.SYSTEM_TIME] = 0
         cls.log_data[PAYLOAD_IDX.SYSTEM_UPTIME] = 0
         cls.log_data[PAYLOAD_IDX.PD_STATE_JETSON] = 0
@@ -538,14 +531,12 @@ class PayloadController:
         """
         It will check the ack command id and set the corresponding variable to true
         """
-        logger.info(f"[PAYLOAD] - Processing ack: {ack}")
         # see if it was a ping ack
-        if ack.cmd_id == COMMAND_IDS["PING"]:
+        if ack.cmd_id == COMMAND_IDS["PING_EXP"]:
             # it was a ping command
             if cls.received_ping_ack:
-                logger.error("[PAYLOAD] - PING ACK OVERRIDDEN")
+                logger.error("[PAYLOAD] - PING_EXP ACK OVERRIDDEN")
             cls.received_ping_ack = True
-            logger.info("[PAYLOAD] - received_ping_ack set to true")
             return
 
         # see if it was a experiment ack
@@ -581,7 +572,6 @@ class PayloadController:
         cls.transaction_dict[tid].set_number_packets(number_of_packets)
         cls.add_transaction_for_download(tid, cls.transaction_dict[tid])
 
-        logger.info(f"[PAYLOAD] - Processing init transaction command: {tid}, {number_of_packets}")
         return True
 
     @classmethod
@@ -602,7 +592,6 @@ class PayloadController:
         # need to give a random number for number_of_packets
         cls.transaction_dict[tid] = Transaction(tid, filename, number_of_packets=-1, max_payload_size=600)
 
-        logger.info(f"[PAYLOAD] - Processing create transaction command: {tid}, {filename}")
         return True
 
     @classmethod
@@ -643,7 +632,6 @@ class PayloadController:
         This funciton will process the received fragments
         ideally this will only happen when in listening mode (triggered when the payload goes into download mode)
         """
-        logger.info(f"[PAYLOAD] - Processing fragment: {fragment}")
         cls.DWN_LAST_FRAGMENT_TS = TPM.time()
         cls.download_manager.note_fragment_received(fragment)
         cls.transaction_dict[fragment.tid].add_fragment(fragment)

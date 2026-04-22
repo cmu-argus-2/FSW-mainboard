@@ -31,17 +31,6 @@ class Task(TemplateTask):
                 circular_buffer_size=200,
             )
 
-        # TODO - not sure what this is for
-        # OD process (should be a separate file process)
-        if not DH.data_process_exists("payload_od"):
-            DH.register_data_process(
-                tag_name="payload_od",
-                data_format="B" * 10,  # TODO: define proper format
-                persistent=True,
-                data_limit=1000,
-                circular_buffer_size=100,
-            )
-
     def run_idle_state(self):
         """
         This is the function that will run when the payload is in idle state
@@ -50,7 +39,6 @@ class Task(TemplateTask):
             if there are commands, it will change to watching state
         If there are no commands, it will just return
         """
-        self.log_info("Running payload")
 
         if PC.command_available():
             # means that we now have a command that is available, want to switch state to watching
@@ -91,8 +79,6 @@ class Task(TemplateTask):
                 PC.switch_state("FAIL")
                 return
             return
-
-        self.log_info(f"   Missing {command[0] - TPM.time()} seconds")
 
         # not time to run the command yet
         return
@@ -183,6 +169,7 @@ class Task(TemplateTask):
 
         # check to see if processing is finished
         if PC.received_experiment_finished:
+            PC.send_telemetry_command()   # request for telemetry value to get the inference return
             self.log_info("Processing finished, switching to FINISHED state.")
             PC.switch_state("FINISHED")
             return
@@ -335,11 +322,15 @@ class Task(TemplateTask):
 
     async def main_task(self):
 
+        # Do not run in startup
+        if SM.current_state == STATES.STARTUP:
+            return
+
         if TPM.time() - self._last_state_print_ts >= 5:
             self._last_state_print_ts = TPM.time()
             DH.log_data("payload_tm", PC.log_data)  # periodically log data
-            self.log_info(f"Last command time: {PC.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME]}")
             self.log_info(f"Current state: {PC.current_state}")
+            self.log_info(f"  next command time: {PC.log_data[PAYLOAD_IDX.NEXT_CMD_TIME]}")
 
         if SM.current_state == STATES.LOW_POWER:
             # we are in low power mode, will not run the payload task
