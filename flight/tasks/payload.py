@@ -183,6 +183,7 @@ class Task(TemplateTask):
 
         # check to see if processing is finished
         if PC.received_experiment_finished:
+            PC.send_telemetry_command()   # request for telemetry value to get the inference return
             self.log_info("Processing finished, switching to FINISHED state.")
             PC.switch_state("FINISHED")
             return

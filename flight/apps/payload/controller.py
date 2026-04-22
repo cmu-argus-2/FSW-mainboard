@@ -110,7 +110,7 @@ class PayloadController:
     waiting_shutdown = False  # this flag is set to true and it receives the turn off ack
 
     # Telemetry variables
-    payload_tm_data_format = "QQQQ" + 14 * "B" + "H" + 2 * "B" + 3 * "H"
+    payload_tm_data_format = "QQQQ" + 3 * "B" + "b" + 11 * "B" + "H" + 2 * "B" + 3 * "H"
     log_data = [0] * len(payload_tm_data_format)
 
     # this is the dict were the transactions will be stored
@@ -140,6 +140,7 @@ class PayloadController:
         if cls.current_state == PayloadState.IDLE:
             # set the last_executed_time
             cls.current_command = None
+            # TODO: maybe should change this not interesting to know that next command is at time  0, not enough resolution for it
             cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = 30  # arbitrary number to distinguish from command time 0
 
         # booting state needs to turn on the satellite
@@ -460,6 +461,7 @@ class PayloadController:
             for var_name, value in var_dict.items():
                 logger.info(f"[PAYLOAD] -   {var_name}: {value}")
 
+        cls.log_data[PAYLOAD_IDX.INFERENCE_RETURN_CODE] = report.variables["PAYLOAD_TM"]["INFERENCE_RETURN_CODE"]
         cls.log_data[PAYLOAD_IDX.SYSTEM_TIME] = report.variables["PAYLOAD_TM"]["SYSTEM_TIME"]
         cls.log_data[PAYLOAD_IDX.SYSTEM_UPTIME] = report.variables["PAYLOAD_TM"]["SYSTEM_UPTIME"]
         # cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME] = report.variables["PAYLOAD_TM"]["LAST_EXECUTED_CMD_TIME"]  # this is not filled by jetson
@@ -493,6 +495,7 @@ class PayloadController:
         TODO: do we really want this? we will lose the last telemetry data from the jetson
 
         """
+        # cls.log_data[PAYLOAD_IDX.INFERENCE_RETURN_CODE] = 0   # do not want to reset this value
         cls.log_data[PAYLOAD_IDX.SYSTEM_TIME] = 0
         cls.log_data[PAYLOAD_IDX.SYSTEM_UPTIME] = 0
         cls.log_data[PAYLOAD_IDX.PD_STATE_JETSON] = 0
