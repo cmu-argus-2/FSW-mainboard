@@ -62,7 +62,7 @@ def FORCE_REBOOT():
 def GRACEFUL_REBOOT():
     """
     Attempt to gracefully reboot the satellite
-    this is equivalente to the reboot every 24h
+    this is equivalent to the reboot every 24h
     """
 
     logger.info("Executing GRACEFUL_REBOOT")
@@ -92,7 +92,19 @@ def MAIN_POWER_REBOOT():
     except Exception as e:
         logger.error(f"Failed to reboot the satellite: {e}")
         return ["main power reboot failed"]
+
+
+@register_command()
+def REBOOT_ACK():
+    """
+    This command will perform a reboot on the satellite after acknowledging, using the command supervisor
+    This reboot is equivalente to force reboot but it will wait for the ack to be sent before rebooting
+    """
+    CommandSupervisor.request_reboot()
     
+    return ["reboot requested"]
+
+
 @register_command()
 def PET_REBOOT():
     """
