@@ -1,10 +1,10 @@
 # Communication task which uses the radio to transmit and receive messages.
 from apps.command import QUEUE_STATUS, CommandQueue
+from apps.command.supervisor import CommandSupervisor
 from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import TransmitQueue
-from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
-from apps.command.supervisor import CommandSupervisor
 from apps.comms.modes import COMMS_MODE
+from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
 from apps.telemetry.splat.splat.telemetry_codec import Command, pack  # this should be implemented in middleware
 from core import TemplateTask
 from core import state_manager as SM
