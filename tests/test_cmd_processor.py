@@ -113,5 +113,4 @@ def test_valid_state():
     assert valid_state(STATES.STARTUP)
     assert valid_state(STATES.DETUMBLING)
     assert valid_state(STATES.NOMINAL)
-    assert valid_state(STATES.EXPERIMENT)
     assert valid_state(STATES.LOW_POWER)

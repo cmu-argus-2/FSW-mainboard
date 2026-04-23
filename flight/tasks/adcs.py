@@ -122,9 +122,9 @@ class Task(TemplateTask):
                 self.MODE = update_mode(self.MODE, self.CONTROLLER_MODE)
 
             # ------------------------------------------------------------------------------------------------------------------------------------
-            # LOW POWER or EXPERIMENT
+            # LOW POWER
             # ------------------------------------------------------------------------------------------------------------------------------------
-            elif SM.current_state == STATES.LOW_POWER or SM.current_state == STATES.EXPERIMENT:
+            elif SM.current_state == STATES.LOW_POWER:
                 # Turn coils off to conserve power
                 self.ensure_coils_off()
 

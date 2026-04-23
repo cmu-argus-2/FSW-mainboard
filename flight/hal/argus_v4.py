@@ -106,7 +106,7 @@ class ArgusV4Interfaces:
     JETSON_BAUD = const(460800)
     JETSON_TX = board.TX1
     JETSON_RX = board.RX1
-    JETSON_UART = UART(JETSON_TX, JETSON_RX, baudrate=JETSON_BAUD, receiver_buffer_size=8192)
+    JETSON_UART = UART(JETSON_TX, JETSON_RX, baudrate=JETSON_BAUD, receiver_buffer_size=609 * 40, timeout=0.2)
 
 
 class ArgusV4Components:
@@ -264,7 +264,6 @@ class ArgusV4Components:
     # PAYLOAD_IO0 = board.PAYLOAD_IO0
     # PAYLOAD_IO1 = board.PAYLOAD_IO1
     # PAYLOAD_IO2 = board.PAYLOAD_IO2
-    JETSON_SD_REQ = board.JETSON_SD_REQ
     # PAYLOAD_CS = board.PAYLOAD_nCS
     # PAYLOAD_EN = board.PAYLOAD_EN
 
@@ -281,9 +280,13 @@ class ArgusV4Components:
     #########
 
     # JETSON
-    JETSON_UART = ArgusV4Interfaces.JETSON_UART
+    JETSON_UART = ArgusV4Interfaces.JETSON_UART  # TODO: i dont think we need this here
+    JETSON_SD_REQ = digitalio.DigitalInOut(board.JETSON_SD_REQ)  # this has been wired to 5v dcdc enable
+    JETSON_SD_REQ.direction = digitalio.Direction.OUTPUT
+    JETSON_SD_REQ.value = False  # Not necessary, suggested by copilot, added just to be sure
     JETSON_ENABLE = digitalio.DigitalInOut(board.JETSON_EN)
     JETSON_ENABLE.direction = digitalio.Direction.OUTPUT
+    JETSON_ENABLE.value = False  # Not necessary, suggested by copilot, added just to be sure
 
     ########
     # MISC #
@@ -314,6 +317,8 @@ class ArgusV4(CubeSat):
         super().__init__()
 
         self.__payload_uart = ArgusV4Interfaces.JETSON_UART
+        self.__jetson_enable = ArgusV4Components.JETSON_ENABLE
+        self.__jetson_sd_req = ArgusV4Components.JETSON_SD_REQ
 
     ######################## BOOT SEQUENCE ########################
 
