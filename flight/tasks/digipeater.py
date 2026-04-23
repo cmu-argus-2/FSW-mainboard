@@ -53,7 +53,7 @@ class Task(TemplateTask):
             raw_packet, status = DigipeaterRxQueue.pop_packet()
             if status != DIGIPEATER_QUEUE_STATUS.OK or raw_packet is None:
                 return
-            
+
             self.log_info(f"Looking at packet: {raw_packet[:20]}")
 
             # Validate LoRa APRS packet header and structure

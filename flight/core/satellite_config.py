@@ -32,4 +32,4 @@ class comms_config:
 
 
 class digipeater_config:
-    RX_QUEUE_MAX = const(20)
+    RX_QUEUE_MAX = const(5)

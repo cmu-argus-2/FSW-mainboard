@@ -42,7 +42,7 @@ class SATELLITE_RADIO:
     tx_packet_count = 0
     tx_failed_count = 0  # this is because the radio was not available
     tx_digipeater_count = 0  # the number of packets transmitted via the digipeater function
-    
+
     rx_message_rssi = 0.0  # rssi of last received message, updated in receive_message()
 
     # RF_STOP / COMMS mode state
