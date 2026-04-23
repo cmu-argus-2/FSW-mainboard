@@ -12,7 +12,6 @@ Each command is defined as follows:
 - Name: A string representation of the command for debugging.
 - Description: A brief description of the command.
 - Arguments: A list of parameters that the command accepts.
-- Precondition: A list of conditions that must be met before executing the command.
 
 See the documentation for a full description of each command.
 
