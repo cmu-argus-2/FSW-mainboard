@@ -20,7 +20,6 @@ from core import state_manager as SM
 from core.dh_constants import PAYLOAD_IDX
 from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
-from hal.argus_v4 import ArgusV4Components
 from hal.configuration import SATELLITE
 
 
