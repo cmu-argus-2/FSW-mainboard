@@ -25,6 +25,7 @@ from core import DataHandler as DH
 from core import logger
 from core.dh_constants import PAYLOAD_IDX
 from core.time_processor import TimeProcessor as TPM
+from hal.argus_v4 import ArgusV4Components
 from hal.configuration import SATELLITE
 from micropython import const
 
@@ -283,7 +284,7 @@ class PayloadController:
                 # We have timed out while booting
                 # Log error and reset the state
                 logger.error("Timeout booting. Resetting state.")
-                cls._switch_to_staate(PayloadState.POWERING_ON)
+                cls._switch_to_state(PayloadState.POWERING_ON)
 
         elif cls.state == PayloadState.POWERING_ON:
             # Wait for the Payload to be ready
@@ -898,11 +899,18 @@ class PayloadController:
         # If the function is called again and the power line is already on, it SHOULD do nothing
         # This will be called multiple times in a row
         logger.debug("[PAYLOAD] Turning on power...")
-        pass
+        if not ArgusV4Components.JETSON_ENABLE.value:
+            ArgusV4Components.JETSON_ENABLE.value = True
+            logger.info("[PAYLOAD] Payload power enabled.")
 
     @classmethod
     def turn_off_power(cls):
         # This is an expensive and drastic operation on the HW so must be limited to strict necessity
         # Preferable after a shutdown command
         logger.debug("[PAYLOAD] Turning off power...")
-        pass
+        if cls._interface_injected and cls.communication_interface is not None and cls.communication_interface.is_connected():
+            cls.communication_interface.disconnect()
+
+        if ArgusV4Components.JETSON_ENABLE.value:
+            ArgusV4Components.JETSON_ENABLE.value = False
+            logger.info("[PAYLOAD] Payload power disabled.")
