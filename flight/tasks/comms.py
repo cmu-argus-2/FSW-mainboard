@@ -30,7 +30,7 @@ class Task(TemplateTask):
         self.last_periodic_telemetry_time = TPM.time()  # timestamp of the last periodic telemetry downlink
 
         # Initialize log_data array for telemetry
-        self.log_data = [0] * 10  # 10 COMMS variables
+        self.log_data = [0] * 11  # 11 COMMS variables
 
         SATELLITE_RADIO.restore_comms_mode_from_persistent_state()
         SATELLITE_RADIO.set_rx_mode()
@@ -107,6 +107,7 @@ class Task(TemplateTask):
         # Populate telemetry data from SATELLITE_RADIO
         self.log_data[COMMS_IDX.RX_PACKET_COUNT] = SATELLITE_RADIO.rx_packet_count
         self.log_data[COMMS_IDX.RX_DIGIPEATER_COUNT] = SATELLITE_RADIO.rx_digipeater_count
+        self.log_data[COMMS_IDX.TX_DIGIPEATER_COUNT] = SATELLITE_RADIO.tx_digipeater_count
         self.log_data[COMMS_IDX.FAILED_UNPACK_COUNT] = SATELLITE_RADIO.failed_unpack_count
         self.log_data[COMMS_IDX.CRC_ERROR_COUNT] = SATELLITE_RADIO.crc_error_count
         self.log_data[COMMS_IDX.UNDEF_ERROR_COUNT] = SATELLITE_RADIO.undef_error_count
@@ -128,7 +129,7 @@ class Task(TemplateTask):
 
         # Register COMMS data process if it doesn't exist
         if not DH.data_process_exists("comms"):
-            data_format = "HHHHHHHHHe"
+            data_format = "HHHHHHHHHHe"
             DH.register_data_process("comms", data_format, True, data_limit=100000, write_interval=5)
 
         self.check_periodic_telemetry()  # check if it's time to send periodic telemetry

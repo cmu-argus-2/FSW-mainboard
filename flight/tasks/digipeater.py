@@ -51,10 +51,10 @@ class Task(TemplateTask):
 
         while DigipeaterRxQueue.packet_available():
             raw_packet, status = DigipeaterRxQueue.pop_packet()
-            self.log_info(f"Looking at packet: {raw_packet[:20]}")
-
             if status != DIGIPEATER_QUEUE_STATUS.OK or raw_packet is None:
                 return
+            
+            self.log_info(f"Looking at packet: {raw_packet[:20]}")
 
             # Validate LoRa APRS packet header and structure
             result = is_valid_lora_aprs_packet(raw_packet, self._satellite_cs_re)
@@ -65,6 +65,6 @@ class Task(TemplateTask):
             # Add asterik to callsign to indicate digipeating
             final_packet = add_asterisk_packet(raw_packet, self._satellite_cs_re)
 
-            # Transmit directly (not via TransmitQueue, which applies SPLAT packing)
-            if not SATELLITE_RADIO.transmit_message(final_packet):
+            # Transmit using special transmit digi packet function
+            if not SATELLITE_RADIO.transmit_digi_packet(final_packet):
                 self.log_warning("Digipeater TX failed (RF_STOP or radio unavailable)")

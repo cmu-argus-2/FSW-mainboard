@@ -41,7 +41,8 @@ class SATELLITE_RADIO:
 
     tx_packet_count = 0
     tx_failed_count = 0  # this is because the radio was not available
-
+    tx_digipeater_count = 0  # the number of packets transmitted via the digipeater function
+    
     rx_message_rssi = 0.0  # rssi of last received message, updated in receive_message()
 
     # RF_STOP / COMMS mode state
@@ -140,8 +141,6 @@ class SATELLITE_RADIO:
         # no need to check if radio is available, it was already checked
         packet, err = SATELLITE.RADIO.recv(len=0, timeout_en=True, timeout_ms=1000)
 
-        logger.info(f"[COMMS] Received raw packet: {packet[-15:]}, err code: {err}")
-
         # Checks on err returned by driver
         if err == _ERR_CRC_MISMATCH:
             # CRC error, packet likely corrupted
@@ -168,6 +167,7 @@ class SATELLITE_RADIO:
             logger.info(f"Received lora aprs packet {packet[:20]}")
             cls.rx_digipeater_count += 1
             DigipeaterRxQueue.push_packet(packet)
+            return None
 
         if cls.auth_enabled:
             # Authenticated command format:
@@ -229,3 +229,15 @@ class SATELLITE_RADIO:
             logger.error("[COMMS ERROR] RADIO no longer active on SAT")
             cls.tx_failed_count += 1
             return False
+
+    @classmethod
+    def transmit_digi_packet(cls, packet):
+        """
+        Special function that will be used to transmit a digipeater packet
+        using this function to increment the digipeater tx count
+        calls the normal transmit function after incrementing the count
+        If the packet is not transmitted the counter will not be incremented
+        """
+        status = cls.transmit_message(packet)
+        cls.tx_digipeater_count = cls.tx_digipeater_count + status
+        return status

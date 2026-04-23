@@ -174,7 +174,8 @@ class COMMS_IDX:
     PACKET_AUTH_FAIL_COUNT = const(6)
     TX_PACKET_COUNT = const(7)
     TX_FAILED_COUNT = const(8)
-    RX_MESSAGE_RSSI = const(9)
+    TX_DIGIPEATER_COUNT = const(9)
+    RX_MESSAGE_RSSI = const(10)
 
 
 class HAL_IDX:
