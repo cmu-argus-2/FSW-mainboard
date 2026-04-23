@@ -44,7 +44,7 @@ class CommandProcessingStatus:
 def process_command(command):
     """Processes a command by ID and arguments, with lightweight validation and execution."""
     precondition_name = command.precondition
-    satellite_func_name = command.satellite_func
+    satellite_func_name = command.name
     argument_list = command.get_arguments_list()
 
     logger.info(f"Processing command: {satellite_func_name} with arguments: {argument_list}")
