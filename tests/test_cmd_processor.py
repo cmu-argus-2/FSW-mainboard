@@ -5,7 +5,6 @@ import pytest
 # Setup CircuitPython mocks for testing
 import tests.cp_mock  # noqa: F401
 from flight.apps.command.processor import CommandProcessingStatus, process_command
-from flight.core.state_machine import STATES
 
 
 class MOCK_ARGUMENTS:
