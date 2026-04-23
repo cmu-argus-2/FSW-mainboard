@@ -232,8 +232,8 @@ _BMX160_GYRO_ODR_VALUES = [3200, 1600, 800, 400, 200, 100, 50]
 # _BMX160_MAG_ODR_1_56HZ = const(0x02)
 # _BMX160_MAG_ODR_3_12HZ = const(0x03)
 # _BMX160_MAG_ODR_6_25HZ = const(0x04)
-# _BMX160_MAG_ODR_12_5HZ = const(0x05)
-_BMX160_MAG_ODR_25HZ = const(0x06)
+_BMX160_MAG_ODR_12_5HZ = const(0x05)
+# _BMX160_MAG_ODR_25HZ = const(0x06)
 # _BMX160_MAG_ODR_50HZ = const(0x07)
 # _BMX160_MAG_ODR_100HZ = const(0x08)
 # _BMX160_MAG_ODR_200HZ = const(0x09)
@@ -386,7 +386,7 @@ class BMX160:
 
     # _mag_bandwidth = NORMAL
     # _mag_powermode = NORMAL
-    _mag_odr = 25  # Hz
+    _mag_odr = 12.5  # Hz
     _mag_range = 250  # deg/sec
 
     def __init__(self, i2c, i2c_addr):
@@ -633,18 +633,18 @@ class BMX160:
         # put mag into sleep mode
         self.write_u8(_BMX160_MAG_IF_3_ADDR, 0x01)
         self.write_u8(_BMX160_MAG_IF_2_ADDR, 0x4B)
-        # set x-y to regular power preset
-        self.write_u8(_BMX160_MAG_IF_3_ADDR, 0x04)
+        # set x-y to high accuracy preset
+        self.write_u8(_BMX160_MAG_IF_3_ADDR, 0x17)
         self.write_u8(_BMX160_MAG_IF_2_ADDR, 0x51)
-        # set z to regular preset
-        self.write_u8(_BMX160_MAG_IF_3_ADDR, 0x0E)
+        # set z to high accuracy preset
+        self.write_u8(_BMX160_MAG_IF_3_ADDR, 0x52)
         self.write_u8(_BMX160_MAG_IF_2_ADDR, 0x52)
         # prepare MAG_IF[1-3] for mag_if data mode
         self.write_u8(_BMX160_MAG_IF_3_ADDR, 0x02)
         self.write_u8(_BMX160_MAG_IF_2_ADDR, 0x4C)
         self.write_u8(_BMX160_MAG_IF_1_ADDR, 0x42)
-        # Set ODR to 25 Hz
-        self.write_u8(_BMX160_MAG_ODR_ADDR, _BMX160_MAG_ODR_25HZ)
+        # Set ODR to 12.5 Hz
+        self.write_u8(_BMX160_MAG_ODR_ADDR, _BMX160_MAG_ODR_12_5HZ)
         self.write_u8(_BMX160_MAG_IF_0_ADDR, 0x00)
         # put in low power mode.
         self.write_u8(_BMX160_COMMAND_REG_ADDR, _BMX160_MAG_LOWPOWER_MODE)
