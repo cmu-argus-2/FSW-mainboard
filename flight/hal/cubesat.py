@@ -37,6 +37,8 @@ class CubeSat:
     __slots__ = (
         "__device_list",
         "__payload_uart",
+        "__jetson_enable",
+        "__jetson_sd_req",
         "_time_ref_boot",
     )
 
@@ -46,6 +48,10 @@ class CubeSat:
         return super().__new__(cls)
 
     def __init__(self):
+        self.__payload_uart = None
+        self.__jetson_enable = None
+        self.__jetson_sd_req = None
+
         self.__device_list = OrderedDict(
             [
                 ("NEOPIXEL", Device(self.__neopixel_boot, ASIL0)),
@@ -560,6 +566,21 @@ class CubeSat:
         if self.PAYLOADUART_AVAILABLE:
             return self.__payload_uart.baudrate
         return None
+
+    @property
+    def JETSON_ENABLE(self):
+        """JETSON_ENABLE: Returns the payload enable control line."""
+        return self.__jetson_enable
+
+    @property
+    def JETSON_SD_REQ(self):
+        """JETSON_SD_REQ: Returns the payload SD request control line."""
+        return self.__jetson_sd_req
+
+    @property
+    def PAYLOADPOWER_AVAILABLE(self) -> bool:
+        """PAYLOADPOWER_AVAILABLE: Returns True when payload power lines are configured."""
+        return self.__jetson_enable is not None and self.__jetson_sd_req is not None
 
     @property
     def BOOTTIME(self):
