@@ -189,6 +189,8 @@ class PayloadController:
 
             cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = previous_state
 
+        return True
+
     @classmethod
     def clear_experiment_list(cls):
         """
