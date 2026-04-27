@@ -1,14 +1,11 @@
 """
 Author: Chase Dunaway
-Description: GPS Driver for the SkyTraq PX1120S and S1216F8-GL Modules
+Description: GPS Driver for the SkyTraq PX1120S Module
 
-This driver is designed to interface with the SkyTraq PX1120S and S1216F8-GL GPS modules over
+This driver is designed to interface with the SkyTraq PX1120S module over
 UART using their binary protocol. It handles board detection, message parsing, and data extraction for navigation information.
 
-Note, the PX1120S uses the AN0037 binary protocol, while the S1216F8-GL uses the AN0030 binary protocol.
-The driver automatically detects the board type based on the incoming messages and parses the data accordingly.
-
-For final flight build, anything related to the PX1120S SHOULD be removed, as the S1216F8-GL is the receiver that will be used.
+Note, the PX1120S uses the AN0037 binary protocol.
 """
 
 try:
@@ -58,59 +55,30 @@ class GPS:
         # BOARD PROTOCOL OUTPUT VARIABLES
         ################################################
 
-        # NOTE: ENSURE THE BOARD IS SET TO S1216F8-GL BEFORE FLIGHT
-        self._board = "S1216F8-GL"  # "PX1120S" Defaulting to the flight module, otherwise needs to be set to PX1120S
-        self._board_detected = (
-            True  # This is set to true with hardcoded board type regardless, _check_board_type is removed from update()
-        )
-        self._ordered_keys_map = {
-            "PX1120S": [
-                "message_id",
-                "fix_mode",
-                "number_of_sv",
-                "week",
-                "tow",
-                "latitude",
-                "longitude",
-                "ellipsoid_altitude",
-                "mean_sea_level_altitude",
-                "gdop",
-                "pdop",
-                "hdop",
-                "vdop",
-                "tdop",
-                "ecef_x",
-                "ecef_y",
-                "ecef_z",
-                "ecef_vx",
-                "ecef_vy",
-                "ecef_vz",
-                "unix_time",
-                "timestamp_utc",
-            ],
-            "S1216F8-GL": [
-                "message_id",
-                "IOD",
-                "fix_mode",
-                "week",
-                "tow",
-                "ecef_x",
-                "ecef_y",
-                "ecef_z",
-                "ecef_vx",
-                "ecef_vy",
-                "ecef_vz",
-                "clock_bias",
-                "clock_drift",
-                "gdop",
-                "pdop",
-                "hdop",
-                "vdop",
-                "tdop",
-                "unix_time",
-                "timestamp_utc",
-            ],
-        }
+        self._ordered_keys = [
+            "message_id",
+            "fix_mode",
+            "number_of_sv",
+            "week",
+            "tow",
+            "latitude",
+            "longitude",
+            "ellipsoid_altitude",
+            "mean_sea_level_altitude",
+            "gdop",
+            "pdop",
+            "hdop",
+            "vdop",
+            "tdop",
+            "ecef_x",
+            "ecef_y",
+            "ecef_z",
+            "ecef_vx",
+            "ecef_vy",
+            "ecef_vz",
+            "unix_time",
+            "timestamp_utc",
+        ]
 
         ################################################
         # MESSAGE OUTPUT
@@ -149,7 +117,7 @@ class GPS:
 
         self.unix_time = 0  # Unix time in whole seconds, type: int, unit: seconds
 
-        ## For AN0030: Binary Protocol
+        ## For both Binary Protocols
         self.message_id = 0  # Field 1, type: uint8, unit: N/A
         self.IOD = 0  # Field 2, type: uint8, unit: N/A
         self.fix_mode = 0  # Field 3, type: uint8, unit: N/A
@@ -229,28 +197,6 @@ class GPS:
             self._log("debug", " ".join(f"{b:02x}" for b in self._msg))
         return True
 
-    def _check_board_type(self) -> bool:
-        if not self._board_detected:
-            if self._msg is None or len(self._msg) < 5:
-                return False
-
-            if self._msg[4] == 0xA8 or b"Phoenix" in self._msg:
-                if self._debug:
-                    self._log("debug", "Board type detected: PX1120S")
-                self._board = "PX1120S"
-                self._board_detected = True
-
-            if self._msg[4] == 0xDF or self._msg == b"$PSTI,001,1*1E\r\n" or b"Venus8" in self._msg:
-                if self._debug:
-                    self._log("debug", "Board type detected: S1216F8-GL")
-                self._board = "S1216F8-GL"
-                self._board_detected = True
-
-        if self._board is None:
-            self.last_update_status = "Board type could not be detected."
-            return False
-        return True
-
     def _parse_message_header(self) -> bool:
         try:
             self._payload_len = int(((self._msg[2] & 0xFF) << 8) | self._msg[3])
@@ -275,25 +221,16 @@ class GPS:
         return True
 
     def _check_nav_data(self) -> bool:
-        if self._msg_id != 0xA8 and self._msg_id != 0xDF:
-            self.last_update_status = f"Invalid message ID, expected 0xA8 or 0xdf, got: {hex(self._msg_id)}"
+        if self._msg_id != 0xA8:
+            self.last_update_status = f"Invalid message ID, expected 0xA8, got: {hex(self._msg_id)}"
             return False
         return True
 
     def _parse_nav_data(self) -> bool:
-        if self._board == "PX1120S":
-            if self._payload_len != 59:
-                self.last_update_status = f"Invalid payload length, expected 59, got: {self._payload_len}"
-                return False
-            return self._parse_data_AN0037()
-
-        if self._board == "S1216F8-GL":
-            if self._payload_len != 81:
-                self.last_update_status = f"Invalid payload length, expected 81, got: {self._payload_len}"
-                return False
-            return self._parse_data_AN0030()
-
-        return False
+        if self._payload_len != 59:
+            self.last_update_status = f"Invalid payload length, expected 59, got: {self._payload_len}"
+            return False
+        return self._parse_data_AN0037()
 
     def _checksum(self) -> bool:  # Checksum is simply XOR sequentially of the payload ID + payload bytes
         cs = 0
@@ -308,7 +245,7 @@ class GPS:
     def _parse_data_AN0037(self) -> bool:
         """
         Parse SkyTraq AN0037 Navigation Data Message (ID 0xA8) payload using the
-        same style as parse_data_AN0030 (typed helpers, no manual bit shifting). :contentReference[oaicite:0]{index=0}
+        (typed helpers, no manual bit shifting).
         """
         try:
             self.message_id = self._u8(0)
@@ -341,36 +278,6 @@ class GPS:
 
         except Exception as e:
             self.last_update_status = f"Error parsing AN0037 data: {e}"
-            return False
-
-    def _parse_data_AN0030(self) -> bool:
-        try:
-            self.message_id = self._u8(0)
-            self.IOD = self._u8(1)
-            self.fix_mode = self._u8(2)
-            self.week = self._u16(3)
-            self.tow = self._dpfp(5)
-            self.ecef_x = self._dpfp(13)
-            self.ecef_y = self._dpfp(21)
-            self.ecef_z = self._dpfp(29)
-            self.ecef_vx = self._spfp(37)
-            self.ecef_vy = self._spfp(41)
-            self.ecef_vz = self._spfp(45)
-            self.clock_bias = self._dpfp(49)
-            self.clock_drift = self._spfp(57)
-            self.gdop = self._spfp(61)
-            self.pdop = self._spfp(65)
-            self.hdop = self._spfp(69)
-            self.vdop = self._spfp(73)
-            self.tdop = self._spfp(77)
-            self.unix_time = self._gps_time_2_unix_time(self.week, self.tow)
-            if self._debug:
-                self._log("debug", "Printing navigation data")
-                self._print_nav_data()
-            return True
-        except Exception as e:
-            self.last_update_status = f"Error parsing AN0030 data: {e}"
-            self._log("error", f"Error parsing AN0030 data: {e}")
             return False
 
     def _s32(self, value: int) -> int:
@@ -409,18 +316,17 @@ class GPS:
         return struct.unpack(">d", bytes(self._payload[idx : idx + 8]))[0]
 
     """
-    Fix Modes in GPS Binary Message (S1216F8-GL):
+    Fix Modes in GPS Binary Message (PX1120S):
 
     0 - No fix: The GPS receiver has not obtained a valid fix or has lost the fix.
-    1 - Predicted fix: Still not valid, but the receiver is indicating a prediction
-    2 - 2D fix: A 2D fix is available
-    3 - 3D fix: A 3D fix is available
-    4 - 3D + GNSS fix: A fix using signals from multiple GNSS systems
+    1 - 2D fix: A 2D fix is available
+    2 - 3D fix: A 3D fix is available
+    3 - 3D + GNSS fix: A fix using signals from multiple GNSS systems
     """
 
     def has_fix(self) -> bool:
         """True if a current fix for location information is available."""
-        if self.fix_mode is not None and self.fix_mode >= 2:
+        if self.fix_mode is not None and self.fix_mode >= 1:
             return True
         else:
             return False
@@ -429,7 +335,7 @@ class GPS:
         """Returns true if there is a 3d fix available.
         use has_fix to determine if a 2d fix is available,
         passing it the same data"""
-        if self.fix_mode is not None and self.fix_mode >= 3:
+        if self.fix_mode is not None and self.fix_mode >= 2:
             return True
         else:
             return False
@@ -497,67 +403,36 @@ class GPS:
 
     def _print_nav_data(self) -> None:
         """Logs the current navigation data."""
-        if self._board is not None:
-            self.nav_data = self._get_nav_data()
-            ordered_keys = self._ordered_keys_map.get(self._board, list(self.nav_data.keys()))
+        self.nav_data = self._get_nav_data()
 
-            for key in ordered_keys:
-                if key in self.nav_data:
-                    self._log("info", f"{key}: {self.nav_data[key]}")
+        for key in self._ordered_keys:
+            if key in self.nav_data:
+                self._log("info", f"{key}: {self.nav_data[key]}")
 
     def _get_nav_data(self) -> dict:
         """Returns the current navigation data as a dictionary."""
-        if self._board is None:
-            return {}
-        elif self._board == "PX1120S":
-            return {
-                "message_id": self.message_id,
-                "fix_mode": self.fix_mode,
-                "number_of_sv": self.number_of_sv,
-                "week": self.week,
-                "tow": self.tow,
-                "latitude": self.latitude,
-                "longitude": self.longitude,
-                "ellipsoid_altitude": self.ellipsoid_altitude,
-                "mean_sea_level_altitude": self.mean_sea_level_altitude,
-                "gdop": self.gdop,
-                "pdop": self.pdop,
-                "hdop": self.hdop,
-                "vdop": self.vdop,
-                "tdop": self.tdop,
-                "ecef_x": self.ecef_x,
-                "ecef_y": self.ecef_y,
-                "ecef_z": self.ecef_z,
-                "ecef_vx": self.ecef_vx,
-                "ecef_vy": self.ecef_vy,
-                "ecef_vz": self.ecef_vz,
-                "unix_time": self.unix_time,
-                "timestamp_utc": self.timestamp_utc,
-            }
-        elif self._board == "S1216F8-GL":
-            return {
-                "message_id": self.message_id,
-                "IOD": self.IOD,
-                "fix_mode": self.fix_mode,
-                "week": self.week,
-                "tow": self.tow,
-                "ecef_x": self.ecef_x,
-                "ecef_y": self.ecef_y,
-                "ecef_z": self.ecef_z,
-                "ecef_vx": self.ecef_vx,
-                "ecef_vy": self.ecef_vy,
-                "ecef_vz": self.ecef_vz,
-                "clock_bias": self.clock_bias,
-                "clock_drift": self.clock_drift,
-                "gdop": self.gdop,
-                "pdop": self.pdop,
-                "hdop": self.hdop,
-                "vdop": self.vdop,
-                "tdop": self.tdop,
-                "unix_time": self.unix_time,
-                "timestamp_utc": self.timestamp_utc,
-            }
-        return {}
+        return {
+            "message_id": self.message_id,
+            "IOD": self.IOD,
+            "fix_mode": self.fix_mode,
+            "week": self.week,
+            "tow": self.tow,
+            "ecef_x": self.ecef_x,
+            "ecef_y": self.ecef_y,
+            "ecef_z": self.ecef_z,
+            "ecef_vx": self.ecef_vx,
+            "ecef_vy": self.ecef_vy,
+            "ecef_vz": self.ecef_vz,
+            "clock_bias": self.clock_bias,
+            "clock_drift": self.clock_drift,
+            "gdop": self.gdop,
+            "pdop": self.pdop,
+            "hdop": self.hdop,
+            "vdop": self.vdop,
+            "tdop": self.tdop,
+            "unix_time": self.unix_time,
+            "timestamp_utc": self.timestamp_utc,
+        }
 
     def _write(self, bytestr) -> Optional[int]:
         return self._uart.write(bytestr)
@@ -576,23 +451,15 @@ class GPS:
 
     def _query_binary_status(self) -> None:
         """Send Query Binary Status command."""
-        if self._board == "PX1120S":
-            # (Message ID 0x16)
-            self._write(b"\xa0\xa1\x00\x01\x16\x16\x0d\x0a")
-        if self._board == "S1216F8-GL":
-            # (Message ID 0x1F)
-            self._write(b"\xa0\xa1\x00\x01\x1F\x1F\x0d\x0a")
+        # (Message ID 0x16)
+        self._write(b"\xa0\xa1\x00\x01\x16\x16\x0d\x0a")
+
 
     def _enable_periodic_nav_data(self) -> None:
         """Send Enable Periodic Navigation Data command."""
-        if self._board == "PX1120S":
-            # (Message ID 0x64)
-            # self._write(b"\xa0\xa1\x00\x04\x64\x2F\x01\x00\x4A\x0d\x0a")
-            self._write(b"\xa0\xa1\x00\x04\x64\x2F\x01\x01\x4B\x0d\x0a")  # Flash memory version
-        if self._board == "S1216F8-GL":
-            # (Message ID 0x11)
-            # self._write(b"\xa0\xa1\x00\x09\x1e\x00\x00\x00\x00\x01\x03\x00\x00\x1c\x0d\x0a")
-            self._write(b"\xa0\xa1\x00\x09\x1e\x00\x00\x00\x00\x01\x03\x00\x01\x1d\x0d\x0a")  # Flash memory version
+        # (Message ID 0x64)
+        # self._write(b"\xa0\xa1\x00\x04\x64\x2F\x01\x00\x4A\x0d\x0a")
+        self._write(b"\xa0\xa1\x00\x04\x64\x2F\x01\x01\x4B\x0d\x0a")  # Flash memory version
 
     def _disable_nmea_periodic(self) -> None:
         """Send Disable NMEA Periodic Messages command (Message ID 0x64)."""
@@ -609,94 +476,44 @@ class GPS:
 
     def _use_helper_functions(self) -> None:
         """Use helper functions to set up the receiver hardware configuration."""
-        if self._board == "PX1120S":
+        if self._debug:
+            self._log("debug", "Helper Functions: PX1120S")
+
+        # Helper Statements
+        if self._RESET_TO_FACTORY:
+            self._reset_to_factory_defaults()
+            self._RESET_TO_FACTORY = False
             if self._debug:
-                self._log("debug", "Helper Functions: PX1120S")
+                self._log("debug", "Resetting to factory defaults")
+            return
 
-            # Helper Statements
-            if self._RESET_TO_FACTORY:
-                self._reset_to_factory_defaults()
-                self._RESET_TO_FACTORY = False
-                if self._debug:
-                    self._log("debug", "Resetting to factory defaults")
-                return
-
-            if self._DISABLE_NMEA_FLAG:
-                self._disable_nmea_periodic()
-                self._DISABLE_NMEA_FLAG = False
-                if self._debug:
-                    self._log("debug", "Disabling NMEA")
-                return
-
-            if self._BINARY_SET_FLAG:
-                self._set_to_binary()
-                self._BINARY_SET_FLAG = False
-                if self._debug:
-                    self._log("debug", "Setting receiver to binary mode")
-                return
-
-            if self._QUERIED_BINARY_STATUS_FLAG:
-                self._query_binary_status()
-                self._QUERIED_BINARY_STATUS_FLAG = False
-                if self._debug:
-                    self._log("debug", "Querying binary status")
-                return
-
-            if self._PERIODIC_NAV_FLAG:
-                self._enable_periodic_nav_data()
-                self._PERIODIC_NAV_FLAG = False
-                if self._debug:
-                    self._log("debug", "Enabling periodic navigation data")
-                return
-
-        if self._board == "S1216F8-GL":
+        if self._DISABLE_NMEA_FLAG:
+            self._disable_nmea_periodic()
+            self._DISABLE_NMEA_FLAG = False
             if self._debug:
-                self._log("debug", "Helper Functions: S1216F8-GL")
-                # Note, the S1216F8-GL and PX1120S don't have all the same helper functions
-                # This is due to the different protocols
+                self._log("debug", "Disabling NMEA")
+            return
 
-            # Helper Statements
-            if self._RESET_TO_FACTORY:
-                self._reset_to_factory_defaults()
-                self._RESET_TO_FACTORY = False
-                if self._debug:
-                    self._log("debug", "Resetting to factory defaults")
-                return
+        if self._BINARY_SET_FLAG:
+            self._set_to_binary()
+            self._BINARY_SET_FLAG = False
+            if self._debug:
+                self._log("debug", "Setting receiver to binary mode")
+            return
 
-            if self._DISABLE_NMEA_FLAG:
-                self._disable_nmea_periodic()
-                self._DISABLE_NMEA_FLAG = False
-                if self._debug:
-                    self._log("debug", "Disabling NMEA")
-                return
+        if self._QUERIED_BINARY_STATUS_FLAG:
+            self._query_binary_status()
+            self._QUERIED_BINARY_STATUS_FLAG = False
+            if self._debug:
+                self._log("debug", "Querying binary status")
+            return
 
-            if self._BINARY_SET_FLAG:
-                self._set_to_binary()
-                self._BINARY_SET_FLAG = False
-                if self._debug:
-                    self._log("debug", "Setting receiver to binary mode")
-                return
-
-            if self._QUERIED_BINARY_STATUS_FLAG:
-                self._query_binary_status()
-                self._QUERIED_BINARY_STATUS_FLAG = False
-                if self._debug:
-                    self._log("debug", "Querying binary status")
-                return
-
-            if self._PERIODIC_NAV_FLAG:
-                self._enable_periodic_nav_data()
-                self._PERIODIC_NAV_FLAG = False
-                if self._debug:
-                    self._log("debug", "Enabling periodic navigation data")
-                return
-
-            if self._DISABLE_UNNECESSARY_BINARY_FLAG:
-                self._disable_unnecessary_binary_data()
-                self._DISABLE_UNNECESSARY_BINARY_FLAG = False
-                if self._debug:
-                    self._log("debug", "Disabling unnecessary binary data")
-                return
+        if self._PERIODIC_NAV_FLAG:
+            self._enable_periodic_nav_data()
+            self._PERIODIC_NAV_FLAG = False
+            if self._debug:
+                self._log("debug", "Enabling periodic navigation data")
+            return
 
     @property
     def _in_waiting(self) -> int:
@@ -789,7 +606,7 @@ class GPS:
                 break
 
             latest_frame = frame
-            if len(frame) >= 5 and frame[4] in (0xA8, 0xDF):
+            if len(frame) >= 5 and frame[4] == 0xA8:
                 latest_nav_frame = frame
 
         return latest_nav_frame or latest_frame

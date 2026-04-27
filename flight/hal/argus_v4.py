@@ -348,7 +348,7 @@ class ArgusV4(CubeSat):
         :return: Error code if the GPS failed to initialize
         """
 
-        from hal.drivers.gps import GPS
+        from hal.drivers.s1216f8gl import GPS
 
         try:
             gps = GPS(
