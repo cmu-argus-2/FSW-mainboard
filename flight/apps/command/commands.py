@@ -136,6 +136,16 @@ def PING(string="Hello From Space!"):
 
 
 @register_command()
+def GET_COMMAND_LIST(skip_elements=0):
+    """
+    Get a list of commands from spalt
+    It should give the command name and id
+    """
+    from apps.telemetry.splat.splat.telemetry_definition import command_list
+    return command_list[skip_elements:]
+
+
+@register_command()
 def SUM(opA, opB):
     """
     Test command
@@ -579,6 +589,7 @@ def EXPERIMENT(
         logger.error(f"[PAYLOAD] - Failed to add experiment command for timestamp {ts}")
     return result
 
+
 @register_command()
 def SIMPLE_EXPERIMENT(
     ts,
@@ -615,7 +626,7 @@ def SIMPLE_EXPERIMENT(
 
     had to create a custom command for this because of the changes to splat
     it is an exact copy of EXPERIMENT command
-    
+
     """
     from apps.payload.controller import PayloadController as PC
 

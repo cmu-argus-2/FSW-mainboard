@@ -115,7 +115,7 @@ class StateManager:
         if self.__current_state == STATES.NOMINAL and new_state_id != STATES.NOMINAL:
             logger.warning("Leaving NOMINAL state - ensuring digipeater is turned off")
             from apps.digipeater import DigipeaterState
-            DigipeaterState.deactivate(False)
+            DigipeaterState.deactivate()
 
         self.__previous_state = self.__current_state
         self.__current_state = new_state_id
