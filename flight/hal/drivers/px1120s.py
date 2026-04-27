@@ -454,7 +454,6 @@ class GPS:
         # (Message ID 0x16)
         self._write(b"\xa0\xa1\x00\x01\x16\x16\x0d\x0a")
 
-
     def _enable_periodic_nav_data(self) -> None:
         """Send Enable Periodic Navigation Data command."""
         # (Message ID 0x64)
