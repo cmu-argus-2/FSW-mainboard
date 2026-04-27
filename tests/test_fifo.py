@@ -6,10 +6,9 @@ from flight.apps.command.fifo import QUEUE_STATUS, CommandQueue
 class MockCommand:
     """Mock command object matching the new command structure."""
 
-    def __init__(self, command_id, satellite_func, precondition=None, arguments=None):
+    def __init__(self, command_id, satellite_func, arguments=None):
         self.command_id = command_id
         self.satellite_func = satellite_func
-        self.precondition = precondition
         self._arguments = arguments or []
 
     def get_arguments_list(self):

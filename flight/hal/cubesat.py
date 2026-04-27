@@ -1,7 +1,9 @@
 import time
 from collections import OrderedDict
 
+import microcontroller
 from hal.drivers.errors import Errors
+from hal.drivers.stateflags import StateFlags
 from micropython import const
 
 # Argus Safety Integrity Level
@@ -40,6 +42,7 @@ class CubeSat:
         "__jetson_enable",
         "__jetson_sd_req",
         "_time_ref_boot",
+        "__flags",
     )
 
     def __new__(cls, *args, **kwargs):
@@ -51,6 +54,10 @@ class CubeSat:
         self.__payload_uart = None
         self.__jetson_enable = None
         self.__jetson_sd_req = None
+
+        # Initialize StateFlags with microcontroller NVM access
+        self.__flags = StateFlags()
+        self.__flags.micro = microcontroller
 
         self.__device_list = OrderedDict(
             [
@@ -568,6 +575,13 @@ class CubeSat:
         :return: object or None
         """
         return self._time_ref_boot
+
+    @property
+    def FLAGS(self):
+        """FLAGS: Returns the StateFlags object for NVM flag access
+        :return: StateFlags object
+        """
+        return self.__flags
 
     ######################## ERROR HANDLING ########################
 

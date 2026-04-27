@@ -55,11 +55,7 @@ class EPS_IDX:
     YP_SOLAR_CHARGE_CURRENT = const(36)
     YM_SOLAR_CHARGE_VOLTAGE = const(37)
     YM_SOLAR_CHARGE_CURRENT = const(38)
-    ZP_SOLAR_CHARGE_VOLTAGE = const(39)
-    ZP_SOLAR_CHARGE_CURRENT = const(40)
-    ZM_SOLAR_CHARGE_VOLTAGE = const(41)
-    ZM_SOLAR_CHARGE_CURRENT = const(42)
-    BATTERY_HEATERS_ENABLED = const(43)
+    BATTERY_HEATERS_ENABLED = const(39)
 
 
 class EPS_WARNING_IDX:
@@ -166,6 +162,20 @@ class PAYLOAD_IDX:
 class STORAGE_IDX:
     NUM_FILES = const(0)
     DIR_SIZE = const(1)
+
+
+class COMMS_IDX:
+    RX_PACKET_COUNT = const(0)
+    RX_DIGIPEATER_COUNT = const(1)
+    FAILED_UNPACK_COUNT = const(2)
+    CRC_ERROR_COUNT = const(3)
+    UNDEF_ERROR_COUNT = const(4)
+    PACKET_NONE_COUNT = const(5)
+    PACKET_AUTH_FAIL_COUNT = const(6)
+    TX_PACKET_COUNT = const(7)
+    TX_FAILED_COUNT = const(8)
+    TX_DIGIPEATER_COUNT = const(9)
+    RX_MESSAGE_RSSI = const(10)
 
 
 class HAL_IDX:
