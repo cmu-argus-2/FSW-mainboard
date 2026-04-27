@@ -102,7 +102,7 @@ class Task(TemplateTask):
                             TPM.set_time_reference(SATELLITE.GPS.unix_time)
 
                         # Only update RTC time if the fix is better than _FIX_MODE_THR
-                        if SATELLITE.GPS.fix_mode >= _FIX_MODE_THR:
+                        elif SATELLITE.GPS.fix_mode >= _FIX_MODE_THR:
                             TPM.set_time(SATELLITE.GPS.unix_time)
 
                     else:
