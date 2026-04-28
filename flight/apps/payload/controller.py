@@ -213,7 +213,7 @@ class PayloadController:
         return True
 
     @classmethod
-    def add_command(
+    def add_command_inference(
         cls,
         ts,
         camera_bit_flag,
@@ -267,40 +267,53 @@ class PayloadController:
 
         # need to add the data in the corerct spot in the list
         # it has to be ordered by timestamp
-        cls.command_list.append(
-            (
-                ts,
-                camera_bit_flag,
-                level_of_processing,
-                width,
-                height,
-                downscale_factor,
-                camera_defaults_selector,
-                fps,
-                wbmode,
-                aelock,
-                awblock,
-                exposuretimerange_low,
-                exposuretimerange_high,
-                gainrange_low,
-                gainrange_high,
-                ispdigitalgainrange_low,
-                ispdigitalgainrange_high,
-                ee_mode,
-                ee_strength,
-                aeantibanding,
-                exposurecompensation,
-                tnr_mode,
-                tnr_strength,
-                saturation,
-            )
-        )
-        cls.command_list.sort(key=lambda x: x[0])  # Sort by timestamp
+        argument_list =(
+            ts,
+            camera_bit_flag,
+            level_of_processing,
+            width,
+            height,
+            downscale_factor,
+            camera_defaults_selector,
+            fps,
+            wbmode,
+            aelock,
+            awblock,
+            exposuretimerange_low,
+            exposuretimerange_high,
+            gainrange_low,
+            gainrange_high,
+            ispdigitalgainrange_low,
+            ispdigitalgainrange_high,
+            ee_mode,
+            ee_strength,
+            aeantibanding,
+            exposurecompensation,
+            tnr_mode,
+            tnr_strength,
+            saturation)
+        
+        command = Command("EXPERIMENT")
+        command.set_arguments(*argument_list)
+        
+        return cls.add_command(command)
+        
+    @classmethod
+    def add_command(cls, cmd: Command):
+        """
+        This function will be used to avoid repeating code. For each of the types of commands to be sent to the jetson
+        there will be a function that will build that argument list, and then use this function to add it to the command list
+        from the point of view of the satellite, all of the types of commands are exactly the same
+        the payload task flow will not change
+        cmd.arguments["ts"] is the ts
+        
+        TODO: might need to change some of the timeouts
+        """
+        cls.command_list.append(cmd)
+        cls.command_list.sort(key=lambda x: x.arguments["ts"])  # Sort by timestamp
 
-        cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = ts if ts > 0 else TPM.time()
+        cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = cmd.arguments["ts"] if cmd.arguments["ts"] > 0 else TPM.time()
         logger.warning(f"[PAYLOAD] - Next command time: {cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME]}")
-
-        logger.info(f"[PAYLOAD] - Command added: {cls.command_list[-1]}")
 
         return True
 
@@ -357,17 +370,10 @@ class PayloadController:
         Will send the current command to the jetson
         """
 
-        logger.info(f"[PAYLOAD] - Sending current command {cls.current_command}")
+        logger.info(f"[PAYLOAD] - Sending: {cls.current_command} args: {cls.current_command.arguments}")
 
-        # 1. create the command
-        command = Command("EXPERIMENT")
-
-        # 2. set the arguments
-        command.set_arguments(*cls.current_command)
-        logger.info(f"[PAYLOAD] - Command: {command} args: {command.arguments}")
-
-        # 3. pack the command and send to uart
-        PU.send(pack(command))
+        # 1. pack the command and send to uart (no need to create the command now as it has already been created)
+        PU.send(pack(cls.current_command))
 
     @classmethod
     def send_telemetry_command(cls):

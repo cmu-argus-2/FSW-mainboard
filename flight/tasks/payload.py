@@ -64,10 +64,10 @@ class Task(TemplateTask):
         self.log_info(f"Watching for command: {command}")
 
         # update next command time
-        PC.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = command[0]
+        PC.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = command.arguments["ts"]
 
         # check to see if the time to execute the command has arrived
-        if command[0] < TPM.time() or command[0] == 0:
+        if command.arguments["ts"] < TPM.time() or command.arguments["ts"] == 0:
             # means that it is time to run the command
             self.log_info("Command time has arrived, switching to booting state.")
             PC.BOOT_TS = TPM.time()

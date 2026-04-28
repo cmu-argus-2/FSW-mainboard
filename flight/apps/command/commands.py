@@ -631,7 +631,7 @@ def SIMPLE_EXPERIMENT(
     from apps.payload.controller import PayloadController as PC
 
     logger.info(f"[PAYLOAD] - Simple experiment command received to run at {ts}")
-    result = PC.add_command(
+    result = PC.add_command_inference(
         ts,
         camera_bit_flag,
         level_of_processing,
