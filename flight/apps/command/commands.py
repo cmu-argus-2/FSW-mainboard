@@ -663,6 +663,38 @@ def SIMPLE_EXPERIMENT(
 
 
 @register_command()
+def DATASET_COLLECTION(
+    ts,
+    imu_hz,
+    camera_hz,
+    duration,
+):
+    """
+    Command that will be called by the ground station to start a dataset collection experiment
+    ts                    -> the time at which the command should be ran (0 is to run now)
+    imu_hz                -> the frequency at which the imu data should be collected
+    camera_hz             -> the frequency at which the images should be collected
+    duration               -> the duration of the experiment in seconds
+
+    had to create a custom command for this because of the changes to splat
+    it is an exact copy of EXPERIMENT command but with different arguments
+
+    """
+    from apps.payload.controller import PayloadController as PC
+
+    logger.info(f"[PAYLOAD] - Dataset collection command received to run at {ts}")
+    result = PC.add_dataset_collection_command(
+        ts,
+        imu_hz,
+        camera_hz,
+        duration,
+    )
+    if not result:
+        logger.error(f"[PAYLOAD] - Failed to add dataset collection command for timestamp {ts}")
+    return result
+
+
+@register_command()
 def CLEAR_EXPERIMENT_LIST():
     """
     Command that will be called by the ground station to clear the list of scheduled experiments in the payload

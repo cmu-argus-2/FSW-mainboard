@@ -209,9 +209,38 @@ class PayloadController:
         This will return the list of scheduled experiments in the payload
         """
         return [command[0] for command in cls.command_list]  # return the timestamps of the scheduled commands
+    
+    @classmethod
+    def add_dataset_collection_command(
+        cls,
+        ts,
+        imu_hz,
+        camera_hz,
+        duration,
+    ):
+        """
+        This is the command that will be used to schedule a dataset collection experiment
+        TODO: should add some checks to the arguments here
+        """
+        argument_list = (
+            ts,
+            imu_hz,
+            camera_hz,
+            duration,
+        )
+        
+        command = Command("DATASET_COLLECTION")
+        command.set_arguments(*argument_list)
+        return cls.add_command(command)
+    
+    @classmethod
+    def add_dataset_processing_command():
+        pass
 
-        return True
-
+    @classmethod
+    def add_dataset_od_command():
+        pass
+    
     @classmethod
     def add_command_inference(
         cls,
