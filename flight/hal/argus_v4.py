@@ -365,26 +365,6 @@ class ArgusV4(CubeSat):
             "RADIO_PWR": [ArgusV4Components.RADIO_POWER_MONITOR_I2C_ADDRESS, ArgusV4Components.RADIO_POWER_MONITOR_I2C],
             "GPS_PWR": [ArgusV4Components.GPS_POWER_MONITOR_I2C_ADDRESS, ArgusV4Components.GPS_POWER_MONITOR_I2C],
             "JETSON_PWR": [ArgusV4Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV4Components.JETSON_POWER_MONITOR_I2C],
-            "XP_PWR": [
-                ArgusV4Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV4Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C,
-            ],
-            "XM_PWR": [
-                ArgusV4Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV4Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C,
-            ],
-            "YP_PWR": [
-                ArgusV4Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV4Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C,
-            ],
-            "YM_PWR": [
-                ArgusV4Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV4Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C,
-            ],
-            "ZP_PWR": [
-                ArgusV4Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV4Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C,
-            ],
         }
         data = locations[location]
         try:
