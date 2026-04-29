@@ -211,7 +211,7 @@ class PayloadController:
         return [command[0] for command in cls.command_list]  # return the timestamps of the scheduled commands
     
     @classmethod
-    def add_dataset_collection_command(cls, ts, imu_hz, camera_hz, duration):
+    def add_dataset_collection_command(cls, ts, imu_hz, capture_rate, duration):
         """
         This is the command that will be used to schedule a dataset collection experiment
         TODO: should add some checks to the arguments here
@@ -219,7 +219,7 @@ class PayloadController:
         argument_list = (
             ts,
             imu_hz,
-            camera_hz,
+            capture_rate,
             duration,
         )
         

@@ -666,14 +666,14 @@ def SIMPLE_EXPERIMENT(
 def DATASET_COLLECTION(
     ts,
     imu_hz,
-    camera_hz,
+    capture_rate,
     duration,
 ):
     """
     Command that will be called by the ground station to start a dataset collection experiment
     ts                    -> the time at which the command should be ran (0 is to run now)
     imu_hz                -> the frequency at which the imu data should be collected
-    camera_hz             -> the frequency at which the images should be collected
+    capture_rate             -> the frequency at which the images should be collected
     duration               -> the duration of the experiment in seconds
 
     had to create a custom command for this because of the changes to splat
@@ -686,7 +686,7 @@ def DATASET_COLLECTION(
     result = PC.add_dataset_collection_command(
         ts,
         imu_hz,
-        camera_hz,
+        capture_rate,
         duration,
     )
     if not result:
