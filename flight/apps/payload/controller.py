@@ -601,6 +601,15 @@ class PayloadController:
                 logger.error("[PAYLOAD] - EXPERIMENT ACK OVERRIDDEN")
             cls.received_experiment_ack = True
             return
+        
+        # using the same as experiment ack
+        # and not checking if this was what I was expecting
+        if ack.cmd_id == COMMAND_IDS["DATASET_COLLECTION"]:
+            # it was a experiment command
+            if cls.received_experiment_ack:
+                logger.error("[PAYLOAD] - EXPERIMENT ACK OVERRIDDEN (dataset)")
+            cls.received_experiment_ack = True
+            return
 
         # see if it was a off ack
         if ack.cmd_id == COMMAND_IDS["TURN_OFF_PAYLOAD"]:
