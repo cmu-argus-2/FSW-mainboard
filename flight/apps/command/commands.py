@@ -665,15 +665,17 @@ def SIMPLE_EXPERIMENT(
 @register_command()
 def DATASET_COLLECTION(
     ts,
-    imu_hz,
+    camera_bit_flag,
     capture_rate,
+    imu_hz,
     duration,
 ):
     """
     Command that will be called by the ground station to start a dataset collection experiment
     ts                    -> the time at which the command should be ran (0 is to run now)
-    imu_hz                -> the frequency at which the imu data should be collected
+    camera_bit_flag       -> the first 4 bits will indicate which cameras should be used to take the picture
     capture_rate             -> the frequency at which the images should be collected
+    imu_hz                -> the frequency at which the imu data should be collected
     duration               -> the duration of the experiment in seconds
 
     had to create a custom command for this because of the changes to splat
@@ -685,8 +687,9 @@ def DATASET_COLLECTION(
     logger.info(f"[PAYLOAD] - Dataset collection command received to run at {ts}")
     result = PC.add_dataset_collection_command(
         ts,
-        imu_hz,
+        camera_bit_flag,
         capture_rate,
+        imu_hz,
         duration,
     )
     if not result:
@@ -698,14 +701,16 @@ def DATASET_COLLECTION(
 def DATASET_PROCESSING(
     ts,
     level_processing,
-    model_version,
+    rc_version,
+    ld_version,
     dataset_path,
 ):
     """
     Command that will be called by the ground station to start a dataset processing experiment
     ts                    -> the time at which the command should be ran (0 is to run now)
     level_processing      -> the level of processing to run on the dataset
-    model_version         -> the version of the model to use for processing
+    rc_version            -> the version of the rc model to use for processing
+    ld_version            -> the version of the ld model to use for processing
     dataset_path          -> the path to the dataset to process
     """
     from apps.payload.controller import PayloadController as PC
@@ -714,7 +719,8 @@ def DATASET_PROCESSING(
     result = PC.add_dataset_processing_command(
         ts,
         level_processing,
-        model_version,
+        rc_version,
+        ld_version,
         dataset_path,
     )
     if not result:
