@@ -69,9 +69,9 @@ class Simulator:  # will be passed by reference to the emulated HAL
         return self.measurement[self.mag_idx]  # IMU obtains magnetic field readings in uT
 
     def sun_lux(self, attr):
-        self.advance_to_time()  # XP, XM, YP, YM, ZP1, ZP2, ZP3, ZP4, ZM
+        self.advance_to_time()  # XP, XM, YP, YM, ZP_XP, ZP_YM, ZP_XM, ZP_YP, ZM
 
-        attr2idx = {"XP": 0, "XM": 1, "YP": 2, "YM": 3, "ZP_1": 4, "ZP_2": 5, "ZP_3": 6, "ZP_4": 7, "ZM": 8}
+        attr2idx = {"XP": 0, "XM": 1, "YP": 2, "YM": 3, "ZP_XP": 4, "ZP_YM": 5, "ZP_XM": 6, "ZP_YP": 7, "ZM": 8}
         if attr not in attr2idx.keys():
             raise Exception(f"Invalid Sun Sensor dir {attr}")
         return self.measurement[self.lux_idx][attr2idx[attr]]
