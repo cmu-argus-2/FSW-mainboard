@@ -211,13 +211,7 @@ class PayloadController:
         return [command[0] for command in cls.command_list]  # return the timestamps of the scheduled commands
     
     @classmethod
-    def add_dataset_collection_command(
-        cls,
-        ts,
-        imu_hz,
-        camera_hz,
-        duration,
-    ):
+    def add_dataset_collection_command(cls, ts, imu_hz, camera_hz, duration):
         """
         This is the command that will be used to schedule a dataset collection experiment
         TODO: should add some checks to the arguments here
@@ -234,13 +228,37 @@ class PayloadController:
         return cls.add_command(command)
     
     @classmethod
-    def add_dataset_processing_command():
-        pass
+    def add_dataset_processing_command(cls, ts, level_processing, model_version, dataset_path):
+        """
+        This is the command that will be used to schedule a dataset processing experiment
+        TODO: should add some checks to the arguments here
+        """
+        argument_list = (
+            ts,
+            level_processing,
+            model_version,
+            dataset_path,
+        )
+        command = Command("DATASET_PROCESSING")
+        command.set_arguments(*argument_list)
+        return cls.add_command(command)
 
     @classmethod
-    def add_dataset_od_command():
-        pass
-    
+    def add_dataset_od_command(cls, ts, duration, max_iteration, dataset_path):
+        """
+        This is the command that will be used to schedule a dataset orbit determination experiment
+        TODO: should add some checks to the arguments here
+        """
+        argument_list = (
+            ts,
+            duration,
+            max_iteration,
+            dataset_path,
+        )
+        command = Command("DATASET_OD")
+        command.set_arguments(*argument_list)
+        return cls.add_command(command)
+
     @classmethod
     def add_command_inference(
         cls,

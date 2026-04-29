@@ -695,6 +695,63 @@ def DATASET_COLLECTION(
 
 
 @register_command()
+def DATASET_PROCESSING(
+    ts,
+    level_processing,
+    model_version,
+    dataset_path,
+):
+    """
+    Command that will be called by the ground station to start a dataset processing experiment
+    ts                    -> the time at which the command should be ran (0 is to run now)
+    level_processing      -> the level of processing to run on the dataset
+    model_version         -> the version of the model to use for processing
+    dataset_path          -> the path to the dataset to process
+    """
+    from apps.payload.controller import PayloadController as PC
+
+    logger.info(f"[PAYLOAD] - Dataset processing command received to run at {ts}")
+    result = PC.add_dataset_processing_command(
+        ts,
+        level_processing,
+        model_version,
+        dataset_path,
+    )
+    if not result:
+        logger.error(f"[PAYLOAD] - Failed to add dataset processing command for timestamp {ts}")
+    return result
+
+
+@register_command()
+def DATASET_OD(
+    ts,
+    duration,
+    max_iteration,
+    dataset_path
+):
+    """
+    Command that will be called by the ground station to start a orbit determination processing experiment
+    ts                     -> the time at which the command should be ran (0 is to run now)
+    duration               -> the duration of the experiment in seconds
+    max_iteration          -> the maximum number of iterations for batch optimization
+    dataset_path           -> the path to the dataset to process
+   
+    """
+    from apps.payload.controller import PayloadController as PC
+
+    logger.info(f"[PAYLOAD] - Dataset collection command received to run at {ts}")
+    result = PC.add_dataset_od_command(
+        ts,
+        duration,
+        max_iteration,
+        dataset_path
+    )
+    if not result:
+        logger.error(f"[PAYLOAD] - Failed to add dataset collection command for timestamp {ts}")
+    return result
+
+
+@register_command()
 def CLEAR_EXPERIMENT_LIST():
     """
     Command that will be called by the ground station to clear the list of scheduled experiments in the payload
