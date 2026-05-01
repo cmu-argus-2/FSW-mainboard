@@ -156,7 +156,7 @@ class Task(TemplateTask):
         It will check if the message from jetson for processing finished has been received
         """
 
-        if PC.PROC_TS + PC.PROC_TIMEOUT <= TPM.time():
+        if PC.PROC_TS + PC.current_command.arguments["duration"] + PC.PROC_TIMEOUT <= TPM.time():
             # means that we have reached the timeout of the command
             self.log_info("Processing timeout reached, switching to FAIL state.")
             PC.switch_state("FAIL")

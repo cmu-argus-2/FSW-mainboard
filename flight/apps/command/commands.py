@@ -142,6 +142,7 @@ def GET_COMMAND_LIST(skip_elements=0):
     It should give the command name and id
     """
     from apps.telemetry.splat.splat.telemetry_definition import command_list
+
     return command_list[skip_elements:]
 
 
@@ -525,6 +526,7 @@ def UPDATE_SD_USAGE():
 @register_command()
 def EXPERIMENT(
     ts,
+    duration,
     camera_bit_flag,
     level_of_processing,
     width,
@@ -561,6 +563,7 @@ def EXPERIMENT(
     logger.info(f"[PAYLOAD] - Experiment command received to run at {ts}")
     result = PC.add_command(
         ts,
+        duration,
         camera_bit_flag,
         level_of_processing,
         width,
@@ -593,6 +596,7 @@ def EXPERIMENT(
 @register_command()
 def SIMPLE_EXPERIMENT(
     ts,
+    duration,
     camera_bit_flag,
     level_of_processing,
     width,
@@ -633,6 +637,7 @@ def SIMPLE_EXPERIMENT(
     logger.info(f"[PAYLOAD] - Simple experiment command received to run at {ts}")
     result = PC.add_command_inference(
         ts,
+        duration,
         camera_bit_flag,
         level_of_processing,
         width,
@@ -700,6 +705,7 @@ def DATASET_COLLECTION(
 @register_command()
 def DATASET_PROCESSING(
     ts,
+    duration,
     level_processing,
     rc_version,
     ld_version,
@@ -718,6 +724,7 @@ def DATASET_PROCESSING(
     logger.info(f"[PAYLOAD] - Dataset processing command received to run at {ts}")
     result = PC.add_dataset_processing_command(
         ts,
+        duration,
         level_processing,
         rc_version,
         ld_version,
@@ -729,29 +736,19 @@ def DATASET_PROCESSING(
 
 
 @register_command()
-def DATASET_OD(
-    ts,
-    duration,
-    max_iteration,
-    dataset_path
-):
+def DATASET_OD(ts, duration, max_iteration, dataset_path):
     """
     Command that will be called by the ground station to start a orbit determination processing experiment
     ts                     -> the time at which the command should be ran (0 is to run now)
     duration               -> the duration of the experiment in seconds
     max_iteration          -> the maximum number of iterations for batch optimization
     dataset_path           -> the path to the dataset to process
-   
+
     """
     from apps.payload.controller import PayloadController as PC
 
     logger.info(f"[PAYLOAD] - Dataset collection command received to run at {ts}")
-    result = PC.add_dataset_od_command(
-        ts,
-        duration,
-        max_iteration,
-        dataset_path
-    )
+    result = PC.add_dataset_od_command(ts, duration, max_iteration, dataset_path)
     if not result:
         logger.error(f"[PAYLOAD] - Failed to add dataset collection command for timestamp {ts}")
     return result

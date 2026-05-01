@@ -81,7 +81,7 @@ class PayloadController:
     ACT_TIMEOUT = 20  # max amount of seconds to wait to recieve jetson ack for experiment command
 
     PROC_TS = 0  # time at which switched to processing state
-    PROC_TIMEOUT = 60  # max amounts of seconds to run the experiment
+    PROC_TIMEOUT = 20  # seconds added to duration to control processing timeout
 
     DWN_TS = 0  # time at which switched to download state
     DWN_TIMEOUT = 50  # max amount of time to wait for fragments
@@ -144,7 +144,9 @@ class PayloadController:
         if cls.current_state == PayloadState.BOOTING:
             logger.info("[PAYLOAD] -  Turning on jetson")
             cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = 200  # starting a new experiment resetting the error
-            cls.current_command = (cls.get_first_command())  # choosing the command here, if boot fails we do not run the command again
+            cls.current_command = (
+                cls.get_first_command()
+            )  # choosing the command here, if boot fails we do not run the command again
             cls.remove_first_command()
             logger.info(f"[PAYLOAD] -  Selected command: {cls.current_command}")
             logger.info(f"[PAYLOAD] - command list size: {len(cls.command_list)}")
@@ -209,7 +211,7 @@ class PayloadController:
         This will return the list of scheduled experiments in the payload
         """
         return [command[0] for command in cls.command_list]  # return the timestamps of the scheduled commands
-    
+
     @classmethod
     def add_dataset_collection_command(cls, ts, camera_bit_flag, capture_rate, imu_hz, duration):
         """
@@ -223,19 +225,20 @@ class PayloadController:
             imu_hz,
             duration,
         )
-        
+
         command = Command("DATASET_COLLECTION")
         command.set_arguments(*argument_list)
         return cls.add_command(command)
-    
+
     @classmethod
-    def add_dataset_processing_command(cls, ts, level_processing, rc_version, ld_version, dataset_path):
+    def add_dataset_processing_command(cls, ts, duration, level_processing, rc_version, ld_version, dataset_path):
         """
         This is the command that will be used to schedule a dataset processing experiment
         TODO: should add some checks to the arguments here
         """
         argument_list = (
             ts,
+            duration,
             level_processing,
             rc_version,
             ld_version,
@@ -265,6 +268,7 @@ class PayloadController:
     def add_command_inference(
         cls,
         ts,
+        duration,
         camera_bit_flag,
         level_of_processing,
         width,
@@ -316,8 +320,9 @@ class PayloadController:
 
         # need to add the data in the corerct spot in the list
         # it has to be ordered by timestamp
-        argument_list =(
+        argument_list = (
             ts,
+            duration,
             camera_bit_flag,
             level_of_processing,
             width,
@@ -340,13 +345,14 @@ class PayloadController:
             exposurecompensation,
             tnr_mode,
             tnr_strength,
-            saturation)
-        
+            saturation,
+        )
+
         command = Command("EXPERIMENT")
         command.set_arguments(*argument_list)
-        
+
         return cls.add_command(command)
-        
+
     @classmethod
     def add_command(cls, cmd: Command):
         """
@@ -355,7 +361,7 @@ class PayloadController:
         from the point of view of the satellite, all of the types of commands are exactly the same
         the payload task flow will not change
         cmd.arguments["ts"] is the ts
-        
+
         TODO: might need to change some of the timeouts
         """
         cls.command_list.append(cmd)
@@ -603,7 +609,7 @@ class PayloadController:
                 logger.error("[PAYLOAD] - EXPERIMENT ACK OVERRIDDEN")
             cls.received_experiment_ack = True
             return
-        
+
         # using the same as experiment ack
         # and not checking if this was what I was expecting
         if ack.cmd_id == COMMAND_IDS["DATASET_COLLECTION"]:
@@ -612,13 +618,20 @@ class PayloadController:
                 logger.error("[PAYLOAD] - EXPERIMENT ACK OVERRIDDEN (dataset)")
             cls.received_experiment_ack = True
             return
-        
+
         # using the same as experiment ack
         # and not checking if this was what I was expecting
         if ack.cmd_id == COMMAND_IDS["DATASET_PROCESSING"]:
             # it was a experiment command
             if cls.received_experiment_ack:
                 logger.error("[PAYLOAD] - EXPERIMENT ACK OVERRIDDEN (dataset processing)")
+            cls.received_experiment_ack = True
+            return
+
+        if ack.cmd_id == COMMAND_IDS["DATASET_OD"]:
+            # it was a experiment command
+            if cls.received_experiment_ack:
+                logger.error("[PAYLOAD] - EXPERIMENT ACK OVERRIDDEN (dataset od)")
             cls.received_experiment_ack = True
             return
 
