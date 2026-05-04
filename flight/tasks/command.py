@@ -161,7 +161,8 @@ class Task(TemplateTask):
             if DH.SD_SCANNED() and time_since_boot > _EXIT_STARTUP_TIMEOUT:
                 if not DH.data_process_exists("cdh"):
                     data_format = "LLbLbbbbb"
-                    DH.register_data_process("cdh", data_format, True, data_limit=100000)
+                    # this is 18 bytes, in current config ~7.2bytes/s. 25k will be ~60min
+                    DH.register_data_process("cdh", data_format, True, data_limit=25000, write_interval=5)
 
                 if not DH.data_process_exists("cmd_logs"):
                     DH.register_data_process("cmd_logs", "LBB", True, data_limit=100000)
