@@ -1,7 +1,9 @@
 import time
 from collections import OrderedDict
 
+import microcontroller
 from hal.drivers.errors import Errors
+from hal.drivers.stateflags import StateFlags
 from micropython import const
 
 # Argus Safety Integrity Level
@@ -38,6 +40,7 @@ class CubeSat:
         "__device_list",
         "__payload_uart",
         "_time_ref_boot",
+        "__flags",
     )
 
     def __new__(cls, *args, **kwargs):
@@ -46,6 +49,12 @@ class CubeSat:
         return super().__new__(cls)
 
     def __init__(self):
+        # Initialize StateFlags with microcontroller NVM access (mirrors the
+        # pattern from the cmu_comm_payload_merge branch where f_rf_stop was
+        # added). Required by SET_LOG_LEVEL which persists via FLAGS.f_log_level.
+        self.__flags = StateFlags()
+        self.__flags.micro = microcontroller
+
         self.__device_list = OrderedDict(
             [
                 ("NEOPIXEL", Device(self.__neopixel_boot, ASIL0)),
@@ -547,6 +556,13 @@ class CubeSat:
         :return: object or None
         """
         return self._time_ref_boot
+
+    @property
+    def FLAGS(self):
+        """FLAGS: Returns the StateFlags object for NVM flag access
+        :return: StateFlags object
+        """
+        return self.__flags
 
     ######################## ERROR HANDLING ########################
 

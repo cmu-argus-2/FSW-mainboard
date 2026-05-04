@@ -30,7 +30,9 @@ from apps.telemetry.splat.splat.transport_layer import transaction_manager as TM
 from core import logger
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
+from core.logging import LEVELS as LOG_LEVELS
 from core.logging import RotatingFileHandler, getLogger
+from hal.configuration import SATELLITE
 from core.satellite_config import log_config as LOG_CONFIG
 from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
@@ -262,6 +264,47 @@ def CLEANUP_LOG_DOWNLINK():
         logger.error(f"CLEANUP_LOG_DOWNLINK: remove failed: {e}")
         return [f"error: {e}"]
     return ["cleaned"]
+
+
+@register_command()
+def SET_LOG_LEVEL(level_id):
+    """Change the active log level (stream + file handlers) and persist it in NVM.
+
+    level_id is an index into core.logging.LEVELS:
+        0 NOTSET, 1 DEBUG, 2 INFO, 3 WARNING, 4 ERROR, 5 CRITICAL, 6 NOTHING.
+    The new level applies immediately to the core_logger and to the
+    RotatingFileHandler (if file logging is up). It is also written to the
+    NVM-backed StateFlags.f_log_level byte so it survives a reboot; the
+    persisted value is read at boot by setup_logger and by the file-handler
+    init in tasks/command.py.
+
+    Returns:
+        [level_id]            on success
+        ["invalid_level"]     if level_id is out of range (NVM untouched)
+        ["nvm_write_failed"]  if level changed in-memory but NVM write threw
+    """
+    logger.info(f"Executing SET_LOG_LEVEL with level_id: {level_id}")
+
+    if not isinstance(level_id, int) or level_id < 0 or level_id >= len(LOG_LEVELS):
+        logger.error(f"SET_LOG_LEVEL: invalid level_id {level_id}")
+        return ["invalid_level"]
+
+    level_int = LOG_LEVELS[level_id][0]
+
+    core_logger = getLogger("core_logger")
+    core_logger.setLevel(level_int)
+    for h in core_logger._handlers:
+        if isinstance(h, RotatingFileHandler):
+            h.setLevel(level_int)
+            break
+
+    try:
+        SATELLITE.FLAGS.f_log_level = level_id
+    except Exception as e:
+        logger.error(f"SET_LOG_LEVEL: NVM write failed: {e}")
+        return ["nvm_write_failed"]
+
+    return [level_id]
 
 
 @register_command()

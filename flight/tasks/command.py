@@ -18,7 +18,7 @@ from core import TemplateTask
 from core import state_manager as SM
 from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX
 from core.logging import LEVELS as LOG_LEVELS
-from core.logging import Formatter, RotatingFileHandler, getLogger
+from core.logging import Formatter, RotatingFileHandler, get_persisted_level_name, getLogger
 from core.satellite_config import command_config as CONFIG
 from core.satellite_config import log_config as LOG_CONFIG
 from core.states import STATES, STR_STATES
@@ -184,13 +184,16 @@ class Task(TemplateTask):
                         # Resolve and validate log level BEFORE opening the handler
                         # (avoids file-handle leak on bad config and prevents silent
                         # NOTSET fallback that would flood the SD with DEBUG output).
+                        # NVM override (set by SET_LOG_LEVEL) wins over yaml default.
+                        persisted_level = get_persisted_level_name()
+                        target_level_str = persisted_level if persisted_level is not None else LOG_CONFIG.LOG_FILE_LEVEL
                         file_level = None
                         for lvl_int, lvl_str in LOG_LEVELS:
-                            if lvl_str == LOG_CONFIG.LOG_FILE_LEVEL:
+                            if lvl_str == target_level_str:
                                 file_level = lvl_int
                                 break
                         if file_level is None:
-                            raise ValueError(f"Invalid LOG_FILE_LEVEL: {LOG_CONFIG.LOG_FILE_LEVEL!r}")
+                            raise ValueError(f"Invalid LOG_FILE_LEVEL: {target_level_str!r}")
 
                         file_handler = RotatingFileHandler(
                             LOG_CONFIG.LOG_FILENAME,

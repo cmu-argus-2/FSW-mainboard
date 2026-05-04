@@ -96,6 +96,33 @@ LEVELS = [
     (NOTHING, "NOTHING"),
 ]
 
+# Sentinel for "no override" in the NVM-backed StateFlags.f_log_level byte.
+# An erased / never-written NVM byte reads as 0xFF, so that doubles as the
+# sentinel and means: fall back to the yaml default.
+LOG_LEVEL_NVM_SENTINEL = const(0xFF)
+
+
+def get_persisted_level_name():
+    """Return the level name persisted in StateFlags.f_log_level, or None.
+
+    Returns None when:
+      - the persisted byte is the 0xFF sentinel (never set),
+      - the persisted byte is out of range (corrupt / future schema),
+      - SATELLITE / NVM are not available (emulator, sil, very early boot).
+    Callers fall back to the yaml-configured default in any of these cases.
+
+    Lazy-imports SATELLITE because core.logging is imported before
+    hal.configuration during boot (core/__init__.py runs first in main.py).
+    """
+    try:
+        from hal.configuration import SATELLITE
+        idx = SATELLITE.FLAGS.f_log_level
+    except Exception:
+        return None
+    if idx == LOG_LEVEL_NVM_SENTINEL or idx >= len(LEVELS):
+        return None
+    return LEVELS[idx][1]
+
 
 def _level_for(value: int) -> str:
     """Convert a numeric level to the most appropriate name.
@@ -263,7 +290,12 @@ class StreamHandler(Handler):
         :param record: The record (message object) to be logged
         """
         text = super().format(record)
-        lines = text.splitlines()
+        # Drop any trailing whitespace/newlines on the formatted record, then
+        # split on whatever line breaks remain inside it. Filter out lines
+        # that are empty or whitespace-only — without this, a stray leading
+        # "\n" or an embedded "\n\n" (which traceback strings often produce)
+        # turns into a visible blank row on the serial console.
+        lines = [ln for ln in text.rstrip().splitlines() if ln.strip()]
         return self.terminator.join(lines)
 
     def emit(self, record: LogRecord) -> None:
@@ -271,7 +303,10 @@ class StreamHandler(Handler):
 
         :param record: The record (message object) to be logged
         """
-        self.stream.write(self.format(record) + self.terminator)
+        formatted = self.format(record)
+        if not formatted:
+            return  # nothing meaningful to emit; skip rather than write a bare newline
+        self.stream.write(formatted + self.terminator)
 
     def flush(self) -> None:
         """flush the stream. You might need to call this if your messages
@@ -425,17 +460,21 @@ class RotatingFileHandler(FileHandler):
 
         :param record: The record (message object) to be logged
         """
+        formatted = self.format(record)
+        if not formatted:
+            return  # all-whitespace record; skip to avoid writing a bare separator
         log_size = self.GetLogSize()
         if (log_size is not None) and (log_size >= self._maxBytes) and (self._maxBytes > 0) and (self._backupCount > 0):
             self.doRollover()
+        payload = formatted + self.terminator
         try:
-            self.stream.write(self.format(record) + self.terminator)
+            self.stream.write(payload)
             self.stream.flush()
         except (OSError, ValueError):
             # Stream is stale (file deleted, SD deinitialized, etc.). Try to reopen and retry once.
             try:
                 self.stream = open(self._LogFileName, mode=self._WriteMode)
-                self.stream.write(self.format(record) + self.terminator)
+                self.stream.write(payload)
                 self.stream.flush()
             except (OSError, ValueError):
                 pass  # Can't write — silently drop rather than crash
@@ -658,6 +697,11 @@ def setup_logger(level="NOTSET", handler=None):
     :param level: The logging level (NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL).
     :param handler: A logging handler, e.g., StreamHandler or FileHandler.
     """
+    # NVM override (set by SET_LOG_LEVEL command) wins over the yaml default.
+    persisted = get_persisted_level_name()
+    if persisted is not None:
+        level = persisted
+
     set_level = 0
     for i, _level in enumerate(LEVELS):
         if _level[1] == level:
