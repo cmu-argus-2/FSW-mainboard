@@ -22,9 +22,9 @@ class Task(TemplateTask):
     def init_all_data_processes(self):
 
         # Telemetry process
-        if not DH.data_process_exists("payload_tm"):
+        if not DH.data_process_exists("payload"):
             DH.register_data_process(
-                tag_name="payload_tm",
+                tag_name="payload",
                 data_format=PC.payload_tm_data_format,
                 persistent=True,
                 data_limit=100000,
@@ -328,7 +328,7 @@ class Task(TemplateTask):
 
         if TPM.time() - self._last_state_print_ts >= 5:
             self._last_state_print_ts = TPM.time()
-            DH.log_data("payload_tm", PC.log_data)  # periodically log data
+            DH.log_data("payload", PC.log_data)  # periodically log data
             self.log_info(f"Current state: {PC.current_state}")
             self.log_info(f"  next command time: {PC.log_data[PAYLOAD_IDX.NEXT_CMD_TIME]}")
 
