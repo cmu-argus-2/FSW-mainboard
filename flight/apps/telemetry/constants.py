@@ -254,6 +254,7 @@ class HAL_IDX:
     DEPLOYMENT_YM_ERROR = const(69)
     DEPLOYMENT_YM_ERROR_COUNT = const(70)
     PERIPH_REBOOT_COUNT = const(71)
+    BOOT_COUNT = const(72)
 
 
 """

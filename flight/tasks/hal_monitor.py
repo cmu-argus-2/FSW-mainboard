@@ -33,6 +33,7 @@ class Task(TemplateTask):
         self.log_data = [0] * _IDX_LENGTH
         self.restored = False
         self.peripheral_reboot_count = 0
+        self.boot_count = 1
         self.graceful_reboot = False
         self.graceful_reboot_counter = TPM.monotonic()
         self.turn_on_device = {}
@@ -102,6 +103,7 @@ class Task(TemplateTask):
             self.log_data[error_idx] = error_list[0]
             self.log_data[error_count_idx] = error_list[1]
         self.log_data[_PERIPH_REBOOT_COUNT_IDX] = self.peripheral_reboot_count
+        self.log_data[HAL_IDX.BOOT_COUNT] = self.boot_count
 
     def log_error_handle_info(self, results, device_name):
         result, device_error = results
@@ -159,12 +161,16 @@ class Task(TemplateTask):
                                 elif "PERIPH_REBOOT_COUNT" in key_name:
                                     self.peripheral_reboot_count = value
                                     self.log_info(f"Restored {key_name} to {value}")
+                                elif "BOOT_COUNT" in key_name:
+                                    self.boot_count = value + 1
+                                    self.log_info(f"Restored {key_name} to {value} and incremented to {self.boot_count}")
                                 else:
                                     self.log_error(f"Unable to parse {key_name}")
                     else:
                         self.log_info("Could not restore data process, starting fresh")
                 else:
                     self.log_info("No SD card available, starting fresh")
+                self.log_info(f"Boot count: {self.boot_count}")
                 self.restored = True
 
         # sample device errors from registers and boot errors
