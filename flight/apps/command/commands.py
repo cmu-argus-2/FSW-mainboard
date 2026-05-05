@@ -89,8 +89,42 @@ def UPLINK_TIME_REFERENCE(time_reference):
 
 @register_command()
 def TURN_OFF_PAYLOAD():
-    """Sends a shutdown command to the payload and turns off its power line."""
+    """Cuts the power to the payload"""
     logger.info("Executing TURN_OFF_PAYLOAD")
+
+    if not SATELLITE.PAYLOADPOWER_AVAILABLE:
+        logger.warning("[PAYLOAD] Payload power pins is not available.")
+        return ["payload power pins not available"]
+
+    try:
+        logger.info("[PAYLOAD] Shutdown command sent successfully, waiting for payload to shutdown before cutting power")
+        SATELLITE.JETSON_ENABLE.value = False
+        TPM.sleep(0.1)
+        SATELLITE.JETSON_SD_REQ.value = False  # turn of 5v dcdc to save more power
+
+    except Exception as e:
+        logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
+
+    return []
+
+
+@register_command()
+def TURN_ON_PAYLOAD():
+    """Enables power to the payload"""
+    logger.info("Executing TURN_ON_PAYLOAD")
+
+    if not SATELLITE.PAYLOADPOWER_AVAILABLE:
+        logger.warning("[PAYLOAD] Payload power pins is not available.")
+        return ["payload power pins not available"]
+
+    try:
+        SATELLITE.JETSON_SD_REQ.value = True
+        TPM.sleep(0.1)
+        SATELLITE.JETSON_ENABLE.value = True  # turn of 5v dcdc to save more power
+
+        logger.info("[PAYLOAD] Jetson power enabled successfully.")
+    except Exception as e:
+        logger.error(f"[PAYLOAD] Failed to enable payload power: {e}")
     return []
 
 
@@ -322,14 +356,13 @@ def CREATE_TRANS(tid, string_command):
     cmd = Command("INIT_TRANS")
     tid = transaction.tid
     n_packets = transaction.number_of_packets
-    hash_MSB, hash_msb, hash_LSB = transaction.get_hash_as_integers()
 
-    cmd.set_arguments(tid, n_packets, hash_MSB, hash_msb, hash_LSB)
+    cmd.set_arguments(tid, n_packets)
     q_stat = TransmitQueue.push_packet(cmd)
     if q_stat != QUEUE_STATUS.OK:
         logger.error(f"Failed to push INIT_TRANS command to transmit queue with status: {q_stat}")
 
-    return [tid, n_packets, hash_MSB, hash_LSB]
+    return [tid, n_packets]
 
 
 @register_command()
@@ -371,7 +404,7 @@ def GENERATE_X_PACKETS(tid, x):
 
 
 @register_command()
-def GET_SINGLE_PACKET(tid, seq_number):
+def GENERATE_SINGLE_PACKET(tid, seq_number):
     # 1. search for the transaction id
     transaction = TM.get_transaction(tid)
     if transaction is None:
@@ -390,7 +423,7 @@ def GET_SINGLE_PACKET(tid, seq_number):
 
 
 @register_command()
-def CONFIRM_LAST_BATCH(tid, MSB, LSB):
+def CONFIRM_LAST_BATCH(tid, bitmap_high, bitmap_low):
     # 1. search for the transaction id
     transaction = TM.get_transaction(tid)
     if transaction is None:
@@ -398,14 +431,13 @@ def CONFIRM_LAST_BATCH(tid, MSB, LSB):
         return ["transaction_not_found"]
 
     # 2. confirm last batch
-    bitmap = (MSB << 16) | LSB
-    len_missing_fragments = transaction.confirm_last_batch(bitmap)
+    len_missing_fragments = transaction.confirm_last_batch((bitmap_high, bitmap_low))
 
     return [len_missing_fragments]
 
 
 @register_command()
-def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, MSB, LSB):
+def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, bitmap_high, bitmap_low):
     # 1. search for the transaction id
     transaction = TM.get_transaction(tid)
     if transaction is None:
@@ -413,8 +445,7 @@ def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, MSB, LSB):
         return ["transaction_not_found"]
 
     # 2. update missing fragments
-    bitmap = (MSB << 16) | LSB
-    len_missing_fragments = transaction.update_missing_fragments_bitmap(seq_offset, bitmap)
+    len_missing_fragments = transaction.update_missing_fragments_bitmap(seq_offset, (bitmap_high, bitmap_low))
 
     return [len_missing_fragments]
 
@@ -428,7 +459,7 @@ def TRANS_PAYLOAD(tid, seq_number, payload):
 
 
 @register_command()
-def INIT_TRANS(tid, number_of_packets, hash_MSB, hash_LSB):
+def INIT_TRANS(tid, number_of_packets):
     # [TODO] - implement this command if there is the necessity to uplink files to the satellite
     # no need to implement now, this will only be needed if sending transactions from the gs to sat
     # return a structured "not implemented" response to avoid breaking downstream handling
@@ -479,3 +510,71 @@ def UPDATE_SD_USAGE():
     except Exception as e:
         return [f"error: {e}"]
     return ["sd usage updated", usage]
+
+
+@register_command()
+def EXPERIMENT(
+    ts,
+    camera_bit_flag,
+    level_of_processing,
+    width,
+    height,
+    downscale_factor=2.0,
+    camera_defaults_selector=-1,
+    fps=0,
+    wbmode=0,
+    aelock=0,
+    awblock=0,
+    exposuretimerange_low=0,
+    exposuretimerange_high=0,
+    gainrange_low=0.0,
+    gainrange_high=0.0,
+    ispdigitalgainrange_low=0.0,
+    ispdigitalgainrange_high=0.0,
+    ee_mode=0,
+    ee_strength=0.0,
+    aeantibanding=0,
+    exposurecompensation=0.0,
+    tnr_mode=0,
+    tnr_strength=0.0,
+    saturation=0.0,
+):
+    """
+    Command that will be called by the ground station to start an experiment
+    ts                    -> the time at which the command should be ran (0 is to run now)
+    camera_bit_flag       -> the first 4 bits will indicate which cameras should be used to take the picture
+    level_of_processing   -> what level of processing to run TODO - add here the options
+    resolution            -> The resolution of the images. They are taken at full resolution and scaled down
+    """
+    from apps.payload.controller import PayloadController as PC
+
+    logger.info(f"[PAYLOAD] - Experiment command received to run at {ts}")
+    result = PC.add_command(
+        ts,
+        camera_bit_flag,
+        level_of_processing,
+        width,
+        height,
+        downscale_factor,
+        camera_defaults_selector,
+        fps,
+        wbmode,
+        aelock,
+        awblock,
+        exposuretimerange_low,
+        exposuretimerange_high,
+        gainrange_low,
+        gainrange_high,
+        ispdigitalgainrange_low,
+        ispdigitalgainrange_high,
+        ee_mode,
+        ee_strength,
+        aeantibanding,
+        exposurecompensation,
+        tnr_mode,
+        tnr_strength,
+        saturation,
+    )
+    if not result:
+        logger.error(f"[PAYLOAD] - Failed to add experiment command for timestamp {ts}")
+    return result

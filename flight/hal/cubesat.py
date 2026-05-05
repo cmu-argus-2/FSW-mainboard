@@ -39,6 +39,8 @@ class CubeSat:
     __slots__ = (
         "__device_list",
         "__payload_uart",
+        "__jetson_enable",
+        "__jetson_sd_req",
         "_time_ref_boot",
         "__flags",
     )
@@ -49,6 +51,10 @@ class CubeSat:
         return super().__new__(cls)
 
     def __init__(self):
+        self.__payload_uart = None
+        self.__jetson_enable = None
+        self.__jetson_sd_req = None
+
         # Initialize StateFlags with microcontroller NVM access (mirrors the
         # pattern from the cmu_comm_payload_merge branch where f_rf_stop was
         # added). Required by SET_LOG_LEVEL which persists via FLAGS.f_log_level.
@@ -71,11 +77,6 @@ class CubeSat:
                 ("RADIO_PWR", Device(self.__power_monitor_boot, ASIL1)),
                 ("GPS_PWR", Device(self.__power_monitor_boot, ASIL1)),
                 ("JETSON_PWR", Device(self.__power_monitor_boot, ASIL1)),
-                ("XP_PWR", Device(self.__power_monitor_boot, ASIL1)),
-                ("XM_PWR", Device(self.__power_monitor_boot, ASIL1)),
-                ("YP_PWR", Device(self.__power_monitor_boot, ASIL1)),
-                ("YM_PWR", Device(self.__power_monitor_boot, ASIL1)),
-                ("ZP_PWR", Device(self.__power_monitor_boot, ASIL1)),
                 ("TORQUE_XP", Device(self.__torque_driver_boot, ASIL3)),
                 ("TORQUE_XM", Device(self.__torque_driver_boot, ASIL3)),
                 ("TORQUE_YP", Device(self.__torque_driver_boot, ASIL3)),
@@ -111,11 +112,6 @@ class CubeSat:
             "RADIO_PWR": [],
             "GPS_PWR": [],
             "JETSON_PWR": [],
-            "XP_PWR": [],
-            "XM_PWR": [],
-            "YP_PWR": [],
-            "YM_PWR": [],
-            "ZP_PWR": [],
             "TORQUE_XP": [],
             "TORQUE_XM": [],
             "TORQUE_YP": [],
@@ -549,6 +545,21 @@ class CubeSat:
         if self.PAYLOADUART_AVAILABLE:
             return self.__payload_uart.baudrate
         return None
+
+    @property
+    def JETSON_ENABLE(self):
+        """JETSON_ENABLE: Returns the payload enable control line."""
+        return self.__jetson_enable
+
+    @property
+    def JETSON_SD_REQ(self):
+        """JETSON_SD_REQ: Returns the payload SD request control line."""
+        return self.__jetson_sd_req
+
+    @property
+    def PAYLOADPOWER_AVAILABLE(self) -> bool:
+        """PAYLOADPOWER_AVAILABLE: Returns True when payload power lines are configured."""
+        return self.__jetson_enable is not None and self.__jetson_sd_req is not None
 
     @property
     def BOOTTIME(self):
