@@ -4,7 +4,6 @@ import sys
 import time
 
 import microcontroller
-
 from core import logger, setup_logger, state_manager
 from core.satellite_config import main_config as CONFIG
 from hal.configuration import SATELLITE
