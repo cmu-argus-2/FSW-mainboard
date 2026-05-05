@@ -85,6 +85,11 @@ class Task(TemplateTask):
     coils_off = True
     last_mag_time = 0.0
 
+    _mag_buffer = None
+    _MAG_SAMPLE_DT = 0.08
+    _MAG_N_SAMPLES = 6
+    _BDOT_COIL_ON_TIME = 0.5
+
     def __init__(self, id):
         super().__init__(id)
         self.name = "ADCS"  # Override the name
@@ -166,23 +171,13 @@ class Task(TemplateTask):
         """
         mtq_throttle = np.zeros((3,))
 
-        if self.CONTROLLER_MODE == ControllerModes.BDOT:
-            if self.MODE != Modes.ACS_OFF:
-                if not (self.mag_status != StatusConst.OK):
-                    if self.MODE == Modes.TUMBLING:
-                        mtq_throttle = bdot_controller(
-                            self.mag_data, self.prev_mag_data, 0.1 * self.bdot_dt
-                        )  # equal to using a 10x gain for faster detumbling
-                    else:
-                        mtq_throttle = bdot_controller(self.mag_data, self.prev_mag_data, self.bdot_dt)
-
-        elif self.CONTROLLER_MODE == ControllerModes.BCROSS:
+        if self.CONTROLLER_MODE == ControllerModes.BCROSS:
             if self.MODE != Modes.ACS_OFF:
                 if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
                     mtq_throttle = bcross_controller(self.mag_data, self.gyro_data)
         elif self.CONTROLLER_MODE == ControllerModes.SUN_POINTING:
             # Decide which controller to choose
-            if self.MODE in [Modes.TUMBLING, Modes.STABLE]:  # spin-stabilizing controller
+            if self.MODE == Modes.TUMBLING or self.MODE == Modes.STABLE:  # spin-stabilizing controller
 
                 if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
                     # Control MCMs and obtain coil statuses
@@ -227,32 +222,39 @@ class Task(TemplateTask):
         num_cycles: how many cycles to execute (2 for detumbling, 1 for nominal).
         """
         if self.CONTROLLER_MODE == ControllerModes.BDOT:
-            self._bdot_cycle(cycle_duration, num_cycles)
+            self._bdot_cycle()
         else:
             self._bcross_sun_cycle(cycle_duration * num_cycles)
 
-    def _bdot_cycle(self, cycle_duration, num_cycles):
+    def _bdot_cycle(self):
         """
-        B-dot control cycle.  Each cycle = read_mag → coils on → coils off.
-        A settle wait (20% of cycle_duration) is inserted before each cycle
-        after the first so the magnetometer field is clean; with num_cycles=1
-        no settle is needed at all.
-
-        Timing per cycle_duration=0.3 s:
-          coil_on  = 0.2 s  (66.67 %)
-          settle   = 0.1 s  (33.33 %, skipped on first cycle)
+        B-dot control cycle: sample 6 mag readings, run coils, coils off.
+        Total duration: 5 x 0.08 + 0.5 = 0.9 s.
         """
-        settle_time = 0.1  # 100 ms at 0.3 s
-        coil_on_time = cycle_duration - 0.1  # 200 ms at 0.3 s
+        self._mag_buffer = []
+        for k in range(self._MAG_N_SAMPLES):
+            status, reading = sensors.read_magnetometer()
+            if status == StatusConst.OK:
+                self._mag_buffer.append(reading)
+            if k < self._MAG_N_SAMPLES - 1:
+                TPM.sleep(self._MAG_SAMPLE_DT)
 
-        for i in range(num_cycles):
-            if i == 0:
-                self._update_mag()
-            self._apply_control(True)
-            TPM.sleep(coil_on_time)
+        if self._mag_buffer:
+            self.mag_data = self._mag_buffer[-1]
+            self.mag_status = StatusConst.OK
+        else:
+            self.mag_status = StatusConst.MAG_FAIL
+
+        if self.MODE != Modes.ACS_OFF and len(self._mag_buffer) == self._MAG_N_SAMPLES:
+            buf = np.array(self._mag_buffer)
+            throttle = bdot_controller(buf, self._MAG_SAMPLE_DT)
+            self.coil_status = mcm_coil_allocator(throttle, self.mag_data)
+            self.coils_off = False
+        else:
             self.ensure_coils_off()
-            TPM.sleep(settle_time)  # let field settle before next mag read
-            self._update_mag()
+
+        TPM.sleep(self._BDOT_COIL_ON_TIME)
+        self.ensure_coils_off()
 
         self.gyro_status, self.gyro_data = sensors.read_gyro()
 
@@ -349,7 +351,7 @@ class Task(TemplateTask):
         self.log_info(f"Gyro Status : {self.gyro_status}")
         self.log_info(f"Mag Status : {self.mag_status}")
         # Bdot debugging
-        # self.log_info(f"Bdot : {bdot_controller(self.mag_data, self.prev_mag_data, self.bdot_dt)}")
+
         # self.log_info(f"Prev Mag : {self.prev_mag_data}")
         # self.log_info(f"Current Mag : {self.mag_data}")
         # self.log_info(f"Bdot dt : {self.bdot_dt}")

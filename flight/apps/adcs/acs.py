@@ -77,14 +77,18 @@ def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field
             return u_dir / u_dir_norm
 
 
-def bdot_controller(mag_field: np.ndarray, prev_mag_field: np.ndarray, bdot_dt: float) -> np.ndarray:
-    """
-    B-dot control law.
-    """
-    if not readings_are_valid((prev_mag_field, mag_field)) or bdot_dt <= 0 or bdot_dt > 1.5:
-        return ControllerConst.FALLBACK_CONTROL
+_DERIVATIVE_WEIGHTS = np.array([-5.0, -3.0, -1.0, 1.0, 3.0, 5.0]) / 35.0
 
-    b_dot = (mag_field - prev_mag_field) / bdot_dt
+
+def bdot_controller(mag_buffer: np.ndarray, dt: float) -> np.ndarray:
+    """
+    B-dot control law using a 6-point central derivative over uniformly-spaced samples.
+    mag_buffer: shape (6, 3), oldest sample in row 0.
+    dt: uniform sample spacing in seconds.
+    """
+    if mag_buffer.shape != (6, 3) or dt <= 0:
+        return ControllerConst.FALLBACK_CONTROL
+    b_dot = np.dot(mag_buffer.T, _DERIVATIVE_WEIGHTS) / dt
     u = -ControllerConst.BDOT_GAIN * b_dot
     return smooth_throttle(u)
 
