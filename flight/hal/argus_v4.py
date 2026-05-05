@@ -99,10 +99,18 @@ class ArgusV4Interfaces:
     SPI1 = SPI(SPI1_SCK, MOSI=SPI1_MOSI, MISO=SPI1_MISO)
 
     UART0_BAUD = const(115200)
+    GPS_UART_RX_BUFFER_SIZE = const(1000)
+    GPS_DRIVER_RX_BUFFER_SIZE = const(2000)
     UART0_TX = board.TX0
     UART0_RX = board.RX0
-    UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD)
+    # UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD)
 
+    UART0 = UART(
+        UART0_TX,
+        UART0_RX,
+        baudrate=UART0_BAUD,
+        receiver_buffer_size=GPS_UART_RX_BUFFER_SIZE,
+    )
     JETSON_BAUD = const(460800)
     JETSON_TX = board.TX1
     JETSON_RX = board.RX1
@@ -340,10 +348,14 @@ class ArgusV4(CubeSat):
         :return: Error code if the GPS failed to initialize
         """
 
-        from hal.drivers.gps import GPS
+        from hal.drivers.s1216f8gl import GPS
 
         try:
-            gps = GPS(ArgusV4Components.GPS_UART, None, False, False)
+            gps = GPS(
+                uart=ArgusV4Components.GPS_UART,
+                debug=False,
+                rx_buffer_size=ArgusV4Interfaces.GPS_DRIVER_RX_BUFFER_SIZE,
+            )
 
             return [gps, Errors.NO_ERROR]
         except Exception as e:
