@@ -169,8 +169,5 @@ assets/*
 
 
 flight/build/
-params.yaml
-montecarlo/
-
 
 temp_test.py

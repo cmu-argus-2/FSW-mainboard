@@ -9,10 +9,10 @@ from apps.eps.eps import (
     SHOULD_DISABLE_HEATERS,
     SHOULD_ENABLE_HEATERS,
 )
-from apps.telemetry.constants import EPS_IDX, EPS_WARNING_IDX, class_length
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
+from core.dh_constants import EPS_IDX, EPS_WARNING_IDX, class_length
 from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
@@ -234,7 +234,7 @@ class Task(TemplateTask):
         soc = self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]
         curr_flag = self.log_data[EPS_IDX.EPS_POWER_FLAG]
         flag = GET_EPS_POWER_FLAG(curr_flag, soc)
-        if flag <= EPS_POWER_FLAG.EXPERIMENT or flag > EPS_POWER_FLAG.NONE:
+        if flag > EPS_POWER_FLAG.NONE and flag <= EPS_POWER_FLAG.NOMINAL:
             self.log_data[EPS_IDX.EPS_POWER_FLAG] = int(flag)
             self.log_info(f"EPS state: {self.log_data[EPS_IDX.EPS_POWER_FLAG]} ")
         else:

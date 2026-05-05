@@ -106,7 +106,7 @@ class ArgusV4Interfaces:
     JETSON_BAUD = const(460800)
     JETSON_TX = board.TX1
     JETSON_RX = board.RX1
-    JETSON_UART = UART(JETSON_TX, JETSON_RX, baudrate=JETSON_BAUD, receiver_buffer_size=8192)
+    JETSON_UART = UART(JETSON_TX, JETSON_RX, baudrate=JETSON_BAUD, receiver_buffer_size=609 * 40, timeout=0.2)
 
 
 class ArgusV4Components:
@@ -150,9 +150,13 @@ class ArgusV4Components:
     LIGHT_SENSOR_YM_I2C = ArgusV4Interfaces.I2C0
     LIGHT_SENSOR_YM_I2C_ADDRESS = const(0x45)
 
+    # YM DEPLOYMENT SENSOR
+    DEPLOYMENT_SENSOR_YM_I2C = ArgusV4Interfaces.I2C0
+    DEPLOYMENT_SENSOR_YM_I2C_ADDRESS = const(0x29)
+
     # ZM TORQUE COILS
     TORQUE_COILS_ZM_I2C = ArgusV4Interfaces.I2C0
-    TORQUE_ZM_I2C_ADDRESS = const(0x32)
+    TORQUE_ZM_I2C_ADDRESS = const(0x33)
 
     # ZM LIGHT SENSOR
     LIGHT_SENSOR_ZM_I2C = ArgusV4Interfaces.I2C0
@@ -161,10 +165,6 @@ class ArgusV4Components:
     # ZM BURN WIRE DRIVER
     BURN_WIRE_I2C = ArgusV4Interfaces.I2C0
     BURN_WIRE_I2C_ADDRESS = const(0x60)
-
-    # YM DEPLOYMENT SENSOR
-    DEPLOYMENT_SENSOR_YM_I2C = ArgusV4Interfaces.I2C0
-    DEPLOYMENT_SENSOR_YM_I2C_ADDRESS = const(0x29)
 
     ########
     # I2C1 #
@@ -182,10 +182,6 @@ class ArgusV4Components:
     RADIO_POWER_MONITOR_I2C = ArgusV4Interfaces.I2C1
     RADIO_POWER_MONITOR_I2C_ADDRESS = const(0x42)
 
-    # JETSON POWER MONITOR
-    JETSON_POWER_MONITOR_I2C = ArgusV4Interfaces.I2C1
-    JETSON_POWER_MONITOR_I2C_ADDRESS = const(0x43)
-
     # RTC
     RTC_I2C = ArgusV4Interfaces.I2C1
     RTC_I2C_ADDRESS = const(0x68)
@@ -202,6 +198,10 @@ class ArgusV4Components:
     LIGHT_SENSOR_XP_I2C = ArgusV4Interfaces.I2C1
     LIGHT_SENSOR_XP_I2C_ADDRESS = const(0x44)
 
+    # XP DEPLOYMENT SENSOR
+    DEPLOYMENT_SENSOR_XP_I2C = ArgusV4Interfaces.I2C1
+    DEPLOYMENT_SENSOR_XP_I2C_ADDRESS = const(0x29)
+
     # YP TORQUE COILS
     TORQUE_COILS_YP_I2C = ArgusV4Interfaces.I2C1
     TORQUE_YP_I2C_ADDRESS = const(0x31)
@@ -216,27 +216,27 @@ class ArgusV4Components:
 
     # ZP TORQUE COILS
     TORQUE_COILS_ZP_I2C = ArgusV4Interfaces.I2C1
-    TORQUE_ZP_I2C_ADDRESS = const(0x12)
+    TORQUE_ZP_I2C_ADDRESS = const(0x33)
 
     # ZP SOLAR CHARGING POWER MONITOR
     SOLAR_CHARGING_ZP_POWER_MONITOR_I2C = ArgusV4Interfaces.I2C1
-    SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS = const(0x62)
+    SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS = const(0x49)
 
     # ZP SUN SENSOR
     SUN_SENSOR_ZP_I2C = ArgusV4Interfaces.I2C1
-    SUN_SENSOR_ZP1_I2C_ADDRESS = const(0x64)
-    SUN_SENSOR_ZP2_I2C_ADDRESS = const(0x65)
-    SUN_SENSOR_ZP3_I2C_ADDRESS = const(0x66)
-    SUN_SENSOR_ZP4_I2C_ADDRESS = const(0x67)
+    SUN_SENSOR_ZP1_I2C_ADDRESS = const(0x54)
+    SUN_SENSOR_ZP2_I2C_ADDRESS = const(0x55)
+    SUN_SENSOR_ZP3_I2C_ADDRESS = const(0x56)
+    SUN_SENSOR_ZP4_I2C_ADDRESS = const(0x57)
 
     # BATTERY BOARD FUEL GAUGE
     FUEL_GAUGE_I2C = ArgusV4Interfaces.I2C1
     FUEL_GAUGE_I2C_ADDRESS = const(0x36)
     FUEL_GAUGE_ALERT = board.BATT_ALRT
 
-    # XP DEPLOYMENT SENSOR
-    DEPLOYMENT_SENSOR_XP_I2C = ArgusV4Interfaces.I2C1
-    DEPLOYMENT_SENSOR_XP_I2C_ADDRESS = const(0x29)
+    # JETSON POWER MONITOR
+    JETSON_POWER_MONITOR_I2C = ArgusV4Interfaces.I2C1
+    JETSON_POWER_MONITOR_I2C_ADDRESS = const(0x46)
 
     ########
     # SPI0 #
@@ -264,7 +264,6 @@ class ArgusV4Components:
     # PAYLOAD_IO0 = board.PAYLOAD_IO0
     # PAYLOAD_IO1 = board.PAYLOAD_IO1
     # PAYLOAD_IO2 = board.PAYLOAD_IO2
-    JETSON_SD_REQ = board.JETSON_SD_REQ
     # PAYLOAD_CS = board.PAYLOAD_nCS
     # PAYLOAD_EN = board.PAYLOAD_EN
 
@@ -281,9 +280,13 @@ class ArgusV4Components:
     #########
 
     # JETSON
-    JETSON_UART = ArgusV4Interfaces.JETSON_UART
+    JETSON_UART = ArgusV4Interfaces.JETSON_UART    # TODO: i dont think we need this here
+    JETSON_SD_REQ = digitalio.DigitalInOut(board.JETSON_SD_REQ)   # this has been wired to 5v dcdc enable
+    JETSON_SD_REQ.direction = digitalio.Direction.OUTPUT
+    JETSON_SD_REQ.value = False     # Not necessary, suggested by copilot, added just to be sure
     JETSON_ENABLE = digitalio.DigitalInOut(board.JETSON_EN)
     JETSON_ENABLE.direction = digitalio.Direction.OUTPUT
+    JETSON_ENABLE.value = False     # Not necessary, suggested by copilot, added just to be sure
 
     ########
     # MISC #
@@ -314,6 +317,8 @@ class ArgusV4(CubeSat):
         super().__init__()
 
         self.__payload_uart = ArgusV4Interfaces.JETSON_UART
+        self.__jetson_enable = ArgusV4Components.JETSON_ENABLE
+        self.__jetson_sd_req = ArgusV4Components.JETSON_SD_REQ
 
     ######################## BOOT SEQUENCE ########################
 
@@ -360,26 +365,6 @@ class ArgusV4(CubeSat):
             "RADIO_PWR": [ArgusV4Components.RADIO_POWER_MONITOR_I2C_ADDRESS, ArgusV4Components.RADIO_POWER_MONITOR_I2C],
             "GPS_PWR": [ArgusV4Components.GPS_POWER_MONITOR_I2C_ADDRESS, ArgusV4Components.GPS_POWER_MONITOR_I2C],
             "JETSON_PWR": [ArgusV4Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV4Components.JETSON_POWER_MONITOR_I2C],
-            "XP_PWR": [
-                ArgusV4Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV4Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C,
-            ],
-            "XM_PWR": [
-                ArgusV4Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV4Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C,
-            ],
-            "YP_PWR": [
-                ArgusV4Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV4Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C,
-            ],
-            "YM_PWR": [
-                ArgusV4Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV4Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C,
-            ],
-            "ZP_PWR": [
-                ArgusV4Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV4Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C,
-            ],
         }
         data = locations[location]
         try:
