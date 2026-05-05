@@ -25,7 +25,7 @@ for path in ["/hal", "/apps", "/core"]:
 
 setup_logger(level=CONFIG.LOG_LEVEL)
 
-reset_reason = microcontroller.cpu.reset_reason
+reset_reason = getattr(microcontroller.cpu, "reset_reason", None)
 print(f"Reset reason: {reset_reason}")
 logger.warning(f"Reset reason: {reset_reason}")
 

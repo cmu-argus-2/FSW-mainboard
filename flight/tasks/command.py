@@ -206,7 +206,7 @@ class Task(TemplateTask):
                         getLogger("core_logger").addHandler(file_handler)
                         self.file_logging_enabled = True
                         self.log_info("File logging enabled on SD card")
-                        self.log_warning(f"Reset reason: {microcontroller.cpu.reset_reason}")
+                        self.log_warning(f"Reset reason: {getattr(microcontroller.cpu, 'reset_reason', None)}")
                     except Exception as e:
                         self.log_warning(f"File logging not available: {e}")
 
