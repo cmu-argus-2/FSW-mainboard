@@ -32,10 +32,10 @@ from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.logging import LEVELS as LOG_LEVELS
 from core.logging import RotatingFileHandler, getLogger
-from hal.configuration import SATELLITE
 from core.satellite_config import log_config as LOG_CONFIG
 from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
+from hal.configuration import SATELLITE
 
 FILE_PKTSIZE = 240
 COMMAND_REGISTRY = {}

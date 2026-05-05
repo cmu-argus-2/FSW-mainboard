@@ -5,9 +5,8 @@
 import gc
 import os
 
-import microcontroller
-
 import apps.command.processor as processor
+import microcontroller
 from apps.adcs.consts import Modes
 from apps.command import QUEUE_STATUS, CommandQueue
 from apps.eps.eps import EPS_POWER_FLAG
