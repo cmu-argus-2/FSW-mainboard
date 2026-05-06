@@ -4,27 +4,31 @@ import hal.drivers.errors as Errors
 
 class Watchdog:
     def __init__(self, enable_pin: object, input: object):
+        self.__enable_pin = enable_pin
+
         self.__enable = digitalio.DigitalInOut(enable_pin)
-        self.__enable.direction = digitalio.Direction.OUTPUT
-        self.__enable.value = False
-        self.__en_val = False  # Error handling
+        self.__enable.switch_to_output(True, digitalio.DriveMode.PUSH_PULL)
+        self.__en_val = True  # Error handling
 
         self.__input = digitalio.DigitalInOut(input)
         self.__input.direction = digitalio.Direction.OUTPUT
-        self.__input.value = True
-        self.__input_val = True  # Error handling
+        self.__input.value = False
+        self.__input_val = False  # Error handling
 
     def enable(self):
-        self.__enable.value = True
-        self.__en_val = True
+        if not self.__en_val:
+            self.__enable = digitalio.DigitalInOut(self.__enable_pin)
+            self.__enable.switch_to_output(True, digitalio.DriveMode.PUSH_PULL)
+            self.__en_val = True
+
+    def disable(self):
+        if self.__en_val:
+            self.__enable.deinit()
+            self.__en_val = False
 
     @property
     def enabled(self):
-        return self.__enable.value
-
-    def disable(self):
-        self.__enable.value = False
-        self.__en_val = False
+        return self.__en_val
 
     def input_high(self):
         self.__input.value = True
@@ -50,8 +54,11 @@ class Watchdog:
         return results
 
     def deinit(self):
-        self.__enable.deinit()
-        self.__enable = None
+        if self.__en_val:
+            self.__enable.deinit()
+            self.__enable = None
+            self.__en_val = False
         self.__input.deinit()
         self.__input = None
+        self.__input_val = False
         return
