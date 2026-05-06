@@ -232,10 +232,10 @@ class ArgusV4Components:
 
     # ZP SUN SENSOR
     SUN_SENSOR_ZP_I2C = ArgusV4Interfaces.I2C1
-    SUN_SENSOR_ZP1_I2C_ADDRESS = const(0x54)
-    SUN_SENSOR_ZP2_I2C_ADDRESS = const(0x55)
-    SUN_SENSOR_ZP3_I2C_ADDRESS = const(0x56)
-    SUN_SENSOR_ZP4_I2C_ADDRESS = const(0x57)
+    SUN_SENSOR_ZP_XP_I2C_ADDRESS = const(0x54)
+    SUN_SENSOR_ZP_YM_I2C_ADDRESS = const(0x55)
+    SUN_SENSOR_ZP_XM_I2C_ADDRESS = const(0x56)
+    SUN_SENSOR_ZP_YP_I2C_ADDRESS = const(0x57)
 
     # BATTERY BOARD FUEL GAUGE
     FUEL_GAUGE_I2C = ArgusV4Interfaces.I2C1
@@ -453,10 +453,10 @@ class ArgusV4(CubeSat):
             "LIGHT_YP": [ArgusV4Components.LIGHT_SENSOR_YP_I2C_ADDRESS, ArgusV4Components.LIGHT_SENSOR_YP_I2C],
             "LIGHT_YM": [ArgusV4Components.LIGHT_SENSOR_YM_I2C_ADDRESS, ArgusV4Components.LIGHT_SENSOR_YM_I2C],
             "LIGHT_ZM": [ArgusV4Components.LIGHT_SENSOR_ZM_I2C_ADDRESS, ArgusV4Components.LIGHT_SENSOR_ZM_I2C],
-            "LIGHT_ZP_1": [ArgusV4Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
-            "LIGHT_ZP_2": [ArgusV4Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
-            "LIGHT_ZP_3": [ArgusV4Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
-            "LIGHT_ZP_4": [ArgusV4Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_XP": [ArgusV4Components.SUN_SENSOR_ZP_XP_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_YM": [ArgusV4Components.SUN_SENSOR_ZP_YM_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_XM": [ArgusV4Components.SUN_SENSOR_ZP_XM_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_YP": [ArgusV4Components.SUN_SENSOR_ZP_YP_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
         }
 
         from hal.drivers.opt4003 import OPT4003

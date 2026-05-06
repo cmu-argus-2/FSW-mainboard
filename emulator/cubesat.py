@@ -66,10 +66,10 @@ class CubeSat:
                 # ("LIGHT_YP", Device(self.__light_sensor_boot, ASIL2)),
                 # ("LIGHT_YM", Device(self.__light_sensor_boot, ASIL2)),
                 # ("LIGHT_ZM", Device(self.__light_sensor_boot, ASIL2)),
-                # ("LIGHT_ZP_1", Device(self.__light_sensor_boot, ASIL2)),
-                # ("LIGHT_ZP_2", Device(self.__light_sensor_boot, ASIL2)),
-                # ("LIGHT_ZP_3", Device(self.__light_sensor_boot, ASIL2)),
-                # ("LIGHT_ZP_4", Device(self.__light_sensor_boot, ASIL2)),
+                # ("LIGHT_ZP_XP", Device(self.__light_sensor_boot, ASIL2)),
+                # ("LIGHT_ZP_YM", Device(self.__light_sensor_boot, ASIL2)),
+                # ("LIGHT_ZP_XM", Device(self.__light_sensor_boot, ASIL2)),
+                # ("LIGHT_ZP_YP", Device(self.__light_sensor_boot, ASIL2)),
             ]
         )
         self.__errors = {
@@ -97,10 +97,10 @@ class CubeSat:
             "LIGHT_YP": [],
             "LIGHT_YM": [],
             "LIGHT_ZM": [],
-            "LIGHT_ZP_1": [],
-            "LIGHT_ZP_2": [],
-            "LIGHT_ZP_3": [],
-            "LIGHT_ZP_4": [],
+            "LIGHT_ZP_XP": [],
+            "LIGHT_ZP_YM": [],
+            "LIGHT_ZP_XM": [],
+            "LIGHT_ZP_YP": [],
         }
         # Debugging
         self._time_ref_boot = int(time.monotonic())
