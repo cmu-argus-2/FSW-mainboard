@@ -52,7 +52,7 @@ class Task(TemplateTask):
         self.name = "COMMAND"
         self.time_ref_set = False
         self.boot_count = 0
-        self.boot_count_initialized = False
+        self.restored = False
 
         # Transition status from ADCS and EPS
         self.ADCS_MODE = Modes.STABLE
@@ -123,24 +123,33 @@ class Task(TemplateTask):
         if SATELLITE.NEOPIXEL_AVAILABLE:
             SATELLITE.NEOPIXEL.fill([255, 255, 255])
 
-        # Check time_since_boot
-        time_since_boot = TPM.monotonic() - SATELLITE.BOOTTIME
+        # Restore boot count from previous session
+        if not self.restored:
+            if not DH.data_process_exists("cdh"):
+                data_format = "LLbLbbbbb"
+                DH.register_data_process("cdh", data_format, True, data_limit=100000)
 
-        if not self.boot_count_initialized:
-            if DH.SD_SCANNED() and DH.data_process_exists("cdh"):
-                cdh_data = DH.get_latest_data("cdh")
-
-                if cdh_data:
+            if SATELLITE.SD_CARD_AVAILABLE:
+                cdh_data = DH.data_process_registry["cdh"].get_latest_data()
+                if cdh_data is not None:
                     self.boot_count = cdh_data[CDH_IDX.BOOT_COUNT] + 1
                     self.log_info(f"Restored boot count to {self.boot_count}")
                 else:
-                    self.boot_count = 0
-                    self.log_info("Restarting boot count at 0")
+                    self.boot_count = 1
+                    self.log_info("SD card is available, but no CDH data was found; starting boot count at 1")
             else:
-                self.boot_count = 0
-                self.log_info("SD card is not available; restarting boot count at 0")
+                self.boot_count = 1
+                self.log_info("SD card is not available; starting boot count at 1")
 
-            self.boot_count_initialized = True
+            self.restored = True
+
+            # Log boot count immediately during startup
+            self.log_data[CDH_IDX.TIME] = TPM.time()
+            self.log_data[CDH_IDX.BOOT_COUNT] = self.boot_count
+            DH.log_data("cdh", self.log_data)
+
+        # Check time_since_boot
+        time_since_boot = TPM.monotonic() - SATELLITE.BOOTTIME
 
         """
         In case the RTC has died, the TPM uses a time reference for time keeping
