@@ -1610,7 +1610,7 @@ class DataHandler:
     def update_SD_usage(cls) -> None:
         cls._SD_USAGE = cls.fs_sd_size()
 
-    @classmethod 
+    @classmethod
     def fs_sd_size(cls):
         """
         Will return the size of the sd card in bytes according to the file system information

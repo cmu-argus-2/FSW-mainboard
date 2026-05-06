@@ -155,7 +155,10 @@ class Frame:
             "gps",
             "payload",
             "cmd_logs",
+            "hal",
+            "eps_warning"
         ]  # storage subsystem works differently so we need a separate list for it
+
         idx_list = [CDH_IDX, STORAGE_IDX]  # this is used to match the ss to the dh constants
         # get the latest data from each subsystem
         dh_data_list = [cls.get_dh_latest_data(x) for x in ss_list]  # storage subsytem works differently
