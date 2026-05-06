@@ -35,7 +35,7 @@ _PAYLOAD_TESTING_MODE = CONFIG.PAYLOAD_TESTING_MODE
 
 class Task(TemplateTask):
     # To be removed
-    # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "REBOOT_COUNT",
+    # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "BOOT_COUNT",
     # "WATCHDOG_TIMER", "HAL_BITFLAGS", "DETUMBLING_ERROR_FLAG"]
 
     log_data = [0] * 9
@@ -51,6 +51,8 @@ class Task(TemplateTask):
         super().__init__(id)
         self.name = "COMMAND"
         self.time_ref_set = False
+        self.boot_count = 0
+        self.boot_count_initialized = False
 
         # Transition status from ADCS and EPS
         self.ADCS_MODE = Modes.STABLE
@@ -123,6 +125,22 @@ class Task(TemplateTask):
 
         # Check time_since_boot
         time_since_boot = TPM.monotonic() - SATELLITE.BOOTTIME
+
+        if not self.boot_count_initialized:
+            if DH.SD_SCANNED() and DH.data_process_exists("cdh"):
+                cdh_data = DH.get_latest_data("cdh")
+
+                if cdh_data:
+                    self.boot_count = cdh_data[CDH_IDX.BOOT_COUNT] + 1
+                    self.log_info(f"Restored boot count to {self.boot_count}")
+                else:
+                    self.boot_count = 0
+                    self.log_info("Restarting boot count at 0")
+            else:
+                self.boot_count = 0
+                self.log_info("SD card is not available; restarting boot count at 0")
+
+            self.boot_count_initialized = True
 
         """
         In case the RTC has died, the TPM uses a time reference for time keeping
@@ -445,7 +463,7 @@ class Task(TemplateTask):
             self.log_data[CDH_IDX.SC_STATE] = SM.current_state
             self.log_data[CDH_IDX.SD_USAGE] = int(DH.SD_usage() / 1000)  # kb - gets updated in the OBDH task
             self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = self.get_memory_usage()
-            self.log_data[CDH_IDX.REBOOT_COUNT] = 0
+            self.log_data[CDH_IDX.BOOT_COUNT] = self.boot_count
             self.log_data[CDH_IDX.WATCHDOG_TIMER] = 0
             self.log_data[CDH_IDX.HAL_BITFLAGS] = 0
 
