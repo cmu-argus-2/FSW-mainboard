@@ -1,28 +1,25 @@
 """
     MODE DETERMINATION
 """
-import apps.adcs.sensors as sensors
 from apps.adcs.consts import ControllerConst, ControllerModes, Modes, StatusConst
 from ulab import numpy as np
 
 
-def update_mode(current_mode, ctr_mode) -> int:
+def update_mode(current_mode, ctr_mode, gyro_status, omega, sun_status=None, sun_pos_body=None) -> int:
     """
     - Returns the current mode of the ADCS
     """
     if ctr_mode in [ControllerModes.BCROSS, ControllerModes.BDOT]:
-        return update_mode_detumbling(current_mode)
+        return update_mode_detumbling(current_mode, gyro_status, omega)
     if ctr_mode == ControllerModes.SUN_POINTING:
-        return update_mode_sun_pointing(current_mode)
+        return update_mode_sun_pointing(current_mode, gyro_status, omega, sun_status, sun_pos_body)
     raise ValueError(f"Invalid Controller Mode {ctr_mode}")
 
 
-def update_mode_detumbling(current_mode) -> int:
+def update_mode_detumbling(current_mode, gyro_status, omega) -> int:
     """
     Returns the current mode of the ADCS for a detumbling-only controller
     """
-    gyro_status, omega = sensors.read_gyro()
-
     # Fail-safe STABLE mode if IMU fails
     if gyro_status != StatusConst.OK:
         return Modes.STABLE
@@ -51,13 +48,10 @@ def update_mode_detumbling(current_mode) -> int:
     raise ValueError(f"Invalid Current Mode {current_mode}")
 
 
-def update_mode_sun_pointing(current_mode) -> int:
+def update_mode_sun_pointing(current_mode, gyro_status, omega, sun_status, sun_pos_body) -> int:
     """
     Returns the current mode of the ADCS for a spin-stabilized sun-pointing controller
     """
-    gyro_status, omega = sensors.read_gyro()
-    sun_status, sun_pos_body, _ = sensors.read_sun_position()
-
     # Fail-safe STABLE mode if IMU or sun acquisition fails
     if gyro_status != StatusConst.OK:
         return Modes.STABLE

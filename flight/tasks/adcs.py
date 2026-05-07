@@ -101,7 +101,7 @@ class Task(TemplateTask):
         else:
             if not DH.data_process_exists("adcs"):
                 data_format = "LBB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B"  # + 4 * "f"
-                DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=5)
+                DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=2)
 
             ControllerModes.load()
 
@@ -112,6 +112,12 @@ class Task(TemplateTask):
             self.time = TPM.time()
             self.log_data[ADCS_IDX.TIME_ADCS] = self.time
 
+            self._update_mag()
+            self.gyro_status, self.gyro_data = sensors.read_gyro()
+            self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
+
+            self.log()
+
             # ------------------------------------------------------------------------------------------------------------------------------------
             # DETUMBLING
             # ------------------------------------------------------------------------------------------------------------------------------------
@@ -120,11 +126,14 @@ class Task(TemplateTask):
                 if sensors.get_gyro_scale != 0:
                     sensors.set_gyro_scale(0)
 
-                # Run 1.2 s control cycle (4 cycles × 300 ms)
-                self._run_control_cycle(0.3, 4)
+                if self.CONTROLLER_MODE == ControllerModes.BDOT:
+                    self._bdot_cycle()
+                else:
+                    self._bcross_sun_cycle(1.2)
 
-                # Check if detumbling has been completed
-                self.MODE = update_mode(self.MODE, self.CONTROLLER_MODE)
+                self.MODE = update_mode(
+                    self.MODE, self.CONTROLLER_MODE, self.gyro_status, self.gyro_data, self.sun_status, self.sun_pos_body
+                )
 
             # ------------------------------------------------------------------------------------------------------------------------------------
             # LOW POWER
@@ -137,30 +146,20 @@ class Task(TemplateTask):
             # NOMINAL
             # ------------------------------------------------------------------------------------------------------------------------------------
             else:
-                if (
-                    SM.current_state == STATES.NOMINAL
-                    and not DH.get_latest_data("cdh")[CDH_IDX.DETUMBLING_ERROR_FLAG]
-                    and update_mode(self.MODE, self.CONTROLLER_MODE) == Modes.TUMBLING
-                ):
-                    # Do not allow a switch to Detumbling from Low power
-                    self.MODE = Modes.TUMBLING
+                # Set bmx160 scale to 125 deg/s, max resolution
+                if sensors.get_gyro_scale != 4:
+                    sensors.set_gyro_scale(4)
 
+                if self.CONTROLLER_MODE == ControllerModes.BDOT:
+                    self._bdot_cycle()
                 else:
-                    # Set bmx160 scale to 125 deg/s, max resolution
-                    if sensors.get_gyro_scale != 4:
-                        sensors.set_gyro_scale(4)
+                    self._bcross_sun_cycle(1.0)
 
-                    # Run two 500ms control cycles
-                    self._run_control_cycle(0.5, 2)
-
-                    # Identify Mode based on current sensor readings
-                    new_mode = update_mode(self.MODE, self.CONTROLLER_MODE)
-                    if new_mode != self.MODE:
-                        self.MODE = new_mode
-
-            # Log data
-            # NOTE: In detumbling, most of the log will be zeros since very few sensors are queried
-            self.log()
+                new_mode = update_mode(
+                    self.MODE, self.CONTROLLER_MODE, self.gyro_status, self.gyro_data, self.sun_status, self.sun_pos_body
+                )
+                if new_mode != self.MODE:
+                    self.MODE = new_mode
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ Attitude Control Auxiliary Functions """
@@ -215,17 +214,6 @@ class Task(TemplateTask):
         else:
             self.ensure_coils_off()
 
-    def _run_control_cycle(self, cycle_duration, num_cycles):
-        """
-        Dispatches to the appropriate control cycle.
-        cycle_duration: duration of one cycle in seconds (0.5 s nominal).
-        num_cycles: how many cycles to execute (2 for detumbling, 1 for nominal).
-        """
-        if self.CONTROLLER_MODE == ControllerModes.BDOT:
-            self._bdot_cycle()
-        else:
-            self._bcross_sun_cycle(cycle_duration * num_cycles)
-
     def _bdot_cycle(self):
         """
         B-dot control cycle: sample 6 mag readings, run coils, coils off.
@@ -256,23 +244,18 @@ class Task(TemplateTask):
         TPM.sleep(self._BDOT_COIL_ON_TIME)
         self.ensure_coils_off()
 
-        self.gyro_status, self.gyro_data = sensors.read_gyro()
-
     def _bcross_sun_cycle(self, duration):
         """
         B-cross / Sun-pointing control cycle:
-          1. Read magnetometer and sun sensor at the beginning
-          2. Update ADCS mode based on fresh readings
-          3. Every 50 ms for duration seconds:
+          1. Update ADCS mode based on snapshot readings
+          2. Every 50 ms for duration seconds:
              read gyro and update the control law / coils
              (future: propagate sun and mag vectors with gyro)
-          4. Coils off at the end
+          3. Coils off at the end
         """
-        self._update_mag()
-        self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
-        self.gyro_status, self.gyro_data = sensors.read_gyro()
-
-        new_mode = update_mode(self.MODE, self.CONTROLLER_MODE)
+        new_mode = update_mode(
+            self.MODE, self.CONTROLLER_MODE, self.gyro_status, self.gyro_data, self.sun_status, self.sun_pos_body
+        )
         if new_mode != self.MODE:
             self.MODE = new_mode
 
