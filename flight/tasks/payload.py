@@ -240,9 +240,9 @@ class Task(TemplateTask):
             PC.send_confirm_last_batch(command)
 
             self.log_info(
-                f"Sent CONFIRM_LAST_BATCH: tid={status['current_tid']}," +
-                f" bitmap_high=0x{bitmap_high:08X}, bitmap_low=0x{bitmap_low:08X}," +
-                f" missing={status['missing_fragments']}"
+                f"Sent CONFIRM_LAST_BATCH: tid={status['current_tid']},"
+                + f" bitmap_high=0x{bitmap_high:08X}, bitmap_low=0x{bitmap_low:08X},"
+                + f" missing={status['missing_fragments']}"
             )
 
             # Check if file is complete

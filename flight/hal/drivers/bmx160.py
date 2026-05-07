@@ -447,10 +447,10 @@ class BMX160:
         # Returns compensated magnetic field in µT using BMM150 factory trim (datasheet Appendix 1).
         # Falls back to flat 1/16 scalar if trim was not read (dig_xyz1 == 0).
         raw = self._mag
-        x_adc = raw[0] >> 3   # 13-bit signed
-        y_adc = raw[1] >> 3   # 13-bit signed
-        z_adc = raw[2] >> 1   # 15-bit signed
-        rhall = raw[3] >> 2   # 14-bit unsigned
+        x_adc = raw[0] >> 3  # 13-bit signed
+        y_adc = raw[1] >> 3  # 13-bit signed
+        z_adc = raw[2] >> 1  # 15-bit signed
+        rhall = raw[3] >> 2  # 14-bit unsigned
 
         if self._dig_xyz1 == 0:
             return (x_adc * self.MAG_SCALAR, y_adc * self.MAG_SCALAR, z_adc * self.MAG_SCALAR)
@@ -477,7 +477,7 @@ class BMX160:
         p1 = self._dig_xy2 * (p0 * p0 / 268435456.0)
         p2 = p1 + p0 * self._dig_xy1 / 16384.0
         p4 = y_adc * ((p2 + 256.0) * (self._dig_y2 + 160.0))
-        return (p4 / 8192.0 + self._dig_y1 * 8.0) / 16.0        
+        return (p4 / 8192.0 + self._dig_y1 * 8.0) / 16.0
 
     def _compensate_z(self, z_adc, rhall):
         if z_adc == _BMM150_OVERFLOW_ZAXIS:
@@ -490,7 +490,7 @@ class BMX160:
         p3 = self._dig_z2 + (self._dig_z1 * rhall / 32768.0)
         if p3 == 0:
             return 0.0
-        p5 = (p0 * 131072.0 - p2)
+        p5 = p0 * 131072.0 - p2
         return p5 / (p3 * 64.0)
 
     def temperature(self):
@@ -750,7 +750,7 @@ class BMX160:
         time.sleep(0.00065)  # datasheet says wait for 650microsec
         self.write_u8(_BMX160_MAG_IF_0_ADDR, 0x80)
         self._bmm150_write(0x4B, 0x01)  # put MAG into sleep mode
-        self._read_trim()               # reads trim registers; leaves MAG_IF[0] in burst mode
+        self._read_trim()  # reads trim registers; leaves MAG_IF[0] in burst mode
         self.write_u8(_BMX160_MAG_IF_0_ADDR, 0x80)  # restore manual mode, burst=1
         # Low Power
         # self._bmm150_write(0x51, 0x01)
