@@ -30,7 +30,6 @@ _PWM_MIN = const(0)  # Minimum PWM value for deployment
 _FIRST_PWM = const(2)  # First PWM to start deployment
 _BURN_WIRE_TIMEOUT = CONFIG.BURN_WIRE_TIMEOUT  # number of tries
 _DEPLOYMENT_DISTANCE = const(2)  # distance(cm) threshold for deployment
-_PAYLOAD_TESTING_MODE = CONFIG.PAYLOAD_TESTING_MODE
 _SKIP_DEPLOYMENT = CONFIG.SKIP_DEPLOYMENT
 
 
@@ -446,6 +445,7 @@ class Task(TemplateTask):
 
             # Set CDH log data
             self.log_data[CDH_IDX.TIME] = TPM.time()
+            self.log_data[CDH_IDX.BOOT_TIME] = TPM.monotonic() - SATELLITE.BOOTTIME
             self.log_data[CDH_IDX.SC_STATE] = SM.current_state
             self.log_data[CDH_IDX.SD_USAGE] = int(DH.SD_usage() / 1000)  # kb - gets updated in the OBDH task
             self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = self.get_memory_usage()

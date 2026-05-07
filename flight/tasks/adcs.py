@@ -47,9 +47,9 @@ class Task(TemplateTask):
         "LIGHT_SENSOR_YP",
         "LIGHT_SENSOR_YM",
         "LIGHT_SENSOR_ZP_XP",
-        "LIGHT_SENSOR_ZP_YP",
-        "LIGHT_SENSOR_ZP_XM",
         "LIGHT_SENSOR_ZP_YM",
+        "LIGHT_SENSOR_ZP_XM",
+        "LIGHT_SENSOR_ZP_YP",
         "LIGHT_SENSOR_ZM",
         "XP_COIL_STATUS",
         "XM_COIL_STATUS",
@@ -328,9 +328,9 @@ class Task(TemplateTask):
         self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = int(self.sun_lux[3]) & 0xFFFF
         self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(self.sun_lux[4]) & 0xFFFF
         self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_XP] = int(self.sun_lux[5]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_YP] = int(self.sun_lux[6]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_YM] = int(self.sun_lux[6]) & 0xFFFF
         self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_XM] = int(self.sun_lux[7]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_YM] = int(self.sun_lux[8]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_YP] = int(self.sun_lux[8]) & 0xFFFF
         self.log_data[ADCS_IDX.XP_COIL_STATUS] = int(self.coil_status[0])
         self.log_data[ADCS_IDX.XM_COIL_STATUS] = int(self.coil_status[1])
         self.log_data[ADCS_IDX.YP_COIL_STATUS] = int(self.coil_status[2])

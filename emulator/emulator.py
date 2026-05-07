@@ -70,9 +70,9 @@ class EmulatedSatellite(CubeSat):
         self.append_device("LIGHT_YP", None, LightSensor("YP", simulator=self.__simulated_spacecraft), ASIL=2)
         self.append_device("LIGHT_YM", None, LightSensor("YM", simulator=self.__simulated_spacecraft), ASIL=2)
         self.append_device("LIGHT_ZP_XP", None, LightSensor("ZP_XP", simulator=self.__simulated_spacecraft), ASIL=2)
-        self.append_device("LIGHT_ZP_YP", None, LightSensor("ZP_YP", simulator=self.__simulated_spacecraft), ASIL=2)
-        self.append_device("LIGHT_ZP_XM", None, LightSensor("ZP_XM", simulator=self.__simulated_spacecraft), ASIL=2)
         self.append_device("LIGHT_ZP_YM", None, LightSensor("ZP_YM", simulator=self.__simulated_spacecraft), ASIL=2)
+        self.append_device("LIGHT_ZP_XM", None, LightSensor("ZP_XM", simulator=self.__simulated_spacecraft), ASIL=2)
+        self.append_device("LIGHT_ZP_YP", None, LightSensor("ZP_YP", simulator=self.__simulated_spacecraft), ASIL=2)
         self.append_device("LIGHT_ZM", None, LightSensor("ZM", simulator=self.__simulated_spacecraft), ASIL=2)
 
         self._torque_drivers = TorqueCoilArray(simulator=self.__simulated_spacecraft)

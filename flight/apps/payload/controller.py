@@ -195,6 +195,27 @@ class PayloadController:
         return True
 
     @classmethod
+    def clear_experiment_list(cls):
+        """
+        This will clear the list of scheduled experiments in the payload
+        """
+        cleared_count = len(cls.command_list)
+        cls.command_list = []
+        logger.info(f"[PAYLOAD] - Cleared experiment list (count: {cleared_count})")
+        cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = 0
+
+        return cleared_count
+
+    @classmethod
+    def list_experiments(cls):
+        """
+        This will return the list of scheduled experiments in the payload
+        """
+        return [command[0] for command in cls.command_list]  # return the timestamps of the scheduled commands
+
+        return True
+
+    @classmethod
     def add_command(
         cls,
         ts,
@@ -299,7 +320,7 @@ class PayloadController:
         """
         Returns the first command in the list
         """
-        return cls.command_list[0]
+        return cls.command_list[0] if cls.command_available() else None
 
     @classmethod
     def remove_first_command(cls):

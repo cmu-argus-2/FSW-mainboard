@@ -29,9 +29,12 @@ class hal_monitor_config:
 
 
 class comms_config:
-    ARGUS_ID = const(0x0)
     HB_PERIOD = const(30)
     AUTH_ENABLED = True
     AUTH_KEY_HEX = "d6172b38acb7d2a28e21662f689d1d15ad78ccc888a9c7a78ef58cb61b0f1e32"
-    SC_CALLSIGN = "CT6xxx"
-    GS_CALLSIGN = "CSXXXX"
+    SC_CALLSIGN = "CT6ARG"
+    GS_CALLSIGN = "CS5CEP"
+
+
+class digipeater_config:
+    RX_QUEUE_MAX = const(5)

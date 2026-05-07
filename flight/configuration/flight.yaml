@@ -53,6 +53,13 @@ comms:
   GS_CALLSIGN:
     value: "CS5CEP"
 
+# Digipeater Task
+digipeater:
+  RX_QUEUE_MAX:
+    value: 5
+    _const: true
+
+
 # ADCS Task
 adcs:
   CONTROLLER_MODE: 0
