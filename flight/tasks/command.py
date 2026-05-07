@@ -223,7 +223,7 @@ class Task(TemplateTask):
                     if self.deploymentPWM < _PWM_MIN and deployment_time_check:
                         self.deploymentTries += 1
                         if self.check_deployment_status() or self.deploymentTries >= _BURN_WIRE_TIMEOUT:
-                            self.log_info("Deployment complete")
+                            self.log_warning("Deployment complete")
                             self.deployment_done = True
                             SATELLITE.BURN_WIRES.turn_off_pwm(self.deploymentPWM + 1)
                             SATELLITE.BURN_WIRES.disable_driver()
@@ -242,7 +242,7 @@ class Task(TemplateTask):
                 if self.deployment_done:
                     # T0: Boot over and deployment complete
                     SM.switch_to(STATES.DETUMBLING)
-                    self.log_info("T0: Transition from STARTUP to DETUMBLING")
+                    self.log_warning("T0: Transition from STARTUP to DETUMBLING")
 
     def state_machine_execution(self):
         # ------------------------------------------------------------------------------------------------------------------------------------
@@ -349,12 +349,12 @@ class Task(TemplateTask):
             """Transitions out of DETUMBLING"""
             if self.ADCS_MODE != Modes.TUMBLING or self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] == 1:
                 # T1.1: Spin stabilized OR detumbling error flag is set, transition to NOMINAL
-                self.log_info("T1.1: Transition from DETUMBLING to NOMINAL")
+                self.log_warning("T1.1: Transition from DETUMBLING to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
 
             elif self.EPS_MODE == EPS_POWER_FLAG.LOW_POWER:
                 # T1.2: Low SoC, transition to low power
-                self.log_info("T1.2: Transition from DETUMBLING to LOW POWER")
+                self.log_warning("T1.2: Transition from DETUMBLING to LOW POWER")
                 SM.switch_to(STATES.LOW_POWER)
 
             else:
@@ -375,17 +375,17 @@ class Task(TemplateTask):
             """Transitions out of NOMINAL"""
             if self.ADCS_MODE == Modes.TUMBLING and self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] != 1:
                 # T2.1: Tumbling again AND detumbling error flag is not set, transition to DETUMBLING
-                self.log_info("T2.1: Transition from NOMINAL to DETUMBLING")
+                self.log_warning("T2.1: Transition from NOMINAL to DETUMBLING")
                 SM.switch_to(STATES.DETUMBLING)
 
             elif self.EPS_MODE == EPS_POWER_FLAG.LOW_POWER:
                 # T2.2: Low SoC, transition to low power
-                self.log_info("T2.3: Transition from NOMINAL to LOW POWER")
+                self.log_warning("T2.3: Transition from NOMINAL to LOW POWER")
                 SM.switch_to(STATES.LOW_POWER)
 
             elif self.PAYLOAD_MODE == PayloadState.WATCHING:
                 # T2.3: Payload commanded to start watching, transition to EXPERIMENT
-                self.log_info("T2.4: Transition from NOMINAL to EXPERIMENT")
+                self.log_warning("T2.4: Transition from NOMINAL to EXPERIMENT")
                 SM.switch_to(STATES.EXPERIMENT)
             else:
                 # No transition, stay in NOMINAL
@@ -403,7 +403,7 @@ class Task(TemplateTask):
             """Transitions out of LOW_POWER"""
             if self.EPS_MODE != EPS_POWER_FLAG.LOW_POWER:
                 # T3.1: Nominal or high SoC, transition out of low power
-                self.log_info("T3.1: Transition from LOW POWER to NOMINAL")
+                self.log_warning("T3.1: Transition from LOW POWER to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
 
             else:
@@ -422,17 +422,17 @@ class Task(TemplateTask):
             """Transitions out of EXPERIMENT"""
             if self.PAYLOAD_MODE == PayloadState.FAIL or self.PAYLOAD_MODE == PayloadState.IDLE:
                 # T4.1: Experiment has finished or failed, transition to NOMINAL
-                self.log_info("T4.1: Transition from EXPERIMENT to NOMINAL")
+                self.log_warning("T4.1: Transition from EXPERIMENT to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
 
             elif self.EPS_MODE == EPS_POWER_FLAG.LOW_POWER:
                 # T4.2: Low SoC, transition to LOW_POWER
-                self.log_info("T4.2: Transition from EXPERIMENT to LOW POWER")
+                self.log_warning("T4.2: Transition from EXPERIMENT to LOW POWER")
                 SM.switch_to(STATES.LOW_POWER)
 
             elif self.ADCS_MODE == Modes.TUMBLING and self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] != 1:
                 # T4.3: Tumbling again AND detumbling error flag is not set, transition to DETUMBLING
-                self.log_info("T4.3: Transition from EXPERIMENT to DETUMBLING")
+                self.log_warning("T4.3: Transition from EXPERIMENT to DETUMBLING")
                 SM.switch_to(STATES.DETUMBLING)
 
             else:
