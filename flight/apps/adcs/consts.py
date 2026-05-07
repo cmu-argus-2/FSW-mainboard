@@ -195,7 +195,7 @@ class ControllerConst:
     SPIN_STABILIZING_GAIN = 2.0e07
 
     # Detumbling Constants
-    BDOT_GAIN = 2.0e4
+    BDOT_GAIN = 1.0e5
     BCROSS_GAIN = 2.0e4
 
 
