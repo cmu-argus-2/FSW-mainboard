@@ -20,9 +20,9 @@ Author: Ibrahima S. Sow
 """
 
 import supervisor
+from apps.adcs.consts import ControllerModes
 from apps.command.supervisor import CommandSupervisor
 from apps.comms.comms import SATELLITE_RADIO
-from apps.adcs.consts import ControllerModes
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.comms.modes import COMMS_MODE as COMMS_MODE_ID
 from apps.comms.modes import COMMS_MODE_STR
@@ -143,6 +143,7 @@ def GET_COMMAND_LIST(skip_elements=0):
     It should give the command name and id
     """
     from apps.telemetry.splat.splat.telemetry_definition import command_list
+
     return command_list[skip_elements:]
 
 
@@ -463,7 +464,7 @@ def INIT_TRANS(tid, number_of_packets):
 def ADCS_CTRL_MODE(mode_id):
     """Sends a command to change the ADCS controller mode."""
     logger.info(f"Executing ADCS_CTRL_MODE with mode_id: {mode_id}")
-    
+
     if not ((isinstance(mode_id, int)) and 0 <= mode_id <= 2):
         logger.error(f"[ADCS] - Failed ADCS_CTRL_MODE, invalid mode_id {mode_id}")
         return [-1]
@@ -472,7 +473,7 @@ def ADCS_CTRL_MODE(mode_id):
     if valid:
         return [ControllerModes.current_mode]
     else:
-        logger.error(f"[ADCS] - Failed ADCS_CTRL_MODE, update_mode call fail")
+        logger.error("[ADCS] - Failed ADCS_CTRL_MODE, update_mode call fail")
         return [-1]
 
 
@@ -519,7 +520,9 @@ def DELETE_ALL_FILES():
 
     try:
         DH.delete_all_files()
-        supervisor.reload()  # reload after deleting all files to clear any references to deleted files in memory and reset the state of the satellite
+        # reload after deleting all files to clear any references to deleted files
+        # in memory and reset the state of the satellite
+        supervisor.reload()
     except Exception as e:
         return [f"error: {e}"]
     return ["all files deleted"]
