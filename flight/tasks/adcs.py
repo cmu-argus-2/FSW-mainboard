@@ -14,16 +14,12 @@ from apps.adcs.modemanager import update_mode
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
-from core.dh_constants import ADCS_IDX, CDH_IDX, class_length
+from core.dh_constants import ADCS_IDX, class_length
 from core.satellite_config import adcs_config as CONFIG
 from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 from ulab import numpy as np
 
-"""
-    ASSUMPTIONS :
-        - ADCS Task runs at 5 Hz (TBD if we can't handle this)
-"""
 _IDX_LENGTH = class_length(ADCS_IDX)
 
 
@@ -155,11 +151,9 @@ class Task(TemplateTask):
                 else:
                     self._bcross_sun_cycle(1.0)
 
-                new_mode = update_mode(
+                self.MODE = update_mode(
                     self.MODE, self.CONTROLLER_MODE, self.gyro_status, self.gyro_data, self.sun_status, self.sun_pos_body
                 )
-                if new_mode != self.MODE:
-                    self.MODE = new_mode
 
     # ------------------------------------------------------------------------------------------------------------------------------------
     """ Attitude Control Auxiliary Functions """

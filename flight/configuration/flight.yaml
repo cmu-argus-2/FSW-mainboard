@@ -12,9 +12,6 @@ command:
     value: 18000  # seconds, i.e., 5 hours
     _const: true
 
-  PAYLOAD_TESTING_MODE:
-    value: false
-
   SKIP_DEPLOYMENT:
     value: false  # Must be false for flight - deployment must execute
 
