@@ -17,7 +17,7 @@ except ImportError:
 from apps.telemetry.splat.splat.telemetry_codec import Report
 from core import DataHandler as DH
 from core import logger
-from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX, GPS_IDX, PAYLOAD_IDX, STORAGE_IDX
+from core.dh_constants import ADCS_IDX, CDH_IDX, COMMS_IDX, EPS_IDX, GPS_IDX, PAYLOAD_IDX, STORAGE_IDX
 
 
 class Frame:
@@ -74,8 +74,8 @@ class Frame:
         # this will be a report
         report = Report("TM_HEARTBEAT")
 
-        ss_list = ["cdh", "eps", "adcs", "gps"]  # we need this to get the from dh, and it is case sensitive
-        idx_list = [CDH_IDX, EPS_IDX, ADCS_IDX, GPS_IDX]  # this is used to match the ss to the dh constants
+        ss_list = ["cdh", "eps", "adcs", "gps", "comms"]  # we need this to get the from dh, and it is case sensitive
+        idx_list = [CDH_IDX, EPS_IDX, ADCS_IDX, GPS_IDX, COMMS_IDX]  # this is used to match the ss to the dh constants
         # get the latest data from each subsystem
         dh_data_list = [cls.get_dh_latest_data(x) for x in ss_list]
 
