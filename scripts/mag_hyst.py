@@ -41,6 +41,8 @@ print(",".join(headers))
 for coil in COILS:
     SATELLITE.TORQUE_DRIVERS[coil].set_throttle(0)
 
+mag_measurement_times_ns = []
+
 for coil in COILS:
     for step in STEPS:
         for c in COILS:
@@ -49,7 +51,10 @@ for coil in COILS:
         time.sleep(SETTLE_TIME)
 
         curr_time = int(1e9 * time.monotonic())
+        mag_start_ns = time.monotonic_ns()
         mag = SATELLITE.IMU.mag()
+        mag_end_ns = time.monotonic_ns()
+        mag_measurement_times_ns.append(mag_end_ns - mag_start_ns)
 
         voltages = [SATELLITE.TORQUE_DRIVERS[c].__read_voltage() for c in COILS]
         currents = [SATELLITE.TORQUE_DRIVERS[c].__read_current() for c in COILS]
@@ -59,3 +64,7 @@ for coil in COILS:
 
 for coil in COILS:
     SATELLITE.TORQUE_DRIVERS[coil].set_throttle(0)
+
+if mag_measurement_times_ns:
+    avg_mag_time_ns = sum(mag_measurement_times_ns) / len(mag_measurement_times_ns)
+    print(f"Average mag measurement time (ns): {avg_mag_time_ns}")
