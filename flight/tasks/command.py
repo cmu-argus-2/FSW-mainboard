@@ -123,7 +123,6 @@ class Task(TemplateTask):
         if SATELLITE.NEOPIXEL_AVAILABLE:
             SATELLITE.NEOPIXEL.fill([255, 255, 255])
 
-        # Ensure CDH data process exists (register once)
         if not DH.data_process_exists("cdh"):
             data_format = "LLbLbbbbbb"
             DH.register_data_process("cdh", data_format, True, data_limit=100000)
@@ -131,7 +130,7 @@ class Task(TemplateTask):
         # Restore boot count and deployment status from previous session
         if not self.restored:
             if SATELLITE.SD_CARD_AVAILABLE:
-                cdh_data = DH.data_process_registry["cdh"].get_latest_data()
+                cdh_data = DH.get_latest_data("cdh")
                 if cdh_data is not None:
                     self.boot_count = cdh_data[CDH_IDX.BOOT_COUNT] + 1
                     self.deployment_done = bool(cdh_data[CDH_IDX.DEPLOYMENT_STATUS])
