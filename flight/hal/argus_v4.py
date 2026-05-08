@@ -8,6 +8,7 @@ import time
 import board
 import digitalio
 from busio import I2C, SPI, UART
+from core.satellite_config import hal_config as CONFIG
 from hal.cubesat import ASIL0, ASIL1, ASIL2, ASIL3, ASIL4, CubeSat
 from hal.drivers.errors import Errors
 from hal.drivers.objectWrapper import objectWrapper
@@ -340,7 +341,10 @@ class ArgusV4(CubeSat):
         """boot_sequence: Boot sequence for the CubeSat."""
 
         for name, device in self.__device_list.items():
-            self.__boot_device(name, device)
+            if device.ASIL != ASIL0 or CONFIG.ASIL0_EN:
+                self.__boot_device(name, device)
+            else:
+                print(f"Skipping boot for {name} as it is ASIL0")
 
     def __gps_boot(self, _) -> list[object, int]:
         """GPS_boot: Boot sequence for the GPS

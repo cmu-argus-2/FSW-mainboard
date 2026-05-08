@@ -33,3 +33,7 @@ class comms_config:
 
 class digipeater_config:
     RX_QUEUE_MAX = const(5)
+
+
+class hal_config:
+    ASIL0_EN = True
