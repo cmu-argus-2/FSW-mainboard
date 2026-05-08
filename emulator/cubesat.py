@@ -436,7 +436,6 @@ class CubeSat:
         """Starts ranging for the specific deployment sensor if available
 
         :param dir: The direction key (e.g., 'XP', 'YM', etc.)
-        :return: bool - True if ranging started successfully, False otherwise.
         """
         return
 
@@ -444,7 +443,6 @@ class CubeSat:
         """Stops ranging for the specific deployment sensor if available
 
         :param dir: The direction key (e.g., 'XP', 'YM', etc.)
-        :return: bool - True if ranging stopped successfully, False otherwise.
         """
         return
 
