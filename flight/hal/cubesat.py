@@ -545,7 +545,6 @@ class CubeSat:
         """Starts ranging for the specific deployment sensor if available
 
         :param dir: The direction key (e.g., 'XP', 'YM', etc.)
-        :return: bool - True if ranging started successfully, False otherwise.
         """
         if self.DEPLOYMENT_SENSOR_AVAILABLE(dir):
             self.__device_list["DEPLOYMENT_" + dir].device.start_ranging()
@@ -554,7 +553,6 @@ class CubeSat:
         """Stops ranging for the specific deployment sensor if available
 
         :param dir: The direction key (e.g., 'XP', 'YM', etc.)
-        :return: bool - True if ranging stopped successfully, False otherwise.
         """
         if self.DEPLOYMENT_SENSOR_AVAILABLE(dir):
             self.__device_list["DEPLOYMENT_" + dir].device.stop_ranging()

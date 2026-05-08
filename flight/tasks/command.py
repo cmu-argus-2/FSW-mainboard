@@ -130,7 +130,7 @@ class Task(TemplateTask):
         # Restore boot count and deployment status from previous session
         if not self.restored:
             if SATELLITE.SD_CARD_AVAILABLE:
-                cdh_data = DH.get_latest_data("cdh")
+                cdh_data = DH.data_process_registry["cdh"].get_latest_data()
                 if cdh_data is not None:
                     self.boot_count = cdh_data[CDH_IDX.BOOT_COUNT] + 1
                     self.deployment_done = bool(cdh_data[CDH_IDX.DEPLOYMENT_STATUS])
