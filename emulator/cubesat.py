@@ -431,6 +431,22 @@ class CubeSat:
         if self.DEPLOYMENT_SENSOR_AVAILABLE(dir):
             return self.__device_list["DEPLOYMENT_" + dir].device.distance
         return -1
+    
+    def DEPLOYMENT_SENSOR_START_RANGING(self, dir: str):
+        """Starts ranging for the specific deployment sensor if available
+
+        :param dir: The direction key (e.g., 'XP', 'YM', etc.)
+        :return: bool - True if ranging started successfully, False otherwise.
+        """
+        return
+    
+    def DEPLOYMENT_SENSOR_STOP_RANGING(self, dir: str):
+        """Stops ranging for the specific deployment sensor if available
+
+        :param dir: The direction key (e.g., 'XP', 'YM', etc.)
+        :return: bool - True if ranging stopped successfully, False otherwise.
+        """
+        return
 
     ######################## ERROR HANDLING ########################
 
