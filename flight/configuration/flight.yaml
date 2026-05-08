@@ -55,3 +55,7 @@ digipeater:
   RX_QUEUE_MAX:
     value: 5
     _const: true
+
+hal:
+  ASIL0_EN:
+    value: false
