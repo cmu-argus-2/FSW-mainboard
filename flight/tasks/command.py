@@ -21,8 +21,8 @@ from micropython import const
 
 _TPM_INIT_TIMEOUT = const(10)  # seconds
 _EXIT_STARTUP_TIMEOUT = CONFIG.EXIT_STARTUP_TIMEOUT  # Already a const in satellite_config
-_DEPLOYABLE_STRENGTH = const(15)  # 0-255
-_ANTENNA_STRENGTH = int(_DEPLOYABLE_STRENGTH / 2)
+_DEPLOYABLE_STRENGTH = const(90)  # 0-255
+_ANTENNA_STRENGTH = const(80)
 _ANTENNA_PWM = const(2)
 _ANTENNA_DEPLOYMENT_TRIES = const(2)
 _DEPLOYMENT_INTERVAL = const(5)  # seconds
@@ -37,7 +37,8 @@ class Task(TemplateTask):
     # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "BOOT_COUNT",
     # "WATCHDOG_TIMER", "HAL_BITFLAGS", "DETUMBLING_ERROR_FLAG"]
 
-    log_data = [0] * 9
+    # Ensure log_data has entries for all CDH_IDX fields (indices 0..9)
+    log_data = [0] * 10
 
     log_commands = [0] * 3
 
@@ -122,17 +123,20 @@ class Task(TemplateTask):
         if SATELLITE.NEOPIXEL_AVAILABLE:
             SATELLITE.NEOPIXEL.fill([255, 255, 255])
 
-        # Restore boot count from previous session
-        if not self.restored:
-            if not DH.data_process_exists("cdh"):
-                data_format = "LLbLbbbbb"
-                DH.register_data_process("cdh", data_format, True, data_limit=100000)
+        # Ensure CDH data process exists (register once)
+        if not DH.data_process_exists("cdh"):
+            data_format = "LLbLbbbbbb"
+            DH.register_data_process("cdh", data_format, True, data_limit=100000)
 
+        # Restore boot count and deployment status from previous session
+        if not self.restored:
             if SATELLITE.SD_CARD_AVAILABLE:
                 cdh_data = DH.data_process_registry["cdh"].get_latest_data()
                 if cdh_data is not None:
                     self.boot_count = cdh_data[CDH_IDX.BOOT_COUNT] + 1
+                    self.deployment_done = bool(cdh_data[CDH_IDX.DEPLOYMENT_STATUS])
                     self.log_info(f"Restored boot count to {self.boot_count}")
+                    self.log_info(f"Restored deployment status to {self.deployment_done}")
                 else:
                     self.boot_count = 1
                     self.log_info("SD card is available, but no CDH data was found; starting boot count at 1")
@@ -145,6 +149,7 @@ class Task(TemplateTask):
             # Log boot count immediately during startup
             self.log_data[CDH_IDX.TIME] = TPM.time()
             self.log_data[CDH_IDX.BOOT_COUNT] = self.boot_count
+            self.log_data[CDH_IDX.DEPLOYMENT_STATUS] = int(self.deployment_done)
             DH.log_data("cdh", self.log_data)
 
         # Check time_since_boot
@@ -186,10 +191,6 @@ class Task(TemplateTask):
         else:
             # If the DH successfully scanned the SD card, and it has been 5 secs since FSW boot
             if DH.SD_SCANNED() and time_since_boot > _EXIT_STARTUP_TIMEOUT:
-                if not DH.data_process_exists("cdh"):
-                    data_format = "LLbLbbbbb"
-                    DH.register_data_process("cdh", data_format, True, data_limit=100000)
-
                 if not DH.data_process_exists("cmd_logs"):
                     DH.register_data_process("cmd_logs", "LBB", True, data_limit=100000)
 
@@ -200,16 +201,13 @@ class Task(TemplateTask):
                     else True
                 )
 
-                # TODO: add deployment flag
-                if SATELLITE.BURN_WIRES_AVAILABLE:
+                if SATELLITE.BURN_WIRES_AVAILABLE and not self.deployment_done:
                     # Deployment finished when the deployment PWM reaches 0
                     if self.deploymentPWM < _PWM_MIN and deployment_time_check:
                         self.deploymentTries += 1
                         if self.check_deployment_status() or self.deploymentTries >= _BURN_WIRE_TIMEOUT:
                             self.log_info("Deployment complete")
                             self.deployment_done = True
-                            SATELLITE.BURN_WIRES.turn_off_pwm(self.deploymentPWM + 1)
-                            SATELLITE.BURN_WIRES.disable_driver()
                         else:
                             self.log_warning("Deployment not successful, retrying deployment sequence...")
                             self.deploymentPWM = _FIRST_PWM  # Reset PWM to retry deployment
@@ -219,11 +217,12 @@ class Task(TemplateTask):
                         self.last_deployment_time = TPM.monotonic()
                         self.deployment_sequence()
                 else:
-                    self.log_info("Burn wires not available, skipping deployment sequence...")
-                    self.deployment_done = True
-
-                if self.deployment_done:
+                    if not SATELLITE.BURN_WIRES_AVAILABLE and not self.deployment_done:
+                        self.log_info("Burn wires not available, skipping deployment sequence...")
                     # T0: Boot over and deployment complete
+                    if SATELLITE.BURN_WIRES_AVAILABLE:
+                        SATELLITE.BURN_WIRES.disable_driver()
+                    SATELLITE.DEPLOYMENT_SENSOR_STOP_RANGING()
                     SM.switch_to(STATES.DETUMBLING)
                     self.log_info("T0: Transition from STARTUP to DETUMBLING")
 
@@ -475,6 +474,7 @@ class Task(TemplateTask):
             self.log_data[CDH_IDX.BOOT_COUNT] = self.boot_count
             self.log_data[CDH_IDX.WATCHDOG_TIMER] = 0
             self.log_data[CDH_IDX.HAL_BITFLAGS] = 0
+            self.log_data[CDH_IDX.DEPLOYMENT_STATUS] = int(self.deployment_done)
 
             # The detumbling error flag is set in the DETUMBLING state
 

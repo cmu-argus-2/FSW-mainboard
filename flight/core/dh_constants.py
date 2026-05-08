@@ -13,6 +13,7 @@ class CDH_IDX:
     WATCHDOG_TIMER = const(6)
     HAL_BITFLAGS = const(7)
     DETUMBLING_ERROR_FLAG = const(8)
+    DEPLOYMENT_STATUS = const(9)
 
 
 class EPS_IDX:
