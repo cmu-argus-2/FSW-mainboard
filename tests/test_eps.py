@@ -13,9 +13,7 @@ from flight.apps.eps.eps import (
 
 # Invalid SOC values
 @pytest.mark.parametrize("soc", [-2, 101])
-@pytest.mark.parametrize(
-    "state", [EPS_POWER_FLAG.NONE, EPS_POWER_FLAG.LOW_POWER, EPS_POWER_FLAG.NOMINAL]
-)
+@pytest.mark.parametrize("state", [EPS_POWER_FLAG.NONE, EPS_POWER_FLAG.LOW_POWER, EPS_POWER_FLAG.NOMINAL])
 def test_invalid_soc_values(state, soc):
     assert GET_EPS_POWER_FLAG(state, soc) == EPS_POWER_FLAG.NONE
 
@@ -29,9 +27,7 @@ def test_invalid_current_state_values(state):
 
 # Low power SOC range
 @pytest.mark.parametrize("soc", [EPS_SOC_THRESHOLD.LOW_POWER_ENTRY, EPS_SOC_THRESHOLD.LOW_POWER_ENTRY / 2, 0])
-@pytest.mark.parametrize(
-    "state", [EPS_POWER_FLAG.NONE, EPS_POWER_FLAG.LOW_POWER, EPS_POWER_FLAG.NOMINAL]
-)
+@pytest.mark.parametrize("state", [EPS_POWER_FLAG.NONE, EPS_POWER_FLAG.LOW_POWER, EPS_POWER_FLAG.NOMINAL])
 def test_low_power_soc_range(state, soc):
     assert GET_EPS_POWER_FLAG(state, soc) == EPS_POWER_FLAG.LOW_POWER
 

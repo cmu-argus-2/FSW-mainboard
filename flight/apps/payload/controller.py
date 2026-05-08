@@ -137,14 +137,18 @@ class PayloadController:
         if cls.current_state == PayloadState.IDLE:
             # set the last_executed_time
             cls.current_command = None
-            # TODO: maybe should change this not interesting to know that next command is at time  0, not enough resolution for it
-            cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = 30  # arbitrary number to distinguish from command time 0
+            # TODO: maybe should change this not interesting to know that next command is at
+            # time 0, not enough resolution for it
+            # arbitrary number to distinguish from command time 0
+            cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = 30
 
         # booting state needs to turn on the satellite
         if cls.current_state == PayloadState.BOOTING:
             logger.info("[PAYLOAD] -  Turning on jetson")
             cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = 200  # starting a new experiment resetting the error
-            cls.current_command = (cls.get_first_command())  # choosing the command here, if boot fails we do not run the command again
+            cls.current_command = (
+                cls.get_first_command()
+            )  # choosing the command here, if boot fails we do not run the command again
             cls.remove_first_command()
             logger.info(f"[PAYLOAD] -  Selected command: {cls.current_command}")
             logger.info(f"[PAYLOAD] - command list size: {len(cls.command_list)}")
@@ -473,12 +477,18 @@ class PayloadController:
             logger.error("[PAYLOAD] - Data process 'payload_tm' does not exist")
             return
 
-        cls.log_data[PAYLOAD_IDX.INFERENCE_RETURN_CODE] = report.variables["PAYLOAD_TM"]["INFERENCE_RETURN_CODE"]
-        cls.log_data[PAYLOAD_IDX.SYSTEM_TIME] = report.variables["PAYLOAD_TM"]["SYSTEM_TIME"]
-        cls.log_data[PAYLOAD_IDX.SYSTEM_UPTIME] = report.variables["PAYLOAD_TM"]["SYSTEM_UPTIME"]
-        # cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME] = report.variables["PAYLOAD_TM"]["LAST_EXECUTED_CMD_TIME"]  # this is not filled by jetson
-        # cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_ID] = report.variables["PAYLOAD_TM"]["LAST_EXECUTED_CMD_ID"]      # this is not filled by jetson
-        # cls.log_data[PAYLOAD_IDX.PD_STATE_MAINBOARD] = report.variables["PAYLOAD_TM"]["PD_STATE_MAINBOARD"]          # this is not filled by the jetson report data
+        inf_code = report.variables["PAYLOAD_TM"]["INFERENCE_RETURN_CODE"]
+        cls.log_data[PAYLOAD_IDX.INFERENCE_RETURN_CODE] = inf_code
+        sys_time = report.variables["PAYLOAD_TM"]["SYSTEM_TIME"]
+        cls.log_data[PAYLOAD_IDX.SYSTEM_TIME] = sys_time
+        sys_uptime = report.variables["PAYLOAD_TM"]["SYSTEM_UPTIME"]
+        cls.log_data[PAYLOAD_IDX.SYSTEM_UPTIME] = sys_uptime
+        # cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_TIME] = ...
+        # (not filled by jetson)
+        # cls.log_data[PAYLOAD_IDX.LAST_EXECUTED_CMD_ID] = ...
+        # (not filled by jetson)
+        # cls.log_data[PAYLOAD_IDX.PD_STATE_MAINBOARD] = ...
+        # (not filled by jetson report data)
         cls.log_data[PAYLOAD_IDX.PD_STATE_JETSON] = report.variables["PAYLOAD_TM"]["PD_STATE_JETSON"]
         # cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = report.variables["PAYLOAD_TM"]["LATEST_ERROR"]
         cls.log_data[PAYLOAD_IDX.DISK_USAGE] = report.variables["PAYLOAD_TM"]["DISK_USAGE"]

@@ -540,7 +540,7 @@ class CubeSat:
         if self.DEPLOYMENT_SENSOR_AVAILABLE(dir):
             return self.__device_list["DEPLOYMENT_" + dir].device.distance
         return -1
-    
+
     def DEPLOYMENT_SENSOR_START_RANGING(self, dir: str):
         """Starts ranging for the specific deployment sensor if available
 
@@ -549,7 +549,7 @@ class CubeSat:
         """
         if self.DEPLOYMENT_SENSOR_AVAILABLE(dir):
             self.__device_list["DEPLOYMENT_" + dir].device.start_ranging()
-    
+
     def DEPLOYMENT_SENSOR_STOP_RANGING(self, dir: str):
         """Stops ranging for the specific deployment sensor if available
 
