@@ -221,7 +221,8 @@ class Task(TemplateTask):
                     # T0: Boot over and deployment complete
                     if SATELLITE.BURN_WIRES_AVAILABLE:
                         SATELLITE.BURN_WIRES.disable_driver()
-                    SATELLITE.DEPLOYMENT_SENSOR_STOP_RANGING()
+                    SATELLITE.DEPLOYMENT_SENSOR_STOP_RANGING("XP")
+                    SATELLITE.DEPLOYMENT_SENSOR_STOP_RANGING("YM")
                     SM.switch_to(STATES.DETUMBLING)
                     self.log_info("T0: Transition from STARTUP to DETUMBLING")
 
