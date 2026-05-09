@@ -45,8 +45,5 @@ class StateFlags:
     f_lowbtout = bitFlag(register=FLAG, bit=3)
     f_gpsfix = bitFlag(register=FLAG, bit=4)
     f_shtdwn = bitFlag(register=FLAG, bit=5)
-
-    # Persisted log level set by the SET_LOG_LEVEL command. Value is an index
-    # into core.logging.LEVELS (0..len(LEVELS)-1). 0xFF (the erased-NVM default)
-    # is the sentinel meaning "no override, fall back to yaml".
+    f_rf_stop = bitFlag(register=FLAG, bit=6)
     f_log_level = multiBitFlag(register=LOG_LVL, lowest_bit=0, num_bits=8)
