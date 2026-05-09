@@ -169,7 +169,7 @@ class Task(TemplateTask):
 
         # check to see if processing is finished
         if PC.received_experiment_finished:
-            PC.send_telemetry_command()  # request for telemetry value to get the inference return
+            PC.send_telemetry_command()   # request for telemetry value to get the inference return
             self.log_info("Processing finished, switching to FINISHED state.")
             PC.switch_state("FINISHED")
             return
@@ -240,9 +240,7 @@ class Task(TemplateTask):
             PC.send_confirm_last_batch(command)
 
             self.log_info(
-                f"Sent CONFIRM_LAST_BATCH: tid={status['current_tid']}, "
-                f"bitmap_high=0x{bitmap_high:08X}, bitmap_low=0x{bitmap_low:08X}, "
-                f"missing={status['missing_fragments']}"
+                f"Sent CONFIRM_LAST_BATCH: tid={status['current_tid']}, bitmap_high=0x{bitmap_high:08X}, bitmap_low=0x{bitmap_low:08X}, missing={status['missing_fragments']}"
             )
 
             # Check if file is complete
@@ -339,8 +337,8 @@ class Task(TemplateTask):
             # and will fail if I was in another state other then idle
             if PC.current_state != 0:
                 self.log_warning("In LOW POWER state but payload is not in IDLE state, switching to fail.")
-                PC.switch_state("FAIL")  # this will send the fail message to gs and change to idle
-                self.run_fail_state()  # this will cut the power to the jetson and change to idle
+                PC.switch_state("FAIL")   # this will send the fail message to gs and change to idle
+                self.run_fail_state()     # this will cut the power to the jetson and change to idle
             return
 
         if PC.current_state == 0:

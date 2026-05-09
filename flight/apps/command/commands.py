@@ -142,7 +142,6 @@ def GET_COMMAND_LIST(skip_elements=0):
     It should give the command name and id
     """
     from apps.telemetry.splat.splat.telemetry_definition import command_list
-
     return command_list[skip_elements:]
 
 
@@ -502,9 +501,7 @@ def DELETE_ALL_FILES():
 
     try:
         DH.delete_all_files()
-        # reload after deleting all files to clear any references to deleted files
-        # in memory and reset the state of the satellite
-        supervisor.reload()
+        supervisor.reload()  # reload after deleting all files to clear any references to deleted files in memory and reset the state of the satellite
     except Exception as e:
         return [f"error: {e}"]
     return ["all files deleted"]

@@ -18,12 +18,7 @@ TASK_CONFIG = {
     TASK.DIGIPEATER: {"Task": digipeater, "Frequency": 0.25, "Priority": 2, "ScheduleLater": True, "StartStopped": True},
     TASK.COMMS: {"Task": comms, "Frequency": 1, "Priority": 2, "ScheduleLater": True},
     TASK.ADCS: {"Task": adcs, "Frequency": 5, "Priority": 1},
-    TASK.GPS: {
-        "Task": gps,
-        "Frequency": 2,
-        "Priority": 3,
-        "ScheduleLater": True,
-    },  # GPS Nav data output = 1 Hz, other data is output as well < 1 Hz
+    TASK.GPS: {"Task": gps, "Frequency": 2, "Priority": 3, "ScheduleLater": True},  # GPS Nav data output = 1 Hz, other data is output as well < 1 Hz
     TASK.PAYLOAD: {"Task": payload, "Frequency": 1, "Priority": 3, "ScheduleLater": True},
     # Watchdog needs to have priority over HAL monitor to ensure it is serviced
     # HAL monitor can take too long on boot and cause watchdog resets
