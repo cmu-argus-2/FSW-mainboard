@@ -96,7 +96,6 @@ LEVELS = [
     (NOTHING, "NOTHING"),
 ]
 
-# Sentinel for "no override" in the NVM-backed StateFlags.f_log_level byte.
 # An erased / never-written NVM byte reads as 0xFF, so that doubles as the
 # sentinel and means: fall back to the yaml default.
 LOG_LEVEL_NVM_SENTINEL = const(0xFF)
@@ -107,12 +106,9 @@ def get_persisted_level_name():
 
     Returns None when:
       - the persisted byte is the 0xFF sentinel (never set),
-      - the persisted byte is out of range (corrupt / future schema),
+      - the persisted byte is out of range (corrupt/future schema),
       - SATELLITE / NVM are not available (emulator, sil, very early boot).
     Callers fall back to the yaml-configured default in any of these cases.
-
-    Lazy-imports SATELLITE because core.logging is imported before
-    hal.configuration during boot (core/__init__.py runs first in main.py).
     """
     try:
         from hal.configuration import SATELLITE
@@ -290,10 +286,6 @@ class StreamHandler(Handler):
         :param record: The record (message object) to be logged
         """
         text = super().format(record)
-        # Drop any trailing whitespace/newlines on the formatted record, then
-        # split on whatever line breaks remain inside it. Filter out lines
-        # that are empty or whitespace-only — without this, a stray leading
-        # "\n" or an embedded "\n\n" (which traceback strings often produce)
         # turns into a visible blank row on the serial console.
         lines = [ln for ln in text.rstrip().splitlines() if ln.strip()]
         return self.terminator.join(lines)
@@ -394,8 +386,8 @@ class RotatingFileHandler(FileHandler):
         fsw.log.1 (static, nothing will write to it) and logging resumes on a
         fresh fsw.log.  The downlink should then target fsw.log.1.
 
-        Skips rollover if the current log is empty or size cannot be determined
-        — this avoids producing a 0-byte rotated file and preserves any prior
+        Skips rollover if the current log is empty or size cannot be determined:
+        this avoids producing a 0-byte rotated file and preserves any prior
         .1 backup for downlink.
         """
         if self._backupCount <= 0:
@@ -437,8 +429,6 @@ class RotatingFileHandler(FileHandler):
             sys.stderr.write(f"[LOG] doRollover rename failed: {e}\n")
 
         # Reopen the file. On failure, leave self.stream as the closed handle
-        # from self.close() above — emit()'s except path will reopen on its
-        # next write attempt.
         # pylint: disable=consider-using-with
         try:
             self.stream = open(self._LogFileName, mode=self._WriteMode)

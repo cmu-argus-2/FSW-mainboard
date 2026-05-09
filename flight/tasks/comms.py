@@ -60,8 +60,7 @@ class Task(TemplateTask):
             else:
                 self.log_error("Error popping packet from TransmitQueue")
             # Yield to scheduler between packets so watchdog (and other tasks)
-            # get CPU time. Each transmit_message above is synchronous so packet
-            # integrity is preserved — the yield only happens between packets.
+            # get CPU time.
             await sleep(0)
 
     def receive_message(self):
