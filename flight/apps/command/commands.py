@@ -81,7 +81,7 @@ def GRACEFUL_REBOOT():
         return ["success"]  # this will never be returned
     except Exception as e:
         logger.error(f"Failed to gracefully reboot the satellite: {e}")
-        return ["graceful reboot failed: {e}"]
+        return [f"graceful reboot failed: {e}"]
 
 
 @register_command()
@@ -92,7 +92,7 @@ def MAIN_POWER_REBOOT():
         return ["success"]  # this will never be returned
     except Exception as e:
         logger.error(f"Failed to reboot the satellite: {e}")
-        return ["main power reboot failed"]
+        return [f"main power reboot failed: {e}"]
 
 
 @register_command()
