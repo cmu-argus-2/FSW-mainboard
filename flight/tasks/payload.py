@@ -17,6 +17,7 @@ class Task(TemplateTask):
     def __init__(self, id):
         super().__init__(id)
         self.name = "PAYLOAD"
+        self.experiment_mode_wait_iterations = 0
         self.init_all_data_processes()
 
     def init_all_data_processes(self):
@@ -68,6 +69,19 @@ class Task(TemplateTask):
 
         # check to see if the time to execute the command has arrived
         if command[0] < TPM.time() or command[0] == 0:
+            if SM.current_state != STATES.EXPERIMENT:
+                self.experiment_mode_wait_iterations += 1
+                if self.experiment_mode_wait_iterations < 2:
+                    self.log_warning("Not in experiment mode, waiting next iteration")
+                    return
+
+                self.log_error("Failed to enter EXPERIMENT MODE")
+                PC.switch_state("FAIL")
+                self.experiment_mode_wait_iterations = 0
+                return
+
+            self.experiment_mode_wait_iterations = 0
+
             # means that it is time to run the command
             self.log_info("Command time has arrived, switching to booting state.")
             PC.BOOT_TS = TPM.time()
