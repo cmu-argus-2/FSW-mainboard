@@ -102,7 +102,7 @@ class Task(TemplateTask):
             ControllerModes.load()
 
             # Check for controller mode update from commands
-            if self.CONTROLLER_MODE is not ControllerModes.current_mode:
+            if self.CONTROLLER_MODE != ControllerModes.current_mode:
                 self.CONTROLLER_MODE = ControllerModes.current_mode
 
             self.time = TPM.time()
@@ -119,7 +119,7 @@ class Task(TemplateTask):
             # ------------------------------------------------------------------------------------------------------------------------------------
             if SM.current_state == STATES.DETUMBLING:
                 # Set bmx160 to max scale of 2000 deg/s
-                if sensors.get_gyro_scale != 0:
+                if sensors.get_gyro_scale() != 0:
                     sensors.set_gyro_scale(0)
 
                 if self.CONTROLLER_MODE == ControllerModes.BDOT:
@@ -143,7 +143,7 @@ class Task(TemplateTask):
             # ------------------------------------------------------------------------------------------------------------------------------------
             else:
                 # Set bmx160 scale to 125 deg/s, max resolution
-                if sensors.get_gyro_scale != 4:
+                if sensors.get_gyro_scale() != 4:
                     sensors.set_gyro_scale(4)
 
                 if self.CONTROLLER_MODE == ControllerModes.BDOT:

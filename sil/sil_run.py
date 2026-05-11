@@ -116,6 +116,13 @@ def update_fsw_config(sim_set_config):
     fsw_config_file_path = os.path.join(
         os.path.abspath(os.path.dirname(__file__)), "..", "flight", "configuration", "ground.yaml"
     )
+    # copy and replace ground_temp.yaml with the old values
+    temp_config_file_path = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), "..", "flight", "configuration", "ground_temp.yaml"
+    )
+    if not os.path.exists(temp_config_file_path):
+        shutil.copy(fsw_config_file_path, temp_config_file_path)
+
     with open(fsw_config_file_path, "r") as file:
         config_data = yaml.safe_load(file)
 
@@ -123,6 +130,18 @@ def update_fsw_config(sim_set_config):
 
     with open(fsw_config_file_path, "w") as file:
         yaml.dump(config_data, file)
+
+
+def reset_fsw_config():
+    fsw_config_file_path = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), "..", "flight", "configuration", "ground.yaml"
+    )
+    temp_config_file_path = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), "..", "flight", "configuration", "ground_temp.yaml"
+    )
+    if os.path.exists(temp_config_file_path):
+        shutil.copy(temp_config_file_path, fsw_config_file_path)
+        os.remove(temp_config_file_path)
 
 
 def run_simulation_trial(
@@ -226,6 +245,9 @@ if __name__ == "__main__":
                 set_config_params=set_config_params,
                 args=args,
             )
+
+        #  reset fsw config and delete temp config file
+        reset_fsw_config()
 
         # Run Plotting (Sim states)
         sim_set_folder_path = os.path.join("sil/results", trial_date, sim_set)

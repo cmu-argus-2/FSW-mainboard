@@ -15,6 +15,7 @@ import random
 import shutil
 import time
 from datetime import datetime
+from math import floor
 
 import numpy as np
 from argusim.simulation_manager.sim import Simulator as cppSim
@@ -150,17 +151,16 @@ class Simulator:  # will be passed by reference to the emulated HAL
         Called by MockTime.sleep() so that FSW sleeps advance the dynamics
         rather than only sensor reads doing so.
         """
-        iters = int(sim_seconds / self.base_dt)
-        if iters == 0:
+        iters = floor(sim_seconds / self.base_dt)
+        last_dt = sim_seconds - iters * self.base_dt
+        if iters == 0 and last_dt == 0:
             return
-        if iters > 20:
-            dt = sim_seconds / 20
-            iters = 20
-        else:
-            dt = self.base_dt
         for _ in range(iters):
-            self.measurement = self.cppsim.step(self.sim_time, dt)
-            self.sim_time += dt
+            self.measurement = self.cppsim.step(self.sim_time, self.base_dt)
+            self.sim_time += self.base_dt
+        if last_dt > 0:
+            self.measurement = self.cppsim.step(self.sim_time, last_dt)
+            self.sim_time += last_dt
         self.latest_real_epoch = time.monotonic_ns() / 1.0e9
 
     def get_time_diff_since_last(self):
