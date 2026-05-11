@@ -9,7 +9,7 @@ class CDH_IDX:
     SC_STATE = const(2)
     SD_USAGE = const(3)
     CURRENT_RAM_USAGE = const(4)
-    REBOOT_COUNT = const(5)
+    BOOT_COUNT = const(5)
     WATCHDOG_TIMER = const(6)
     HAL_BITFLAGS = const(7)
     DETUMBLING_ERROR_FLAG = const(8)

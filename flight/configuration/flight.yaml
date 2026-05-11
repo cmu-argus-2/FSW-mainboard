@@ -56,6 +56,10 @@ digipeater:
     value: 5
     _const: true
 
+hal:
+  ASIL0_EN:
+    value: false
+
 
 # ADCS Task
 adcs:
