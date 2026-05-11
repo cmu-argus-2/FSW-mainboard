@@ -12,7 +12,6 @@ Each command is defined as follows:
 - Name: A string representation of the command for debugging.
 - Description: A brief description of the command.
 - Arguments: A list of parameters that the command accepts.
-- Precondition: A list of conditions that must be met before executing the command.
 
 See the documentation for a full description of each command.
 
@@ -22,8 +21,13 @@ Author: Ibrahima S. Sow
 
 import supervisor
 from apps.adcs.consts import ControllerConst, ControllerModes, Modes
+from apps.command.supervisor import CommandSupervisor
+from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
-from apps.telemetry.middleware import Frame as TelemetryFrame  # this will substitute for the old telemetry packer
+from apps.comms.modes import COMMS_MODE as COMMS_MODE_ID
+from apps.comms.modes import COMMS_MODE_STR
+from apps.digipeater import DigipeaterState
+from apps.telemetry.middleware import Frame as TelemetryFrame
 from apps.telemetry.splat.splat.telemetry_codec import Command
 from apps.telemetry.splat.splat.transport_layer import transaction_manager as TM
 from core import logger
@@ -31,6 +35,7 @@ from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
+from hal.configuration import SATELLITE
 
 FILE_PKTSIZE = 240
 COMMAND_REGISTRY = {}
@@ -52,8 +57,94 @@ def FORCE_REBOOT():
     """Forces a power cycle of the spacecraft."""
     logger.info("Executing FORCE_REBOOT")
     supervisor.reload()
-    # https://learn.adafruit.com/circuitpython-essentials/circuitpython-resetting
     return []
+
+
+@register_command()
+def GRACEFUL_REBOOT():
+    """
+    Attempt to gracefully reboot the satellite
+    this is equivalent to the reboot every 24h
+    """
+
+    logger.info("Executing GRACEFUL_REBOOT")
+    try:
+
+        # shutdown DH to make sure all files are closed properly
+        response = DH.graceful_shutdown()
+
+        if not response:
+            logger.error("Failed to gracefully shutdown data handler, aborting reboot")
+            return ["graceful reboot failed: DH shutdown failed"]
+
+        SATELLITE.reboot()
+
+        return ["success"]  # this will never be returned
+    except Exception as e:
+        logger.error(f"Failed to gracefully reboot the satellite: {e}")
+        return ["graceful reboot failed: {e}"]
+
+
+@register_command()
+def MAIN_POWER_REBOOT():
+    logger.info("Executing MAIN_POWER_REBOOT")
+    try:
+        SATELLITE.reboot()
+        return ["success"]  # this will never be returned
+    except Exception as e:
+        logger.error(f"Failed to reboot the satellite: {e}")
+        return ["main power reboot failed"]
+
+
+@register_command()
+def REBOOT_ACK():
+    """
+    This command will perform a reboot on the satellite after acknowledging, using the command supervisor
+    This reboot is equivalente to force reboot but it will wait for the ack to be sent before rebooting
+    """
+    CommandSupervisor.request_reboot()
+
+    return ["reboot requested"]
+
+
+@register_command()
+def PET_REBOOT():
+    """
+    This will update the _BOOT_TIME in hal_monitor to make prevent the satellite from performing
+    the regular reboot for the next 24 hours
+    """
+    logger.info("Executing PET_REBOOT")
+
+    try:
+        from tasks import hal_monitor
+
+        current_time = TPM.monotonic()
+        hal_monitor._BOOT_TIME = current_time
+        return ["pet successfull"]
+    except Exception as e:
+        logger.error(f"[PET_REBOOT] Failed to reset regular reboot timer: {e}")
+        return [f"pet failed: {e}"]
+
+
+@register_command()
+def PING(string="Hello From Space!"):
+    """
+    Command to test the communication with the satellite
+    will respond with whatever string it received
+    """
+    logger.info(f"Executing PING with string: {string}")
+    return [string]
+
+
+@register_command()
+def GET_COMMAND_LIST(skip_elements=0):
+    """
+    Get a list of commands from spalt
+    It should give the command name and id
+    """
+    from apps.telemetry.splat.splat.telemetry_definition import command_list
+
+    return command_list[skip_elements:]
 
 
 @register_command()
@@ -84,15 +175,89 @@ def UPLINK_TIME_REFERENCE(time_reference):
 
 @register_command()
 def TURN_OFF_PAYLOAD():
-    """Sends a shutdown command to the payload and turns off its power line."""
+    """Cuts the power to the payload"""
     logger.info("Executing TURN_OFF_PAYLOAD")
+
+    if not SATELLITE.PAYLOADPOWER_AVAILABLE:
+        logger.warning("[PAYLOAD] Payload power pins is not available.")
+        return ["payload power pins not available"]
+
+    try:
+        logger.info("[PAYLOAD] Shutdown command sent successfully, waiting for payload to shutdown before cutting power")
+        SATELLITE.JETSON_ENABLE.value = False
+        TPM.sleep(0.1)
+        SATELLITE.JETSON_SD_REQ.value = False  # turn of 5v dcdc to save more power
+
+    except Exception as e:
+        logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
+
     return []
 
 
 @register_command()
-def SCHEDULE_OD_EXPERIMENT():
-    """Schedules an orbit determination experiment at the next available opportunity."""
-    logger.info("Executing SCHEDULE_OD_EXPERIMENT")
+def TURN_ON_PAYLOAD():
+    """Enables power to the payload"""
+    logger.info("Executing TURN_ON_PAYLOAD")
+
+    if not SATELLITE.PAYLOADPOWER_AVAILABLE:
+        logger.warning("[PAYLOAD] Payload power pins is not available.")
+        return ["payload power pins not available"]
+
+    try:
+        SATELLITE.JETSON_SD_REQ.value = True
+        TPM.sleep(0.1)
+        SATELLITE.JETSON_ENABLE.value = True  # turn of 5v dcdc to save more power
+
+        logger.info("[PAYLOAD] Jetson power enabled successfully.")
+    except Exception as e:
+        logger.error(f"[PAYLOAD] Failed to enable payload power: {e}")
+    return []
+
+
+@register_command()
+def RF_STOP():
+    """Stops all satellite RF transmissions."""
+    logger.warning("Executing RF_STOP (deferred): will disable TX after ACK")
+    CommandSupervisor.request_rf_stop()
+    return ["rf_stop_requested"]
+
+
+@register_command()
+def RF_RESUME():
+    """Resumes normal satellite RF transmissions."""
+    logger.warning("Executing RF_RESUME: enabling standard satellite TX")
+    CommandSupervisor.cancel_pending_rf_stop()
+    SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.STANDARD)
+    return ["rf_resume_executed"]
+
+
+@register_command()
+def DIGIPEATER_ACTIVATE():
+    """Activates the digipeater relay subsystem."""
+    logger.warning("Executing DIGIPEATER_ACTIVATE")
+    return DigipeaterState.activate()
+
+
+@register_command()
+def DIGIPEATER_DEACTIVATE():
+    """Deactivates the digipeater relay subsystem."""
+    logger.warning("Executing DIGIPEATER_DEACTIVATE")
+    return DigipeaterState.deactivate()
+
+
+@register_command()
+def COMMS_MODE(mode_id):
+    """Set COMMS operating mode (STANDARD/RF_STOP).
+
+    RF_STOP is routed through CommandSupervisor for deferred execution
+    (ACK first, then drain queue, then activate).
+    """
+    if mode_id == COMMS_MODE_ID.RF_STOP:
+        logger.warning("Executing COMMS_MODE(RF_STOP) via deferred path")
+        CommandSupervisor.request_rf_stop()
+    else:
+        SATELLITE_RADIO.set_comms_mode(mode_id)
+        logger.warning(f"Executing COMMS_MODE: {COMMS_MODE_STR.get(mode_id, 'UNKNOWN')}")
     return []
 
 
@@ -101,16 +266,13 @@ def REQUEST_TM_NOMINAL():
     """Requests a nominal snapshot of all subsystems."""
     logger.info("Executing REQUEST_TM_NOMINAL")
     # Pack telemetry
-    packet = TelemetryFrame.pack_tm_heartbeat()  #
+    packet = TelemetryFrame.pack_tm_heartbeat()
     q_stat = TransmitQueue.push_packet(packet)
     if q_stat != QUEUE_STATUS.OK:
         logger.error(f"Failed to push nominal telemetry to transmit queue with status: {q_stat}")
     logger.info(f"Telemetry nominal packed and pushed to transmit queue {q_stat}")
 
-    # might be interesting to differentiate between periodic hearbeats
-    # might want to add that this is a response
-
-    return [q_stat]  # return the queue status number
+    return [q_stat]
 
 
 @register_command()
@@ -124,7 +286,7 @@ def REQUEST_TM_HAL():
         logger.error(f"Failed to push HAL telemetry to transmit queue with status: {q_stat}")
     logger.info(f"Telemetry hal packed and pushed to transmit queue {q_stat}")
 
-    return [q_stat]  # return the queue status number
+    return [q_stat]
 
 
 @register_command()
@@ -138,7 +300,7 @@ def REQUEST_TM_STORAGE():
         logger.error(f"Failed to push storage telemetry to transmit queue with status: {q_stat}")
     logger.info(f"Telemetry storage packed and pushed to transmit queue {q_stat}")
 
-    return [q_stat]  # return the queue status number
+    return [q_stat]
 
 
 @register_command()
@@ -152,7 +314,7 @@ def REQUEST_TM_PAYLOAD():
         logger.error(f"Failed to push payload telemetry to transmit queue with status: {q_stat}")
     logger.info(f"Telemetry payload packed and pushed to transmit queue {q_stat}")
 
-    return [q_stat]  # return the queue status number
+    return [q_stat]
 
 
 @register_command()
@@ -188,14 +350,13 @@ def CREATE_TRANS(tid, string_command):
     cmd = Command("INIT_TRANS")
     tid = transaction.tid
     n_packets = transaction.number_of_packets
-    hash_MSB, hash_msb, hash_LSB = transaction.get_hash_as_integers()
 
-    cmd.set_arguments(tid, n_packets, hash_MSB, hash_msb, hash_LSB)
+    cmd.set_arguments(tid, n_packets)
     q_stat = TransmitQueue.push_packet(cmd)
     if q_stat != QUEUE_STATUS.OK:
         logger.error(f"Failed to push INIT_TRANS command to transmit queue with status: {q_stat}")
 
-    return [tid, n_packets, hash_MSB, hash_LSB]
+    return [tid, n_packets]
 
 
 @register_command()
@@ -237,7 +398,7 @@ def GENERATE_X_PACKETS(tid, x):
 
 
 @register_command()
-def GET_SINGLE_PACKET(tid, seq_number):
+def GENERATE_SINGLE_PACKET(tid, seq_number):
     # 1. search for the transaction id
     transaction = TM.get_transaction(tid)
     if transaction is None:
@@ -256,7 +417,7 @@ def GET_SINGLE_PACKET(tid, seq_number):
 
 
 @register_command()
-def CONFIRM_LAST_BATCH(tid, MSB, LSB):
+def CONFIRM_LAST_BATCH(tid, bitmap_high, bitmap_low):
     # 1. search for the transaction id
     transaction = TM.get_transaction(tid)
     if transaction is None:
@@ -264,14 +425,13 @@ def CONFIRM_LAST_BATCH(tid, MSB, LSB):
         return ["transaction_not_found"]
 
     # 2. confirm last batch
-    bitmap = (MSB << 16) | LSB
-    len_missing_fragments = transaction.confirm_last_batch(bitmap)
+    len_missing_fragments = transaction.confirm_last_batch((bitmap_high, bitmap_low))
 
     return [len_missing_fragments]
 
 
 @register_command()
-def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, MSB, LSB):
+def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, bitmap_high, bitmap_low):
     # 1. search for the transaction id
     transaction = TM.get_transaction(tid)
     if transaction is None:
@@ -279,8 +439,7 @@ def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, MSB, LSB):
         return ["transaction_not_found"]
 
     # 2. update missing fragments
-    bitmap = (MSB << 16) | LSB
-    len_missing_fragments = transaction.update_missing_fragments_bitmap(seq_offset, bitmap)
+    len_missing_fragments = transaction.update_missing_fragments_bitmap(seq_offset, (bitmap_high, bitmap_low))
 
     return [len_missing_fragments]
 
@@ -294,7 +453,7 @@ def TRANS_PAYLOAD(tid, seq_number, payload):
 
 
 @register_command()
-def INIT_TRANS(tid, number_of_packets, hash_MSB, hash_LSB):
+def INIT_TRANS(tid, number_of_packets):
     # [TODO] - implement this command if there is the necessity to uplink files to the satellite
     # no need to implement now, this will only be needed if sending transactions from the gs to sat
     # return a structured "not implemented" response to avoid breaking downstream handling
@@ -306,10 +465,15 @@ def ADCS_CTRL_MODE(mode_id):
     """Sends a command to change the ADCS controller mode."""
     logger.info(f"Executing ADCS_CTRL_MODE with mode_id: {mode_id}")
 
+    if not ((isinstance(mode_id, int)) and 0 <= mode_id <= 2):
+        logger.error(f"[ADCS] - Failed ADCS_CTRL_MODE, invalid mode_id {mode_id}")
+        return [-1]
+
     valid = ControllerModes.update_mode(mode_id)
     if valid:
         return [ControllerModes.current_mode]
     else:
+        logger.error("[ADCS] - Failed ADCS_CTRL_MODE, update_mode call fail")
         return [-1]
 
 
@@ -387,6 +551,23 @@ def LIST_DIR(skip_elements, string_command):
 
 
 @register_command()
+def GET_FILE_SIZE(string_command):
+    """
+    Try and get the size of a file
+    the result will be sent as a string
+    """
+
+    import os
+
+    try:
+        file_size = os.stat(string_command)[6]  # get the size of the file in bytes
+    except Exception as e:
+        return [f"error: {e}"]
+
+    return [file_size]
+
+
+@register_command()
 def DELETE_ALL_FILES():
     """
     Simple command that will delete all files
@@ -395,6 +576,9 @@ def DELETE_ALL_FILES():
 
     try:
         DH.delete_all_files()
+        # reload after deleting all files to clear any references to deleted files
+        # in memory and reset the state of the satellite
+        supervisor.reload()
     except Exception as e:
         return [f"error: {e}"]
     return ["all files deleted"]
@@ -413,3 +597,169 @@ def UPDATE_SD_USAGE():
     except Exception as e:
         return [f"error: {e}"]
     return ["sd usage updated", usage]
+
+
+@register_command()
+def EXPERIMENT(
+    ts,
+    camera_bit_flag,
+    level_of_processing,
+    width,
+    height,
+    downscale_factor=2.0,
+    camera_defaults_selector=-1,
+    fps=0,
+    wbmode=0,
+    aelock=0,
+    awblock=0,
+    exposuretimerange_low=0,
+    exposuretimerange_high=0,
+    gainrange_low=0.0,
+    gainrange_high=0.0,
+    ispdigitalgainrange_low=0.0,
+    ispdigitalgainrange_high=0.0,
+    ee_mode=0,
+    ee_strength=0.0,
+    aeantibanding=0,
+    exposurecompensation=0.0,
+    tnr_mode=0,
+    tnr_strength=0.0,
+    saturation=0.0,
+):
+    """
+    Command that will be called by the ground station to start an experiment
+    ts                    -> the time at which the command should be ran (0 is to run now)
+    camera_bit_flag       -> the first 4 bits will indicate which cameras should be used to take the picture
+    level_of_processing   -> what level of processing to run TODO - add here the options
+    resolution            -> The resolution of the images. They are taken at full resolution and scaled down
+    """
+    from apps.payload.controller import PayloadController as PC
+
+    logger.info(f"[PAYLOAD] - Experiment command received to run at {ts}")
+    result = PC.add_command(
+        ts,
+        camera_bit_flag,
+        level_of_processing,
+        width,
+        height,
+        downscale_factor,
+        camera_defaults_selector,
+        fps,
+        wbmode,
+        aelock,
+        awblock,
+        exposuretimerange_low,
+        exposuretimerange_high,
+        gainrange_low,
+        gainrange_high,
+        ispdigitalgainrange_low,
+        ispdigitalgainrange_high,
+        ee_mode,
+        ee_strength,
+        aeantibanding,
+        exposurecompensation,
+        tnr_mode,
+        tnr_strength,
+        saturation,
+    )
+    if not result:
+        logger.error(f"[PAYLOAD] - Failed to add experiment command for timestamp {ts}")
+    return result
+
+
+@register_command()
+def SIMPLE_EXPERIMENT(
+    ts,
+    camera_bit_flag,
+    level_of_processing,
+    width,
+    height,
+    downscale_factor=2.0,
+    camera_defaults_selector=-1,
+    fps=0,
+    wbmode=0,
+    aelock=0,
+    awblock=0,
+    exposuretimerange_low=0,
+    exposuretimerange_high=0,
+    gainrange_low=0.0,
+    gainrange_high=0.0,
+    ispdigitalgainrange_low=0.0,
+    ispdigitalgainrange_high=0.0,
+    ee_mode=0,
+    ee_strength=0.0,
+    aeantibanding=0,
+    exposurecompensation=0.0,
+    tnr_mode=0,
+    tnr_strength=0.0,
+    saturation=0.0,
+):
+    """
+    Command that will be called by the ground station to start an experiment
+    ts                    -> the time at which the command should be ran (0 is to run now)
+    camera_bit_flag       -> the first 4 bits will indicate which cameras should be used to take the picture
+    level_of_processing   -> what level of processing to run TODO - add here the options
+    resolution            -> The resolution of the images. They are taken at full resolution and scaled down
+
+    had to create a custom command for this because of the changes to splat
+    it is an exact copy of EXPERIMENT command
+
+    """
+    from apps.payload.controller import PayloadController as PC
+
+    logger.info(f"[PAYLOAD] - Simple experiment command received to run at {ts}")
+    result = PC.add_command(
+        ts,
+        camera_bit_flag,
+        level_of_processing,
+        width,
+        height,
+        downscale_factor,
+        camera_defaults_selector,
+        fps,
+        wbmode,
+        aelock,
+        awblock,
+        exposuretimerange_low,
+        exposuretimerange_high,
+        gainrange_low,
+        gainrange_high,
+        ispdigitalgainrange_low,
+        ispdigitalgainrange_high,
+        ee_mode,
+        ee_strength,
+        aeantibanding,
+        exposurecompensation,
+        tnr_mode,
+        tnr_strength,
+        saturation,
+    )
+    if not result:
+        logger.error(f"[PAYLOAD] - Failed to add simple experiment command for timestamp {ts}")
+    return result
+
+
+@register_command()
+def CLEAR_EXPERIMENT_LIST():
+    """
+    Command that will be called by the ground station to clear the list of scheduled experiments in the payload
+    returns the number of experiments that were cleared from the list
+    """
+    from apps.payload.controller import PayloadController as PC
+
+    logger.info("[PAYLOAD] - Clear experiment list command received")
+    cleared_count = PC.clear_experiment_list()
+    return [cleared_count]
+
+
+@register_command()
+def GET_EXPERIMENT_LIST(skip_elements=0):
+    """
+    Command that will be called by the ground station to get the list of scheduled experiments in the payload
+    returns a list of experiments ts
+    """
+    from apps.payload.controller import PayloadController as PC
+
+    logger.info("[PAYLOAD] - List experiments command received")
+    experiment_list = PC.list_experiments()
+    return experiment_list[skip_elements:]

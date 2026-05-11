@@ -55,11 +55,6 @@ class CubeSat:
                 # ("RADIO_PWR", Device(self.__power_monitor_boot, ASIL1)),
                 # ("GPS_PWR", Device(self.__power_monitor_boot, ASIL1)),
                 # ("JETSON_PWR", Device(self.__power_monitor_boot, ASIL1)),
-                # ("XP_PWR", Device(self.__power_monitor_boot, ASIL1)),
-                # ("XM_PWR", Device(self.__power_monitor_boot, ASIL1)),
-                # ("YP_PWR", Device(self.__power_monitor_boot, ASIL1)),
-                # ("YM_PWR", Device(self.__power_monitor_boot, ASIL1)),
-                # ("ZP_PWR", Device(self.__power_monitor_boot, ASIL1)),
                 # ("TORQUE_XP", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
                 # ("TORQUE_XM", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
                 # ("TORQUE_YP", Device(self.__torque_driver_boot, ASIL3, peripheral_line=False)),
@@ -72,9 +67,9 @@ class CubeSat:
                 # ("LIGHT_YM", Device(self.__light_sensor_boot, ASIL2)),
                 # ("LIGHT_ZM", Device(self.__light_sensor_boot, ASIL2)),
                 # ("LIGHT_ZP_XP", Device(self.__light_sensor_boot, ASIL2)),
-                # ("LIGHT_ZP_YP", Device(self.__light_sensor_boot, ASIL2)),
-                # ("LIGHT_ZP_XM", Device(self.__light_sensor_boot, ASIL2)),
                 # ("LIGHT_ZP_YM", Device(self.__light_sensor_boot, ASIL2)),
+                # ("LIGHT_ZP_XM", Device(self.__light_sensor_boot, ASIL2)),
+                # ("LIGHT_ZP_YP", Device(self.__light_sensor_boot, ASIL2)),
             ]
         )
         self.__errors = {
@@ -91,11 +86,6 @@ class CubeSat:
             "RADIO_PWR": [],
             "GPS_PWR": [],
             "JETSON_PWR": [],
-            "XP_PWR": [],
-            "XM_PWR": [],
-            "YP_PWR": [],
-            "YM_PWR": [],
-            "ZP_PWR": [],
             "TORQUE_XP": [],
             "TORQUE_XM": [],
             "TORQUE_YP": [],
@@ -108,9 +98,9 @@ class CubeSat:
             "LIGHT_YM": [],
             "LIGHT_ZM": [],
             "LIGHT_ZP_XP": [],
-            "LIGHT_ZP_YP": [],
-            "LIGHT_ZP_XM": [],
             "LIGHT_ZP_YM": [],
+            "LIGHT_ZP_XM": [],
+            "LIGHT_ZP_YP": [],
         }
         # Debugging
         self._time_ref_boot = int(time.monotonic())

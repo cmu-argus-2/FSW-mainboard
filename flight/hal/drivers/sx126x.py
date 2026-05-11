@@ -1577,6 +1577,10 @@ class SX1262(SX126X):
 
     def send(self, data):
 
+        # truncate the data if it exceeds the maximum packet length
+        if len(data) > _SX126X_MAX_PACKET_LENGTH:
+            data = data[:_SX126X_MAX_PACKET_LENGTH]
+
         if not self.blocking:
             return self._startTransmit(data)
         else:

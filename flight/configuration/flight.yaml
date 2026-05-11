@@ -12,9 +12,6 @@ command:
     value: 18000  # seconds, i.e., 5 hours
     _const: true
 
-  PAYLOAD_TESTING_MODE:
-    value: false
-
   SKIP_DEPLOYMENT:
     value: false  # Must be false for flight - deployment must execute
 
@@ -47,12 +44,24 @@ comms:
   AUTH_ENABLED:
     value: true
   AUTH_KEY_HEX:
-    value: "d6172b38acb7d2a28e21662f689d1d15ad78ccc888a9c7a78ef58cb61b0f1e32" # TODO: Change before flight
+    value: "d6172b38acb7d2a28e21662f689d1d15ad78ccc888a9c7a78ef58cb61b0f1e32" # AUTH_KEY_D
   SC_CALLSIGN:
     value: "CT6ARG"
   GS_CALLSIGN:
     value: "CS5CEP"
 
+# Digipeater Task
+digipeater:
+  RX_QUEUE_MAX:
+    value: 5
+    _const: true
+
+
 # ADCS Task
 adcs:
   CONTROLLER_MODE: 0
+
+# Watchdog Task
+watchdog:
+  ENABLED:
+    value: true  # Hardware watchdog must be enabled in flight

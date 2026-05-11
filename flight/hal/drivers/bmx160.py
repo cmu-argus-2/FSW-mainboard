@@ -232,8 +232,8 @@ _BMX160_GYRO_ODR_VALUES = [3200, 1600, 800, 400, 200, 100, 50]
 # _BMX160_MAG_ODR_1_56HZ = const(0x02)
 # _BMX160_MAG_ODR_3_12HZ = const(0x03)
 # _BMX160_MAG_ODR_6_25HZ = const(0x04)
-# _BMX160_MAG_ODR_12_5HZ = const(0x05)
-_BMX160_MAG_ODR_25HZ = const(0x06)
+_BMX160_MAG_ODR_12_5HZ = const(0x05)
+# _BMX160_MAG_ODR_25HZ = const(0x06)
 # _BMX160_MAG_ODR_50HZ = const(0x07)
 # _BMX160_MAG_ODR_100HZ = const(0x08)
 # _BMX160_MAG_ODR_200HZ = const(0x09)
@@ -261,6 +261,10 @@ _BMX160_MAG_ODR_25HZ = const(0x06)
 # Error related
 _BMX160_OK = const(0)
 # _BMX160_ERROR = const(-1)
+
+# BMM150 overflow sentinel values (13-bit X/Y min, 15-bit Z min after bit-shift)
+_BMM150_OVERFLOW_XYAXIS = const(-4096)
+_BMM150_OVERFLOW_ZAXIS = const(-16384)
 
 # Each goes with a different sensitivity in decreasing order
 AccelSensitivity2Gravity_values = [
@@ -324,7 +328,7 @@ class BMX160:
 
     _accel = Struct(_BMX160_ACCEL_DATA_ADDR, "<hhh")  # this is the default scalar, but it should get reset anyhow in init
     _gyro = Struct(_BMX160_GYRO_DATA_ADDR, "<hhh")
-    _mag = Struct(_BMX160_MAG_DATA_ADDR, "<hhh")
+    _mag = Struct(_BMX160_MAG_DATA_ADDR, "<hhhH")
     _temp = Struct(_BMX160_TEMP_DATA_ADDR, "<h")
 
     ### STATUS BITS
@@ -386,18 +390,29 @@ class BMX160:
 
     # _mag_bandwidth = NORMAL
     # _mag_powermode = NORMAL
-    _mag_odr = 25  # Hz
+    _mag_odr = 12.5  # Hz
     _mag_range = 250  # deg/sec
 
     def __init__(self, i2c, i2c_addr):
         self.i2c_device = I2CDevice(i2c, i2c_addr, probe=False)
         # soft reset & reboot
         self.cmd = _BMX160_SOFT_RESET_CMD
-        time.sleep(0.001)
+        # Datasheet lists ~1ms typical startup after soft reset, but in practice
+        # the chip occasionally isn't ready in time at 1ms (intermittent wrong
+        # chip ID or NACK). 3ms gives a safe margin with negligible boot cost.
+        time.sleep(0.003)
         # Check ID registers.
         ID = self.read_u8(_BMX160_CHIP_ID_ADDR)
         if ID != _BMX160_CHIP_ID:
             raise RuntimeError("Could not find BMX160, check wiring!")
+
+        # Trim coefficients are populated by _read_trim() inside init_mag().
+        # Zero-initialised here so mag() degrades gracefully if init fails.
+        self._dig_x1 = self._dig_y1 = 0
+        self._dig_x2 = self._dig_y2 = 0
+        self._dig_xy1 = self._dig_xy2 = 0
+        self._dig_xyz1 = 0
+        self._dig_z1 = self._dig_z2 = self._dig_z3 = self._dig_z4 = 0
 
         # print("status:", format_binary(self.status))
         # set the default settings
@@ -429,8 +444,54 @@ class BMX160:
         return tuple(x * self.ACC_SCALAR for x in self._accel)
 
     def mag(self):
-        # uT
-        return tuple(x * self.MAG_SCALAR for x in self._mag)
+        # Returns compensated magnetic field in µT using BMM150 factory trim (datasheet Appendix 1).
+        # Falls back to flat 1/16 scalar if trim was not read (dig_xyz1 == 0).
+        raw = self._mag
+        x_adc = raw[0] >> 3  # 13-bit signed
+        y_adc = raw[1] >> 3  # 13-bit signed
+        z_adc = raw[2] >> 1  # 15-bit signed
+        rhall = raw[3] >> 2  # 14-bit unsigned
+
+        if self._dig_xyz1 == 0:
+            return (x_adc * self.MAG_SCALAR, y_adc * self.MAG_SCALAR, z_adc * self.MAG_SCALAR)
+
+        return (
+            self._compensate_x(x_adc, rhall),
+            self._compensate_y(y_adc, rhall),
+            self._compensate_z(z_adc, rhall),
+        )
+
+    def _compensate_x(self, x_adc, rhall):
+        if x_adc == _BMM150_OVERFLOW_XYAXIS or rhall == 0 or self._dig_xyz1 == 0:
+            return 0.0
+        p0 = self._dig_xyz1 * 16384.0 / rhall - 16384.0
+        p1 = self._dig_xy2 * (p0 * p0 / 268435456.0)
+        p2 = p1 + p0 * self._dig_xy1 / 16384.0
+        p4 = x_adc * ((p2 + 256.0) * (self._dig_x2 + 160.0))
+        return (p4 / 8192.0 + self._dig_x1 * 8.0) / 16.0
+
+    def _compensate_y(self, y_adc, rhall):
+        if y_adc == _BMM150_OVERFLOW_XYAXIS or rhall == 0 or self._dig_xyz1 == 0:
+            return 0.0
+        p0 = self._dig_xyz1 * 16384.0 / rhall - 16384.0
+        p1 = self._dig_xy2 * (p0 * p0 / 268435456.0)
+        p2 = p1 + p0 * self._dig_xy1 / 16384.0
+        p4 = y_adc * ((p2 + 256.0) * (self._dig_y2 + 160.0))
+        return (p4 / 8192.0 + self._dig_y1 * 8.0) / 16.0
+
+    def _compensate_z(self, z_adc, rhall):
+        if z_adc == _BMM150_OVERFLOW_ZAXIS:
+            return 0.0
+        if self._dig_z2 == 0 or self._dig_z1 == 0 or rhall == 0 or self._dig_xyz1 == 0:
+            return 0.0
+        p0 = z_adc - self._dig_z4
+        p1 = rhall - self._dig_xyz1
+        p2 = self._dig_z3 * p1
+        p3 = self._dig_z2 + (self._dig_z1 * rhall / 32768.0)
+        if p3 == 0:
+            return 0.0
+        p5 = p0 * 131072.0 - p2
+        return p5 / (p3 * 64.0)
 
     def temperature(self):
         return self._temp[0] * self.TEMP_SCALAR + 23
@@ -625,27 +686,84 @@ class BMX160:
 
     ############## MAGNETOMETER SETTINGS  ##############
 
+    def _bmm150_write(self, bmm150_reg, value):
+        # Indirect write to BMM150 via BMX160 secondary interface (datasheet §2.4.3.1.1).
+        # Writing to MAG_IF[2] (0x4E) triggers the transaction; mag_man_op goes high
+        # while it is in progress and must clear before the next write is issued.
+        self.write_u8(_BMX160_MAG_IF_3_ADDR, value)
+        self.write_u8(_BMX160_MAG_IF_2_ADDR, bmm150_reg)
+        start_time = time.monotonic_ns()
+        while self.mag_man_op:
+            if time.monotonic_ns() - start_time > 1e6:  # 1 millisecond timeout
+                # TODO: Should throw an error
+                break
+
+    def _bmm150_read(self, bmm150_reg, n_bytes):
+        # Indirect read from BMM150 (datasheet §2.4.3.1.1).
+        # Burst encoding: 1→0x00, 2→0x01, 6→0x02, 8→0x03.
+        # MAG_IF[0] must keep bit 7 set (manual mode) while burst bits change.
+        burst_code = {1: 0x00, 2: 0x01, 6: 0x02, 8: 0x03}.get(n_bytes, 0x03)
+        self.write_u8(_BMX160_MAG_IF_0_ADDR, 0x80 | burst_code)
+        self.write_u8(_BMX160_MAG_IF_1_ADDR, bmm150_reg)
+        start_time = time.monotonic_ns()
+        while self.mag_man_op:
+            if time.monotonic_ns() - start_time > 1e6:
+                break
+        return self.read_bytes(_BMX160_MAG_DATA_ADDR, n_bytes, self._BUFFER)
+
+    def _read_trim(self):
+        # Read BMM150 factory trim coefficients from registers 0x5D–0x71.
+        # These are used by the compensation formulas in mag().
+
+        # 2 bytes from 0x5D: dig_x1 (int8), dig_y1 (int8)
+        d = self._bmm150_read(0x5D, 2)
+        self._dig_x1 = d[0] if d[0] < 128 else d[0] - 256
+        self._dig_y1 = d[1] if d[1] < 128 else d[1] - 256
+
+        # 2 bytes from 0x62: dig_z4 (int16 LE)
+        d = self._bmm150_read(0x62, 2)
+        v = d[0] | (d[1] << 8)
+        self._dig_z4 = v if v < 32768 else v - 65536
+
+        # 2 bytes from 0x64: dig_x2 (int8), dig_y2 (int8)
+        d = self._bmm150_read(0x64, 2)
+        self._dig_x2 = d[0] if d[0] < 128 else d[0] - 256
+        self._dig_y2 = d[1] if d[1] < 128 else d[1] - 256
+
+        # 8 bytes from 0x68: dig_z2 (int16), dig_z1 (uint16), dig_xyz1 (uint16 15-bit), dig_z3 (int16)
+        d = self._bmm150_read(0x68, 8)
+        v = d[0] | (d[1] << 8)
+        self._dig_z2 = v if v < 32768 else v - 65536
+        self._dig_z1 = d[2] | (d[3] << 8)
+        self._dig_xyz1 = (d[4] | (d[5] << 8)) & 0x7FFF
+        v = d[6] | (d[7] << 8)
+        self._dig_z3 = v if v < 32768 else v - 65536
+
+        # 2 bytes from 0x70: dig_xy2 (int8), dig_xy1 (uint8)
+        d = self._bmm150_read(0x70, 2)
+        self._dig_xy2 = d[0] if d[0] < 128 else d[0] - 256
+        self._dig_xy1 = d[1]
+
     def init_mag(self):
         # see pg 25 of: https://ae-bst.resource.bosch.com/media/_tech/media/datasheets/BST-BMX160-DS000.pdf
         self.write_u8(_BMX160_COMMAND_REG_ADDR, _BMX160_MAG_NORMAL_MODE)
         time.sleep(0.00065)  # datasheet says wait for 650microsec
         self.write_u8(_BMX160_MAG_IF_0_ADDR, 0x80)
-        # put mag into sleep mode
-        self.write_u8(_BMX160_MAG_IF_3_ADDR, 0x01)
-        self.write_u8(_BMX160_MAG_IF_2_ADDR, 0x4B)
-        # set x-y to regular power preset
-        self.write_u8(_BMX160_MAG_IF_3_ADDR, 0x04)
-        self.write_u8(_BMX160_MAG_IF_2_ADDR, 0x51)
-        # set z to regular preset
-        self.write_u8(_BMX160_MAG_IF_3_ADDR, 0x0E)
-        self.write_u8(_BMX160_MAG_IF_2_ADDR, 0x52)
-        # prepare MAG_IF[1-3] for mag_if data mode
-        self.write_u8(_BMX160_MAG_IF_3_ADDR, 0x02)
-        self.write_u8(_BMX160_MAG_IF_2_ADDR, 0x4C)
+        self._bmm150_write(0x4B, 0x01)  # put MAG into sleep mode
+        self._read_trim()  # reads trim registers; leaves MAG_IF[0] in burst mode
+        self.write_u8(_BMX160_MAG_IF_0_ADDR, 0x80)  # restore manual mode, burst=1
+        # Low Power
+        # self._bmm150_write(0x51, 0x01)
+        # self._bmm150_write(0x52, 0x02)
+        # High Accuracy
+        self._bmm150_write(0x51, 0x17)  # rep_xy = 23 (high accuracy preset)
+        self._bmm150_write(0x52, 0x52)  # rep_z  = 82 (high accuracy preset)
+        self._bmm150_write(0x4C, 0x02)  # prepare for data mode (forced mode)
         self.write_u8(_BMX160_MAG_IF_1_ADDR, 0x42)
-        # Set ODR to 25 Hz
-        self.write_u8(_BMX160_MAG_ODR_ADDR, _BMX160_MAG_ODR_25HZ)
-        self.write_u8(_BMX160_MAG_IF_0_ADDR, 0x00)
+        # Set ODR to 12.5 Hz
+        self.write_u8(_BMX160_MAG_ODR_ADDR, _BMX160_MAG_ODR_12_5HZ)
+        # Switch to data mode with burst=8 so RHALL (bytes 6-7) is included in every auto-poll.
+        self.write_u8(_BMX160_MAG_IF_0_ADDR, 0x03)
         # put in low power mode.
         self.write_u8(_BMX160_COMMAND_REG_ADDR, _BMX160_MAG_LOWPOWER_MODE)
         time.sleep(0.1)  # takes this long to warm up (empirically)

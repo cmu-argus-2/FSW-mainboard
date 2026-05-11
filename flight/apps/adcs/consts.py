@@ -4,10 +4,14 @@ Constants used in ADCS apps.
 Author(s): Derek Fan
 """
 
+import os
+
 import math
 
 from core.satellite_config import adcs_config as CONFIG
 from ulab import numpy as np
+
+_CTRL_MODE_PATH = "sd/adcs/controller_mode.txt"
 
 
 class StatusConst:
@@ -111,12 +115,49 @@ class ControllerModes:
     SUN_POINTING = 2
 
     current_mode = CONFIG.CONTROLLER_MODE
+    _loaded = False
+
+    @classmethod
+    def load(cls):
+        if cls._loaded:
+            return
+        try:
+            with open(_CTRL_MODE_PATH, "r") as f:
+                mode = int(f.read(16).replace("\x00", "").strip())
+                if mode in (cls.BDOT, cls.BCROSS, cls.SUN_POINTING):
+                    cls.current_mode = mode
+                    cls._loaded = True
+                    return
+        except Exception:
+            pass
+        try:
+            os.remove(_CTRL_MODE_PATH)
+        except Exception:
+            pass
+        try:
+            with open(_CTRL_MODE_PATH, "w") as f:
+                f.write(str(CONFIG.CONTROLLER_MODE))
+            os.sync()
+            cls._loaded = True
+        except Exception:
+            pass
 
     @classmethod
     def update_mode(cls, new_mode):
         if new_mode in [cls.BDOT, cls.BCROSS, cls.SUN_POINTING]:
             cls.current_mode = new_mode
+            try:
+                os.remove(_CTRL_MODE_PATH)
+            except Exception:
+                pass
+            try:
+                with open(_CTRL_MODE_PATH, "w") as f:
+                    f.write(str(new_mode))
+                os.sync()
+            except Exception:
+                pass
             return True
+        return False
         return False
 
 
@@ -132,9 +173,9 @@ class SunConst:
         [0, 1, 0],
         [0, -1, 0],
         [0.7071, 0, 0.7071],
-        [0, 0.7071, 0.7071],
-        [-0.7071, 0, 0.7071],
         [0, -0.7071, 0.7071],
+        [-0.7071, 0, 0.7071],
+        [0, 0.7071, 0.7071],
         [0, 0, -1],
     ]
 
@@ -172,7 +213,7 @@ class ControllerConst:
     SPIN_STABILIZING_GAIN = 2.0e07
 
     # Detumbling Constants
-    DETUMB_GAIN = 1.0e07
+    DETUMB_GAIN = 1.0e05
 
     @classmethod
     def update_gains(cls, spin_gain, detumb_gain):

@@ -68,10 +68,6 @@ class Task(TemplateTask):
         "YP_SOLAR_CHARGE_CURRENT",
         "YM_SOLAR_CHARGE_VOLTAGE",
         "YM_SOLAR_CHARGE_CURRENT",
-        "ZP_SOLAR_CHARGE_VOLTAGE",
-        "ZP_SOLAR_CHARGE_CURRENT",
-        "ZM_SOLAR_CHARGE_VOLTAGE",
-        "ZM_SOLAR_CHARGE_CURRENT",
         "BATTERY_HEATERS_ENABLED",
     ]"""
 
@@ -234,7 +230,7 @@ class Task(TemplateTask):
         soc = self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]
         curr_flag = self.log_data[EPS_IDX.EPS_POWER_FLAG]
         flag = GET_EPS_POWER_FLAG(curr_flag, soc)
-        if flag <= EPS_POWER_FLAG.EXPERIMENT or flag > EPS_POWER_FLAG.NONE:
+        if flag > EPS_POWER_FLAG.NONE and flag <= EPS_POWER_FLAG.NOMINAL:
             self.log_data[EPS_IDX.EPS_POWER_FLAG] = int(flag)
             self.log_info(f"EPS state: {self.log_data[EPS_IDX.EPS_POWER_FLAG]} ")
         else:
@@ -247,7 +243,7 @@ class Task(TemplateTask):
         else:
             if not DH.data_process_exists("eps"):
                 data_format = (
-                    "Lbhhhhb" + "h" * 4 + "L" * 2 + "h" * 30 + "b"
+                    "Lbhhhhb" + "h" * 4 + "L" * 2 + "h" * 26 + "b"
                 )  # - use mV for voltage and mA for current (h = short integer 2 bytes, L = 4 bytes)
                 DH.register_data_process("eps", data_format, True, data_limit=1000000, write_interval=5)
 

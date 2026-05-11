@@ -70,9 +70,9 @@ class EmulatedSatellite(CubeSat):
         self.append_device("LIGHT_YP", None, LightSensor("YP", simulator=self.__simulated_spacecraft), ASIL=2)
         self.append_device("LIGHT_YM", None, LightSensor("YM", simulator=self.__simulated_spacecraft), ASIL=2)
         self.append_device("LIGHT_ZP_XP", None, LightSensor("ZP_XP", simulator=self.__simulated_spacecraft), ASIL=2)
-        self.append_device("LIGHT_ZP_YP", None, LightSensor("ZP_YP", simulator=self.__simulated_spacecraft), ASIL=2)
-        self.append_device("LIGHT_ZP_XM", None, LightSensor("ZP_XM", simulator=self.__simulated_spacecraft), ASIL=2)
         self.append_device("LIGHT_ZP_YM", None, LightSensor("ZP_YM", simulator=self.__simulated_spacecraft), ASIL=2)
+        self.append_device("LIGHT_ZP_XM", None, LightSensor("ZP_XM", simulator=self.__simulated_spacecraft), ASIL=2)
+        self.append_device("LIGHT_ZP_YP", None, LightSensor("ZP_YP", simulator=self.__simulated_spacecraft), ASIL=2)
         self.append_device("LIGHT_ZM", None, LightSensor("ZM", simulator=self.__simulated_spacecraft), ASIL=2)
 
         self._torque_drivers = TorqueCoilArray(simulator=self.__simulated_spacecraft)
@@ -91,13 +91,6 @@ class EmulatedSatellite(CubeSat):
         self.append_device(
             "JETSON_PWR", None, PowerMonitor(device_name="JETSON", simulator=self.__simulated_spacecraft), ASIL=1
         )
-
-        # Solar Power monitors
-        self.append_device("XP_PWR", None, PowerMonitor(device_name="XP", simulator=self.__simulated_spacecraft), ASIL=1)
-        self.append_device("XM_PWR", None, PowerMonitor(device_name="XM", simulator=self.__simulated_spacecraft), ASIL=1)
-        self.append_device("YP_PWR", None, PowerMonitor(device_name="YP", simulator=self.__simulated_spacecraft), ASIL=1)
-        self.append_device("YM_PWR", None, PowerMonitor(device_name="YM", simulator=self.__simulated_spacecraft), ASIL=1)
-        self.append_device("ZP_PWR", None, PowerMonitor(device_name="ZP", simulator=self.__simulated_spacecraft), ASIL=1)
 
         # self._fuel_gauge = self.init_device(FuelGauge())
         self.append_device("FUEL_GAUGE", None, FuelGauge(simulator=self.__simulated_spacecraft), ASIL=2)

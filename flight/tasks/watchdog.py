@@ -4,6 +4,7 @@
 # functioning correctly.
 
 from core import TemplateTask
+from core.satellite_config import watchdog_config as CONFIG
 from hal.configuration import SATELLITE
 
 
@@ -13,6 +14,9 @@ class Task(TemplateTask):
         self.name = "WATCHDOG"
 
     async def main_task(self):
+        if not CONFIG.ENABLED:
+            return
+
         if SATELLITE.WATCHDOG_AVAILABLE:
 
             """
