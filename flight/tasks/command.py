@@ -353,8 +353,6 @@ class Task(TemplateTask):
             if SATELLITE.NEOPIXEL_AVAILABLE:
                 SATELLITE.NEOPIXEL.fill([0, 255, 0])
 
-            self.log_info(f"PDMODE: {self.PAYLOAD_MODE}")
-
             """Transitions out of NOMINAL"""
             if self.ADCS_MODE == Modes.TUMBLING and self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] != 1:
                 # T2.1: Tumbling again AND detumbling error flag is not set, transition to DETUMBLING
