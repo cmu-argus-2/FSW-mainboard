@@ -13,6 +13,7 @@ from ulab import numpy as np
 _CTR_MODE_DIR = "sd/config/"
 _CTRL_MODE_PATH = "sd/config/controller_mode.bin"
 
+
 class StatusConst:
     """
     Status codes used in ADCS apps.
@@ -113,7 +114,7 @@ class ControllerModes:
             os.mkdir(_CTR_MODE_DIR)
         except Exception:
             pass
-        try:            
+        try:
             with open(_CTRL_MODE_PATH, "wb") as f:
                 f.write(struct.pack("B", CONFIG.CONTROLLER_MODE))
             os.sync()
