@@ -4,9 +4,8 @@ Constants used in ADCS apps.
 Author(s): Derek Fan
 """
 
-import os
-
 import math
+import os
 import struct
 
 from core.satellite_config import adcs_config as CONFIG

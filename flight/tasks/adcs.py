@@ -81,6 +81,7 @@ class Task(TemplateTask):
 
     coils_off = True
     last_mag_time = 0.0
+    last_mag_prop_time = 0.0
 
     _mag_buffer = None
     _MAG_SAMPLE_DT = 0.08

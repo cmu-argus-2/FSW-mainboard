@@ -147,7 +147,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
         """
         if self.sim_time >= self.cppsim.params.MAX_TIME:
             raise SimulationComplete(f"Reached MAX_TIME={self.cppsim.params.MAX_TIME}s")
-        
+
         iters = floor(sim_seconds / self.base_dt)
         last_dt = sim_seconds - iters * self.base_dt
         if iters == 0 and last_dt == 0:

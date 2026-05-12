@@ -64,7 +64,7 @@ def FSW_simulate(
     if sim_real_speedup is not None:
         safety_timeout = STARTUP_OVERHEAD_S + max_sim_time / sim_real_speedup * 2
     else:
-        safety_timeout = STARTUP_OVERHEAD_S + 300
+        safety_timeout = STARTUP_OVERHEAD_S + max_sim_time / 50
     try:
         with open(outfile, "w") as log_file:
             cmd = ["./run.sh", "simulate", str(trial_number), trial_date, sim_set_name]
@@ -368,7 +368,16 @@ if __name__ == "__main__":
             # Run simulation set script
             # Build the trial args list (same for both sequential and parallel paths)
             trial_args = [
-                (i + first_trial_id, trial_date, sim_set, sim_real_speedup, max_sim_time, set_config_params, args, current_file_path)
+                (
+                    i + first_trial_id,
+                    trial_date,
+                    sim_set,
+                    sim_real_speedup,
+                    max_sim_time,
+                    set_config_params,
+                    args,
+                    current_file_path,
+                )
                 for i in range(n_trials)
             ]
 
