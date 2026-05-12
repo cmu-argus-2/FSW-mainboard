@@ -93,7 +93,8 @@ class DownloadManager:
         self.current_batch_received_count = 0
         self.state = "ACTIVE"
         logger.info(
-            f"[DOWNLOAD_MGR] Starting download for tid={self.current_tid}, total_packets={self.current_transaction.number_of_packets}"
+            f"[DOWNLOAD_MGR] Starting download for tid={self.current_tid},"
+            + f" total_packets={self.current_transaction.number_of_packets}"
         )
         return True
 
@@ -174,13 +175,15 @@ class DownloadManager:
             # check to see if we have received all the packets
             if self.current_batch_received_count >= target_batch_count:
                 logger.info(
-                    f"[DOWNLOAD_MGR] Received {self.current_batch_received_count} fragments for tid={self.current_tid}, seq_offset={self.current_batch_offset}. Ending listen early."
+                    f"[DOWNLOAD_MGR] Received {self.current_batch_received_count} fragments for tid={self.current_tid},"
+                    + f" seq_offset={self.current_batch_offset}. Ending listen early."
                 )
                 break
 
         if not self.current_batch_received_any:
             logger.info(
-                f"[DOWNLOAD_MGR] No fragments received yet for tid={self.current_tid}, seq_offset={self.current_batch_offset}. Waiting before sending confirmation."
+                f"[DOWNLOAD_MGR] No fragments received yet for tid={self.current_tid},"
+                + f"seq_offset={self.current_batch_offset}. Waiting before sending confirmation."
             )
             return None, None
 
@@ -195,7 +198,8 @@ class DownloadManager:
         bitmap_low = bitmap & 0xFFFFFFFF
 
         logger.info(
-            f"[DOWNLOAD_MGR] Batch processed: tid={self.current_tid}, seq_offset={self.current_batch_offset}, width={width}, bitmap=0x{bitmap:016X}, missing_frags={trans._missing_fragments_count}"
+            f"[DOWNLOAD_MGR] Batch processed: tid={self.current_tid}, seq_offset={self.current_batch_offset},"
+            + f" width={width}, bitmap=0x{bitmap:016X}, missing_frags={trans._missing_fragments_count}"
         )
 
         return bitmap_high, bitmap_low
