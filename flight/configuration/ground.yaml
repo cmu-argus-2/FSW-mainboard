@@ -65,3 +65,7 @@ adcs:
 watchdog:
   ENABLED:
     value: false  # Disable hardware watchdog during ground testing to prevent USB resets mid-flash
+
+hal:
+  ASIL0_EN:
+    value: true 

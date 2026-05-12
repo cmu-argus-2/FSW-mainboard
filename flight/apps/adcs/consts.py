@@ -7,11 +7,13 @@ Author(s): Derek Fan
 import os
 
 import math
+import struct
 
 from core.satellite_config import adcs_config as CONFIG
 from ulab import numpy as np
 
-_CTRL_MODE_PATH = "sd/adcs/controller_mode.txt"
+_CTR_MODE_DIR = "/sd/config/"
+_CTRL_MODE_PATH = _CTR_MODE_DIR + "controller_mode.bin"
 
 
 class StatusConst:
@@ -122,8 +124,8 @@ class ControllerModes:
         if cls._loaded:
             return
         try:
-            with open(_CTRL_MODE_PATH, "r") as f:
-                mode = int(f.read(16).replace("\x00", "").strip())
+            with open(_CTRL_MODE_PATH, "rb") as f:
+                mode = struct.unpack("B", f.read(1))[0]
                 if mode in (cls.BDOT, cls.BCROSS, cls.SUN_POINTING):
                     cls.current_mode = mode
                     cls._loaded = True
@@ -135,8 +137,12 @@ class ControllerModes:
         except Exception:
             pass
         try:
-            with open(_CTRL_MODE_PATH, "w") as f:
-                f.write(str(CONFIG.CONTROLLER_MODE))
+            os.mkdir(_CTR_MODE_DIR)
+        except Exception:
+            pass
+        try:
+            with open(_CTRL_MODE_PATH, "wb") as f:
+                f.write(struct.pack("B", CONFIG.CONTROLLER_MODE))
             os.sync()
             cls._loaded = True
         except Exception:
@@ -147,12 +153,8 @@ class ControllerModes:
         if new_mode in [cls.BDOT, cls.BCROSS, cls.SUN_POINTING]:
             cls.current_mode = new_mode
             try:
-                os.remove(_CTRL_MODE_PATH)
-            except Exception:
-                pass
-            try:
-                with open(_CTRL_MODE_PATH, "w") as f:
-                    f.write(str(new_mode))
+                with open(_CTRL_MODE_PATH, "wb") as f:
+                    f.write(struct.pack("B", new_mode))
                 os.sync()
             except Exception:
                 pass

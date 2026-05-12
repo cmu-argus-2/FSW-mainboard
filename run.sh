@@ -80,7 +80,7 @@ elif [ "$1" == "simulate" ]; then
     if [[ -n $5 ]]; then
         export SIM_REAL_SPEEDUP=$5
     else
-        export SIM_REAL_SPEEDUP=275
+        unset SIM_REAL_SPEEDUP
     fi
     WORKER_ID="${6:-0}"
     if [[ $WORKER_ID -gt 0 ]]; then

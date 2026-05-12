@@ -55,17 +55,24 @@ def FSW_simulate(
     trial_number: int,
     trial_date: str,
     sim_set_name: str,
-    sim_real_speedup: int,
+    sim_real_speedup=None,
     worker_id: int = 0,
 ) -> None:
     # The FSW process exits naturally via SimulationComplete when MAX_TIME is reached (exit code 0).
     # TimeoutExpired means the process hung and is a genuine error.
     global _active_process
-    safety_timeout = STARTUP_OVERHEAD_S + max_sim_time / sim_real_speedup * 2
+    if sim_real_speedup is not None:
+        safety_timeout = STARTUP_OVERHEAD_S + max_sim_time / sim_real_speedup * 2
+    else:
+        safety_timeout = STARTUP_OVERHEAD_S + 300
     try:
         with open(outfile, "w") as log_file:
+            cmd = ["./run.sh", "simulate", str(trial_number), trial_date, sim_set_name]
+            if sim_real_speedup is not None:
+                cmd.append(str(sim_real_speedup))
+            # option to run a number of simulations, and to run a specific trial
             process = subprocess.Popen(
-                ["./run.sh", "simulate", str(trial_number), trial_date, sim_set_name, str(sim_real_speedup), str(worker_id)],
+                cmd,
                 stdout=log_file,
                 stderr=log_file,
                 start_new_session=True,
@@ -162,6 +169,13 @@ def update_fsw_config(sim_set_config):
     fsw_config_file_path = os.path.join(
         os.path.abspath(os.path.dirname(__file__)), "..", "flight", "configuration", "ground.yaml"
     )
+    # copy and replace ground_temp.yaml with the old values
+    temp_config_file_path = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), "..", "flight", "configuration", "ground_temp.yaml"
+    )
+    if not os.path.exists(temp_config_file_path):
+        shutil.copy(fsw_config_file_path, temp_config_file_path)
+
     with open(fsw_config_file_path, "r") as file:
         config_data = yaml.safe_load(file)
 
@@ -171,11 +185,24 @@ def update_fsw_config(sim_set_config):
         yaml.dump(config_data, file)
 
 
+def reset_fsw_config():
+    fsw_config_file_path = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), "..", "flight", "configuration", "ground.yaml"
+    )
+    temp_config_file_path = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), "..", "flight", "configuration", "ground_temp.yaml"
+    )
+    if os.path.exists(temp_config_file_path):
+        shutil.copy(temp_config_file_path, fsw_config_file_path)
+        os.remove(temp_config_file_path)
+
+
 def run_simulation_trial(
     trial_number: int,
     trial_date: str,
     sim_set_name: str,
-    sim_real_speedup: int,
+    sim_real_speedup,
+    max_sim_time: float,
     set_config_params,
     args,
     sil_path: str,
@@ -189,7 +216,7 @@ def run_simulation_trial(
 
     # Run FSW Simulation
     FSW_simulate(
-        max_sim_time=set_config_params["param_changes"]["MAX_TIME"],
+        max_sim_time=max_sim_time,
         outfile=outfile,
         trial_number=trial_number,
         trial_date=trial_date,
@@ -270,7 +297,8 @@ def run_simulation_trial_worker(
     trial_number: int,
     trial_date: str,
     sim_set_name: str,
-    sim_real_speedup: int,
+    sim_real_speedup,
+    max_sim_time: float,
     set_config_params,
     args,
     sil_path: str,
@@ -281,6 +309,7 @@ def run_simulation_trial_worker(
         trial_date=trial_date,
         sim_set_name=sim_set_name,
         sim_real_speedup=sim_real_speedup,
+        max_sim_time=max_sim_time,
         set_config_params=set_config_params,
         args=args,
         sil_path=sil_path,
@@ -321,31 +350,44 @@ if __name__ == "__main__":
         n_workers = min(n_trials, os.cpu_count() or 1) if args.multiprocessing else 1
         print(f"Running Simulation Set {sim_set} ({n_workers} worker(s))...")
 
-        sim_real_speedup = 1  # default
-        if "sim_real_speedup" in sil_campaign_params["sil_campaign"][sim_set]:
-            sim_real_speedup = sil_campaign_params["sil_campaign"][sim_set]["sim_real_speedup"]
+        sim_real_speedup = sil_campaign_params["sil_campaign"][sim_set].get("sim_real_speedup", None)
+
+        param_changes = set_config_params.get("param_changes") or {}
+        if "MAX_TIME" in param_changes:
+            max_sim_time = param_changes["MAX_TIME"]
+        else:
+            params_yaml_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "configs", "params.yaml")
+            with open(params_yaml_path) as f:
+                max_sim_time = yaml.safe_load(f)["MAX_TIME"]
+            print(f"[{sim_set}] No MAX_TIME in param_changes, using nominal MAX_TIME={max_sim_time}s from params.yaml")
 
         # Update the fsw config.yaml
         update_fsw_config(sil_campaign_params["sil_campaign"][sim_set])
 
-        # Build the trial args list (same for both sequential and parallel paths)
-        trial_args = [
-            (i + first_trial_id, trial_date, sim_set, sim_real_speedup, set_config_params, args, current_file_path)
-            for i in range(n_trials)
-        ]
+        try:
+            # Run simulation set script
+            # Build the trial args list (same for both sequential and parallel paths)
+            trial_args = [
+                (i + first_trial_id, trial_date, sim_set, sim_real_speedup, max_sim_time, set_config_params, args, current_file_path)
+                for i in range(n_trials)
+            ]
 
-        # Run simulation set — sequential if n_workers == 1, parallel otherwise
-        if n_workers == 1:
-            elapsed_times = [run_simulation_trial_worker(*t_args) for t_args in trial_args]
-        else:
-            # Assign worker IDs 1..n_workers via a Queue so each Pool process gets a stable ID.
-            id_queue: multiprocessing.Queue = multiprocessing.Queue()
-            for k in range(1, n_workers + 1):
-                id_queue.put(k)
-            with multiprocessing.Pool(n_workers, initializer=_init_worker, initargs=(id_queue,)) as pool:
-                elapsed_times = pool.starmap(run_simulation_trial_worker, trial_args)
+            # Run simulation set — sequential if n_workers == 1, parallel otherwise
+            if n_workers == 1:
+                elapsed_times = [run_simulation_trial_worker(*t_args) for t_args in trial_args]
+            else:
+                # Assign worker IDs 1..n_workers via a Queue so each Pool process gets a stable ID.
+                id_queue: multiprocessing.Queue = multiprocessing.Queue()
+                for k in range(1, n_workers + 1):
+                    id_queue.put(k)
+                with multiprocessing.Pool(n_workers, initializer=_init_worker, initargs=(id_queue,)) as pool:
+                    elapsed_times = pool.starmap(run_simulation_trial_worker, trial_args)
 
-        trial_times = list(zip([i + first_trial_id for i in range(n_trials)], elapsed_times))
+            trial_times = list(zip([i + first_trial_id for i in range(n_trials)], elapsed_times))
+
+        finally:
+            #  reset fsw config and delete temp config file
+            reset_fsw_config()
 
         # Run Plotting (Sim states)
         sim_set_folder_path = os.path.join("sil/results", trial_date, sim_set)
@@ -361,7 +403,7 @@ if __name__ == "__main__":
         with open(timing_file_path, "w") as f:
             f.write(f"Sim set : {sim_set}\n")
             f.write(
-                f"MAX_TIME: {set_config_params['param_changes']['MAX_TIME']}s | speedup: {sim_real_speedup}x | trials: {n_trials}\n"
+                f"MAX_TIME: {max_sim_time}s | speedup: {f'{sim_real_speedup}x' if sim_real_speedup is not None else 'full CPU'} | trials: {n_trials}\n"
             )
             f.write("-" * 40 + "\n")
             for trial_num, t in trial_times:

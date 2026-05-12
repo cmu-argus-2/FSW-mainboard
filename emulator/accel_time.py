@@ -5,7 +5,6 @@ Author: Ibrahima S. Sow, Karthik Karumanchi
 
 """
 
-import os
 import time as real_time
 
 real_time_module = real_time
@@ -13,75 +12,45 @@ real_time_module = real_time
 
 class MockTime:
     def __init__(self):
-        self.acceleration = int(os.environ["SIM_REAL_SPEEDUP"])
         self.__simulator = None
-
-        # Datum references for Speedup
-        self.start_real_time = real_time.time_ns() / 1.0e9
-        self.start_real_time_ns = real_time.time_ns()
-        self.start_real_time_monotonic = real_time.monotonic_ns() / 1.0e9
-        self.start_real_time_monotonic_ns = real_time.monotonic_ns()
-
-        # Sped-up times
-        self.spedup_time = self.start_real_time
-        self.spedup_time_ns = self.start_real_time_ns
-
-        self.start_simulated_time = real_time.time()
-
-    def time(self):
-        real_elapsed = real_time.time_ns() / 1.0e9 - self.start_real_time
-        self.spedup_time = self.start_real_time + real_elapsed * self.acceleration
-        return self.spedup_time
-
-    def time_ns(self):
-        real_elapsed = real_time.time_ns() - self.start_real_time_ns
-        self.spedup_time_ns = self.start_real_time_ns + real_elapsed * self.acceleration
-        return self.spedup_time_ns
+        self.acceleration = None  # set from simulator params via set_simulator(); None = full CPU speed
+        self._sim_elapsed = 0.0
+        self._epoch_offset = real_time.time()  # Unix epoch at sim start
 
     def set_simulator(self, simulator):
         self.__simulator = simulator
+        self.acceleration = simulator.speedup  # None means full speed, number means X× real-time pacing
+
+    def time(self):
+        return self._epoch_offset + self._sim_elapsed
+
+    def time_ns(self):
+        return int((self._epoch_offset + self._sim_elapsed) * 1e9)
 
     def sleep(self, seconds):
+        self._sim_elapsed += seconds
         if self.__simulator is not None:
             self.__simulator.advance_by_simtime(seconds)
-        real_time.sleep(seconds / self.acceleration)
-
-    def localtime(self, secs=None):
-        simulated_secs = self.time() if secs is None else secs
-        return real_time.localtime(simulated_secs)
+        if self.acceleration is not None:
+            real_time.sleep(seconds / self.acceleration)
 
     def monotonic(self):
-        real_elapsed = real_time.monotonic_ns() / 1.0e9 - self.start_real_time_monotonic
-        return real_elapsed * self.acceleration
+        return self._sim_elapsed
 
     def monotonic_ns(self):
-        real_elapsed = real_time.monotonic_ns() - self.start_real_time_monotonic_ns
-        return real_elapsed * self.acceleration
+        return int(self._sim_elapsed * 1e9)
+
+    def localtime(self, secs=None):
+        return real_time.localtime(self.time() if secs is None else secs)
+
+    def gmtime(self, secs=None):
+        return real_time.gmtime(self.time() if secs is None else secs)
 
     def tzset(self):
         pass
-
-    def gmtime(self, secs=None):
-        simulated_secs = self.time() if secs is None else secs
-        return real_time.gmtime(simulated_secs)
 
     def debug(self):
         return "Mock Time Active"
 
     def __getattr__(self, name):
-        if name == "time":
-            return self.time
-        if name == "sleep":
-            return self.sleep
-        if name == "localtime":
-            return self.localtime
-        if name == "monotonic":
-            return self.monotonic
-        if name == "gmtime":
-            return self.gmtime
-        if name == "tzset":
-            return self.tzset
-        if name == "debug":
-            return self.debug
-        else:
-            return getattr(real_time, name)
+        return getattr(real_time, name)

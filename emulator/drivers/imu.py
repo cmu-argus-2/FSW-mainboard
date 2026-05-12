@@ -14,6 +14,7 @@ class IMU:
 
         self.__mag = array([4.0, 3.0, 1.0])
         self.__gyro = array([0.0, 0.0, 0.0])
+        self.gyro_range = 2000.0
         self.__temp = 20
         self.__enable = False
 
@@ -40,6 +41,12 @@ class IMU:
             self.simulate_faults()
             return self.__simulator.gyro()
         return self.__gyro if self.__enable else None
+
+    def set_gyro_range(self, gyro_const_value: int) -> None:
+        self.gyro_range = gyro_const_value
+
+    def get_gyro_range(self) -> int:
+        return self.gyro_range
 
     def temperature(self):
         return self.__temp if self.__enable else None
