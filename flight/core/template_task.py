@@ -94,3 +94,7 @@ class TemplateTask:
         :param msg: Message to log
         """
         logger.critical(f"[{self.ID}][{self.name}] {msg}")
+
+    def get_runtime_stat(self, task_id):
+        """Proxy runtime stat lookups to the active scheduler."""
+        return scheduler.get_loop().get_runtime_stat(task_id)

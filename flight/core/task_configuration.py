@@ -9,6 +9,7 @@ from tasks.hal_monitor import Task as hal_monitor
 from tasks.obdh import Task as obdh
 from tasks.payload import Task as payload
 from tasks.watchdog import Task as watchdog
+from tasks.runtime_monitor import Task as runtime_monitor
 
 TASK_CONFIG = {
     TASK.COMMAND: {"Task": command, "Frequency": 2, "Priority": 2},
@@ -20,6 +21,7 @@ TASK_CONFIG = {
     TASK.ADCS: {"Task": adcs, "Frequency": 5, "Priority": 1},
     TASK.GPS: {"Task": gps, "Frequency": 2, "Priority": 3, "ScheduleLater": True},  # GPS Nav data output = 1 Hz, other data is output as well < 1 Hz
     TASK.PAYLOAD: {"Task": payload, "Frequency": 1, "Priority": 3, "ScheduleLater": True},
+    TASK.RUNTIME_MONITOR: {"Task": runtime_monitor, "Frequency": 0.2, "Priority": 4, "ScheduleLater": True},
     # Watchdog needs to have priority over HAL monitor to ensure it is serviced
     # HAL monitor can take too long on boot and cause watchdog resets
     TASK.HAL_MONITOR: {"Task": hal_monitor, "Frequency": 5, "Priority": 2},

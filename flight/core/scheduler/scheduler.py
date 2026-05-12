@@ -48,9 +48,10 @@ def _get_future_nanos(seconds_in_future):
 class PriorityTask:
     """Represents an asynchronous task with a priority."""
 
-    def __init__(self, coroutine, priority: int):
+    def __init__(self, coroutine, priority: int, task_id=None):
         self.coroutine = coroutine  # the coroutine to be executed
         self.priority = priority  # integer representing the priority (lower is higher priority)
+        self.task_id = task_id
 
     def priority_sort(self):
         return self.priority
@@ -95,6 +96,7 @@ class ScheduledTask:
         priority,
         forward_args,
         forward_kwargs,
+        task_id=None,
     ):
         # reference to the event loop
         self._loop = loop
@@ -102,6 +104,7 @@ class ScheduledTask:
         self._forward_async_fn = forward_async_fn
         self._forward_args = forward_args
         self._forward_kwargs = forward_kwargs
+        self._task_id = task_id
         # time between invocations
         self._nanoseconds_per_invocation = (1 / hz) * 1000000000
         # control flags
@@ -123,7 +126,7 @@ class ScheduledTask:
         """Schedule the task if not already scheduled."""
         self._stop = False
         if not self._scheduled_to_run:  # Check if the task is already scheduled to run
-            self._loop.add_task(self._run_at_fixed_rate(), self._priority)
+            self._loop.add_task(self._run_at_fixed_rate(), self._priority, task_id=self._task_id)
 
     async def _run_at_fixed_rate(self):
         """Coroutine that runs the task at the specified rate."""
@@ -180,6 +183,7 @@ class Scheduler:
         self._ready = []  # List of sleeping tasks ready to resume
         self._current = None  # The current task being executed
         self._debug = debug  # Debug flag
+        self._runtime_stats = {}
 
     @property
     def debug(self):
@@ -188,14 +192,43 @@ class Scheduler:
     def enable_debug_logging(self):
         self._debug = True
 
-    def add_task(self, awaitable_task, priority):
+    def add_task(self, awaitable_task, priority, task_id=None):
         """
         Add a concurrent task (known as a coroutine, implemented as a generator in CircuitPython)
         Use:
           scheduler.add_task( my_async_method() )
         :param awaitable_task:  The coroutine to be concurrently driven to completion.
         """
-        self._tasks.append(PriorityTask(awaitable_task, priority))
+        self._tasks.append(PriorityTask(awaitable_task, priority, task_id=task_id))
+
+    def _runtime_stat_for(self, task: PriorityTask):
+        task_key = task.task_id if task.task_id is not None else id(task.coroutine)
+        stats = self._runtime_stats.get(task_key)
+        if stats is None:
+            stats = {
+                "count": 0,
+                "total_ns": 0,
+                "min_ns": 0,
+                "max_ns": 0,
+                "name": getattr(task.coroutine, "__name__", None),
+            }
+            self._runtime_stats[task_key] = stats
+        elif stats.get("name") is None:
+            stats["name"] = getattr(task.coroutine, "__name__", None)
+        return stats
+
+    def get_runtime_stat(self, task_id):
+        """Return cumulative runtime statistics for a scheduled task."""
+        stats = self._runtime_stats.get(task_id)
+        if stats is None:
+            return {
+                "count": 0,
+                "total_ns": 0,
+                "min_ns": 0,
+                "max_ns": 0,
+                "name": None,
+            }
+        return stats
 
     async def sleep(self, seconds):
         """
@@ -220,7 +253,7 @@ class Scheduler:
 
         self.add_task(_run_later(), priority)
 
-    def schedule(self, hz: float, coroutine_function, priority, *args, **kwargs):
+    def schedule(self, hz: float, coroutine_function, priority, *args, task_id=None, **kwargs):
         """
         Schedule a coroutine to run at a specified frequency.
 
@@ -238,11 +271,11 @@ class Scheduler:
         :param coroutine_function: The coroutine to schedule.
         """
         assert coroutine_function is not None, "coroutine function must not be none"
-        task = ScheduledTask(self, hz, coroutine_function, priority, args, kwargs)
+        task = ScheduledTask(self, hz, coroutine_function, priority, args, kwargs, task_id=task_id)
         task.start()
         return task
 
-    def schedule_later(self, hz: float, coroutine_function, priority, *args, **kwargs):
+    def schedule_later(self, hz: float, coroutine_function, priority, *args, task_id=None, **kwargs):
         """
         Schedule a coroutine to start after an initial delay of one interval.
 
@@ -262,7 +295,7 @@ class Scheduler:
                 await _yield_once()
                 ran_once = True
 
-        return self.schedule(hz, call_later, priority)
+        return self.schedule(hz, call_later, priority, task_id=task_id)
 
     def run(self):
         """
@@ -378,6 +411,7 @@ class Scheduler:
         Runs a task and re-queues for the next loop if it is both (1) not complete and (2) not sleeping.
         """
         self._current = task
+        start_ns = _monotonic_ns()
         try:
             # Attempt to run the next step of the coroutine
             task.coroutine.send(None)
@@ -391,6 +425,14 @@ class Scheduler:
         except StopIteration:
             pass  # Task is complete
         finally:
+            elapsed_ns = _monotonic_ns() - start_ns
+            stats = self._runtime_stat_for(task)
+            stats["count"] += 1
+            stats["total_ns"] += elapsed_ns
+            if stats["count"] == 1 or elapsed_ns < stats["min_ns"]:
+                stats["min_ns"] = elapsed_ns
+            if elapsed_ns > stats["max_ns"]:
+                stats["max_ns"] = elapsed_ns
             self._current = None  # Clear the current task reference upon completion
 
     async def _sleep_until_nanos(self, target_run_nanos):

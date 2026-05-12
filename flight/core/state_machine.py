@@ -136,7 +136,7 @@ class StateManager:
             task_fn = self.__tasks[task_id]._run
             self.__tasks[task_id].set_frequency(frequency)
 
-            self.__scheduled_tasks[task_id] = schedule(frequency, task_fn, priority)
+            self.__scheduled_tasks[task_id] = schedule(frequency, task_fn, priority, task_id=task_id)
 
             if task_params.get("StartStopped", False):
                 self.__scheduled_tasks[task_id].stop()

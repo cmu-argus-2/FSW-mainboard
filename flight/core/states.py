@@ -36,6 +36,7 @@ class TASK:
     PAYLOAD = const(0x09)
     HAL_MONITOR = const(0x0A)
     DIGIPEATER = const(0x0B)
+    RUNTIME_MONITOR = const(0x0C)
 
 
 class STATES:
