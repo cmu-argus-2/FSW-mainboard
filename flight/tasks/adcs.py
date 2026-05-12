@@ -132,9 +132,9 @@ class Task(TemplateTask):
                 )
 
             # ------------------------------------------------------------------------------------------------------------------------------------
-            # LOW POWER
+            # LOW POWER or EXPERIMENT
             # ------------------------------------------------------------------------------------------------------------------------------------
-            elif SM.current_state == STATES.LOW_POWER:
+            elif SM.current_state == STATES.LOW_POWER or SM.current_state == STATES.EXPERIMENT:
                 # Turn coils off to conserve power
                 self.ensure_coils_off()
 

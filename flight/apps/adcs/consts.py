@@ -10,8 +10,8 @@ import struct
 from core.satellite_config import adcs_config as CONFIG
 from ulab import numpy as np
 
-_CTR_MODE_DIR = "sd/config/"
-_CTRL_MODE_PATH = "sd/config/controller_mode.bin"
+_CTR_MODE_DIR = "/sd/config/"
+_CTRL_MODE_PATH = _CTR_MODE_DIR + "controller_mode.bin"
 
 
 class StatusConst:
@@ -198,7 +198,7 @@ class ControllerConst:
 
     # Detumbling Constants
     BDOT_GAIN = 1.0e5
-    BCROSS_GAIN = 2.0e4
+    BCROSS_GAIN = 1.0e5
 
 
 class MCMConst:
