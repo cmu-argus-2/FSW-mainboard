@@ -235,19 +235,21 @@ if __name__ == "__main__":
 
         # Update the fsw config.yaml
         update_fsw_config(sil_campaign_params["sil_campaign"][sim_set])
-        # Run simulation set script
-        for i in range(n_trials):
-            run_simulation_trial(
-                trial_number=i + first_trial_id,
-                trial_date=trial_date,
-                sim_set_name=sim_set,
-                sim_real_speedup=sim_real_speedup,
-                set_config_params=set_config_params,
-                args=args,
-            )
+        try:
+            # Run simulation set script
+            for i in range(n_trials):
+                run_simulation_trial(
+                    trial_number=i + first_trial_id,
+                    trial_date=trial_date,
+                    sim_set_name=sim_set,
+                    sim_real_speedup=sim_real_speedup,
+                    set_config_params=set_config_params,
+                    args=args,
+                )
 
-        #  reset fsw config and delete temp config file
-        reset_fsw_config()
+        finally:
+            #  reset fsw config and delete temp config file
+            reset_fsw_config()
 
         # Run Plotting (Sim states)
         sim_set_folder_path = os.path.join("sil/results", trial_date, sim_set)
