@@ -80,7 +80,7 @@ elif [ "$1" == "simulate" ]; then
     if [[ -n $5 ]]; then
         export SIM_REAL_SPEEDUP=$5
     else
-        export SIM_REAL_SPEEDUP=275
+        unset SIM_REAL_SPEEDUP
     fi
     $PYTHON_CMD build_tools/build-emulator.py $FLIGHT_FLAG
     cd build/ && rm -rf sd && $PYTHON_CMD main.py
