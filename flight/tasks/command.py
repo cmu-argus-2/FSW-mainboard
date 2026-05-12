@@ -30,12 +30,11 @@ _PWM_MIN = const(0)  # Minimum PWM value for deployment
 _FIRST_PWM = const(2)  # First PWM to start deployment
 _BURN_WIRE_TIMEOUT = CONFIG.BURN_WIRE_TIMEOUT  # number of tries
 _DEPLOYMENT_DISTANCE = const(2)  # distance(cm) threshold for deployment
-_PAYLOAD_TESTING_MODE = CONFIG.PAYLOAD_TESTING_MODE
 
 
 class Task(TemplateTask):
     # To be removed
-    # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "REBOOT_COUNT",
+    # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "BOOT_COUNT",
     # "WATCHDOG_TIMER", "HAL_BITFLAGS", "DETUMBLING_ERROR_FLAG"]
 
     log_data = [0] * 9
@@ -51,6 +50,8 @@ class Task(TemplateTask):
         super().__init__(id)
         self.name = "COMMAND"
         self.time_ref_set = False
+        self.boot_count = 0
+        self.restored = False
 
         # Transition status from ADCS and EPS
         self.ADCS_MODE = Modes.STABLE
@@ -120,6 +121,31 @@ class Task(TemplateTask):
         # Neopixel for STARTUP (white)
         if SATELLITE.NEOPIXEL_AVAILABLE:
             SATELLITE.NEOPIXEL.fill([255, 255, 255])
+
+        # Restore boot count from previous session
+        if not self.restored:
+            if not DH.data_process_exists("cdh"):
+                data_format = "LLbLbbbbb"
+                DH.register_data_process("cdh", data_format, True, data_limit=100000)
+
+            if SATELLITE.SD_CARD_AVAILABLE:
+                cdh_data = DH.data_process_registry["cdh"].get_latest_data()
+                if cdh_data is not None:
+                    self.boot_count = cdh_data[CDH_IDX.BOOT_COUNT] + 1
+                    self.log_info(f"Restored boot count to {self.boot_count}")
+                else:
+                    self.boot_count = 1
+                    self.log_info("SD card is available, but no CDH data was found; starting boot count at 1")
+            else:
+                self.boot_count = 1
+                self.log_info("SD card is not available; starting boot count at 1")
+
+            self.restored = True
+
+            # Log boot count immediately during startup
+            self.log_data[CDH_IDX.TIME] = TPM.time()
+            self.log_data[CDH_IDX.BOOT_COUNT] = self.boot_count
+            DH.log_data("cdh", self.log_data)
 
         # Check time_since_boot
         time_since_boot = TPM.monotonic() - SATELLITE.BOOTTIME
@@ -442,10 +468,11 @@ class Task(TemplateTask):
 
             # Set CDH log data
             self.log_data[CDH_IDX.TIME] = TPM.time()
+            self.log_data[CDH_IDX.BOOT_TIME] = TPM.monotonic() - SATELLITE.BOOTTIME
             self.log_data[CDH_IDX.SC_STATE] = SM.current_state
             self.log_data[CDH_IDX.SD_USAGE] = int(DH.SD_usage() / 1000)  # kb - gets updated in the OBDH task
             self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = self.get_memory_usage()
-            self.log_data[CDH_IDX.REBOOT_COUNT] = 0
+            self.log_data[CDH_IDX.BOOT_COUNT] = self.boot_count
             self.log_data[CDH_IDX.WATCHDOG_TIMER] = 0
             self.log_data[CDH_IDX.HAL_BITFLAGS] = 0
 

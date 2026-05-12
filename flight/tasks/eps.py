@@ -71,10 +71,6 @@ class Task(TemplateTask):
         "YP_SOLAR_CHARGE_CURRENT",
         "YM_SOLAR_CHARGE_VOLTAGE",
         "YM_SOLAR_CHARGE_CURRENT",
-        "ZP_SOLAR_CHARGE_VOLTAGE",
-        "ZP_SOLAR_CHARGE_CURRENT",
-        "ZM_SOLAR_CHARGE_VOLTAGE",
-        "ZM_SOLAR_CHARGE_CURRENT",
         "BATTERY_HEATERS1_ENABLED",
         "BATTERY_HEATERS2_ENABLED",
     ]"""
@@ -265,7 +261,7 @@ class Task(TemplateTask):
         else:
             if not DH.data_process_exists("eps"):
                 data_format = (
-                    "Lbhhhhhhhb" + "h" * 4 + "L" * 2 + "h" * 30 + "b" * 2
+                    "Lbhhhhb" + "h" * 4 + "L" * 2 + "h" * 30 + "b"
                 )  # - use mV for voltage and mA for current (h = short integer 2 bytes, L = 4 bytes)
                 DH.register_data_process("eps", data_format, True, data_limit=1000000, write_interval=5)
 
