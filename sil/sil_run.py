@@ -32,13 +32,16 @@ KEYWORDS = {"WARNING": "\033[93m", "ERROR": "\033[91m"}
 
 
 def FSW_simulate(
-    runtime: float, outfile: str, trial_number: int, trial_date: str, sim_set_name: str, sim_real_speedup: int
+    runtime: float, outfile: str, trial_number: int, trial_date: str, sim_set_name: str, sim_real_speedup=None
 ) -> None:
     try:
         with open(outfile, "w") as log_file:
+            cmd = ["./run.sh", "simulate", str(trial_number), trial_date, sim_set_name]
+            if sim_real_speedup is not None:
+                cmd.append(str(sim_real_speedup))
             # option to run a number of simulations, and to run a specific trial
             process = subprocess.Popen(
-                ["./run.sh", "simulate", str(trial_number), trial_date, sim_set_name, str(sim_real_speedup)],
+                cmd,
                 stdout=log_file,
                 stderr=log_file,
                 preexec_fn=lambda: (os.setsid(), signal.alarm(20)),
@@ -145,7 +148,7 @@ def reset_fsw_config():
 
 
 def run_simulation_trial(
-    trial_number: int, trial_date: str, sim_set_name: str, sim_real_speedup: int, set_config_params, args
+    trial_number: int, trial_date: str, sim_set_name: str, sim_real_speedup, set_config_params, args
 ) -> None:
 
     # Run FSW Simulation
@@ -229,9 +232,7 @@ if __name__ == "__main__":
         n_trials = sil_campaign_params["sil_campaign"][sim_set]["num_sims"]
         first_trial_id = sil_campaign_params["sil_campaign"][sim_set]["first_trial_number"]
 
-        sim_real_speedup = 1  # default
-        if "sim_real_speedup" in sil_campaign_params["sil_campaign"][sim_set]:
-            sim_real_speedup = sil_campaign_params["sil_campaign"][sim_set]["sim_real_speedup"]
+        sim_real_speedup = sil_campaign_params["sil_campaign"][sim_set].get("sim_real_speedup", None)
 
         # Update the fsw config.yaml
         update_fsw_config(sil_campaign_params["sil_campaign"][sim_set])
