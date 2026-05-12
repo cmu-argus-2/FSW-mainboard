@@ -233,9 +233,9 @@ class Task(TemplateTask):
             self.log_vc("ZM Coil", EPS_IDX.ZM_COIL_VOLTAGE, EPS_IDX.ZM_COIL_CURRENT, voltage, current)
 
     def log_fuel_gauge_readings(self):
-        self.log_info(f"Battery Pack Temperature AIN1: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN1]}°cC")
-        self.log_info(f"Battery Pack Temperature AIN2: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN2]}°cC")
-        self.log_info(f"Battery Pack Temperature Die: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_DIE]}°cC")
+        self.log_info(f"Battery Pack Temperature AIN1: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN1]} cC")
+        self.log_info(f"Battery Pack Temperature AIN2: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_AIN2]} cC")
+        self.log_info(f"Battery Pack Temperature Die: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE_DIE]} cC")
         self.log_info(f"Battery Pack Reported SOC: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]}% ")
         self.log_info(f"Battery Pack Reported Capacity: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY]} mAh ")
         self.log_info(f"Battery Pack Current: {self.log_data[EPS_IDX.BATTERY_PACK_CURRENT]} mA ")
@@ -261,7 +261,7 @@ class Task(TemplateTask):
         else:
             if not DH.data_process_exists("eps"):
                 data_format = (
-                    "Lbhhhhb" + "h" * 4 + "L" * 2 + "h" * 30 + "b"
+                    "Lb" + "h" * 7 + "b" + "h" * 4 + "L" * 2 + "h" * 26 + "b" * 2
                 )  # - use mV for voltage and mA for current (h = short integer 2 bytes, L = 4 bytes)
                 DH.register_data_process("eps", data_format, True, data_limit=1000000, write_interval=5)
 
