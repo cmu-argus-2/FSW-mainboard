@@ -687,11 +687,6 @@ def setup_logger(level="NOTSET", handler=None):
     :param level: The logging level (NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL).
     :param handler: A logging handler, e.g., StreamHandler or FileHandler.
     """
-    # NVM override (set by SET_LOG_LEVEL command) wins over the yaml default.
-    persisted = get_persisted_level_name()
-    if persisted is not None:
-        level = persisted
-
     set_level = 0
     for i, _level in enumerate(LEVELS):
         if _level[1] == level:

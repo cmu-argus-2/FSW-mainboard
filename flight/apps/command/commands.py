@@ -428,15 +428,17 @@ def CLEANUP_LOG_DOWNLINK():
 
 @register_command()
 def SET_LOG_LEVEL(level_id):
-    """Change the active log level (stream + file handlers) and persist it in NVM.
+    """Change the SD-card file log level and persist it in NVM.
+
+    Serial console level is fixed at boot from yaml and is intentionally
+    NOT affected by this command.
 
     level_id is an index into core.logging.LEVELS:
         0 NOTSET, 1 DEBUG, 2 INFO, 3 WARNING, 4 ERROR, 5 CRITICAL, 6 NOTHING.
-    The new level applies immediately to the core_logger and to the
-    RotatingFileHandler (if file logging is up). It is also written to the
-    NVM-backed StateFlags.f_log_level byte so it survives a reboot; the
-    persisted value is read at boot by setup_logger and by the file-handler
-    init in tasks/command.py.
+    The new level applies immediately to the RotatingFileHandler (if file
+    logging is up). It is also written to the NVM-backed StateFlags.f_log_level
+    byte so it survives a reboot; the persisted value is read by the
+    file-handler init in tasks/command.py.
 
     Returns:
         [level_id]            on success
@@ -452,7 +454,6 @@ def SET_LOG_LEVEL(level_id):
     level_int = LOG_LEVELS[level_id][0]
 
     core_logger = getLogger("core_logger")
-    core_logger.setLevel(level_int)
     for h in core_logger._handlers:
         if isinstance(h, RotatingFileHandler):
             h.setLevel(level_int)

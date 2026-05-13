@@ -28,7 +28,7 @@ time_processor:
 # Main Task
 main:
   LOG_LEVEL:
-    value: "INFO"
+    value: "DEBUG"
 
 # HAL Monitor Task
 hal_monitor:

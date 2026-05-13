@@ -16,7 +16,7 @@ class time_processor_config:
 
 
 class main_config:
-    LOG_LEVEL = "INFO"
+    LOG_LEVEL = "DEBUG"
 
 
 class hal_monitor_config:
