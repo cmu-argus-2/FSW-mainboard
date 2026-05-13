@@ -13,6 +13,8 @@ from ulab import numpy as np
 
 _CTR_MODE_DIR = "/sd/config/"
 _CTRL_MODE_PATH = _CTR_MODE_DIR + "controller_mode.bin"
+_CTRL_CONSTS_PATH = _CTR_MODE_DIR + "controller_consts.bin"
+_MODE_TOLS_PATH = _CTR_MODE_DIR + "mode_tols.bin"
 
 
 class StatusConst:
@@ -84,16 +86,52 @@ class Modes:
     SUN_POINTED_TOL_LO = 0.176  # Turn ACS off if momentum less than 10 deg from sun vector
     SUN_POINTED_TOL_HI = 0.26  # Re-enter sun_pointed if momentum more than 15 deg from sun vector
 
+    _loaded = False
+
+    @classmethod
+    def load(cls):
+        if cls._loaded:
+            return
+        try:
+            with open(_MODE_TOLS_PATH, "rb") as f:
+                vals = struct.unpack("5f", f.read(struct.calcsize("5f")))
+            cls.VF_TUMBLING_TOL_BDOT = vals[0]
+            cls.VF_TUMBLING_TOL      = vals[1]
+            cls.TUMBLING_TOL         = vals[2]
+            cls.DETUMBLED_TOL_LO     = vals[3]
+            cls.DETUMBLED_TOL_HI     = vals[4]
+        except Exception:
+            pass
+        cls._loaded = True
+
+    @classmethod
+    def _save(cls):
+        if not cls._loaded:
+            return
+        try:
+            with open(_MODE_TOLS_PATH, "wb") as f:
+                f.write(struct.pack("5f",
+                    cls.VF_TUMBLING_TOL_BDOT,
+                    cls.VF_TUMBLING_TOL,
+                    cls.TUMBLING_TOL,
+                    cls.DETUMBLED_TOL_LO,
+                    cls.DETUMBLED_TOL_HI))
+            os.sync()
+        except Exception:
+            pass
+
     @classmethod
     def update_vf_tumbling_tols(cls, bdot, vf):
         cls.VF_TUMBLING_TOL_BDOT = bdot
         cls.VF_TUMBLING_TOL = vf
+        cls._save()
 
     @classmethod
     def update_detumbling_tols(cls, tumbling, lo, hi):
         cls.TUMBLING_TOL = tumbling
         cls.DETUMBLED_TOL_LO = lo
         cls.DETUMBLED_TOL_HI = hi
+        cls._save()
 
 
 class ControllerModes:
@@ -205,16 +243,48 @@ class ControllerConst:
     # Detumbling Constants
     DETUMB_GAIN = 1.0e05
 
+    _loaded = False
+
+    @classmethod
+    def load(cls):
+        if cls._loaded:
+            return
+        try:
+            with open(_CTRL_CONSTS_PATH, "rb") as f:
+                vals = struct.unpack("9f", f.read(struct.calcsize("9f")))
+            cls.update_gains(vals[0], vals[1])
+            cls.update_omega_target(vals[2])
+            cls.update_inertia(vals[3], vals[4], vals[5], vals[6], vals[7], vals[8])
+        except Exception:
+            pass
+        cls._loaded = True
+
+    @classmethod
+    def _save(cls):
+        if not cls._loaded:
+            return
+        try:
+            m = cls.INERTIA_MAT
+            with open(_CTRL_CONSTS_PATH, "wb") as f:
+                f.write(struct.pack("9f",
+                    cls.SPIN_STABILIZING_GAIN, cls.DETUMB_GAIN, cls.OMEGA_MAG_TARGET,
+                    m[0][0], m[0][1], m[0][2], m[1][1], m[1][2], m[2][2]))
+            os.sync()
+        except Exception:
+            pass
+
     @classmethod
     def update_gains(cls, spin_gain, detumb_gain):
         cls.SPIN_STABILIZING_GAIN = spin_gain
         cls.DETUMB_GAIN = detumb_gain
+        cls._save()
 
     @classmethod
     def update_omega_target(cls, omega_mag_target):
         cls.OMEGA_MAG_TARGET = omega_mag_target
         cls.MOMENTUM_TARGET = np.dot(cls.INERTIA_MAT, cls.INERTIA_MAJOR_DIR * omega_mag_target)
         cls.MOMENTUM_TARGET_MAG = np.linalg.norm(cls.MOMENTUM_TARGET)
+        cls._save()
 
     @classmethod
     def update_inertia(cls, ixx, ixy, ixz, iyy, iyz, izz):
@@ -230,6 +300,7 @@ class ControllerConst:
 
         cls.MOMENTUM_TARGET = np.dot(cls.INERTIA_MAT, cls.INERTIA_MAJOR_DIR * cls.OMEGA_MAG_TARGET)
         cls.MOMENTUM_TARGET_MAG = np.linalg.norm(cls.MOMENTUM_TARGET)
+        cls._save()
 
 
 class MCMConst:

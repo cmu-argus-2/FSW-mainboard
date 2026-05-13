@@ -10,7 +10,7 @@ from apps.adcs.acs import (
     sun_pointing_controller,
     zero_all_coils,
 )
-from apps.adcs.consts import ControllerModes, Modes, StatusConst
+from apps.adcs.consts import ControllerConst, ControllerModes, Modes, StatusConst
 from apps.adcs.modemanager import update_mode
 from apps.adcs.sensors import load_sensor_cal
 from core import DataHandler as DH
@@ -103,6 +103,8 @@ class Task(TemplateTask):
                 DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=2)
 
             ControllerModes.load()
+            ControllerConst.load()
+            Modes.load()
             load_sensor_cal()
 
             # Check for controller mode update from commands
