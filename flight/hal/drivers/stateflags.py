@@ -19,31 +19,10 @@ class StateFlags:
     def __init__(self):
         pass
 
-    # TODO: Update to reflect desired design
-
     # NVM register numbers
-    BOOTCNT = const(0)
-    VBUSRST = const(6)
-    STATECNT = const(7)
-    TOUTS = const(9)
-    GSRSP = const(10)
-    ICHRG = const(11)
-    FLAG = const(16)
-    LOG_LVL = const(17)
-
-    # General NVM counters
-    c_boot = multiBitFlag(register=BOOTCNT, lowest_bit=0, num_bits=8)
-    c_vbusrst = multiBitFlag(register=VBUSRST, lowest_bit=0, num_bits=8)
-    c_state_err = multiBitFlag(register=STATECNT, lowest_bit=0, num_bits=8)
-    c_gs_resp = multiBitFlag(register=GSRSP, lowest_bit=0, num_bits=8)
-    c_ichrg = multiBitFlag(register=ICHRG, lowest_bit=0, num_bits=8)
+    LOG_LVL = const(0)
+    FLAG = const(1)
 
     # Define NVM flags
-    f_lowbatt = bitFlag(register=FLAG, bit=0)
-    f_solar = bitFlag(register=FLAG, bit=1)
-    f_gpson = bitFlag(register=FLAG, bit=2)
-    f_lowbtout = bitFlag(register=FLAG, bit=3)
-    f_gpsfix = bitFlag(register=FLAG, bit=4)
-    f_shtdwn = bitFlag(register=FLAG, bit=5)
-    f_rf_stop = bitFlag(register=FLAG, bit=6)
     f_log_level = multiBitFlag(register=LOG_LVL, lowest_bit=0, num_bits=8)
+    f_rf_stop = bitFlag(register=FLAG, bit=0)
