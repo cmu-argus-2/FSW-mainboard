@@ -699,9 +699,6 @@ def setup_logger(level="NOTSET", handler=None):
 
     logger.setLevel(set_level)
 
-    if level == "NOTSET" or level == "NOTHING":
-        return
-
     if handler is None:
         handler = StreamHandler()
 
