@@ -100,7 +100,8 @@ def read_magnetometer() -> tuple[int, np.ndarray]:
     """
 
     if SATELLITE.IMU_AVAILABLE:
-        mag = 1e-6 * np.array(SATELLITE.IMU.mag())  # Convert field from uT to T
+        mag = np.array(SATELLITE.IMU.mag())
+        mag *= 1e-6  # Convert field from uT to T
         mag -= _MAG_BIAS
         mag *= _MAG_SCALE
 

@@ -23,6 +23,7 @@ from core.time_processor import TimeProcessor as TPM
 from ulab import numpy as np
 
 _IDX_LENGTH = class_length(ADCS_IDX)
+_ADCS_DATA_FORMAT = "LBBffffffBfffHHHHHHHHHBBBBBB"
 
 
 class Task(TemplateTask):
@@ -99,8 +100,7 @@ class Task(TemplateTask):
             pass
         else:
             if not DH.data_process_exists("adcs"):
-                data_format = "LBB" + 6 * "f" + "B" + 3 * "f" + 9 * "H" + 6 * "B"  # + 4 * "f"
-                DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=2)
+                DH.register_data_process("adcs", _ADCS_DATA_FORMAT, True, data_limit=100000, write_interval=2)
 
             ControllerModes.load()
             ControllerConst.load()
@@ -168,7 +168,7 @@ class Task(TemplateTask):
         """
         Performs attitude control on the spacecraft
         """
-        mtq_throttle = np.zeros((3,))
+        mtq_throttle = ControllerConst.FALLBACK_CONTROL
 
         if self.CONTROLLER_MODE == ControllerModes.BCROSS:
             if self.MODE != Modes.ACS_OFF and self.MODE != Modes.VF_TUMBLING:

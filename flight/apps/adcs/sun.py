@@ -24,6 +24,7 @@ _MAX_RANGE = const(140000)  # OPT4001
 _THRESHOLD_ILLUMINATION_LUX = const(3000)
 _NUM_LIGHT_SENSORS = const(9)
 _ERROR_LUX = const(-1)
+_FACES = ("XP", "XM", "YP", "YM", "ZP_XP", "ZP_YM", "ZP_XM", "ZP_YP", "ZM")
 
 
 def _read_light_sensor(face):
@@ -41,10 +42,9 @@ def read_light_sensors():
         lux_readings: list of lux readings on each face. A "ERROR_LUX" reading comes from a dysfunctional sensor.
     """
 
-    faces = ["XP", "XM", "YP", "YM", "ZP_XP", "ZP_YM", "ZP_XM", "ZP_YP", "ZM"]
     lux_readings = []
 
-    for face in faces:
+    for face in _FACES:
         try:
             lux_readings.append(_read_light_sensor(face))
         except Exception as e:
