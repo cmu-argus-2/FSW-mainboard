@@ -16,6 +16,11 @@ from core.time_processor import TimeProcessor as TPM
 
 
 class Task(TemplateTask):
+    # Number of packets to transmit back-to-back before yielding to the
+    # scheduler. Bigger -> higher TX throughput but longer scheduler blackout.
+    # Bounded by HW watchdog timeout. Tune empirically.
+    TX_BURST_SIZE = 5
+
     def __init__(self, id):
         super().__init__(id)
 
@@ -50,6 +55,7 @@ class Task(TemplateTask):
         if TransmitQueue.packet_available():
             self.update_comms_telemetry()  # will only update comms data when something is sent or received
 
+        sent_in_burst = 0
         while TransmitQueue.packet_available():
             self.log_info("  Packet available in TransmitQueue, preparing for transmission")
             # If we have a packet to transmit, set it in the radio
@@ -59,9 +65,12 @@ class Task(TemplateTask):
                 SATELLITE_RADIO.transmit_message(packed_packet)
             else:
                 self.log_error("Error popping packet from TransmitQueue")
-            # Yield to scheduler between packets so watchdog (and other tasks)
-            # get CPU time.
-            await sleep(0)
+            sent_in_burst += 1
+            if sent_in_burst >= self.TX_BURST_SIZE:
+                # Yield to scheduler after a burst so watchdog (and other tasks)
+                # get CPU time. Burst size bounded by HW watchdog timeout.
+                await sleep(0)
+                sent_in_burst = 0
 
     def receive_message(self):
         """
