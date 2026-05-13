@@ -1,7 +1,56 @@
+import os
+import struct
+
 from apps.adcs.consts import StatusConst, SunConst
 from apps.adcs.sun import compute_body_sun_vector_from_lux, read_light_sensors
 from hal.configuration import SATELLITE
 from ulab import numpy as np
+
+_CAL_PATH = "/sd/config/sensor_cal.bin"
+_CAL_FMT = "9f"
+_sensor_cal_loaded = False
+
+_GYRO_BIAS = np.zeros(3)
+_MAG_BIAS = np.zeros(3)
+_MAG_SCALE = np.ones(3)
+
+
+def load_sensor_cal():
+    global _sensor_cal_loaded
+    if _sensor_cal_loaded:
+        return
+    _sensor_cal_loaded = True
+    try:
+        with open(_CAL_PATH, "rb") as f:
+            vals = struct.unpack(_CAL_FMT, f.read(struct.calcsize(_CAL_FMT)))
+        _GYRO_BIAS[0] = vals[0]; _GYRO_BIAS[1] = vals[1]; _GYRO_BIAS[2] = vals[2]
+        _MAG_BIAS[0]  = vals[3]; _MAG_BIAS[1]  = vals[4]; _MAG_BIAS[2]  = vals[5]
+        _MAG_SCALE[0] = vals[6]; _MAG_SCALE[1] = vals[7]; _MAG_SCALE[2] = vals[8]
+    except Exception:
+        pass
+
+
+def _save_sensor_cal():
+    try:
+        with open(_CAL_PATH, "wb") as f:
+            f.write(struct.pack(_CAL_FMT,
+                _GYRO_BIAS[0], _GYRO_BIAS[1], _GYRO_BIAS[2],
+                _MAG_BIAS[0],  _MAG_BIAS[1],  _MAG_BIAS[2],
+                _MAG_SCALE[0], _MAG_SCALE[1], _MAG_SCALE[2]))
+        os.sync()
+    except Exception:
+        pass
+
+
+def update_gyro_bias(b_x, b_y, b_z):
+    _GYRO_BIAS[0] = b_x; _GYRO_BIAS[1] = b_y; _GYRO_BIAS[2] = b_z
+    _save_sensor_cal()
+
+
+def update_mag_cal(b_x, b_y, b_z, s_x, s_y, s_z):
+    _MAG_BIAS[0] = b_x; _MAG_BIAS[1] = b_y; _MAG_BIAS[2] = b_z
+    _MAG_SCALE[0] = s_x; _MAG_SCALE[1] = s_y; _MAG_SCALE[2] = s_z
+    _save_sensor_cal()
 
 
 def read_gyro() -> tuple[int, np.ndarray]:
@@ -11,6 +60,7 @@ def read_gyro() -> tuple[int, np.ndarray]:
 
     if SATELLITE.IMU_AVAILABLE:
         gyro = np.array(SATELLITE.IMU.gyro())  # Gyro measurements are in rad/s
+        gyro -= _GYRO_BIAS
 
         # Sensor validity check
         if not is_valid_gyro_reading(gyro):
@@ -29,6 +79,8 @@ def read_magnetometer() -> tuple[int, np.ndarray]:
 
     if SATELLITE.IMU_AVAILABLE:
         mag = 1e-6 * np.array(SATELLITE.IMU.mag())  # Convert field from uT to T
+        mag -= _MAG_BIAS
+        mag *= _MAG_SCALE
 
         # Sensor validity check
         if not is_valid_mag_reading(mag):
