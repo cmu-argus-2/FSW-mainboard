@@ -25,6 +25,7 @@ _THRESHOLD_ILLUMINATION_LUX = const(3000)
 _NUM_LIGHT_SENSORS = const(9)
 _ERROR_LUX = const(-1)
 _FACES = ("XP", "XM", "YP", "YM", "ZP_XP", "ZP_YM", "ZP_XM", "ZP_YP", "ZM")
+_LUX_BUF = [_ERROR_LUX] * _NUM_LIGHT_SENSORS
 
 
 def _read_light_sensor(face):
@@ -42,16 +43,14 @@ def read_light_sensors():
         lux_readings: list of lux readings on each face. A "ERROR_LUX" reading comes from a dysfunctional sensor.
     """
 
-    lux_readings = []
-
-    for face in _FACES:
+    for i, face in enumerate(_FACES):
         try:
-            lux_readings.append(_read_light_sensor(face))
+            _LUX_BUF[i] = _read_light_sensor(face)
         except Exception as e:
             logger.warning(f"Error reading {face}: {e}")
-            lux_readings.append(_ERROR_LUX)
+            _LUX_BUF[i] = _ERROR_LUX
 
-    return lux_readings
+    return _LUX_BUF
 
 
 def compute_body_sun_vector_from_lux(I_vec):
