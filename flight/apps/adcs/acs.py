@@ -89,7 +89,7 @@ def bdot_controller(mag_buffer: np.ndarray, dt: float) -> np.ndarray:
     if mag_buffer.shape != (6, 3) or dt <= 0:
         return ControllerConst.FALLBACK_CONTROL
     b_dot = np.dot(mag_buffer.T, _DERIVATIVE_WEIGHTS) / dt
-    u = -ControllerConst.BDOT_GAIN * b_dot
+    u = -ControllerConst.DETUMB_GAIN * b_dot
     return smooth_throttle(u)
 
 
