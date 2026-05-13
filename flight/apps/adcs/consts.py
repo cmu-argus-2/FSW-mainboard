@@ -199,21 +199,23 @@ class SunConst:
     """
 
     # map from light sensors to body vector
-    LIGHT_SENSOR_NORMALS = [
-        [1, 0, 0],
-        [-1, 0, 0],
-        [0, 1, 0],
-        [0, -1, 0],
-        [0.7071, 0, 0.7071],
-        [0, -0.7071, 0.7071],
-        [-0.7071, 0, 0.7071],
-        [0, 0.7071, 0.7071],
-        [0, 0, -1],
-    ]
+    LIGHT_SENSOR_NORMALS = np.array(
+        [
+            [1, 0, 0],
+            [-1, 0, 0],
+            [0, 1, 0],
+            [0, -1, 0],
+            [0.7071, 0, 0.7071],
+            [0, -0.7071, 0.7071],
+            [-0.7071, 0, 0.7071],
+            [0, 0.7071, 0.7071],
+            [0, 0, -1],
+        ]
+    )
 
-    LIGHT_X_IDXS = [0, 1, 4, 6]
-    LIGHT_Y_IDXS = [2, 3, 5, 7]
-    LIGHT_Z_IDXS = [4, 5, 6, 7, 8]
+    LIGHT_X_IDXS = (0, 1, 4, 6)
+    LIGHT_Y_IDXS = (2, 3, 5, 7)
+    LIGHT_Z_IDXS = (4, 5, 6, 7, 8)
 
     # Logging only allows for a max value of 65535. Since OPT4003 has a max value of 140k, scale log data down by 3
     LIGHT_SENSOR_LOG_FACTOR = 1 / 3
@@ -323,8 +325,8 @@ class MCMConst:
     """
 
     N_MCM = 6
-    MCM_FACES = ["XP", "XM", "YP", "YM", "ZP", "ZM"]
-    MCM_INDICES = [0, 1, 2, 3, 4, 5]
+    MCM_FACES = ("XP", "XM", "YP", "YM", "ZP", "ZM")
+    MCM_INDICES = (0, 1, 2, 3, 4, 5)
 
     ALLOC_MAT = np.array(
         [

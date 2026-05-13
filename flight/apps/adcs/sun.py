@@ -84,10 +84,9 @@ def compute_body_sun_vector_from_lux(I_vec):
         status = StatusConst.OK
 
     # Extract body vectors and lux readings where the sensor readings are valid
-    ACTIVE_LIGHT_READINGS = np.array([I_vec[i] for i in range(_NUM_LIGHT_SENSORS) if I_vec[i] > _THRESHOLD_ILLUMINATION_LUX])
-    ACTIVE_LIGHT_NORMALS = np.array(
-        [SunConst.LIGHT_SENSOR_NORMALS[i] for i in range(_NUM_LIGHT_SENSORS) if I_vec[i] > _THRESHOLD_ILLUMINATION_LUX]
-    )
+    active_idxs = [i for i in range(_NUM_LIGHT_SENSORS) if I_vec[i] > _THRESHOLD_ILLUMINATION_LUX]
+    ACTIVE_LIGHT_READINGS = np.array([I_vec[i] for i in active_idxs])
+    ACTIVE_LIGHT_NORMALS = np.array([SunConst.LIGHT_SENSOR_NORMALS[i] for i in active_idxs])
 
     # Try to perform an inverse. If the condition-number of under 1e-4, Cpy throws a ValueError for a singular matrix
     # If the pinv fails, we have a singular matrix and return a NOT_ENOUGH_READINGS flag
