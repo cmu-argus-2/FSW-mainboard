@@ -95,16 +95,6 @@ class Modes:
         cls.DETUMBLED_TOL_LO = lo
         cls.DETUMBLED_TOL_HI = hi
 
-    @classmethod
-    def update_stable_tols(cls, lo, hi):
-        cls.STABLE_TOL_LO = lo
-        cls.STABLE_TOL_HI = hi
-
-    @classmethod
-    def update_sun_pointed_tols(cls, lo, hi):
-        cls.SUN_POINTED_TOL_LO = lo
-        cls.SUN_POINTED_TOL_HI = hi
-
 
 class ControllerModes:
     """
@@ -202,10 +192,9 @@ class ControllerConst:
 
     # Dimensions of sensor readings and control input
     READING_DIM = (3,)
-    CONTROL_DIM = (3,)
 
     # Fallback control input
-    FALLBACK_CONTROL = np.zeros(CONTROL_DIM)
+    FALLBACK_CONTROL = np.zeros(3)
 
     # Spin-stabilized Constants
     OMEGA_MAG_TARGET = 0.35  # Target angular velocity (20 deg/s) for spin stabilization

@@ -21,6 +21,7 @@ Author: Ibrahima S. Sow
 
 import supervisor
 from apps.adcs.consts import ControllerConst, ControllerModes, Modes
+from apps.adcs.sensors import update_gyro_bias, update_mag_cal
 from apps.command.supervisor import CommandSupervisor
 from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
@@ -518,19 +519,19 @@ def ADCS_UPDATE_DETUMB_TOLS(tb, dtb_lo, dtb_hi):
 
 
 @register_command()
-def ADCS_UPDATE_STABLE_TOLS(lo, hi):
-    """Updates the stable mode entry/exit thresholds."""
-    logger.info(f"Executing ADCS_UPDATE_STABLE_TOLS with lo: {lo}, hi: {hi}")
-    Modes.update_stable_tols(lo, hi)
-    return [Modes.STABLE_TOL_LO, Modes.STABLE_TOL_HI]
+def ADCS_UPDATE_GYRO_BIAS(b_x, b_y, b_z):
+    """Updates the gyro bias values."""
+    logger.info(f"Executing ADCS_UPDATE_GYRO_BIAS with b_x: {b_x}, b_y: {b_y}, b_z: {b_z}")
+    update_gyro_bias(float(b_x), float(b_y), float(b_z))
+    return [b_x, b_y, b_z]
 
 
 @register_command()
-def ADCS_UPDATE_SUN_POINT_TOLS(lo, hi):
-    """Updates the sun-pointed mode entry/exit thresholds."""
-    logger.info(f"Executing ADCS_UPDATE_SUN_POINT_TOLS with lo: {lo}, hi: {hi}")
-    Modes.update_sun_pointed_tols(lo, hi)
-    return [Modes.SUN_POINTED_TOL_LO, Modes.SUN_POINTED_TOL_HI]
+def ADCS_UPDATE_MAG_CAL(b_x, b_y, b_z, s_x, s_y, s_z):
+    """Updates the magnetometer calibration (hard-iron bias and per-axis scale)."""
+    logger.info(f"Executing ADCS_UPDATE_MAG_CAL with b_x: {b_x}, b_y: {b_y}, b_z: {b_z}, s_x: {s_x}, s_y: {s_y}, s_z: {s_z}")
+    update_mag_cal(float(b_x), float(b_y), float(b_z), float(s_x), float(s_y), float(s_z))
+    return [b_x, b_y, b_z, s_x, s_y, s_z]
 
 
 @register_command()

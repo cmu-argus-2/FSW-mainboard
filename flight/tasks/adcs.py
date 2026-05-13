@@ -12,6 +12,7 @@ from apps.adcs.acs import (
 )
 from apps.adcs.consts import ControllerModes, Modes, StatusConst
 from apps.adcs.modemanager import update_mode
+from apps.adcs.sensors import load_sensor_cal
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
@@ -102,6 +103,7 @@ class Task(TemplateTask):
                 DH.register_data_process("adcs", data_format, True, data_limit=100000, write_interval=2)
 
             ControllerModes.load()
+            load_sensor_cal()
 
             # Check for controller mode update from commands
             if self.CONTROLLER_MODE != ControllerModes.current_mode:
