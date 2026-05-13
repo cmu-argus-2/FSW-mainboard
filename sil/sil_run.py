@@ -187,8 +187,8 @@ def arg_parse(parser):
     parser.add_argument(
         "--erase_sil_logs",
         action="store_true",
-        default=False,
-        help="Flag to erase SIL logs in main folder [default: False]",
+        default=True,
+        help="Flag to erase SIL logs in main folder [default: True]",
     )
     parser.add_argument(
         "--store_sil_logs_results",

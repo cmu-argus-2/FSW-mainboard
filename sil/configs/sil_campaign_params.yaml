@@ -9,7 +9,7 @@ sil_campaign:
           num_sims: 1 # 100
           first_trial_number: 1 # for debugging, to repeat specific trial
           runtime: 100 # [seconds] how long the FSW is allowed to run
-          sim_real_speedup : 275
+          # sim_real_speedup : 275
           outfile: "sil_logs.log"
           fsw_percent_to_log: 0.01 # fraction of FSW data to log for plotting
           param_changes:
@@ -70,7 +70,7 @@ sil_campaign:
           num_sims: 1 # 100
           first_trial_number: 1 # for debugging, to repeat specific trial
           runtime: 40 # [seconds] how long the FSW is allowed to run
-          sim_real_speedup : 1 # 275
+          # sim_real_speedup : 1 # 275
           outfile: "sil_logs.log"
           fsw_percent_to_log: 1 # fraction of FSW data to log for plotting
           param_changes:
