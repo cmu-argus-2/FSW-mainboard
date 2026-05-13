@@ -23,9 +23,15 @@ def load_sensor_cal():
     try:
         with open(_CAL_PATH, "rb") as f:
             vals = struct.unpack(_CAL_FMT, f.read(struct.calcsize(_CAL_FMT)))
-        _GYRO_BIAS[0] = vals[0]; _GYRO_BIAS[1] = vals[1]; _GYRO_BIAS[2] = vals[2]
-        _MAG_BIAS[0]  = vals[3]; _MAG_BIAS[1]  = vals[4]; _MAG_BIAS[2]  = vals[5]
-        _MAG_SCALE[0] = vals[6]; _MAG_SCALE[1] = vals[7]; _MAG_SCALE[2] = vals[8]
+        _GYRO_BIAS[0] = vals[0]
+        _GYRO_BIAS[1] = vals[1]
+        _GYRO_BIAS[2] = vals[2]
+        _MAG_BIAS[0] = vals[3]
+        _MAG_BIAS[1] = vals[4]
+        _MAG_BIAS[2] = vals[5]
+        _MAG_SCALE[0] = vals[6]
+        _MAG_SCALE[1] = vals[7]
+        _MAG_SCALE[2] = vals[8]
     except Exception:
         pass
 
@@ -33,23 +39,39 @@ def load_sensor_cal():
 def _save_sensor_cal():
     try:
         with open(_CAL_PATH, "wb") as f:
-            f.write(struct.pack(_CAL_FMT,
-                _GYRO_BIAS[0], _GYRO_BIAS[1], _GYRO_BIAS[2],
-                _MAG_BIAS[0],  _MAG_BIAS[1],  _MAG_BIAS[2],
-                _MAG_SCALE[0], _MAG_SCALE[1], _MAG_SCALE[2]))
+            f.write(
+                struct.pack(
+                    _CAL_FMT,
+                    _GYRO_BIAS[0],
+                    _GYRO_BIAS[1],
+                    _GYRO_BIAS[2],
+                    _MAG_BIAS[0],
+                    _MAG_BIAS[1],
+                    _MAG_BIAS[2],
+                    _MAG_SCALE[0],
+                    _MAG_SCALE[1],
+                    _MAG_SCALE[2],
+                )
+            )
         os.sync()
     except Exception:
         pass
 
 
 def update_gyro_bias(b_x, b_y, b_z):
-    _GYRO_BIAS[0] = b_x; _GYRO_BIAS[1] = b_y; _GYRO_BIAS[2] = b_z
+    _GYRO_BIAS[0] = b_x
+    _GYRO_BIAS[1] = b_y
+    _GYRO_BIAS[2] = b_z
     _save_sensor_cal()
 
 
 def update_mag_cal(b_x, b_y, b_z, s_x, s_y, s_z):
-    _MAG_BIAS[0] = b_x; _MAG_BIAS[1] = b_y; _MAG_BIAS[2] = b_z
-    _MAG_SCALE[0] = s_x; _MAG_SCALE[1] = s_y; _MAG_SCALE[2] = s_z
+    _MAG_BIAS[0] = b_x
+    _MAG_BIAS[1] = b_y
+    _MAG_BIAS[2] = b_z
+    _MAG_SCALE[0] = s_x
+    _MAG_SCALE[1] = s_y
+    _MAG_SCALE[2] = s_z
     _save_sensor_cal()
 
 

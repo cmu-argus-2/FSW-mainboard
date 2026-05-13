@@ -96,10 +96,10 @@ class Modes:
             with open(_MODE_TOLS_PATH, "rb") as f:
                 vals = struct.unpack("5f", f.read(struct.calcsize("5f")))
             cls.VF_TUMBLING_TOL_BDOT = vals[0]
-            cls.VF_TUMBLING_TOL      = vals[1]
-            cls.TUMBLING_TOL         = vals[2]
-            cls.DETUMBLED_TOL_LO     = vals[3]
-            cls.DETUMBLED_TOL_HI     = vals[4]
+            cls.VF_TUMBLING_TOL = vals[1]
+            cls.TUMBLING_TOL = vals[2]
+            cls.DETUMBLED_TOL_LO = vals[3]
+            cls.DETUMBLED_TOL_HI = vals[4]
         except Exception:
             pass
         cls._loaded = True
@@ -110,12 +110,16 @@ class Modes:
             return
         try:
             with open(_MODE_TOLS_PATH, "wb") as f:
-                f.write(struct.pack("5f",
-                    cls.VF_TUMBLING_TOL_BDOT,
-                    cls.VF_TUMBLING_TOL,
-                    cls.TUMBLING_TOL,
-                    cls.DETUMBLED_TOL_LO,
-                    cls.DETUMBLED_TOL_HI))
+                f.write(
+                    struct.pack(
+                        "5f",
+                        cls.VF_TUMBLING_TOL_BDOT,
+                        cls.VF_TUMBLING_TOL,
+                        cls.TUMBLING_TOL,
+                        cls.DETUMBLED_TOL_LO,
+                        cls.DETUMBLED_TOL_HI,
+                    )
+                )
             os.sync()
         except Exception:
             pass
@@ -266,9 +270,20 @@ class ControllerConst:
         try:
             m = cls.INERTIA_MAT
             with open(_CTRL_CONSTS_PATH, "wb") as f:
-                f.write(struct.pack("9f",
-                    cls.SPIN_STABILIZING_GAIN, cls.DETUMB_GAIN, cls.OMEGA_MAG_TARGET,
-                    m[0][0], m[0][1], m[0][2], m[1][1], m[1][2], m[2][2]))
+                f.write(
+                    struct.pack(
+                        "9f",
+                        cls.SPIN_STABILIZING_GAIN,
+                        cls.DETUMB_GAIN,
+                        cls.OMEGA_MAG_TARGET,
+                        m[0][0],
+                        m[0][1],
+                        m[0][2],
+                        m[1][1],
+                        m[1][2],
+                        m[2][2],
+                    )
+                )
             os.sync()
         except Exception:
             pass
