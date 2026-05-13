@@ -19,7 +19,6 @@ def load_sensor_cal():
     global _sensor_cal_loaded
     if _sensor_cal_loaded:
         return
-    _sensor_cal_loaded = True
     try:
         with open(_CAL_PATH, "rb") as f:
             vals = struct.unpack(_CAL_FMT, f.read(struct.calcsize(_CAL_FMT)))
@@ -34,6 +33,7 @@ def load_sensor_cal():
         _MAG_SCALE[2] = vals[8]
     except Exception:
         pass
+    _sensor_cal_loaded = True
 
 
 def _save_sensor_cal():

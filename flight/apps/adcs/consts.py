@@ -191,7 +191,6 @@ class ControllerModes:
                 pass
             return True
         return False
-        return False
 
 
 class SunConst:
