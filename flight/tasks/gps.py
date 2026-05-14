@@ -66,7 +66,9 @@ class Task(TemplateTask):
             if SATELLITE.GPS_AVAILABLE:
                 if not DH.data_process_exists("gps"):
                     data_format = "LBBIBHIHHHHHllllll"
-                    DH.register_data_process("gps", data_format, True, data_limit=100000, write_interval=1)
+
+                    # data limit is around 100minutes. No need to make it smaller for downlink 
+                    DH.register_data_process("gps", data_format, True, data_limit=10000, write_interval=1)
 
                 # Check if the module sent a valid nav data message
                 if SATELLITE.GPS.update():
