@@ -19,7 +19,7 @@ from hal.configuration import SATELLITE
 
 IDX_LENGTH = class_length(EPS_IDX)
 WARNING_IDX_LENGTH = class_length(EPS_WARNING_IDX)
-FUEL_GAUGE_LOG_FREQ = 5  # log fuel gauge readings every 5 seconds
+LOG_FREQ = 5  # log fuel gauge readings every 5 seconds
 MAINBOARD_TEMP_OFFSET = 200  # offset of mainboard temperature to battery pack temp in cC
 
 
@@ -101,7 +101,7 @@ class Task(TemplateTask):
         if self.log_counter % self.frequency == 0:
             self.log_data[voltage_idx] = voltage
             self.log_data[current_idx] = current
-            self.log_info(
+            self.log_debug(
                 f"{key} Voltage: {self.log_data[voltage_idx]} mV, " + f"{key} Current: {self.log_data[current_idx]} mA "
             )
 
@@ -217,14 +217,14 @@ class Task(TemplateTask):
             self.log_vc("ZM Coil", EPS_IDX.ZM_COIL_VOLTAGE, EPS_IDX.ZM_COIL_CURRENT, voltage, current)
 
     def log_fuel_gauge_readings(self):
-        self.log_info(f"Battery Pack Temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]}°cC")
-        self.log_info(f"Battery Pack Reported SOC: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]}% ")
-        self.log_info(f"Battery Pack Reported Capacity: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY]} mAh ")
-        self.log_info(f"Battery Pack Current: {self.log_data[EPS_IDX.BATTERY_PACK_CURRENT]} mA ")
-        self.log_info(f"Battery Pack Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_VOLTAGE]} mV ")
-        self.log_info(f"Battery Pack Midpoint Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE]} mV ")
-        self.log_info(f"Battery Pack Time-to-Empty: {self.log_data[EPS_IDX.BATTERY_PACK_TTE]} seconds ")
-        self.log_info(f"Battery Pack Time-to-Full: {self.log_data[EPS_IDX.BATTERY_PACK_TTF]} seconds ")
+        self.log_debug(f"Battery Pack Temperature: {self.log_data[EPS_IDX.BATTERY_PACK_TEMPERATURE]}°cC")
+        self.log_debug(f"Battery Pack Reported SOC: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]}% ")
+        self.log_debug(f"Battery Pack Reported Capacity: {self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_CAPACITY]} mAh ")
+        self.log_debug(f"Battery Pack Current: {self.log_data[EPS_IDX.BATTERY_PACK_CURRENT]} mA ")
+        self.log_debug(f"Battery Pack Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_VOLTAGE]} mV ")
+        self.log_debug(f"Battery Pack Midpoint Voltage: {self.log_data[EPS_IDX.BATTERY_PACK_MIDPOINT_VOLTAGE]} mV ")
+        self.log_debug(f"Battery Pack Time-to-Empty: {self.log_data[EPS_IDX.BATTERY_PACK_TTE]} seconds ")
+        self.log_debug(f"Battery Pack Time-to-Full: {self.log_data[EPS_IDX.BATTERY_PACK_TTF]} seconds ")
 
     def update_eps_state(self):
         soc = self.log_data[EPS_IDX.BATTERY_PACK_REPORTED_SOC]
@@ -265,24 +265,21 @@ class Task(TemplateTask):
                     self.process_torque_coil_readings(location, sensor)
 
             # Log every second
-            if self.log_counter % self.frequency == 0:
+            if self.log_counter % (LOG_FREQ * self.frequency) == 0:
                 self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE] = int(microcontroller.cpu.temperature * 100)
-                self.log_info(f"CPU temperature: {self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE]} °cC ")
+                self.log_debug(f"CPU temperature: {self.log_data[EPS_IDX.MAINBOARD_TEMPERATURE]} °cC ")
 
                 if SATELLITE.FUEL_GAUGE_AVAILABLE:
                     self.read_fuel_gauge()
                     self.update_eps_state()
+                    self.log_fuel_gauge_readings()
 
                 if SATELLITE.BATTERY_HEATERS_AVAILABLE:
                     battery_heaters = SATELLITE.BATTERY_HEATERS
                     self.set_battery_heaters(battery_heaters)
-                    self.log_info(f"Battery Heaters Enabled: {self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED]}")
+                    self.log_debug(f"Battery Heaters Enabled: {self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED]}")
 
                 DH.log_data("eps", self.log_data)
-
-            if self.log_counter % (FUEL_GAUGE_LOG_FREQ * self.frequency) == 0:
-                if SATELLITE.FUEL_GAUGE_AVAILABLE:
-                    self.log_fuel_gauge_readings()
 
             DH.log_data("eps_warning", self.warning_log_data)
             self.log_counter += 1
