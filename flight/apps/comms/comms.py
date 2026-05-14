@@ -184,8 +184,8 @@ class SATELLITE_RADIO:
 
         # unpack the received packet
         callsign, message_object = unpack(packet)  # [TODO] - this should be implemented in middleware
-        logger.info(f"Received callsign: {callsign}")
-        logger.info(f"Received raw packet: {packet[0:20]}")
+        logger.debug(f"Received callsign: {callsign}")
+        logger.debug(f"Received raw packet: {packet[0:20]}")
         logger.info(f"Unpacked message object: {message_object}")
 
         if callsign != cls.GS_CALLSIGN:
@@ -223,7 +223,7 @@ class SATELLITE_RADIO:
         if SATELLITE.RADIO_AVAILABLE:
             SATELLITE.RADIO.send(packet)
             cls.tx_packet_count += 1
-            logger.info(f"[COMMS] - Message has been transmitted: {format_bytes(packet[:20])}...")
+            logger.debug(f"[COMMS] - Message has been transmitted: {format_bytes(packet[:20])}...")
             return True
         else:
             logger.error("[COMMS ERROR] RADIO no longer active on SAT")
