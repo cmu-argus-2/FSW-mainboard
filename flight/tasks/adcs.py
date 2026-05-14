@@ -77,7 +77,6 @@ class Task(TemplateTask):
 
     coils_off = True
 
-    _mag_buffer = None
     _MAG_SAMPLE_DT = 0.08
     _MAG_N_SAMPLES = 6
     _BDOT_COIL_ON_TIME = 0.5
@@ -100,8 +99,7 @@ class Task(TemplateTask):
             if self.CONTROLLER_MODE != ControllerModes.current_mode:
                 self.CONTROLLER_MODE = ControllerModes.current_mode
 
-            self.time = TPM.time()
-            self.log_data[ADCS_IDX.TIME_ADCS] = self.time
+            self.log_data[ADCS_IDX.TIME_ADCS] = TPM.time()
 
             self.mag_status, self.mag_data = sensors.read_magnetometer()
             self.gyro_status, self.gyro_data = sensors.read_gyro()
@@ -150,49 +148,29 @@ class Task(TemplateTask):
                     self.MODE, self.CONTROLLER_MODE, self.gyro_status, self.gyro_data, self.sun_status, self.sun_pos_body
                 )
 
-    # ------------------------------------------------------------------------------------------------------------------------------------
-    """ Attitude Control Auxiliary Functions """
-    # ------------------------------------------------------------------------------------------------------------------------------------
-    def attitude_control(self):
-        """
-        Performs attitude control on the spacecraft
-        """
+    # --- Attitude Control ---
+    def _apply_control(self):
+        if self.MODE == Modes.ACS_OFF:
+            self.ensure_coils_off()
+            return
         mtq_throttle = ControllerConst.FALLBACK_CONTROL
-
         if self.CONTROLLER_MODE == ControllerModes.BCROSS:
             if self.MODE != Modes.ACS_OFF:
                 if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
                     mtq_throttle = bcross_controller(self.mag_data, self.gyro_data)
         elif self.CONTROLLER_MODE == ControllerModes.SUN_POINTING:
-            # Decide which controller to choose
-            if self.MODE == Modes.TUMBLING or self.MODE == Modes.STABLE:  # spin-stabilizing controller
-
+            if self.MODE == Modes.TUMBLING or self.MODE == Modes.STABLE:
                 if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
-                    # Control MCMs and obtain coil statuses
                     mtq_throttle = spin_stabilizing_controller(self.gyro_data, self.mag_data)
-
-            elif self.MODE == Modes.SUN_POINTING:  # Sun-pointed controller
-
-                # Perform ACS iff a sun vector measurement is valid
-                # i.e., ignore eclipses, insufficient readings etc.
+            elif self.MODE == Modes.SUN_POINTING:
                 if not (
                     self.gyro_status != StatusConst.OK
                     or self.mag_status != StatusConst.OK
                     or self.sun_status != StatusConst.OK
                 ):
                     mtq_throttle = sun_pointing_controller(self.sun_pos_body, self.gyro_data, self.mag_data)
-            # Else, if in ACS_OFF, do not control MCMs
-            # Commanded dipole moment stays zero
-
         self.coil_status = mcm_coil_allocator(mtq_throttle, self.mag_data)
-
-    def _apply_control(self, allow_coils):
-        """Runs attitude control if allowed, otherwise ensures coils are off."""
-        if allow_coils:
-            self.attitude_control()
-            self.coils_off = False
-        else:
-            self.ensure_coils_off()
+        self.coils_off = False
 
     def _bdot_cycle(self):
         """
@@ -247,7 +225,7 @@ class Task(TemplateTask):
 
             self.gyro_status, self.gyro_data = sensors.read_gyro()
             # TODO: Propagate sun vector and magnetometer with gyro reading
-            self._apply_control(self.MODE != Modes.ACS_OFF)
+            self._apply_control()
 
             elapsed = TPM.monotonic_float() - loop_start
             remaining = GYRO_INTERVAL - elapsed
@@ -264,10 +242,7 @@ class Task(TemplateTask):
             zero_all_coils()
             self.coils_off = True
 
-    # ------------------------------------------------------------------------------------------------------------------------------------
-    """ LOGGING """
-
-    # ------------------------------------------------------------------------------------------------------------------------------------
+    # --- Logging ---
     def log(self):
         """
         Logs data to Data Handler
@@ -313,8 +288,3 @@ class Task(TemplateTask):
         self.log_info(f"Sun Status : {self.log_data[ADCS_IDX.SUN_STATUS]}")
         self.log_info(f"Gyro Status : {self.gyro_status}")
         self.log_info(f"Mag Status : {self.mag_status}")
-        # Bdot debugging
-
-        # self.log_info(f"Prev Mag : {self.prev_mag_data}")
-        # self.log_info(f"Current Mag : {self.mag_data}")
-        # self.log_info(f"Bdot dt : {self.bdot_dt}")
