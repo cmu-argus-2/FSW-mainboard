@@ -136,6 +136,24 @@ def PING(string="Hello From Space!"):
 
 
 @register_command()
+def SEND_ONES()
+    """
+    This is a simple command that will be use to conduct IST experiment
+    The idea is that when this command is received it will generate a packet with only 1s
+    This packet has to be sent without a header, so the digipeater comms function will be used
+    """
+
+    from apps.comms.comms import SATELLITE_RADIO
+
+    logger.debug("Generating 1s packet")
+
+    packet = [0xff]*255
+    SATELLITE_RADIO.transmit_digi_packet(packet)
+
+    return ["packet sent"]
+
+
+@register_command()
 def GET_COMMAND_LIST(skip_elements=0):
     """
     Get a list of commands from spalt
