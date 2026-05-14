@@ -62,7 +62,6 @@ class Task(TemplateTask):
 
         self.update_comms_telemetry()  # will only update comms data when something is sent or received
 
-
     def receive_message(self):
         """
         Receive data from the radio. Currently it only receives commands from the GS

@@ -27,7 +27,7 @@ class Task(TemplateTask):
                 tag_name="payload",
                 data_format=PC.payload_tm_data_format,
                 persistent=True,
-                data_limit=20000, # this is 57 bytes, in current config ~5.7bytes/s. 20k will be ~60min
+                data_limit=20000,  # this is 57 bytes, in current config ~5.7bytes/s. 20k will be ~60min
                 circular_buffer_size=200,
             )
 
