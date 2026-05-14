@@ -216,7 +216,7 @@ class DataProcess:
             except OSError as e:
                 logger.critical(f"Error creating folder: {e}")
         else:
-            logger.info("Folder already exists.")
+            logger.debug("Folder already exists.")
 
     @classmethod
     def compute_bytesize(cls, data_format: str) -> int:
