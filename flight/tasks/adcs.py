@@ -71,16 +71,11 @@ class Task(TemplateTask):
     mag_status = StatusConst.OK
     mag_data = np.zeros((3,))
 
-    # for bdot controller
-    prev_mag_data = np.zeros((3,))
-    bdot_dt = 0.2  # time step for bdot controller, in seconds
-
     sun_status = StatusConst.OK
     sun_pos_body = np.zeros((3,))
     sun_lux = np.zeros((9,))
 
     coils_off = True
-    last_mag_time = 0.0
 
     _mag_buffer = None
     _MAG_SAMPLE_DT = 0.08
@@ -108,7 +103,7 @@ class Task(TemplateTask):
             self.time = TPM.time()
             self.log_data[ADCS_IDX.TIME_ADCS] = self.time
 
-            self._update_mag()
+            self.mag_status, self.mag_data = sensors.read_magnetometer()
             self.gyro_status, self.gyro_data = sensors.read_gyro()
             self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
 
@@ -190,15 +185,6 @@ class Task(TemplateTask):
             # Commanded dipole moment stays zero
 
         self.coil_status = mcm_coil_allocator(mtq_throttle, self.mag_data)
-
-    def _update_mag(self):
-        """Reads the magnetometer and updates bdot dt tracking."""
-        self.prev_mag_data = self.mag_data.copy()
-        self.mag_status, self.mag_data = sensors.read_magnetometer()
-        new_last_mag_time = TPM.monotonic_float()
-        if self.last_mag_time != 0.0:
-            self.bdot_dt = new_last_mag_time - self.last_mag_time
-        self.last_mag_time = new_last_mag_time
 
     def _apply_control(self, allow_coils):
         """Runs attitude control if allowed, otherwise ensures coils are off."""
