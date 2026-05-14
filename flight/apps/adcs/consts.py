@@ -142,21 +142,23 @@ class SunConst:
     """
 
     # map from light sensors to body vector
-    LIGHT_SENSOR_NORMALS = [
-        [1, 0, 0],
-        [-1, 0, 0],
-        [0, 1, 0],
-        [0, -1, 0],
-        [0.7071, 0, 0.7071],
-        [0, -0.7071, 0.7071],
-        [-0.7071, 0, 0.7071],
-        [0, 0.7071, 0.7071],
-        [0, 0, -1],
-    ]
+    LIGHT_SENSOR_NORMALS = np.array(
+        [
+            [1, 0, 0],
+            [-1, 0, 0],
+            [0, 1, 0],
+            [0, -1, 0],
+            [0.7071, 0, 0.7071],
+            [0, -0.7071, 0.7071],
+            [-0.7071, 0, 0.7071],
+            [0, 0.7071, 0.7071],
+            [0, 0, -1],
+        ]
+    )
 
-    LIGHT_X_IDXS = [0, 1, 4, 6]
-    LIGHT_Y_IDXS = [2, 3, 5, 7]
-    LIGHT_Z_IDXS = [4, 5, 6, 7, 8]
+    LIGHT_X_IDXS = (0, 1, 4, 6)
+    LIGHT_Y_IDXS = (2, 3, 5, 7)
+    LIGHT_Z_IDXS = (4, 5, 6, 7, 8)
 
     # Logging only allows for a max value of 65535. Since OPT4003 has a max value of 140k, scale log data down by 3
     LIGHT_SENSOR_LOG_FACTOR = 1 / 3
@@ -185,10 +187,9 @@ class ControllerConst:
 
     # Dimensions of sensor readings and control input
     READING_DIM = (3,)
-    CONTROL_DIM = (3,)
 
     # Fallback control input
-    FALLBACK_CONTROL = np.zeros(CONTROL_DIM)
+    FALLBACK_CONTROL = np.zeros(3)
 
     # Spin-stabilized Constants
     OMEGA_MAG_TARGET = 0.35  # Target angular velocity (20 deg/s) for spin stabilization
@@ -197,8 +198,7 @@ class ControllerConst:
     SPIN_STABILIZING_GAIN = 2.0e07
 
     # Detumbling Constants
-    BDOT_GAIN = 1.0e5
-    BCROSS_GAIN = 1.0e5
+    DETUMB_GAIN = 1.0e05
 
 
 class MCMConst:
@@ -207,8 +207,8 @@ class MCMConst:
     """
 
     N_MCM = 6
-    MCM_FACES = ["XP", "XM", "YP", "YM", "ZP", "ZM"]
-    MCM_INDICES = [0, 1, 2, 3, 4, 5]
+    MCM_FACES = ("XP", "XM", "YP", "YM", "ZP", "ZM")
+    MCM_INDICES = (0, 1, 2, 3, 4, 5)
 
     ALLOC_MAT = np.array(
         [
