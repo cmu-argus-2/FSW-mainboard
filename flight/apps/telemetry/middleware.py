@@ -4,8 +4,6 @@ it will have functions to encode and decode telemetry packets
     gathering the variables and all of that
 """
 
-import gc
-
 try:
     from micropython import const
 except ImportError:
@@ -96,10 +94,6 @@ class Frame:
                 dh_var_idx = getattr(idx_list[ss_list.index(ss_lower)], var_name)
                 report.add_variable(var_name, ss, dh_data[dh_var_idx])
 
-        logger.debug(f"Packed heartbeat telemetry frame {report}")
-
-        gc.collect()
-
         return report
 
     @classmethod
@@ -131,10 +125,6 @@ class Frame:
             for var_name in report.variables[ss].keys():
                 dh_var_idx = getattr(idx_list[ss_list.index(ss_lower)], var_name)
                 report.add_variable(var_name, ss, dh_data[dh_var_idx])
-
-        logger.debug(f"Packed HAL telemetry frame {report}")
-
-        gc.collect()
 
         return report
 
@@ -195,9 +185,6 @@ class Frame:
             # get the necessary dh names
             dh_ss_name = "_".join(var_name.split("_")[:-2]).lower()  # get the first 2/3 parts of the variable name
             dh_variable_name = "_".join(var_name.split("_")[-2:])  # get the last two parts of the variable name
-            logger.info(
-                f"Processing STORAGE var {var_name} with dh ss {dh_ss_name.upper()} and dh var {dh_variable_name.upper()}"
-            )
             ss_index = storage_ss_list.index(dh_ss_name)
             if ss_index == -1:
                 logger.warning(f"Subsystem {dh_ss_name.upper()} not recognized for storage variable {var_name}")
@@ -211,10 +198,6 @@ class Frame:
 
             report.add_variable(var_name, "STORAGE", dh_storage_list[ss_index][dh_var_idx])  # add the variable to the report
 
-        logger.debug(f"Packed STORAGE telemetry frame {report}")
-
-        gc.collect()
-
         return report
 
     @classmethod
@@ -222,7 +205,7 @@ class Frame:
         """
         Pack a payload telemetry frame.
         """
-        logger.info("[TELEMETRY] - Packing PAYLOAD telemetry frame")
+        logger.debug("[TELEMETRY] - Packing PAYLOAD telemetry frame")
         # this will be a report
         report = Report("TM_PAYLOAD")
 
@@ -248,9 +231,5 @@ class Frame:
                 dh_var_idx = getattr(idx_list[ss_list.index(ss_lower)], var_name)
                 data = dh_data[dh_var_idx]
                 report.add_variable(var_name, ss, data)
-
-        logger.info(f"Packed PAYLOAD telemetry frame {report}")
-
-        gc.collect()
 
         return report
