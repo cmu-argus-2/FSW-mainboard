@@ -470,7 +470,6 @@ class Task(TemplateTask):
             self.log_data[CDH_IDX.TIME] = TPM.time()
             self.log_data[CDH_IDX.BOOT_TIME] = TPM.monotonic() - SATELLITE.BOOTTIME
             self.log_data[CDH_IDX.SC_STATE] = SM.current_state
-            self.log_data[CDH_IDX.SD_USAGE] = int(DH.SD_usage() / 1000)  # kb - gets updated in the OBDH task
             self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = self.get_memory_usage()
             self.log_data[CDH_IDX.BOOT_COUNT] = self.boot_count
             self.log_data[CDH_IDX.WATCHDOG_TIMER] = 0
