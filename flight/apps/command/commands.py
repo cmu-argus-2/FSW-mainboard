@@ -20,7 +20,7 @@ Author: Ibrahima S. Sow
 """
 
 import supervisor
-from apps.adcs.consts import ControllerConst, ControllerModes, Modes
+from apps.adcs.consts import ControllerModes  # ControllerConst, Modes removed: SD persistence removed (RAM footprint)
 from apps.adcs.sensors import update_gyro_bias, update_mag_cal
 from apps.command.supervisor import CommandSupervisor
 from apps.comms.comms import SATELLITE_RADIO
@@ -478,44 +478,43 @@ def ADCS_CTRL_MODE(mode_id):
         return [-1]
 
 
-@register_command()
-def ADCS_UPDATE_GAINS(k_ss, k_dtb):
-    """Updates the spin-stabilizing and detumbling controller gains."""
-    logger.info(f"Executing ADCS_UPDATE_GAINS with k_ss: {k_ss}, k_dtb: {k_dtb}")
-    ControllerConst.update_gains(float(k_ss), float(k_dtb))
-    return [ControllerConst.SPIN_STABILIZING_GAIN, ControllerConst.DETUMB_GAIN]
-
-
-@register_command()
-def ADCS_UPDATE_TARGET_SPIN(w_tgt):
-    """Updates the target spin rate and recomputes derived momentum targets. Input in radps"""
-    logger.info(f"Executing ADCS_UPDATE_TARGET_SPIN with target spin rate: {w_tgt} radps")
-    ControllerConst.update_omega_target(float(w_tgt))
-    return [ControllerConst.OMEGA_MAG_TARGET, ControllerConst.MOMENTUM_TARGET_MAG]
-
-
-@register_command()
-def ADCS_UPDATE_INERTIA(ixx, ixy, ixz, iyy, iyz, izz):
-    """Updates the inertia matrix (symmetric, 6 unique values) and recomputes momentum targets."""
-    logger.info(f"Executing ADCS_UPDATE_INERTIA with ixx: {ixx}, ixy: {ixy}, ixz: {ixz}, iyy: {iyy}, iyz: {iyz}, izz: {izz}")
-    ControllerConst.update_inertia(ixx, ixy, ixz, iyy, iyz, izz)
-    return [1]
-
-
-@register_command()
-def ADCS_UPDATE_VF_TUMB_TOLS(vf_bdot, vf):
-    """Updates the very-fast-tumbling entry thresholds (bdot and gyro)."""
-    logger.info(f"Executing ADCS_UPDATE_VF_TUMB_TOLS with vf_tol_bdot: {vf_bdot}, vf_tol: {vf}")
-    Modes.update_vf_tumbling_tols(float(vf_bdot), float(vf))
-    return [Modes.VF_TUMBLING_TOL_BDOT, Modes.VF_TUMBLING_TOL]
-
-
-@register_command()
-def ADCS_UPDATE_DETUMB_TOLS(tb, dtb_lo, dtb_hi):
-    """Updates the detumbling mode thresholds (exit-to-stable, turn-off, re-enter)."""
-    logger.info(f"Executing ADCS_UPDATE_DETUMB_TOLS with tb_tol: {tb}, dtb_tol_lo: {dtb_lo}, dtb_tol_hi: {dtb_hi}")
-    Modes.update_detumbling_tols(float(tb), float(dtb_lo), float(dtb_hi))
-    return [Modes.TUMBLING_TOL, Modes.DETUMBLED_TOL_LO, Modes.DETUMBLED_TOL_HI]
+# Removed: ADCS_UPDATE_GAINS, ADCS_UPDATE_TARGET_SPIN, ADCS_UPDATE_INERTIA,
+# ADCS_UPDATE_VF_TUMB_TOLS, ADCS_UPDATE_DETUMB_TOLS — SD persistence removed (RAM footprint)
+#
+# @register_command()
+# def ADCS_UPDATE_GAINS(k_ss, k_dtb):
+#     """Updates the spin-stabilizing and detumbling controller gains."""
+#     logger.info(f"Executing ADCS_UPDATE_GAINS with k_ss: {k_ss}, k_dtb: {k_dtb}")
+#     ControllerConst.update_gains(float(k_ss), float(k_dtb))
+#     return [ControllerConst.SPIN_STABILIZING_GAIN, ControllerConst.DETUMB_GAIN]
+#
+# @register_command()
+# def ADCS_UPDATE_TARGET_SPIN(w_tgt):
+#     """Updates the target spin rate and recomputes derived momentum targets. Input in radps"""
+#     logger.info(f"Executing ADCS_UPDATE_TARGET_SPIN with target spin rate: {w_tgt} radps")
+#     ControllerConst.update_omega_target(float(w_tgt))
+#     return [ControllerConst.OMEGA_MAG_TARGET, ControllerConst.MOMENTUM_TARGET_MAG]
+#
+# @register_command()
+# def ADCS_UPDATE_INERTIA(ixx, ixy, ixz, iyy, iyz, izz):
+#     """Updates the inertia matrix (symmetric, 6 unique values) and recomputes momentum targets."""
+#     logger.info(f"Executing ADCS_UPDATE_INERTIA with ixx: {ixx}, ixy: {ixy}, ixz: {ixz}, iyy: {iyy}, iyz: {iyz}, izz: {izz}")
+#     ControllerConst.update_inertia(ixx, ixy, ixz, iyy, iyz, izz)
+#     return [1]
+#
+# @register_command()
+# def ADCS_UPDATE_VF_TUMB_TOLS(vf_bdot, vf):
+#     """Updates the very-fast-tumbling entry thresholds (bdot and gyro)."""
+#     logger.info(f"Executing ADCS_UPDATE_VF_TUMB_TOLS with vf_tol_bdot: {vf_bdot}, vf_tol: {vf}")
+#     Modes.update_vf_tumbling_tols(float(vf_bdot), float(vf))
+#     return [Modes.VF_TUMBLING_TOL_BDOT, Modes.VF_TUMBLING_TOL]
+#
+# @register_command()
+# def ADCS_UPDATE_DETUMB_TOLS(tb, dtb_lo, dtb_hi):
+#     """Updates the detumbling mode thresholds (exit-to-stable, turn-off, re-enter)."""
+#     logger.info(f"Executing ADCS_UPDATE_DETUMB_TOLS with tb_tol: {tb}, dtb_tol_lo: {dtb_lo}, dtb_tol_hi: {dtb_hi}")
+#     Modes.update_detumbling_tols(float(tb), float(dtb_lo), float(dtb_hi))
+#     return [Modes.TUMBLING_TOL, Modes.DETUMBLED_TOL_LO, Modes.DETUMBLED_TOL_HI]
 
 
 @register_command()
