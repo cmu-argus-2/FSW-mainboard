@@ -279,7 +279,7 @@ class DataProcess:
         if self.last_data is not None:
             return self.last_data
         else:
-            logger.warning("No latest data point available.")
+            logger.warning(f"No latest data {self.tag_name}")
             return None
 
     def clear_latest_data(self) -> bool:

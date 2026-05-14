@@ -38,9 +38,6 @@ class Frame:
             return None
 
         data = DH.get_latest_data(ss)
-        if data is None:
-            logger.warning(f"No latest {ss.upper()} data available")
-            return None
 
         return data
 
@@ -86,7 +83,6 @@ class Frame:
 
             dh_data = dh_data_list[ss_list.index(ss_lower)]
             if dh_data is None:
-                logger.warning(f"No data for subsystem {ss.upper()} to pack in heartbeat")
                 continue
 
             # iterating over all the variables for the ss in the report and adding them
