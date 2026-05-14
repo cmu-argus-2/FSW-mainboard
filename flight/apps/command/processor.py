@@ -63,10 +63,7 @@ def process_command(command):
         elif not isinstance(response_args, (list, tuple)):
             response_args = [response_args]
 
-        return (
-            CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS,
-            list(response_args),
-        )
+        return (CommandProcessingStatus.COMMAND_EXECUTION_SUCCESS, list(response_args))
 
     except Exception as e:
         logger.error(f"Cmd: Command execution failed: {e}")

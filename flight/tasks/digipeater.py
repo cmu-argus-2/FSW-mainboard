@@ -32,6 +32,7 @@ from core.satellite_config import digipeater_config as CONFIG
 
 
 class Task(TemplateTask):
+
     def __init__(self, id):
         super().__init__(id)
         self.name = "DIGI"

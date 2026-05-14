@@ -54,9 +54,7 @@ class Task(TemplateTask):
             # If we have a packet to transmit, set it in the radio
             packet, queue_error_code = TransmitQueue.pop_packet()
             if queue_error_code == QUEUE_STATUS.OK:
-                packed_packet = pack(
-                    packet, callsign=SATELLITE_RADIO.SC_CALLSIGN
-                )  # changed and the entries in transmitqueue are no longer packed
+                packed_packet = pack(packet, callsign=SATELLITE_RADIO.SC_CALLSIGN)  # changed and the entries in transmitqueue are no longer packed
                 SATELLITE_RADIO.transmit_message(packed_packet)
             else:
                 self.log_error("Error popping packet from TransmitQueue")
@@ -137,5 +135,4 @@ class Task(TemplateTask):
         self.check_periodic_telemetry()  # check if it's time to send periodic telemetry
         self.transmit_message()  # check if we have messages to transmit to GS
         self.receive_message()  # check if we have received messages from GS
-        # TODO - should be its own task. Keeping this way because of time constraints
-        CommandSupervisor.process_pending_action()
+        CommandSupervisor.process_pending_action()   # TODO - should be its own task. Keeping this way because of time constraints

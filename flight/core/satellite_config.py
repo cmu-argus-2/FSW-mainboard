@@ -42,3 +42,7 @@ class digipeater_config:
 
 class hal_config:
     ASIL0_EN = True
+
+
+class watchdog_config:
+    ENABLED = True

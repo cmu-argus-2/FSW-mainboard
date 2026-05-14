@@ -37,7 +37,7 @@ class SATELLITE_RADIO:
     undef_error_count = 0
     packet_none_count = 0
     packet_auth_fail_count = 0
-    rx_digipeater_count = 0  # the number of packets that match the digipeater header
+    rx_digipeater_count = 0    # the number of packets that match the digipeater header
 
     tx_packet_count = 0
     tx_failed_count = 0  # this is because the radio was not available
@@ -49,7 +49,7 @@ class SATELLITE_RADIO:
     comms_mode = COMMS_MODE.STANDARD
     rf_stop = False
 
-    digipeater_header = b"\x3c\xff\x01"  # have it here as well to facilitate checking
+    digipeater_header = b"\x3c\xff\x01"    # have it here as well to facilitate checking
 
     @classmethod
     def set_rx_mode(cls):
