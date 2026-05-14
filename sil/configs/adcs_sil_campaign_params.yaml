@@ -39,7 +39,7 @@ sil_campaign:
                initialization:
                     disperse_initial_angular_rate : True
                     initial_angular_rate : [1.0,1.0,1.0] # [rad/s] accessed iff disperse_initial_angular_rate is True
-                    initial_angular_rate_dev : 2.0 # Max initial angular rate about any axis [rad/s]
+                    initial_angular_rate_dev : 3.0 # Max initial angular rate about any axis [rad/s]
                     initial_angular_rate_bound : 9.5 # Max initial angular rate norm [rad/s]
           fsw_config_param_changes:
                adcs:
@@ -59,7 +59,7 @@ sil_campaign:
                initialization:
                     disperse_initial_angular_rate : True
                     initial_angular_rate : [1.0,1.0,1.0] # [rad/s] accessed iff disperse_initial_angular_rate is True
-                    initial_angular_rate_dev : 2.0 # Max initial angular rate about any axis [rad/s]
+                    initial_angular_rate_dev : 3.0 # Max initial angular rate about any axis [rad/s]
                     initial_angular_rate_bound : 9.5 # Max initial angular rate norm [rad/s]
           fsw_config_param_changes:
                adcs:
