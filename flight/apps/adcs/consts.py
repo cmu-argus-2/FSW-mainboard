@@ -201,22 +201,18 @@ class ControllerConst:
     DETUMB_GAIN = 1.0e05
 
 
-class MCMConst:
-    """
-    Constants used for magnetorquer control and allocation.
-    """
-
-    N_MCM = 6
-    MCM_FACES = ("XP", "XM", "YP", "YM", "ZP", "ZM")
-    MCM_INDICES = (0, 1, 2, 3, 4, 5)
-
-    ALLOC_MAT = np.array(
-        [
-            [0.5, 0.0, 0.0],
-            [0.5, 0.0, 0.0],
-            [0.0, 0.5, 0.0],
-            [0.0, 0.5, 0.0],
-            [0.0, 0.0, 0.5],
-            [0.0, 0.0, 0.5],
-        ]
-    )
+# Removed: MCMConst class — RAM footprint (ALLOC_MAT, MCM_FACES, MCM_INDICES, N_MCM moved to acs.py)
+# class MCMConst:
+#     N_MCM = 6
+#     MCM_FACES = ("XP", "XM", "YP", "YM", "ZP", "ZM")
+#     MCM_INDICES = (0, 1, 2, 3, 4, 5)
+#     ALLOC_MAT = np.array(
+#         [
+#             [0.5, 0.0, 0.0],
+#             [0.5, 0.0, 0.0],
+#             [0.0, 0.5, 0.0],
+#             [0.0, 0.5, 0.0],
+#             [0.0, 0.0, 0.5],
+#             [0.0, 0.0, 0.5],
+#         ]
+#     )
