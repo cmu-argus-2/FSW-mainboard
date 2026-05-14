@@ -68,8 +68,8 @@ def FSW_simulate(
     try:
         with open(outfile, "w") as log_file:
             cmd = ["./run.sh", "simulate", str(trial_number), trial_date, sim_set_name]
-            if sim_real_speedup is not None:
-                cmd.append(str(sim_real_speedup))
+            cmd.append(str(sim_real_speedup) if sim_real_speedup is not None else "")
+            cmd.append(str(worker_id))
             # option to run a number of simulations, and to run a specific trial
             process = subprocess.Popen(
                 cmd,
@@ -278,6 +278,12 @@ def arg_parse(parser):
         default=True,
         help="Run trials in parallel using multiprocessing (workers = min(n_trials, cpu_count))",
     )
+    parser.add_argument(
+        "--max_workers",
+        type=int,
+        default=min(10, os.cpu_count() or 1),
+        help="Upper bound on the number of parallel processes to use for simulations [default: 10 or cpu_count if lower]",
+    )
 
     # Parse Arguments
     return parser.parse_args()
@@ -338,6 +344,31 @@ if __name__ == "__main__":
 
     # Run campaign script
     os.makedirs(campaign_folder_path)
+
+    # Capture git diff and git status to track code version
+    project_root_path = os.path.join(current_file_path, "..")
+    git_diff_path = os.path.join(campaign_folder_path, "git.txt")
+
+    try:
+        # Capture git diff
+        with open(git_diff_path, "w") as f:
+            subprocess.run(
+                ["git", "status"],
+                cwd=project_root_path,
+                stdout=f,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "diff"],
+                cwd=project_root_path,
+                stdout=f,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+    except Exception as e:
+        print(f"Warning: Could not capture git information: {e}")
+
     # Copy the campaign config file to the campaign folder
     shutil.copy(campaign_config_file_path, os.path.join(campaign_folder_path, "sil_campaign_params.yaml"))
     for sim_set in sim_sets.keys():
@@ -346,8 +377,9 @@ if __name__ == "__main__":
         sim_set_folder_path = os.path.join(campaign_folder_path, sim_set)
         n_trials = sil_campaign_params["sil_campaign"][sim_set]["num_sims"]
         first_trial_id = sil_campaign_params["sil_campaign"][sim_set]["first_trial_number"]
+        max_n_workers = args.max_workers
+        n_workers = min(n_trials, max_n_workers) if args.multiprocessing else 1
 
-        n_workers = min(n_trials, os.cpu_count() or 1) if args.multiprocessing else 1
         print(f"Running Simulation Set {sim_set} ({n_workers} worker(s))...")
 
         sim_real_speedup = sil_campaign_params["sil_campaign"][sim_set].get("sim_real_speedup", None)
