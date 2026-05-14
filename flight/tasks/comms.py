@@ -19,7 +19,7 @@ class Task(TemplateTask):
     # Number of packets to transmit back-to-back before yielding to the
     # scheduler. Bigger -> higher TX throughput but longer scheduler blackout.
     # Bounded by HW watchdog timeout. Tune empirically.
-    TX_BURST_SIZE = 5
+    TX_BURST_SIZE = 15
 
     def __init__(self, id):
         super().__init__(id)
