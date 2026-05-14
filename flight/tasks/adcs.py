@@ -233,7 +233,7 @@ class Task(TemplateTask):
         else:
             self.mag_status = StatusConst.MAG_FAIL
 
-        if self.MODE != Modes.ACS_OFF and len(self._mag_buffer) == self._MAG_N_SAMPLES:
+        if (self.MODE != Modes.ACS_OFF and self.MODE != Modes.VF_TUMBLING) and len(self._mag_buffer) == self._MAG_N_SAMPLES:
             buf = np.array(self._mag_buffer)
             throttle = bdot_controller(buf, self._MAG_SAMPLE_DT)
             self.coil_status = mcm_coil_allocator(throttle, self.mag_data)
