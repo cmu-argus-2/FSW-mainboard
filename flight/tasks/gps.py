@@ -67,7 +67,7 @@ class Task(TemplateTask):
                 if not DH.data_process_exists("gps"):
                     data_format = "LBBIBHIHHHHHllllll"
 
-                    # data limit is around 100minutes. No need to make it smaller for downlink 
+                    # data limit is around 100minutes. No need to make it smaller for downlink
                     DH.register_data_process("gps", data_format, True, data_limit=10000, write_interval=1)
 
                 # Check if the module sent a valid nav data message

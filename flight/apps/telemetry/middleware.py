@@ -114,7 +114,6 @@ class Frame:
 
             dh_data = dh_data_list[ss_list.index(ss_lower)]
             if dh_data is None:
-                logger.warning(f"No data for subsystem {ss.upper()} to pack in HAL")
                 continue
 
             # iterating over all the variables for the ss in the report and adding them
@@ -162,7 +161,6 @@ class Frame:
 
             dh_data = dh_data_list[ss_list.index(ss_lower)]
             if dh_data is None:
-                logger.warning(f"No data for subsystem {ss.upper()} to pack in STORAGE")
                 continue
 
             # iterating over all the variables for the ss in the report and adding them
@@ -219,7 +217,6 @@ class Frame:
 
             dh_data = dh_data_list[ss_list.index(ss_lower)]
             if dh_data is None:
-                logger.warning(f"No data for subsystem {ss.upper()} to pack in PAYLOAD")
                 continue
 
             # iterating over all the variables for the ss in the report and adding them
