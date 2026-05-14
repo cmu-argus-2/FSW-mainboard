@@ -115,33 +115,33 @@ def smooth_throttle(u: np.ndarray) -> np.ndarray:
     return u * np.tanh(u_norm) / u_norm
 
 
-def mcm_coil_allocator(u: np.ndarray, b: np.ndarray) -> np.ndarray:
-    # Query the available coil statuses
-    coil_status = []
-    mcm_alloc = np.zeros((6, 3))
+_MCM_ALLOC = np.zeros((6, 3))
+_COIL_STATUS = [False] * 6
+
+
+def mcm_coil_allocator(u: np.ndarray, b: np.ndarray) -> list:
+    _MCM_ALLOC[:] = 0  # reset in-place — no allocation
 
     for n in range(MCMConst.N_MCM // 2):
         EP_status = SATELLITE.TORQUE_DRIVERS_AVAILABLE(MCMConst.MCM_FACES[2 * n])
         EM_status = SATELLITE.TORQUE_DRIVERS_AVAILABLE(MCMConst.MCM_FACES[2 * n + 1])
 
         if EP_status and EM_status:
-            mcm_alloc[2 * n, :] = MCMConst.ALLOC_MAT[2 * n, :]
-            mcm_alloc[2 * n + 1, :] = MCMConst.ALLOC_MAT[2 * n + 1, :]
-        elif EP_status and not EM_status:
-            mcm_alloc[2 * n, :] = 2 * MCMConst.ALLOC_MAT[2 * n, :]
-            mcm_alloc[2 * n + 1, :] = np.zeros((1, 3))
-        elif not EP_status and EM_status:
-            mcm_alloc[2 * n, :] = np.zeros((1, 3))
-            mcm_alloc[2 * n + 1, :] = 2 * MCMConst.ALLOC_MAT[2 * n + 1, :]
-        else:
-            mcm_alloc[2 * n : 2 * (n + 1)] = np.zeros((2, 3))
+            _MCM_ALLOC[2 * n, :] = MCMConst.ALLOC_MAT[2 * n, :]
+            _MCM_ALLOC[2 * n + 1, :] = MCMConst.ALLOC_MAT[2 * n + 1, :]
+        elif EP_status:  # EM failed — double EP, EM row stays zero
+            _MCM_ALLOC[2 * n, :] = 2 * MCMConst.ALLOC_MAT[2 * n, :]
+        elif EM_status:  # EP failed — double EM, EP row stays zero
+            _MCM_ALLOC[2 * n + 1, :] = 2 * MCMConst.ALLOC_MAT[2 * n + 1, :]
+        # else: both failed — both rows stay zero from pre-zero
 
-        coil_status = coil_status + [EP_status, EM_status]
+        _COIL_STATUS[2 * n] = EP_status
+        _COIL_STATUS[2 * n + 1] = EM_status
 
     # check full axis failure
     axis_fail = []
     for axis in range(3):
-        if not (coil_status[2 * axis] or coil_status[2 * axis + 1]):
+        if not (_COIL_STATUS[2 * axis] or _COIL_STATUS[2 * axis + 1]):
             axis_fail += [axis]
     # if one axis failure, modify allocation matrix
     if len(axis_fail) == 1:
@@ -149,19 +149,19 @@ def mcm_coil_allocator(u: np.ndarray, b: np.ndarray) -> np.ndarray:
             mcm_mat_no_zaxis = np.zeros((3, 3))
             mcm_mat_no_zaxis[:, axis_fail[0]] = b / b[axis_fail[0]]
             mcm_mat_no_zaxis[:, :] = np.eye(3) - mcm_mat_no_zaxis
-            mcm_alloc = np.dot(mcm_alloc, mcm_mat_no_zaxis)
+            _MCM_ALLOC[:] = np.dot(_MCM_ALLOC, mcm_mat_no_zaxis)
 
     # Compute Coil Voltages based on Allocation matrix and target input
-    u_throttle = np.dot(mcm_alloc, u)
+    u_throttle = np.dot(_MCM_ALLOC, u)
     # Maintain direction, clip magnitude to 1, enforce power consumption limit
     u_throttle = u_throttle / max(1.0, np.linalg.norm(u_throttle) * 0.707)
 
     # Apply Coil Voltages
     for n in range(MCMConst.N_MCM):
-        if coil_status[n]:
+        if _COIL_STATUS[n]:
             SATELLITE.APPLY_MAGNETIC_CONTROL(MCMConst.MCM_FACES[n], u_throttle[n])
 
-    return coil_status
+    return _COIL_STATUS
 
 
 def zero_all_coils():
