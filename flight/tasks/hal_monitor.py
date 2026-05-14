@@ -137,7 +137,7 @@ class Task(TemplateTask):
         if SM.current_state == STATES.STARTUP:
             if not DH.data_process_exists(self.log_name):
                 data_format = "L" + "B" * (_IDX_LENGTH - 1)
-                DH.register_data_process(self.log_name, data_format, True, data_limit=10000)
+                DH.register_data_process(self.log_name, data_format, True, data_limit=50000, write_interval=10)
 
             # restore previous device status
             if not self.restored:
