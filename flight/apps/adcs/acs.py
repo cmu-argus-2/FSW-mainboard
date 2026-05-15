@@ -4,7 +4,7 @@ Attitude Control Module for the Attitude Determination and Control Subsystem (AD
 This module is responsible for computing voltage allocations to each of ARGUS' 6 magnetorquer coils.
 """
 
-from apps.adcs.consts import ControllerConst, MCMConst
+from apps.adcs.consts import ControllerConst
 from hal.configuration import SATELLITE
 from ulab import numpy as np
 
@@ -26,7 +26,7 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
     All sensor estimates are in the body-fixed reference frame.
     """
     # Stop ACS if the reading values are invalid
-    if not readings_are_valid((omega, mag_field)) or np.linalg.norm(mag_field) == 0:
+    if not readings_are_valid((omega, mag_field)):
         return ControllerConst.FALLBACK_CONTROL
 
     # Do spin stabilization
@@ -50,7 +50,7 @@ def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field
     # Stop ACS if the reading values are invalid
     if (
         not readings_are_valid((sun_vector, omega, mag_field))
-        or np.linalg.norm(mag_field) == 0
+        # or np.linalg.norm(mag_field) == 0
         or np.linalg.norm(sun_vector) == 0
         or np.linalg.norm(omega) == 0
     ):
@@ -97,7 +97,7 @@ def bcross_controller(mag_field: np.ndarray, omega: np.ndarray) -> np.ndarray:
     """
     B-cross control law.
     """
-    if not readings_are_valid((omega, mag_field)) or np.linalg.norm(mag_field) == 0:
+    if not readings_are_valid((omega, mag_field)):
         return ControllerConst.FALLBACK_CONTROL
 
     u = -ControllerConst.DETUMB_GAIN * np.cross(mag_field, omega)
@@ -115,51 +115,62 @@ def smooth_throttle(u: np.ndarray) -> np.ndarray:
     return u * np.tanh(u_norm) / u_norm
 
 
-_MCM_ALLOC = np.zeros((6, 3))
+_MCM_FACES = ("XP", "XM", "YP", "YM", "ZP", "ZM")
 _COIL_STATUS = [False] * 6
+_U_EFF = np.zeros(3)
 
 
 def mcm_coil_allocator(u: np.ndarray, b: np.ndarray) -> list:
-    _MCM_ALLOC[:] = 0  # reset in-place — no allocation
+    # Step 1: query coil availability per axis pair
+    for n in range(3):
+        _COIL_STATUS[2 * n] = SATELLITE.TORQUE_DRIVERS_AVAILABLE(_MCM_FACES[2 * n])
+        _COIL_STATUS[2 * n + 1] = SATELLITE.TORQUE_DRIVERS_AVAILABLE(_MCM_FACES[2 * n + 1])
 
-    for n in range(MCMConst.N_MCM // 2):
-        EP_status = SATELLITE.TORQUE_DRIVERS_AVAILABLE(MCMConst.MCM_FACES[2 * n])
-        EM_status = SATELLITE.TORQUE_DRIVERS_AVAILABLE(MCMConst.MCM_FACES[2 * n + 1])
-
-        if EP_status and EM_status:
-            _MCM_ALLOC[2 * n, :] = MCMConst.ALLOC_MAT[2 * n, :]
-            _MCM_ALLOC[2 * n + 1, :] = MCMConst.ALLOC_MAT[2 * n + 1, :]
-        elif EP_status:  # EM failed — double EP, EM row stays zero
-            _MCM_ALLOC[2 * n, :] = 2 * MCMConst.ALLOC_MAT[2 * n, :]
-        elif EM_status:  # EP failed — double EM, EP row stays zero
-            _MCM_ALLOC[2 * n + 1, :] = 2 * MCMConst.ALLOC_MAT[2 * n + 1, :]
-        # else: both failed — both rows stay zero from pre-zero
-
-        _COIL_STATUS[2 * n] = EP_status
-        _COIL_STATUS[2 * n + 1] = EM_status
-
-    # check full axis failure
-    axis_fail = []
+    # Step 2: find a fully failed axis; only single-axis failure is compensated
+    axis_fail = -1
     for axis in range(3):
         if not (_COIL_STATUS[2 * axis] or _COIL_STATUS[2 * axis + 1]):
-            axis_fail += [axis]
-    # if one axis failure, modify allocation matrix
-    if len(axis_fail) == 1:
-        if abs(b[axis_fail[0]]) > 1e-9:
-            mcm_mat_no_zaxis = np.zeros((3, 3))
-            mcm_mat_no_zaxis[:, axis_fail[0]] = b / b[axis_fail[0]]
-            mcm_mat_no_zaxis[:, :] = np.eye(3) - mcm_mat_no_zaxis
-            _MCM_ALLOC[:] = np.dot(_MCM_ALLOC, mcm_mat_no_zaxis)
+            if axis_fail < 0:
+                axis_fail = axis
+            else:
+                axis_fail = -2  # two axes failed — no compensation attempted
+                break
 
-    # Compute Coil Voltages based on Allocation matrix and target input
-    u_throttle = np.dot(_MCM_ALLOC, u)
-    # Maintain direction, clip magnitude to 1, enforce power consumption limit
-    u_throttle = u_throttle / max(1.0, np.linalg.norm(u_throttle) * 0.707)
+    # Step 3: copy u into persistent buffer; project out failed-axis component along b
+    # u_eff = u - (u[a] / b[a]) * b  →  zeros the failed-axis dipole, redistributes along b
+    _U_EFF[0] = u[0]
+    _U_EFF[1] = u[1]
+    _U_EFF[2] = u[2]
+    if axis_fail >= 0 and abs(b[axis_fail]) > 1e-9:
+        factor = _U_EFF[axis_fail] / b[axis_fail]
+        _U_EFF[0] -= factor * b[0]
+        _U_EFF[1] -= factor * b[1]
+        _U_EFF[2] -= factor * b[2]
 
-    # Apply Coil Voltages
-    for n in range(MCMConst.N_MCM):
-        if _COIL_STATUS[n]:
-            SATELLITE.APPLY_MAGNETIC_CONTROL(MCMConst.MCM_FACES[n], u_throttle[n])
+    # Step 4: compute effective coil-vector L2 norm to enforce power limit
+    # both coils on axis → each gets 0.5*val  (contributes 0.5*val^2 to norm^2)
+    # single coil on axis → it gets 1.0*val   (contributes val^2)
+    norm_sq = 0.0
+    for axis in range(3):
+        val = _U_EFF[axis]
+        if _COIL_STATUS[2 * axis] and _COIL_STATUS[2 * axis + 1]:
+            norm_sq += 0.5 * val * val
+        elif _COIL_STATUS[2 * axis] or _COIL_STATUS[2 * axis + 1]:
+            norm_sq += val * val
+    scale = max(1.0, norm_sq ** 0.5 * 0.707)
+
+    # Step 5: distribute scaled throttle to coils
+    for axis in range(3):
+        ep = _COIL_STATUS[2 * axis]
+        em = _COIL_STATUS[2 * axis + 1]
+        val = _U_EFF[axis] / scale
+        if ep and em:
+            SATELLITE.APPLY_MAGNETIC_CONTROL(_MCM_FACES[2 * axis], 0.5 * val)
+            SATELLITE.APPLY_MAGNETIC_CONTROL(_MCM_FACES[2 * axis + 1], 0.5 * val)
+        elif ep:
+            SATELLITE.APPLY_MAGNETIC_CONTROL(_MCM_FACES[2 * axis], val)
+        elif em:
+            SATELLITE.APPLY_MAGNETIC_CONTROL(_MCM_FACES[2 * axis + 1], val)
 
     return _COIL_STATUS
 
@@ -168,6 +179,6 @@ def zero_all_coils():
     """
     Sets all magnetorquer coil throttles to zero.
     """
-    for face in MCMConst.MCM_FACES:
+    for face in _MCM_FACES:
         if SATELLITE.TORQUE_DRIVERS_AVAILABLE(face):
             SATELLITE.APPLY_MAGNETIC_CONTROL(face, 0)

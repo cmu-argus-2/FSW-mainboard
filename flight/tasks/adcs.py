@@ -73,19 +73,13 @@ class Task(TemplateTask):
     mag_status = StatusConst.OK
     mag_data = np.zeros((3,))
 
-    # for bdot controller
-    prev_mag_data = np.zeros((3,))
-    bdot_dt = 0.2  # time step for bdot controller, in seconds
-
     sun_status = StatusConst.OK
     sun_pos_body = np.zeros((3,))
     sun_lux = np.zeros((9,))
 
     coils_off = True
-    last_mag_time = 0.0
     last_mag_prop_time = 0.0
 
-    _mag_buffer = None
     _MAG_SAMPLE_DT = 0.08
     _MAG_N_SAMPLES = 6
     _BDOT_COIL_ON_TIME = 0.5
@@ -111,108 +105,58 @@ class Task(TemplateTask):
             if self.CONTROLLER_MODE != ControllerModes.current_mode:
                 self.CONTROLLER_MODE = ControllerModes.current_mode
 
-            self.time = TPM.time()
-            self.log_data[ADCS_IDX.TIME_ADCS] = self.time
+            self.log_data[ADCS_IDX.TIME_ADCS] = TPM.time()
 
-            self._update_mag()
+            self.mag_status, self.mag_data = sensors.read_magnetometer()
             self.gyro_status, self.gyro_data = sensors.read_gyro()
             self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
 
             self.log()
 
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            # DETUMBLING
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            if SM.current_state == STATES.DETUMBLING:
-                # Set bmx160 to max scale of 2000 deg/s
-                if sensors.get_gyro_scale() != 0:
-                    sensors.set_gyro_scale(0)
-
-                if self.CONTROLLER_MODE == ControllerModes.BDOT:
-                    self._bdot_cycle()
-                else:
-                    self._bcross_sun_cycle(1.2)
+            if SM.current_state == STATES.LOW_POWER or SM.current_state == STATES.EXPERIMENT:
+                # In low power or experiment mode, we want to conserve power by turning off the coils and not running the control cycle
+                self.ensure_coils_off()
+            else:
+                if SM.current_state == STATES.DETUMBLING:
+                    # Set bmx160 to max scale of 2000 deg/s
+                    if sensors.get_gyro_scale() != 0:
+                        sensors.set_gyro_scale(0)
+                elif SM.current_state == STATES.NOMINAL:
+                    # Set bmx160 scale to 125 deg/s, max resolution
+                    if sensors.get_gyro_scale() != 4:
+                        sensors.set_gyro_scale(4)
 
                 self.MODE = update_mode(
                     self.MODE, self.CONTROLLER_MODE, self.gyro_status, self.gyro_data, self.sun_status, self.sun_pos_body
                 )
-
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            # LOW POWER or EXPERIMENT
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            elif SM.current_state == STATES.LOW_POWER or SM.current_state == STATES.EXPERIMENT:
-                # Turn coils off to conserve power
-                self.ensure_coils_off()
-
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            # NOMINAL
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            else:
-                # Set bmx160 scale to 125 deg/s, max resolution
-                if sensors.get_gyro_scale() != 4:
-                    sensors.set_gyro_scale(4)
 
                 if self.CONTROLLER_MODE == ControllerModes.BDOT:
                     self._bdot_cycle()
                 else:
                     self._bcross_sun_cycle(1.0)
 
-                self.MODE = update_mode(
-                    self.MODE, self.CONTROLLER_MODE, self.gyro_status, self.gyro_data, self.sun_status, self.sun_pos_body
-                )
-
-    # ------------------------------------------------------------------------------------------------------------------------------------
-    """ Attitude Control Auxiliary Functions """
-    # ------------------------------------------------------------------------------------------------------------------------------------
-    def attitude_control(self):
-        """
-        Performs attitude control on the spacecraft
-        """
+    # --- Attitude Control ---
+    def _apply_control(self):
+        if self.MODE == Modes.ACS_OFF and self.MODE != Modes.VF_TUMBLING:
+            self.ensure_coils_off()
+            return
         mtq_throttle = ControllerConst.FALLBACK_CONTROL
-
         if self.CONTROLLER_MODE == ControllerModes.BCROSS:
-            if self.MODE != Modes.ACS_OFF and self.MODE != Modes.VF_TUMBLING:
-                if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
-                    mtq_throttle = bcross_controller(self.mag_data, self.gyro_data)
+            if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
+                mtq_throttle = bcross_controller(self.mag_data, self.gyro_data)
         elif self.CONTROLLER_MODE == ControllerModes.SUN_POINTING:
-            # Decide which controller to choose
-            if self.MODE == Modes.TUMBLING or self.MODE == Modes.STABLE:  # spin-stabilizing controller
-
+            if self.MODE == Modes.TUMBLING or self.MODE == Modes.STABLE:
                 if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
-                    # Control MCMs and obtain coil statuses
                     mtq_throttle = spin_stabilizing_controller(self.gyro_data, self.mag_data)
-
-            elif self.MODE == Modes.SUN_POINTING:  # Sun-pointed controller
-
-                # Perform ACS iff a sun vector measurement is valid
-                # i.e., ignore eclipses, insufficient readings etc.
+            elif self.MODE == Modes.SUN_POINTING:
                 if not (
                     self.gyro_status != StatusConst.OK
                     or self.mag_status != StatusConst.OK
                     or self.sun_status != StatusConst.OK
                 ):
                     mtq_throttle = sun_pointing_controller(self.sun_pos_body, self.gyro_data, self.mag_data)
-            # Else, if in ACS_OFF, do not control MCMs
-            # Commanded dipole moment stays zero
-
         self.coil_status = mcm_coil_allocator(mtq_throttle, self.mag_data)
-
-    def _update_mag(self):
-        """Reads the magnetometer and updates bdot dt tracking."""
-        self.prev_mag_data = self.mag_data.copy()
-        self.mag_status, self.mag_data = sensors.read_magnetometer()
-        new_last_mag_time = TPM.monotonic_float()
-        if self.last_mag_time != 0.0:
-            self.bdot_dt = new_last_mag_time - self.last_mag_time
-        self.last_mag_time = new_last_mag_time
-
-    def _apply_control(self, allow_coils):
-        """Runs attitude control if allowed, otherwise ensures coils are off."""
-        if allow_coils:
-            self.attitude_control()
-            self.coils_off = False
-        else:
-            self.ensure_coils_off()
+        self.coils_off = False
 
     def _bdot_cycle(self):
         """
@@ -253,29 +197,22 @@ class Task(TemplateTask):
              (future: propagate sun and mag vectors with gyro)
           3. Coils off at the end
         """
-        new_mode = update_mode(
-            self.MODE, self.CONTROLLER_MODE, self.gyro_status, self.gyro_data, self.sun_status, self.sun_pos_body
-        )
-        if new_mode != self.MODE:
-            self.MODE = new_mode
-
         GYRO_INTERVAL = 0.05  # 50 ms
         t_start = TPM.monotonic_float()
-
+        self.last_mag_prop_time = t_start
         while TPM.monotonic_float() - t_start < duration:
             loop_start = TPM.monotonic_float()
 
             self.gyro_status, self.gyro_data = sensors.read_gyro()
-
-            if self.gyro_status == StatusConst.OK:
-                dt = loop_start - self.last_mag_prop_time
+            dt = loop_start - self.last_mag_prop_time
+            if self.gyro_status == StatusConst.OK and dt > 0:
                 R = math.rotation_matrix_from_vector(-self.gyro_data * dt)
                 self.mag_data = np.dot(R, self.mag_data)
                 if self.sun_status == StatusConst.OK:
                     self.sun_pos_body = np.dot(R, self.sun_pos_body)
             self.last_mag_prop_time = loop_start
 
-            self._apply_control(self.MODE != Modes.ACS_OFF)
+            self._apply_control()
 
             elapsed = TPM.monotonic_float() - loop_start
             remaining = GYRO_INTERVAL - elapsed
@@ -292,9 +229,7 @@ class Task(TemplateTask):
             zero_all_coils()
             self.coils_off = True
 
-    # ------------------------------------------------------------------------------------------------------------------------------------
-    """ LOGGING """
-    # ------------------------------------------------------------------------------------------------------------------------------------
+    # --- Logging ---
     def log(self):
         """
         Logs data to Data Handler
@@ -330,18 +265,13 @@ class Task(TemplateTask):
         DH.log_data("adcs", self.log_data)
 
         # Log Gyro Angular Velocities
+        # [TODO:] Remove later
         self.log_info(f"Time :  {TPM.monotonic_float()}")  # self.time}")
         self.log_info(f"ADCS Mode : {self.MODE}")
         self.log_info(f"Controller Mode : {self.CONTROLLER_MODE}")
         self.log_info(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z + 1]}")
-        # [TODO:] Remove later
         self.log_info(f"Mag Field : {self.log_data[ADCS_IDX.MAG_X:ADCS_IDX.MAG_Z + 1]}")
         self.log_info(f"Sun Vector : {self.log_data[ADCS_IDX.SUN_VEC_X:ADCS_IDX.SUN_VEC_Z + 1]}")
         self.log_info(f"Sun Status : {self.log_data[ADCS_IDX.SUN_STATUS]}")
         self.log_info(f"Gyro Status : {self.gyro_status}")
         self.log_info(f"Mag Status : {self.mag_status}")
-        # Bdot debugging
-
-        # self.log_info(f"Prev Mag : {self.prev_mag_data}")
-        # self.log_info(f"Current Mag : {self.mag_data}")
-        # self.log_info(f"Bdot dt : {self.bdot_dt}")

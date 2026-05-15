@@ -12,9 +12,10 @@ class Task(TemplateTask):
     def __init__(self, id):
         super().__init__(id)
         self.name = "WATCHDOG"
+        self.enabled = CONFIG.ENABLED
 
     async def main_task(self):
-        if not CONFIG.ENABLED:
+        if not self.enabled:
             return
 
         if SATELLITE.WATCHDOG_AVAILABLE:

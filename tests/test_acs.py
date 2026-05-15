@@ -82,7 +82,7 @@ def larger_pointing_error_omega(
             "nominal_sun_vector",
             "zero_pointing_error_omega",
             np.ones(3),
-            np.zeros(3),
+            ControllerConst.FALLBACK_CONTROL,
         ),
         (  # parallel magnetic field and pointing error test case
             "nominal_sun_vector",

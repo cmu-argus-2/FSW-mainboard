@@ -299,22 +299,22 @@ class ControllerConst:
     #     cls._save()
 
 
-class MCMConst:
-    """
-    Constants used for magnetorquer control and allocation.
-    """
+# class MCMConst:
+#     """
+#     Constants used for magnetorquer control and allocation.
+#     """
 
-    N_MCM = 6
-    MCM_FACES = ("XP", "XM", "YP", "YM", "ZP", "ZM")
-    MCM_INDICES = (0, 1, 2, 3, 4, 5)
+#     N_MCM = 6
+#     MCM_FACES = ("XP", "XM", "YP", "YM", "ZP", "ZM")
+#     MCM_INDICES = (0, 1, 2, 3, 4, 5)
 
-    ALLOC_MAT = np.array(
-        [
-            [0.5, 0.0, 0.0],
-            [0.5, 0.0, 0.0],
-            [0.0, 0.5, 0.0],
-            [0.0, 0.5, 0.0],
-            [0.0, 0.0, 0.5],
-            [0.0, 0.0, 0.5],
-        ]
-    )
+#     ALLOC_MAT = np.array(
+#         [
+#             [0.5, 0.0, 0.0],
+#             [0.5, 0.0, 0.0],
+#             [0.0, 0.5, 0.0],
+#             [0.0, 0.5, 0.0],
+#             [0.0, 0.0, 0.5],
+#             [0.0, 0.0, 0.5],
+#         ]
+#     )
