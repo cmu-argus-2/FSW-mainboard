@@ -115,7 +115,7 @@ class Task(TemplateTask):
             self.log_info(f"Temporarily shut down {device_name} due to error {device_error}")
         elif result == Errors.GRACEFUL_REBOOT:
             SATELLITE.update_device_error(device_name, device_error)
-            self.log_info(f"Queued graceful reboot for {device_name} due to error {device_error}")
+            self.log_warning(f"Queued graceful reboot for {device_name} due to error {device_error}")
             self.graceful_reboot = True
         elif result == Errors.DEVICE_DEAD:
             SATELLITE.update_device_error(device_name, result)
@@ -191,7 +191,7 @@ class Task(TemplateTask):
                 SATELLITE.graceful_reboot()
                 if not DH.restore_data_process_files():
                     self.log_error("Error restoring data process files after graceful reboot")
-                self.log_info("Gracefully rebooted peripheral power line.")
+                self.log_warning("Gracefully rebooted peripheral power line.")
             self.graceful_reboot_counter = TPM.monotonic()
 
         self.log_device_status()
@@ -200,6 +200,6 @@ class Task(TemplateTask):
         # TODO: delay this if the satellite is at a ground pass
         if TPM.monotonic() - _BOOT_TIME >= _REGULAR_REBOOT_TIME:
             # TODO: graceful shutdown for payload if needed
-            self.log_info("Executing regular reboot")
+            self.log_warning("Executing regular reboot")
             self.close_data_process()
             SATELLITE.reboot()

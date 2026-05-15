@@ -21,7 +21,7 @@ class time_processor_config:
 
 
 class main_config:
-    LOG_LEVEL = "INFO"
+    LOG_LEVEL = "DEBUG"
 
 
 class hal_monitor_config:
@@ -46,3 +46,11 @@ class hal_config:
 
 class watchdog_config:
     ENABLED = True
+
+
+class log_config:
+    LOG_DIR = "/sd/sys_logs"
+    LOG_FILENAME = "/sd/sys_logs/fsw.log"
+    LOG_FILE_MAX_BYTES = 102400
+    LOG_FILE_BACKUP_COUNT = 9
+    LOG_FILE_LEVEL = "WARNING"

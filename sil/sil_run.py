@@ -24,7 +24,7 @@ from sil.fsw_plotter import collect_FSW_data, plot_FSW, plot_results
 # DEFAULT_RUNTIME = 60  # 5 * 60  # 5 minutes
 # DEFAULT_OUTFILE = "sil_logs.log"
 # DEFAULT_N_TRIALS = 1  # Default number of trials to run
-DEFAULT_CONFIGFILE = "sil_campaign_params.yaml"
+DEFAULT_CONFIGFILE = "ci_sil_campaign_params.yaml"
 STARTUP_OVERHEAD_S = 60.0  # wall-clock budget for build-emulator.py before main.py starts
 
 # Module-level handle to the active simulation process so atexit and SIGTERM can clean it up.

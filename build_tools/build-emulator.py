@@ -185,9 +185,9 @@ def create_build(source_folder, emulator_folder, worker_id=0):
 
     # Adding data_handler.py to the build folder
     # shutil.copy2("flight/core/data_handler.py", "build/lib/core/data_handler.py")
-    root = "build" if worker_id == 0 else f"build_{worker_id}"
     with open("flight/core/data_handler.py", "r") as file:
         updated_content = file.read().replace('_HOME_PATH = "/sd"', '_HOME_PATH = "sd"')
+    root = "build" if worker_id == 0 else f"build_{worker_id}"
     with open(f"{root}/lib/core/data_handler.py", "w") as file:
         file.write(updated_content)
 
