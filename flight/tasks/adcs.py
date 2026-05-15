@@ -107,46 +107,27 @@ class Task(TemplateTask):
 
             self.log()
 
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            # DETUMBLING
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            if SM.current_state == STATES.DETUMBLING:
-                # Set bmx160 to max scale of 2000 deg/s
-                if sensors.get_gyro_scale() != 0:
-                    sensors.set_gyro_scale(0)
-
-                if self.CONTROLLER_MODE == ControllerModes.BDOT:
-                    self._bdot_cycle()
-                else:
-                    self._bcross_sun_cycle(1.2)
+            if SM.current_state == STATES.LOW_POWER or SM.current_state == STATES.EXPERIMENT:
+                # In low power or experiment mode, we want to conserve power by turning off the coils and not running the control cycle
+                self.ensure_coils_off()
+            else:
+                if SM.current_state == STATES.DETUMBLING:
+                    # Set bmx160 to max scale of 2000 deg/s
+                    if sensors.get_gyro_scale() != 0:
+                        sensors.set_gyro_scale(0)
+                elif SM.current_state == STATES.NOMINAL:
+                    # Set bmx160 scale to 125 deg/s, max resolution
+                    if sensors.get_gyro_scale() != 4:
+                        sensors.set_gyro_scale(4)
 
                 self.MODE = update_mode(
                     self.MODE, self.CONTROLLER_MODE, self.gyro_status, self.gyro_data, self.sun_status, self.sun_pos_body
                 )
-
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            # LOW POWER or EXPERIMENT
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            elif SM.current_state == STATES.LOW_POWER or SM.current_state == STATES.EXPERIMENT:
-                # Turn coils off to conserve power
-                self.ensure_coils_off()
-
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            # NOMINAL
-            # ------------------------------------------------------------------------------------------------------------------------------------
-            else:
-                # Set bmx160 scale to 125 deg/s, max resolution
-                if sensors.get_gyro_scale() != 4:
-                    sensors.set_gyro_scale(4)
 
                 if self.CONTROLLER_MODE == ControllerModes.BDOT:
                     self._bdot_cycle()
                 else:
                     self._bcross_sun_cycle(1.0)
-
-                self.MODE = update_mode(
-                    self.MODE, self.CONTROLLER_MODE, self.gyro_status, self.gyro_data, self.sun_status, self.sun_pos_body
-                )
 
     # --- Attitude Control ---
     def _apply_control(self):
@@ -211,12 +192,6 @@ class Task(TemplateTask):
              (future: propagate sun and mag vectors with gyro)
           3. Coils off at the end
         """
-        new_mode = update_mode(
-            self.MODE, self.CONTROLLER_MODE, self.gyro_status, self.gyro_data, self.sun_status, self.sun_pos_body
-        )
-        if new_mode != self.MODE:
-            self.MODE = new_mode
-
         GYRO_INTERVAL = 0.05  # 50 ms
         t_start = TPM.monotonic_float()
 

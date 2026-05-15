@@ -51,14 +51,6 @@ def read_sun_position() -> tuple[int, np.ndarray, np.ndarray]:
     return status, sun_pos_body, np.array(light_sensor_lux_readings) * SunConst.LIGHT_SENSOR_LOG_FACTOR
 
 
-def read_deployment_sensors(sens_id) -> float:
-    """
-    - Reads the deployment sensor distances from HAL
-    - Returns the distance for XP or YM sensors
-    """
-    return SATELLITE.DEPLOYMENT_SENSOR_DISTANCE(sens_id)
-
-
 def get_gyro_scale() -> int:
     """
     - Reads the scale configuration of the gyro
