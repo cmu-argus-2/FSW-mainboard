@@ -60,6 +60,17 @@ hal:
   ASIL0_EN:
     value: false
 
+log:
+  LOG_DIR:
+    value: "/sd/sys_logs"
+  LOG_FILENAME:
+    value: "/sd/sys_logs/fsw.log"
+  LOG_FILE_MAX_BYTES:
+    value: 102400
+  LOG_FILE_BACKUP_COUNT:
+    value: 9
+  LOG_FILE_LEVEL:
+    value: "WARNING"
 
 # ADCS Task
 adcs:
