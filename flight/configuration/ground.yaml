@@ -39,7 +39,7 @@ hal_monitor:
 # Comms App
 comms:
   HB_PERIOD:
-    value: 30  # seconds, i.e., 30 seconds
+    value: 5  # seconds, i.e., 30 seconds
     _const: true
   AUTH_ENABLED:
     value: true

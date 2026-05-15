@@ -503,7 +503,7 @@ class ArgusV4(CubeSat):
             )
 
             radio.begin(
-                freq=435,
+                freq=433.707,
                 bw=125,
                 sf=7,
                 cr=5,

@@ -241,3 +241,25 @@ class SATELLITE_RADIO:
         status = cls.transmit_message(packet)
         cls.tx_digipeater_count = cls.tx_digipeater_count + status
         return status
+
+    def set_modulation_gfsk():
+
+        SATELLITE.RADIO.beginFSK(
+            freq=434.707,
+            power=22,
+            bR=20_000,
+            pS=0x08,  # BT=0.3
+            bW=0x1B,  # RX_BW = 78k
+            fDev=5_000,
+            preLength=512,
+            preDetect=0x05,  # PREAMBLE DETECT 16
+            syncLength=32,
+            addrComp=0x00,  # ADDR FILT OFF
+            packType=0x01,  # PACK VAR
+            plLength=255,
+            crcType=0x06,  # CRC 2 BYTE INV (CCITT)
+            whitening=0x01,  # WHITE ON
+            currentLimit=140.0,
+            tcxoVoltage=1.7,
+            useRegulatorLDO=False,
+            blocking=True)
