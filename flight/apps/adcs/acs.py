@@ -26,7 +26,7 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
     All sensor estimates are in the body-fixed reference frame.
     """
     # Stop ACS if the reading values are invalid
-    if not readings_are_valid((omega, mag_field)) or np.linalg.norm(mag_field) == 0:
+    if not readings_are_valid((omega, mag_field)):
         return ControllerConst.FALLBACK_CONTROL
 
     # Do spin stabilization
@@ -50,7 +50,7 @@ def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field
     # Stop ACS if the reading values are invalid
     if (
         not readings_are_valid((sun_vector, omega, mag_field))
-        or np.linalg.norm(mag_field) == 0
+        # or np.linalg.norm(mag_field) == 0
         or np.linalg.norm(sun_vector) == 0
         or np.linalg.norm(omega) == 0
     ):
@@ -97,7 +97,7 @@ def bcross_controller(mag_field: np.ndarray, omega: np.ndarray) -> np.ndarray:
     """
     B-cross control law.
     """
-    if not readings_are_valid((omega, mag_field)) or np.linalg.norm(mag_field) == 0:
+    if not readings_are_valid((omega, mag_field)):
         return ControllerConst.FALLBACK_CONTROL
 
     u = -ControllerConst.DETUMB_GAIN * np.cross(mag_field, omega)

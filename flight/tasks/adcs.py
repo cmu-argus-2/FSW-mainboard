@@ -136,9 +136,8 @@ class Task(TemplateTask):
             return
         mtq_throttle = ControllerConst.FALLBACK_CONTROL
         if self.CONTROLLER_MODE == ControllerModes.BCROSS:
-            if self.MODE != Modes.ACS_OFF:
-                if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
-                    mtq_throttle = bcross_controller(self.mag_data, self.gyro_data)
+            if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
+                mtq_throttle = bcross_controller(self.mag_data, self.gyro_data)
         elif self.CONTROLLER_MODE == ControllerModes.SUN_POINTING:
             if self.MODE == Modes.TUMBLING or self.MODE == Modes.STABLE:
                 if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
@@ -253,11 +252,11 @@ class Task(TemplateTask):
         DH.log_data("adcs", self.log_data)
 
         # Log Gyro Angular Velocities
+        # [TODO:] Remove later
         self.log_info(f"Time :  {TPM.monotonic_float()}")  # self.time}")
         self.log_info(f"ADCS Mode : {self.MODE}")
         self.log_info(f"Controller Mode : {self.CONTROLLER_MODE}")
         self.log_info(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z + 1]}")
-        # [TODO:] Remove later
         self.log_info(f"Mag Field : {self.log_data[ADCS_IDX.MAG_X:ADCS_IDX.MAG_Z + 1]}")
         self.log_info(f"Sun Vector : {self.log_data[ADCS_IDX.SUN_VEC_X:ADCS_IDX.SUN_VEC_Z + 1]}")
         self.log_info(f"Sun Status : {self.log_data[ADCS_IDX.SUN_STATUS]}")
