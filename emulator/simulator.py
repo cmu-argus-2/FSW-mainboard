@@ -25,6 +25,12 @@ RESULTS_ROOT_FOLDER = os.path.join(ARGUS_ROOT, "sil/results")
 CONFIG_FILE = os.path.join(ARGUS_ROOT, "sil/configs/params.yaml")
 
 
+class SimulationComplete(BaseException):
+    """Raised when the physics engine reaches MAX_TIME, signalling the FSW to exit cleanly."""
+
+    pass
+
+
 class Simulator:  # will be passed by reference to the emulated HAL
     def __init__(self, trial=None, trial_date=None, sim_set_name="sil_set_1"):
         if trial is None:
@@ -137,7 +143,11 @@ class Simulator:  # will be passed by reference to the emulated HAL
         """
         Advance the simulation by exactly sim_seconds of simulation time.
         Called by MockTime.sleep() — the only mechanism that steps the physics engine.
+        Raises SimulationComplete when MAX_TIME is reached.
         """
+        if self.sim_time >= self.cppsim.params.MAX_TIME:
+            raise SimulationComplete(f"Reached MAX_TIME={self.cppsim.params.MAX_TIME}s")
+
         iters = floor(sim_seconds / self.base_dt)
         last_dt = sim_seconds - iters * self.base_dt
         if iters == 0 and last_dt == 0:

@@ -82,8 +82,14 @@ elif [ "$1" == "simulate" ]; then
     else
         unset SIM_REAL_SPEEDUP
     fi
-    $PYTHON_CMD build_tools/build-emulator.py $FLIGHT_FLAG
-    cd build/ && rm -rf sd && $PYTHON_CMD main.py
+    WORKER_ID="${6:-0}"
+    if [[ $WORKER_ID -gt 0 ]]; then
+        BUILD_DIR="build_${WORKER_ID}"
+    else
+        BUILD_DIR="build"
+    fi
+    $PYTHON_CMD build_tools/build-emulator.py $FLIGHT_FLAG --worker-id $WORKER_ID
+    cd "$BUILD_DIR" && rm -rf sd && $PYTHON_CMD main.py
     cd -
 elif [ "$1" == "flight" ]; then
     # If --flight is the only argument, build with flight config
