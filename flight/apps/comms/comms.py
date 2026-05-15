@@ -49,7 +49,7 @@ class SATELLITE_RADIO:
     comms_mode = COMMS_MODE.STANDARD
     rf_stop = False
 
-    digipeater_header = b"\x3c\xff\x01"    # have it here as well to facilitate checking
+    digipeater_header = b"\x3c\xff\x01"   # have it here as well to facilitate checking
 
     @classmethod
     def set_rx_mode(cls):
