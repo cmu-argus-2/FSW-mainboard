@@ -136,7 +136,7 @@ def PING(string="Hello From Space!"):
 
 
 @register_command()
-def SEND_ONES()
+def SEND_ONES():
     """
     This is a simple command that will be use to conduct IST experiment
     The idea is that when this command is received it will generate a packet with only 1s
@@ -147,10 +147,9 @@ def SEND_ONES()
 
     logger.debug("Generating 1s packet")
 
-    packet = [0xff]*255
-    SATELLITE_RADIO.transmit_digi_packet(packet)
-
-    return ["packet sent"]
+    packet = bytearray([0xff] * 255)
+    status = SATELLITE_RADIO.transmit_digi_packet(packet)
+    return [status]
 
 
 @register_command()
