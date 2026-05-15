@@ -28,7 +28,7 @@ time_processor:
 # Main Task
 main:
   LOG_LEVEL:
-    value: "INFO"
+    value: "DEBUG"
 
 # HAL Monitor Task
 hal_monitor:
@@ -58,4 +58,16 @@ digipeater:
 
 hal:
   ASIL0_EN:
-    value: true 
+    value: true
+
+log:
+  LOG_DIR:
+    value: "/sd/sys_logs"
+  LOG_FILENAME:
+    value: "/sd/sys_logs/fsw.log"
+  LOG_FILE_MAX_BYTES:
+    value: 102400
+  LOG_FILE_BACKUP_COUNT:
+    value: 9
+  LOG_FILE_LEVEL:
+    value: "WARNING"

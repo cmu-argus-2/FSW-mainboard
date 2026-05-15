@@ -3,8 +3,10 @@
 # It also executes commands received from the ground station (TBD)
 
 import gc
+import os
 
 import apps.command.processor as processor
+import microcontroller
 from apps.adcs.consts import Modes
 from apps.command import QUEUE_STATUS, CommandQueue
 from apps.eps.eps import EPS_POWER_FLAG
@@ -13,7 +15,10 @@ from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
 from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX, PAYLOAD_IDX
+from core.logging import LEVELS as LOG_LEVELS
+from core.logging import Formatter, RotatingFileHandler, get_persisted_level_name, getLogger
 from core.satellite_config import command_config as CONFIG
+from core.satellite_config import log_config as LOG_CONFIG
 from core.states import STATES, STR_STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
@@ -64,6 +69,7 @@ class Task(TemplateTask):
         self.last_deployment_time = None
 
         self.antenna_tries = 0
+        self.file_logging_enabled = False
 
     def get_memory_usage(self):
         return int(gc.mem_alloc() / self.total_memory * 100)
@@ -193,6 +199,43 @@ class Task(TemplateTask):
                 if not DH.data_process_exists("cmd_logs"):
                     DH.register_data_process("cmd_logs", "LBB", True, data_limit=100000)
 
+                # Enable file logging to SD card (runs once, after SD is confirmed ready)
+                if not self.file_logging_enabled:
+                    try:
+                        try:
+                            os.mkdir(LOG_CONFIG.LOG_DIR)
+                        except OSError:
+                            pass  # Directory already exists
+                        # Resolve and validate log level BEFORE opening the handler
+                        # (avoids file-handle leak on bad config and prevents silent
+                        # NOTSET fallback that would flood the SD with DEBUG output).
+                        # NVM override (set by SET_LOG_LEVEL) wins over yaml default.
+                        persisted_level = get_persisted_level_name()
+                        target_level_str = persisted_level if persisted_level is not None else LOG_CONFIG.LOG_FILE_LEVEL
+                        file_level = None
+                        for lvl_int, lvl_str in LOG_LEVELS:
+                            if lvl_str == target_level_str:
+                                file_level = lvl_int
+                                break
+                        if file_level is None:
+                            raise ValueError(f"Invalid LOG_FILE_LEVEL: {target_level_str!r}")
+
+                        file_handler = RotatingFileHandler(
+                            LOG_CONFIG.LOG_FILENAME,
+                            mode="a",
+                            maxBytes=LOG_CONFIG.LOG_FILE_MAX_BYTES,
+                            backupCount=LOG_CONFIG.LOG_FILE_BACKUP_COUNT,
+                        )
+                        file_handler.setLevel(file_level)
+                        formatter = Formatter(fmt="[{asctime}][{levelname}] {message}", style="{")
+                        file_handler.setFormatter(formatter)
+                        getLogger("core_logger").addHandler(file_handler)
+                        self.file_logging_enabled = True
+                        self.log_info("File logging enabled on SD card")
+                        self.log_warning(f"Reset reason: {getattr(microcontroller.cpu, 'reset_reason', None)}")
+                    except Exception as e:
+                        self.log_warning(f"File logging not available: {e}")
+
                 # check if the deployment is ready to be performed
                 deployment_time_check = (
                     (TPM.monotonic() - self.last_deployment_time) >= _DEPLOYMENT_INTERVAL
@@ -206,7 +249,7 @@ class Task(TemplateTask):
                     if self.deploymentPWM < _PWM_MIN and deployment_time_check:
                         self.deploymentTries += 1
                         if self.check_deployment_status() or self.deploymentTries >= _BURN_WIRE_TIMEOUT:
-                            self.log_info("Deployment complete")
+                            self.log_warning("Deployment complete")
                             self.deployment_done = True
                             SATELLITE.BURN_WIRES.turn_off_pwm(self.deploymentPWM + 1)
                             SATELLITE.BURN_WIRES.disable_driver()
@@ -225,7 +268,7 @@ class Task(TemplateTask):
                 if self.deployment_done:
                     # T0: Boot over and deployment complete
                     SM.switch_to(STATES.DETUMBLING)
-                    self.log_info("T0: Transition from STARTUP to DETUMBLING")
+                    self.log_warning("T0: Transition from STARTUP to DETUMBLING")
 
     def state_machine_execution(self):
         # ------------------------------------------------------------------------------------------------------------------------------------
@@ -332,12 +375,12 @@ class Task(TemplateTask):
             """Transitions out of DETUMBLING"""
             if self.ADCS_MODE != Modes.TUMBLING or self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] == 1:
                 # T1.1: Spin stabilized OR detumbling error flag is set, transition to NOMINAL
-                self.log_info("T1.1: Transition from DETUMBLING to NOMINAL")
+                self.log_warning("T1.1: Transition from DETUMBLING to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
 
             elif self.EPS_MODE == EPS_POWER_FLAG.LOW_POWER:
                 # T1.2: Low SoC, transition to low power
-                self.log_info("T1.2: Transition from DETUMBLING to LOW POWER")
+                self.log_warning("T1.2: Transition from DETUMBLING to LOW POWER")
                 SM.switch_to(STATES.LOW_POWER)
 
             else:
@@ -358,17 +401,17 @@ class Task(TemplateTask):
             """Transitions out of NOMINAL"""
             if self.ADCS_MODE == Modes.TUMBLING and self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] != 1:
                 # T2.1: Tumbling again AND detumbling error flag is not set, transition to DETUMBLING
-                self.log_info("T2.1: Transition from NOMINAL to DETUMBLING")
+                self.log_warning("T2.1: Transition from NOMINAL to DETUMBLING")
                 SM.switch_to(STATES.DETUMBLING)
 
             elif self.EPS_MODE == EPS_POWER_FLAG.LOW_POWER:
                 # T2.2: Low SoC, transition to low power
-                self.log_info("T2.3: Transition from NOMINAL to LOW POWER")
+                self.log_warning("T2.3: Transition from NOMINAL to LOW POWER")
                 SM.switch_to(STATES.LOW_POWER)
 
             elif self.PAYLOAD_MODE == PayloadState.WATCHING:
                 # T2.3: Payload commanded to start watching, transition to EXPERIMENT
-                self.log_info("T2.4: Transition from NOMINAL to EXPERIMENT")
+                self.log_warning("T2.4: Transition from NOMINAL to EXPERIMENT")
                 SM.switch_to(STATES.EXPERIMENT)
             else:
                 # No transition, stay in NOMINAL
@@ -386,7 +429,7 @@ class Task(TemplateTask):
             """Transitions out of LOW_POWER"""
             if self.EPS_MODE != EPS_POWER_FLAG.LOW_POWER:
                 # T3.1: Nominal or high SoC, transition out of low power
-                self.log_info("T3.1: Transition from LOW POWER to NOMINAL")
+                self.log_warning("T3.1: Transition from LOW POWER to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
 
             else:
@@ -405,17 +448,17 @@ class Task(TemplateTask):
             """Transitions out of EXPERIMENT"""
             if self.PAYLOAD_MODE == PayloadState.FAIL or self.PAYLOAD_MODE == PayloadState.IDLE:
                 # T4.1: Experiment has finished or failed, transition to NOMINAL
-                self.log_info("T4.1: Transition from EXPERIMENT to NOMINAL")
+                self.log_warning("T4.1: Transition from EXPERIMENT to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
 
             elif self.EPS_MODE == EPS_POWER_FLAG.LOW_POWER:
                 # T4.2: Low SoC, transition to LOW_POWER
-                self.log_info("T4.2: Transition from EXPERIMENT to LOW POWER")
+                self.log_warning("T4.2: Transition from EXPERIMENT to LOW POWER")
                 SM.switch_to(STATES.LOW_POWER)
 
             elif self.ADCS_MODE == Modes.TUMBLING and self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] != 1:
                 # T4.3: Tumbling again AND detumbling error flag is not set, transition to DETUMBLING
-                self.log_info("T4.3: Transition from EXPERIMENT to DETUMBLING")
+                self.log_warning("T4.3: Transition from EXPERIMENT to DETUMBLING")
                 SM.switch_to(STATES.DETUMBLING)
 
             else:

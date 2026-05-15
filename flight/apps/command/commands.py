@@ -19,6 +19,8 @@ Author: Ibrahima S. Sow
 
 """
 
+import os
+
 import supervisor
 from apps.command.supervisor import CommandSupervisor
 from apps.comms.comms import SATELLITE_RADIO
@@ -32,6 +34,9 @@ from apps.telemetry.splat.splat.transport_layer import transaction_manager as TM
 from core import logger
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
+from core.logging import LEVELS as LOG_LEVELS
+from core.logging import RotatingFileHandler, getLogger
+from core.satellite_config import log_config as LOG_CONFIG
 from core.states import STR_STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
@@ -332,6 +337,136 @@ def EVAL_STRING_COMMAND(string_command):
     except Exception as e:
         logger.error(f"EVAL_STRING_COMMAND execution failed: {e}")
         return ["eval_string_command_failed"]
+
+
+@register_command()
+def PREPARE_LOG_DOWNLINK():
+    """Freeze current system logs into a staging file safe from rotation.
+
+    Rotates the active log (fsw.log -> fsw.log.1) and moves that rotated file
+    to a stable path (fsw.log.downlink) that the rotation sequence will never
+    touch. The ground station then runs the standard CREATE_TRANS /
+    GENERATE_X_PACKETS / CONFIRM_LAST_BATCH loop against that staging path.
+    Logging continues normally on a fresh fsw.log throughout.
+
+    Returns:
+        [staging_path, file_size]                 on success
+        ["empty"]                                 if nothing to downlink
+        ["no_file_handler"]                       if file logging isn't up
+        ["rollover_failed"] / ["rename_failed"]   on filesystem failure
+    """
+    logger.info("Executing PREPARE_LOG_DOWNLINK")
+
+    core_logger = getLogger("core_logger")
+    file_handler = None
+    for h in core_logger._handlers:
+        if isinstance(h, RotatingFileHandler):
+            file_handler = h
+            break
+    if file_handler is None:
+        logger.error("PREPARE_LOG_DOWNLINK: no file handler registered")
+        return ["no_file_handler"]
+
+    staging_path = LOG_CONFIG.LOG_FILENAME + ".downlink"
+    rotated_path = LOG_CONFIG.LOG_FILENAME + ".1"
+
+    # Best-effort remove of any stale staging file from a prior session
+    # (e.g. previous downlink interrupted before CLEANUP).
+    try:
+        os.remove(staging_path)
+    except OSError:
+        pass
+
+    # Rotate fsw.log -> fsw.log.1 (no-op if log is empty).
+    try:
+        file_handler.force_rollover()
+    except Exception as e:
+        logger.error(f"PREPARE_LOG_DOWNLINK: rollover failed: {e}")
+        return ["rollover_failed"]
+
+    # Move fsw.log.1 out of the rotation sequence into the staging path.
+    try:
+        os.rename(rotated_path, staging_path)
+    except OSError as e:
+        # ENOENT (errno 2) means no .1 existed — log was empty and no prior
+        # rotation had occurred. Legitimate "nothing to downlink" case.
+        if e.args and e.args[0] == 2:
+            return ["empty"]
+        logger.error(f"PREPARE_LOG_DOWNLINK: rename failed: {e}")
+        return ["rename_failed"]
+
+    try:
+        size = os.stat(staging_path)[6]
+    except OSError:
+        size = 0
+
+    return [staging_path, size]
+
+
+@register_command()
+def CLEANUP_LOG_DOWNLINK():
+    """Remove the log downlink staging file after a successful transfer.
+
+    Should be called by the ground station after CONFIRM_LAST_BATCH indicates
+    zero missing fragments. Safe (idempotent) if the file is already gone.
+
+    Returns:
+        ["cleaned"]     on success
+        ["not_found"]   if no staging file existed (idempotent)
+        ["error: ..."]  on other filesystem failures
+    """
+    logger.info("Executing CLEANUP_LOG_DOWNLINK")
+    staging_path = LOG_CONFIG.LOG_FILENAME + ".downlink"
+    try:
+        os.remove(staging_path)
+    except OSError as e:
+        if e.args and e.args[0] == 2:
+            return ["not_found"]
+        logger.error(f"CLEANUP_LOG_DOWNLINK: remove failed: {e}")
+        return [f"error: {e}"]
+    return ["cleaned"]
+
+
+@register_command()
+def SET_LOG_LEVEL(level_id):
+    """Change the SD-card file log level and persist it in NVM.
+
+    Serial console level is fixed at boot from yaml and is intentionally
+    NOT affected by this command.
+
+    level_id is an index into core.logging.LEVELS:
+        0 NOTSET, 1 DEBUG, 2 INFO, 3 WARNING, 4 ERROR, 5 CRITICAL, 6 NOTHING.
+    The new level applies immediately to the RotatingFileHandler (if file
+    logging is up). It is also written to the NVM-backed StateFlags.f_log_level
+    byte so it survives a reboot; the persisted value is read by the
+    file-handler init in tasks/command.py.
+
+    Returns:
+        [level_id]            on success
+        ["invalid_level"]     if level_id is out of range (NVM untouched)
+        ["nvm_write_failed"]  if level changed in-memory but NVM write threw
+    """
+    logger.info(f"Executing SET_LOG_LEVEL with level_id: {level_id}")
+
+    if not isinstance(level_id, int) or level_id < 0 or level_id >= len(LOG_LEVELS):
+        logger.error(f"SET_LOG_LEVEL: invalid level_id {level_id}")
+        return ["invalid_level"]
+
+    level_int = LOG_LEVELS[level_id][0]
+
+    core_logger = getLogger("core_logger")
+    for h in core_logger._handlers:
+        if isinstance(h, RotatingFileHandler):
+            h.setLevel(level_int)
+            break
+
+    try:
+        SATELLITE.FLAGS.f_log_level = level_id
+    except Exception as e:
+        logger.error(f"SET_LOG_LEVEL: NVM write failed: {e}")
+        return ["nvm_write_failed"]
+
+    return [level_id]
 
 
 @register_command()

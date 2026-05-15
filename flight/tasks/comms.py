@@ -10,11 +10,17 @@ from core import TemplateTask
 from core import state_manager as SM
 from core.data_handler import DataHandler as DH
 from core.dh_constants import COMMS_IDX
+from core.scheduler import sleep
 from core.states import STATES
 from core.time_processor import TimeProcessor as TPM
 
 
 class Task(TemplateTask):
+    # Number of packets to transmit back-to-back before yielding to the
+    # scheduler. Bigger -> higher TX throughput but longer scheduler blackout.
+    # Bounded by HW watchdog timeout. Tune empirically.
+    TX_BURST_SIZE = 15
+
     def __init__(self, id):
         super().__init__(id)
 
@@ -35,7 +41,7 @@ class Task(TemplateTask):
         SATELLITE_RADIO.restore_comms_mode_from_persistent_state()
         SATELLITE_RADIO.set_rx_mode()
 
-    def transmit_message(self):
+    async def transmit_message(self):
         """
         Will transmit whatever is available on the transmit queue
         it should only be packets in bytes
@@ -49,6 +55,7 @@ class Task(TemplateTask):
         if TransmitQueue.packet_available():
             self.update_comms_telemetry()  # will only update comms data when something is sent or received
 
+        sent_in_burst = 0
         while TransmitQueue.packet_available():
             self.log_info("  Packet available in TransmitQueue, preparing for transmission")
             # If we have a packet to transmit, set it in the radio
@@ -59,6 +66,12 @@ class Task(TemplateTask):
                 SATELLITE_RADIO.transmit_message(packed_packet)
             else:
                 self.log_error("Error popping packet from TransmitQueue")
+            sent_in_burst += 1
+            if sent_in_burst >= self.TX_BURST_SIZE:
+                # Yield to scheduler after a burst so watchdog (and other tasks)
+                # get CPU time. Burst size bounded by HW watchdog timeout.
+                await sleep(0)
+                sent_in_burst = 0
 
     def receive_message(self):
         """
@@ -134,7 +147,7 @@ class Task(TemplateTask):
             DH.register_data_process("comms", data_format, True, data_limit=100000, write_interval=5)
 
         self.check_periodic_telemetry()  # check if it's time to send periodic telemetry
-        self.transmit_message()  # check if we have messages to transmit to GS
+        await self.transmit_message()  # check if we have messages to transmit to GS
         self.receive_message()  # check if we have received messages from GS
         # TODO - should be its own task. Keeping this way because of time constraints
         CommandSupervisor.process_pending_action()
