@@ -33,11 +33,8 @@ _DEPLOYMENT_DISTANCE = const(2)  # distance(cm) threshold for deployment
 
 
 class Task(TemplateTask):
-    # To be removed
-    # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "BOOT_COUNT",
-    # "WATCHDOG_TIMER", "HAL_BITFLAGS", "DETUMBLING_ERROR_FLAG"]
 
-    log_data = [0] * 9
+    log_data = [0] * 7
 
     log_commands = [0] * 3
 
@@ -125,8 +122,9 @@ class Task(TemplateTask):
         # Restore boot count from previous session
         if not self.restored:
             if not DH.data_process_exists("cdh"):
-                data_format = "LLbLbbbbb"
-                DH.register_data_process("cdh", data_format, True, data_limit=100000)
+                data_format = "LLbbbbb"
+                # this is 18 bytes, in current config ~7.2bytes/s. 25k will be ~60min
+                DH.register_data_process("cdh", data_format, True, data_limit=25000, write_interval=5)
 
             if SATELLITE.SD_CARD_AVAILABLE:
                 cdh_data = DH.data_process_registry["cdh"].get_latest_data()
@@ -188,7 +186,8 @@ class Task(TemplateTask):
             if DH.SD_SCANNED() and time_since_boot > _EXIT_STARTUP_TIMEOUT:
                 if not DH.data_process_exists("cdh"):
                     data_format = "LLbLbbbbb"
-                    DH.register_data_process("cdh", data_format, True, data_limit=100000)
+                    # this is 18 bytes, in current config ~7.2bytes/s. 25k will be ~60min
+                    DH.register_data_process("cdh", data_format, True, data_limit=25000, write_interval=5)
 
                 if not DH.data_process_exists("cmd_logs"):
                     DH.register_data_process("cmd_logs", "LBB", True, data_limit=100000)
@@ -353,8 +352,6 @@ class Task(TemplateTask):
             if SATELLITE.NEOPIXEL_AVAILABLE:
                 SATELLITE.NEOPIXEL.fill([0, 255, 0])
 
-            self.log_info(f"PDMODE: {self.PAYLOAD_MODE}")
-
             """Transitions out of NOMINAL"""
             if self.ADCS_MODE == Modes.TUMBLING and self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] != 1:
                 # T2.1: Tumbling again AND detumbling error flag is not set, transition to DETUMBLING
@@ -470,10 +467,8 @@ class Task(TemplateTask):
             self.log_data[CDH_IDX.TIME] = TPM.time()
             self.log_data[CDH_IDX.BOOT_TIME] = TPM.monotonic() - SATELLITE.BOOTTIME
             self.log_data[CDH_IDX.SC_STATE] = SM.current_state
-            self.log_data[CDH_IDX.SD_USAGE] = int(DH.SD_usage() / 1000)  # kb - gets updated in the OBDH task
             self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = self.get_memory_usage()
             self.log_data[CDH_IDX.BOOT_COUNT] = self.boot_count
-            self.log_data[CDH_IDX.WATCHDOG_TIMER] = 0
             self.log_data[CDH_IDX.HAL_BITFLAGS] = 0
 
             # The detumbling error flag is set in the DETUMBLING state

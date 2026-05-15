@@ -107,15 +107,15 @@ class Task(TemplateTask):
     def log_error_handle_info(self, results, device_name):
         result, device_error = results
         if result == Errors.NO_REBOOT:
-            self.log_info(f"Device {device_name} has {device_error}, no reboot occured")
+            self.log_debug(f"Device {device_name} has {device_error}, no reboot occured")
             SATELLITE.update_device_error(device_name, device_error)
         elif result == Errors.REBOOT_DEVICE:
             self.turn_on_device[device_name] = self.log_data[HAL_IDX.TIME_HAL]
             SATELLITE.update_device_error(device_name, device_error)
-            self.log_info(f"Temporarily shut down {device_name} due to error {device_error}")
+            self.log_error(f"Temporarily shut down {device_name} due to error {device_error}")
         elif result == Errors.GRACEFUL_REBOOT:
             SATELLITE.update_device_error(device_name, device_error)
-            self.log_info(f"Queued graceful reboot for {device_name} due to error {device_error}")
+            self.log_error(f"Queued graceful reboot for {device_name} due to error {device_error}")
             self.graceful_reboot = True
         elif result == Errors.DEVICE_DEAD:
             SATELLITE.update_device_error(device_name, result)
@@ -137,7 +137,7 @@ class Task(TemplateTask):
         if SM.current_state == STATES.STARTUP:
             if not DH.data_process_exists(self.log_name):
                 data_format = "L" + "B" * (_IDX_LENGTH - 1)
-                DH.register_data_process(self.log_name, data_format, True, data_limit=10000)
+                DH.register_data_process(self.log_name, data_format, True, data_limit=50000, write_interval=10)
 
             # restore previous device status
             if not self.restored:
@@ -151,15 +151,15 @@ class Task(TemplateTask):
                                 key_name = self.idx_to_hal_name(idx)
                                 if "_ERROR_COUNT" in key_name:
                                     SATELLITE.update_device_error_count(key_name.replace("_ERROR_COUNT", ""), value)
-                                    self.log_info(f"Restored {key_name} to {value}")
+                                    self.log_debug(f"Restored {key_name} to {value}")
                                     if SATELLITE.check_device_dead(value):
                                         SATELLITE.update_device_dead(key_name.replace("_ERROR_COUNT", ""), True)
-                                        self.log_info(f"Restored {key_name} to dead")
+                                        self.log_error(f"Restored {key_name} to dead")
                                 elif "_ERROR" in key_name:
                                     pass
                                 elif "PERIPH_REBOOT_COUNT" in key_name:
                                     self.peripheral_reboot_count = value
-                                    self.log_info(f"Restored {key_name} to {value}")
+                                    self.log_debug(f"Restored {key_name} to {value}")
                                 else:
                                     self.log_error(f"Unable to parse {key_name}")
                     else:
@@ -179,7 +179,7 @@ class Task(TemplateTask):
                 for device_name, time in self.turn_on_device.items():
                     if self.log_data[HAL_IDX.TIME_HAL] != time:
                         SATELLITE.turn_on_device(device_name)
-                        self.log_info(f"Turned on {device_name} and devices on the same power line.")
+                        self.log_warning(f"Turned on {device_name} and devices on the same power line.")
                         self.turn_on_device.pop(device_name)
             self.individual_reboot_counter = TPM.monotonic()
 
@@ -191,7 +191,7 @@ class Task(TemplateTask):
                 SATELLITE.graceful_reboot()
                 if not DH.restore_data_process_files():
                     self.log_error("Error restoring data process files after graceful reboot")
-                self.log_info("Gracefully rebooted peripheral power line.")
+                self.log_warning("Gracefully rebooted peripheral power line.")
             self.graceful_reboot_counter = TPM.monotonic()
 
         self.log_device_status()
@@ -200,6 +200,6 @@ class Task(TemplateTask):
         # TODO: delay this if the satellite is at a ground pass
         if TPM.monotonic() - _BOOT_TIME >= _REGULAR_REBOOT_TIME:
             # TODO: graceful shutdown for payload if needed
-            self.log_info("Executing regular reboot")
+            self.log_warning("Executing regular reboot")
             self.close_data_process()
             SATELLITE.reboot()

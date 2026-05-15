@@ -81,7 +81,7 @@ def GRACEFUL_REBOOT():
         return ["success"]  # this will never be returned
     except Exception as e:
         logger.error(f"Failed to gracefully reboot the satellite: {e}")
-        return ["graceful reboot failed: {e}"]
+        return [f"graceful reboot failed: {e}"]
 
 
 @register_command()
@@ -92,7 +92,7 @@ def MAIN_POWER_REBOOT():
         return ["success"]  # this will never be returned
     except Exception as e:
         logger.error(f"Failed to reboot the satellite: {e}")
-        return ["main power reboot failed"]
+        return [f"main power reboot failed: {e}"]
 
 
 @register_command()
@@ -133,6 +133,23 @@ def PING(string="Hello From Space!"):
     """
     logger.info(f"Executing PING with string: {string}")
     return [string]
+
+
+@register_command()
+def SEND_ONES():
+    """
+    This is a simple command that will be use to conduct IST experiment
+    The idea is that when this command is received it will generate a packet with only 1s
+    This packet has to be sent without a header, so the digipeater comms function will be used
+    """
+
+    from apps.comms.comms import SATELLITE_RADIO
+
+    logger.debug("Generating 1s packet")
+
+    packet = bytearray([0xff] * 255)
+    status = SATELLITE_RADIO.transmit_digi_packet(packet)
+    return [status]
 
 
 @register_command()

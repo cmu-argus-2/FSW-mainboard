@@ -216,7 +216,7 @@ class DataProcess:
             except OSError as e:
                 logger.critical(f"Error creating folder: {e}")
         else:
-            logger.info("Folder already exists.")
+            logger.debug("Folder already exists.")
 
     @classmethod
     def compute_bytesize(cls, data_format: str) -> int:
@@ -279,7 +279,7 @@ class DataProcess:
         if self.last_data is not None:
             return self.last_data
         else:
-            logger.warning("No latest data point available.")
+            logger.warning(f"No latest data {self.tag_name}")
             return None
 
     def clear_latest_data(self) -> bool:
@@ -1585,6 +1585,8 @@ class DataHandler:
     def compute_total_size_files(cls, root_path: str = None) -> int:
         """
         Computes the total size of all files under the sd_path.
+        not used anymore, slow and does not calculate everything
+        now using the filesystem function
 
         Returns:
         - The total size in bytes.
@@ -1606,7 +1608,26 @@ class DataHandler:
 
     @classmethod
     def update_SD_usage(cls) -> None:
-        cls._SD_USAGE = cls.compute_total_size_files()
+        cls._SD_USAGE = cls.fs_sd_size()
+
+    @classmethod
+    def fs_sd_size(cls):
+        """
+        Will return the size of the sd card in bytes according to the file system information
+        """
+        # Get filesystem stats for the SD card mount point
+        stat = os.statvfs('/sd')
+
+        # Calculate total size
+        block_size = stat[0]      # Size of a block
+        total_blocks = stat[2]    # Total number of blocks
+        free_blocks = stat[3]     # Free blocks
+
+        total_size = block_size * total_blocks
+        free_size = block_size * free_blocks
+        used_size = total_size - free_size
+
+        return used_size
 
     @classmethod
     def SD_usage(cls) -> int:

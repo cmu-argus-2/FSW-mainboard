@@ -43,14 +43,15 @@ class Task(TemplateTask):
         TODO: add tx timeout when more information about duty cycle is available
         """
 
-        self.log_info("Checking transmit queue for packets to send...")
-        self.log_info(f"  Transmit queue size: {TransmitQueue.get_size()}")
+        if not TransmitQueue.packet_available():
+            # nothign to be done here
+            return
 
-        if TransmitQueue.packet_available():
-            self.update_comms_telemetry()  # will only update comms data when something is sent or received
+        self.log_debug("Checking transmit queue for packets to send...")
+        self.log_debug(f"  Transmit queue size: {TransmitQueue.get_size()}")
 
         while TransmitQueue.packet_available():
-            self.log_info("  Packet available in TransmitQueue, preparing for transmission")
+            self.log_debug("  Packet available in TransmitQueue, preparing for transmission")
             # If we have a packet to transmit, set it in the radio
             packet, queue_error_code = TransmitQueue.pop_packet()
             if queue_error_code == QUEUE_STATUS.OK:
@@ -59,14 +60,17 @@ class Task(TemplateTask):
             else:
                 self.log_error("Error popping packet from TransmitQueue")
 
+        self.update_comms_telemetry()  # will only update comms data when something is sent or received
+
     def receive_message(self):
         """
         Receive data from the radio. Currently it only receives commands from the GS
         records the rssi and adds the command to the command queue for processing by the command processor task.
         """
 
-        self.log_info("Checking for incoming messages from GS...")
+        self.log_debug("Checking for incoming messages from GS...")
         if SATELLITE_RADIO.data_available():
+            self.log_info("Incoming message detected")
 
             # Read packet present in the RX buffer
             message_object = SATELLITE_RADIO.receive_message()

@@ -4,8 +4,6 @@ it will have functions to encode and decode telemetry packets
     gathering the variables and all of that
 """
 
-import gc
-
 try:
     from micropython import const
 except ImportError:
@@ -40,9 +38,6 @@ class Frame:
             return None
 
         data = DH.get_latest_data(ss)
-        if data is None:
-            logger.warning(f"No latest {ss.upper()} data available")
-            return None
 
         return data
 
@@ -88,17 +83,12 @@ class Frame:
 
             dh_data = dh_data_list[ss_list.index(ss_lower)]
             if dh_data is None:
-                logger.warning(f"No data for subsystem {ss.upper()} to pack in heartbeat")
                 continue
 
             # iterating over all the variables for the ss in the report and adding them
             for var_name in report.variables[ss].keys():
                 dh_var_idx = getattr(idx_list[ss_list.index(ss_lower)], var_name)
                 report.add_variable(var_name, ss, dh_data[dh_var_idx])
-
-        logger.debug(f"Packed heartbeat telemetry frame {report}")
-
-        gc.collect()
 
         return report
 
@@ -124,17 +114,12 @@ class Frame:
 
             dh_data = dh_data_list[ss_list.index(ss_lower)]
             if dh_data is None:
-                logger.warning(f"No data for subsystem {ss.upper()} to pack in HAL")
                 continue
 
             # iterating over all the variables for the ss in the report and adding them
             for var_name in report.variables[ss].keys():
                 dh_var_idx = getattr(idx_list[ss_list.index(ss_lower)], var_name)
                 report.add_variable(var_name, ss, dh_data[dh_var_idx])
-
-        logger.debug(f"Packed HAL telemetry frame {report}")
-
-        gc.collect()
 
         return report
 
@@ -155,6 +140,8 @@ class Frame:
             "gps",
             "payload",
             "cmd_logs",
+            "hal",
+            "eps_warning"
         ]  # storage subsystem works differently so we need a separate list for it
         idx_list = [CDH_IDX, STORAGE_IDX]  # this is used to match the ss to the dh constants
         # get the latest data from each subsystem
@@ -174,7 +161,6 @@ class Frame:
 
             dh_data = dh_data_list[ss_list.index(ss_lower)]
             if dh_data is None:
-                logger.warning(f"No data for subsystem {ss.upper()} to pack in STORAGE")
                 continue
 
             # iterating over all the variables for the ss in the report and adding them
@@ -186,16 +172,14 @@ class Frame:
         for var_name in report.variables["STORAGE"]:
 
             if var_name == "SD_TOTAL_USAGE":
-                value = DH.SD_usage()  # get the SD card usage from DH
+                DH.update_SD_usage()  # update the sd card size
+                value = DH._SD_USAGE  # get the value
                 report.add_variable(var_name, "STORAGE", value)
                 continue
 
             # get the necessary dh names
             dh_ss_name = "_".join(var_name.split("_")[:-2]).lower()  # get the first 2/3 parts of the variable name
             dh_variable_name = "_".join(var_name.split("_")[-2:])  # get the last two parts of the variable name
-            logger.info(
-                f"Processing STORAGE var {var_name} with dh ss {dh_ss_name.upper()} and dh var {dh_variable_name.upper()}"
-            )
             ss_index = storage_ss_list.index(dh_ss_name)
             if ss_index == -1:
                 logger.warning(f"Subsystem {dh_ss_name.upper()} not recognized for storage variable {var_name}")
@@ -209,10 +193,6 @@ class Frame:
 
             report.add_variable(var_name, "STORAGE", dh_storage_list[ss_index][dh_var_idx])  # add the variable to the report
 
-        logger.debug(f"Packed STORAGE telemetry frame {report}")
-
-        gc.collect()
-
         return report
 
     @classmethod
@@ -220,7 +200,7 @@ class Frame:
         """
         Pack a payload telemetry frame.
         """
-        logger.info("[TELEMETRY] - Packing PAYLOAD telemetry frame")
+        logger.debug("[TELEMETRY] - Packing PAYLOAD telemetry frame")
         # this will be a report
         report = Report("TM_PAYLOAD")
 
@@ -238,7 +218,6 @@ class Frame:
 
             dh_data = dh_data_list[ss_list.index(ss_lower)]
             if dh_data is None:
-                logger.warning(f"No data for subsystem {ss.upper()} to pack in PAYLOAD")
                 continue
 
             # iterating over all the variables for the ss in the report and adding them
@@ -246,9 +225,5 @@ class Frame:
                 dh_var_idx = getattr(idx_list[ss_list.index(ss_lower)], var_name)
                 data = dh_data[dh_var_idx]
                 report.add_variable(var_name, ss, data)
-
-        logger.info(f"Packed PAYLOAD telemetry frame {report}")
-
-        gc.collect()
 
         return report
