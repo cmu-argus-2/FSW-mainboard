@@ -9,9 +9,8 @@ class CDH_IDX:
     SC_STATE = const(2)
     CURRENT_RAM_USAGE = const(3)
     BOOT_COUNT = const(4)
-    WATCHDOG_TIMER = const(5)
-    HAL_BITFLAGS = const(6)
-    DETUMBLING_ERROR_FLAG = const(7)
+    HAL_BITFLAGS = const(5)
+    DETUMBLING_ERROR_FLAG = const(6)
 
 
 class EPS_IDX:
