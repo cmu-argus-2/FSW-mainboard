@@ -329,6 +329,9 @@ class Task(TemplateTask):
             self.log_warning("EPS task not available, assuming NOMINAL EPS mode")
             self.EPS_MODE = EPS_POWER_FLAG.NOMINAL
 
+        ### TODO: TEST TEST GET RID OF THIS BEFORE MERGE
+        # self.EPS_MODE = EPS_POWER_FLAG.LOW_POWER
+
         # Get PAYLOAD mode
         if DH.data_process_exists("payload_tm"):
             payload_data = DH.get_latest_data("payload_tm")
