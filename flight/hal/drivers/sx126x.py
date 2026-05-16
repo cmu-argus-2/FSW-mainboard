@@ -589,6 +589,15 @@ class SX126X:
 
         self.setModulationParamsFSK(bR, pS, bW, fDev)
 
+        self._preambleLengthFSK = preLength
+        self._preambleDetectorLength = preDetect
+        self._syncWordLength = syncLength
+        self._addrComp = addrComp
+        self._packetType = packType
+        self._packetLength = plLength
+        self._crcTypeFSK = crcType
+        self._whitening = whitening
+
         self.setPacketParamsFSK(preLength, preDetect, syncLength, addrComp, packType, plLength, crcType, whitening)
 
         if useRegulatorLDO:
@@ -799,6 +808,11 @@ class SX126X:
                     return _ERR_INVALID_PACKET_LENGTH
 
             state = self.setPacketParams(self._preambleLength, self._crcType, len_, self._headerType, self._invertIQ)
+
+        if modem == _SX126X_PACKET_TYPE_GFSK and self._packetType == _SX126X_GFSK_PACKET_VARIABLE:
+            self.setPacketParamsFSK(self._preambleLengthFSK, self._preambleDetectorLength,
+                                    self._syncWordLength, self._addrComp, self._packetType,
+                                    len_, self._crcTypeFSK, self._whitening)
         ASSERT(state)
 
         state = self.setDioIrqParams(_SX126X_IRQ_TX_DONE | _SX126X_IRQ_TIMEOUT, _SX126X_IRQ_TX_DONE)
@@ -1692,7 +1706,7 @@ class SX1262(SX126X):
     ):
 
         state = super().beginFSK(bR=bR, pS=pS, bW=bW, fDev=fDev, preLength=preLength, preDetect=preDetect, syncLength=syncLength, addrComp=addrComp,
-                              packType=packType, plLength=plLength, crcType=crcType, whitening=whitening, currentLimit=currentLimit, useRegulatorLDO=useRegulatorLDO, tcxoVoltage=tcxoVoltage)
+                                 packType=packType, plLength=plLength, crcType=crcType, whitening=whitening, currentLimit=currentLimit, useRegulatorLDO=useRegulatorLDO, tcxoVoltage=tcxoVoltage)
 
         state = self.setFrequency(freq)
         ASSERT(state)
