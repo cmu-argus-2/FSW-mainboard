@@ -93,6 +93,11 @@ class PayloadController:
     TELEM_TS = 0  # time at which last telemetry was requested
     TELEM_PERIOD = 10  # request telemetry every 10s
 
+    # clock sync
+    SYNC_TS = 0
+    SYNC_PERIOD = 30
+    SYNC_SEND_MONOTONIC = 0
+
     # Lets init uart connection.
     # TODO should this only be made once the jetson has been turned on?
     PU.connect()
@@ -535,6 +540,12 @@ class PayloadController:
                 logger.error("[PAYLOAD] - OFF ACK OVERRIDDEN")
             cls.received_off_ack = True
             return
+    
+        if ack.cmd_id == COMMAND_IDS["SYNCHRONIZE_TIME"]:
+            import time
+            rtt = time.monotonic() - cls.SYNC_SEND_MONOTONIC
+            logger.info(f"[SYNC] RTT={rtt:.3f}s status={ack.ack_args}")
+            return
 
     @classmethod
     def process_init_trans(cls, command):
@@ -684,3 +695,17 @@ class PayloadController:
         except Exception as e:
             logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
             return False
+
+    @classmethod
+    def send_synchronize_time_command(cls, rtc_time):
+        """
+        Send SYNCHRONIZE_TIME command to Jetson with current RTC time
+        """
+        command = Command("SYNCHRONIZE_TIME")
+        command.add_argument("rtc_time", rtc_time)
+
+        import time
+        cls.SYNC_SEND_MONOTONIC = time.monotonic()
+
+        logger.info("[PAYLOAD] - Sending rtc update command")
+        PU.send(pack(command))

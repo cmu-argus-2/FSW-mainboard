@@ -444,3 +444,19 @@ def EXPERIMENT(
     if not result:
         logger.error(f"[PAYLOAD] - Failed to add experiment command for timestamp {ts}")
     return result
+
+@register_command()
+def SYNCHRONIZE_TIME():
+    # Sends the current RTC time to the jetson to sync.
+    from apps.payload.controller import PayloadController as PC
+    
+    logger.info("Executing SYNCHRONIZE_TIME")
+    rtc_time = TPM.time()
+    
+    try:
+        PC.send_synchronize_time_command(rtc_time)
+        logger.info(f"SYNCHRONIZE_TIME command sent to payload with RTC time: {rtc_time}")
+        return ["sync_sent", rtc_time]
+    except Exception as e:
+        logger.error(f"SYNCHRONIZE_TIME command failed: {e}")
+        return ["sync_error", str(e)]
