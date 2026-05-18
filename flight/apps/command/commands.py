@@ -157,8 +157,6 @@ def SUM(opA, opB):
     used to experiment adding new command and testing the arguments
     """
 
-    SATELLITE_RADIO.set_modulation_gfsk()
-
     logger.info(f"Executing SUM with opA: {opA} and opB: {opB}")
     return [opA + opB]
 
@@ -235,6 +233,15 @@ def RF_RESUME():
     CommandSupervisor.cancel_pending_rf_stop()
     SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.STANDARD)
     return ["rf_resume_executed"]
+
+
+@register_command()
+def SET_FSK(freq, power, br, ps, bandwidth, f_dev, p_len, p_detect, sync_len, ad_comp, pack_type, pl_len, crc_type, whitening):
+    """Sets the radio modulation to FSK for the next transmission."""
+    logger.warning("Executing SET_FSK: setting modulation to FSK for next transmission")
+
+    SATELLITE_RADIO.set_modulation_fsk(freq, power, br, ps, bandwidth, f_dev, p_len, p_detect, sync_len, ad_comp, pack_type, pl_len, crc_type, whitening)
+    return ["modulation_set_to_fsk"]
 
 
 @register_command()
