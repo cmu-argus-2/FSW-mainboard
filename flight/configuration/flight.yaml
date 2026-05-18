@@ -12,8 +12,8 @@ command:
     value: 18000  # seconds, i.e., 5 hours
     _const: true
 
-  PAYLOAD_TESTING_MODE:
-    value: false
+  SKIP_DEPLOYMENT:
+    value: false  # Must be false for flight - deployment must execute
 
   BURN_WIRE_TIMEOUT:
     value: 5  # number of deployment attempts before forcing completion
@@ -71,3 +71,12 @@ log:
     value: 9
   LOG_FILE_LEVEL:
     value: "WARNING"
+
+# ADCS Task
+adcs:
+  CONTROLLER_MODE: 0
+
+# Watchdog Task
+watchdog:
+  ENABLED:
+    value: true  # Hardware watchdog must be enabled in flight

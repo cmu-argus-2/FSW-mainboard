@@ -24,6 +24,22 @@ def timestamps_to_seconds(timestamps):
     return (epochs - epochs[0]).astype(float)
 
 
+def _parse_measurements_bin(filepath):
+    """Parse a measurements.bin file into a dict of {column_label: np.ndarray}."""
+    import struct
+
+    file_size = os.path.getsize(filepath)
+    with open(filepath, "rb") as f:
+        header = f.readline().decode("utf-8").strip().strip(",")
+        columns = header.split(",")
+        n_cols = len(columns)
+        n_data_bytes = file_size - f.tell()
+        n_rows = n_data_bytes // (8 * n_cols)
+        raw = f.read(n_rows * n_cols * 8)
+    data = np.array(struct.unpack(f"{n_rows * n_cols}d", raw)).reshape(n_rows, n_cols)
+    return {col: data[:, i] for i, col in enumerate(columns)}
+
+
 def undersample(data, percentage):
     if not 0 < percentage <= 100:
         raise ValueError("Percentage must be between 0 and 100")
@@ -31,9 +47,10 @@ def undersample(data, percentage):
     return data[::step]
 
 
-def plot_FSW(result_folder_path):
+def plot_FSW(result_folder_path, plot_sim_mag=True):
     """
     Plots the FSW data.
+    plot_sim_mag: if True, overlay the simulation ground-truth magnetic field from measurements.bin.
     """
     plots_folder_path = os.path.join(result_folder_path, "plots")
     # trials folder path
@@ -48,6 +65,8 @@ def plot_FSW(result_folder_path):
     global_modes_list = []
     gyro_ang_vels_list = []
     mag_fields_list = []
+    sim_mag_list = []
+    sim_gyro_list = []
     sun_vectors_list = []
     sun_statuses_list = []
     trial_numbers = []
@@ -81,35 +100,78 @@ def plot_FSW(result_folder_path):
         global_modes_values = global_modes[:, 1].astype(int)
         gyro_ang_vel = gyro_ang_vels[:, 1:4].astype(float)
 
-        timestamps_gyro = timestamps_to_seconds(timestamps_gyro)
-        timestamps_modes = timestamps_to_seconds(timestamps_modes)
+        # ADCS timestamps are simulation time (float seconds); global mode uses wall-clock
+        timestamps_modes = timestamps_modes.astype(float)
+        timestamps_gyro = timestamps_gyro.astype(float)
         timestamps_global = timestamps_to_seconds(timestamps_global)
 
         mag_fields = data["mag_fields"]
-        timestamps_mag = timestamps_to_seconds(mag_fields[:, 0])
+        timestamps_mag = mag_fields[:, 0].astype(float)
         mag_field = mag_fields[:, 1:4].astype(float)
 
         sun_vectors = data["sun_vectors"]
-        timestamps_sun = timestamps_to_seconds(sun_vectors[:, 0])
+        timestamps_sun = sun_vectors[:, 0].astype(float)
         sun_vector = sun_vectors[:, 1:4].astype(float)
 
         sun_statuses = data["sun_statuses"]
-        timestamps_status = timestamps_to_seconds(sun_statuses[:, 0])
+        timestamps_status = sun_statuses[:, 0].astype(float)
         sun_status = sun_statuses[:, 1].astype(int)
+
+        # Load simulation sensor measurements if requested
+        sim_mag = None
+        sim_gyro = None
+        measurements_path = os.path.join(trial_folder, "measurements.bin")
+        if plot_sim_mag and os.path.exists(measurements_path):
+            meas = _parse_measurements_bin(measurements_path)
+            sim_t = meas["Time [s]"]
+            sim_mag = (
+                sim_t,
+                np.column_stack(
+                    [
+                        meas["mag_x_body [muT]"],
+                        meas["mag_y_body [muT]"],
+                        meas["mag_z_body [muT]"],
+                    ]
+                ),
+            )
+            sim_gyro = (
+                sim_t,
+                np.column_stack(
+                    [
+                        meas["gyro_x [deg/s]"],
+                        meas["gyro_y [deg/s]"],
+                        meas["gyro_z [deg/s]"],
+                    ]
+                ),
+            )
 
         # Store everything into lists
         adcs_modes_list.append((timestamps_modes, adcs_modes_values))
         global_modes_list.append((timestamps_global, global_modes_values))
         gyro_ang_vels_list.append((timestamps_gyro, gyro_ang_vel))
         mag_fields_list.append((timestamps_mag, mag_field))
+        sim_mag_list.append(sim_mag)
+        sim_gyro_list.append(sim_gyro)
         sun_vectors_list.append((timestamps_sun, sun_vector))
         sun_statuses_list.append((timestamps_status, sun_status))
+
+    # Compute x-axis bounds from FSW timestamps only (excludes simulation time)
+    adcs_times = (
+        [t for ts, _ in adcs_modes_list for t in ts]
+        + [t for ts, _ in gyro_ang_vels_list for t in ts]
+        + [t for ts, _ in mag_fields_list for t in ts]
+        + [t for ts, _ in sun_vectors_list for t in ts]
+        + [t for ts, _ in sun_statuses_list for t in ts]
+    )
+    fsw_xlim_adcs = (min(adcs_times), max(adcs_times))
+    all_fsw_times = adcs_times + [t for ts, _ in global_modes_list for t in ts]
+    fsw_xlim_all = (min(all_fsw_times), max(all_fsw_times))
 
     print("Plotting FSW data...")
     # Use timestamps_gyro for plotting (assuming all timestamps are aligned)
     # Plot ADCS Mode
     # Plot ADCS Mode
-    mode_names = ["TUMBLING", "STABLE", "SUN_POINTED", "ACS_OFF"]
+    mode_names = ["TUMBLING", "STABLE", "SUN_POINTED", "ACS_OFF", "VF_TUMBLING"]
     global_mode_names = ["STARTUP", "DETUMBLING", "NOMINAL", "EXPERIMENT", "LOW_POWER"]
 
     plt.figure(figsize=(12, 7))
@@ -117,7 +179,10 @@ def plot_FSW(result_folder_path):
     # ADCS Mode subplot
     ax1 = plt.subplot(2, 1, 1)
     for trial_idx, (timestamps_modes, adcs_modes_values) in enumerate(adcs_modes_list):
-        ax1.plot(timestamps_modes, adcs_modes_values, label=f"Trial {trial_numbers[trial_idx]}")
+        ax1.plot(
+            timestamps_modes, adcs_modes_values, label=f"Trial {trial_numbers[trial_idx]}", marker=".", drawstyle="steps-post"
+        )
+    ax1.set_xlim(fsw_xlim_all)
     ax1.set_ylabel("ADCS Mode")
     ax1.set_yticks(range(len(mode_names)))
     ax1.set_yticklabels(mode_names)
@@ -127,7 +192,13 @@ def plot_FSW(result_folder_path):
     # Global Mode subplot
     ax2 = plt.subplot(2, 1, 2, sharex=ax1)
     for trial_idx, (timestamps_global, global_modes_values) in enumerate(global_modes_list):
-        ax2.plot(timestamps_global, global_modes_values, label=f"Trial {trial_numbers[trial_idx]}")
+        ax2.plot(
+            timestamps_global,
+            global_modes_values,
+            label=f"Trial {trial_numbers[trial_idx]}",
+            marker=".",
+            drawstyle="steps-post",
+        )
     ax2.set_ylabel("Global Mode")
     ax2.set_xlabel("Time (s)")
     ax2.set_yticks(range(len(global_mode_names)))
@@ -148,7 +219,26 @@ def plot_FSW(result_folder_path):
     for i in range(3):
         ax = plt.subplot(3, 1, i + 1)
         for trial_idx, (timestamps_gyro, gyro_ang_vel) in enumerate(gyro_ang_vels_list):
-            ax.plot(timestamps_gyro, np.rad2deg(gyro_ang_vel[:, i]), label=f"Trial {trial_numbers[trial_idx]}")
+            color = f"C{trial_idx}"
+            ax.plot(
+                timestamps_gyro,
+                np.rad2deg(gyro_ang_vel[:, i]),
+                label=f"Trial {trial_numbers[trial_idx]} FSW",
+                marker=".",
+                drawstyle="steps-post",
+                color=color,
+            )
+            if sim_gyro_list[trial_idx] is not None:
+                sim_t, sim_gyro = sim_gyro_list[trial_idx]
+                ax.plot(
+                    sim_t,
+                    sim_gyro[:, i],
+                    label=f"Trial {trial_numbers[trial_idx]} sim",
+                    linestyle="--",
+                    linewidth=0.8,
+                    color=color,
+                )
+        ax.set_xlim(fsw_xlim_adcs)
         ax.set_ylabel(labels[i])
         if i == 2:
             ax.set_xlabel("Time (s)")
@@ -164,11 +254,30 @@ def plot_FSW(result_folder_path):
 
     # Plot Magnetic Field
     plt.figure(figsize=(10, 8))
-    labels = ["Mag X [T]", "Mag Y [T]", "Mag Z [T]"]
+    labels = ["Mag X [uT]", "Mag Y [uT]", "Mag Z [uT]"]
     for i in range(3):
         ax = plt.subplot(3, 1, i + 1)
         for trial_idx, (timestamps_mag, mag_field) in enumerate(mag_fields_list):
-            ax.plot(timestamps_mag, mag_field[:, i], label=f"Trial {trial_numbers[trial_idx]}")
+            color = f"C{trial_idx}"
+            ax.plot(
+                timestamps_mag,
+                1e6 * mag_field[:, i],
+                label=f"Trial {trial_numbers[trial_idx]} FSW",
+                marker=".",
+                drawstyle="steps-post",
+                color=color,
+            )
+            if sim_mag_list[trial_idx] is not None:
+                sim_t, sim_mag = sim_mag_list[trial_idx]
+                ax.plot(
+                    sim_t,
+                    sim_mag[:, i],
+                    label=f"Trial {trial_numbers[trial_idx]} sim",
+                    linestyle="--",
+                    linewidth=0.8,
+                    color=color,
+                )
+        ax.set_xlim(fsw_xlim_adcs)
         ax.set_ylabel(labels[i])
         if i == 2:
             ax.set_xlabel("Time (s)")
@@ -187,7 +296,10 @@ def plot_FSW(result_folder_path):
     for i in range(3):
         ax = plt.subplot(3, 1, i + 1)
         for trial_idx, (timestamps_sun, sun_vector) in enumerate(sun_vectors_list):
-            ax.plot(timestamps_sun, sun_vector[:, i], label=f"Trial {trial_numbers[trial_idx]}")
+            ax.plot(
+                timestamps_sun, sun_vector[:, i], label=f"Trial {trial_numbers[trial_idx]}", marker=".", drawstyle="steps-post"
+            )
+        ax.set_xlim(fsw_xlim_adcs)
         ax.set_ylabel(labels[i])
         if i == 2:
             ax.set_xlabel("Time (s)")
@@ -206,7 +318,10 @@ def plot_FSW(result_folder_path):
     for trial_idx, (timestamps_status, sun_status) in enumerate(sun_statuses_list):
         # Set all sun_status == 0 to 50 for plotting
         sun_status_plot = np.where(sun_status == 0, 50, sun_status)
-        plt.plot(timestamps_status, sun_status_plot, label=f"Trial {trial_numbers[trial_idx]}")
+        plt.plot(
+            timestamps_status, sun_status_plot, label=f"Trial {trial_numbers[trial_idx]}", marker=".", drawstyle="steps-post"
+        )
+    plt.xlim(fsw_xlim_adcs)
     plt.ylabel("Sun Status")
     plt.xlabel("Time (s)")
     plt.yticks(ticks=range(50, 50 + len(sun_mode_names)), labels=sun_mode_names)
@@ -218,6 +333,53 @@ def plot_FSW(result_folder_path):
     plt.savefig(output_plot_path_status)
     plt.close()
     print(f"Sun Status plot saved to {output_plot_path_status}")
+
+    # Plot of x-axis: initial norm of angular velocity vs y-axis: time to detumble
+    # If final mode is detumbling, time to detumble is the last time stamp and marked red. Otherwise green
+    plt.figure(figsize=(8, 6))
+    detumbled_added = False
+    not_detumbled_added = False
+    for trial_idx, (timestamps_modes, global_modes_values) in enumerate(global_modes_list):
+        adcs_modes_values = adcs_modes_list[trial_idx][1]
+        adcs_modes_timestamps = adcs_modes_list[trial_idx][0]
+        # Find the first index where ADCS mode is not STARTUP (mode 0)
+        non_startup_idx = np.where(global_modes_values != 0)[0]
+        if len(non_startup_idx) > 0:
+            first_non_startup_idx = non_startup_idx[0]
+            first_non_startup_time = timestamps_modes[first_non_startup_idx]
+            gyro_ang_vels = gyro_ang_vels_list[trial_idx][1]
+            gyro_times = gyro_ang_vels_list[trial_idx][0]
+            # Find the gyro reading closest to the first non-startup time
+            first_gyro_idx = np.where(gyro_times >= first_non_startup_time)[0]
+            if len(first_gyro_idx) > 0:
+                first_gyro_idx = first_gyro_idx[0]
+            else:
+                continue
+            initial_gyro_norm = np.rad2deg(np.linalg.norm(gyro_ang_vels[first_gyro_idx]))
+        else:
+            continue
+
+        if adcs_modes_values[-1] != 3:  # if final mode is not ACS off, time to detumble is the last timestamp
+            time_to_detumble = adcs_modes_timestamps[-1] / 3600
+            label = "Not Detumbled" if not not_detumbled_added else ""
+            plt.scatter(initial_gyro_norm, time_to_detumble, color="red", label=label)
+            not_detumbled_added = True
+        else:
+            time_to_detumble = (
+                adcs_modes_timestamps[np.where(adcs_modes_values == 0)[0][-1]] / 3600
+            )  # last time it was in tumbling mode
+            label = "Detumbled" if not detumbled_added else ""
+            plt.scatter(initial_gyro_norm, time_to_detumble, color="green", label=label)
+            detumbled_added = True
+    plt.xlabel("Initial Norm of Angular Velocity [deg/s]")
+    plt.xlim(left=0)
+    plt.ylim(bottom=0)
+    plt.ylabel("Time to Detumble [hours]")
+    plt.title("Initial Angular Velocity vs Time to Detumble")
+    plt.legend()
+    output_plot_path_detumble = os.path.join(plots_folder_path, "fsw_initial_gyro_norm_vs_time_to_detumble.png")
+    plt.savefig(output_plot_path_detumble)
+    plt.close()
 
 
 def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False, erase_sil_logs=False, percent_to_log=1):
@@ -247,38 +409,43 @@ def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False, erase_sil
     sun_vectors = []
     sun_statuses = []
 
+    current_adcs_time = None
+    global_mode_code = {
+        "STARTUP": 0,
+        "DETUMBLING": 1,
+        "NOMINAL": 2,
+        "EXPERIMENT": 3,
+        "LOW_POWER": 4,
+    }
     for entry in fsw_data:
         timestamp = entry.split("]")[0][1:]
-        adcs_mode = re.search(r"ADCS Mode : (\d+)", entry)
+        adcs_timestamp = re.search(r"\[ADCS\] Time :\s+([\d.e+-]+)", entry)
         global_mode = re.search(r"GLOBAL STATE: (\w+)", entry)
+        adcs_mode = re.search(r"ADCS Mode : (\d+)", entry)
         gyro_ang_vel = re.search(r"Gyro Ang Vel : \[(.*?)\]", entry)
         mag_field = re.search(r"Mag Field : \[(.*?)\]", entry)
         sun_vector = re.search(r"Sun Vector : \[(.*?)\]", entry)
         sun_status = re.search(r"Sun Status : (\d+)", entry)
-        global_mode_code = {
-            "STARTUP": 0,
-            "DETUMBLING": 1,
-            "NOMINAL": 2,
-            "LOW_POWER": 3,
-        }
 
-        if adcs_mode:
-            adcs_modes.append([timestamp, int(adcs_mode.group(1))])
+        if adcs_timestamp:
+            current_adcs_time = float(adcs_timestamp.group(1))
+        elif adcs_mode:
+            adcs_modes.append([current_adcs_time, int(adcs_mode.group(1))])
         elif global_mode:
             global_modes.append([timestamp, global_mode_code[global_mode.group(1)]])
         elif gyro_ang_vel:
             values = re.findall(r"np\.float64\((.*?)\)", gyro_ang_vel.group(1))
             if not values:
                 values = re.findall(r"[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|[-+]?\d+(?:[eE][-+]?\d+)?", gyro_ang_vel.group(1))
-            gyro_ang_vels.append([timestamp] + [float(v) for v in values])
+            gyro_ang_vels.append([current_adcs_time] + [float(v) for v in values])
         elif mag_field:
             values = re.findall(r"[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|[-+]?\d+(?:[eE][-+]?\d+)?", mag_field.group(1))
-            mag_fields.append([timestamp] + [float(v) for v in values])
+            mag_fields.append([current_adcs_time] + [float(v) for v in values])
         elif sun_vector:
             values = re.findall(r"[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|[-+]?\d+(?:[eE][-+]?\d+)?", sun_vector.group(1))
-            sun_vectors.append([timestamp] + [float(v) for v in values])
+            sun_vectors.append([current_adcs_time] + [float(v) for v in values])
         elif sun_status:
-            sun_statuses.append([timestamp, int(sun_status.group(1))])
+            sun_statuses.append([current_adcs_time, int(sun_status.group(1))])
 
     # Convert lists to numpy arrays (timestamps already included)
     adcs_modes_np = np.array(adcs_modes)

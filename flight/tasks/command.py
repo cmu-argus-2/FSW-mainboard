@@ -35,6 +35,7 @@ _PWM_MIN = const(0)  # Minimum PWM value for deployment
 _FIRST_PWM = const(2)  # First PWM to start deployment
 _BURN_WIRE_TIMEOUT = CONFIG.BURN_WIRE_TIMEOUT  # number of tries
 _DEPLOYMENT_DISTANCE = const(2)  # distance(cm) threshold for deployment
+_SKIP_DEPLOYMENT = CONFIG.SKIP_DEPLOYMENT
 
 
 class Task(TemplateTask):
@@ -244,7 +245,10 @@ class Task(TemplateTask):
                 )
 
                 # TODO: add deployment flag
-                if SATELLITE.BURN_WIRES_AVAILABLE:
+                if _SKIP_DEPLOYMENT:
+                    self.log_info("Deployment skipped (SKIP_DEPLOYMENT=True)")
+                    self.deployment_done = True
+                elif SATELLITE.BURN_WIRES_AVAILABLE:
                     # Deployment finished when the deployment PWM reaches 0
                     if self.deploymentPWM < _PWM_MIN and deployment_time_check:
                         self.deploymentTries += 1
@@ -296,7 +300,7 @@ class Task(TemplateTask):
             if adcs_data:
                 self.ADCS_MODE = adcs_data[ADCS_IDX.MODE]
 
-                if not (self.ADCS_MODE >= Modes.TUMBLING and self.ADCS_MODE <= Modes.ACS_OFF):
+                if not (self.ADCS_MODE >= Modes.TUMBLING and self.ADCS_MODE <= Modes.VF_TUMBLING):
                     self.log_error("ADCS returned an invalid mode, assuming STABLE ADCS mode")
                     self.ADCS_MODE = Modes.STABLE
                 else:
@@ -373,7 +377,9 @@ class Task(TemplateTask):
                 self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1
 
             """Transitions out of DETUMBLING"""
-            if self.ADCS_MODE != Modes.TUMBLING or self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] == 1:
+            if (self.ADCS_MODE != Modes.TUMBLING and self.ADCS_MODE != Modes.VF_TUMBLING) or self.log_data[
+                CDH_IDX.DETUMBLING_ERROR_FLAG
+            ] == 1:
                 # T1.1: Spin stabilized OR detumbling error flag is set, transition to NOMINAL
                 self.log_warning("T1.1: Transition from DETUMBLING to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
@@ -399,7 +405,9 @@ class Task(TemplateTask):
             self.log_info(f"PDMODE: {self.PAYLOAD_MODE}")
 
             """Transitions out of NOMINAL"""
-            if self.ADCS_MODE == Modes.TUMBLING and self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] != 1:
+            if (self.ADCS_MODE == Modes.TUMBLING or self.ADCS_MODE == Modes.VF_TUMBLING) and self.log_data[
+                CDH_IDX.DETUMBLING_ERROR_FLAG
+            ] != 1:
                 # T2.1: Tumbling again AND detumbling error flag is not set, transition to DETUMBLING
                 self.log_warning("T2.1: Transition from NOMINAL to DETUMBLING")
                 SM.switch_to(STATES.DETUMBLING)

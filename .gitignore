@@ -172,3 +172,5 @@ assets/*
 flight/build/
 
 temp_test.py
+
+build_*
