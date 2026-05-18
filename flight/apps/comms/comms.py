@@ -242,24 +242,29 @@ class SATELLITE_RADIO:
         cls.tx_digipeater_count = cls.tx_digipeater_count + status
         return status
 
-    def set_modulation_gfsk():
+    @classmethod
+    def set_modulation_fsk(cls, freq, power, br, ps, bandwidth, f_dev, p_len, p_detect, sync_len, ad_comp, pack_type, pl_len, crc_type, whitening):
+        """
+        Sets the radio modulation to FSK with the given parameters.
+        """
 
         SATELLITE.RADIO.beginFSK(
-            freq=434.707,
-            power=22,
-            bR=20_000,
-            pS=0x08,  # BT=0.3
-            bW=0x1B,  # RX_BW = 78k
-            fDev=5_000,
-            preLength=512,
-            preDetect=0x05,  # PREAMBLE DETECT 16
-            syncLength=32,
-            addrComp=0x00,  # ADDR FILT OFF
-            packType=0x01,  # PACK VAR
-            plLength=255,
-            crcType=0x06,  # CRC 2 BYTE INV (CCITT)
-            whitening=0x01,  # WHITE ON
+            freq=freq,
+            power=power,
+            bR=br,
+            pS=ps,
+            bW=bandwidth,
+            fDev=f_dev,
+            preLength=p_len,
+            preDetect=p_detect,
+            syncLength=sync_len,
+            addrComp=ad_comp,
+            packType=pack_type,
+            plLength=pl_len,
+            crcType=crc_type,
+            whitening=whitening,
             currentLimit=140.0,
             tcxoVoltage=1.7,
             useRegulatorLDO=False,
-            blocking=True)
+            blocking=True
+        )
