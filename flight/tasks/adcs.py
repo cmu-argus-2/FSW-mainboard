@@ -10,7 +10,8 @@ from apps.adcs.acs import (
     zero_all_coils,
 )
 from apps.adcs.consts import ControllerConst, ControllerModes, Modes, StatusConst
-from apps.adcs.modemanager import update_mode
+
+# from apps.adcs.modemanager import update_mode
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
@@ -113,14 +114,12 @@ class Task(TemplateTask):
             else:
                 if SM.current_state == STATES.DETUMBLING:
                     # Set bmx160 to max scale of 2000 deg/s
-                    if sensors.get_gyro_scale() != 0:
-                        sensors.set_gyro_scale(0)
+                    sensors.set_gyro_scale(0)
                 elif SM.current_state == STATES.NOMINAL:
                     # Set bmx160 scale to 125 deg/s, max resolution
-                    if sensors.get_gyro_scale() != 4:
-                        sensors.set_gyro_scale(4)
+                    sensors.set_gyro_scale(4)
 
-                self.MODE = update_mode(
+                self.MODE = sensors.update_mode(
                     self.MODE, self.CONTROLLER_MODE, self.gyro_status, self.gyro_data, self.sun_status, self.sun_pos_body
                 )
 

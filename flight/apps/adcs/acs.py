@@ -38,7 +38,7 @@ def spin_stabilizing_controller(omega: np.ndarray, mag_field: np.ndarray) -> np.
         u = ControllerConst.SPIN_STABILIZING_GAIN * np.cross(mag_field, error)
 
         # Smooth the controller while enforcing an l2-norm upper bound on the control input
-        return smooth_throttle(u)
+        return u / np.sqrt((np.linalg.norm(u) ** 2) + 1)
 
 
 def sun_pointing_controller(sun_vector: np.ndarray, omega: np.ndarray, mag_field: np.ndarray) -> np.ndarray:
@@ -90,7 +90,7 @@ def bdot_controller(mag_buffer: np.ndarray, dt: float) -> np.ndarray:
         return ControllerConst.FALLBACK_CONTROL
     b_dot = np.dot(mag_buffer.T, _DERIVATIVE_WEIGHTS) / dt
     u = -ControllerConst.DETUMB_GAIN * b_dot
-    return smooth_throttle(u)
+    return u / np.sqrt((np.linalg.norm(u) ** 2) + 1)
 
 
 def bcross_controller(mag_field: np.ndarray, omega: np.ndarray) -> np.ndarray:
@@ -101,18 +101,7 @@ def bcross_controller(mag_field: np.ndarray, omega: np.ndarray) -> np.ndarray:
         return ControllerConst.FALLBACK_CONTROL
 
     u = -ControllerConst.DETUMB_GAIN * np.cross(mag_field, omega)
-    return smooth_throttle(u)
-
-
-def smooth_throttle(u: np.ndarray) -> np.ndarray:
-    """
-    Applies a smooth saturation function to the control input u, ensuring that
-    its magnitude does not exceed one.
-    """
-    u_norm = np.linalg.norm(u)
-    if u_norm == 0:
-        return u
-    return u * np.tanh(u_norm) / u_norm
+    return u / np.sqrt((np.linalg.norm(u) ** 2) + 1)
 
 
 _MCM_FACES = ("XP", "XM", "YP", "YM", "ZP", "ZM")
