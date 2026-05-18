@@ -80,14 +80,10 @@ def set_gyro_scale(gyro_const_value: int) -> None:
     """
     - Sets the scale configuration of the gyro
     """
-    cur_gyro_scale = 0
     if SATELLITE.IMU_AVAILABLE:
         cur_gyro_scale = SATELLITE.IMU.gyro_range
-    else:
-        return
-
-    if gyro_const_value != cur_gyro_scale and SATELLITE.IMU_AVAILABLE:
-        SATELLITE.IMU.gyro_range = gyro_const_value
+        if gyro_const_value != cur_gyro_scale:
+            SATELLITE.IMU.gyro_range = gyro_const_value
 
 
 def update_mode(current_mode, ctr_mode, gyro_status, omega, sun_status, sun_pos_body) -> int:
