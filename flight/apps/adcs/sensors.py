@@ -1,10 +1,12 @@
 import os
 import struct
 
-from apps.adcs.consts import StatusConst, SunConst
+from apps.adcs.consts import StatusConst
 from apps.adcs.sun import compute_body_sun_vector_from_lux, read_light_sensors
 from hal.configuration import SATELLITE
 from ulab import numpy as np
+
+_LIGHT_SENSOR_LOG_FACTOR = 1 / 3  # scale 140k lux max down to fit 16-bit log range
 
 _CAL_PATH = "/sd/config/sensor_cal.bin"
 _CAL_FMT = "9f"
@@ -123,7 +125,7 @@ def read_sun_position() -> tuple[int, np.ndarray, np.ndarray]:
     light_sensor_lux_readings = read_light_sensors()
     status, sun_pos_body = compute_body_sun_vector_from_lux(light_sensor_lux_readings)
 
-    return status, sun_pos_body, np.array(light_sensor_lux_readings) * SunConst.LIGHT_SENSOR_LOG_FACTOR
+    return status, sun_pos_body, np.array(light_sensor_lux_readings) * _LIGHT_SENSOR_LOG_FACTOR
 
 
 def get_gyro_scale() -> int:

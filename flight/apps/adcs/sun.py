@@ -14,7 +14,7 @@ both for the mode transitions, sun pointing controller accuracy, and attitude de
 
 """
 
-from apps.adcs.consts import StatusConst, SunConst
+from apps.adcs.consts import StatusConst
 from core import logger
 from hal.configuration import SATELLITE
 from micropython import const
@@ -24,15 +24,11 @@ _MAX_RANGE = const(140000)  # OPT4001
 _THRESHOLD_ILLUMINATION_LUX = const(3000)
 _NUM_LIGHT_SENSORS = const(9)
 _ERROR_LUX = const(-1)
+
+# 1/sqrt(2) — normal component magnitude for 45-degree ZP sensors
+_INV_SQRT2 = 0.70710678118
+
 _FACES = ("XP", "XM", "YP", "YM", "ZP_XP", "ZP_YM", "ZP_XM", "ZP_YP", "ZM")
-_LUX_BUF = [_ERROR_LUX] * _NUM_LIGHT_SENSORS
-
-
-def _read_light_sensor(face):
-    if SATELLITE.LIGHT_SENSOR_AVAILABLE(face):
-        return SATELLITE.LIGHT_SENSORS[face].lux()
-    else:
-        return _ERROR_LUX
 
 
 def read_light_sensors():
@@ -42,15 +38,15 @@ def read_light_sensors():
     Returns:
         lux_readings: list of lux readings on each face. A "ERROR_LUX" reading comes from a dysfunctional sensor.
     """
-
-    for i, face in enumerate(_FACES):
+    lux_readings = [_ERROR_LUX] * _NUM_LIGHT_SENSORS
+    for i in range(_NUM_LIGHT_SENSORS):
         try:
-            _LUX_BUF[i] = _read_light_sensor(face)
+            if SATELLITE.LIGHT_SENSOR_AVAILABLE(_FACES[i]):
+                lux_readings[i] = SATELLITE.LIGHT_SENSORS[_FACES[i]].lux()
         except Exception as e:
-            logger.warning(f"Error reading {face}: {e}")
-            _LUX_BUF[i] = _ERROR_LUX
+            logger.warning(f"Error reading {_FACES[i]}: {e}")
 
-    return _LUX_BUF
+    return lux_readings
 
 
 def compute_body_sun_vector_from_lux(I_vec):
@@ -65,85 +61,68 @@ def compute_body_sun_vector_from_lux(I_vec):
         sun_body: unit vector from spacecraft to sun expressed in body frame
     """
 
-    status = None
     sun_body = np.zeros(3)
 
-    # Determine Sun Status
     num_valid_readings = _NUM_LIGHT_SENSORS - I_vec.count(_ERROR_LUX)
     if num_valid_readings == 0:
-        status = StatusConst.SUN_NO_READINGS
-        return status, sun_body
-    elif num_valid_readings < 3 or missing_axis_reading(I_vec):
-        status = StatusConst.SUN_NOT_ENOUGH_READINGS
-        return status, sun_body
-    elif in_eclipse(I_vec, _THRESHOLD_ILLUMINATION_LUX):
-        status = StatusConst.SUN_ECLIPSE
-        return status, sun_body
-    else:
-        status = StatusConst.OK
+        return StatusConst.SUN_NO_READINGS, sun_body
 
-    # Extract body vectors and lux readings where the sensor readings are valid
-    active_idxs = [i for i in range(_NUM_LIGHT_SENSORS) if I_vec[i] > _THRESHOLD_ILLUMINATION_LUX]
-    ACTIVE_LIGHT_READINGS = np.array([I_vec[i] for i in active_idxs])
-    ACTIVE_LIGHT_NORMALS = np.array([SunConst.LIGHT_SENSOR_NORMALS[i] for i in active_idxs])
+    # Remap consts.py index order to structured solver order
+    r0 = I_vec[0]  # XP
+    r1 = I_vec[1]  # XM
+    r2 = I_vec[2]  # YP
+    r3 = I_vec[3]  # YM
+    r4 = I_vec[8]  # ZM
+    r5 = I_vec[4]  # ZP_XP
+    r6 = I_vec[6]  # ZP_XM
+    r7 = I_vec[7]  # ZP_YP
+    r8 = I_vec[5]  # ZP_YM
 
-    # Try to perform an inverse. If the condition-number of under 1e-4, Cpy throws a ValueError for a singular matrix
-    # If the pinv fails, we have a singular matrix and return a NOT_ENOUGH_READINGS flag
-    try:
-        sun_body = np.dot(
-            np.dot(
-                np.linalg.inv(np.dot(ACTIVE_LIGHT_NORMALS.transpose(), ACTIVE_LIGHT_NORMALS)), ACTIVE_LIGHT_NORMALS.transpose()
-            ),
-            ACTIVE_LIGHT_READINGS,
-        )
-    except ValueError:
+    thr = _THRESHOLD_ILLUMINATION_LUX
+    w0 = 1.0 if r0 > thr else 0.0
+    w1 = 1.0 if r1 > thr else 0.0
+    w2 = 1.0 if r2 > thr else 0.0
+    w3 = 1.0 if r3 > thr else 0.0
+    w4 = 1.0 if r4 > thr else 0.0
+    w5 = 1.0 if r5 > thr else 0.0
+    w6 = 1.0 if r6 > thr else 0.0
+    w7 = 1.0 if r7 > thr else 0.0
+    w8 = 1.0 if r8 > thr else 0.0
+
+    # N^T W N: zero X-Y cross-term by geometry
+    A = w0 + w1 + 0.5 * (w5 + w6)
+    B = w2 + w3 + 0.5 * (w7 + w8)
+    E = w4 + 0.5 * (w5 + w6 + w7 + w8)
+    C = 0.5 * (w5 - w6)
+    D = 0.5 * (w7 - w8)
+
+    # A+B+E = sum of all weights/trace of N^T W N; zero means all valid sensors below threshold
+    if A + B + E < 1e-8:
+        return StatusConst.SUN_ECLIPSE, sun_body
+
+    # Necessary and sufficient invertibility check
+    if A < 1e-8 or B < 1e-8:
+        return StatusConst.SUN_NOT_ENOUGH_READINGS, sun_body
+    S = E - (C * C) / A - (D * D) / B
+    if S < 1e-8:
         return StatusConst.SUN_NOT_ENOUGH_READINGS, sun_body
 
-    if np.linalg.norm(sun_body) == 0:
+    # g = N^T W y
+    gx = w0 * r0 - w1 * r1 + _INV_SQRT2 * (w5 * r5 - w6 * r6)
+    gy = w2 * r2 - w3 * r3 + _INV_SQRT2 * (w7 * r7 - w8 * r8)
+    gz = -w4 * r4 + _INV_SQRT2 * (w5 * r5 + w6 * r6 + w7 * r7 + w8 * r8)
+
+    # (N^T W N) q = g solution
+    qz = (gz - C * gx / A - D * gy / B) / S
+    qx = (gx - C * qz) / A
+    qy = (gy - D * qz) / B
+
+    norm2 = qx * qx + qy * qy + qz * qz
+    if norm2 < 1e-9:
         return StatusConst.ZERO_NORM, sun_body
-    else:
-        sun_body = sun_body / np.linalg.norm(sun_body)
-        return StatusConst.OK, sun_body
 
-
-def in_eclipse(raw_readings, threshold_lux_illumination=_THRESHOLD_ILLUMINATION_LUX):
-    """
-    Check the eclipse conditions based on the lux readings
-
-    Parameters:
-        raw_readings (list): list of lux readings on each face (X+ face, X- face, Y+ face, Y- face, Z- face)
-
-    Returns:
-        eclipse (bool): True if the satellite is in eclipse, False if no eclipse or no correct readings.
-
-    """
-    eclipse = False
-
-    if raw_readings.count(_ERROR_LUX) == _NUM_LIGHT_SENSORS:
-        return eclipse
-
-    # Check if all readings are below the threshold
-    for reading in raw_readings:
-        if reading != _ERROR_LUX and reading >= threshold_lux_illumination:
-            return eclipse
-
-    eclipse = True
-
-    return eclipse
-
-
-def missing_axis_reading(I_vec):
-    missing_x = True
-    missing_y = True
-    missing_z = True
-    for (i, lux) in enumerate(I_vec):
-        if missing_x and lux != _ERROR_LUX and i in SunConst.LIGHT_X_IDXS:
-            missing_x = False
-        if missing_y and lux != _ERROR_LUX and i in SunConst.LIGHT_Y_IDXS:
-            missing_y = False
-        if missing_z and lux != _ERROR_LUX and i in SunConst.LIGHT_Z_IDXS:
-            missing_z = False
-
-        if not (missing_x or missing_y or missing_z):
-            return False
-    return True
+    inv_norm = 1.0 / norm2 ** 0.5
+    sun_body[0] = qx * inv_norm
+    sun_body[1] = qy * inv_norm
+    sun_body[2] = qz * inv_norm
+    return StatusConst.OK, sun_body
