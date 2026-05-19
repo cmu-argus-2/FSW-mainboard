@@ -388,7 +388,7 @@ def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False, erase_sil
     """
     print(f"Collecting FSW data from {outfile}...")
     fsw_data = []
-    pattern = re.compile(r"\[\d+\]\[INFO\] \[\d+\]\[ADCS\] .+:.+")
+    pattern = re.compile(r"\[\d+\]\[DEBUG\] \[\d+\]\[ADCS\] .+:.+")
     command_global_state_pattern = re.compile(
         r"\[\d+\]\[INFO\] \[\d+\]\[COMMAND\] GLOBAL STATE: .+"
     )
