@@ -38,7 +38,6 @@ class Simulator:  # will be passed by reference to the emulated HAL
         self.measurement = np.zeros((52,))
         self.starting_real_epoch = time.monotonic_ns() / 1.0e9
         self.latest_real_epoch = self.starting_real_epoch
-        self.measurement = np.zeros((49,))
         self.starting_real_epoch = time.monotonic_ns() / 1.0e9
         self.latest_real_epoch = self.starting_real_epoch
         self.base_dt = self.cppsim.params.dt
