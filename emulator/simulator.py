@@ -45,7 +45,7 @@ class Simulator:  # will be passed by reference to the emulated HAL
         speedup_env = os.environ.get("SIM_REAL_SPEEDUP")
         self.speedup = float(speedup_env) if speedup_env is not None else None
 
-        self.measurement = np.zeros((49,))
+        self.measurement = np.zeros((52,))
         self.base_dt = self.cppsim.params.dt
         self.sim_time = 0
 
@@ -113,7 +113,22 @@ class Simulator:  # will be passed by reference to the emulated HAL
 
     def battery_diagnostics(self, attr: str):
         attr2idx = dict(
-            zip(["soc", "capacity", "current", "voltage", "midvoltage", "tte", "ttf", "temperature"], [i for i in range(8)])
+            zip(
+                [
+                    "soc",
+                    "capacity",
+                    "current",
+                    "voltage",
+                    "midvoltage",
+                    "tte",
+                    "ttf",
+                    "temperature",
+                    "temperature_ain1",
+                    "temperature_ain2",
+                    "temperature_die",
+                ],
+                [i for i in range(11)],
+            )
         )
 
         if self.measurement[self.power_idx][attr2idx["tte"]] > 1e7 or self.measurement[self.power_idx][attr2idx["tte"]] < 0:
