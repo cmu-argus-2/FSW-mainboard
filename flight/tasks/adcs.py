@@ -156,6 +156,9 @@ class Task(TemplateTask):
         B-dot control cycle: sample 6 mag readings, run coils, coils off.
         Total duration: 5 x 0.08 + 0.5 = 0.9 s.
         """
+        if self.MODE == Modes.ACS_OFF:
+            self.ensure_coils_off()
+            return
         self._mag_buffer = []
         for k in range(self._MAG_N_SAMPLES):
             status, reading = sensors.read_magnetometer()
@@ -170,7 +173,7 @@ class Task(TemplateTask):
         else:
             self.mag_status = StatusConst.MAG_FAIL
 
-        if self.MODE != Modes.ACS_OFF and len(self._mag_buffer) == self._MAG_N_SAMPLES:
+        if len(self._mag_buffer) == self._MAG_N_SAMPLES:
             buf = np.array(self._mag_buffer)
             throttle = bdot_controller(buf, self._MAG_SAMPLE_DT)
             self.coil_status = mcm_coil_allocator(throttle, self.mag_data)
