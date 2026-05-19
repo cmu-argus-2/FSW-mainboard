@@ -254,13 +254,12 @@ class Task(TemplateTask):
         DH.log_data("adcs", self.log_data)
 
         # Log Gyro Angular Velocities
-        # [TODO:] Remove later
-        self.log_info(f"Time :  {TPM.monotonic_float()}")  # self.time}")
-        self.log_info(f"ADCS Mode : {self.MODE}")
-        self.log_info(f"Controller Mode : {self.CONTROLLER_MODE}")
-        self.log_info(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z + 1]}")
-        self.log_info(f"Mag Field : {self.log_data[ADCS_IDX.MAG_X:ADCS_IDX.MAG_Z + 1]}")
-        self.log_info(f"Sun Vector : {self.log_data[ADCS_IDX.SUN_VEC_X:ADCS_IDX.SUN_VEC_Z + 1]}")
-        self.log_info(f"Sun Status : {self.log_data[ADCS_IDX.SUN_STATUS]}")
-        self.log_info(f"Gyro Status : {self.gyro_status}")
-        self.log_info(f"Mag Status : {self.mag_status}")
+        self.log_debug(f"Time :  {TPM.monotonic_float()}")  # self.time}")
+        self.log_debug(f"ADCS Mode : {self.MODE}")
+        self.log_debug(f"Controller Mode : {self.CONTROLLER_MODE}")
+        self.log_debug(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z + 1]}")
+        self.log_debug(f"Mag Field : {self.log_data[ADCS_IDX.MAG_X:ADCS_IDX.MAG_Z + 1]}")
+        self.log_debug(f"Sun Vector : {self.log_data[ADCS_IDX.SUN_VEC_X:ADCS_IDX.SUN_VEC_Z + 1]}")
+        self.log_debug(f"Sun Status : {self.log_data[ADCS_IDX.SUN_STATUS]}")
+        self.log_debug(f"Gyro Status : {self.gyro_status}")
+        self.log_debug(f"Mag Status : {self.mag_status}")
