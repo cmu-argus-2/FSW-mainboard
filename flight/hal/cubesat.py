@@ -601,6 +601,12 @@ class CubeSat:
     def graceful_reboot_devices(self, device_name: str):
         raise NotImplementedError("CubeSats must implement graceful_reboot_devices method")
 
+    def turn_on_device(self, device_name: str):
+        raise NotImplementedError("CubeSats must implement turn_on_device method")
+
+    def turn_off_device(self, device_name: str):
+        raise NotImplementedError("CubeSats must implement turn_off_device method")
+
     def reboot(self, device_name: str):
         raise NotImplementedError("CubeSats must implement reboot_devices method")
 
