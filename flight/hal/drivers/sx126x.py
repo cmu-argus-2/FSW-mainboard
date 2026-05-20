@@ -1830,7 +1830,7 @@ class SX1262(SX126X):
 
         try:
             state = super().receive(data_mv, length, timeout_en, timeout_ms)
-        except AssertionError as e:
+        except RuntimeError as e:
             state = list(ERROR.keys())[list(ERROR.values()).index(str(e))]
 
         # NOTE: CRC check is returned as a state
@@ -1865,7 +1865,7 @@ class SX1262(SX126X):
 
         try:
             state = super().readData(data_mv, length)
-        except AssertionError as e:
+        except RuntimeError as e:
             state = list(ERROR.keys())[list(ERROR.values()).index(str(e))]
 
         # ASSERT(super().startReceive())
