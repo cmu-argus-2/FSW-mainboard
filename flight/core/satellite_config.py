@@ -4,11 +4,16 @@
 from micropython import const
 
 
+class adcs_config:
+    CONTROLLER_MODE = 0
+
+
 class command_config:
     EXIT_STARTUP_TIMEOUT = const(5)
     DETUMBLING_TIMEOUT_DURATION = const(30)
     BURN_WIRE_TIMEOUT = const(2)
     PAYLOAD_TESTING_MODE = False
+    SKIP_DEPLOYMENT = True
 
 
 class time_processor_config:
@@ -37,6 +42,10 @@ class digipeater_config:
 
 class hal_config:
     ASIL0_EN = True
+
+
+class watchdog_config:
+    ENABLED = True
 
 
 class log_config:

@@ -8,6 +8,13 @@ from core import logger, setup_logger, state_manager
 from core.satellite_config import main_config as CONFIG
 from hal.configuration import SATELLITE
 
+# In emulator mode the HAL is the emulator package, which exposes SimulationComplete.
+# This import will fail on real hardware (different HAL), which is intentional.
+try:
+    from hal.simulator import SimulationComplete as _SimulationComplete
+except ImportError:
+    _SimulationComplete = None
+
 
 # Memory stats
 def print_memory_stats(call_gc=True):
@@ -60,6 +67,12 @@ try:
     logger.info("Starting state manager")
     state_manager.start()
 
-except Exception as e:
-    logger.critical("ERROR:", e)
-    # TODO Log the error
+except BaseException as e:
+    if _SimulationComplete is not None and isinstance(e, _SimulationComplete):
+        logger.info(f"Simulation complete: {e}")
+        sys.exit(0)
+    if isinstance(e, Exception):
+        logger.critical("ERROR:", e)
+        # TODO Log the error
+    else:
+        raise  # re-raise KeyboardInterrupt, SystemExit, etc.
