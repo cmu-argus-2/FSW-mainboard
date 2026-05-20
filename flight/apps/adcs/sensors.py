@@ -21,7 +21,7 @@ def read_gyro() -> tuple[int, np.ndarray]:
 
         # gyro validity check
         is_valid = True
-        if gyro is None or len(gyro) != 3:
+        if gyro is None or len(gyro) != 3 or any(v is None for v in gyro):
             is_valid = False
         elif not np.linalg.norm(gyro) <= _MAX_GYRO_NORM:  # Setting a very (VERY) large upper bound
             is_valid = False
@@ -48,7 +48,7 @@ def read_magnetometer() -> tuple[int, np.ndarray]:
 
         # mag validity check
         is_valid = True
-        if mag is None or len(mag) != 3:
+        if mag is None or len(mag) != 3 or any(v is None for v in mag):
             is_valid = False
         elif not (_MIN_MAG_NORM <= np.linalg.norm(mag) <= _MAX_MAG_NORM):
             is_valid = False

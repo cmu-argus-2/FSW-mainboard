@@ -4,8 +4,6 @@ Constants used in ADCS apps.
 Author(s): Derek Fan
 """
 
-import os
-import struct
 
 from core.satellite_config import adcs_config as CONFIG
 from ulab import numpy as np
@@ -97,6 +95,8 @@ class ControllerModes:
     def load(cls):
         if cls._loaded:
             return
+        import os
+        import struct
         try:
             with open(_CTRL_MODE_PATH, "rb") as f:
                 mode = struct.unpack("B", f.read(1))[0]
@@ -127,6 +127,8 @@ class ControllerModes:
         if new_mode in [cls.BDOT, cls.BCROSS, cls.SUN_POINTING]:
             cls.current_mode = new_mode
             try:
+                import os
+                import struct
                 with open(_CTRL_MODE_PATH, "wb") as f:
                     f.write(struct.pack("B", new_mode))
                 os.sync()

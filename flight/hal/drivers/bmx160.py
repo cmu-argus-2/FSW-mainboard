@@ -695,8 +695,7 @@ class BMX160:
         start_time = time.monotonic_ns()
         while self.mag_man_op:
             if time.monotonic_ns() - start_time > 1e6:  # 1 millisecond timeout
-                # TODO: Should throw an error
-                break
+                raise RuntimeError("BMM150 write operation timed out")
 
     def _bmm150_read(self, bmm150_reg, n_bytes):
         # Indirect read from BMM150 (datasheet §2.4.3.1.1).
@@ -708,7 +707,7 @@ class BMX160:
         start_time = time.monotonic_ns()
         while self.mag_man_op:
             if time.monotonic_ns() - start_time > 1e6:
-                break
+                raise RuntimeError("BMM150 read operation timed out")
         return self.read_bytes(_BMX160_MAG_DATA_ADDR, n_bytes, self._BUFFER)
 
     def _read_trim(self):

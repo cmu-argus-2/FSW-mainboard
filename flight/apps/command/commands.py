@@ -22,7 +22,6 @@ Author: Ibrahima S. Sow
 import os
 
 import supervisor
-from apps.adcs.consts import ControllerModes
 from apps.command.supervisor import CommandSupervisor
 from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
@@ -598,6 +597,7 @@ def INIT_TRANS(tid, number_of_packets):
 def ADCS_CTRL_MODE(mode_id):
     """Sends a command to change the ADCS controller mode."""
     logger.info(f"Executing ADCS_CTRL_MODE with mode_id: {mode_id}")
+    from apps.adcs.consts import ControllerModes
 
     if not ((isinstance(mode_id, int)) and 0 <= mode_id <= 2):
         logger.error(f"[ADCS] - Failed ADCS_CTRL_MODE, invalid mode_id {mode_id}")
