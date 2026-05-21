@@ -55,79 +55,71 @@ def register_command(name=None):
 
     return decorator
 
-
 @register_command()
-def FORCE_REBOOT():
-    """Forces a power cycle of the spacecraft."""
-    logger.info("Executing FORCE_REBOOT")
-    supervisor.reload()
-    return []
-
-
-@register_command()
-def GRACEFUL_REBOOT():
+def REBOOT(reboot_mode):
     """
-    Attempt to gracefully reboot the satellite
-    this is equivalent to the reboot every 24h
+    Select and execute one of the available reboot flows
+    0 -> Force reboot: immediately triggers a reboot without any cleanup (supervisor.reload())
+    1 -> Graceful reboot: attempts to gracefully shutdown the satellite by first shutting down the
+            data handler to ensure all files are properly closed, then triggers a reboot (SATELLITE.reboot())
+    2 -> Main power reboot: directly cuts the main power to the satellite, which will trigger a hard reboot
+    3 -> ACK reboot: sends an ACK to the ground station confirming the reboot command,
+            then triggers a reboot after the ACK is sent and the transmit queue is drained (CommandSupervisor.request_reboot())
+    4 -> PET reboot: resets the regular reboot timer to prevent an imminent reboot, without
+            actually rebooting the satellite (used when the satellite is about to reboot but we want to keep it on for longer)
     """
+    # 0 = force reboot
+    if reboot_mode == 0:
+        logger.info("Executing REBOOT: FORCE")
+        supervisor.reload()
+        return []
 
-    logger.info("Executing GRACEFUL_REBOOT")
-    try:
+    # 1 = graceful reboot
+    if reboot_mode == 1:
+        logger.info("Executing REBOOT: GRACEFUL")
+        try:
+            # shutdown DH to make sure all files are closed properly
+            response = DH.graceful_shutdown()
+            if not response:
+                logger.error("Failed to gracefully shutdown data handler, aborting reboot")
+                return ["graceful reboot failed: DH shutdown failed"]
+            SATELLITE.reboot()
+            return ["success"]  # this will never be returned
 
-        # shutdown DH to make sure all files are closed properly
-        response = DH.graceful_shutdown()
+        except Exception as e:
+            logger.error(f"Failed to gracefully reboot the satellite: {e}")
+            return [f"graceful reboot failed: {e}"]
 
-        if not response:
-            logger.error("Failed to gracefully shutdown data handler, aborting reboot")
-            return ["graceful reboot failed: DH shutdown failed"]
+    # 2 = main power reboot
+    elif reboot_mode == 2:
+        logger.info("Executing REBOOT: MAIN_POWER")
+        try:
+            SATELLITE.reboot()
+            return ["success"]  # this will never be returned
+        except Exception as e:
+            logger.error(f"Failed to reboot the satellite: {e}")
+            return [f"main power reboot failed: {e}"]
 
-        SATELLITE.reboot()
+    # 3 = ack reboot
+    elif reboot_mode == 3:
+        logger.info("Executing REBOOT: ACK")
+        CommandSupervisor.request_reboot()
+        return ["reboot requested"]
 
-        return ["success"]  # this will never be returned
-    except Exception as e:
-        logger.error(f"Failed to gracefully reboot the satellite: {e}")
-        return ["graceful reboot failed: {e}"]
+    # 4 = PET reboot
+    elif reboot_mode == 4:
+        logger.info("Executing REBOOT: PET")
+        try:
+            from tasks import hal_monitor
+            current_time = TPM.monotonic()
+            hal_monitor._BOOT_TIME = current_time
+            return ["pet successful"]
+        except Exception as e:
+            logger.error(f"[REBOOT_PET] Failed to reset regular reboot timer: {e}")
+            return [f"pet failed: {e}"]
 
-
-@register_command()
-def MAIN_POWER_REBOOT():
-    logger.info("Executing MAIN_POWER_REBOOT")
-    try:
-        SATELLITE.reboot()
-        return ["success"]  # this will never be returned
-    except Exception as e:
-        logger.error(f"Failed to reboot the satellite: {e}")
-        return ["main power reboot failed"]
-
-
-@register_command()
-def REBOOT_ACK():
-    """
-    This command will perform a reboot on the satellite after acknowledging, using the command supervisor
-    This reboot is equivalente to force reboot but it will wait for the ack to be sent before rebooting
-    """
-    CommandSupervisor.request_reboot()
-
-    return ["reboot requested"]
-
-
-@register_command()
-def PET_REBOOT():
-    """
-    This will update the _BOOT_TIME in hal_monitor to make prevent the satellite from performing
-    the regular reboot for the next 24 hours
-    """
-    logger.info("Executing PET_REBOOT")
-
-    try:
-        from tasks import hal_monitor
-
-        current_time = TPM.monotonic()
-        hal_monitor._BOOT_TIME = current_time
-        return ["pet successfull"]
-    except Exception as e:
-        logger.error(f"[PET_REBOOT] Failed to reset regular reboot timer: {e}")
-        return [f"pet failed: {e}"]
+    logger.error(f"Invalid reboot selector: {reboot_mode}")
+    return ["invalid reboot selector"]
 
 
 @register_command()
