@@ -56,7 +56,7 @@ def register_command(name=None):
     return decorator
 
 @register_command()
-def REBOOT(reboot_mode):
+def REBOOT(selector):
     """
     Select and execute one of the available reboot flows
     0 -> Force reboot: immediately triggers a reboot without any cleanup (supervisor.reload())
@@ -69,13 +69,13 @@ def REBOOT(reboot_mode):
             actually rebooting the satellite (used when the satellite is about to reboot but we want to keep it on for longer)
     """
     # 0 = force reboot
-    if reboot_mode == 0:
+    if selector == 0:
         logger.info("Executing REBOOT: FORCE")
         supervisor.reload()
         return []
 
     # 1 = graceful reboot
-    if reboot_mode == 1:
+    if selector == 1:
         logger.info("Executing REBOOT: GRACEFUL")
         try:
             # shutdown DH to make sure all files are closed properly
@@ -91,7 +91,7 @@ def REBOOT(reboot_mode):
             return [f"graceful reboot failed: {e}"]
 
     # 2 = main power reboot
-    elif reboot_mode == 2:
+    elif selector == 2:
         logger.info("Executing REBOOT: MAIN_POWER")
         try:
             SATELLITE.reboot()
@@ -101,13 +101,13 @@ def REBOOT(reboot_mode):
             return [f"main power reboot failed: {e}"]
 
     # 3 = ack reboot
-    elif reboot_mode == 3:
+    elif selector == 3:
         logger.info("Executing REBOOT: ACK")
         CommandSupervisor.request_reboot()
         return ["reboot requested"]
 
     # 4 = PET reboot
-    elif reboot_mode == 4:
+    elif selector == 4:
         logger.info("Executing REBOOT: PET")
         try:
             from tasks import hal_monitor
@@ -118,7 +118,7 @@ def REBOOT(reboot_mode):
             logger.error(f"[REBOOT_PET] Failed to reset regular reboot timer: {e}")
             return [f"pet failed: {e}"]
 
-    logger.error(f"Invalid reboot selector: {reboot_mode}")
+    logger.error(f"Invalid reboot selector: {selector}")
     return ["invalid reboot selector"]
 
 
@@ -210,34 +210,39 @@ def TURN_ON_PAYLOAD():
 
 
 @register_command()
-def RF_STOP():
-    """Stops all satellite RF transmissions."""
-    logger.warning("Executing RF_STOP (deferred): will disable TX after ACK")
-    CommandSupervisor.request_rf_stop()
-    return ["rf_stop_requested"]
+def RF_SWITCH(selector):
+    """
+    Turn on or off all rf transmissions from the satellite
+    this is latching command (will last over reboots)
+    0 -> turn off RF transmissions (enter RF_STOP mode)
+    1 -> turn on RF transmissions (enter STANDARD mode)
+    """
+    
+    if selector == 0:
+        logger.warning("Executing RF_SWITCH (turn off): will disable TX after ACK")
+        CommandSupervisor.request_rf_stop()
+        return ["rf_stop_requested"]
+    if selector == 1:
+        logger.warning("Executing RF_SWITCH (turn on): will enable TX after ACK")
+        CommandSupervisor.cancel_pending_rf_stop()
+        SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.STANDARD)
+        return ["rf_switch_executed"]
+    logger.warning(f"Executing RF_SWITCH with invalid selector: {selector}")
+    return ["invalid rf switch status"]
 
 
 @register_command()
-def RF_RESUME():
-    """Resumes normal satellite RF transmissions."""
-    logger.warning("Executing RF_RESUME: enabling standard satellite TX")
-    CommandSupervisor.cancel_pending_rf_stop()
-    SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.STANDARD)
-    return ["rf_resume_executed"]
-
-
-@register_command()
-def DIGIPEATER_ACTIVATE():
-    """Activates the digipeater relay subsystem."""
-    logger.warning("Executing DIGIPEATER_ACTIVATE")
-    return DigipeaterState.activate()
-
-
-@register_command()
-def DIGIPEATER_DEACTIVATE():
-    """Deactivates the digipeater relay subsystem."""
-    logger.warning("Executing DIGIPEATER_DEACTIVATE")
-    return DigipeaterState.deactivate()
+def DIGIPEATER_SWITCH(selector):
+    """Activates or deactivates the digipeater relay subsystem."""
+    if selector == 0:
+        logger.warning("Executing DIGIPEATER_SWITCH (deactivate)")
+        return DigipeaterState.deactivate()
+    elif selector == 1:
+        logger.warning("Executing DIGIPEATER_SWITCH (activate)")
+        return DigipeaterState.activate()
+    else:
+        logger.warning(f"Executing DIGIPEATER_SWITCH with invalid selector: {selector}")
+        return ["invalid digipeater switch status"]
 
 
 @register_command()
