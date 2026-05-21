@@ -55,6 +55,7 @@ def register_command(name=None):
 
     return decorator
 
+
 @register_command()
 def REBOOT(selector):
     """
@@ -159,44 +160,44 @@ def UPLINK_TIME_REFERENCE(time_reference):
 
 
 @register_command()
-def TURN_OFF_PAYLOAD():
-    """Cuts the power to the payload"""
-    logger.info("Executing TURN_OFF_PAYLOAD")
+def PAYLOAD_SWITCH(selector):
+    """
+    This command is mostly used for debug. But it might come in handy in flight
+    it will turn on or off the power to the jetson
+    be careful with this command in flight
+    considering removing the capability to turn on the payload in flight
+        as you will not be able to do anything with it on
+        payload app is responbile for turning on and off the payload
+    """
+    logger.info("Executing PAYLOAD_SWITCH")
 
     if not SATELLITE.PAYLOADPOWER_AVAILABLE:
         logger.warning("[PAYLOAD] Payload power pins is not available.")
         return ["payload power pins not available"]
 
-    try:
-        logger.info("[PAYLOAD] Shutdown command sent successfully, waiting for payload to shutdown before cutting power")
-        SATELLITE.JETSON_ENABLE.value = False
-        TPM.sleep(0.1)
-        SATELLITE.JETSON_SD_REQ.value = False  # turn of 5v dcdc to save more power
+    if selector == 0:
+        try:
+            logger.info("[PAYLOAD] Shutdown command sent successfully, waiting for payload to shutdown before cutting power")
+            SATELLITE.JETSON_ENABLE.value = False
+            TPM.sleep(0.1)
+            SATELLITE.JETSON_SD_REQ.value = False  # turn of 5v dcdc to save more power
+            return ["payload power off"]
+        except Exception as e:
+            logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
+            return [f"error turning off payload: {e}"]
 
-    except Exception as e:
-        logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
+    if selector == 1:
+        try:
+            SATELLITE.JETSON_SD_REQ.value = True
+            TPM.sleep(0.1)
+            SATELLITE.JETSON_ENABLE.value = True  # turn of 5v dcdc to save more powe
+            logger.info("[PAYLOAD] Jetson power enabled successfully.")
+            return ["payload power on"]
+        except Exception as e:
+            logger.error(f"[PAYLOAD] Failed to enable payload power: {e}")
+            return [f"error turning on payload: {e}"]
 
-    return []
-
-
-@register_command()
-def TURN_ON_PAYLOAD():
-    """Enables power to the payload"""
-    logger.info("Executing TURN_ON_PAYLOAD")
-
-    if not SATELLITE.PAYLOADPOWER_AVAILABLE:
-        logger.warning("[PAYLOAD] Payload power pins is not available.")
-        return ["payload power pins not available"]
-
-    try:
-        SATELLITE.JETSON_SD_REQ.value = True
-        TPM.sleep(0.1)
-        SATELLITE.JETSON_ENABLE.value = True  # turn of 5v dcdc to save more power
-
-        logger.info("[PAYLOAD] Jetson power enabled successfully.")
-    except Exception as e:
-        logger.error(f"[PAYLOAD] Failed to enable payload power: {e}")
-    return []
+    return ["invalid payload switch status"]
 
 
 @register_command()
@@ -207,7 +208,7 @@ def RF_SWITCH(selector):
     0 -> turn off RF transmissions (enter RF_STOP mode)
     1 -> turn on RF transmissions (enter STANDARD mode)
     """
-    
+
     if selector == 0:
         logger.warning("Executing RF_SWITCH (turn off): will disable TX after ACK")
         CommandSupervisor.request_rf_stop()
