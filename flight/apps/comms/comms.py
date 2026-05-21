@@ -60,8 +60,8 @@ class SATELLITE_RADIO:
         """
         # set the radio into receive mode
         SATELLITE.RADIO.startReceive(0xFFFFFF)
-        SATELLITE.RADIO.rx_en.value = True
         SATELLITE.RADIO.tx_en.value = False
+        SATELLITE.RADIO.rx_en.value = True
 
     @classmethod
     def get_rssi(cls):
