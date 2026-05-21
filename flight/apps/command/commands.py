@@ -143,16 +143,6 @@ def GET_COMMAND_LIST(skip_elements=0):
 
 
 @register_command()
-def SUM(opA, opB):
-    """
-    Test command
-    used to experiment adding new command and testing the arguments
-    """
-    logger.info(f"Executing SUM with opA: {opA} and opB: {opB}")
-    return [opA + opB]
-
-
-@register_command()
 def SWITCH_TO_STATE(target_state_id, time_in_state=None):
     """Forces a switch of the spacecraft to a specific state."""
     logger.info(f"Executing SWITCH_TO_STATE with target_state: {STR_STATES[target_state_id]}, time_in_state: {time_in_state}")
