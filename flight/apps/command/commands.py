@@ -22,8 +22,6 @@ Author: Ibrahima S. Sow
 import os
 
 import supervisor
-from apps.adcs.consts import ControllerModes  # ControllerConst, Modes removed: SD persistence removed (RAM footprint)
-from apps.adcs.sensors import update_gyro_bias, update_mag_cal
 from apps.command.supervisor import CommandSupervisor
 from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
@@ -599,6 +597,7 @@ def INIT_TRANS(tid, number_of_packets):
 def ADCS_CTRL_MODE(mode_id):
     """Sends a command to change the ADCS controller mode."""
     logger.info(f"Executing ADCS_CTRL_MODE with mode_id: {mode_id}")
+    from apps.adcs.consts import ControllerModes
 
     if not ((isinstance(mode_id, int)) and 0 <= mode_id <= 2):
         logger.error(f"[ADCS] - Failed ADCS_CTRL_MODE, invalid mode_id {mode_id}")
@@ -654,6 +653,7 @@ def ADCS_CTRL_MODE(mode_id):
 @register_command()
 def ADCS_UPDATE_GYRO_BIAS(b_x, b_y, b_z):
     """Updates the gyro bias values."""
+    from apps.adcs.sensors import update_gyro_bias
     logger.info(f"Executing ADCS_UPDATE_GYRO_BIAS with b_x: {b_x}, b_y: {b_y}, b_z: {b_z}")
     update_gyro_bias(float(b_x), float(b_y), float(b_z))
     return [b_x, b_y, b_z]
@@ -662,6 +662,7 @@ def ADCS_UPDATE_GYRO_BIAS(b_x, b_y, b_z):
 @register_command()
 def ADCS_UPDATE_MAG_CAL(b_x, b_y, b_z, s_x, s_y, s_z):
     """Updates the magnetometer calibration (hard-iron bias and per-axis scale)."""
+    from apps.adcs.sensors import update_mag_cal
     logger.info(f"Executing ADCS_UPDATE_MAG_CAL with b_x: {b_x}, b_y: {b_y}, b_z: {b_z}, s_x: {s_x}, s_y: {s_y}, s_z: {s_z}")
     update_mag_cal(float(b_x), float(b_y), float(b_z), float(s_x), float(s_y), float(s_z))
     return [b_x, b_y, b_z, s_x, s_y, s_z]

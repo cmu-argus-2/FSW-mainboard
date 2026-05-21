@@ -11,7 +11,8 @@ from apps.adcs.acs import (
     zero_all_coils,
 )
 from apps.adcs.consts import ControllerConst, ControllerModes, Modes, StatusConst
-from apps.adcs.modemanager import update_mode
+
+# from apps.adcs.modemanager import update_mode
 from apps.adcs.sensors import load_sensor_cal
 from core import DataHandler as DH
 from core import TemplateTask
@@ -119,14 +120,12 @@ class Task(TemplateTask):
             else:
                 if SM.current_state == STATES.DETUMBLING:
                     # Set bmx160 to max scale of 2000 deg/s
-                    if sensors.get_gyro_scale() != 0:
-                        sensors.set_gyro_scale(0)
+                    sensors.set_gyro_scale(0)
                 elif SM.current_state == STATES.NOMINAL:
                     # Set bmx160 scale to 125 deg/s, max resolution
-                    if sensors.get_gyro_scale() != 4:
-                        sensors.set_gyro_scale(4)
+                    sensors.set_gyro_scale(4)
 
-                self.MODE = update_mode(
+                self.MODE = sensors.update_mode(
                     self.MODE, self.CONTROLLER_MODE, self.gyro_status, self.gyro_data, self.sun_status, self.sun_pos_body
                 )
 
@@ -163,6 +162,9 @@ class Task(TemplateTask):
         B-dot control cycle: sample 6 mag readings, run coils, coils off.
         Total duration: 5 x 0.08 + 0.5 = 0.9 s.
         """
+        if self.MODE == Modes.ACS_OFF or self.MODE == Modes.VF_TUMBLING:
+            self.ensure_coils_off()
+            return
         self._mag_buffer = []
         for k in range(self._MAG_N_SAMPLES):
             status, reading = sensors.read_magnetometer()
@@ -177,7 +179,7 @@ class Task(TemplateTask):
         else:
             self.mag_status = StatusConst.MAG_FAIL
 
-        if (self.MODE != Modes.ACS_OFF and self.MODE != Modes.VF_TUMBLING) and len(self._mag_buffer) == self._MAG_N_SAMPLES:
+        if len(self._mag_buffer) == self._MAG_N_SAMPLES:
             buf = np.array(self._mag_buffer)
             throttle = bdot_controller(buf, self._MAG_SAMPLE_DT)
             self.coil_status = mcm_coil_allocator(throttle, self.mag_data)
@@ -247,15 +249,15 @@ class Task(TemplateTask):
         self.log_data[ADCS_IDX.SUN_VEC_X] = self.sun_pos_body[0]
         self.log_data[ADCS_IDX.SUN_VEC_Y] = self.sun_pos_body[1]
         self.log_data[ADCS_IDX.SUN_VEC_Z] = self.sun_pos_body[2]
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = int(self.sun_lux[0]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = int(self.sun_lux[1]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = int(self.sun_lux[2]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = int(self.sun_lux[3]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(self.sun_lux[4]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_XP] = int(self.sun_lux[5]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_YM] = int(self.sun_lux[6]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_XM] = int(self.sun_lux[7]) & 0xFFFF
-        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_YP] = int(self.sun_lux[8]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_XP] = int(self.sun_lux[0]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_XM] = int(self.sun_lux[1]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_YP] = int(self.sun_lux[2]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_YM] = int(self.sun_lux[3]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_XP] = int(self.sun_lux[4]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_YM] = int(self.sun_lux[5]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_XM] = int(self.sun_lux[6]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZP_YP] = int(self.sun_lux[7]) & 0xFFFF
+        self.log_data[ADCS_IDX.LIGHT_SENSOR_ZM] = int(self.sun_lux[8]) & 0xFFFF
         self.log_data[ADCS_IDX.XP_COIL_STATUS] = int(self.coil_status[0])
         self.log_data[ADCS_IDX.XM_COIL_STATUS] = int(self.coil_status[1])
         self.log_data[ADCS_IDX.YP_COIL_STATUS] = int(self.coil_status[2])
@@ -265,13 +267,12 @@ class Task(TemplateTask):
         DH.log_data("adcs", self.log_data)
 
         # Log Gyro Angular Velocities
-        # [TODO:] Remove later
-        self.log_info(f"Time :  {TPM.monotonic_float()}")  # self.time}")
-        self.log_info(f"ADCS Mode : {self.MODE}")
-        self.log_info(f"Controller Mode : {self.CONTROLLER_MODE}")
-        self.log_info(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z + 1]}")
-        self.log_info(f"Mag Field : {self.log_data[ADCS_IDX.MAG_X:ADCS_IDX.MAG_Z + 1]}")
-        self.log_info(f"Sun Vector : {self.log_data[ADCS_IDX.SUN_VEC_X:ADCS_IDX.SUN_VEC_Z + 1]}")
-        self.log_info(f"Sun Status : {self.log_data[ADCS_IDX.SUN_STATUS]}")
-        self.log_info(f"Gyro Status : {self.gyro_status}")
-        self.log_info(f"Mag Status : {self.mag_status}")
+        self.log_debug(f"Time :  {TPM.monotonic_float()}")  # self.time}")
+        self.log_debug(f"ADCS Mode : {self.MODE}")
+        self.log_debug(f"Controller Mode : {self.CONTROLLER_MODE}")
+        self.log_debug(f"Gyro Ang Vel : {self.log_data[ADCS_IDX.GYRO_X:ADCS_IDX.GYRO_Z + 1]}")
+        self.log_debug(f"Mag Field : {self.log_data[ADCS_IDX.MAG_X:ADCS_IDX.MAG_Z + 1]}")
+        self.log_debug(f"Sun Vector : {self.log_data[ADCS_IDX.SUN_VEC_X:ADCS_IDX.SUN_VEC_Z + 1]}")
+        self.log_debug(f"Sun Status : {self.log_data[ADCS_IDX.SUN_STATUS]}")
+        self.log_debug(f"Gyro Status : {self.gyro_status}")
+        self.log_debug(f"Mag Status : {self.mag_status}")
