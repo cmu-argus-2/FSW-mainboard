@@ -570,22 +570,6 @@ def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, bitmap_high, bitmap_low):
 
 
 @register_command()
-def TRANS_PAYLOAD(tid, seq_number, payload):
-    # [TODO] - implement this command if there is the necessity to uplink files to the satellite
-    # no need to implement now, this will only be needed if sending transactions from the gs to sat
-    # return a structured "not implemented" response to avoid breaking downstream handling
-    return ["not_implemented"]
-
-
-@register_command()
-def INIT_TRANS(tid, number_of_packets):
-    # [TODO] - implement this command if there is the necessity to uplink files to the satellite
-    # no need to implement now, this will only be needed if sending transactions from the gs to sat
-    # return a structured "not implemented" response to avoid breaking downstream handling
-    return ["not_implemented"]
-
-
-@register_command()
 def LIST_DIR(skip_elements, string_command):
     """
     Try and list whatever is on the given directory
