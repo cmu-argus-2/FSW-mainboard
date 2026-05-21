@@ -12,8 +12,8 @@ command:
     value: 18000  # seconds, i.e., 5 hours
     _const: true
 
-  PAYLOAD_TESTING_MODE:
-    value: false
+  SKIP_DEPLOYMENT:
+    value: false  # Must be false for flight - deployment must execute
 
   BURN_WIRE_TIMEOUT:
     value: 5  # number of deployment attempts before forcing completion
@@ -44,8 +44,39 @@ comms:
   AUTH_ENABLED:
     value: true
   AUTH_KEY_HEX:
-    value: "d6172b38acb7d2a28e21662f689d1d15ad78ccc888a9c7a78ef58cb61b0f1e32" # TODO: Change before flight
+    value: "d6172b38acb7d2a28e21662f689d1d15ad78ccc888a9c7a78ef58cb61b0f1e32" # AUTH_KEY_D
   SC_CALLSIGN:
     value: "CT6ARG"
   GS_CALLSIGN:
     value: "CS5CEP"
+
+# Digipeater Task
+digipeater:
+  RX_QUEUE_MAX:
+    value: 5
+    _const: true
+
+hal:
+  ASIL0_EN:
+    value: false
+
+log:
+  LOG_DIR:
+    value: "/sd/sys_logs"
+  LOG_FILENAME:
+    value: "/sd/sys_logs/fsw.log"
+  LOG_FILE_MAX_BYTES:
+    value: 102400
+  LOG_FILE_BACKUP_COUNT:
+    value: 9
+  LOG_FILE_LEVEL:
+    value: "WARNING"
+
+# ADCS Task
+adcs:
+  CONTROLLER_MODE: 0
+
+# Watchdog Task
+watchdog:
+  ENABLED:
+    value: true  # Hardware watchdog must be enabled in flight

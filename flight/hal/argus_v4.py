@@ -8,6 +8,7 @@ import time
 import board
 import digitalio
 from busio import I2C, SPI, UART
+from core.satellite_config import hal_config as CONFIG
 from hal.cubesat import ASIL0, ASIL1, ASIL2, ASIL3, ASIL4, CubeSat
 from hal.drivers.errors import Errors
 from hal.drivers.objectWrapper import objectWrapper
@@ -99,14 +100,22 @@ class ArgusV4Interfaces:
     SPI1 = SPI(SPI1_SCK, MOSI=SPI1_MOSI, MISO=SPI1_MISO)
 
     UART0_BAUD = const(115200)
+    GPS_UART_RX_BUFFER_SIZE = const(1000)
+    GPS_DRIVER_RX_BUFFER_SIZE = const(2000)
     UART0_TX = board.TX0
     UART0_RX = board.RX0
-    UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD)
+    # UART0 = UART(UART0_TX, UART0_RX, baudrate=UART0_BAUD)
 
+    UART0 = UART(
+        UART0_TX,
+        UART0_RX,
+        baudrate=UART0_BAUD,
+        receiver_buffer_size=GPS_UART_RX_BUFFER_SIZE,
+    )
     JETSON_BAUD = const(460800)
     JETSON_TX = board.TX1
     JETSON_RX = board.RX1
-    JETSON_UART = UART(JETSON_TX, JETSON_RX, baudrate=JETSON_BAUD, receiver_buffer_size=8192)
+    JETSON_UART = UART(JETSON_TX, JETSON_RX, baudrate=JETSON_BAUD, receiver_buffer_size=609 * 40, timeout=0.2)
 
 
 class ArgusV4Components:
@@ -224,14 +233,15 @@ class ArgusV4Components:
 
     # ZP SUN SENSOR
     SUN_SENSOR_ZP_I2C = ArgusV4Interfaces.I2C1
-    SUN_SENSOR_ZP1_I2C_ADDRESS = const(0x54)
-    SUN_SENSOR_ZP2_I2C_ADDRESS = const(0x55)
-    SUN_SENSOR_ZP3_I2C_ADDRESS = const(0x56)
-    SUN_SENSOR_ZP4_I2C_ADDRESS = const(0x57)
+    SUN_SENSOR_ZP_XP_I2C_ADDRESS = const(0x54)
+    SUN_SENSOR_ZP_YM_I2C_ADDRESS = const(0x55)
+    SUN_SENSOR_ZP_XM_I2C_ADDRESS = const(0x56)
+    SUN_SENSOR_ZP_YP_I2C_ADDRESS = const(0x57)
 
     # BATTERY BOARD FUEL GAUGE
     FUEL_GAUGE_I2C = ArgusV4Interfaces.I2C1
-    FUEL_GAUGE_I2C_ADDRESS = const(0x36)
+    FUEL_GAUGE_I2C_ADDRESS_1 = const(0x36)
+    FUEL_GAUGE_I2C_ADDRESS_2 = const(0x0B)
     FUEL_GAUGE_ALERT = board.BATT_ALRT
 
     # JETSON POWER MONITOR
@@ -264,7 +274,6 @@ class ArgusV4Components:
     # PAYLOAD_IO0 = board.PAYLOAD_IO0
     # PAYLOAD_IO1 = board.PAYLOAD_IO1
     # PAYLOAD_IO2 = board.PAYLOAD_IO2
-    JETSON_SD_REQ = board.JETSON_SD_REQ
     # PAYLOAD_CS = board.PAYLOAD_nCS
     # PAYLOAD_EN = board.PAYLOAD_EN
 
@@ -281,9 +290,13 @@ class ArgusV4Components:
     #########
 
     # JETSON
-    JETSON_UART = ArgusV4Interfaces.JETSON_UART
+    JETSON_UART = ArgusV4Interfaces.JETSON_UART    # TODO: i dont think we need this here
+    JETSON_SD_REQ = digitalio.DigitalInOut(board.JETSON_SD_REQ)   # this has been wired to 5v dcdc enable
+    JETSON_SD_REQ.direction = digitalio.Direction.OUTPUT
+    JETSON_SD_REQ.value = False     # Not necessary, suggested by copilot, added just to be sure
     JETSON_ENABLE = digitalio.DigitalInOut(board.JETSON_EN)
     JETSON_ENABLE.direction = digitalio.Direction.OUTPUT
+    JETSON_ENABLE.value = False     # Not necessary, suggested by copilot, added just to be sure
 
     ########
     # MISC #
@@ -314,6 +327,8 @@ class ArgusV4(CubeSat):
         super().__init__()
 
         self.__payload_uart = ArgusV4Interfaces.JETSON_UART
+        self.__jetson_enable = ArgusV4Components.JETSON_ENABLE
+        self.__jetson_sd_req = ArgusV4Components.JETSON_SD_REQ
 
     ######################## BOOT SEQUENCE ########################
 
@@ -327,7 +342,10 @@ class ArgusV4(CubeSat):
         """boot_sequence: Boot sequence for the CubeSat."""
 
         for name, device in self.__device_list.items():
-            self.__boot_device(name, device)
+            if device.ASIL != ASIL0 or CONFIG.ASIL0_EN:
+                self.__boot_device(name, device)
+            else:
+                print(f"Skipping boot for {name} as it is ASIL0")
 
     def __gps_boot(self, _) -> list[object, int]:
         """GPS_boot: Boot sequence for the GPS
@@ -335,10 +353,14 @@ class ArgusV4(CubeSat):
         :return: Error code if the GPS failed to initialize
         """
 
-        from hal.drivers.gps import GPS
+        from hal.drivers.s1216f8gl import GPS
 
         try:
-            gps = GPS(ArgusV4Components.GPS_UART, None, False, False)
+            gps = GPS(
+                uart=ArgusV4Components.GPS_UART,
+                debug=False,
+                rx_buffer_size=ArgusV4Interfaces.GPS_DRIVER_RX_BUFFER_SIZE,
+            )
 
             return [gps, Errors.NO_ERROR]
         except Exception as e:
@@ -360,26 +382,6 @@ class ArgusV4(CubeSat):
             "RADIO_PWR": [ArgusV4Components.RADIO_POWER_MONITOR_I2C_ADDRESS, ArgusV4Components.RADIO_POWER_MONITOR_I2C],
             "GPS_PWR": [ArgusV4Components.GPS_POWER_MONITOR_I2C_ADDRESS, ArgusV4Components.GPS_POWER_MONITOR_I2C],
             "JETSON_PWR": [ArgusV4Components.JETSON_POWER_MONITOR_I2C_ADDRESS, ArgusV4Components.JETSON_POWER_MONITOR_I2C],
-            "XP_PWR": [
-                ArgusV4Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV4Components.SOLAR_CHARGING_XP_POWER_MONITOR_I2C,
-            ],
-            "XM_PWR": [
-                ArgusV4Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV4Components.SOLAR_CHARGING_XM_POWER_MONITOR_I2C,
-            ],
-            "YP_PWR": [
-                ArgusV4Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV4Components.SOLAR_CHARGING_YP_POWER_MONITOR_I2C,
-            ],
-            "YM_PWR": [
-                ArgusV4Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV4Components.SOLAR_CHARGING_YM_POWER_MONITOR_I2C,
-            ],
-            "ZP_PWR": [
-                ArgusV4Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C_ADDRESS,
-                ArgusV4Components.SOLAR_CHARGING_ZP_POWER_MONITOR_I2C,
-            ],
         }
         data = locations[location]
         try:
@@ -456,10 +458,10 @@ class ArgusV4(CubeSat):
             "LIGHT_YP": [ArgusV4Components.LIGHT_SENSOR_YP_I2C_ADDRESS, ArgusV4Components.LIGHT_SENSOR_YP_I2C],
             "LIGHT_YM": [ArgusV4Components.LIGHT_SENSOR_YM_I2C_ADDRESS, ArgusV4Components.LIGHT_SENSOR_YM_I2C],
             "LIGHT_ZM": [ArgusV4Components.LIGHT_SENSOR_ZM_I2C_ADDRESS, ArgusV4Components.LIGHT_SENSOR_ZM_I2C],
-            "LIGHT_ZP_1": [ArgusV4Components.SUN_SENSOR_ZP1_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
-            "LIGHT_ZP_2": [ArgusV4Components.SUN_SENSOR_ZP2_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
-            "LIGHT_ZP_3": [ArgusV4Components.SUN_SENSOR_ZP3_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
-            "LIGHT_ZP_4": [ArgusV4Components.SUN_SENSOR_ZP4_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_XP": [ArgusV4Components.SUN_SENSOR_ZP_XP_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_YM": [ArgusV4Components.SUN_SENSOR_ZP_YM_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_XM": [ArgusV4Components.SUN_SENSOR_ZP_XM_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
+            "LIGHT_ZP_YP": [ArgusV4Components.SUN_SENSOR_ZP_YP_I2C_ADDRESS, ArgusV4Components.SUN_SENSOR_ZP_I2C],
         }
 
         from hal.drivers.opt4003 import OPT4003
@@ -588,7 +590,8 @@ class ArgusV4(CubeSat):
         try:
             fuel_gauge = MAX17205(
                 ArgusV4Components.FUEL_GAUGE_I2C,
-                ArgusV4Components.FUEL_GAUGE_I2C_ADDRESS,
+                ArgusV4Components.FUEL_GAUGE_I2C_ADDRESS_1,
+                ArgusV4Components.FUEL_GAUGE_I2C_ADDRESS_2,
             )
 
             return [fuel_gauge, Errors.NO_ERROR]

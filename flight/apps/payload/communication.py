@@ -26,11 +26,3 @@ class PayloadCommunicationInterface:
     @classmethod
     def receive(cls):
         raise NotImplementedError("Subclass must implement receive()")
-
-    @classmethod
-    def packet_available(cls):
-        raise NotImplementedError("Subclass must implement packet_available()")
-
-    @classmethod
-    def get_id(cls):
-        raise NotImplementedError("Subclass must implement get_id()")

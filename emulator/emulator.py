@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from hal.cubesat import CubeSat
 from hal.drivers.burnwire import BurnWires
+from hal.drivers.deployment_sensor import DeploymentSensor
 from hal.drivers.errors import Errors
 from hal.drivers.fuel_gauge import FuelGauge
 from hal.drivers.gps import GPS
@@ -68,10 +69,10 @@ class EmulatedSatellite(CubeSat):
         self.append_device("LIGHT_XM", None, LightSensor("XM", simulator=self.__simulated_spacecraft), ASIL=2)
         self.append_device("LIGHT_YP", None, LightSensor("YP", simulator=self.__simulated_spacecraft), ASIL=2)
         self.append_device("LIGHT_YM", None, LightSensor("YM", simulator=self.__simulated_spacecraft), ASIL=2)
-        self.append_device("LIGHT_ZP_1", None, LightSensor("ZP_1", simulator=self.__simulated_spacecraft), ASIL=2)
-        self.append_device("LIGHT_ZP_2", None, LightSensor("ZP_2", simulator=self.__simulated_spacecraft), ASIL=2)
-        self.append_device("LIGHT_ZP_3", None, LightSensor("ZP_3", simulator=self.__simulated_spacecraft), ASIL=2)
-        self.append_device("LIGHT_ZP_4", None, LightSensor("ZP_4", simulator=self.__simulated_spacecraft), ASIL=2)
+        self.append_device("LIGHT_ZP_XP", None, LightSensor("ZP_XP", simulator=self.__simulated_spacecraft), ASIL=2)
+        self.append_device("LIGHT_ZP_YM", None, LightSensor("ZP_YM", simulator=self.__simulated_spacecraft), ASIL=2)
+        self.append_device("LIGHT_ZP_XM", None, LightSensor("ZP_XM", simulator=self.__simulated_spacecraft), ASIL=2)
+        self.append_device("LIGHT_ZP_YP", None, LightSensor("ZP_YP", simulator=self.__simulated_spacecraft), ASIL=2)
         self.append_device("LIGHT_ZM", None, LightSensor("ZM", simulator=self.__simulated_spacecraft), ASIL=2)
 
         self._torque_drivers = TorqueCoilArray(simulator=self.__simulated_spacecraft)
@@ -91,18 +92,15 @@ class EmulatedSatellite(CubeSat):
             "JETSON_PWR", None, PowerMonitor(device_name="JETSON", simulator=self.__simulated_spacecraft), ASIL=1
         )
 
-        # Solar Power monitors
-        self.append_device("XP_PWR", None, PowerMonitor(device_name="XP", simulator=self.__simulated_spacecraft), ASIL=1)
-        self.append_device("XM_PWR", None, PowerMonitor(device_name="XM", simulator=self.__simulated_spacecraft), ASIL=1)
-        self.append_device("YP_PWR", None, PowerMonitor(device_name="YP", simulator=self.__simulated_spacecraft), ASIL=1)
-        self.append_device("YM_PWR", None, PowerMonitor(device_name="YM", simulator=self.__simulated_spacecraft), ASIL=1)
-        self.append_device("ZP_PWR", None, PowerMonitor(device_name="ZP", simulator=self.__simulated_spacecraft), ASIL=1)
-
         # self._fuel_gauge = self.init_device(FuelGauge())
         self.append_device("FUEL_GAUGE", None, FuelGauge(simulator=self.__simulated_spacecraft), ASIL=2)
 
         # self._rtc = self.init_device(RTC(time.gmtime()))
         self.append_device("RTC", None, RTC(time.gmtime(), simulator=self.__simulated_spacecraft), ASIL=2)
+
+        # Deployment Sensors
+        self.append_device("DEPLOYMENT_XP", None, DeploymentSensor("XP", simulator=self.__simulated_spacecraft))
+        self.append_device("DEPLOYMENT_YM", None, DeploymentSensor("YM", simulator=self.__simulated_spacecraft))
 
         # self.ERRORS = []
 

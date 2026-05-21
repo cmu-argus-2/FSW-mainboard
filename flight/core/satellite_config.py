@@ -4,11 +4,16 @@
 from micropython import const
 
 
+class adcs_config:
+    CONTROLLER_MODE = 0
+
+
 class command_config:
     EXIT_STARTUP_TIMEOUT = const(5)
     DETUMBLING_TIMEOUT_DURATION = const(30)
     BURN_WIRE_TIMEOUT = const(2)
     PAYLOAD_TESTING_MODE = False
+    SKIP_DEPLOYMENT = True
 
 
 class time_processor_config:
@@ -16,20 +21,36 @@ class time_processor_config:
 
 
 class main_config:
-    LOG_LEVEL = "INFO"
+    LOG_LEVEL = "DEBUG"
 
 
 class hal_monitor_config:
     REGULAR_REBOOT = const(3600)
 
 
-# TODO: Change the auth key before flight
-
-
 class comms_config:
-    ARGUS_ID = const(0)
-    HB_PERIOD = const(60)
+    HB_PERIOD = const(30)
     AUTH_ENABLED = True
     AUTH_KEY_HEX = "d6172b38acb7d2a28e21662f689d1d15ad78ccc888a9c7a78ef58cb61b0f1e32"
-    SC_CALLSIGN = "CT6ARG"
-    GS_CALLSIGN = "CS5CEP"
+    SC_CALLSIGN = "CT6xxx"
+    GS_CALLSIGN = "CSXXXX"
+
+
+class digipeater_config:
+    RX_QUEUE_MAX = const(5)
+
+
+class hal_config:
+    ASIL0_EN = True
+
+
+class watchdog_config:
+    ENABLED = True
+
+
+class log_config:
+    LOG_DIR = "/sd/sys_logs"
+    LOG_FILENAME = "/sd/sys_logs/fsw.log"
+    LOG_FILE_MAX_BYTES = 102400
+    LOG_FILE_BACKUP_COUNT = 9
+    LOG_FILE_LEVEL = "WARNING"

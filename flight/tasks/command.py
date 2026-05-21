@@ -3,18 +3,22 @@
 # It also executes commands received from the ground station (TBD)
 
 import gc
+import os
 
 import apps.command.processor as processor
+import microcontroller
 from apps.adcs.consts import Modes
 from apps.command import QUEUE_STATUS, CommandQueue
 from apps.eps.eps import EPS_POWER_FLAG
-from apps.payload.controller import PayloadController as PC
 from apps.payload.controller import PayloadState
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
-from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX
+from core.dh_constants import ADCS_IDX, CDH_IDX, EPS_IDX, PAYLOAD_IDX
+from core.logging import LEVELS as LOG_LEVELS
+from core.logging import Formatter, RotatingFileHandler, get_persisted_level_name, getLogger
 from core.satellite_config import command_config as CONFIG
+from core.satellite_config import log_config as LOG_CONFIG
 from core.states import STATES, STR_STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
@@ -31,15 +35,15 @@ _PWM_MIN = const(0)  # Minimum PWM value for deployment
 _FIRST_PWM = const(2)  # First PWM to start deployment
 _BURN_WIRE_TIMEOUT = CONFIG.BURN_WIRE_TIMEOUT  # number of tries
 _DEPLOYMENT_DISTANCE = const(2)  # distance(cm) threshold for deployment
-_PAYLOAD_TESTING_MODE = CONFIG.PAYLOAD_TESTING_MODE
+_SKIP_DEPLOYMENT = CONFIG.SKIP_DEPLOYMENT
 
 
 class Task(TemplateTask):
     # To be removed
-    # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "REBOOT_COUNT",
+    # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "BOOT_COUNT",
     # "WATCHDOG_TIMER", "HAL_BITFLAGS", "DETUMBLING_ERROR_FLAG"]
 
-    log_data = [0] * 8
+    log_data = [0] * 9
 
     log_commands = [0] * 3
 
@@ -52,10 +56,13 @@ class Task(TemplateTask):
         super().__init__(id)
         self.name = "COMMAND"
         self.time_ref_set = False
+        self.boot_count = 0
+        self.restored = False
 
         # Transition status from ADCS and EPS
         self.ADCS_MODE = Modes.STABLE
         self.EPS_MODE = EPS_POWER_FLAG.NOMINAL
+        self.PAYLOAD_MODE = PayloadState.IDLE
 
         self.deployment_done = False
         self.deploymentPWM = _FIRST_PWM
@@ -63,6 +70,7 @@ class Task(TemplateTask):
         self.last_deployment_time = None
 
         self.antenna_tries = 0
+        self.file_logging_enabled = False
 
     def get_memory_usage(self):
         return int(gc.mem_alloc() / self.total_memory * 100)
@@ -121,6 +129,31 @@ class Task(TemplateTask):
         if SATELLITE.NEOPIXEL_AVAILABLE:
             SATELLITE.NEOPIXEL.fill([255, 255, 255])
 
+        # Restore boot count from previous session
+        if not self.restored:
+            if not DH.data_process_exists("cdh"):
+                data_format = "LLbLbbbbb"
+                DH.register_data_process("cdh", data_format, True, data_limit=100000)
+
+            if SATELLITE.SD_CARD_AVAILABLE:
+                cdh_data = DH.data_process_registry["cdh"].get_latest_data()
+                if cdh_data is not None:
+                    self.boot_count = cdh_data[CDH_IDX.BOOT_COUNT] + 1
+                    self.log_info(f"Restored boot count to {self.boot_count}")
+                else:
+                    self.boot_count = 1
+                    self.log_info("SD card is available, but no CDH data was found; starting boot count at 1")
+            else:
+                self.boot_count = 1
+                self.log_info("SD card is not available; starting boot count at 1")
+
+            self.restored = True
+
+            # Log boot count immediately during startup
+            self.log_data[CDH_IDX.TIME] = TPM.time()
+            self.log_data[CDH_IDX.BOOT_COUNT] = self.boot_count
+            DH.log_data("cdh", self.log_data)
+
         # Check time_since_boot
         time_since_boot = TPM.monotonic() - SATELLITE.BOOTTIME
 
@@ -161,11 +194,48 @@ class Task(TemplateTask):
             # If the DH successfully scanned the SD card, and it has been 5 secs since FSW boot
             if DH.SD_SCANNED() and time_since_boot > _EXIT_STARTUP_TIMEOUT:
                 if not DH.data_process_exists("cdh"):
-                    data_format = "LbLbbbbb"
+                    data_format = "LLbLbbbbb"
                     DH.register_data_process("cdh", data_format, True, data_limit=100000)
 
                 if not DH.data_process_exists("cmd_logs"):
                     DH.register_data_process("cmd_logs", "LBB", True, data_limit=100000)
+
+                # Enable file logging to SD card (runs once, after SD is confirmed ready)
+                if not self.file_logging_enabled:
+                    try:
+                        try:
+                            os.mkdir(LOG_CONFIG.LOG_DIR)
+                        except OSError:
+                            pass  # Directory already exists
+                        # Resolve and validate log level BEFORE opening the handler
+                        # (avoids file-handle leak on bad config and prevents silent
+                        # NOTSET fallback that would flood the SD with DEBUG output).
+                        # NVM override (set by SET_LOG_LEVEL) wins over yaml default.
+                        persisted_level = get_persisted_level_name()
+                        target_level_str = persisted_level if persisted_level is not None else LOG_CONFIG.LOG_FILE_LEVEL
+                        file_level = None
+                        for lvl_int, lvl_str in LOG_LEVELS:
+                            if lvl_str == target_level_str:
+                                file_level = lvl_int
+                                break
+                        if file_level is None:
+                            raise ValueError(f"Invalid LOG_FILE_LEVEL: {target_level_str!r}")
+
+                        file_handler = RotatingFileHandler(
+                            LOG_CONFIG.LOG_FILENAME,
+                            mode="a",
+                            maxBytes=LOG_CONFIG.LOG_FILE_MAX_BYTES,
+                            backupCount=LOG_CONFIG.LOG_FILE_BACKUP_COUNT,
+                        )
+                        file_handler.setLevel(file_level)
+                        formatter = Formatter(fmt="[{asctime}][{levelname}] {message}", style="{")
+                        file_handler.setFormatter(formatter)
+                        getLogger("core_logger").addHandler(file_handler)
+                        self.file_logging_enabled = True
+                        self.log_info("File logging enabled on SD card")
+                        self.log_warning(f"Reset reason: {getattr(microcontroller.cpu, 'reset_reason', None)}")
+                    except Exception as e:
+                        self.log_warning(f"File logging not available: {e}")
 
                 # check if the deployment is ready to be performed
                 deployment_time_check = (
@@ -175,12 +245,15 @@ class Task(TemplateTask):
                 )
 
                 # TODO: add deployment flag
-                if SATELLITE.BURN_WIRES_AVAILABLE:
+                if _SKIP_DEPLOYMENT:
+                    self.log_info("Deployment skipped (SKIP_DEPLOYMENT=True)")
+                    self.deployment_done = True
+                elif SATELLITE.BURN_WIRES_AVAILABLE:
                     # Deployment finished when the deployment PWM reaches 0
                     if self.deploymentPWM < _PWM_MIN and deployment_time_check:
                         self.deploymentTries += 1
                         if self.check_deployment_status() or self.deploymentTries >= _BURN_WIRE_TIMEOUT:
-                            self.log_info("Deployment complete")
+                            self.log_warning("Deployment complete")
                             self.deployment_done = True
                             SATELLITE.BURN_WIRES.turn_off_pwm(self.deploymentPWM + 1)
                             SATELLITE.BURN_WIRES.disable_driver()
@@ -199,7 +272,7 @@ class Task(TemplateTask):
                 if self.deployment_done:
                     # T0: Boot over and deployment complete
                     SM.switch_to(STATES.DETUMBLING)
-                    self.log_info("T0: Transition from STARTUP to DETUMBLING")
+                    self.log_warning("T0: Transition from STARTUP to DETUMBLING")
 
     def state_machine_execution(self):
         # ------------------------------------------------------------------------------------------------------------------------------------
@@ -247,7 +320,7 @@ class Task(TemplateTask):
             if eps_data:
                 self.EPS_MODE = eps_data[EPS_IDX.EPS_POWER_FLAG]
 
-                if not (self.EPS_MODE >= EPS_POWER_FLAG.NONE and self.EPS_MODE <= EPS_POWER_FLAG.EXPERIMENT):
+                if not (self.EPS_MODE >= EPS_POWER_FLAG.NONE and self.EPS_MODE <= EPS_POWER_FLAG.NOMINAL):
                     self.log_error("EPS returned an invalid mode, assuming NOMINAL EPS mode")
                     self.EPS_MODE = EPS_POWER_FLAG.NOMINAL
                 else:
@@ -259,6 +332,20 @@ class Task(TemplateTask):
         else:
             self.log_warning("EPS task not available, assuming NOMINAL EPS mode")
             self.EPS_MODE = EPS_POWER_FLAG.NOMINAL
+
+        # Get PAYLOAD mode
+        if DH.data_process_exists("payload_tm"):
+            payload_data = DH.get_latest_data("payload_tm")
+
+            self.PAYLOAD_MODE = PayloadState.IDLE  # assuming idle if there is no payload data
+
+            if payload_data:
+                self.PAYLOAD_MODE = payload_data[PAYLOAD_IDX.PD_STATE_MAINBOARD]
+
+            # check to see if we have a valid payload mode, if not assume IDLE
+            if not (self.PAYLOAD_MODE >= PayloadState.IDLE and self.PAYLOAD_MODE <= PayloadState.FAIL):
+                self.log_error("PAYLOAD returned an invalid mode, assuming STABLE PAYLOAD mode")
+                self.PAYLOAD_MODE = PayloadState.IDLE
 
         # ------------------------------------------------------------------------------------------------------------------------------------
         # DETUMBLING
@@ -292,12 +379,12 @@ class Task(TemplateTask):
             """Transitions out of DETUMBLING"""
             if self.ADCS_MODE != Modes.TUMBLING or self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] == 1:
                 # T1.1: Spin stabilized OR detumbling error flag is set, transition to NOMINAL
-                self.log_info("T1.1: Transition from DETUMBLING to NOMINAL")
+                self.log_warning("T1.1: Transition from DETUMBLING to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
 
             elif self.EPS_MODE == EPS_POWER_FLAG.LOW_POWER:
                 # T1.2: Low SoC, transition to low power
-                self.log_info("T1.2: Transition from DETUMBLING to LOW POWER")
+                self.log_warning("T1.2: Transition from DETUMBLING to LOW POWER")
                 SM.switch_to(STATES.LOW_POWER)
 
             else:
@@ -313,24 +400,22 @@ class Task(TemplateTask):
             if SATELLITE.NEOPIXEL_AVAILABLE:
                 SATELLITE.NEOPIXEL.fill([0, 255, 0])
 
+            self.log_info(f"PDMODE: {self.PAYLOAD_MODE}")
+
             """Transitions out of NOMINAL"""
             if self.ADCS_MODE == Modes.TUMBLING and self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] != 1:
                 # T2.1: Tumbling again AND detumbling error flag is not set, transition to DETUMBLING
-                self.log_info("T2.1: Transition from NOMINAL to DETUMBLING")
+                self.log_warning("T2.1: Transition from NOMINAL to DETUMBLING")
                 SM.switch_to(STATES.DETUMBLING)
 
             elif self.EPS_MODE == EPS_POWER_FLAG.LOW_POWER:
                 # T2.2: Low SoC, transition to low power
-                self.log_info("T2.2: Transition from NOMINAL to LOW POWER")
+                self.log_warning("T2.3: Transition from NOMINAL to LOW POWER")
                 SM.switch_to(STATES.LOW_POWER)
 
-            elif self.EPS_MODE == EPS_POWER_FLAG.EXPERIMENT:
-                # T2.3: High SoC, engage the payload
-                self.log_info("T2.3: Transition from NOMINAL to EXPERIMENT")
-                SM.switch_to(STATES.EXPERIMENT)
-            elif _PAYLOAD_TESTING_MODE:
-                # T2.4: Payload testing mode enabled, engage the payload
-                self.log_info("T2.4: Transition from NOMINAL to EXPERIMENT (Payload Testing Mode)")
+            elif self.PAYLOAD_MODE == PayloadState.WATCHING:
+                # T2.3: Payload commanded to start watching, transition to EXPERIMENT
+                self.log_warning("T2.4: Transition from NOMINAL to EXPERIMENT")
                 SM.switch_to(STATES.EXPERIMENT)
             else:
                 # No transition, stay in NOMINAL
@@ -348,7 +433,7 @@ class Task(TemplateTask):
             """Transitions out of LOW_POWER"""
             if self.EPS_MODE != EPS_POWER_FLAG.LOW_POWER:
                 # T3.1: Nominal or high SoC, transition out of low power
-                self.log_info("T3.1: Transition from LOW POWER to NOMINAL")
+                self.log_warning("T3.1: Transition from LOW POWER to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
 
             else:
@@ -356,27 +441,29 @@ class Task(TemplateTask):
                 pass
 
         # ------------------------------------------------------------------------------------------------------------------------------------
-        # PAYLOAD / EXPERIMENT
+        # EXPERIMENT
         # ------------------------------------------------------------------------------------------------------------------------------------
 
         elif SM.current_state == STATES.EXPERIMENT:
-            # Neopixel for PAYLOAD / EXPERIMENT (purple)
+            # Neopixel for EXPERIMENT (blue)
             if SATELLITE.NEOPIXEL_AVAILABLE:
-                SATELLITE.NEOPIXEL.fill([255, 0, 255])
-
-            # The Payload controller should be kept as autonomous as possible, since the payload task
-            # has access to the global state. External requests exists as a last resort to control the
-            # payload from the CDH (and Payload task itself =/= Payload Controller)
-
-            # Note all ground commands related to the payload are executed in the command processor
-            if PC.state == PayloadState.READY:
-                pass
+                SATELLITE.NEOPIXEL.fill([100, 100, 255])
 
             """Transitions out of EXPERIMENT"""
-            if self.EPS_MODE != EPS_POWER_FLAG.EXPERIMENT and not _PAYLOAD_TESTING_MODE:
-                # T4.1: Nominal or low SoC, transition back to nominal
-                self.log_info("T4.1: Transition from LOW POWER to NOMINAL")
+            if self.PAYLOAD_MODE == PayloadState.FAIL or self.PAYLOAD_MODE == PayloadState.IDLE:
+                # T4.1: Experiment has finished or failed, transition to NOMINAL
+                self.log_warning("T4.1: Transition from EXPERIMENT to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
+
+            elif self.EPS_MODE == EPS_POWER_FLAG.LOW_POWER:
+                # T4.2: Low SoC, transition to LOW_POWER
+                self.log_warning("T4.2: Transition from EXPERIMENT to LOW POWER")
+                SM.switch_to(STATES.LOW_POWER)
+
+            elif self.ADCS_MODE == Modes.TUMBLING and self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] != 1:
+                # T4.3: Tumbling again AND detumbling error flag is not set, transition to DETUMBLING
+                self.log_warning("T4.3: Transition from EXPERIMENT to DETUMBLING")
+                SM.switch_to(STATES.DETUMBLING)
 
             else:
                 # No transition, stay in EXPERIMENT
@@ -406,7 +493,7 @@ class Task(TemplateTask):
 
             self.log_info(f"  Arguments: {command.arguments}")
             status, response_args = processor.process_command(command)
-            processor.handle_command_execution_status(status, response_args)
+            processor.handle_command_execution_status(status, command.command_id, response_args)
 
             # Log the command execution history
             self.log_commands[0] = TPM.time()
@@ -428,10 +515,11 @@ class Task(TemplateTask):
 
             # Set CDH log data
             self.log_data[CDH_IDX.TIME] = TPM.time()
+            self.log_data[CDH_IDX.BOOT_TIME] = TPM.monotonic() - SATELLITE.BOOTTIME
             self.log_data[CDH_IDX.SC_STATE] = SM.current_state
             self.log_data[CDH_IDX.SD_USAGE] = int(DH.SD_usage() / 1000)  # kb - gets updated in the OBDH task
             self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = self.get_memory_usage()
-            self.log_data[CDH_IDX.REBOOT_COUNT] = 0
+            self.log_data[CDH_IDX.BOOT_COUNT] = self.boot_count
             self.log_data[CDH_IDX.WATCHDOG_TIMER] = 0
             self.log_data[CDH_IDX.HAL_BITFLAGS] = 0
 

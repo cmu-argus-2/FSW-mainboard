@@ -23,6 +23,7 @@ _PERIPH_REBOOT_COUNT_IDX = getattr(HAL_IDX, "PERIPH_REBOOT_COUNT")
 _HAL_IDX_INV = {v: k for k, v in HAL_IDX.__dict__.items()}
 _GRACEFUL_REBOOT_INTERVAL = const(60)  # 1 minute interval
 _INDIVIDUAL_REBOOT_INTERVAL = const(10)  # 10 second interval
+_BOOT_TIME = SATELLITE.BOOTTIME
 
 
 class Task(TemplateTask):
@@ -114,7 +115,7 @@ class Task(TemplateTask):
             self.log_info(f"Temporarily shut down {device_name} due to error {device_error}")
         elif result == Errors.GRACEFUL_REBOOT:
             SATELLITE.update_device_error(device_name, device_error)
-            self.log_info(f"Queued graceful reboot for {device_name} due to error {device_error}")
+            self.log_warning(f"Queued graceful reboot for {device_name} due to error {device_error}")
             self.graceful_reboot = True
         elif result == Errors.DEVICE_DEAD:
             SATELLITE.update_device_error(device_name, result)
@@ -190,15 +191,15 @@ class Task(TemplateTask):
                 SATELLITE.graceful_reboot()
                 if not DH.restore_data_process_files():
                     self.log_error("Error restoring data process files after graceful reboot")
-                self.log_info("Gracefully rebooted peripheral power line.")
+                self.log_warning("Gracefully rebooted peripheral power line.")
             self.graceful_reboot_counter = TPM.monotonic()
 
         self.log_device_status()
         DH.log_data(self.log_name, self.log_data)
         # regular reboot every 24 hours
         # TODO: delay this if the satellite is at a ground pass
-        if TPM.monotonic() - SATELLITE.BOOTTIME >= _REGULAR_REBOOT_TIME:
+        if TPM.monotonic() - _BOOT_TIME >= _REGULAR_REBOOT_TIME:
             # TODO: graceful shutdown for payload if needed
-            self.log_info("Executing regular reboot")
+            self.log_warning("Executing regular reboot")
             self.close_data_process()
             SATELLITE.reboot()
