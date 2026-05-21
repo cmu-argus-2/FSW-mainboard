@@ -485,26 +485,12 @@ def CREATE_TRANS(tid, string_command):
 
 
 @register_command()
-def GENERATE_ALL_PACKETS(tid):
-    # 1. search for the transaction id
-    transaction = TM.get_transaction(tid)
-    if transaction is None:
-        logger.error(f"Transaction with tid {tid} not found")
-        return ["transaction_not_found"]
-
-    # 2. generate all the packets for that transaction
-    packet_list = transaction.generate_all_packets()
-    # 3. add them to the transmit queue
-    for packet in packet_list:
-        q_stat = TransmitQueue.push_packet(packet)
-        if q_stat != QUEUE_STATUS.OK:
-            logger.error(f"Failed to push packet to transmit queue with status: {q_stat}")
-
-    return [len(packet_list)]
-
-
-@register_command()
 def GENERATE_X_PACKETS(tid, x):
+    """
+    Generate x packets for the given transaction and transmit them
+        - if x is 0, generate all packets for the transaction
+
+    """
     # 1. search for the transaction id
     transaction = TM.get_transaction(tid)
     if transaction is None:
@@ -512,7 +498,10 @@ def GENERATE_X_PACKETS(tid, x):
         return ["transaction_not_found"]
 
     # 2. generate the packets
-    packet_list = transaction.generate_x_packets(x)
+    if x == 0:
+        packet_list = transaction.generate_all_packets()
+    else:
+        packet_list = transaction.generate_x_packets(x)
     # 3. add them to the transmit queue
     for packet in packet_list:
         q_stat = TransmitQueue.push_packet(packet)
