@@ -219,31 +219,31 @@ class PayloadController:
 
     @classmethod
     def add_dataset_collection_command(
-            cls,
-            ts,
-            camera_bit_flag,
-            capture_rate,
-            imu_hz,
-            duration,
-            camera_defaults_selector=-1,
-            fps=0,
-            wbmode=0,
-            aelock=0,
-            awblock=0,
-            exposuretimerange_low=0,
-            exposuretimerange_high=0,
-            gainrange_low=0.0,
-            gainrange_high=0.0,
-            ispdigitalgainrange_low=0.0,
-            ispdigitalgainrange_high=0.0,
-            ee_mode=0,
-            ee_strength=0.0,
-            aeantibanding=0,
-            exposurecompensation=0.0,
-            tnr_mode=0,
-            tnr_strength=0.0,
-            saturation=0.0
-        ):
+        cls,
+        ts,
+        camera_bit_flag,
+        capture_rate,
+        imu_hz,
+        duration,
+        camera_defaults_selector=-1,
+        fps=0,
+        wbmode=0,
+        aelock=0,
+        awblock=0,
+        exposuretimerange_low=0,
+        exposuretimerange_high=0,
+        gainrange_low=0.0,
+        gainrange_high=0.0,
+        ispdigitalgainrange_low=0.0,
+        ispdigitalgainrange_high=0.0,
+        ee_mode=0,
+        ee_strength=0.0,
+        aeantibanding=0,
+        exposurecompensation=0.0,
+        tnr_mode=0,
+        tnr_strength=0.0,
+        saturation=0.0,
+    ):
         """
         This is the command that will be used to schedule a dataset collection experiment
         TODO: should add some checks to the arguments here
@@ -279,7 +279,7 @@ class PayloadController:
         return cls.add_command(command)
 
     @classmethod
-    def add_dataset_processing_command(cls, ts, duration, level_processing, rc_version, ld_version, dataset_path):
+    def add_dataset_processing_command(cls, ts, duration, level_processing, rc_version, ld_version, dataset_path, bypass_preflt_rej):
         """
         This is the command that will be used to schedule a dataset processing experiment
         TODO: should add some checks to the arguments here
@@ -291,6 +291,7 @@ class PayloadController:
             rc_version,
             ld_version,
             dataset_path,
+            bypass_preflt_rej
         )
         command = Command("DATASET_PROCESSING")
         command.set_arguments(*argument_list)
@@ -690,7 +691,7 @@ class PayloadController:
                 logger.error("[PAYLOAD] - OFF ACK OVERRIDDEN")
             cls.received_off_ack = True
             return
-    
+
         if ack.cmd_id == COMMAND_IDS["SYNCHRONIZE_TIME"]:
             import time
             rtt = time.monotonic() - cls.SYNC_SEND_MONOTONIC

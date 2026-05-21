@@ -899,6 +899,7 @@ def DATASET_PROCESSING(
     rc_version,
     ld_version,
     dataset_path,
+    bypass_preflt_rej,
 ):
     """
     Command that will be called by the ground station to start a dataset processing experiment
@@ -907,6 +908,7 @@ def DATASET_PROCESSING(
     rc_version            -> the version of the rc model to use for processing
     ld_version            -> the version of the ld model to use for processing
     dataset_path          -> the path to the dataset to process
+    bypass_preflt_rej     -> whether to bypass prefiltering rejection
     """
     from apps.payload.controller import PayloadController as PC
 
@@ -918,6 +920,7 @@ def DATASET_PROCESSING(
         rc_version,
         ld_version,
         dataset_path,
+        bypass_preflt_rej
     )
     if not result:
         logger.error(f"[PAYLOAD] - Failed to add dataset processing command for timestamp {ts}")
