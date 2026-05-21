@@ -1719,12 +1719,12 @@ class SX1262(SX126X):
         state = super().fixPaClamping()
         ASSERT(state)
 
+        state = self.setBlockingCallback(blocking)
+
         # Radio needs to be set to RX after changing to FSK
         # As comms task is already initialized
         state = self.startReceive()
         ASSERT(state)
-
-        state = self.setBlockingCallback(blocking)
 
         return state
 
