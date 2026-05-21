@@ -594,6 +594,24 @@ def INIT_TRANS(tid, number_of_packets):
 
 
 @register_command()
+def ADCS_CTRL_MODE(mode_id):
+    """Sends a command to change the ADCS controller mode."""
+    logger.info(f"Executing ADCS_CTRL_MODE with mode_id: {mode_id}")
+    from apps.adcs.consts import ControllerModes
+
+    if not ((isinstance(mode_id, int)) and 0 <= mode_id <= 2):
+        logger.error(f"[ADCS] - Failed ADCS_CTRL_MODE, invalid mode_id {mode_id}")
+        return [-1]
+
+    valid = ControllerModes.update_mode(mode_id)
+    if valid:
+        return [ControllerModes.current_mode]
+    else:
+        logger.error("[ADCS] - Failed ADCS_CTRL_MODE, update_mode call fail")
+        return [-1]
+
+
+@register_command()
 def LIST_DIR(skip_elements, string_command):
     """
     Try and list whatever is on the given directory
