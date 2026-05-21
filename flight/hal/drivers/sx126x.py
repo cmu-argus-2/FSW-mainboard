@@ -1688,7 +1688,7 @@ class SX1262(SX126X):
     def beginFSK(
         self,
         freq=434.707,
-        power=14,
+        power=22,
         bR=20_000,
         pS=0x08,  # BT=0.3
         bW=0x1B,  # RX_BW = 78k
@@ -1698,7 +1698,7 @@ class SX1262(SX126X):
         syncLength=32,
         addrComp=0x00,  # ADDR FILT OFF
         packType=0x01,  # PACK VAR
-        plLength=0,
+        plLength=255,
         crcType=0x06,  # CRC 2 BYTE INV (CCITT)
         whitening=0x01,  # WHITE ON
         currentLimit=140.0,
