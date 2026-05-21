@@ -41,7 +41,7 @@ def read_light_sensors():
         lux_readings: list of lux readings on each face. A "ERROR_LUX" reading comes from a dysfunctional sensor.
     """
 
-    faces = ["XP", "XM", "YP", "YM", "ZP_1", "ZP_2", "ZP_3", "ZP_4", "ZM"]
+    faces = ["XP", "XM", "YP", "YM", "ZP_XP", "ZP_YM", "ZP_XM", "ZP_YP", "ZM"]
     lux_readings = []
 
     for face in faces:
@@ -60,7 +60,7 @@ def compute_body_sun_vector_from_lux(I_vec):
 
     Args:
         I_vec: flux values on each face in the following order
-        - X+ face, X- face, Y+ face, Y- face, ZP1 face, ZP2 face, ZP3 face, ZP4 face, Z- face
+        - X+ face, X- face, Y+ face, Y- face, ZP_XP face, ZP_YM face, ZP_XM face, ZP_YP face, Z- face
 
     Returns:
         sun_body: unit vector from spacecraft to sun expressed in body frame

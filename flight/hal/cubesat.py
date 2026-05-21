@@ -75,11 +75,6 @@ class CubeSat:
                 ("RADIO_PWR", Device(self.__power_monitor_boot, ASIL1)),
                 ("GPS_PWR", Device(self.__power_monitor_boot, ASIL1)),
                 ("JETSON_PWR", Device(self.__power_monitor_boot, ASIL1)),
-                ("XP_PWR", Device(self.__power_monitor_boot, ASIL1)),
-                ("XM_PWR", Device(self.__power_monitor_boot, ASIL1)),
-                ("YP_PWR", Device(self.__power_monitor_boot, ASIL1)),
-                ("YM_PWR", Device(self.__power_monitor_boot, ASIL1)),
-                ("ZP_PWR", Device(self.__power_monitor_boot, ASIL1)),
                 ("TORQUE_XP", Device(self.__torque_driver_boot, ASIL3)),
                 ("TORQUE_XM", Device(self.__torque_driver_boot, ASIL3)),
                 ("TORQUE_YP", Device(self.__torque_driver_boot, ASIL3)),
@@ -91,10 +86,10 @@ class CubeSat:
                 ("LIGHT_YP", Device(self.__light_sensor_boot, ASIL2)),
                 ("LIGHT_YM", Device(self.__light_sensor_boot, ASIL2)),
                 ("LIGHT_ZM", Device(self.__light_sensor_boot, ASIL2)),
-                ("LIGHT_ZP_1", Device(self.__light_sensor_boot, ASIL2)),
-                ("LIGHT_ZP_2", Device(self.__light_sensor_boot, ASIL2)),
-                ("LIGHT_ZP_3", Device(self.__light_sensor_boot, ASIL2)),
-                ("LIGHT_ZP_4", Device(self.__light_sensor_boot, ASIL2)),
+                ("LIGHT_ZP_XP", Device(self.__light_sensor_boot, ASIL2)),
+                ("LIGHT_ZP_YM", Device(self.__light_sensor_boot, ASIL2)),
+                ("LIGHT_ZP_XM", Device(self.__light_sensor_boot, ASIL2)),
+                ("LIGHT_ZP_YP", Device(self.__light_sensor_boot, ASIL2)),
                 ("DEPLOYMENT_XP", Device(self.__deployment_sensor_boot, ASIL1)),
                 ("DEPLOYMENT_YM", Device(self.__deployment_sensor_boot, ASIL1)),
             ]
@@ -115,11 +110,6 @@ class CubeSat:
             "RADIO_PWR": [],
             "GPS_PWR": [],
             "JETSON_PWR": [],
-            "XP_PWR": [],
-            "XM_PWR": [],
-            "YP_PWR": [],
-            "YM_PWR": [],
-            "ZP_PWR": [],
             "TORQUE_XP": [],
             "TORQUE_XM": [],
             "TORQUE_YP": [],
@@ -131,10 +121,10 @@ class CubeSat:
             "LIGHT_YP": [],
             "LIGHT_YM": [],
             "LIGHT_ZM": [],
-            "LIGHT_ZP_1": [],
-            "LIGHT_ZP_2": [],
-            "LIGHT_ZP_3": [],
-            "LIGHT_ZP_4": [],
+            "LIGHT_ZP_XP": [],
+            "LIGHT_ZP_YM": [],
+            "LIGHT_ZP_XM": [],
+            "LIGHT_ZP_YP": [],
             "DEPLOYMENT_XP": [],
             "DEPLOYMENT_YM": [],
         }
@@ -211,6 +201,26 @@ class CubeSat:
     def key_in_device_list(self, key: str) -> bool:
         """key_in_device_list: Check if the key is in the device list"""
         return key in self.__device_list
+
+    def DEVICE_STATUS(self, device_name: str) -> dict:
+        """DEVICE_STATUS: Return detailed status for a device.
+
+        Intended for debugging why *_AVAILABLE flags evaluate to False.
+
+        :return: dict with fields: present, device_is_none, dead, temp_disabled, error, error_count
+        """
+        if not self.key_in_device_list(device_name):
+            return {"present": False}
+
+        device = self.__device_list[device_name]
+        return {
+            "present": True,
+            "device_is_none": device.device is None,
+            "dead": device.dead,
+            "temp_disabled": device.temp_disabled,
+            "error": device.error,
+            "error_count": device.error_count,
+        }
 
     ######################### DEVICES #########################
 

@@ -70,7 +70,7 @@ class TimeProcessor:
     @classmethod
     def set_time_reference(cls, unix_timestamp):
         # Update TPM time reference and offset
-        cls.time_reference = unix_timestamp
+        cls.time_reference = int(unix_timestamp)
         cls.calc_time_offset()
 
     """
@@ -80,9 +80,10 @@ class TimeProcessor:
 
     @classmethod
     def set_time(cls, unix_timestamp):
+        unix_timestamp = int(unix_timestamp)
         if SATELLITE.RTC_AVAILABLE:
-            if cls.time() != unix_timestamp:
-                # RTC exists and time is different enough, update RTC time
+            current_time = cls.time()
+            if abs(current_time - unix_timestamp) > 1:  # 1 second tolerance between GPS and RTC
                 SATELLITE.RTC.set_datetime(time.localtime(unix_timestamp))
             else:
                 # Time references are the same, save a write cycle
@@ -104,7 +105,7 @@ class TimeProcessor:
     def time(cls):
         if SATELLITE.RTC_AVAILABLE:
             # RTC exists, get RTC time
-            rtc_time = time.mktime(SATELLITE.RTC.datetime)
+            rtc_time = int(time.mktime(SATELLITE.RTC.datetime))
 
             # Update TPM time reference and offset, in case RTC fails later
             cls.time_reference = rtc_time

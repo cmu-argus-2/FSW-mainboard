@@ -17,21 +17,21 @@ from flight.apps.adcs.sun import _ERROR_LUX, compute_body_sun_vector_from_lux
         ([100, 0, 2900, 1100, _ERROR_LUX, 0, 1000, 1800, 0], (StatusConst.SUN_ECLIPSE, np.zeros((3,)))),
         # Random vectors and errors from MATLAB
         (
-            [7.8592e4, 0, 5.0082e4, 0, 1.2945e5, 1.0929e5, 1.8302e4, 3.8461e4, 0],  # All sensors active
+            [7.8592e4, 0, 5.0082e4, 0, 1.2945e5, 3.8461e4, 1.8302e4, 1.0929e5, 0],  # All sensors active
             (StatusConst.OK, np.array([0.5614, 0.3577, 0.7463])),
         ),
         (
-            [6.3769e4, 0, 1.2443e5, 0, _ERROR_LUX, 8.2945e4, 0, 0, 7.1272e3],  # 1 sensor not working
+            [6.3769e4, 0, 1.2443e5, 0, _ERROR_LUX, 0, 0, 8.2945e4, 7.1272e3],  # 1 sensor not working
             # [6.3769e4, 0, 1.2443e5, 0, 4.0051e4, 8.2945e4, 0, 0, 7.1272e3]
             (StatusConst.OK, np.array([0.4555, 0.8888, -0.0509])),
         ),
         (
-            [0, 8.8434e4, 1.0842e5, _ERROR_LUX, 0, 7.3230e4, _ERROR_LUX, 0, 4.8603e3],  # 2 not working
+            [0, 8.8434e4, 1.0842e5, _ERROR_LUX, 0, 0, _ERROR_LUX, 7.3230e4, 4.8603e3],  # 2 not working
             # [0, 8.8434e4, 1.0842e5, 0, 0, 7.3230e4, 5.9095e4, 0, 4.8603e3]
             (StatusConst.OK, np.array([-0.6317, 0.7745, -0.0347])),
         ),
         (
-            [_ERROR_LUX, 0, _ERROR_LUX, _ERROR_LUX, 1.0644e5, 6.3273e3, 2.8399e4, 1.2851e5, 0],  # 3 not working
+            [_ERROR_LUX, 0, _ERROR_LUX, _ERROR_LUX, 1.0644e5, 1.2851e5, 2.8399e4, 6.3273e3, 0],  # 3 not working
             # [5.5182e4, 0, 0, 8.6397e4, 1.0644e5, 6.3273e3, 2.8399e4, 1.2851e5, 0]
             (StatusConst.OK, np.array([0.3942, -0.6171, 0.6810])),
         ),

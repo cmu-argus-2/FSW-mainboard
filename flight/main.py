@@ -3,6 +3,7 @@ import gc
 import sys
 import time
 
+import microcontroller
 from core import logger, setup_logger, state_manager
 from core.satellite_config import main_config as CONFIG
 from hal.configuration import SATELLITE
@@ -23,6 +24,10 @@ for path in ["/hal", "/apps", "/core"]:
         sys.path.append(path)
 
 setup_logger(level=CONFIG.LOG_LEVEL)
+
+reset_reason = getattr(microcontroller.cpu, "reset_reason", None)
+print(f"Reset reason: {reset_reason}")
+logger.warning(f"Reset reason: {reset_reason}")
 
 print_memory_stats(call_gc=True)
 

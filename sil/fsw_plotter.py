@@ -18,12 +18,10 @@ project_root = os.path.abspath(os.path.join(project_root, ".."))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-# Convert timestamp strings to seconds from the start
+# Convert epoch timestamp strings to seconds from the start
 def timestamps_to_seconds(timestamps):
-    dt_format = "%Y-%m-%d %H:%M:%S"
-    dt_objs = [datetime.strptime(ts, dt_format) for ts in timestamps]
-    start_time = dt_objs[0]
-    return np.array([(dt - start_time).total_seconds() for dt in dt_objs])
+    epochs = np.array([int(ts) for ts in timestamps])
+    return (epochs - epochs[0]).astype(float)
 
 
 def undersample(data, percentage):
@@ -228,9 +226,9 @@ def collect_FSW_data(outfile, result_folder_path, save_sil_logs=False, erase_sil
     """
     print(f"Collecting FSW data from {outfile}...")
     fsw_data = []
-    pattern = re.compile(r"\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]\[INFO\] \[\d+\]\[ADCS\] .+:.+")
+    pattern = re.compile(r"\[\d+\]\[INFO\] \[\d+\]\[ADCS\] .+:.+")
     command_global_state_pattern = re.compile(
-        r"\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]\[INFO\] \[\d+\]\[COMMAND\] GLOBAL STATE: .+"
+        r"\[\d+\]\[INFO\] \[\d+\]\[COMMAND\] GLOBAL STATE: .+"
     )
     with open(outfile, "r") as f:
         for line in f:

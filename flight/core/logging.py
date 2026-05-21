@@ -96,6 +96,29 @@ LEVELS = [
     (NOTHING, "NOTHING"),
 ]
 
+# An erased / never-written NVM byte reads as 0xFF, so that doubles as the
+# sentinel and means: fall back to the yaml default.
+LOG_LEVEL_NVM_SENTINEL = const(0xFF)
+
+
+def get_persisted_level_name():
+    """Return the level name persisted in StateFlags.f_log_level, or None.
+
+    Returns None when:
+      - the persisted byte is the 0xFF sentinel (never set),
+      - the persisted byte is out of range (corrupt/future schema),
+      - SATELLITE / NVM are not available (emulator, sil, very early boot).
+    Callers fall back to the yaml-configured default in any of these cases.
+    """
+    try:
+        from hal.configuration import SATELLITE
+        idx = SATELLITE.FLAGS.f_log_level
+    except Exception:
+        return None
+    if idx == LOG_LEVEL_NVM_SENTINEL or idx >= len(LEVELS):
+        return None
+    return LEVELS[idx][1]
+
 
 def _level_for(value: int) -> str:
     """Convert a numeric level to the most appropriate name.
@@ -175,11 +198,7 @@ class Formatter:
             "args": record.args,
         }
         if "{asctime}" in self.fmt or "%(asctime)s" in self.fmt:
-            now = TPM.localtime()
-            # pylint: disable=line-too-long
-            vals[
-                "asctime"
-            ] = f"{now.tm_year}-{now.tm_mon:02d}-{now.tm_mday:02d} {now.tm_hour:02d}:{now.tm_min:02d}:{now.tm_sec:02d}"
+            vals["asctime"] = TPM.time()
 
         if self.defaults:
             for key, val in self.defaults.items():
@@ -263,7 +282,8 @@ class StreamHandler(Handler):
         :param record: The record (message object) to be logged
         """
         text = super().format(record)
-        lines = text.splitlines()
+        # turns into a visible blank row on the serial console.
+        lines = [ln for ln in text.rstrip().splitlines() if ln.strip()]
         return self.terminator.join(lines)
 
     def emit(self, record: LogRecord) -> None:
@@ -271,7 +291,10 @@ class StreamHandler(Handler):
 
         :param record: The record (message object) to be logged
         """
-        self.stream.write(self.format(record) + self.terminator)
+        formatted = self.format(record)
+        if not formatted:
+            return  # nothing meaningful to emit; skip rather than write a bare newline
+        self.stream.write(formatted + self.terminator)
 
     def flush(self) -> None:
         """flush the stream. You might need to call this if your messages
@@ -288,7 +311,7 @@ class FileHandler(StreamHandler):
     :param str mode: Whether to write ('w') or append ('a'); default is to append
     """
 
-    terminator = "\r\n"
+    terminator = "|"
 
     def __init__(self, filename: str, mode: str = "a") -> None:
         # pylint: disable=consider-using-with
@@ -352,6 +375,24 @@ class RotatingFileHandler(FileHandler):
         # Open the file and save the handle to self.stream
         super().__init__(self._LogFileName, mode=self._WriteMode)
 
+    def force_rollover(self) -> None:
+        """Force rollover only when the active log has content to rotate.
+
+        Call this before downlinking the log file so the active log rotates to
+        fsw.log.1 (static, nothing will write to it) and logging resumes on a
+        fresh fsw.log.  The downlink should then target fsw.log.1.
+
+        Skips rollover if the current log is empty or size cannot be determined:
+        this avoids producing a 0-byte rotated file and preserves any prior
+        .1 backup for downlink.
+        """
+        if self._backupCount <= 0:
+            return
+        log_size = self.GetLogSize()
+        if not log_size:  # None (error) or 0 (empty) — nothing to rotate
+            return
+        self.doRollover()
+
     def doRollover(self) -> None:
         """Roll over the log files. This should not need to be called directly"""
         # At this point, we have already determined that we need to roll the log files.
@@ -375,24 +416,29 @@ class RotatingFileHandler(FileHandler):
                 else:
                     raise e
 
-        # Rename the current log to the first backup
-        os.rename(self._LogFileName, CurrentFileName)
+        # Rename the current log to the first backup. If this fails, the log
+        # still exists at its original path; the reopen below simply re-attaches
+        # to it. emit()'s size check will retrigger rollover on the next write.
+        try:
+            os.rename(self._LogFileName, CurrentFileName)
+        except OSError as e:
+            sys.stderr.write(f"[LOG] doRollover rename failed: {e}\n")
 
-        # Reopen the file.
+        # Reopen the file. On failure, leave self.stream as the closed handle
         # pylint: disable=consider-using-with
-        self.stream = open(self._LogFileName, mode=self._WriteMode)
+        try:
+            self.stream = open(self._LogFileName, mode=self._WriteMode)
+        except (OSError, ValueError) as e:
+            sys.stderr.write(f"[LOG] doRollover reopen failed: {e}\n")
 
     def GetLogSize(self) -> int:
         """Check the size of the log file."""
         try:
             self.stream.flush()  # We need to call this or the file size is always zero.
             LogFileSize = os.stat(self._LogFileName)[6]
-        except OSError as e:
-            if e.args[0] == 2:
-                # Log file does not exsist. This is okay.
-                LogFileSize = None
-            else:
-                raise e
+        except (OSError, ValueError):
+            # Can't determine size (file deleted, bad fd, deinitialized stream, etc.) — skip rotation.
+            LogFileSize = None
         return LogFileSize
 
     def emit(self, record: LogRecord) -> None:
@@ -400,10 +446,24 @@ class RotatingFileHandler(FileHandler):
 
         :param record: The record (message object) to be logged
         """
-        if (self.GetLogSize() >= self._maxBytes) and (self._maxBytes > 0) and (self._backupCount > 0):
+        formatted = self.format(record)
+        if not formatted:
+            return  # all-whitespace record; skip to avoid writing a bare separator
+        log_size = self.GetLogSize()
+        if (log_size is not None) and (log_size >= self._maxBytes) and (self._maxBytes > 0) and (self._backupCount > 0):
             self.doRollover()
-        self.stream.write(self.format(record))
-        self.stream.flush()
+        payload = formatted + self.terminator
+        try:
+            self.stream.write(payload)
+            self.stream.flush()
+        except (OSError, ValueError):
+            # Stream is stale (file deleted, SD deinitialized, etc.). Try to reopen and retry once.
+            try:
+                self.stream = open(self._LogFileName, mode=self._WriteMode)
+                self.stream.write(payload)
+                self.stream.flush()
+            except (OSError, ValueError):
+                pass  # Can't write — silently drop rather than crash
 
 
 class NullHandler(Handler):
@@ -494,7 +554,11 @@ class Logger:
         return len(self._handlers) > 0
 
     def _log(self, level: int, msg: str, *args) -> None:
-        record = _logRecordFactory(self.name, level, (msg % args) if args else msg, args)
+        try:
+            formatted = (msg % args) if args else msg
+        except TypeError:
+            formatted = msg + " " + " ".join(str(a) for a in args)
+        record = _logRecordFactory(self.name, level, formatted, args)
         self.handle(record)
 
     def handle(self, record: LogRecord) -> None:
@@ -626,13 +690,10 @@ def setup_logger(level="NOTSET", handler=None):
 
     logger.setLevel(set_level)
 
-    if level == "NOTSET" or level == "NOTHING":
-        return
-
     if handler is None:
         handler = StreamHandler()
 
-    formatter = Formatter(fmt="[{asctime}][{levelname}] {message}", datefmt="%Y-%m-%d %H:%M:%S", style="{")
+    formatter = Formatter(fmt="[{asctime}][{levelname}] {message}", style="{")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.info(f"Logger set to level {level}")
