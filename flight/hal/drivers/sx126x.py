@@ -850,8 +850,10 @@ class SX126X:
             state = self.setPacketParams(
                 self._preambleLength, self._crcType, self._implicitLen, self._headerType, self._invertIQ
             )
-        elif modem == _SX126X_PACKET_TYPE_GFSK:
-            pass
+        elif modem == _SX126X_PACKET_TYPE_GFSK and self._packetType == _SX126X_GFSK_PACKET_VARIABLE:
+            self.setPacketParamsFSK(self._preambleLengthFSK, self._preambleDetectorLength,
+                                    self._syncWordLength, self._addrComp, self._packetType,
+                                    255, self._crcTypeFSK, self._whitening)
         else:
             return _ERR_UNKNOWN
         ASSERT(state)
