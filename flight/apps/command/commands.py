@@ -842,10 +842,26 @@ def DATASET_OD(ts, duration, max_iteration, dataset_path):
     """
     from apps.payload.controller import PayloadController as PC
 
-    logger.info(f"[PAYLOAD] - Dataset collection command received to run at {ts}")
+    logger.info(f"[PAYLOAD] - Dataset OD command received to run at {ts}")
     result = PC.add_dataset_od_command(ts, duration, max_iteration, dataset_path)
     if not result:
-        logger.error(f"[PAYLOAD] - Failed to add dataset collection command for timestamp {ts}")
+        logger.error(f"[PAYLOAD] - Failed to add dataset OD command for timestamp {ts}")
+    return result
+
+
+@register_command()
+def SYNCHRONIZE_TIME(rtc_time):
+    """
+    Command that will be called by the ground station to synchronize the time
+    rtc_time               -> the real-time clock time to set
+
+    """
+    from apps.payload.controller import PayloadController as PC
+
+    logger.info(f"[PAYLOAD] - Synchronize time command received with RTC time: {rtc_time}")
+    result = PC.send_synchronize_time_command(rtc_time)
+    if not result:
+        logger.error("[PAYLOAD] - Failed to synchronize time")
     return result
 
 
