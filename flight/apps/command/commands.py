@@ -237,33 +237,42 @@ def RF_RESUME():
 
 @register_command()
 def SET_FSK(freq, power, br, ps, bandwidth, f_dev, p_len, p_detect, sync_len, ad_comp, pack_type, pl_len, crc_type, whitening):
-    """Sets the radio modulation to FSK for the next transmission."""
-    logger.warning("Executing SET_FSK: setting modulation to FSK for next transmission")
-    
-    from hal.configuration import SATELLITE
-    # SATELLITE.RADIO.beginFSK(
-    #     freq=freq,
-    #     power=power,
-    #     bR=br,
-    #     pS=ps,
-    #     bW=bandwidth,
-    #     fDev=f_dev,
-    #     preLength=p_len,
-    #     preDetect=p_detect,
-    #     syncLength=sync_len,
-    #     addrComp=ad_comp,
-    #     packType=pack_type,
-    #     plLength=pl_len,
-    #     crcType=crc_type,
-    #     whitening=whitening,
-    #     currentLimit=140.0,
-    #     tcxoVoltage=1.7,
-    #     useRegulatorLDO=False,
-    #     blocking=True
-    # )
-    SATELLITE.RADIO.beginFSK()
+    """
+    Sets the radio modulation to FSK for the next transmission
+    Calling the driver here directly to avoid passing a lot of arguments around
 
-    return ["modulation_set_to_fsk"]
+    for some reason the objects are wrapped in object wrapper
+    and object wrapper does not support __setattr__ so we are unable to change the values
+    to minimize changes, here we will use the obj attribute
+    doing all of this to avoid sending a lot of arguments in beginFSK
+    to avoid exhausting the stack
+    """
+    from hal.configuration import SATELLITE
+
+    logger.warning("Executing SET_FSK: setting modulation to FSK for next transmission")
+
+
+    SATELLITE.RADIO.obj._FREQ = freq
+    SATELLITE.RADIO.obj._POWER = power
+    
+    try:
+        SATELLITE.RADIO.beginFSK(
+            bR=br,
+            pS=ps,
+            bW=bandwidth,
+            fDev=f_dev,
+            preLength=p_len,
+            preDetect=p_detect,
+            syncLength=sync_len,
+            addrComp=ad_comp,
+            packType=pack_type,
+            plLength=pl_len,
+            crcType=crc_type,
+            whitening=whitening,
+        )
+    except Exception as e:
+        return [f"fsk failed {e}"]
+    return ["fsk set"]
 
 
 @register_command()

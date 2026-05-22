@@ -474,13 +474,13 @@ class SX126X:
         self.tx_en.value = False
         self.rx_en.value = True
 
-        self._bwKhz = 0
+        self._bwKhz = 0    # this is the provided bw in KHz
         self._sf = 0
-        self._bw = 0
+        self._bw = 0       # this is the bw setting for the modem config (lora)
         self._cr = 0
         self._ldro = 0
-        self._crcType = 0
-        self._preambleLength = 0
+        self._crcType = 0         # same variable in lora and fsk
+        self._preambleLength = 0  # same variable in lora and fsk
         self._tcxoDelay = 0
         self._headerType = 0
         self._implicitLen = 0
@@ -494,8 +494,6 @@ class SX126X:
         self._rxBw = 0
         self._rxBwKhz = 0
         self._pulseShape = 0
-        self._crcTypeFSK = 0
-        self._preambleLengthFSK = 0
         self._addrComp = 0
         self._syncWordLength = 0
         self._whitening = 0
@@ -505,7 +503,7 @@ class SX126X:
         self._preambleDetectorLength = 0
 
     def begin(
-        self, bw, sf, cr, syncWord, currentLimit, preambleLength, tcxoVoltage, useRegulatorLDO=False, txIq=False, rxIq=False
+        self, bw, sf, cr, syncWord, currentLimit, preambleLength, tcxoVoltage=1.7, useRegulatorLDO=False, txIq=False, rxIq=False
     ):
         self._bwKhz = bw
         self._sf = sf
@@ -539,7 +537,7 @@ class SX126X:
         state = self.setSpreadingFactor(sf)
         ASSERT(state)
 
-        state = self.setBandwidth(bw)
+        state = self.setBandwidth()
         ASSERT(state)
 
         state = self.setCodingRate(cr)
@@ -565,7 +563,7 @@ class SX126X:
         return state
 
     def beginFSK(self, bR, pS, bW, fDev, preLength, preDetect, syncLength, addrComp, packType, plLength,
-                 crcType, whitening, currentLimit, tcxoVoltage, useRegulatorLDO=False):
+                 crcType, whitening, currentLimit, tcxoVoltage=1.7, useRegulatorLDO=False):
         
         state = self.reset()
         ASSERT(state)
@@ -589,13 +587,13 @@ class SX126X:
 
         self.setModulationParamsFSK(bR, pS, bW, fDev)
 
-        self._preambleLengthFSK = preLength
+        self._preambleLength = preLength
         self._preambleDetectorLength = preDetect
         self._syncWordLength = syncLength
         self._addrComp = addrComp
         self._packetType = packType
         self._packetLength = plLength
-        self._crcTypeFSK = crcType
+        self._crcType = crcType
         self._whitening = whitening
 
         self.setPacketParamsFSK(preLength, preDetect, syncLength, addrComp, packType, plLength, crcType, whitening)
@@ -810,9 +808,9 @@ class SX126X:
             state = self.setPacketParams(self._preambleLength, self._crcType, len_, self._headerType, self._invertIQ)
 
         if modem == _SX126X_PACKET_TYPE_GFSK and self._packetType == _SX126X_GFSK_PACKET_VARIABLE:
-            self.setPacketParamsFSK(self._preambleLengthFSK, self._preambleDetectorLength,
+            self.setPacketParamsFSK(self._preambleLength, self._preambleDetectorLength,
                                     self._syncWordLength, self._addrComp, self._packetType,
-                                    len_, self._crcTypeFSK, self._whitening)
+                                    len_, self._crcType, self._whitening)
         ASSERT(state)
 
         state = self.setDioIrqParams(_SX126X_IRQ_TX_DONE | _SX126X_IRQ_TIMEOUT, _SX126X_IRQ_TX_DONE)
@@ -851,9 +849,9 @@ class SX126X:
                 self._preambleLength, self._crcType, self._implicitLen, self._headerType, self._invertIQ
             )
         elif modem == _SX126X_PACKET_TYPE_GFSK and self._packetType == _SX126X_GFSK_PACKET_VARIABLE:
-            self.setPacketParamsFSK(self._preambleLengthFSK, self._preambleDetectorLength,
+            self.setPacketParamsFSK(self._preambleLength, self._preambleDetectorLength,
                                     self._syncWordLength, self._addrComp, self._packetType,
-                                    255, self._crcTypeFSK, self._whitening)
+                                    255, self._crcType, self._whitening)
         else:
             return _ERR_UNKNOWN
         ASSERT(state)
@@ -956,14 +954,14 @@ class SX126X:
 
         return state
 
-    def setBandwidth(self, bw):
+    def setBandwidth(self):
         if self.getPacketType() != _SX126X_PACKET_TYPE_LORA:
             return _ERR_WRONG_MODEM
 
-        if not ((bw > 0) and (bw < 510)):
+        if not ((self._bwKhz > 0) and (self._bwKhz < 510)):
             return _ERR_INVALID_BANDWIDTH
 
-        bw_div2 = int(bw / 2 + 0.01)
+        bw_div2 = int(self._bwKhz / 2 + 0.01)
         switch = {
             3: _SX126X_LORA_BW_7_8,
             5: _SX126X_LORA_BW_10_4,
@@ -981,7 +979,6 @@ class SX126X:
         except:  # noqa E722
             return _ERR_INVALID_BANDWIDTH
 
-        self._bwKhz = bw
         return self.setModulationParams(self._sf, self._bw, self._cr, self._ldro)
 
     def setSpreadingFactor(self, sf):
@@ -1636,6 +1633,12 @@ class SX1262(SX126X):
     TX_DONE = _SX126X_IRQ_TX_DONE
     RX_DONE = _SX126X_IRQ_RX_DONE
     STATUS = ERROR
+    
+    _FREQ = 434.7
+    _POWER = 22
+    
+    
+    _BLOCKING = True   # for argus this will always be true, non blocking path does not seem to be complete
 
     def __init__(self, spi_bus, cs, irq, rst, gpio, tx_en, rx_en):
         super().__init__(spi_bus, cs, irq, rst, gpio, tx_en, rx_en)
@@ -1643,24 +1646,17 @@ class SX1262(SX126X):
 
     def begin(
         self,
-        freq=434.0,
         bw=125.0,
         sf=9,
         cr=7,
         syncWord=_SX126X_SYNC_WORD_PRIVATE,
-        power=14,
         currentLimit=60.0,
         preambleLength=8,
         implicit=False,
         implicitLen=0xFF,
         crcOn=True,
-        txIq=False,
-        rxIq=False,
-        tcxoVoltage=1.6,
-        useRegulatorLDO=False,
-        blocking=True,
     ):
-        state = super().begin(bw, sf, cr, syncWord, currentLimit, preambleLength, tcxoVoltage, useRegulatorLDO, txIq, rxIq)
+        state = super().begin(bw, sf, cr, syncWord, currentLimit, preambleLength)
         ASSERT(state)
 
         if not implicit:
@@ -1672,23 +1668,21 @@ class SX1262(SX126X):
         state = super().setCRC(crcOn)
         ASSERT(state)
 
-        state = self.setFrequency(freq)
+        state = self.setFrequency(self._FREQ)
         ASSERT(state)
 
-        state = self.setOutputPower(power)
+        state = self.setOutputPower(self._POWER)
         ASSERT(state)
 
         state = super().fixPaClamping()
         ASSERT(state)
 
-        state = self.setBlockingCallback(blocking)
+        state = self.setBlockingCallback()
 
         return state
 
     def beginFSK(
         self,
-        freq=434.707,
-        power=22,
         bR=20_000,
         pS=0x08,  # BT=0.3
         bW=0x1B,  # RX_BW = 78k
@@ -1702,24 +1696,22 @@ class SX1262(SX126X):
         crcType=0x06,  # CRC 2 BYTE INV (CCITT)
         whitening=0x01,  # WHITE ON
         currentLimit=140.0,
-        tcxoVoltage=1.7,
-        useRegulatorLDO=False,
-        blocking=True
     ):
 
         state = super().beginFSK(bR=bR, pS=pS, bW=bW, fDev=fDev, preLength=preLength, preDetect=preDetect, syncLength=syncLength, addrComp=addrComp,
-                                 packType=packType, plLength=plLength, crcType=crcType, whitening=whitening, currentLimit=currentLimit, useRegulatorLDO=useRegulatorLDO, tcxoVoltage=tcxoVoltage)
+                                 packType=packType, plLength=plLength, crcType=crcType, whitening=whitening, currentLimit=currentLimit)
 
-        state = self.setFrequency(freq)
+        print(f"this is the freq  before: {self._FREQ}")
+        state = self.setFrequency(self._FREQ)
         ASSERT(state)
 
-        state = self.setOutputPower(power)
+        state = self.setOutputPower(self._POWER)
         ASSERT(state)
 
         state = super().fixPaClamping()
         ASSERT(state)
 
-        state = self.setBlockingCallback(blocking)
+        state = self.setBlockingCallback()
 
         # Radio needs to be set to RX after changing to FSK
         # As comms task is already initialized
@@ -1778,17 +1770,17 @@ class SX1262(SX126X):
 
     def setRxIq(self, rxIq):
         self._rxIq = rxIq
-        if not self.blocking:
+        if not self._BLOCKING:
             ASSERT(super().startReceive())
 
     def setPreambleDetectorLength(self, preambleDetectorLength):
         self._preambleDetectorLength = preambleDetectorLength
-        if not self.blocking:
+        if not self._BLOCKING:
             ASSERT(super().startReceive())
 
-    def setBlockingCallback(self, blocking, callback=None):
-        self.blocking = blocking
-        if not self.blocking:
+    def setBlockingCallback(self, callback=None):
+        self._BLOCKING
+        if not self._BLOCKING:
             state = super().startReceive()
             ASSERT(state)
             if callback is not None:
@@ -1806,14 +1798,14 @@ class SX1262(SX126X):
             return state
 
     def recv(self, len=0, timeout_en=False, timeout_ms=0):
-        if not self.blocking:
+        if not self._BLOCKING:
             return self._readData(len)
         else:
             return self._receive(len, timeout_en, timeout_ms)
 
     def send(self, data):
 
-        if not self.blocking:
+        if not self._BLOCKING:
             return self._startTransmit(data)
         else:
             return self._transmit(data)

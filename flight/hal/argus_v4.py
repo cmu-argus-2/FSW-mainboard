@@ -501,24 +501,25 @@ class ArgusV4(CubeSat):
                 tx_en=ArgusV4Components.RADIO_TX_EN,
                 rx_en=ArgusV4Components.RADIO_RX_EN,
             )
+            
+            radio._FREQ = 433.707
+            radio._POWER = 22
 
             radio.begin(
-                freq=433.707,
                 bw=125,
                 sf=7,
                 cr=5,
                 syncWord=0x12,
-                power=22,
                 currentLimit=140.0,
                 preambleLength=8,
                 implicit=False,
                 implicitLen=0xFF,
                 crcOn=True,
-                txIq=False,
-                rxIq=False,
-                tcxoVoltage=1.7,
-                useRegulatorLDO=False,
-                blocking=True,
+                # txIq=False,     # assuming the default values for these parameters
+                # rxIq=False,
+                # tcxoVoltage=1.7,
+                # useRegulatorLDO=False,
+                # blocking=True,    
             )
 
             return [radio, Errors.NO_ERROR]
