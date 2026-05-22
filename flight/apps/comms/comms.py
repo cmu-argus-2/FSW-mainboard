@@ -64,6 +64,15 @@ class SATELLITE_RADIO:
         SATELLITE.RADIO.startReceive(0xFFFFFF)
         SATELLITE.RADIO.tx_en.value = False
         SATELLITE.RADIO.rx_en.value = True
+        
+    @classmethod
+    def set_tx_mode(cls):
+        """
+        Name: set_tx_mode
+        Description: Used to set the radio into transmit mode, which is necessary before transmitting messages
+        """
+        SATELLITE.RADIO.rx_en.value = False
+        SATELLITE.RADIO.tx_en.value = True
 
     @classmethod
     def get_rssi(cls):
@@ -225,7 +234,6 @@ class SATELLITE_RADIO:
         if SATELLITE.RADIO_AVAILABLE:
             SATELLITE.RADIO.send(packet)
             cls.tx_packet_count += 1
-            logger.info(f"[COMMS] - Message has been transmitted: {format_bytes(packet[:20])}...")
             return True
         else:
             logger.error("[COMMS ERROR] RADIO no longer active on SAT")

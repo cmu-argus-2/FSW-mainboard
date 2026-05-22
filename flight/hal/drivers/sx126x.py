@@ -626,15 +626,16 @@ class SX126X:
                 return state
             sleep_ms(10)
 
-    def transmit(self, data, len_, addr=0):
+    def transmit(self, data, len_):
         # This is the transmit fn used in FSW
 
-        # Enable TX and disable RX
-        self.rx_en.value = False
-        self.tx_en.value = True
+        # Enable TX and disable RX     - this is to be done by the comms task
+        # self.rx_en.value = False
+        # self.tx_en.value = True
 
-        state = self.standby()
-        ASSERT(state)
+        # this is redundant, no need to switch to standby
+        # state = self.standby()
+        # ASSERT(state)
 
         if self._modem == _SX126X_PACKET_TYPE_LORA:
             timeout = int((self.getTimeOnAirLora(len_) * 3) / 2)
@@ -642,7 +643,7 @@ class SX126X:
             # assuming that we are in gfsk mode
             timeout = self.getTimeOnAirFSK(len_)
 
-        state = self.startTransmit(data, len_, addr)
+        state = self.startTransmit(data, len_)
         ASSERT(state)
 
         # TODO: Characterize latency and potentially tweak sleep time
@@ -654,22 +655,18 @@ class SX126X:
                 self.standby()
                 return _ERR_TX_TIMEOUT
 
-        elapsed = abs(ticks_diff(start, ticks_us()))
-
-        self._dataRate = (len_ * 8.0) / (float(elapsed) / 1000000.0)
+        # elapsed = abs(ticks_diff(start, ticks_us()))
+        # self._dataRate = (len_ * 8.0) / (float(elapsed) / 1000000.0)
 
         state = self.clearIrqStatus()
         ASSERT(state)
 
-        state = self.standby()
-
-        # Switch to receive mode instanly after transmitting
-        state = self.startReceive(_SX126X_RX_TIMEOUT_INF)
-        ASSERT(state)
-
-        # Enable RX and disable TX
-        self.tx_en.value = False
-        self.rx_en.value = True
+        # Switch to receive mode instanly after transmitting  - this is to be done by the comms task
+        # state = self.startReceive(_SX126X_RX_TIMEOUT_INF)
+        # ASSERT(state)
+        # # Enable RX and disable TX
+        # self.tx_en.value = False
+        # self.rx_en.value = True
 
         return state
 
@@ -1401,7 +1398,6 @@ class SX126X:
             else _ERR_UNKNOWN)
 
         packetParam[8] = whitening
-        print(f"Packet params: {packetParam}")
         return self.SPIwriteCommand([_SX126X_CMD_SET_PACKET_PARAMS], 1, packetParam, 9)
 
     def setBufferBaseAddress(self, txBaseAddress=0x00, rxBaseAddress=0x00):
