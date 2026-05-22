@@ -23,3 +23,20 @@ print("Jetson should be off now.")
 
 while True:
     time.sleep(1)
+    if SATELLITE.WATCHDOG_AVAILABLE:
+        """
+        The enable pin is used for a MOSFET to control the signal to the
+        MCU, the watchdog is powered regardless of the enable pin.
+        The input pin will therefore need to be toggled before the enable pin
+        is toggled to ensure that the watchdog is not triggered during the
+        transition.
+        """
+
+        if SATELLITE.WATCHDOG.input:
+            SATELLITE.WATCHDOG.input_low()
+        else:
+            SATELLITE.WATCHDOG.input_high()
+
+        if not SATELLITE.WATCHDOG.enabled:
+            print("Watchdog enabled.")
+            SATELLITE.WATCHDOG.enable()
