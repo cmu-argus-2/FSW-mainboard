@@ -633,9 +633,6 @@ class SX126X:
         state = self.standby()
         ASSERT(state)
 
-        if len_ > _SX126X_MAX_PACKET_LENGTH:
-            return _ERR_PACKET_TOO_LONG
-
         timeout = 0
 
         modem = self.getPacketType()
