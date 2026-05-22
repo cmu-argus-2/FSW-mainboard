@@ -678,9 +678,12 @@ def UPDATE_SD_USAGE():
 
 @register_command()
 def EXPERIMENT(
+    mode_id,
     ts,
     duration,
     camera_bit_flag,
+    capture_rate,
+    imu_hz,
     level_of_processing,
     width,
     height,
@@ -712,67 +715,84 @@ def EXPERIMENT(
     resolution            -> The resolution of the images. They are taken at full resolution and scaled down
     """
     from apps.payload.controller import PayloadController as PC
-
-    logger.info(f"[PAYLOAD] - Experiment command received to run at {ts}")
-    result = PC.add_command(
-        ts,
-        duration,
-        camera_bit_flag,
-        level_of_processing,
-        width,
-        height,
-        downscale_factor,
-        camera_defaults_selector,
-        fps,
-        wbmode,
-        aelock,
-        awblock,
-        exposuretimerange_low,
-        exposuretimerange_high,
-        gainrange_low,
-        gainrange_high,
-        ispdigitalgainrange_low,
-        ispdigitalgainrange_high,
-        ee_mode,
-        ee_strength,
-        aeantibanding,
-        exposurecompensation,
-        tnr_mode,
-        tnr_strength,
-        saturation,
-    )
-    if not result:
-        logger.error(f"[PAYLOAD] - Failed to add experiment command for timestamp {ts}")
-    return result
+    if mode_id == 0:
+        logger.info(f"[PAYLOAD] - Experiment command received to run at {ts}")
+        result = PC.add_command(
+            ts,
+            duration,
+            camera_bit_flag,
+            level_of_processing,
+            width,
+            height,
+            downscale_factor,
+            camera_defaults_selector,
+            fps,
+            wbmode,
+            aelock,
+            awblock,
+            exposuretimerange_low,
+            exposuretimerange_high,
+            gainrange_low,
+            gainrange_high,
+            ispdigitalgainrange_low,
+            ispdigitalgainrange_high,
+            ee_mode,
+            ee_strength,
+            aeantibanding,
+            exposurecompensation,
+            tnr_mode,
+            tnr_strength,
+            saturation,
+        )
+        if not result:
+            logger.error(f"[PAYLOAD] - Failed to add experiment command for timestamp {ts}")
+        return result
+    if mode_id == 1:
+        logger.info(f"[PAYLOAD] - Dataset collection command received to run at {ts}")
+        result = PC.add_dataset_collection_command(
+            ts,
+            camera_bit_flag,
+            capture_rate,
+            imu_hz,
+            duration,
+            camera_defaults_selector,
+            fps,
+            wbmode,
+            aelock,
+            awblock,
+            exposuretimerange_low,
+            exposuretimerange_high,
+            gainrange_low,
+            gainrange_high,
+            ispdigitalgainrange_low,
+            ispdigitalgainrange_high,
+            ee_mode,
+            ee_strength,
+            aeantibanding,
+            exposurecompensation,
+            tnr_mode,
+            tnr_strength,
+            saturation,
+        )
+        if not result:
+            logger.error(f"[PAYLOAD] - Failed to add dataset collection command for timestamp {ts}")
+        return result
+    logger.error(f"[PAYLOAD] - Invalid mode_id received: {mode_id}")
+    return False
 
 
 @register_command()
 def SIMPLE_EXPERIMENT(
+    mode_id,
     ts,
     duration,
     camera_bit_flag,
+    capture_rate,
+    imu_hz,
     level_of_processing,
     width,
     height,
-    downscale_factor=2.0,
-    camera_defaults_selector=-1,
-    fps=0,
-    wbmode=0,
-    aelock=0,
-    awblock=0,
-    exposuretimerange_low=0,
-    exposuretimerange_high=0,
-    gainrange_low=0.0,
-    gainrange_high=0.0,
-    ispdigitalgainrange_low=0.0,
-    ispdigitalgainrange_high=0.0,
-    ee_mode=0,
-    ee_strength=0.0,
-    aeantibanding=0,
-    exposurecompensation=0.0,
-    tnr_mode=0,
-    tnr_strength=0.0,
-    saturation=0.0,
+    downscale_factor=2.0
 ):
     """
     Command that will be called by the ground station to start an experiment
@@ -786,109 +806,33 @@ def SIMPLE_EXPERIMENT(
 
     """
     from apps.payload.controller import PayloadController as PC
-
-    logger.info(f"[PAYLOAD] - Simple experiment command received to run at {ts}")
-    result = PC.add_command_inference(
-        ts,
-        duration,
-        camera_bit_flag,
-        level_of_processing,
-        width,
-        height,
-        downscale_factor,
-        camera_defaults_selector,
-        fps,
-        wbmode,
-        aelock,
-        awblock,
-        exposuretimerange_low,
-        exposuretimerange_high,
-        gainrange_low,
-        gainrange_high,
-        ispdigitalgainrange_low,
-        ispdigitalgainrange_high,
-        ee_mode,
-        ee_strength,
-        aeantibanding,
-        exposurecompensation,
-        tnr_mode,
-        tnr_strength,
-        saturation,
-    )
-    if not result:
-        logger.error(f"[PAYLOAD] - Failed to add simple experiment command for timestamp {ts}")
-    return result
-
-
-@register_command()
-def DATASET_COLLECTION(
-    ts,
-    camera_bit_flag,
-    capture_rate,
-    imu_hz,
-    duration,
-    camera_defaults_selector,
-    fps,
-    wbmode,
-    aelock,
-    awblock,
-    exposuretimerange_low,
-    exposuretimerange_high,
-    gainrange_low,
-    gainrange_high,
-    ispdigitalgainrange_low,
-    ispdigitalgainrange_high,
-    ee_mode,
-    ee_strength,
-    aeantibanding,
-    exposurecompensation,
-    tnr_mode,
-    tnr_strength,
-    saturation,
-):
-    """
-    Command that will be called by the ground station to start a dataset collection experiment
-    ts                    -> the time at which the command should be ran (0 is to run now)
-    camera_bit_flag       -> the first 4 bits will indicate which cameras should be used to take the picture
-    capture_rate             -> the frequency at which the images should be collected
-    imu_hz                -> the frequency at which the imu data should be collected
-    duration               -> the duration of the experiment in seconds
-
-    had to create a custom command for this because of the changes to splat
-    it is an exact copy of EXPERIMENT command but with different arguments
-
-    """
-    from apps.payload.controller import PayloadController as PC
-
-    logger.info(f"[PAYLOAD] - Dataset collection command received to run at {ts}")
-    result = PC.add_dataset_collection_command(
-        ts,
-        camera_bit_flag,
-        capture_rate,
-        imu_hz,
-        duration,
-        camera_defaults_selector,
-        fps,
-        wbmode,
-        aelock,
-        awblock,
-        exposuretimerange_low,
-        exposuretimerange_high,
-        gainrange_low,
-        gainrange_high,
-        ispdigitalgainrange_low,
-        ispdigitalgainrange_high,
-        ee_mode,
-        ee_strength,
-        aeantibanding,
-        exposurecompensation,
-        tnr_mode,
-        tnr_strength,
-        saturation,
-    )
-    if not result:
-        logger.error(f"[PAYLOAD] - Failed to add dataset collection command for timestamp {ts}")
-    return result
+    if mode_id == 0:
+        logger.info(f"[PAYLOAD] - Simple experiment command received to run at {ts}")
+        result = PC.add_command_inference(
+            ts,
+            duration,
+            camera_bit_flag,
+            level_of_processing,
+            width,
+            height,
+            downscale_factor
+        )
+        if not result:
+            logger.error(f"[PAYLOAD] - Failed to add simple experiment command for timestamp {ts}")
+    if mode_id == 1:
+        logger.info(f"[PAYLOAD] - Dataset collection command received to run at {ts}")
+        result = PC.add_dataset_collection_command(
+            ts,
+            camera_bit_flag,
+            capture_rate,
+            imu_hz,
+            duration,
+        )
+        if not result:
+            logger.error(f"[PAYLOAD] - Failed to add dataset collection command for timestamp {ts}")
+        return result
+    logger.error(f"[PAYLOAD] - Invalid mode_id received: {mode_id}")
+    return False
 
 
 @register_command()
