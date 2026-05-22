@@ -685,29 +685,6 @@ class SX126X:
         # state = self.standby()
         # ASSERT(state)
 
-        timeout = 0
-
-        modem = self.getPacketType()
-        if modem == _SX126X_PACKET_TYPE_LORA:
-            symbolLength = float(1 << self._sf) / float(self._bwKhz)
-            timeout = int(symbolLength * 100.0 * 1000.0)
-        
-        elif modem == _SX126X_PACKET_TYPE_GFSK:
-            # TODO: CALCULATE GFSK TIMEOUT
-            pass
-        else:
-            return _ERR_UNKNOWN
-
-        if timeout_ms == 0:
-            pass
-        else:
-            timeout = timeout_ms * 1000
-
-        if timeout_en:
-            timeoutValue = int(float(timeout) / 15.625)  # noqa F841
-        else:
-            timeoutValue = _SX126X_RX_TIMEOUT_NONE  # noqa F841
-
         # Check if a packet is currently available in the RX buffer
         if self.RX_available():
             if self._headerType == _SX126X_LORA_HEADER_IMPLICIT and self.getPacketType() == _SX126X_PACKET_TYPE_LORA:
