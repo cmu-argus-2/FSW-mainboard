@@ -1675,7 +1675,7 @@ class SX1262(SX126X):
         pS=0x08,  # BT=0.3
         bW=0x1B,  # RX_BW = 78k
         fDev=5_000,
-        preLength=512,
+        preLength=32,
         preDetect=0x05,  # PREAMBLE DETECT 16
         syncLength=32,
         addrComp=0x00,  # ADDR FILT OFF
