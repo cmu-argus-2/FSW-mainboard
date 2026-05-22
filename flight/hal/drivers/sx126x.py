@@ -636,11 +636,10 @@ class SX126X:
         state = self.standby()
         ASSERT(state)
 
-        timeout = 0
-
         if self._modem == _SX126X_PACKET_TYPE_LORA:
             timeout = int((self.getTimeOnAirLora(len_) * 3) / 2)
-        if self._modem == _SX126X_PACKET_TYPE_GFSK:
+        else:
+            # assuming that we are in gfsk mode
             timeout = self.getTimeOnAirFSK(len_)
 
         state = self.startTransmit(data, len_, addr)
