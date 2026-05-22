@@ -11,3 +11,7 @@ The ci_sil_campaign_params.yaml defines the list of simulations to run in the CI
 The results are stored in the results folder, and are identified by timestamp. For each campaign, the results of each set of simulations are stored separately, with the results split between a plots folder with the generated figures and a trials folder with the data. The params.yaml used to generate the simulation is also stored for reproducibility, along with the description. The sil_campaign_params.yaml is similarly stored in the campaign folder.
 
 The params.yaml file is still kept in the configs folder so the run.sh command still works, though this file is rewritten each run, and nominally the sil_run.py rather than the command run.sh should be used to run simulations.
+
+## Re-plotting
+
+To redo the plots for a given simulation campaign, run sil/fsw_plotter.py. The script will provide the user with a list of previous simulation campaigns and assign an id to which one for the user to pick.

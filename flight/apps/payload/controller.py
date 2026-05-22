@@ -210,8 +210,6 @@ class PayloadController:
         """
         return [command[0] for command in cls.command_list]  # return the timestamps of the scheduled commands
 
-        return True
-
     @classmethod
     def add_command(
         cls,

@@ -16,8 +16,8 @@ command:
     value: 2  # number of deployment attempts before forcing completion
     _const: true
 
-  PAYLOAD_TESTING_MODE:
-    value: false  # Set to true to enable payload testing mode (goes straight to experiment mode)
+  SKIP_DEPLOYMENT:
+    value: true  # Set to true to skip the burn wire deployment sequence entirely (ground testing)
 
 # Time Processor Module
 time_processor:
@@ -55,6 +55,16 @@ digipeater:
   RX_QUEUE_MAX:
     value: 5
     _const: true
+
+
+# ADCS Task
+adcs:
+  CONTROLLER_MODE: 0
+
+# Watchdog Task
+watchdog:
+  ENABLED:
+    value: false  # Disable hardware watchdog during ground testing to prevent USB resets mid-flash
 
 hal:
   ASIL0_EN:
