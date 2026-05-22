@@ -254,10 +254,10 @@ def SET_FSK(freq, power, br, ps, bandwidth, f_dev, p_len, p_detect, sync_len, ad
 
     SATELLITE.RADIO.obj._FREQ = freq
     SATELLITE.RADIO.obj._POWER = power
+    SATELLITE.RADIO.obj._bitrate = br
     
     try:
         SATELLITE.RADIO.beginFSK(
-            bR=br,
             pS=ps,
             bW=bandwidth,
             fDev=f_dev,
@@ -271,6 +271,7 @@ def SET_FSK(freq, power, br, ps, bandwidth, f_dev, p_len, p_detect, sync_len, ad
             whitening=whitening,
         )
     except Exception as e:
+        logger.error(f"FSK fail: {e}")
         return [f"fsk failed {e}"]
     return ["fsk set"]
 

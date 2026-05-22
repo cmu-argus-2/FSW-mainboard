@@ -489,7 +489,7 @@ class SX126X:
         self._invertIQ = 0
         self._ldroAuto = True
 
-        self._br = 0
+        self._bitrate = 0          # this is used for FSK (mostly to set the timeout)
         self._freqDev = 0
         self._rxBw = 0
         self._rxBwKhz = 0
@@ -562,7 +562,7 @@ class SX126X:
 
         return state
 
-    def beginFSK(self, bR, pS, bW, fDev, preLength, preDetect, syncLength, addrComp, packType, plLength,
+    def beginFSK(self, pS, bW, fDev, preLength, preDetect, syncLength, addrComp, packType, plLength,
                  crcType, whitening, currentLimit, tcxoVoltage=1.7, useRegulatorLDO=False):
         
         state = self.reset()
@@ -585,7 +585,7 @@ class SX126X:
 
         self.setWhiteningSeed()
 
-        self.setModulationParamsFSK(bR, pS, bW, fDev)
+        self.setModulationParamsFSK(self._bitrate, pS, bW, fDev)
 
         self._preambleLength = preLength
         self._preambleDetectorLength = preDetect
@@ -639,9 +639,10 @@ class SX126X:
         timeout = 0
 
         modem = self.getPacketType()
-        # TODO: Set timeout for (G)FSK modem
         if modem == _SX126X_PACKET_TYPE_LORA:
-            timeout = int((self.getTimeOnAir(len_) * 3) / 2)
+            timeout = int((self.getTimeOnAirLora(len_) * 3) / 2)
+        if modem == _SX126X_PACKET_TYPE_GFSK:
+            timeout = self.getTimeOnAirFSK(len_)
 
         state = self.startTransmit(data, len_, addr)
         ASSERT(state)
@@ -650,7 +651,7 @@ class SX126X:
         start = ticks_us()
         while not self.irq.value:
             yield_()
-            if abs(ticks_diff(start, ticks_us())) > timeout and timeout != 0:
+            if abs(ticks_diff(start, ticks_us())) > timeout:
                 self.clearIrqStatus()
                 self.standby()
                 return _ERR_TX_TIMEOUT
@@ -1089,31 +1090,42 @@ class SX126X:
         self.SPIreadCommand([_SX126X_CMD_GET_RX_BUFFER_STATUS], 1, rxBufStatus_mv, 2)
         return rxBufStatus[0]
 
-    def getTimeOnAir(self, len_):
-        if self.getPacketType() == _SX126X_PACKET_TYPE_LORA:
-            symbolLength_us = int(((1000 * 10) << self._sf) / (self._bwKhz * 10))
-            sfCoeff1_x4 = 17
-            sfCoeff2 = 8
-            if self._sf == 5 or self._sf == 6:
-                sfCoeff1_x4 = 25
-                sfCoeff2 = 0
-            sfDivisor = 4 * self._sf
-            if symbolLength_us >= 16000:
-                sfDivisor = 4 * (self._sf - 2)
-            bitsPerCrc = 16
-            N_symbol_header = 20 if self._headerType == _SX126X_LORA_HEADER_EXPLICIT else 0
+    def getTimeOnAirLora(self, len_):
+        """
+        Calculate the timeout for a lora packet
+        """
+        symbolLength_us = int(((1000 * 10) << self._sf) / (self._bwKhz * 10))
+        sfCoeff1_x4 = 17
+        sfCoeff2 = 8
+        if self._sf == 5 or self._sf == 6:
+            sfCoeff1_x4 = 25
+            sfCoeff2 = 0
+        sfDivisor = 4 * self._sf
+        if symbolLength_us >= 16000:
+            sfDivisor = 4 * (self._sf - 2)
+        bitsPerCrc = 16
+        N_symbol_header = 20 if self._headerType == _SX126X_LORA_HEADER_EXPLICIT else 0
 
-            bitCount = int(8 * len_ + self._crcType * bitsPerCrc - 4 * self._sf + sfCoeff2 + N_symbol_header)
-            if bitCount < 0:
-                bitCount = 0
+        bitCount = int(8 * len_ + self._crcType * bitsPerCrc - 4 * self._sf + sfCoeff2 + N_symbol_header)
+        if bitCount < 0:
+            bitCount = 0
 
-            nPreCodedSymbols = int((bitCount + (sfDivisor - 1)) / sfDivisor)
+        nPreCodedSymbols = int((bitCount + (sfDivisor - 1)) / sfDivisor)
 
-            nSymbol_x4 = int((self._preambleLength + 8) * 4 + sfCoeff1_x4 + nPreCodedSymbols * (self._cr + 4) * 4)
+        nSymbol_x4 = int((self._preambleLength + 8) * 4 + sfCoeff1_x4 + nPreCodedSymbols * (self._cr + 4) * 4)
 
-            return int((symbolLength_us * nSymbol_x4) / 4)
-        else:
-            return int((len_ * 8 * self._br) / (_SX126X_CRYSTAL_FREQ * 32))
+        return int((symbolLength_us * nSymbol_x4) / 4)
+
+    def getTimeOnAirFSK(self, len_):
+        """
+        Calculate the timeout for fsk packet in us
+        will already have a margin added to the calculation
+        have a margin of 3 in the len_
+        consider decreasing the margin
+        """
+        
+        num_bits = len_ * 8 * 3
+        return int((num_bits / self._bitrate) * 1000000)
 
     def implicitHeader(self, len_):
         return self.setHeaderType(_SX126X_LORA_HEADER_IMPLICIT, len_)
@@ -1683,7 +1695,6 @@ class SX1262(SX126X):
 
     def beginFSK(
         self,
-        bR=20_000,
         pS=0x08,  # BT=0.3
         bW=0x1B,  # RX_BW = 78k
         fDev=5_000,
@@ -1698,7 +1709,7 @@ class SX1262(SX126X):
         currentLimit=140.0,
     ):
 
-        state = super().beginFSK(bR=bR, pS=pS, bW=bW, fDev=fDev, preLength=preLength, preDetect=preDetect, syncLength=syncLength, addrComp=addrComp,
+        state = super().beginFSK(pS=pS, bW=bW, fDev=fDev, preLength=preLength, preDetect=preDetect, syncLength=syncLength, addrComp=addrComp,
                                  packType=packType, plLength=plLength, crcType=crcType, whitening=whitening, currentLimit=currentLimit)
 
         print(f"this is the freq  before: {self._FREQ}")
