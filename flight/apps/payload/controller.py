@@ -218,67 +218,6 @@ class PayloadController:
         return [command[0] for command in cls.command_list]  # return the timestamps of the scheduled commands
 
     @classmethod
-    def add_dataset_collection_command(
-        cls,
-        ts,
-        camera_bit_flag,
-        capture_rate,
-        imu_hz,
-        duration,
-        camera_defaults_selector=-1,
-        fps=0,
-        wbmode=0,
-        aelock=0,
-        awblock=0,
-        exposuretimerange_low=0,
-        exposuretimerange_high=0,
-        gainrange_low=0.0,
-        gainrange_high=0.0,
-        ispdigitalgainrange_low=0.0,
-        ispdigitalgainrange_high=0.0,
-        ee_mode=0,
-        ee_strength=0.0,
-        aeantibanding=0,
-        exposurecompensation=0.0,
-        tnr_mode=0,
-        tnr_strength=0.0,
-        saturation=0.0,
-    ):
-        """
-        This is the command that will be used to schedule a dataset collection experiment
-        TODO: should add some checks to the arguments here
-        """
-        argument_list = (
-            ts,
-            camera_bit_flag,
-            capture_rate,
-            imu_hz,
-            duration,
-            camera_defaults_selector,
-            fps,
-            wbmode,
-            aelock,
-            awblock,
-            exposuretimerange_low,
-            exposuretimerange_high,
-            gainrange_low,
-            gainrange_high,
-            ispdigitalgainrange_low,
-            ispdigitalgainrange_high,
-            ee_mode,
-            ee_strength,
-            aeantibanding,
-            exposurecompensation,
-            tnr_mode,
-            tnr_strength,
-            saturation
-        )
-
-        command = Command("DATASET_COLLECTION")
-        command.set_arguments(*argument_list)
-        return cls.add_command(command)
-
-    @classmethod
     def add_dataset_processing_command(cls, ts, duration, level_processing, rc_version, ld_version, dataset_path, bypass_preflt_rej):
         """
         This is the command that will be used to schedule a dataset processing experiment
@@ -316,9 +255,12 @@ class PayloadController:
     @classmethod
     def add_command_inference(
         cls,
+        mode_id,
         ts,
         duration,
         camera_bit_flag,
+        capture_rate,
+        imu_hz,
         level_of_processing,
         width,
         height,
@@ -346,8 +288,8 @@ class PayloadController:
         Given the information it will create the command and add it to the list
         it should add ordered by timestamp
         the command_list will be a list of lists. The inside list will contain the necessary info
-            ts, camera_bit_flag, level_of_processing, width, height,
-            downscale_factor,
+            mode_id, ts, camera_bit_flag, capture_rate, imu_hz,
+            level_of_processing, width, height, downscale_factor,
             camera_defaults_selector, fps, wbmode, aelock, awblock,
             exposuretimerange_low, exposuretimerange_high,
             gainrange_low, gainrange_high,
@@ -370,9 +312,12 @@ class PayloadController:
         # need to add the data in the corerct spot in the list
         # it has to be ordered by timestamp
         argument_list = (
+            mode_id,
             ts,
             duration,
             camera_bit_flag,
+            capture_rate,
+            imu_hz,
             level_of_processing,
             width,
             height,
