@@ -51,6 +51,8 @@ class SATELLITE_RADIO:
 
     digipeater_header = b"\x3c\xff\x01"   # have it here as well to facilitate checking
 
+    TX_BURST_SIZE = 15  # number of packets to send in a burst during a transmission window
+
     @classmethod
     def set_rx_mode(cls):
         """

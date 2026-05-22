@@ -241,6 +241,8 @@ def SET_FSK(freq, power, br, ps, bandwidth, f_dev, p_len, p_detect, sync_len, ad
     Sets the radio modulation to FSK for the next transmission
     Calling the driver here directly to avoid passing a lot of arguments around
 
+    will triplicate the tx burst size to make up for the faster transmission in fsk compared to lora
+
     for some reason the objects are wrapped in object wrapper
     and object wrapper does not support __setattr__ so we are unable to change the values
     to minimize changes, here we will use the obj attribute
@@ -270,6 +272,11 @@ def SET_FSK(freq, power, br, ps, bandwidth, f_dev, p_len, p_detect, sync_len, ad
             crcType=crc_type,
             whitening=whitening,
         )
+
+        # in fsk transmission is way faster compared to lora (>3 times)
+        # lets triplicate tx_burst_size
+        SATELLITE_RADIO.TX_BURST_SIZE *= 3
+
     except Exception as e:
         logger.error(f"FSK fail: {e}")
         return [f"fsk failed {e}"]
