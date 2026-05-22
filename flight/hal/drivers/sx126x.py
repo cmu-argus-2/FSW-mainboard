@@ -503,6 +503,7 @@ class SX126X:
         self._preambleDetectorLength = 0
 
         self._modem = _SX126X_PACKET_TYPE_LORA   # used to keep track of the current modem
+        self._lastPacketLen = 0                  # used to keep track of when to call setPacketParams
 
     def begin(
         self, bw, sf, cr, syncWord, currentLimit, preambleLength, tcxoVoltage=1.7, useRegulatorLDO=False, txIq=False, rxIq=False
@@ -779,7 +780,7 @@ class SX126X:
 
             state = self.setPacketParams(self._preambleLength, self._crcType, len_, self._headerType, self._invertIQ)
 
-        if self._modem == _SX126X_PACKET_TYPE_GFSK and self._packetType == _SX126X_GFSK_PACKET_VARIABLE:
+        if self._lastPacketLen != len_ and self._modem == _SX126X_PACKET_TYPE_GFSK and self._packetType == _SX126X_GFSK_PACKET_VARIABLE:
             self.setPacketParamsFSK(self._preambleLength, self._preambleDetectorLength,
                                     self._syncWordLength, self._addrComp, self._packetType,
                                     len_, self._crcType, self._whitening)
@@ -805,6 +806,8 @@ class SX126X:
 
         while self.gpio.value:
             yield_()
+
+        self._lastPacketLen = len_
 
         return state
 
