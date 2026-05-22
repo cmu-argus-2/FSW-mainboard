@@ -1831,7 +1831,7 @@ class SX1262(SX126X):
             return 0, _ERR_INVALID_PACKET_TYPE
 
         state = super().transmit(data, len(data))
-        return len(data), state
+        return state
 
     def _readData(self, len_=0):
         state = _ERR_NONE
