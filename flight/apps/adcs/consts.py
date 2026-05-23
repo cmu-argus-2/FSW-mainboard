@@ -9,10 +9,7 @@ from core.satellite_config import adcs_config as CONFIG
 from ulab import numpy as np
 
 _CTR_MODE_DIR = "/sd/config/"
-_CTRL_MODE_PATH = "/sd/config/controller_mode.bin"
-# Removed: SD persistence for gains/tolerances (RAM footprint)
-# _CTRL_CONSTS_PATH = _CTR_MODE_DIR + "controller_consts.bin"
-# _MODE_TOLS_PATH   = _CTR_MODE_DIR + "mode_tols.bin"
+_CTRL_MODE_PATH = _CTR_MODE_DIR + "controller_mode.bin"
 
 
 class StatusConst:
