@@ -849,20 +849,20 @@ def DATASET_OD(ts, duration, max_iteration, dataset_path):
     return result
 
 
-@register_command()
-def SYNCHRONIZE_TIME(rtc_time):
-    """
-    Command that will be called by the ground station to synchronize the time
-    rtc_time               -> the real-time clock time to set
+# @register_command()
+# def SYNCHRONIZE_TIME(rtc_time):
+#     """
+#     Command that will be called by the ground station to synchronize the time
+#     rtc_time               -> the real-time clock time to set
 
-    """
-    from apps.payload.controller import PayloadController as PC
+#     """
+#     from apps.payload.controller import PayloadController as PC
 
-    logger.info(f"[PAYLOAD] - Synchronize time command received with RTC time: {rtc_time}")
-    result = PC.send_synchronize_time_command(rtc_time)
-    if not result:
-        logger.error("[PAYLOAD] - Failed to synchronize time")
-    return result
+#     logger.info(f"[PAYLOAD] - Synchronize time command received with RTC time: {rtc_time}")
+#     result = PC.send_synchronize_time_command(rtc_time)
+#     if not result:
+#         logger.error("[PAYLOAD] - Failed to synchronize time")
+#     return result
 
 
 @register_command()

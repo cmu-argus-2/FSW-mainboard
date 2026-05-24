@@ -114,6 +114,7 @@ class Task(TemplateTask):
             self.log_info("Ping responded, switching to ACTIVE state.")
             PC.received_experiment_ack = False
             PC.ACT_TS = TPM.time()
+            PC.send_synchronize_time_command(TPM.time())
             PC.switch_state("ACTIVE")
 
             # set the last_executed_time

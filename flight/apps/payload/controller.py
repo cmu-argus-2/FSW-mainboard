@@ -159,6 +159,7 @@ class PayloadController:
             if not response:
                 logger.error("[PAYLOAD] - Failed to turn on jetson")
                 return False
+            PU.flush_rx()
 
         # active state, need to get the desired command
         if cls.current_state == PayloadState.ACTIVE:
@@ -482,13 +483,17 @@ class PayloadController:
         data = cls.read(max_packet_size)  # read the max packet size
 
         if not data or len(data) < max_packet_size:
-            # nothing to be done here
+            # logger.debug(f"[PAYLOAD] - Short read: got {len(data) if data else 0}/{max_packet_size} bytes")
             return False
 
         logger.debug(f"[PAYLOAD] - Received data from uart: {data[0:10]} size: {len(data)}")
 
         # try and unpack the data
-        _, message_object = unpack(data)
+        try:
+            _, message_object = unpack(data)
+        except Exception as e:
+            logger.error(f"[PAYLOAD] - unpack failed: {e} | first 30 bytes: {data[:30]} | in_waiting after: {PU._uart.in_waiting if PU._uart else 'N/A'}")
+            return False
 
         if isinstance(message_object, Ack):
             logger.info(f"[PAYLOAD] -   Received ack: {message_object}")
@@ -778,6 +783,7 @@ class PayloadController:
             TPM.sleep(0.1)  # TODO: probably do not need this delay
             SATELLITE.JETSON_SD_REQ.value = False  # turn off the 5v regulator to save power
             logger.info("[PAYLOAD] - Jetson power disabled successfully")
+            PU.flush_rx()
             return True
         except Exception as e:
             logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
