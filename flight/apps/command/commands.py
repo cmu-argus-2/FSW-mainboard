@@ -652,10 +652,10 @@ def ADCS_CTRL_MODE(mode_id):
 
 @register_command()
 def ADCS_UPDATE_MAG_BIAS(b_x, b_y, b_z):
-    """Updates the magnetometer hard-iron bias values."""
+    """Updates the magnetometer hard-iron bias values in microtesla."""
     from apps.adcs.sensors import update_mag_bias
 
-    logger.info(f"Executing ADCS_UPDATE_MAG_BIAS with b_x: {b_x}, b_y: {b_y}, b_z: {b_z}")
+    logger.info(f"Executing ADCS_UPDATE_MAG_BIAS with b_x: {b_x} uT, b_y: {b_y} uT, b_z: {b_z} uT")
     update_mag_bias(float(b_x), float(b_y), float(b_z))
     return [b_x, b_y, b_z]
 
