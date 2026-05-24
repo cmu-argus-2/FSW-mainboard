@@ -1,6 +1,5 @@
 # Attitude Determination and Control (ADC) task
 
-import apps.adcs.math as math
 import apps.adcs.sensors as sensors
 from apps.adcs.acs import (
     bcross_controller,
@@ -13,7 +12,6 @@ from apps.adcs.acs import (
 from apps.adcs.consts import ControllerConst, ControllerModes, Modes, StatusConst
 
 # from apps.adcs.modemanager import update_mode
-from apps.adcs.sensors import load_sensor_cal
 from core import DataHandler as DH
 from core import TemplateTask
 from core import state_manager as SM
@@ -79,7 +77,6 @@ class Task(TemplateTask):
     sun_lux = np.zeros((9,))
 
     coils_off = True
-    last_mag_prop_time = 0.0
 
     _MAG_SAMPLE_DT = 0.08
     _MAG_N_SAMPLES = 6
@@ -100,7 +97,7 @@ class Task(TemplateTask):
             ControllerModes.load()
             # ControllerConst.load()  # Removed: SD persistence for gains/inertia (RAM footprint)
             # Modes.load()            # Removed: SD persistence for mode tolerances (RAM footprint)
-            load_sensor_cal()
+            sensors.load_mag_bias()
 
             # Check for controller mode update from commands
             if self.CONTROLLER_MODE != ControllerModes.current_mode:
@@ -196,23 +193,14 @@ class Task(TemplateTask):
           1. Update ADCS mode based on snapshot readings
           2. Every 50 ms for duration seconds:
              read gyro and update the control law / coils
-             (future: propagate sun and mag vectors with gyro)
           3. Coils off at the end
         """
         GYRO_INTERVAL = 0.05  # 50 ms
         t_start = TPM.monotonic_float()
-        self.last_mag_prop_time = t_start
         while TPM.monotonic_float() - t_start < duration:
             loop_start = TPM.monotonic_float()
 
             self.gyro_status, self.gyro_data = sensors.read_gyro()
-            dt = loop_start - self.last_mag_prop_time
-            if self.gyro_status == StatusConst.OK and dt > 0:
-                R = math.rotation_matrix_from_vector(-self.gyro_data * dt)
-                self.mag_data = np.dot(R, self.mag_data)
-                if self.sun_status == StatusConst.OK:
-                    self.sun_pos_body = np.dot(R, self.sun_pos_body)
-            self.last_mag_prop_time = loop_start
 
             self._apply_control()
 

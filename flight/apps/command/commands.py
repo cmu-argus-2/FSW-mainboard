@@ -651,21 +651,13 @@ def ADCS_CTRL_MODE(mode_id):
 
 
 @register_command()
-def ADCS_UPDATE_GYRO_BIAS(b_x, b_y, b_z):
-    """Updates the gyro bias values."""
-    from apps.adcs.sensors import update_gyro_bias
-    logger.info(f"Executing ADCS_UPDATE_GYRO_BIAS with b_x: {b_x}, b_y: {b_y}, b_z: {b_z}")
-    update_gyro_bias(float(b_x), float(b_y), float(b_z))
+def ADCS_UPDATE_MAG_BIAS(b_x, b_y, b_z):
+    """Updates the magnetometer hard-iron bias values."""
+    from apps.adcs.sensors import update_mag_bias
+
+    logger.info(f"Executing ADCS_UPDATE_MAG_BIAS with b_x: {b_x}, b_y: {b_y}, b_z: {b_z}")
+    update_mag_bias(float(b_x), float(b_y), float(b_z))
     return [b_x, b_y, b_z]
-
-
-@register_command()
-def ADCS_UPDATE_MAG_CAL(b_x, b_y, b_z, s_x, s_y, s_z):
-    """Updates the magnetometer calibration (hard-iron bias and per-axis scale)."""
-    from apps.adcs.sensors import update_mag_cal
-    logger.info(f"Executing ADCS_UPDATE_MAG_CAL with b_x: {b_x}, b_y: {b_y}, b_z: {b_z}, s_x: {s_x}, s_y: {s_y}, s_z: {s_z}")
-    update_mag_cal(float(b_x), float(b_y), float(b_z), float(s_x), float(s_y), float(s_z))
-    return [b_x, b_y, b_z, s_x, s_y, s_z]
 
 
 @register_command()

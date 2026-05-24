@@ -1,6 +1,3 @@
-import os
-import struct
-
 from apps.adcs.consts import ControllerConst, ControllerModes, Modes, StatusConst
 from apps.adcs.sun import compute_body_sun_vector_from_lux, read_light_sensors
 from hal.configuration import SATELLITE
@@ -12,73 +9,50 @@ _MAX_MAG_NORM = 2.5e-3  # Max allowed magnetometer reading is 2500 uT (Field str
 # bmx160 magnetometer scale wont go past 1.3 mT in x,y and 2.5 mT in z axis
 _MAX_GYRO_NORM = 2.0e3 * np.pi / 180.0  # bmx160 gyro max scale is 2000 deg/s - anything higher is likely faulty reading
 
-_CAL_PATH = "/sd/config/sensor_cal.bin"
-_CAL_FMT = "9f"
-_sensor_cal_loaded = False
-
-_GYRO_BIAS = np.zeros(3)
+_MAG_BIAS_PATH = "/sd/config/mag_bias.bin"
+_MAG_BIAS_FMT = "3f"
+_mag_bias_loaded = False
 _MAG_BIAS = np.zeros(3)
-_MAG_SCALE = np.ones(3)
 
 
-def load_sensor_cal():
-    global _sensor_cal_loaded
-    if _sensor_cal_loaded:
+def load_mag_bias():
+    global _mag_bias_loaded
+    if _mag_bias_loaded:
         return
     try:
-        with open(_CAL_PATH, "rb") as f:
-            vals = struct.unpack(_CAL_FMT, f.read(struct.calcsize(_CAL_FMT)))
-        _GYRO_BIAS[0] = vals[0]
-        _GYRO_BIAS[1] = vals[1]
-        _GYRO_BIAS[2] = vals[2]
-        _MAG_BIAS[0] = vals[3]
-        _MAG_BIAS[1] = vals[4]
-        _MAG_BIAS[2] = vals[5]
-        _MAG_SCALE[0] = vals[6]
-        _MAG_SCALE[1] = vals[7]
-        _MAG_SCALE[2] = vals[8]
+        import struct
+
+        with open(_MAG_BIAS_PATH, "rb") as f:
+            vals = struct.unpack(_MAG_BIAS_FMT, f.read(struct.calcsize(_MAG_BIAS_FMT)))
+        _MAG_BIAS[0] = vals[0]
+        _MAG_BIAS[1] = vals[1]
+        _MAG_BIAS[2] = vals[2]
     except Exception:
         pass
-    _sensor_cal_loaded = True
+    _mag_bias_loaded = True
 
 
-def _save_sensor_cal():
+def _save_mag_bias():
     try:
-        with open(_CAL_PATH, "wb") as f:
-            f.write(
-                struct.pack(
-                    _CAL_FMT,
-                    _GYRO_BIAS[0],
-                    _GYRO_BIAS[1],
-                    _GYRO_BIAS[2],
-                    _MAG_BIAS[0],
-                    _MAG_BIAS[1],
-                    _MAG_BIAS[2],
-                    _MAG_SCALE[0],
-                    _MAG_SCALE[1],
-                    _MAG_SCALE[2],
-                )
-            )
+        import os
+        import struct
+
+        try:
+            os.mkdir("/sd/config")
+        except Exception:
+            pass
+        with open(_MAG_BIAS_PATH, "wb") as f:
+            f.write(struct.pack(_MAG_BIAS_FMT, _MAG_BIAS[0], _MAG_BIAS[1], _MAG_BIAS[2]))
         os.sync()
     except Exception:
         pass
 
 
-def update_gyro_bias(b_x, b_y, b_z):
-    _GYRO_BIAS[0] = b_x
-    _GYRO_BIAS[1] = b_y
-    _GYRO_BIAS[2] = b_z
-    _save_sensor_cal()
-
-
-def update_mag_cal(b_x, b_y, b_z, s_x, s_y, s_z):
+def update_mag_bias(b_x, b_y, b_z):
     _MAG_BIAS[0] = b_x
     _MAG_BIAS[1] = b_y
     _MAG_BIAS[2] = b_z
-    _MAG_SCALE[0] = s_x
-    _MAG_SCALE[1] = s_y
-    _MAG_SCALE[2] = s_z
-    _save_sensor_cal()
+    _save_mag_bias()
 
 
 def read_gyro() -> tuple[int, np.ndarray]:
@@ -88,7 +62,6 @@ def read_gyro() -> tuple[int, np.ndarray]:
 
     if SATELLITE.IMU_AVAILABLE:
         gyro = np.array(SATELLITE.IMU.gyro())  # Gyro measurements are in rad/s
-        gyro -= _GYRO_BIAS
 
         # gyro validity check
         is_valid = True
@@ -118,7 +91,6 @@ def read_magnetometer() -> tuple[int, np.ndarray]:
         mag = np.array(SATELLITE.IMU.mag())
         mag *= 1e-6  # Convert field from uT to T
         mag -= _MAG_BIAS
-        mag *= _MAG_SCALE
 
         # mag validity check
         is_valid = True
