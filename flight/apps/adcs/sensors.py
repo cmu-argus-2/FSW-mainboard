@@ -32,7 +32,11 @@ def load_mag_bias():
     _mag_bias_loaded = True
 
 
-def _save_mag_bias():
+def update_mag_bias(b_x, b_y, b_z):
+    """Update magnetometer bias from commanded microtesla values."""
+    _MAG_BIAS[0] = b_x * 1e-6
+    _MAG_BIAS[1] = b_y * 1e-6
+    _MAG_BIAS[2] = b_z * 1e-6
     try:
         import os
         import struct
@@ -46,14 +50,6 @@ def _save_mag_bias():
         os.sync()
     except Exception:
         pass
-
-
-def update_mag_bias(b_x, b_y, b_z):
-    """Update magnetometer bias from commanded microtesla values."""
-    _MAG_BIAS[0] = b_x * 1e-6
-    _MAG_BIAS[1] = b_y * 1e-6
-    _MAG_BIAS[2] = b_z * 1e-6
-    _save_mag_bias()
 
 
 def read_gyro() -> tuple[int, np.ndarray]:
