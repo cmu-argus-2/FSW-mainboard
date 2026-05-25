@@ -6,12 +6,22 @@ class Watchdog:
     def __init__(self, enable_pin: object, input: object):
         self.__enable_pin = enable_pin
 
+        # Deinitialize the Enable Pin in case of code and not MCU reset
+        self.__enable = digitalio.DigitalInOut(enable_pin)
+        self.__enable.deinit()
+        self.__en_val = False
+
+        # Initialize the Enable Pin and set it to high (Enabling WDT by default)
         self.__enable = digitalio.DigitalInOut(enable_pin)
         self.__enable.switch_to_output(True, digitalio.DriveMode.PUSH_PULL)
         self.__en_val = True  # Error handling
 
+        # Initialize the WDT Input pin
         self.__input = digitalio.DigitalInOut(input)
         self.__input.direction = digitalio.Direction.OUTPUT
+
+        # Ping WDT Input pin at initialization
+        self.__input.value = True
         self.__input.value = False
         self.__input_val = False  # Error handling
 
