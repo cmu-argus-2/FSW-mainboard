@@ -156,7 +156,6 @@ def SUM(opA, opB):
     Test command
     used to experiment adding new command and testing the arguments
     """
-
     logger.info(f"Executing SUM with opA: {opA} and opB: {opB}")
     return [opA + opB]
 
