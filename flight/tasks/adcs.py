@@ -126,16 +126,15 @@ class Task(TemplateTask):
                     self.MODE, self.CONTROLLER_MODE, self.gyro_status, self.gyro_data, self.sun_status, self.sun_pos_body
                 )
 
-                if self.CONTROLLER_MODE == ControllerModes.BDOT:
+                if self.MODE == Modes.ACS_OFF or self.MODE == Modes.VF_TUMBLING:
+                    self.ensure_coils_off()
+                elif self.CONTROLLER_MODE == ControllerModes.BDOT:
                     self._bdot_cycle()
                 else:
                     self._bcross_sun_cycle(1.0)
 
     # --- Attitude Control ---
     def _apply_control(self):
-        if self.MODE == Modes.ACS_OFF and self.MODE != Modes.VF_TUMBLING:
-            self.ensure_coils_off()
-            return
         mtq_throttle = ControllerConst.FALLBACK_CONTROL
         if self.CONTROLLER_MODE == ControllerModes.BCROSS:
             if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
@@ -159,25 +158,22 @@ class Task(TemplateTask):
         B-dot control cycle: sample 6 mag readings, run coils, coils off.
         Total duration: 5 x 0.08 + 0.5 = 0.9 s.
         """
-        if self.MODE == Modes.ACS_OFF or self.MODE == Modes.VF_TUMBLING:
-            self.ensure_coils_off()
-            return
-        self._mag_buffer = []
+        _mag_buffer = []
         for k in range(self._MAG_N_SAMPLES):
             status, reading = sensors.read_magnetometer()
             if status == StatusConst.OK:
-                self._mag_buffer.append(reading)
+                _mag_buffer.append(reading)
             if k < self._MAG_N_SAMPLES - 1:
                 TPM.sleep(self._MAG_SAMPLE_DT)
 
-        if self._mag_buffer:
-            self.mag_data = self._mag_buffer[-1]
+        if _mag_buffer:
+            self.mag_data = _mag_buffer[-1]
             self.mag_status = StatusConst.OK
         else:
             self.mag_status = StatusConst.MAG_FAIL
 
-        if len(self._mag_buffer) == self._MAG_N_SAMPLES:
-            buf = np.array(self._mag_buffer)
+        if len(_mag_buffer) == self._MAG_N_SAMPLES:
+            buf = np.array(_mag_buffer)
             throttle = bdot_controller(buf, self._MAG_SAMPLE_DT)
             self.coil_status = mcm_coil_allocator(throttle, self.mag_data)
             self.coils_off = False
