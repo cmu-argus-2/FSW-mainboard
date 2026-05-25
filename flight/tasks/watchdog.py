@@ -4,7 +4,6 @@
 # functioning correctly.
 
 from core import TemplateTask
-from core.satellite_config import watchdog_config as CONFIG
 from hal.configuration import SATELLITE
 
 
