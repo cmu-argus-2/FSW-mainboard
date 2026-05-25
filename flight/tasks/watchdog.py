@@ -12,14 +12,10 @@ class Task(TemplateTask):
     def __init__(self, id):
         super().__init__(id)
         self.name = "WATCHDOG"
-        self.enabled = CONFIG.ENABLED
 
     async def main_task(self):
-        if not self.enabled:
-            return
 
         if SATELLITE.WATCHDOG_AVAILABLE:
-
             """
             The enable pin is used for a MOSFET to control the signal to the
             MCU, the watchdog is powered regardless of the enable pin.
