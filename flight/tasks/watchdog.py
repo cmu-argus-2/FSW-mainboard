@@ -27,7 +27,6 @@ class Task(TemplateTask):
             is toggled to ensure that the watchdog is not triggered during the
             transition.
             """
-            return
 
             if SATELLITE.WATCHDOG.input:
                 SATELLITE.WATCHDOG.input_low()

@@ -10,7 +10,6 @@ from apps.comms.auth import get_auth_key_bytes, verify_authenticated_command
 from apps.comms.modes import COMMS_MODE, COMMS_MODE_STR
 from apps.digipeater import DigipeaterRxQueue
 from apps.telemetry.splat.splat.telemetry_codec import unpack
-from apps.telemetry.splat.splat.telemetry_helper import format_bytes
 from core import logger
 from core.satellite_config import comms_config as CONFIG
 from hal.configuration import SATELLITE
@@ -64,7 +63,7 @@ class SATELLITE_RADIO:
         SATELLITE.RADIO.startReceive(0xFFFFFF)
         SATELLITE.RADIO.tx_en.value = False
         SATELLITE.RADIO.rx_en.value = True
-        
+
     @classmethod
     def set_tx_mode(cls):
         """

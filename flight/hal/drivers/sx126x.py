@@ -567,7 +567,7 @@ class SX126X:
 
     def beginFSK(self, pS, bW, fDev, preLength, preDetect, syncLength, addrComp, packType, plLength,
                  crcType, whitening, currentLimit, tcxoVoltage=1.7, useRegulatorLDO=False):
-        
+
         state = self.reset()
         ASSERT(state)
 
@@ -1093,7 +1093,7 @@ class SX126X:
         have a margin of 3 in the len_
         consider decreasing the margin
         """
-        
+
         num_bits = len_ * 8 * 3
         return int((num_bits / self._bitrate) * 1000000)
 
@@ -1282,7 +1282,6 @@ class SX126X:
 
         br = 32E6 / bitrate
         br = int(br * 32)
-        print("BR", br)
         modParam = [0, 0, 0, 0, 0, 0, 0, 0]
         modParam[0] = (br >> 16) & 0xFF
         modParam[1] = (br >> 8) & 0xFF
@@ -1325,7 +1324,6 @@ class SX126X:
         modParam[4] = bandwith
 
         Fdev = int(frequencyDeviation * 2**25 / 32E6)
-        print("FDEV", Fdev)
         modParam[5] = (Fdev >> 16) & 0xFF
         modParam[6] = (Fdev >> 8) & 0xFF
         modParam[7] = Fdev & 0xFF
@@ -1614,11 +1612,10 @@ class SX1262(SX126X):
     TX_DONE = _SX126X_IRQ_TX_DONE
     RX_DONE = _SX126X_IRQ_RX_DONE
     STATUS = ERROR
-    
-    _FREQ = 434.7
+
+    _FREQ = 437.4   # assuming the assigned frequency
     _POWER = 22
-    
-    
+
     _BLOCKING = True   # for argus this will always be true, non blocking path does not seem to be complete
 
     def __init__(self, spi_bus, cs, irq, rst, gpio, tx_en, rx_en):
@@ -1681,7 +1678,6 @@ class SX1262(SX126X):
         state = super().beginFSK(pS=pS, bW=bW, fDev=fDev, preLength=preLength, preDetect=preDetect, syncLength=syncLength, addrComp=addrComp,
                                  packType=packType, plLength=plLength, crcType=crcType, whitening=whitening, currentLimit=currentLimit)
 
-        print(f"this is the freq  before: {self._FREQ}")
         state = self.setFrequency(self._FREQ)
         ASSERT(state)
 
@@ -1817,17 +1813,11 @@ class SX1262(SX126X):
             if len_ == 0:
                 length = super().getPacketLength(False)
                 data = data[:length]
-
         else:
             return b"", state
         return bytes(data), state
 
     def _transmit(self, data):
-        if isinstance(data, bytes) or isinstance(data, bytearray):
-            pass
-        else:
-            return 0, _ERR_INVALID_PACKET_TYPE
-
         state = super().transmit(data, len(data))
         return state
 

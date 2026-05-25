@@ -54,10 +54,9 @@ class Task(TemplateTask):
         if TransmitQueue.packet_available():
             self.update_comms_telemetry()  # will only update comms data when something is sent or received
             SATELLITE_RADIO.set_tx_mode()  # set the radio to transmit mode if we have something to send, will be set back to rx mode after transmission
-            
             sent_in_burst = 0
+
             while TransmitQueue.packet_available():
-                self.log_info("  Packet available in TransmitQueue, preparing for transmission")
                 # If we have a packet to transmit, set it in the radio
                 packet, queue_error_code = TransmitQueue.pop_packet()
                 if queue_error_code == QUEUE_STATUS.OK:

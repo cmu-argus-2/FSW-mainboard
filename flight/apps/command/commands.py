@@ -253,11 +253,10 @@ def SET_FSK(freq, power, br, ps, bandwidth, f_dev, p_len, p_detect, sync_len, ad
 
     logger.warning("Executing SET_FSK: setting modulation to FSK for next transmission")
 
-
     SATELLITE.RADIO.obj._FREQ = freq
     SATELLITE.RADIO.obj._POWER = power
     SATELLITE.RADIO.obj._bitrate = br
-    
+
     try:
         SATELLITE.RADIO.beginFSK(
             pS=ps,
