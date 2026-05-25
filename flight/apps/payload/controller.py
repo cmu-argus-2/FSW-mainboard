@@ -75,7 +75,7 @@ class PayloadController:
 
     # Time variables for diferente things
     BOOT_TS = 0  # time at which switched to booting state
-    BOOT_TIMEOUT = 60  # how long it will wait for jetson to respond ping
+    BOOT_TIMEOUT = 90  # how long it will wait for jetson to respond ping
 
     ACT_TS = 0  # time at which switched to active state
     ACT_TIMEOUT = 20  # max amount of seconds to wait to recieve jetson ack for experiment command
