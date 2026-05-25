@@ -66,7 +66,7 @@ class Modes:
 
     # Detumbling
     VF_TUMBLING_TOL_BDOT = 3.49  # 1.75  # Enter VF tumbling if ω > 3.49 rad/s (200 deg/s)
-    VF_TUMBLING_TOL = 8.72  # 3.49  # Enter VF tumbling if ω > 8.72 rad/s (500 deg/s)
+    VF_TUMBLING_TOL = 3.49  # Enter VF tumbling if ω > 3.49 rad/s (200 deg/s)
     TUMBLING_TOL = 0.54  # Exit detumbling into stable if ω < 0.54 rad/s (30 deg/s)
 
     # Detumbling only controllers
