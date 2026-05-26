@@ -219,7 +219,7 @@ class PayloadController:
         return [command[0] for command in cls.command_list]  # return the timestamps of the scheduled commands
 
     @classmethod
-    def add_dataset_processing_command(cls, ts, duration, level_processing, rc_version, ld_version, dataset_path, bypass_preflt_rej):
+    def add_dataset_processing_command(cls, ts, duration, level_processing, rc_version, ld_version, bypass_preflt_rej, dataset_path):
         """
         This is the command that will be used to schedule a dataset processing experiment
         TODO: should add some checks to the arguments here
@@ -230,8 +230,8 @@ class PayloadController:
             level_processing,
             rc_version,
             ld_version,
+            bypass_preflt_rej,
             dataset_path,
-            bypass_preflt_rej
         )
         command = Command("DATASET_PROCESSING")
         command.set_arguments(*argument_list)
