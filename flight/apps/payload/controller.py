@@ -120,6 +120,8 @@ class PayloadController:
     transaction_dict = {}
     received_create_trans = False
     received_init_trans = False
+    received_file_size = False
+    file_size_request_tid = None
 
     # Download manager for handling file transfers
     download_manager = DownloadManager()
@@ -166,7 +168,13 @@ class PayloadController:
             logger.info(f"[PAYLOAD] -  Selected command: {cls.current_command}")
 
         if cls.current_state == PayloadState.DOWNLOAD:
+            cls.transaction_dict = {}
+            cls.received_create_trans = False
+            cls.received_init_trans = False
+            cls.received_file_size = False
+            cls.file_size_request_tid = None
             cls.received_all_files_sent = False
+            cls.download_manager.reset()
             cls.DWN_LAST_FRAGMENT_TS = TPM.time()
 
         # turn off state needs to send turn off command
@@ -461,6 +469,14 @@ class PayloadController:
         logger.info(f"[PAYLOAD] - Sent create transaction command: {tid}, {string_command}")
 
     @classmethod
+    def send_get_file_size(cls, tid, string_command):
+        command = Command("GET_FILE_SIZE")
+        command.add_argument("string_command", string_command)
+        cls.file_size_request_tid = tid
+        PU.send(pack(command))
+        logger.info(f"[PAYLOAD] - Requested payload file size for tid={tid}: {string_command}")
+
+    @classmethod
     def send_turn_off_command(cls):
         """
         Will send the command to turn off the jetson
@@ -639,6 +655,24 @@ class PayloadController:
             logger.info(f"[SYNC] RTT={rtt:.3f}s status={ack.ack_args}")
             return
 
+        if ack.cmd_id == COMMAND_IDS["GET_FILE_SIZE"]:
+            raw_size = (ack.ack_args or "").rstrip("\x00").strip()
+            try:
+                file_size = int(raw_size)
+            except ValueError:
+                logger.error(f"[PAYLOAD] - Invalid GET_FILE_SIZE ACK: {raw_size}")
+                return
+
+            tid = cls.file_size_request_tid
+            if tid is None or tid not in cls.transaction_dict:
+                logger.error(f"[PAYLOAD] - GET_FILE_SIZE ACK without tracked transaction tid={tid}")
+                return
+
+            cls.transaction_dict[tid].file_size = file_size
+            cls.received_file_size = True
+            logger.info(f"[PAYLOAD] - File size for tid={tid}: {file_size}")
+            return
+
     @classmethod
     def process_init_trans(cls, command):
         """
@@ -675,6 +709,8 @@ class PayloadController:
 
         # need to give a random number for number_of_packets
         cls.transaction_dict[tid] = Transaction(tid, filename, number_of_packets=-1, max_payload_size=600)
+        cls.received_file_size = False
+        cls.send_get_file_size(tid, filename)
 
         return True
 
