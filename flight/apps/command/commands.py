@@ -716,7 +716,7 @@ def EXPERIMENT(
     """
     from apps.payload.controller import PayloadController as PC
     logger.info(f"[PAYLOAD] - Experiment command received to run at {ts}")
-    result = PC.add_command(
+    result = PC.add_command_inference(
         mode_id,
         ts,
         duration,
