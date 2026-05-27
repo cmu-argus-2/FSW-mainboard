@@ -222,7 +222,7 @@ class Task(TemplateTask):
             return
 
         # If no transactions to process yet, wait for them
-        if not PC.received_create_trans or not PC.received_init_trans or not PC.received_file_size:
+        if not PC.received_create_trans or not PC.received_init_trans:
             return
 
         # Get current download status
