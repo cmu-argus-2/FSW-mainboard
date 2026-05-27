@@ -509,6 +509,7 @@ class PayloadController:
             _, message_object = unpack(data)
         except Exception as e:
             logger.error(f"[PAYLOAD] - unpack failed: {e} | first 30 bytes: {data[:30]} | in_waiting after: {PU._uart.in_waiting if PU._uart else 'N/A'}")
+            PU.flush_rx()
             return False
 
         if isinstance(message_object, Ack):
@@ -705,12 +706,16 @@ class PayloadController:
             logger.error(f"[PAYLOAD] - Invalid create transaction command: {tid}, {filename}")
             return False
 
-        filename = filename.rstrip("\x00")
+        payload_filename = filename.rstrip("\x00")
+        storage_filename = payload_filename.lstrip("/")
+        dataset_marker = "/data/datasets/"
+        if dataset_marker in payload_filename:
+            storage_filename = "data/datasets/" + payload_filename.split(dataset_marker, 1)[1]
 
         # need to give a random number for number_of_packets
-        cls.transaction_dict[tid] = Transaction(tid, filename, number_of_packets=-1, max_payload_size=600)
+        cls.transaction_dict[tid] = Transaction(tid, storage_filename, number_of_packets=-1, max_payload_size=600)
         cls.received_file_size = False
-        cls.send_get_file_size(tid, filename)
+        cls.send_get_file_size(tid, payload_filename)
 
         return True
 

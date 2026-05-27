@@ -51,9 +51,14 @@ class PayloadUART(PayloadCommunicationInterface):
         if not cls._connected:
             return
         pending = cls._uart.in_waiting
-        if pending > 0:
-            cls._uart.read(pending)
-            # logger.warning(f"[PAYLOAD UART] Flushed {pending} stale RX bytes")
+        flushed = 0
+        while pending > 0:
+            chunk_size = min(pending, 128)
+            cls._uart.read(chunk_size)
+            flushed += chunk_size
+            pending -= chunk_size
+        if flushed > 0:
+            logger.warning(f"[PAYLOAD UART] Flushed {flushed} stale RX bytes")
 
     @classmethod
     def is_connected(cls) -> bool:
