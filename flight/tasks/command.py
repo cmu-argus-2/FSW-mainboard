@@ -414,12 +414,12 @@ class Task(TemplateTask):
 
             elif self.EPS_MODE == EPS_POWER_FLAG.LOW_POWER:
                 # T2.2: Low SoC, transition to low power
-                self.log_warning("T2.3: Transition from NOMINAL to LOW POWER")
+                self.log_warning("T2.2: Transition from NOMINAL to LOW POWER")
                 SM.switch_to(STATES.LOW_POWER)
 
             elif self.PAYLOAD_MODE == PayloadState.WATCHING:
                 # T2.3: Payload commanded to start watching, transition to EXPERIMENT
-                self.log_warning("T2.4: Transition from NOMINAL to EXPERIMENT")
+                self.log_warning("T2.3: Transition from NOMINAL to EXPERIMENT")
                 SM.switch_to(STATES.EXPERIMENT)
             else:
                 # No transition, stay in NOMINAL
