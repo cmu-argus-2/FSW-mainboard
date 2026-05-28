@@ -1,6 +1,7 @@
 import time
 
 import core.scheduler as scheduler
+from core import DataHandler as DH
 from core import logger
 from core.states import STATES, STR_STATES
 from hal.configuration import SATELLITE
@@ -106,12 +107,25 @@ class StateManager:
             self.__initialized = True
 
         if new_state_id == STATES.LOW_POWER:
-            logger.warning("Entering LOW POWER state - cutting power to payload and GPS")
+            logger.warning("Entering LOW POWER state - cutting power to payload, GPS, and peripheral line")
+            DH.graceful_shutdown() # Finish any writes before cutting power to the SD Card
             if SATELLITE.PAYLOADPOWER_AVAILABLE:
                 SATELLITE.JETSON_ENABLE.value = False
                 SATELLITE.JETSON_SD_REQ.value = False
-            SATELLITE.turn_off_device("GPS")
+            SATELLITE.turn_off_device("GPS") # Turn GPS off
+            SATELLITE.turn_off_device("IMU") # Turn SD Card on
+            
+        if self.__current_state == STATES.LOW_POWER and new_state_id != STATES.LOW_POWER:
+            logger.warning("Leaving LOW POWER state - restoring peripheral line power")
+            SATELLITE.turn_on_device("IMU") # Checking status of IMU will block the SD card, just force powerline on
 
+            logger.warning("Leaving LOW POWER state -restoring GPS power")
+            gps_status = SATELLITE.DEVICE_STATUS("GPS") # Turn GPS on if not dead
+            if not gps_status.get("dead", True):
+                SATELLITE.turn_on_device("GPS")
+            else:
+                logger.warning("GPS is dead - not restoring power to GPS")
+    
         # if we are leaving nomimal mode, we want to turn make sure digipeater is turned off
         if self.__current_state == STATES.NOMINAL and new_state_id != STATES.NOMINAL:
             logger.warning("Leaving NOMINAL state - ensuring digipeater is turned off")
