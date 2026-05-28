@@ -494,12 +494,11 @@ class SX126X:
         self._rxBw = 0
         self._rxBwKhz = 0
         self._pulseShape = 0
-        self._addrComp = 0
-        self._syncWordLength = 0
+        self._addrComp = 0            # this could be removed
+        self._syncWordLength = 32     # hardcoded to 32
         self._whitening = 0
-        self._packetType = 0
+        self._packetType = 1          # this could be removed
         self._dataRate = 0
-        self._packetLength = 0
         self._preambleDetectorLength = 0
 
         self._modem = _SX126X_PACKET_TYPE_LORA   # used to keep track of the current modem
@@ -565,7 +564,7 @@ class SX126X:
 
         return state
 
-    def beginFSK(self, pS, bW, fDev, preLength, preDetect, syncLength, addrComp, packType, plLength,
+    def beginFSK(self, pS, bW, fDev, preLength, preDetect,
                  crcType, whitening, currentLimit, tcxoVoltage=1.7, useRegulatorLDO=False):
 
         state = self.reset()
@@ -593,14 +592,10 @@ class SX126X:
 
         self._preambleLength = preLength
         self._preambleDetectorLength = preDetect
-        self._syncWordLength = syncLength
-        self._addrComp = addrComp
-        self._packetType = packType
-        self._packetLength = plLength
         self._crcType = crcType
         self._whitening = whitening
 
-        self.setPacketParamsFSK(preLength, preDetect, syncLength, addrComp, packType, plLength, crcType, whitening)
+        self.setPacketParamsFSK(preLength, preDetect, 32, 0, 1, 255, crcType, whitening)
 
         if useRegulatorLDO:
             state = self.setRegulatorLDO()
@@ -1668,17 +1663,13 @@ class SX1262(SX126X):
         fDev=5_000,
         preLength=32,
         preDetect=0x05,  # PREAMBLE DETECT 16
-        syncLength=32,
-        addrComp=0x00,  # ADDR FILT OFF
-        packType=0x01,  # PACK VAR
-        plLength=255,
         crcType=0x06,  # CRC 2 BYTE INV (CCITT)
         whitening=0x01,  # WHITE ON
         currentLimit=140.0,
     ):
 
-        state = super().beginFSK(pS=pS, bW=bW, fDev=fDev, preLength=preLength, preDetect=preDetect, syncLength=syncLength, addrComp=addrComp,
-                                 packType=packType, plLength=plLength, crcType=crcType, whitening=whitening, currentLimit=currentLimit)
+        state = super().beginFSK(pS=pS, bW=bW, fDev=fDev, preLength=preLength, preDetect=preDetect,
+                                crcType=crcType, whitening=whitening, currentLimit=currentLimit)
 
         state = self.setFrequency(self._FREQ)
         ASSERT(state)
