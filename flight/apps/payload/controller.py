@@ -363,6 +363,10 @@ class PayloadController:
 
         TODO: might need to change some of the timeouts
         """
+        if len(cls.command_list) >= 1 or cls.current_command is not None:
+            logger.error("[PAYLOAD] - Experiment cap reached (max 1). Use CLEAR_EXPERIMENT_LIST first.")
+            return False
+
         cls.command_list.append(cmd)
         cls.command_list.sort(key=lambda x: x.arguments["ts"])  # Sort by timestamp
 
