@@ -37,7 +37,7 @@ from core.data_handler import DataHandler as DH
 from core.logging import LEVELS as LOG_LEVELS
 from core.logging import RotatingFileHandler, getLogger
 from core.satellite_config import log_config as LOG_CONFIG
-from core.states import STR_STATES
+from core.states import STATES, STR_STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 
@@ -597,7 +597,7 @@ def INIT_TRANS(tid, number_of_packets):
 def ADCS_CTRL_MODE(mode_id):
     """Sends a command to change the ADCS controller mode."""
     logger.info(f"Executing ADCS_CTRL_MODE with mode_id: {mode_id}")
-    if SM.current_state == SM.STATES.LOW_POWER:
+    if SM.current_state == STATES.LOW_POWER:
         return [-2]
     from apps.adcs.consts import ControllerModes
 
@@ -616,7 +616,7 @@ def ADCS_CTRL_MODE(mode_id):
 @register_command()
 def ADCS_UPDATE_MAG_BIAS(b_x, b_y, b_z):
     """Updates the magnetometer hard-iron bias values in microtesla."""
-    if SM.current_state == SM.STATES.LOW_POWER:
+    if SM.current_state == STATES.LOW_POWER:
         return [-2]
     from apps.adcs.sensors import update_mag_bias
 
