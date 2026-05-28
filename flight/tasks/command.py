@@ -35,6 +35,7 @@ _PWM_MIN = const(0)  # Minimum PWM value for deployment
 _FIRST_PWM = const(2)  # First PWM to start deployment
 _BURN_WIRE_TIMEOUT = CONFIG.BURN_WIRE_TIMEOUT  # number of tries
 _DEPLOYMENT_DISTANCE = const(2)  # distance(cm) threshold for deployment
+_SKIP_DEPLOYMENT = CONFIG.SKIP_DEPLOYMENT
 
 
 class Task(TemplateTask):
@@ -244,7 +245,10 @@ class Task(TemplateTask):
                 )
 
                 # TODO: add deployment flag
-                if SATELLITE.BURN_WIRES_AVAILABLE:
+                if _SKIP_DEPLOYMENT:
+                    self.log_info("Deployment skipped (SKIP_DEPLOYMENT=True)")
+                    self.deployment_done = True
+                elif SATELLITE.BURN_WIRES_AVAILABLE:
                     # Deployment finished when the deployment PWM reaches 0
                     if self.deploymentPWM < _PWM_MIN and deployment_time_check:
                         self.deploymentTries += 1

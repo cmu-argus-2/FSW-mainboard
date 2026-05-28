@@ -5,7 +5,8 @@ Interface to connect the simulation backend of choice with the emulated hardware
 
 This module provides the Simulator class passed to the emulated HAL to interact with the simulation backend.
 The Simulator class initializes various simulated hardware components and provides methods to interact with them.
-It automatically manages the simulation time and advances the simulation to the current real-world time.
+Simulation time advances only through time.sleep() calls from the FSW — sensor reads return the last computed
+measurement without stepping the physics. This makes SIL runs fully deterministic and independent of wall-clock time.
 Author(s): Karthik Karumanchi, Ibrahima S. Sow
 
 """
@@ -13,8 +14,8 @@ Author(s): Karthik Karumanchi, Ibrahima S. Sow
 import os
 import random
 import shutil
-import time
 from datetime import datetime
+from math import floor
 
 import numpy as np
 from argusim.simulation_manager.sim import Simulator as cppSim
@@ -22,6 +23,12 @@ from argusim.simulation_manager.sim import Simulator as cppSim
 ARGUS_ROOT = os.getenv("ARGUS_ROOT", os.path.join(os.getcwd(), "../"))
 RESULTS_ROOT_FOLDER = os.path.join(ARGUS_ROOT, "sil/results")
 CONFIG_FILE = os.path.join(ARGUS_ROOT, "sil/configs/params.yaml")
+
+
+class SimulationComplete(BaseException):
+    """Raised when the physics engine reaches MAX_TIME, signalling the FSW to exit cleanly."""
+
+    pass
 
 
 class Simulator:  # will be passed by reference to the emulated HAL
@@ -35,57 +42,50 @@ class Simulator:  # will be passed by reference to the emulated HAL
         shutil.copy(CONFIG_FILE, os.path.join(os.path.dirname(RESULTS_FOLDER), "../params.yaml"))
         self.cppsim = cppSim(trial, RESULTS_FOLDER, CONFIG_FILE, log=True)
 
+        speedup_env = os.environ.get("SIM_REAL_SPEEDUP")
+        self.speedup = float(speedup_env) if speedup_env is not None else None
+
         self.measurement = np.zeros((52,))
-        self.starting_real_epoch = time.monotonic_ns() / 1.0e9
-        self.latest_real_epoch = self.starting_real_epoch
-        self.starting_real_epoch = time.monotonic_ns() / 1.0e9
-        self.latest_real_epoch = self.starting_real_epoch
         self.base_dt = self.cppsim.params.dt
         self.sim_time = 0
 
         # Measurement labels
-        self.gps_idx = slice(0, 6)
-        self.gyro_idx = slice(6, 9)
-        self.mag_idx = slice(9, 12)
-        self.lux_idx = slice(12, 21)
-        self.mtb_idx = slice(21, 27)
-        self.solar_idx = slice(27, 40)
-        self.power_idx = slice(40, 51)
-        self.jetson_idx = slice(51, 52)
+        self.gps_idx = self.cppsim.Idx.SENSORS.GPS
+        self.gyro_idx = self.cppsim.Idx.SENSORS.GYRO
+        self.mag_idx = self.cppsim.Idx.SENSORS.MAG
+        self.lux_idx = self.cppsim.Idx.SENSORS.PHOTODIODES
+        self.mtb_idx = self.cppsim.Idx.SENSORS.MTB_POW
+        self.solar_idx = self.cppsim.Idx.SENSORS.SOL_POW
+        self.power_idx = self.cppsim.Idx.SENSORS.BATTERY
+        self.jetson_idx = self.cppsim.Idx.SENSORS.JET_POW
+        self.deploy_idx = self.cppsim.Idx.SENSORS.DEPLOY
 
     """
         SENSOR CALLBACKS
-        Populate each sensor with the appropriate readings
-        They also advance the c++ simulation before reading
+        Return the latest measurement from the physics engine.
+        The physics only advances via advance_by_simtime(), which is called by MockTime.sleep().
     """
 
     def gyro(self):
-        self.advance_to_time()
-        return np.deg2rad(self.measurement[self.gyro_idx])  # IMU obtains gyro readins in deg/s
+        return np.deg2rad(self.measurement[self.gyro_idx])  # IMU obtains gyro readings in deg/s
 
     def mag(self):
-        self.advance_to_time()
         return self.measurement[self.mag_idx]  # IMU obtains magnetic field readings in uT
 
     def sun_lux(self, attr):
-        self.advance_to_time()  # XP, XM, YP, YM, ZP_XP, ZP_YM, ZP_XM, ZP_YP, ZM
-
         attr2idx = {"XP": 0, "XM": 1, "YP": 2, "YM": 3, "ZP_XP": 4, "ZP_YM": 5, "ZP_XM": 6, "ZP_YP": 7, "ZM": 8}
         if attr not in attr2idx.keys():
             raise Exception(f"Invalid Sun Sensor dir {attr}")
         return self.measurement[self.lux_idx][attr2idx[attr]]
 
     def gps(self):
-        self.advance_to_time()
         gps_state = np.array([self.get_sim_time()] + list(self.measurement[self.gps_idx] * 1e2))
         return gps_state  # GPS returns data in cm
 
     def coil_power(self, idx):
-        self.advance_to_time()
         return self.measurement[self.mtb_idx][idx]
 
     def solar_power(self, attr):
-        self.advance_to_time()
         power_idx_map = {
             "XP": [0, 5, 6],
             "XM": [1, 7, 8],
@@ -104,7 +104,6 @@ class Simulator:  # will be passed by reference to the emulated HAL
             raise Exception("Invalid Solar power monitor key")
 
     def jetson_power(self):
-        self.advance_to_time()
         voltage = self.measurement[self.power_idx][3]
         if voltage != 0:
             current = self.measurement[self.jetson_idx] / voltage
@@ -113,7 +112,6 @@ class Simulator:  # will be passed by reference to the emulated HAL
         return (voltage, current)
 
     def battery_diagnostics(self, attr: str):
-        self.advance_to_time()
         attr2idx = dict(
             zip(
                 [
@@ -143,6 +141,12 @@ class Simulator:  # will be passed by reference to the emulated HAL
         else:
             raise Exception("Invalid Battery diagnostic attribute")
 
+    def deployment_sensor(self, attr):
+        attr2idx = {"XP": 0, "YM": 1}
+        if attr not in attr2idx.keys():
+            raise Exception(f"Invalid Deployable Sensor dir {attr}")
+        return self.measurement[self.deploy_idx][attr2idx[attr]]
+
     def set_control_input(self, dir, input):
         """
         Sets the control input to the simulation XP, XM, YP, YM, ZP, ZM
@@ -150,33 +154,25 @@ class Simulator:  # will be passed by reference to the emulated HAL
         dir_2_idx_map = {"XP": 0, "XM": 1, "YP": 2, "YM": 3, "ZP": 4, "ZM": 5}
         self.cppsim.control_input[dir_2_idx_map[dir]] = input * 5
 
-    def get_time_diff_since_last(self):
+    def advance_by_simtime(self, sim_seconds):
         """
-        Time since last simulation advance
+        Advance the simulation by exactly sim_seconds of simulation time.
+        Called by MockTime.sleep() — the only mechanism that steps the physics engine.
+        Raises SimulationComplete when MAX_TIME is reached.
         """
-        self.starting_real_epoch = time.monotonic_ns() / 1.0e9
+        if self.sim_time >= self.cppsim.params.MAX_TIME:
+            raise SimulationComplete(f"Reached MAX_TIME={self.cppsim.params.MAX_TIME}s")
 
-        return self.starting_real_epoch - self.latest_real_epoch
-
-    def advance_to_time(self):
-        """
-        Advance in steps of 'dt' to reach the current FSW time
-        """
-        time_diff = self.get_time_diff_since_last()
-        iters = int(time_diff / self.base_dt)
-
-        if iters > 20:
-            iters = 20
-            dt = iters * self.base_dt / 20
-        else:
-            dt = self.base_dt
-
-        if iters != 0:
-            self.latest_real_epoch += iters * dt
-
+        iters = floor(sim_seconds / self.base_dt)
+        last_dt = sim_seconds - iters * self.base_dt
+        if iters == 0 and last_dt == 0:
+            return
         for _ in range(iters):
-            self.measurement = self.cppsim.step(self.sim_time, dt)
-            self.sim_time += dt
+            self.measurement = self.cppsim.step(self.sim_time, self.base_dt)
+            self.sim_time += self.base_dt
+        if last_dt > 0:
+            self.measurement = self.cppsim.step(self.sim_time, last_dt)
+            self.sim_time += last_dt
 
     def get_sim_time(self):  # spice's tdb/et to unix time
         return self.j2000_to_unix(self.cppsim.get_time())
