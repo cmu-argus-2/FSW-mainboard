@@ -504,6 +504,8 @@ class SX126X:
         self._modem = _SX126X_PACKET_TYPE_LORA   # used to keep track of the current modem
         self._lastPacketLen = 0                  # used to keep track of when to call setPacketParams
 
+        self._EXTRA_TIME = 0   # time used to take into account preambles, crc, sync word (for fsk)
+
     def begin(
         self, bw, sf, cr, syncWord, currentLimit, preambleLength, tcxoVoltage=1.7, useRegulatorLDO=False, txIq=False, rxIq=False
     ):
@@ -601,6 +603,9 @@ class SX126X:
             state = self.setRegulatorLDO()
         else:
             state = self.setRegulatorDCDC()
+
+        # 16 is the crc at the end, time in us
+        self._EXTRA_TIME = (self._preambleLength + self._syncWordLength + 16) / self._bitrate * 1000000
 
     def reset(self, verify=True):
         self.rst.value = True
@@ -1087,12 +1092,10 @@ class SX126X:
         """
         Calculate the timeout for fsk packet in us
         will already have a margin added to the calculation
-        have a margin of 3 in the len_
-        consider decreasing the margin
         """
 
-        num_bits = len_ * 8 * 3
-        return int((num_bits / self._bitrate) * 1000000)
+        num_bits = len_ * 8
+        return int(((num_bits / self._bitrate) * 1000000 + self._EXTRA_TIME) * 1.5)
 
     def implicitHeader(self, len_):
         return self.setHeaderType(_SX126X_LORA_HEADER_IMPLICIT, len_)
@@ -1668,8 +1671,8 @@ class SX1262(SX126X):
         currentLimit=140.0,
     ):
 
-        state = super().beginFSK(pS=pS, bW=bW, fDev=fDev, preLength=preLength, preDetect=preDetect,
-                                crcType=crcType, whitening=whitening, currentLimit=currentLimit)
+        state = super().beginFSK(pS=pS, bW=bW, fDev=fDev, preLength=preLength, preDetect=preDetect, crcType=crcType,
+                                 whitening=whitening, currentLimit=currentLimit)
 
         state = self.setFrequency(self._FREQ)
         ASSERT(state)
