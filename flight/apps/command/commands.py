@@ -85,7 +85,7 @@ def REBOOT(selector):
                 logger.error("Failed to gracefully shutdown data handler, aborting reboot")
                 return ["graceful reboot failed: DH shutdown failed"]
             SATELLITE.reboot()
-            return ["success"]  # this will never be returned
+            return [1]  # this will never be returned
 
         except Exception as e:
             logger.error(f"Failed to gracefully reboot the satellite: {e}")
@@ -96,7 +96,7 @@ def REBOOT(selector):
         logger.info("Executing REBOOT: MAIN_POWER")
         try:
             SATELLITE.reboot()
-            return ["success"]  # this will never be returned
+            return [2]  # this will never be returned
         except Exception as e:
             logger.error(f"Failed to reboot the satellite: {e}")
             return [f"main power reboot failed: {e}"]
@@ -105,7 +105,7 @@ def REBOOT(selector):
     elif selector == 3:
         logger.info("Executing REBOOT: ACK")
         CommandSupervisor.request_reboot()
-        return ["reboot requested"]
+        return [3]
 
     # 4 = PET reboot
     elif selector == 4:
@@ -114,13 +114,13 @@ def REBOOT(selector):
             from tasks import hal_monitor
             current_time = TPM.monotonic()
             hal_monitor._BOOT_TIME = current_time
-            return ["pet successful"]
+            return [4]
         except Exception as e:
             logger.error(f"[REBOOT_PET] Failed to reset regular reboot timer: {e}")
             return [f"pet failed: {e}"]
 
     logger.error(f"Invalid reboot selector: {selector}")
-    return ["invalid reboot selector"]
+    return [-1]
 
 
 @register_command()
@@ -173,7 +173,7 @@ def PAYLOAD_SWITCH(selector):
 
     if not SATELLITE.PAYLOADPOWER_AVAILABLE:
         logger.warning("[PAYLOAD] Payload power pins is not available.")
-        return ["payload power pins not available"]
+        return [-2] # "payload power pins not available"
 
     if selector == 0:
         try:
@@ -181,7 +181,7 @@ def PAYLOAD_SWITCH(selector):
             SATELLITE.JETSON_ENABLE.value = False
             TPM.sleep(0.1)
             SATELLITE.JETSON_SD_REQ.value = False  # turn of 5v dcdc to save more power
-            return ["payload power off"]
+            return [selector] # "payload power off"
         except Exception as e:
             logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
             return [f"error turning off payload: {e}"]
@@ -192,12 +192,12 @@ def PAYLOAD_SWITCH(selector):
             TPM.sleep(0.1)
             SATELLITE.JETSON_ENABLE.value = True  # turn of 5v dcdc to save more powe
             logger.info("[PAYLOAD] Jetson power enabled successfully.")
-            return ["payload power on"]
+            return [selector] # "payload power on"
         except Exception as e:
             logger.error(f"[PAYLOAD] Failed to enable payload power: {e}")
             return [f"error turning on payload: {e}"]
 
-    return ["invalid payload switch status"]
+    return [-1] # "invalid payload switch status"
 
 
 @register_command()
@@ -212,14 +212,14 @@ def RF_SWITCH(selector):
     if selector == 0:
         logger.warning("Executing RF_SWITCH (turn off): will disable TX after ACK")
         CommandSupervisor.request_rf_stop()
-        return ["rf_stop_requested"]
+        return [0]
     if selector == 1:
         logger.warning("Executing RF_SWITCH (turn on): will enable TX after ACK")
         CommandSupervisor.cancel_pending_rf_stop()
         SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.STANDARD)
-        return ["rf_switch_executed"]
+        return [1]
     logger.warning(f"Executing RF_SWITCH with invalid selector: {selector}")
-    return ["invalid rf switch status"]
+    return [-1]
 
 
 @register_command()
@@ -233,7 +233,7 @@ def DIGIPEATER_SWITCH(selector):
         return DigipeaterState.activate()
     else:
         logger.warning(f"Executing DIGIPEATER_SWITCH with invalid selector: {selector}")
-        return ["invalid digipeater switch status"]
+        return [-1]
 
 
 @register_command()
