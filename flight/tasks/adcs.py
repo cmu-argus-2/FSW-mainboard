@@ -91,23 +91,24 @@ class Task(TemplateTask):
             # check for deployment to update inertia matrix
             pass
         else:
-            if not DH.data_process_exists("adcs"):
-                DH.register_data_process("adcs", _ADCS_DATA_FORMAT, True, data_limit=100000, write_interval=2)
+            if SM.current_state != STATES.LOW_POWER:
+                if not DH.data_process_exists("adcs"):
+                    DH.register_data_process("adcs", _ADCS_DATA_FORMAT, True, data_limit=100000, write_interval=2)
 
-            ControllerModes.load()
-            sensors.load_mag_bias()
+                ControllerModes.load()
+                sensors.load_mag_bias()
 
-            # Check for controller mode update from commands
-            if self.CONTROLLER_MODE != ControllerModes.current_mode:
-                self.CONTROLLER_MODE = ControllerModes.current_mode
+                # Check for controller mode update from commands
+                if self.CONTROLLER_MODE != ControllerModes.current_mode:
+                    self.CONTROLLER_MODE = ControllerModes.current_mode
 
-            self.log_data[ADCS_IDX.TIME_ADCS] = TPM.time()
+                self.log_data[ADCS_IDX.TIME_ADCS] = TPM.time()
 
-            self.mag_status, self.mag_data = sensors.read_magnetometer()
-            self.gyro_status, self.gyro_data = sensors.read_gyro()
-            self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
+                self.mag_status, self.mag_data = sensors.read_magnetometer()
+                self.gyro_status, self.gyro_data = sensors.read_gyro()
+                self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
 
-            self.log()
+                self.log()
 
             if SM.current_state == STATES.LOW_POWER or SM.current_state == STATES.EXPERIMENT:
                 # In low power or experiment mode, we want to conserve power by turning off the coils and not running the control cycle
