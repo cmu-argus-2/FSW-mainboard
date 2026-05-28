@@ -784,6 +784,7 @@ class SX126X:
             self.setPacketParamsFSK(self._preambleLength, self._preambleDetectorLength,
                                     self._syncWordLength, self._addrComp, self._packetType,
                                     len_, self._crcType, self._whitening)
+
         ASSERT(state)
 
         state = self.setDioIrqParams(_SX126X_IRQ_TX_DONE | _SX126X_IRQ_TIMEOUT, _SX126X_IRQ_TX_DONE)
@@ -826,6 +827,7 @@ class SX126X:
             self.setPacketParamsFSK(self._preambleLength, self._preambleDetectorLength,
                                     self._syncWordLength, self._addrComp, self._packetType,
                                     255, self._crcType, self._whitening)
+            self._lastPacketLen = 255   # update last len because it was changed
         else:
             return _ERR_UNKNOWN
         ASSERT(state)
