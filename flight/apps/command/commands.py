@@ -173,7 +173,7 @@ def PAYLOAD_SWITCH(selector):
 
     if not SATELLITE.PAYLOADPOWER_AVAILABLE:
         logger.warning("[PAYLOAD] Payload power pins is not available.")
-        return [-2] # "payload power pins not available"
+        return [-2]  # "payload power pins not available"
 
     if selector == 0:
         try:
@@ -181,7 +181,7 @@ def PAYLOAD_SWITCH(selector):
             SATELLITE.JETSON_ENABLE.value = False
             TPM.sleep(0.1)
             SATELLITE.JETSON_SD_REQ.value = False  # turn of 5v dcdc to save more power
-            return [selector] # "payload power off"
+            return [selector]  # "payload power off"
         except Exception as e:
             logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
             return [f"error turning off payload: {e}"]
@@ -192,12 +192,12 @@ def PAYLOAD_SWITCH(selector):
             TPM.sleep(0.1)
             SATELLITE.JETSON_ENABLE.value = True  # turn of 5v dcdc to save more powe
             logger.info("[PAYLOAD] Jetson power enabled successfully.")
-            return [selector] # "payload power on"
+            return [selector]  # "payload power on"
         except Exception as e:
             logger.error(f"[PAYLOAD] Failed to enable payload power: {e}")
             return [f"error turning on payload: {e}"]
 
-    return [-1] # "invalid payload switch status"
+    return [-1]  # "invalid payload switch status"
 
 
 @register_command()
