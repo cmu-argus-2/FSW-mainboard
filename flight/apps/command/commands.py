@@ -235,7 +235,7 @@ def RF_RESUME():
 
 
 @register_command()
-def SET_FSK(freq, power, br, ps, bandwidth, f_dev, p_len, p_detect, sync_len, ad_comp, pack_type, pl_len, crc_type, whitening):
+def SET_FSK(freq, power, br, ps, bandwidth, f_dev, p_len, p_detect, crc_type, whitening):
     """
     Sets the radio modulation to FSK for the next transmission
     Calling the driver here directly to avoid passing a lot of arguments around
@@ -263,10 +263,6 @@ def SET_FSK(freq, power, br, ps, bandwidth, f_dev, p_len, p_detect, sync_len, ad
             fDev=f_dev,
             preLength=p_len,
             preDetect=p_detect,
-            syncLength=sync_len,
-            addrComp=ad_comp,
-            packType=pack_type,
-            plLength=pl_len,
             crcType=crc_type,
             whitening=whitening,
         )
