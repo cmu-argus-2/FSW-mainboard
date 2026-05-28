@@ -75,7 +75,7 @@ class PayloadController:
 
     # Time variables for diferente things
     BOOT_TS = 0  # time at which switched to booting state
-    BOOT_TIMEOUT = 90  # how long it will wait for jetson to respond ping
+    BOOT_TIMEOUT = 120  # how long it will wait for jetson to respond ping
 
     ACT_TS = 0  # time at which switched to active state
     ACT_TIMEOUT = 20  # max amount of seconds to wait to recieve jetson ack for experiment command
@@ -645,7 +645,7 @@ class PayloadController:
         if ack.cmd_id == COMMAND_IDS["SYNCHRONIZE_TIME"]:
             import time
             rtt = time.monotonic() - cls.SYNC_SEND_MONOTONIC
-            logger.info(f"[SYNC] RTT={rtt:.3f}s status={ack.ack_args}")
+            logger.info(f"[PAYLOAD] RTT={rtt:.3f}s status={ack.ack_args}")
             return
 
     @classmethod
@@ -792,9 +792,9 @@ class PayloadController:
             return False
 
         try:
-            SATELLITE.JETSON_ENABLE.value = False
-            TPM.sleep(0.1)  # TODO: probably do not need this delay
-            SATELLITE.JETSON_SD_REQ.value = False  # turn off the 5v regulator to save power
+            # SATELLITE.JETSON_ENABLE.value = False
+            # TPM.sleep(0.1)  # TODO: probably do not need this delay
+            # SATELLITE.JETSON_SD_REQ.value = False  # turn off the 5v regulator to save power
             logger.info("[PAYLOAD] - Jetson power disabled successfully")
             PU.flush_rx()
             return True
