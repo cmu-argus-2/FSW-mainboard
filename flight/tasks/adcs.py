@@ -95,8 +95,6 @@ class Task(TemplateTask):
                 DH.register_data_process("adcs", _ADCS_DATA_FORMAT, True, data_limit=100000, write_interval=2)
 
             ControllerModes.load()
-            # ControllerConst.load()  # Removed: SD persistence for gains/inertia (RAM footprint)
-            # Modes.load()            # Removed: SD persistence for mode tolerances (RAM footprint)
             sensors.load_mag_bias()
 
             # Check for controller mode update from commands

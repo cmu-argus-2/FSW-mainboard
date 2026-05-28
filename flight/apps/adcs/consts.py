@@ -37,21 +37,6 @@ class StatusConst:
     # Success Status Constants
     OK = 0
 
-    # # Failure Messages
-    # _FAIL_MESSAGES = {
-    #     GYRO_FAIL: "Gyro failure",
-    #     MAG_FAIL: "Magnetometer failure",
-    #     SUN_NO_READINGS: "No readings",
-    #     SUN_NOT_ENOUGH_READINGS: "Insufficient readings",
-    #     SUN_ECLIPSE: "In eclipse",
-    #     ZERO_NORM: "Zero-normed vector",
-    #     OK: "Success",
-    # }
-
-    # @classmethod
-    # def get_fail_message(cls, status):
-    #     return cls._FAIL_MESSAGES.get(status, "Unknown error code")
-
 
 class Modes:
     """
@@ -80,50 +65,6 @@ class Modes:
     # SUN POINTED MODE
     SUN_POINTED_TOL_LO = 0.176  # Turn ACS off if momentum less than 10 deg from sun vector
     SUN_POINTED_TOL_HI = 0.26  # Re-enter sun_pointed if momentum more than 15 deg from sun vector
-
-    # Removed: SD persistence for mode tolerances (RAM footprint)
-    # _loaded = False
-    #
-    # @classmethod
-    # def load(cls):
-    #     if cls._loaded:
-    #         return
-    #     try:
-    #         with open(_MODE_TOLS_PATH, "rb") as f:
-    #             vals = struct.unpack("5f", f.read(struct.calcsize("5f")))
-    #         cls.VF_TUMBLING_TOL_BDOT = vals[0]
-    #         cls.VF_TUMBLING_TOL = vals[1]
-    #         cls.TUMBLING_TOL = vals[2]
-    #         cls.DETUMBLED_TOL_LO = vals[3]
-    #         cls.DETUMBLED_TOL_HI = vals[4]
-    #     except Exception:
-    #         pass
-    #     cls._loaded = True
-    #
-    # @classmethod
-    # def _save(cls):
-    #     if not cls._loaded:
-    #         return
-    #     try:
-    #         with open(_MODE_TOLS_PATH, "wb") as f:
-    #             f.write(struct.pack("5f", cls.VF_TUMBLING_TOL_BDOT, cls.VF_TUMBLING_TOL,
-    #                 cls.TUMBLING_TOL, cls.DETUMBLED_TOL_LO, cls.DETUMBLED_TOL_HI))
-    #         os.sync()
-    #     except Exception:
-    #         pass
-    #
-    # @classmethod
-    # def update_vf_tumbling_tols(cls, bdot, vf):
-    #     cls.VF_TUMBLING_TOL_BDOT = bdot
-    #     cls.VF_TUMBLING_TOL = vf
-    #     cls._save()
-    #
-    # @classmethod
-    # def update_detumbling_tols(cls, tumbling, lo, hi):
-    #     cls.TUMBLING_TOL = tumbling
-    #     cls.DETUMBLED_TOL_LO = lo
-    #     cls.DETUMBLED_TOL_HI = hi
-    #     cls._save()
 
 
 class ControllerModes:
@@ -185,34 +126,6 @@ class ControllerModes:
         return False
 
 
-# class SunConst:
-#     """
-#     Constants associated with sun sensor parameters.
-#     """
-#
-#     # map from light sensors to body vector
-#     LIGHT_SENSOR_NORMALS = np.array(
-#         [
-#             [1, 0, 0],
-#             [-1, 0, 0],
-#             [0, 1, 0],
-#             [0, -1, 0],
-#             [0.7071, 0, 0.7071],
-#             [0, -0.7071, 0.7071],
-#             [-0.7071, 0, 0.7071],
-#             [0, 0.7071, 0.7071],
-#             [0, 0, -1],
-#         ]
-#     )
-#
-#     LIGHT_X_IDXS = (0, 1, 4, 6)
-#     LIGHT_Y_IDXS = (2, 3, 5, 7)
-#     LIGHT_Z_IDXS = (4, 5, 6, 7, 8)
-#
-#     # Logging only allows for a max value of 65535. Since OPT4003 has a max value of 140k, scale log data down by 3
-#     LIGHT_SENSOR_LOG_FACTOR = 1 / 3
-
-
 class ControllerConst:
     """
     Constants associated with Controller Behavior
@@ -239,81 +152,3 @@ class ControllerConst:
 
     # Detumbling Constants
     DETUMB_GAIN = 1.0e05
-
-    # Removed: SD persistence for controller gains/inertia (RAM footprint)
-    # _loaded = False
-    #
-    # @classmethod
-    # def load(cls):
-    #     if cls._loaded:
-    #         return
-    #     try:
-    #         with open(_CTRL_CONSTS_PATH, "rb") as f:
-    #             vals = struct.unpack("9f", f.read(struct.calcsize("9f")))
-    #         cls.update_gains(vals[0], vals[1])
-    #         cls.update_omega_target(vals[2])
-    #         cls.update_inertia(vals[3], vals[4], vals[5], vals[6], vals[7], vals[8])
-    #     except Exception:
-    #         pass
-    #     cls._loaded = True
-    #
-    # @classmethod
-    # def _save(cls):
-    #     if not cls._loaded:
-    #         return
-    #     try:
-    #         m = cls.INERTIA_MAT
-    #         with open(_CTRL_CONSTS_PATH, "wb") as f:
-    #             f.write(struct.pack("9f", cls.SPIN_STABILIZING_GAIN, cls.DETUMB_GAIN,
-    #                 cls.OMEGA_MAG_TARGET, m[0][0], m[0][1], m[0][2], m[1][1], m[1][2], m[2][2]))
-    #         os.sync()
-    #     except Exception:
-    #         pass
-    #
-    # @classmethod
-    # def update_gains(cls, spin_gain, detumb_gain):
-    #     cls.SPIN_STABILIZING_GAIN = spin_gain
-    #     cls.DETUMB_GAIN = detumb_gain
-    #     cls._save()
-    #
-    # @classmethod
-    # def update_omega_target(cls, omega_mag_target):
-    #     cls.OMEGA_MAG_TARGET = omega_mag_target
-    #     cls.MOMENTUM_TARGET = np.dot(cls.INERTIA_MAT, cls.INERTIA_MAJOR_DIR * omega_mag_target)
-    #     cls.MOMENTUM_TARGET_MAG = np.linalg.norm(cls.MOMENTUM_TARGET)
-    #     cls._save()
-    #
-    # @classmethod
-    # def update_inertia(cls, ixx, ixy, ixz, iyy, iyz, izz):
-    #     import math
-    #     cls.INERTIA_MAT = np.array([[ixx, ixy, ixz], [ixy, iyy, iyz], [ixz, iyz, izz]])
-    #     _eigvals, _eigvecs = np.linalg.eig(cls.INERTIA_MAT)
-    #     _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
-    #     cls.INERTIA_MAJOR_DIR = _unscaled_axis / np.linalg.norm(_unscaled_axis)
-    #     inertia_major_dir_abs = np.array([math.fabs(dir_x) for dir_x in cls.INERTIA_MAJOR_DIR])
-    #     if cls.INERTIA_MAJOR_DIR[np.argmax(inertia_major_dir_abs)] < 0:
-    #         cls.INERTIA_MAJOR_DIR = -cls.INERTIA_MAJOR_DIR
-    #     cls.MOMENTUM_TARGET = np.dot(cls.INERTIA_MAT, cls.INERTIA_MAJOR_DIR * cls.OMEGA_MAG_TARGET)
-    #     cls.MOMENTUM_TARGET_MAG = np.linalg.norm(cls.MOMENTUM_TARGET)
-    #     cls._save()
-
-
-# class MCMConst:
-#     """
-#     Constants used for magnetorquer control and allocation.
-#     """
-
-#     N_MCM = 6
-#     MCM_FACES = ("XP", "XM", "YP", "YM", "ZP", "ZM")
-#     MCM_INDICES = (0, 1, 2, 3, 4, 5)
-
-#     ALLOC_MAT = np.array(
-#         [
-#             [0.5, 0.0, 0.0],
-#             [0.5, 0.0, 0.0],
-#             [0.0, 0.5, 0.0],
-#             [0.0, 0.5, 0.0],
-#             [0.0, 0.0, 0.5],
-#             [0.0, 0.0, 0.5],
-#         ]
-#     )
