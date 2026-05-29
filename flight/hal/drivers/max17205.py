@@ -17,6 +17,11 @@ _MAX1720X_TEMP_ADDR = const(0x08)  # Temp register
 _MAX1720X_COMMAND_ADDR = const(0x60)  # Command register
 _MAX1720X_CONFIG2_ADDR = const(0xBB)  # Command register
 
+# Addresses in shadow RAM (I2C address 0x0B)
+_MAX1720X_TEMP1_ADDR = const(0x34)  # AIN1 thermistor temperature
+_MAX1720X_TEMP2_ADDR = const(0x3B)  # AIN2 thermistor temperature
+_MAX1720X_INTTEMP_ADDR = const(0x35)  # Internal die temperature
+
 
 def unpack_signed_short_int(byte_list):
     """
@@ -31,10 +36,11 @@ def unpack_signed_short_int(byte_list):
 
 
 class MAX17205:
-    def __init__(self, i2c, i2c_addr):
+    def __init__(self, i2c, i2c_addr1, i2c_addr2):
         # 2 I2C addresses: read address (0x36) and write address (0x0B, shadow RAM)
         # Only using read address
-        self.i2c_device = I2CDevice(i2c, i2c_addr)
+        self.i2c_device1 = I2CDevice(i2c, i2c_addr1)
+        self.i2c_device2 = I2CDevice(i2c, i2c_addr2)
         self.rx_buffer = bytearray(2)
 
         self.voltage = 0.0
@@ -49,13 +55,17 @@ class MAX17205:
         self.time_pwrup = 0
         self.temperature = 0.0
 
+        self.temperature_ain1 = 0
+        self.temperature_ain2 = 0
+        self.temperature_die = 0
+
     def read_soc(self):
         """
         Reads SoC from the battery pack.
 
         :return: SoC as a percentage.
         """
-        with self.i2c_device as i2c:
+        with self.i2c_device1 as i2c:
             # Read 2 bytes from MAX1720X_REPSOC_ADDR
             i2c.write(bytes([_MAX1720X_REPSOC_ADDR]))
             i2c.readinto(self.rx_buffer)
@@ -71,7 +81,7 @@ class MAX17205:
 
         :return: Capacity in mAh.
         """
-        with self.i2c_device as i2c:
+        with self.i2c_device1 as i2c:
             # Read 2 bytes from _MAX1720X_REPCAP_ADDR
             i2c.write(bytes([_MAX1720X_REPCAP_ADDR]))
             i2c.readinto(self.rx_buffer)
@@ -87,7 +97,7 @@ class MAX17205:
 
         :return: Current in mA as a float.
         """
-        with self.i2c_device as i2c:
+        with self.i2c_device1 as i2c:
             # Read 2 bytes from _MAX1720X_CURRENT_ADDR
             i2c.write(bytes([_MAX1720X_CURRENT_ADDR]))
             i2c.readinto(self.rx_buffer)
@@ -106,7 +116,7 @@ class MAX17205:
 
         :return: Voltage in mV as a float.
         """
-        with self.i2c_device as i2c:
+        with self.i2c_device1 as i2c:
             # Read 2 bytes from _MAX1720X_VBAT_ADDR
             i2c.write(bytes([_MAX1720X_VBAT_ADDR]))
             i2c.readinto(self.rx_buffer)
@@ -125,7 +135,7 @@ class MAX17205:
 
         :return: Voltage in mV as a float.
         """
-        with self.i2c_device as i2c:
+        with self.i2c_device1 as i2c:
             # Read 2 bytes from _MAX1720X_VCELL_ADDR
             i2c.write(bytes([_MAX1720X_VCELL_ADDR]))
             i2c.readinto(self.rx_buffer)
@@ -144,7 +154,7 @@ class MAX17205:
 
         :return: Number of cycles.
         """
-        with self.i2c_device as i2c:
+        with self.i2c_device1 as i2c:
             # Read 2 bytes from _MAX1720X_AVCELL_ADDR
             i2c.write(bytes([_MAX1720X_AVCELL_ADDR]))
             i2c.readinto(self.rx_buffer)
@@ -160,7 +170,7 @@ class MAX17205:
 
         :return: Time-to-empty in seconds
         """
-        with self.i2c_device as i2c:
+        with self.i2c_device1 as i2c:
             # Read 2 bytes from _MAX1720X_TTE_ADDR
             i2c.write(bytes([_MAX1720X_TTE_ADDR]))
             i2c.readinto(self.rx_buffer)
@@ -176,7 +186,7 @@ class MAX17205:
 
         :return: Time-to-full in seconds
         """
-        with self.i2c_device as i2c:
+        with self.i2c_device1 as i2c:
             # Read 2 bytes from _MAX1720X_TTF_ADDR
             i2c.write(bytes([_MAX1720X_TTF_ADDR]))
             i2c.readinto(self.rx_buffer)
@@ -192,7 +202,7 @@ class MAX17205:
 
         :return: Time since power up in seconds
         """
-        with self.i2c_device as i2c:
+        with self.i2c_device1 as i2c:
             # Read 2 bytes from _MAX1720X_TIMERH_ADDR
             i2c.write(bytes([_MAX1720X_TIMERH_ADDR]))
             i2c.readinto(self.rx_buffer)
@@ -208,13 +218,55 @@ class MAX17205:
 
         :return: Temperature of the battery pack in centi-Celsius
         """
-        with self.i2c_device as i2c:
+        with self.i2c_device1 as i2c:
             i2c.write(bytes([_MAX1720X_TEMP_ADDR]))
             i2c.readinto(self.rx_buffer)
 
         # Scale temperature down by 256, multiply by 100 to get centi-Celsius (0.39 = 100/256)
         self.temperature = int.from_bytes(self.rx_buffer, "little", signed=False) * 0.390625
         return self.temperature
+
+    def read_temperature_ain1(self):
+        """
+        Reads the temperature of thermistor set 1.
+
+        :return: Temperature of the thermistor set 1 in centi-Celsius
+        """
+        with self.i2c_device2 as i2c:
+            i2c.write(bytes([_MAX1720X_TEMP1_ADDR]))
+            i2c.readinto(self.rx_buffer)
+
+        # Temperature reported in 10 * Kelvin. Subtract 2731 to convert 10 * Celsius. Multiply by 10 to get centi-Celsius
+        self.temperature_ain1 = (int.from_bytes(self.rx_buffer, "little", signed=False) - 2731) * 10
+        return self.temperature_ain1
+
+    def read_temperature_ain2(self):
+        """
+        Reads the temperature of thermistor set 2.
+
+        :return: Temperature of the thermistor set 2 in centi-Celsius
+        """
+        with self.i2c_device2 as i2c:
+            i2c.write(bytes([_MAX1720X_TEMP2_ADDR]))
+            i2c.readinto(self.rx_buffer)
+
+        # Temperature reported in 10 * Kelvin. Subtract 2731 to convert 10 * Celsius. Multiply by 10 to get centi-Celsius
+        self.temperature_ain2 = (int.from_bytes(self.rx_buffer, "little", signed=False) - 2731) * 10
+        return self.temperature_ain2
+
+    def read_temperature_die(self):
+        """
+        Reads the temperature of the MAX17205 die.
+
+        :return: Temperature of the MAX17205 die in centi-Celsius
+        """
+        with self.i2c_device2 as i2c:
+            i2c.write(bytes([_MAX1720X_INTTEMP_ADDR]))
+            i2c.readinto(self.rx_buffer)
+
+        # Temperature reported in 10 * Kelvin. Subtract 2731 to convert 10 * Celsius. Multiply by 10 to get centi-Celsius
+        self.temperature_die = (int.from_bytes(self.rx_buffer, "little", signed=False) - 2731) * 10
+        return self.temperature_die
 
     def reset(self):
         """
@@ -223,7 +275,7 @@ class MAX17205:
         :return: None
         """
 
-        with self.i2c_device as i2c:
+        with self.i2c_device1 as i2c:
             # Write to _MAX1720X_CONFIG2_ADDR
             i2c.write(bytes([_MAX1720X_CONFIG2_ADDR, 0x01, 0x00]))
 

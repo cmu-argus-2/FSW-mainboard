@@ -4,11 +4,16 @@
 from micropython import const
 
 
+class adcs_config:
+    CONTROLLER_MODE = 0
+
+
 class command_config:
     EXIT_STARTUP_TIMEOUT = const(5)
     DETUMBLING_TIMEOUT_DURATION = const(30)
     BURN_WIRE_TIMEOUT = const(2)
     PAYLOAD_TESTING_MODE = False
+    SKIP_DEPLOYMENT = True
 
 
 class time_processor_config:
@@ -16,7 +21,7 @@ class time_processor_config:
 
 
 class main_config:
-    LOG_LEVEL = "INFO"
+    LOG_LEVEL = "DEBUG"
 
 
 class hal_monitor_config:
@@ -37,3 +42,11 @@ class digipeater_config:
 
 class hal_config:
     ASIL0_EN = True
+
+
+class log_config:
+    LOG_DIR = "/sd/sys_logs"
+    LOG_FILENAME = "/sd/sys_logs/fsw.log"
+    LOG_FILE_MAX_BYTES = 102400
+    LOG_FILE_BACKUP_COUNT = 9
+    LOG_FILE_LEVEL = "WARNING"

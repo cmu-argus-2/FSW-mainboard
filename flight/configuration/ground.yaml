@@ -16,8 +16,8 @@ command:
     value: 2  # number of deployment attempts before forcing completion
     _const: true
 
-  PAYLOAD_TESTING_MODE:
-    value: false  # Set to true to enable payload testing mode (goes straight to experiment mode)
+  SKIP_DEPLOYMENT:
+    value: true  # Set to true to skip the burn wire deployment sequence entirely (ground testing)
 
 # Time Processor Module
 time_processor:
@@ -28,7 +28,7 @@ time_processor:
 # Main Task
 main:
   LOG_LEVEL:
-    value: "INFO"
+    value: "DEBUG"
 
 # HAL Monitor Task
 hal_monitor:
@@ -56,6 +56,24 @@ digipeater:
     value: 5
     _const: true
 
+
+# ADCS Task
+adcs:
+  CONTROLLER_MODE: 0
+
+
 hal:
   ASIL0_EN:
-    value: true 
+    value: true
+
+log:
+  LOG_DIR:
+    value: "/sd/sys_logs"
+  LOG_FILENAME:
+    value: "/sd/sys_logs/fsw.log"
+  LOG_FILE_MAX_BYTES:
+    value: 102400
+  LOG_FILE_BACKUP_COUNT:
+    value: 9
+  LOG_FILE_LEVEL:
+    value: "WARNING"

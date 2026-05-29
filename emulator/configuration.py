@@ -25,4 +25,8 @@ if SIMULATION:
     sim_set_name = os.getenv("ARGUS_SIMULATION_SET_NAME", "sil_set_1")
     SimulatedSpacecraft = Simulator(trial=trial, trial_date=trial_date, sim_set_name=sim_set_name)
 
+    import sys
+
+    sys.modules["time"].set_simulator(SimulatedSpacecraft)
+
 SATELLITE: CubeSat = EmulatedSatellite(debug=DEBUG_MODE, simulator=SimulatedSpacecraft, use_socket=SOCKET_RADIO)
