@@ -28,6 +28,7 @@ class Device:
         self.error_count = 0
         self.peripheral_line = peripheral_line
         self.dead = False
+        self.temp_disabled = False
 
 
 class CubeSat:
@@ -225,7 +226,12 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'XM', etc.)
         :return: bool - True if the driver exists and is not None, False otherwise.
         """
-        return self.key_in_device_list("TORQUE_" + dir) and self.__device_list["TORQUE_" + dir].device is not None
+        return (
+            self.key_in_device_list("TORQUE_" + dir)
+            and self.__device_list["TORQUE_" + dir].device is not None
+            and not self.__device_list["TORQUE_" + dir].dead
+            and not self.__device_list["TORQUE_" + dir].temp_disabled
+        )
 
     def TORQUE_DRIVERS_CURRENT(self, dir: str) -> float:
         """Returns the coil current for the specific magnetorquer if available and returns -1 otherwise
