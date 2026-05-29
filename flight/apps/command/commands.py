@@ -214,7 +214,7 @@ def RF_SWITCH(selector):
         CommandSupervisor.request_rf_stop()
         return [0]
     if selector == 1:
-        logger.warning("Executing RF_SWITCH (turn on): will enable TX after ACK")
+        logger.warning("Executing RF_SWITCH (turn on)")
         CommandSupervisor.cancel_pending_rf_stop()
         SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.STANDARD)
         return [1]
