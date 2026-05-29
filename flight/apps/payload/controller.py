@@ -80,7 +80,7 @@ class PayloadController:
     ACT_TS = 0  # time at which switched to active state
     ACT_TIMEOUT = 20  # max amount of seconds to wait to recieve jetson ack for experiment command
     ACT_CMD_SEND_TS = 0  # time at which last experiment command was sent
-    ACT_CMD_SEND_PERIOD = 3  # seconds between experiment command sends
+    ACT_CMD_SEND_PERIOD = 5  # seconds between experiment command sends
 
     PROC_TS = 0  # time at which switched to processing state
     PROC_TIMEOUT = 20  # seconds added to duration to control processing timeout
@@ -167,6 +167,9 @@ class PayloadController:
         if cls.current_state == PayloadState.ACTIVE:
             logger.info(f"[PAYLOAD] -  Selected command: {cls.current_command}")
             cls.ACT_CMD_SEND_TS = 0
+            PU.flush_rx()
+
+        if cls.current_state == PayloadState.PROCESSING:
             PU.flush_rx()
 
         if cls.current_state == PayloadState.DOWNLOAD:
