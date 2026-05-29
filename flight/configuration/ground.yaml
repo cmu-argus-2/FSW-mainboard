@@ -63,10 +63,6 @@ digipeater:
 adcs:
   CONTROLLER_MODE: 0
 
-# Watchdog Task
-watchdog:
-  ENABLED:
-    value: true
 
 hal:
   ASIL0_EN:

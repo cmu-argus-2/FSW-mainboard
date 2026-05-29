@@ -1,4 +1,3 @@
-# from apps.adcs.consts import StatusConst
 from apps.adcs.consts import ControllerConst, ControllerModes, Modes, StatusConst
 from apps.adcs.sun import compute_body_sun_vector_from_lux, read_light_sensors
 from hal.configuration import SATELLITE
@@ -9,6 +8,48 @@ _MIN_MAG_NORM = 1.0e-6  # Min allowed magnetometer reading is 1 uT (Expected fie
 _MAX_MAG_NORM = 2.5e-3  # Max allowed magnetometer reading is 2500 uT (Field strength at Mean Sea Level is ~60 uT)
 # bmx160 magnetometer scale wont go past 1.3 mT in x,y and 2.5 mT in z axis
 _MAX_GYRO_NORM = 2.0e3 * np.pi / 180.0  # bmx160 gyro max scale is 2000 deg/s - anything higher is likely faulty reading
+
+_MAG_BIAS_PATH = "/sd/config/mag_bias.bin"
+_MAG_BIAS_FMT = "3f"
+_mag_bias_loaded = False
+_MAG_BIAS = np.zeros(3)
+
+
+def load_mag_bias():
+    global _mag_bias_loaded
+    if _mag_bias_loaded:
+        return
+    try:
+        import struct
+
+        with open(_MAG_BIAS_PATH, "rb") as f:
+            vals = struct.unpack(_MAG_BIAS_FMT, f.read(struct.calcsize(_MAG_BIAS_FMT)))
+        _MAG_BIAS[0] = vals[0]
+        _MAG_BIAS[1] = vals[1]
+        _MAG_BIAS[2] = vals[2]
+    except Exception:
+        pass
+    _mag_bias_loaded = True
+
+
+def update_mag_bias(b_x, b_y, b_z):
+    """Update magnetometer bias from commanded microtesla values."""
+    _MAG_BIAS[0] = b_x * 1e-6
+    _MAG_BIAS[1] = b_y * 1e-6
+    _MAG_BIAS[2] = b_z * 1e-6
+    try:
+        import os
+        import struct
+
+        try:
+            os.mkdir("/sd/config")
+        except Exception:
+            pass
+        with open(_MAG_BIAS_PATH, "wb") as f:
+            f.write(struct.pack(_MAG_BIAS_FMT, _MAG_BIAS[0], _MAG_BIAS[1], _MAG_BIAS[2]))
+        os.sync()
+    except Exception:
+        pass
 
 
 def read_gyro() -> tuple[int, np.ndarray]:
@@ -44,7 +85,9 @@ def read_magnetometer() -> tuple[int, np.ndarray]:
     """
 
     if SATELLITE.IMU_AVAILABLE:
-        mag = 1e-6 * np.array(SATELLITE.IMU.mag())  # Convert field from uT to T
+        mag = np.array(SATELLITE.IMU.mag())
+        mag *= 1e-6  # Convert field from uT to T
+        mag -= _MAG_BIAS
 
         # mag validity check
         is_valid = True
@@ -98,9 +141,20 @@ def update_mode(current_mode, ctr_mode, gyro_status, omega, sun_status, sun_pos_
     # Used to set FSW state machine to DETUMBLING
     omega_norm = np.linalg.norm(omega)
 
+    if current_mode == Modes.VF_TUMBLING:
+        if omega_norm < Modes.VF_TUMBLING_TOL and ctr_mode != ControllerModes.BDOT:
+            return Modes.TUMBLING
+        if omega_norm < Modes.VF_TUMBLING_TOL_BDOT and ctr_mode == ControllerModes.BDOT:
+            return Modes.TUMBLING
+        return Modes.VF_TUMBLING
+
     if current_mode == Modes.TUMBLING:
         if omega_norm <= Modes.TUMBLING_TOL:
             return Modes.STABLE
+        if omega_norm >= Modes.VF_TUMBLING_TOL and ctr_mode != ControllerModes.BDOT:
+            return Modes.VF_TUMBLING
+        if omega_norm >= Modes.VF_TUMBLING_TOL_BDOT and ctr_mode == ControllerModes.BDOT:
+            return Modes.VF_TUMBLING
         return Modes.TUMBLING
     if omega_norm >= Modes.TUMBLING_TOL:
         return Modes.TUMBLING

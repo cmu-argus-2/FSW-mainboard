@@ -37,21 +37,6 @@ class StatusConst:
     # Success Status Constants
     OK = 0
 
-    # # Failure Messages
-    # _FAIL_MESSAGES = {
-    #     GYRO_FAIL: "Gyro failure",
-    #     MAG_FAIL: "Magnetometer failure",
-    #     SUN_NO_READINGS: "No readings",
-    #     SUN_NOT_ENOUGH_READINGS: "Insufficient readings",
-    #     SUN_ECLIPSE: "In eclipse",
-    #     ZERO_NORM: "Zero-normed vector",
-    #     OK: "Success",
-    # }
-
-    # @classmethod
-    # def get_fail_message(cls, status):
-    #     return cls._FAIL_MESSAGES.get(status, "Unknown error code")
-
 
 class Modes:
     """
@@ -62,8 +47,11 @@ class Modes:
     STABLE = 1  # Satellite is spinning inside the "stable" bounds.
     SUN_POINTING = 2  # Satellite is generally pointed towards the sun.
     ACS_OFF = 3  # Satellite has pointed to the sun and ACS can be turned off
+    VF_TUMBLING = 4  # Satellite is tumbling too fast for the ACS to work
 
     # Detumbling
+    VF_TUMBLING_TOL_BDOT = 2.62  # Enter VF tumbling if ω > 2.62 rad/s (150 deg/s)
+    VF_TUMBLING_TOL = 3.05  # Enter VF tumbling if ω > 3.05 rad/s (175 deg/s)
     TUMBLING_TOL = 0.54  # Exit detumbling into stable if ω < 0.54 rad/s (30 deg/s)
 
     # Detumbling only controllers
@@ -138,34 +126,6 @@ class ControllerModes:
         return False
 
 
-# class SunConst:
-#     """
-#     Constants associated with sun sensor parameters.
-#     """
-#
-#     # map from light sensors to body vector
-#     LIGHT_SENSOR_NORMALS = np.array(
-#         [
-#             [1, 0, 0],
-#             [-1, 0, 0],
-#             [0, 1, 0],
-#             [0, -1, 0],
-#             [0.7071, 0, 0.7071],
-#             [0, -0.7071, 0.7071],
-#             [-0.7071, 0, 0.7071],
-#             [0, 0.7071, 0.7071],
-#             [0, 0, -1],
-#         ]
-#     )
-#
-#     LIGHT_X_IDXS = (0, 1, 4, 6)
-#     LIGHT_Y_IDXS = (2, 3, 5, 7)
-#     LIGHT_Z_IDXS = (4, 5, 6, 7, 8)
-#
-#     # Logging only allows for a max value of 65535. Since OPT4003 has a max value of 140k, scale log data down by 3
-#     LIGHT_SENSOR_LOG_FACTOR = 1 / 3
-
-
 class ControllerConst:
     """
     Constants associated with Controller Behavior
@@ -174,15 +134,6 @@ class ControllerConst:
     INERTIA_MAT = np.array(
         [[3.544e-03, -1.8729e-05, -5.2467e-06], [-1.8729e-05, 3.590e-03, 1.9134e-05], [-5.2467e-06, 1.9134e-05, 4.120e-03]]
     )
-
-    # # Compute Major axis of inertia
-    # _eigvals, _eigvecs = np.linalg.eig(INERTIA_MAT)
-    # _unscaled_axis = _eigvecs[:, np.argmax(_eigvals)]
-
-    # INERTIA_MAJOR_DIR = _unscaled_axis / np.linalg.norm(_unscaled_axis)
-    # inertia_major_dir_abs = np.array([math.fabs(dir_x) for dir_x in INERTIA_MAJOR_DIR])
-    # if INERTIA_MAJOR_DIR[np.argmax(inertia_major_dir_abs)] < 0:
-    #     INERTIA_MAJOR_DIR = -INERTIA_MAJOR_DIR
 
     # Hardcoded Inertia Major Dir
     INERTIA_MAJOR_DIR = np.array([-0.01027212, 0.03638753, 0.99928496])
@@ -201,20 +152,3 @@ class ControllerConst:
 
     # Detumbling Constants
     DETUMB_GAIN = 1.0e05
-
-
-# Removed: MCMConst class — RAM footprint (ALLOC_MAT, MCM_FACES, MCM_INDICES, N_MCM moved to acs.py)
-# class MCMConst:
-#     N_MCM = 6
-#     MCM_FACES = ("XP", "XM", "YP", "YM", "ZP", "ZM")
-#     MCM_INDICES = (0, 1, 2, 3, 4, 5)
-#     ALLOC_MAT = np.array(
-#         [
-#             [0.5, 0.0, 0.0],
-#             [0.5, 0.0, 0.0],
-#             [0.0, 0.5, 0.0],
-#             [0.0, 0.5, 0.0],
-#             [0.0, 0.0, 0.5],
-#             [0.0, 0.0, 0.5],
-#         ]
-#     )

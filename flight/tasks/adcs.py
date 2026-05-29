@@ -91,22 +91,24 @@ class Task(TemplateTask):
             # check for deployment to update inertia matrix
             pass
         else:
-            if not DH.data_process_exists("adcs"):
-                DH.register_data_process("adcs", _ADCS_DATA_FORMAT, True, data_limit=100000, write_interval=2)
+            if SM.current_state != STATES.LOW_POWER:
+                if not DH.data_process_exists("adcs"):
+                    DH.register_data_process("adcs", _ADCS_DATA_FORMAT, True, data_limit=100000, write_interval=2)
 
-            ControllerModes.load()
+                ControllerModes.load()
+                sensors.load_mag_bias()
 
-            # Check for controller mode update from commands
-            if self.CONTROLLER_MODE != ControllerModes.current_mode:
-                self.CONTROLLER_MODE = ControllerModes.current_mode
+                # Check for controller mode update from commands
+                if self.CONTROLLER_MODE != ControllerModes.current_mode:
+                    self.CONTROLLER_MODE = ControllerModes.current_mode
 
-            self.log_data[ADCS_IDX.TIME_ADCS] = TPM.time()
+                self.log_data[ADCS_IDX.TIME_ADCS] = TPM.time()
 
-            self.mag_status, self.mag_data = sensors.read_magnetometer()
-            self.gyro_status, self.gyro_data = sensors.read_gyro()
-            self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
+                self.mag_status, self.mag_data = sensors.read_magnetometer()
+                self.gyro_status, self.gyro_data = sensors.read_gyro()
+                self.sun_status, self.sun_pos_body, self.sun_lux = sensors.read_sun_position()
 
-            self.log()
+                self.log()
 
             if SM.current_state == STATES.LOW_POWER or SM.current_state == STATES.EXPERIMENT:
                 # In low power or experiment mode, we want to conserve power by turning off the coils and not running the control cycle
@@ -123,16 +125,15 @@ class Task(TemplateTask):
                     self.MODE, self.CONTROLLER_MODE, self.gyro_status, self.gyro_data, self.sun_status, self.sun_pos_body
                 )
 
-                if self.CONTROLLER_MODE == ControllerModes.BDOT:
+                if self.MODE == Modes.ACS_OFF or self.MODE == Modes.VF_TUMBLING:
+                    self.ensure_coils_off()
+                elif self.CONTROLLER_MODE == ControllerModes.BDOT:
                     self._bdot_cycle()
                 else:
                     self._bcross_sun_cycle(1.0)
 
     # --- Attitude Control ---
     def _apply_control(self):
-        if self.MODE == Modes.ACS_OFF:
-            self.ensure_coils_off()
-            return
         mtq_throttle = ControllerConst.FALLBACK_CONTROL
         if self.CONTROLLER_MODE == ControllerModes.BCROSS:
             if not (self.gyro_status != StatusConst.OK or self.mag_status != StatusConst.OK):
@@ -156,25 +157,22 @@ class Task(TemplateTask):
         B-dot control cycle: sample 6 mag readings, run coils, coils off.
         Total duration: 5 x 0.08 + 0.5 = 0.9 s.
         """
-        if self.MODE == Modes.ACS_OFF:
-            self.ensure_coils_off()
-            return
-        self._mag_buffer = []
+        _mag_buffer = []
         for k in range(self._MAG_N_SAMPLES):
             status, reading = sensors.read_magnetometer()
             if status == StatusConst.OK:
-                self._mag_buffer.append(reading)
+                _mag_buffer.append(reading)
             if k < self._MAG_N_SAMPLES - 1:
                 TPM.sleep(self._MAG_SAMPLE_DT)
 
-        if self._mag_buffer:
-            self.mag_data = self._mag_buffer[-1]
+        if _mag_buffer:
+            self.mag_data = _mag_buffer[-1]
             self.mag_status = StatusConst.OK
         else:
             self.mag_status = StatusConst.MAG_FAIL
 
-        if len(self._mag_buffer) == self._MAG_N_SAMPLES:
-            buf = np.array(self._mag_buffer)
+        if len(_mag_buffer) == self._MAG_N_SAMPLES:
+            buf = np.array(_mag_buffer)
             throttle = bdot_controller(buf, self._MAG_SAMPLE_DT)
             self.coil_status = mcm_coil_allocator(throttle, self.mag_data)
             self.coils_off = False
@@ -190,17 +188,15 @@ class Task(TemplateTask):
           1. Update ADCS mode based on snapshot readings
           2. Every 50 ms for duration seconds:
              read gyro and update the control law / coils
-             (future: propagate sun and mag vectors with gyro)
           3. Coils off at the end
         """
         GYRO_INTERVAL = 0.05  # 50 ms
         t_start = TPM.monotonic_float()
-
         while TPM.monotonic_float() - t_start < duration:
             loop_start = TPM.monotonic_float()
 
             self.gyro_status, self.gyro_data = sensors.read_gyro()
-            # TODO: Propagate sun vector and magnetometer with gyro reading
+
             self._apply_control()
 
             elapsed = TPM.monotonic_float() - loop_start
