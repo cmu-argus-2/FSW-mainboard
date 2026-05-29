@@ -188,9 +188,9 @@ def PAYLOAD_SWITCH(selector):
 
     if selector == 1:
         try:
-            SATELLITE.JETSON_SD_REQ.value = True
+            SATELLITE.JETSON_SD_REQ.value = True  # turn of 5v dcdc to save more power
             TPM.sleep(0.1)
-            SATELLITE.JETSON_ENABLE.value = True  # turn of 5v dcdc to save more powe
+            SATELLITE.JETSON_ENABLE.value = True
             logger.info("[PAYLOAD] Jetson power enabled successfully.")
             return [selector]  # "payload power on"
         except Exception as e:
