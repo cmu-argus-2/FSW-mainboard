@@ -812,6 +812,12 @@ class ArgusV4(CubeSat):
             return Errors.INVALID_DEVICE_NAME
         self.__turn_on_device(device_name)
 
+    def turn_off_device(self, device_name: str):
+        """turn_off_device: Turn off the device."""
+        if device_name not in self.__device_list:
+            return Errors.INVALID_DEVICE_NAME
+        self.__turn_off_device(device_name)
+
     def reboot(self):
         """Reboot the satellite by resetting the main power."""
         ArgusV4Power.MAIN_PWR_RESET.value = True
