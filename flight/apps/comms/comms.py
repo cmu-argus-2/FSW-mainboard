@@ -231,7 +231,13 @@ class SATELLITE_RADIO:
 
         # Send a message to GS
         if SATELLITE.RADIO_AVAILABLE:
-            SATELLITE.RADIO.send(packet)
+            status = SATELLITE.RADIO.send(packet)
+
+            if status != 0:
+                logger.error(f"[COMMS ERROR] Failed to transmit packet, radio driver returned error code {status}")
+                cls.tx_failed_count += 1
+                return False
+
             cls.tx_packet_count += 1
             return True
         else:
