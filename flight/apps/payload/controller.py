@@ -223,7 +223,10 @@ class PayloadController:
         """
         This will return the list of scheduled experiments in the payload
         """
-        return [command.arguments["ts"] for command in cls.command_list]  # return the timestamps of the scheduled commands
+        all_commands = list(cls.command_list)
+        if cls.current_command is not None:
+            all_commands.append(cls.current_command)
+        return [cmd.arguments["ts"] if cmd.arguments["ts"] != 0 else TPM.time() for cmd in all_commands]
 
     @classmethod
     def add_dataset_processing_command(cls, ts, duration, level_processing, rc_version, ld_version, bypass_preflt_rej, dataset_path):
