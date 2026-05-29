@@ -72,8 +72,8 @@ class Task(TemplateTask):
         # update next command time
         PC.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = command.arguments["ts"]
 
-        # check to see if the time to execute the command has arrived
-        if command.arguments["ts"] < TPM.time() or command.arguments["ts"] == 0:
+        # check to see if it is time to boot: start BOOT_TIMEOUT seconds early so jetson is ready by ts
+        if command.arguments["ts"] == 0 or command.arguments["ts"] - TPM.time() <= PC.BOOT_TIMEOUT:
             if SM.current_state != STATES.EXPERIMENT:
                 self.experiment_mode_wait_iterations += 1
                 if self.experiment_mode_wait_iterations < 2:
@@ -176,7 +176,9 @@ class Task(TemplateTask):
         It will check if the message from jetson for processing finished has been received
         """
 
-        if PC.PROC_TS + PC.current_command.arguments["duration"] + PC.PROC_TIMEOUT <= TPM.time():
+        ts = PC.current_command.arguments["ts"]
+        proc_anchor = PC.PROC_TS if ts == 0 else ts
+        if proc_anchor + PC.current_command.arguments["duration"] + PC.PROC_TIMEOUT <= TPM.time():
             # means that we have reached the timeout of the command
             self.log_info("Processing timeout reached, switching to FAIL state.")
             PC.switch_state("FAIL")
