@@ -38,7 +38,6 @@ def read_light_sensors():
     Returns:
         lux_readings: list of lux readings on each face. A "ERROR_LUX" reading comes from a dysfunctional sensor.
     """
-
     lux_readings = [_ERROR_LUX] * _NUM_LIGHT_SENSORS
     for i in range(_NUM_LIGHT_SENSORS):
         try:

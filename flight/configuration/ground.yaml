@@ -61,6 +61,7 @@ digipeater:
 adcs:
   CONTROLLER_MODE: 0
 
+
 hal:
   ASIL0_EN:
     value: true
