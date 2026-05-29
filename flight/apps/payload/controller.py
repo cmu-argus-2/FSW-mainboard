@@ -321,10 +321,6 @@ class PayloadController:
             logger.error(f"[PAYLOAD] - Invalid camera bit flag: {camera_bit_flag}")
             return False
 
-        if ts != 0 and ts < TPM.time():
-            logger.error(f"[PAYLOAD] - Timestamp in the past: {ts}")
-            return False
-
         # TODO - add limit to resolution and level of processing
 
         # need to add the data in the corerct spot in the list

@@ -715,7 +715,11 @@ def EXPERIMENT(
     resolution            -> The resolution of the images. They are taken at full resolution and scaled down
     """
     from apps.payload.controller import PayloadController as PC
+    from core.time_processor import TimeProcessor as TPM
     logger.info(f"[PAYLOAD] - Experiment command received to run at {ts}")
+    if ts != 0 and ts < TPM.time():
+        logger.error(f"[PAYLOAD] - Timestamp in the past: {ts}")
+        return False
     result = PC.add_command_inference(
         mode_id,
         ts,
@@ -776,7 +780,11 @@ def SIMPLE_EXPERIMENT(
 
     """
     from apps.payload.controller import PayloadController as PC
+    from core.time_processor import TimeProcessor as TPM
     logger.info(f"[PAYLOAD] - Simple experiment command received to run at {ts}")
+    if ts != 0 and ts < TPM.time():
+        logger.error(f"[PAYLOAD] - Timestamp in the past: {ts}")
+        return False
     result = PC.add_command_inference(
         mode_id,
         ts,
