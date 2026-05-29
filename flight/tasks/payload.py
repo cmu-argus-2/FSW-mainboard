@@ -163,9 +163,9 @@ class Task(TemplateTask):
             PC.switch_state("FAIL")
             return
 
-        # send the command
-        # TODO - only want to send this every 5 seconds for example
-        PC.send_current_command()  # current command was choosen in switch state
+        if TPM.time() - PC.ACT_CMD_SEND_TS >= PC.ACT_CMD_SEND_PERIOD:
+            PC.ACT_CMD_SEND_TS = TPM.time()
+            PC.send_current_command()
 
     def run_processing_state(self):
         """
