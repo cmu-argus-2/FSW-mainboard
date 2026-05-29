@@ -34,8 +34,7 @@ while True:
 
         if SATELLITE.WATCHDOG.input:
             SATELLITE.WATCHDOG.input_low()
-        else:
-            SATELLITE.WATCHDOG.input_high()
+        SATELLITE.WATCHDOG.input_high()
 
         if not SATELLITE.WATCHDOG.enabled:
             print("Watchdog enabled.")
