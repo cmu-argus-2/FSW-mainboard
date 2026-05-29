@@ -300,7 +300,7 @@ class Task(TemplateTask):
             if adcs_data:
                 self.ADCS_MODE = adcs_data[ADCS_IDX.MODE]
 
-                if not (self.ADCS_MODE >= Modes.TUMBLING and self.ADCS_MODE <= Modes.ACS_OFF):
+                if not (self.ADCS_MODE >= Modes.TUMBLING and self.ADCS_MODE <= Modes.VF_TUMBLING):
                     self.log_error("ADCS returned an invalid mode, assuming STABLE ADCS mode")
                     self.ADCS_MODE = Modes.STABLE
                 else:
@@ -377,7 +377,9 @@ class Task(TemplateTask):
                 self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1
 
             """Transitions out of DETUMBLING"""
-            if self.ADCS_MODE != Modes.TUMBLING or self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] == 1:
+            if (self.ADCS_MODE != Modes.TUMBLING and self.ADCS_MODE != Modes.VF_TUMBLING) or self.log_data[
+                CDH_IDX.DETUMBLING_ERROR_FLAG
+            ] == 1:
                 # T1.1: Spin stabilized OR detumbling error flag is set, transition to NOMINAL
                 self.log_warning("T1.1: Transition from DETUMBLING to NOMINAL")
                 SM.switch_to(STATES.NOMINAL)
@@ -403,19 +405,21 @@ class Task(TemplateTask):
             self.log_info(f"PDMODE: {self.PAYLOAD_MODE}")
 
             """Transitions out of NOMINAL"""
-            if self.ADCS_MODE == Modes.TUMBLING and self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] != 1:
+            if (self.ADCS_MODE == Modes.TUMBLING or self.ADCS_MODE == Modes.VF_TUMBLING) and self.log_data[
+                CDH_IDX.DETUMBLING_ERROR_FLAG
+            ] != 1:
                 # T2.1: Tumbling again AND detumbling error flag is not set, transition to DETUMBLING
                 self.log_warning("T2.1: Transition from NOMINAL to DETUMBLING")
                 SM.switch_to(STATES.DETUMBLING)
 
             elif self.EPS_MODE == EPS_POWER_FLAG.LOW_POWER:
                 # T2.2: Low SoC, transition to low power
-                self.log_warning("T2.3: Transition from NOMINAL to LOW POWER")
+                self.log_warning("T2.2: Transition from NOMINAL to LOW POWER")
                 SM.switch_to(STATES.LOW_POWER)
 
             elif self.PAYLOAD_MODE == PayloadState.WATCHING:
                 # T2.3: Payload commanded to start watching, transition to EXPERIMENT
-                self.log_warning("T2.4: Transition from NOMINAL to EXPERIMENT")
+                self.log_warning("T2.3: Transition from NOMINAL to EXPERIMENT")
                 SM.switch_to(STATES.EXPERIMENT)
             else:
                 # No transition, stay in NOMINAL
