@@ -44,10 +44,6 @@ class hal_config:
     ASIL0_EN = True
 
 
-class watchdog_config:
-    ENABLED = True
-
-
 class log_config:
     LOG_DIR = "/sd/sys_logs"
     LOG_FILENAME = "/sd/sys_logs/fsw.log"
