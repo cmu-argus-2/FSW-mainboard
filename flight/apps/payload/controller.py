@@ -213,6 +213,9 @@ class PayloadController:
         logger.info(f"[PAYLOAD] - Cleared experiment list (count: {cleared_count})")
         cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = 0
 
+        if cls.current_state == PayloadState.WATCHING:
+            cls.switch_state("IDLE")
+
         return cleared_count
 
     @classmethod
@@ -220,7 +223,7 @@ class PayloadController:
         """
         This will return the list of scheduled experiments in the payload
         """
-        return [command[0] for command in cls.command_list]  # return the timestamps of the scheduled commands
+        return [command.arguments["ts"] for command in cls.command_list]  # return the timestamps of the scheduled commands
 
     @classmethod
     def add_dataset_processing_command(cls, ts, duration, level_processing, rc_version, ld_version, bypass_preflt_rej, dataset_path):

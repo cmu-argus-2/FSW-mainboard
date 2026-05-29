@@ -64,6 +64,11 @@ class Task(TemplateTask):
         command = PC.get_first_command()
         self.log_info(f"Watching for command: {command}")
 
+        if command is None:
+            self.log_info("No commands available while watching, switching back to IDLE.")
+            PC.switch_state("IDLE")
+            return
+
         # update next command time
         PC.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = command.arguments["ts"]
 
