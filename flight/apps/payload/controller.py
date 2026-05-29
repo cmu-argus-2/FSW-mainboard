@@ -792,9 +792,9 @@ class PayloadController:
             return False
 
         try:
-            # SATELLITE.JETSON_ENABLE.value = False
-            # TPM.sleep(0.1)  # TODO: probably do not need this delay
-            # SATELLITE.JETSON_SD_REQ.value = False  # turn off the 5v regulator to save power
+            SATELLITE.JETSON_ENABLE.value = False
+            TPM.sleep(0.1)  # TODO: probably do not need this delay
+            SATELLITE.JETSON_SD_REQ.value = False  # turn off the 5v regulator to save power
             logger.info("[PAYLOAD] - Jetson power disabled successfully")
             PU.flush_rx()
             return True
