@@ -208,9 +208,9 @@ def TURN_ON_PAYLOAD():
         return ["payload power pins not available"]
 
     try:
-        SATELLITE.JETSON_SD_REQ.value = True
+        SATELLITE.JETSON_ENABLE.value = True
         TPM.sleep(0.1)
-        SATELLITE.JETSON_ENABLE.value = True  # turn of 5v dcdc to save more power
+        SATELLITE.JETSON_SD_REQ.value = True  # turn of 5v dcdc to save more power
 
         logger.info("[PAYLOAD] Jetson power enabled successfully.")
     except Exception as e:
