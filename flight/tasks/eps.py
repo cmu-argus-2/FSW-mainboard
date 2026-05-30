@@ -295,7 +295,8 @@ class Task(TemplateTask):
                 if SATELLITE.BATTERY_HEATERS_AVAILABLE:
                     battery_heaters = SATELLITE.BATTERY_HEATERS
                     self.set_battery_heaters(battery_heaters)
-                    self.log_debug(f"Battery Heaters Enabled: {self.log_data[EPS_IDX.BATTERY_HEATERS_ENABLED]}")
+                    self.log_info(f"Battery 1 Heaters Enabled: {self.log_data[EPS_IDX.BATTERY_HEATERS1_ENABLED]}")
+                    self.log_info(f"Battery 2 Heaters Enabled: {self.log_data[EPS_IDX.BATTERY_HEATERS2_ENABLED]}")
 
                 DH.log_data("eps", self.log_data)
 

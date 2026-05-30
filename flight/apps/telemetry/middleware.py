@@ -173,7 +173,7 @@ class Frame:
 
             if var_name == "SD_TOTAL_USAGE":
                 DH.update_SD_usage()  # update the sd card size
-                value = DH._SD_USAGE  # get the value
+                value = DH.SD_usage()  # get the value
                 report.add_variable(var_name, "STORAGE", value)
                 continue
 

@@ -23,9 +23,9 @@ class Task(TemplateTask):
     def init_all_data_processes(self):
 
         # Telemetry process
-        if not DH.data_process_exists("payload"):
+        if not DH.data_process_exists("payload_tm"):
             DH.register_data_process(
-                tag_name="payload",
+                tag_name="payload_tm",
                 data_format=PC.payload_tm_data_format,
                 persistent=True,
                 data_limit=20000,  # this is 57 bytes, in current config ~5.7bytes/s. 20k will be ~60min

@@ -192,7 +192,7 @@ class Task(TemplateTask):
             # If the DH successfully scanned the SD card, and it has been 5 secs since FSW boot
             if DH.SD_SCANNED() and time_since_boot > _EXIT_STARTUP_TIMEOUT:
                 if not DH.data_process_exists("cdh"):
-                    data_format = "LLbLbbbbb"
+                    data_format = "LLbbbbb"
                     # this is 18 bytes, in current config ~7.2bytes/s. 25k will be ~60min
                     DH.register_data_process("cdh", data_format, True, data_limit=25000, write_interval=5)
 

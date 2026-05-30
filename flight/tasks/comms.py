@@ -50,7 +50,7 @@ class Task(TemplateTask):
         """
 
         if not TransmitQueue.packet_available():
-            # nothign to be done here
+            # nothing to be done here
             return
 
         self.log_debug("Checking transmit queue for packets to send...")
