@@ -306,21 +306,10 @@ class DownloadManager:
         file_path = self.SAVE_FOLDER.rstrip("/") + "/" + trans.file_path.lstrip("/")
 
         try:
-            final_size = os.stat(file_path)[6]
+            os.stat(file_path)
         except Exception as error:
             logger.error(f"[DOWNLOAD_MGR] Final file missing for tid={self.current_tid}: {error}")
             return False
-
-        if trans.file_size is not None:
-            expected_size = int(trans.file_size)
-            if final_size < expected_size:
-                logger.error(
-                    f"[DOWNLOAD_MGR] Final file too small for tid={self.current_tid}: {final_size} < {expected_size}"
-                )
-                return False
-            if final_size > expected_size:
-                with open(file_path, "r+b") as f:
-                    f.truncate(expected_size)
 
         trans.change_state(6)
         logger.info(f"[DOWNLOAD_MGR] File finalized successfully for tid={self.current_tid}")
