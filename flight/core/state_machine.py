@@ -114,8 +114,8 @@ class StateManager:
 
         if self.__current_state == STATES.LOW_POWER and new_state_id != STATES.LOW_POWER:
             logger.warning("Leaving LOW POWER state - restoring GPS power")
-            gps_status = SATELLITE.DEVICE_STATUS("GPS") 
-            if not gps_status.get("dead", True): # Turn GPS on if not dead
+            gps_status = SATELLITE.DEVICE_STATUS("GPS")
+            if not gps_status.get("dead", True):  # Turn GPS on if not dead
                 SATELLITE.turn_on_device("GPS")
             else:
                 logger.warning("GPS is dead - not restoring power to GPS")
