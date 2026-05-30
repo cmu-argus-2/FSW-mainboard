@@ -97,8 +97,6 @@ class Task(TemplateTask):
                         self.log_info("GPS module got a valid fix")
                         self.log_info(f"GPS ECEF: {self.log_data[GPS_IDX.GPS_ECEF_X:]}")
 
-                        DH.log_data("gps", self.log_data)
-
                         # If RTC is inactive, set the TPM time reference regardless of fix quality
                         if SATELLITE.RTC_AVAILABLE is False:
                             TPM.set_time_reference(SATELLITE.GPS.unix_time)
@@ -106,6 +104,9 @@ class Task(TemplateTask):
                         # Only update RTC time if the fix is better than _FIX_MODE_THR
                         elif SATELLITE.GPS.fix_mode >= _FIX_MODE_THR:
                             TPM.set_time(SATELLITE.GPS.unix_time)
+
+                        # Apply eligible time synchronization before logging so new files use corrected timestamps.
+                        DH.log_data("gps", self.log_data)
 
                     else:
                         self.log_info("GPS module did not get a valid fix")
