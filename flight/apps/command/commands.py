@@ -37,7 +37,7 @@ from core.data_handler import DataHandler as DH
 from core.logging import LEVELS as LOG_LEVELS
 from core.logging import RotatingFileHandler, getLogger
 from core.satellite_config import log_config as LOG_CONFIG
-from core.states import STR_STATES
+from core.states import STATES, STR_STATES
 from core.time_processor import TimeProcessor as TPM
 from hal.configuration import SATELLITE
 
@@ -558,6 +558,8 @@ def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, bitmap_high, bitmap_low):
 def ADCS_CTRL_MODE(mode_id):
     """Sends a command to change the ADCS controller mode."""
     logger.info(f"Executing ADCS_CTRL_MODE with mode_id: {mode_id}")
+    if SM.current_state == STATES.LOW_POWER:
+        return [-2]
     from apps.adcs.consts import ControllerModes
 
     if not ((isinstance(mode_id, int)) and 0 <= mode_id <= 2):
@@ -570,6 +572,18 @@ def ADCS_CTRL_MODE(mode_id):
     else:
         logger.error("[ADCS] - Failed ADCS_CTRL_MODE, update_mode call fail")
         return [-1]
+
+
+@register_command()
+def ADCS_UPDATE_MAG_BIAS(b_x, b_y, b_z):
+    """Updates the magnetometer hard-iron bias values in microtesla."""
+    if SM.current_state == STATES.LOW_POWER:
+        return [-2]
+    from apps.adcs.sensors import update_mag_bias
+
+    logger.info(f"Executing ADCS_UPDATE_MAG_BIAS with b_x: {b_x} uT, b_y: {b_y} uT, b_z: {b_z} uT")
+    update_mag_bias(float(b_x), float(b_y), float(b_z))
+    return [float(b_x), float(b_y), float(b_z)]
 
 
 @register_command()
