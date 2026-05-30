@@ -67,7 +67,7 @@ class CubeSat:
                 ("GPS", Device(self.__gps_boot, ASIL4, peripheral_line=False)),
                 ("RADIO", Device(self.__radio_boot, ASIL4, peripheral_line=False)),
                 ("IMU", Device(self.__imu_boot, ASIL3)),
-                ("FUEL_GAUGE", Device(self.__fuel_gauge_boot, ASIL2, peripheral_line=False)),
+                ("FUEL_GAUGE", Device(self.__fuel_gauge_boot, ASIL2)),
                 ("BATT_HEATERS", Device(self.__battery_heaters_boot, ASIL4, peripheral_line=False)),
                 ("WATCHDOG", Device(self.__watchdog_boot, ASIL4)),
                 ("BURN_WIRES", Device(self.__burn_wire_boot, ASIL4)),
