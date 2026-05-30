@@ -45,6 +45,8 @@ class DownloadManager:
         self.batch_retry_count = 0
         self.current_batch_received_any = False
         self.current_batch_received_count = 0
+        self.current_batch_received_set = set()
+        self.current_expected_fragments = []
         self.state = "IDLE"  # IDLE, ACTIVE, COMPLETE, ERROR
 
     def add_transaction(self, tid, transaction):
@@ -91,6 +93,8 @@ class DownloadManager:
         self.batch_retry_count = 0
         self.current_batch_received_any = False
         self.current_batch_received_count = 0
+        self.current_batch_received_set = set()
+        self.current_expected_fragments = []
         self.state = "ACTIVE"
         logger.info(
             f"[DOWNLOAD_MGR] Starting download for tid={self.current_tid}, total_packets={self.current_transaction.number_of_packets}"
@@ -111,12 +115,13 @@ class DownloadManager:
             )
             return
 
-        batch_end = self.current_batch_offset + self.BATCH_SIZE
-        if self.current_batch_offset <= fragment.seq_number < batch_end:
+        if fragment.seq_number in self.current_expected_fragments:
             self.current_batch_received_any = True
-            self.current_batch_received_count += 1
+            if fragment.seq_number not in self.current_batch_received_set:
+                self.current_batch_received_set.add(fragment.seq_number)
+                self.current_batch_received_count += 1
         else:
-            logger.warning(f"[DOWNLOAD_MGR] Fragment seq_number={fragment.seq_number} is outside the current batch window.")
+            logger.warning(f"[DOWNLOAD_MGR] Fragment seq_number={fragment.seq_number} is outside the expected batch.")
 
     def has_active_file(self):
         """Check if there is an active download in progress or queued"""
@@ -157,6 +162,12 @@ class DownloadManager:
                 raise Exception("No active transaction and queue is empty")
 
         trans = self.current_transaction
+        if self.is_file_complete():
+            return 0, 0
+
+        self.current_expected_fragments = self._next_expected_fragments()
+        if self.current_expected_fragments:
+            self.current_batch_offset = self.current_expected_fragments[0]
 
         # Listen for packets in this batch window
         logger.info("Entering listen mode (cpu blocking)")
@@ -204,9 +215,21 @@ class DownloadManager:
         """Calculate the number of packets in the current batch"""
         if self.current_transaction.number_of_packets is None:
             return self.BATCH_SIZE
+        if self.current_expected_fragments:
+            return len(self.current_expected_fragments)
 
         remaining = self.current_transaction.number_of_packets - self.current_batch_offset
         return min(self.BATCH_SIZE, remaining)
+
+    def _next_expected_fragments(self):
+        """Return the fragment sequence numbers the payload is expected to send next."""
+        expected = []
+        for seq_number in range(self.current_transaction.number_of_packets):
+            if self.current_transaction._is_missing(seq_number):
+                expected.append(seq_number)
+                if len(expected) >= self.BATCH_SIZE:
+                    break
+        return expected
 
     def _generate_batch_bitmap(self, width):
         """
@@ -225,8 +248,7 @@ class DownloadManager:
         trans = self.current_transaction
         bitmap = 0
 
-        for i in range(width):
-            seq_number = self.current_batch_offset + i
+        for i, seq_number in enumerate(self.current_expected_fragments[:width]):
             if trans._is_missing(seq_number):
                 bit_pos = (width - 1) - i
                 bitmap |= 1 << bit_pos
@@ -240,18 +262,26 @@ class DownloadManager:
         Returns:
             True if more batches to process, False if file is complete
         """
-        self.current_batch_offset += self.BATCH_SIZE
-        self.batch_retry_count = 0
-        self.current_batch_received_any = False
-        self.current_batch_received_count = 0
-
         if self.is_file_complete():
             logger.info(f"[DOWNLOAD_MGR] File complete for tid={self.current_tid}")
             return False
 
-        if self.current_batch_offset >= self.current_transaction.number_of_packets:
-            logger.info(f"[DOWNLOAD_MGR] All batches processed for tid={self.current_tid}")
+        next_missing = None
+        for seq_number in range(self.current_transaction.number_of_packets):
+            if self.current_transaction._is_missing(seq_number):
+                next_missing = seq_number
+                break
+
+        if next_missing is None:
+            logger.info(f"[DOWNLOAD_MGR] File complete for tid={self.current_tid}")
             return False
+
+        self.current_batch_offset = (next_missing // self.BATCH_SIZE) * self.BATCH_SIZE
+        self.batch_retry_count = 0
+        self.current_batch_received_any = False
+        self.current_batch_received_count = 0
+        self.current_batch_received_set = set()
+        self.current_expected_fragments = []
 
         return True
 
@@ -342,5 +372,7 @@ class DownloadManager:
         self.batch_retry_count = 0
         self.current_batch_received_any = False
         self.current_batch_received_count = 0
+        self.current_batch_received_set = set()
+        self.current_expected_fragments = []
         self.state = "IDLE"
         logger.info("[DOWNLOAD_MGR] Download manager reset")
