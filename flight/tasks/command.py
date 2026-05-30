@@ -196,7 +196,7 @@ class Task(TemplateTask):
 
         else:
             # If the DH successfully scanned the SD card, and it has been 5 secs since FSW boot
-            if DH.SD_SCANNED() and time_since_boot > _EXIT_STARTUP_TIMEOUT:
+            if DH.SD_SCANNED() and (self.deployment_done or time_since_boot > _EXIT_STARTUP_TIMEOUT):
                 if not DH.data_process_exists("cmd_logs"):
                     DH.register_data_process("cmd_logs", "LBB", True, data_limit=100000)
 
