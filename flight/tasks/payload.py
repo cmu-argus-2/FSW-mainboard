@@ -325,8 +325,8 @@ class Task(TemplateTask):
                 PC.switch_state("SUCCESS")  # receive the shutdown ack, gave time and can cut power now
             else:
                 PC.switch_state("FAIL")  # did not received the shutdown ack, failing and forcing to shutdown
-            PC.received_off_ack = False # Reset Flag
-            PC.waiting_shutdown = False # Reset Flag
+            PC.received_off_ack = False  # Reset Flag
+            PC.waiting_shutdown = False  # Reset Flag
 
     def run_success_state(self):
         """
