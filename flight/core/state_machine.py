@@ -106,10 +106,19 @@ class StateManager:
             self.__initialized = True
 
         if new_state_id == STATES.LOW_POWER:
-            logger.warning("Entering LOW POWER state - cutting power to payload")
+            logger.warning("Entering LOW POWER state - cutting power to payload and GPS")
             if SATELLITE.PAYLOADPOWER_AVAILABLE:
                 SATELLITE.JETSON_ENABLE.value = False
                 SATELLITE.JETSON_SD_REQ.value = False
+            SATELLITE.turn_off_device("GPS")
+
+        if self.__current_state == STATES.LOW_POWER and new_state_id != STATES.LOW_POWER:
+            logger.warning("Leaving LOW POWER state - restoring GPS power")
+            gps_status = SATELLITE.DEVICE_STATUS("GPS")
+            if not gps_status.get("dead", True):  # Turn GPS on if not dead
+                SATELLITE.turn_on_device("GPS")
+            else:
+                logger.warning("GPS is dead - not restoring power to GPS")
 
         # if we are leaving nomimal mode, we want to turn make sure digipeater is turned off
         if self.__current_state == STATES.NOMINAL and new_state_id != STATES.NOMINAL:
