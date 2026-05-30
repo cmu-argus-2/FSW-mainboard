@@ -836,8 +836,12 @@ def DATASET_PROCESSING(
     dataset_path          -> the path to the dataset to process
     """
     from apps.payload.controller import PayloadController as PC
+    from core.time_processor import TimeProcessor as TPM
 
     logger.info(f"[PAYLOAD] - Dataset processing command received to run at {ts}")
+    if ts != 0 and ts < TPM.time():
+        logger.error(f"[PAYLOAD] - Timestamp in the past: {ts}")
+        return False
     result = PC.add_dataset_processing_command(
         ts,
         duration,
@@ -863,8 +867,12 @@ def DATASET_OD(ts, duration, max_iteration, dataset_path):
 
     """
     from apps.payload.controller import PayloadController as PC
+    from core.time_processor import TimeProcessor as TPM
 
     logger.info(f"[PAYLOAD] - Dataset OD command received to run at {ts}")
+    if ts != 0 and ts < TPM.time():
+        logger.error(f"[PAYLOAD] - Timestamp in the past: {ts}")
+        return False
     result = PC.add_dataset_od_command(ts, duration, max_iteration, dataset_path)
     if not result:
         logger.error(f"[PAYLOAD] - Failed to add dataset OD command for timestamp {ts}")
