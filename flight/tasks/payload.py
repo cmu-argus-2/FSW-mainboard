@@ -116,12 +116,11 @@ class Task(TemplateTask):
         # check to see if we got response from ping
         if PC.received_ping_ack:
             ts = PC.current_command.arguments["ts"]
-            
+
             # Only start the command once scheduled time has arrived
             if ts != 0 and TPM.time() < ts:
                 self.log_info(f"Received ping ack but scheduled time {ts} has not arrived yet, waiting...")
                 return
-
 
             # means we have received a response from jetson, moving to ACTIVE state
             self.log_info("Ping responded, switching to ACTIVE state.")
