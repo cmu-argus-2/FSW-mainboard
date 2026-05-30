@@ -362,15 +362,7 @@ class Task(TemplateTask):
                 self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1
 
             # Detumbling impossible due to magnetorquer failure
-            working_coils = [
-                SATELLITE.TORQUE_DRIVERS_AVAILABLE("XP"),
-                SATELLITE.TORQUE_DRIVERS_AVAILABLE("XM"),
-                SATELLITE.TORQUE_DRIVERS_AVAILABLE("YP"),
-                SATELLITE.TORQUE_DRIVERS_AVAILABLE("YM"),
-                SATELLITE.TORQUE_DRIVERS_AVAILABLE("ZP"),
-                SATELLITE.TORQUE_DRIVERS_AVAILABLE("ZM"),
-            ]
-            if not any(working_coils):
+            if not any(SATELLITE.TORQUE_DRIVERS_NOT_DEAD(d) for d in ("XP", "XM", "YP", "YM", "ZP", "ZM")):
                 self.log_info("DETUMBLING actuator failure - Setting Detumbling Error Flag.")
                 # Set the detumbling error flag in the NVM
                 self.log_data[CDH_IDX.DETUMBLING_ERROR_FLAG] = 1

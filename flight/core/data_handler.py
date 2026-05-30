@@ -1543,6 +1543,9 @@ class DataHandler:
         """
         Clean up the files that have been transmitted and acknowledged.
         """
+        if cls.REBOOT_IN_PROGRESS:  # Skip if reboot in progress
+            return
+
         for tag_name in cls.data_process_registry:
             cls.data_process_registry[tag_name].clean_up()
 
@@ -1552,6 +1555,9 @@ class DataHandler:
         Check the circular buffers for each data process and mark for deletion the oldest files if necessary
         while taking into account the existing paths that are excluded or already marked for deletion.
         """
+        if cls.REBOOT_IN_PROGRESS:  # Skip if reboot in progress
+            return
+
         for tag_name in cls.data_process_registry:
             cls.data_process_registry[tag_name].check_circular_buffer()
 
