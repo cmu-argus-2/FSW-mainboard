@@ -113,6 +113,9 @@ class Task(TemplateTask):
             if SM.current_state == STATES.LOW_POWER or SM.current_state == STATES.EXPERIMENT:
                 # In low power or experiment mode, we want to conserve power by turning off the coils and not running the control cycle
                 self.ensure_coils_off()
+                self.MODE = sensors.update_mode(
+                    self.MODE, self.CONTROLLER_MODE, self.gyro_status, self.gyro_data, self.sun_status, self.sun_pos_body
+                )
             else:
                 if SM.current_state == STATES.DETUMBLING:
                     # Set bmx160 to max scale of 2000 deg/s

@@ -75,13 +75,15 @@ class PayloadController:
 
     # Time variables for diferente things
     BOOT_TS = 0  # time at which switched to booting state
-    BOOT_TIMEOUT = 60  # how long it will wait for jetson to respond ping
+    BOOT_TIMEOUT = 120  # how long it will wait for jetson to respond ping
 
     ACT_TS = 0  # time at which switched to active state
     ACT_TIMEOUT = 20  # max amount of seconds to wait to recieve jetson ack for experiment command
+    ACT_CMD_SEND_TS = 0  # time at which last experiment command was sent
+    ACT_CMD_SEND_PERIOD = 5  # seconds between experiment command sends
 
     PROC_TS = 0  # time at which switched to processing state
-    PROC_TIMEOUT = 60  # max amounts of seconds to run the experiment
+    PROC_TIMEOUT = 20  # seconds added to duration to control processing timeout
 
     DWN_TS = 0  # time at which switched to download state
     DWN_TIMEOUT = 50  # max amount of time to wait for fragments
@@ -92,6 +94,11 @@ class PayloadController:
 
     TELEM_TS = 0  # time at which last telemetry was requested
     TELEM_PERIOD = 10  # request telemetry every 10s
+
+    # clock sync
+    SYNC_TS = 0
+    SYNC_PERIOD = 30
+    SYNC_SEND_MONOTONIC = 0
 
     # Lets init uart connection.
     # TODO should this only be made once the jetson has been turned on?
@@ -144,7 +151,9 @@ class PayloadController:
         if cls.current_state == PayloadState.BOOTING:
             logger.info("[PAYLOAD] -  Turning on jetson")
             cls.log_data[PAYLOAD_IDX.LATEST_ERROR] = 200  # starting a new experiment resetting the error
-            cls.current_command = (cls.get_first_command())  # choosing the command here, if boot fails we do not run the command again
+            cls.current_command = (
+                cls.get_first_command()
+            )  # choosing the command here, if boot fails we do not run the command again
             cls.remove_first_command()
             logger.info(f"[PAYLOAD] -  Selected command: {cls.current_command}")
             logger.info(f"[PAYLOAD] - command list size: {len(cls.command_list)}")
@@ -152,13 +161,23 @@ class PayloadController:
             if not response:
                 logger.error("[PAYLOAD] - Failed to turn on jetson")
                 return False
+            PU.flush_rx()
 
         # active state, need to get the desired command
         if cls.current_state == PayloadState.ACTIVE:
             logger.info(f"[PAYLOAD] -  Selected command: {cls.current_command}")
+            cls.ACT_CMD_SEND_TS = 0
+            PU.flush_rx()
+
+        if cls.current_state == PayloadState.PROCESSING:
+            PU.flush_rx()
 
         if cls.current_state == PayloadState.DOWNLOAD:
+            cls.transaction_dict = {}
+            cls.received_create_trans = False
+            cls.received_init_trans = False
             cls.received_all_files_sent = False
+            cls.download_manager.reset()
             cls.DWN_LAST_FRAGMENT_TS = TPM.time()
 
         # turn off state needs to send turn off command
@@ -201,6 +220,9 @@ class PayloadController:
         logger.info(f"[PAYLOAD] - Cleared experiment list (count: {cleared_count})")
         cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = 0
 
+        if cls.current_state == PayloadState.WATCHING:
+            cls.switch_state("IDLE")
+
         return cleared_count
 
     @classmethod
@@ -208,13 +230,55 @@ class PayloadController:
         """
         This will return the list of scheduled experiments in the payload
         """
-        return [command[0] for command in cls.command_list]  # return the timestamps of the scheduled commands
+        all_commands = list(cls.command_list)
+        if cls.current_command is not None:
+            all_commands.append(cls.current_command)
+        return [cmd.arguments["ts"] if cmd.arguments["ts"] != 0 else TPM.time() for cmd in all_commands]
 
     @classmethod
-    def add_command(
+    def add_dataset_processing_command(cls, ts, duration, level_processing, rc_version, ld_version, bypass_preflt_rej, dataset_path):
+        """
+        This is the command that will be used to schedule a dataset processing experiment
+        TODO: should add some checks to the arguments here
+        """
+        argument_list = (
+            ts,
+            duration,
+            level_processing,
+            rc_version,
+            ld_version,
+            bypass_preflt_rej,
+            dataset_path,
+        )
+        command = Command("DATASET_PROCESSING")
+        command.set_arguments(*argument_list)
+        return cls.add_command(command)
+
+    @classmethod
+    def add_dataset_od_command(cls, ts, duration, max_iteration, dataset_path):
+        """
+        This is the command that will be used to schedule a dataset orbit determination experiment
+        TODO: should add some checks to the arguments here
+        """
+        argument_list = (
+            ts,
+            duration,
+            max_iteration,
+            dataset_path,
+        )
+        command = Command("DATASET_OD")
+        command.set_arguments(*argument_list)
+        return cls.add_command(command)
+
+    @classmethod
+    def add_command_inference(
         cls,
+        mode_id,
         ts,
+        duration,
         camera_bit_flag,
+        capture_rate,
+        imu_hz,
         level_of_processing,
         width,
         height,
@@ -242,8 +306,8 @@ class PayloadController:
         Given the information it will create the command and add it to the list
         it should add ordered by timestamp
         the command_list will be a list of lists. The inside list will contain the necessary info
-            ts, camera_bit_flag, level_of_processing, width, height,
-            downscale_factor,
+            mode_id, ts, camera_bit_flag, capture_rate, imu_hz,
+            level_of_processing, width, height, downscale_factor,
             camera_defaults_selector, fps, wbmode, aelock, awblock,
             exposuretimerange_low, exposuretimerange_high,
             gainrange_low, gainrange_high,
@@ -257,48 +321,66 @@ class PayloadController:
             logger.error(f"[PAYLOAD] - Invalid camera bit flag: {camera_bit_flag}")
             return False
 
-        if ts != 0 and ts < TPM.time():
-            logger.error(f"[PAYLOAD] - Timestamp in the past: {ts}")
-            return False
-
         # TODO - add limit to resolution and level of processing
 
         # need to add the data in the corerct spot in the list
         # it has to be ordered by timestamp
-        cls.command_list.append(
-            (
-                ts,
-                camera_bit_flag,
-                level_of_processing,
-                width,
-                height,
-                downscale_factor,
-                camera_defaults_selector,
-                fps,
-                wbmode,
-                aelock,
-                awblock,
-                exposuretimerange_low,
-                exposuretimerange_high,
-                gainrange_low,
-                gainrange_high,
-                ispdigitalgainrange_low,
-                ispdigitalgainrange_high,
-                ee_mode,
-                ee_strength,
-                aeantibanding,
-                exposurecompensation,
-                tnr_mode,
-                tnr_strength,
-                saturation,
-            )
+        argument_list = (
+            mode_id,
+            ts,
+            duration,
+            camera_bit_flag,
+            capture_rate,
+            imu_hz,
+            level_of_processing,
+            width,
+            height,
+            downscale_factor,
+            camera_defaults_selector,
+            fps,
+            wbmode,
+            aelock,
+            awblock,
+            exposuretimerange_low,
+            exposuretimerange_high,
+            gainrange_low,
+            gainrange_high,
+            ispdigitalgainrange_low,
+            ispdigitalgainrange_high,
+            ee_mode,
+            ee_strength,
+            aeantibanding,
+            exposurecompensation,
+            tnr_mode,
+            tnr_strength,
+            saturation,
         )
-        cls.command_list.sort(key=lambda x: x[0])  # Sort by timestamp
 
-        cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = ts if ts > 0 else TPM.time()
+        command = Command("EXPERIMENT")
+        command.set_arguments(*argument_list)
+
+        return cls.add_command(command)
+
+    @classmethod
+    def add_command(cls, cmd: Command):
+        """
+        This function will be used to avoid repeating code. For each of the types of commands to be sent to the jetson
+        there will be a function that will build that argument list, and then use this function to add it to the command list
+        from the point of view of the satellite, all of the types of commands are exactly the same
+        the payload task flow will not change
+        cmd.arguments["ts"] is the ts
+
+        TODO: might need to change some of the timeouts
+        """
+        if len(cls.command_list) >= 1 or cls.current_command is not None:
+            logger.error("[PAYLOAD] - Experiment cap reached (max 1). Use CLEAR_EXPERIMENT_LIST first.")
+            return False
+
+        cls.command_list.append(cmd)
+        cls.command_list.sort(key=lambda x: x.arguments["ts"])  # Sort by timestamp
+
+        cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = cmd.arguments["ts"] if cmd.arguments["ts"] > 0 else TPM.time()
         logger.warning(f"[PAYLOAD] - Next command time: {cls.log_data[PAYLOAD_IDX.NEXT_CMD_TIME]}")
-
-        logger.info(f"[PAYLOAD] - Command added: {cls.command_list[-1]}")
 
         return True
 
@@ -355,17 +437,10 @@ class PayloadController:
         Will send the current command to the jetson
         """
 
-        logger.info(f"[PAYLOAD] - Sending current command {cls.current_command}")
+        logger.info(f"[PAYLOAD] - Sending: {cls.current_command} args: {cls.current_command.arguments}")
 
-        # 1. create the command
-        command = Command("EXPERIMENT")
-
-        # 2. set the arguments
-        command.set_arguments(*cls.current_command)
-        logger.info(f"[PAYLOAD] - Command: {command} args: {command.arguments}")
-
-        # 3. pack the command and send to uart
-        PU.send(pack(command))
+        # 1. pack the command and send to uart (no need to create the command now as it has already been created)
+        PU.send(pack(cls.current_command))
 
     @classmethod
     def send_telemetry_command(cls):
@@ -425,13 +500,18 @@ class PayloadController:
         data = cls.read(max_packet_size)  # read the max packet size
 
         if not data or len(data) < max_packet_size:
-            # nothing to be done here
+            # logger.debug(f"[PAYLOAD] - Short read: got {len(data) if data else 0}/{max_packet_size} bytes")
             return False
 
         logger.debug(f"[PAYLOAD] - Received data from uart: {data[0:10]} size: {len(data)}")
 
         # try and unpack the data
-        _, message_object = unpack(data)
+        try:
+            _, message_object = unpack(data)
+        except Exception as e:
+            logger.error(f"[PAYLOAD] - unpack failed: {e} | first 30 bytes: {data[:30]} | in_waiting after: {PU._uart.in_waiting if PU._uart else 'N/A'}")
+            PU.flush_rx()
+            return False
 
         if isinstance(message_object, Ack):
             logger.info(f"[PAYLOAD] -   Received ack: {message_object}")
@@ -547,12 +627,34 @@ class PayloadController:
             cls.received_experiment_ack = True
             return
 
+        # using the same as experiment ack
+        # and not checking if this was what I was expecting
+        if ack.cmd_id == COMMAND_IDS["DATASET_PROCESSING"]:
+            # it was a experiment command
+            if cls.received_experiment_ack:
+                logger.error("[PAYLOAD] - EXPERIMENT ACK OVERRIDDEN (dataset processing)")
+            cls.received_experiment_ack = True
+            return
+
+        if ack.cmd_id == COMMAND_IDS["DATASET_OD"]:
+            # it was a experiment command
+            if cls.received_experiment_ack:
+                logger.error("[PAYLOAD] - EXPERIMENT ACK OVERRIDDEN (dataset od)")
+            cls.received_experiment_ack = True
+            return
+
         # see if it was a off ack
         if ack.cmd_id == COMMAND_IDS["TURN_OFF_PAYLOAD"]:
             # it was a off command
             if cls.received_off_ack:
                 logger.error("[PAYLOAD] - OFF ACK OVERRIDDEN")
             cls.received_off_ack = True
+            return
+
+        if ack.cmd_id == COMMAND_IDS["SYNCHRONIZE_TIME"]:
+            import time
+            rtt = time.monotonic() - cls.SYNC_SEND_MONOTONIC
+            logger.info(f"[PAYLOAD] RTT={rtt:.3f}s status={ack.ack_args}")
             return
 
     @classmethod
@@ -587,10 +689,14 @@ class PayloadController:
             logger.error(f"[PAYLOAD] - Invalid create transaction command: {tid}, {filename}")
             return False
 
-        filename = filename.rstrip("\x00")
+        payload_filename = filename.rstrip("\x00")
+        storage_filename = payload_filename.lstrip("/")
+        dataset_marker = "/data/datasets/"
+        if dataset_marker in payload_filename:
+            storage_filename = "data/datasets/" + payload_filename.split(dataset_marker, 1)[1]
 
         # need to give a random number for number_of_packets
-        cls.transaction_dict[tid] = Transaction(tid, filename, number_of_packets=-1, max_payload_size=600)
+        cls.transaction_dict[tid] = Transaction(tid, storage_filename, number_of_packets=-1, max_payload_size=600)
 
         return True
 
@@ -699,7 +805,22 @@ class PayloadController:
             TPM.sleep(0.1)  # TODO: probably do not need this delay
             SATELLITE.JETSON_SD_REQ.value = False  # turn off the 5v regulator to save power
             logger.info("[PAYLOAD] - Jetson power disabled successfully")
+            PU.flush_rx()
             return True
         except Exception as e:
             logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
             return False
+
+    @classmethod
+    def send_synchronize_time_command(cls, rtc_time):
+        """
+        Send SYNCHRONIZE_TIME command to Jetson with current RTC time
+        """
+        command = Command("SYNCHRONIZE_TIME")
+        command.add_argument("rtc_time", rtc_time)
+
+        import time
+        cls.SYNC_SEND_MONOTONIC = time.monotonic()
+
+        logger.info("[PAYLOAD] - Sending rtc update command")
+        PU.send(pack(command))
