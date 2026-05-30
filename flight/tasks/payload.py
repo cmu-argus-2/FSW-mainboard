@@ -64,11 +64,16 @@ class Task(TemplateTask):
         command = PC.get_first_command()
         self.log_info(f"Watching for command: {command}")
 
-        # update next command time
-        PC.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = command[0]
+        if command is None:
+            self.log_info("No commands available while watching, switching back to IDLE.")
+            PC.switch_state("IDLE")
+            return
 
-        # check to see if the time to execute the command has arrived
-        if command[0] < TPM.time() or command[0] == 0:
+        # update next command time
+        PC.log_data[PAYLOAD_IDX.NEXT_CMD_TIME] = command.arguments["ts"]
+
+        # check to see if it is time to boot: start BOOT_TIMEOUT seconds early so jetson is ready by ts
+        if command.arguments["ts"] == 0 or command.arguments["ts"] - TPM.time() <= PC.BOOT_TIMEOUT:
             if SM.current_state != STATES.EXPERIMENT:
                 self.experiment_mode_wait_iterations += 1
                 if self.experiment_mode_wait_iterations < 2:
@@ -110,10 +115,18 @@ class Task(TemplateTask):
 
         # check to see if we got response from ping
         if PC.received_ping_ack:
+            ts = PC.current_command.arguments["ts"]
+
+            # Only start the command once scheduled time has arrived
+            if ts != 0 and TPM.time() < ts:
+                self.log_info(f"Received ping ack but scheduled time {ts} has not arrived yet, waiting...")
+                return
+
             # means we have received a response from jetson, moving to ACTIVE state
             self.log_info("Ping responded, switching to ACTIVE state.")
             PC.received_experiment_ack = False
             PC.ACT_TS = TPM.time()
+            PC.send_synchronize_time_command(TPM.time())
             PC.switch_state("ACTIVE")
 
             # set the last_executed_time
@@ -157,9 +170,9 @@ class Task(TemplateTask):
             PC.switch_state("FAIL")
             return
 
-        # send the command
-        # TODO - only want to send this every 5 seconds for example
-        PC.send_current_command()  # current command was choosen in switch state
+        if TPM.time() - PC.ACT_CMD_SEND_TS >= PC.ACT_CMD_SEND_PERIOD:
+            PC.ACT_CMD_SEND_TS = TPM.time()
+            PC.send_current_command()
 
     def run_processing_state(self):
         """
@@ -170,7 +183,9 @@ class Task(TemplateTask):
         It will check if the message from jetson for processing finished has been received
         """
 
-        if PC.PROC_TS + PC.PROC_TIMEOUT <= TPM.time():
+        ts = PC.current_command.arguments["ts"]
+        proc_anchor = PC.PROC_TS if ts == 0 else ts
+        if proc_anchor + PC.current_command.arguments["duration"] + PC.PROC_TIMEOUT <= TPM.time():
             # means that we have reached the timeout of the command
             self.log_info("Processing timeout reached, switching to FAIL state.")
             PC.switch_state("FAIL")
@@ -307,10 +322,11 @@ class Task(TemplateTask):
             self.log_info("Turn off timeout reached, cutting power to jetson.")
             PC.turn_off_power()
             if PC.received_off_ack:
-                PC.received_off_ack = False
                 PC.switch_state("SUCCESS")  # receive the shutdown ack, gave time and can cut power now
             else:
                 PC.switch_state("FAIL")  # did not received the shutdown ack, failing and forcing to shutdown
+            PC.received_off_ack = False  # Reset Flag
+            PC.waiting_shutdown = False  # Reset Flag
 
     def run_success_state(self):
         """

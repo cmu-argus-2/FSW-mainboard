@@ -14,12 +14,7 @@ class PayloadUART(PayloadCommunicationInterface):
         if SATELLITE.PAYLOADUART_AVAILABLE:
             cls._uart = SATELLITE.PAYLOADUART
             cls._connected = True
-
-            # Flush any stale data in the buffer
-            bytes_flushed = cls._uart.in_waiting
-            if bytes_flushed > 0:
-                # Read and discard stale data
-                cls._uart.read(bytes_flushed)
+            cls.flush_rx()
         else:
             cls._uart = None
             cls._connected = False
@@ -48,7 +43,22 @@ class PayloadUART(PayloadCommunicationInterface):
             logger.error("Attempted to read data over UART when not connected")
             return None
 
+        # logger.debug(f"[PAYLOAD UART] in_waiting={cls._uart.in_waiting} before read({bytes})")
         return cls._uart.read(bytes)
+
+    @classmethod
+    def flush_rx(cls):
+        if not cls._connected:
+            return
+        pending = cls._uart.in_waiting
+        flushed = 0
+        while pending > 0:
+            chunk_size = min(pending, 128)
+            cls._uart.read(chunk_size)
+            flushed += chunk_size
+            pending -= chunk_size
+        if flushed > 0:
+            logger.warning(f"[PAYLOAD UART] Flushed {flushed} stale RX bytes")
 
     @classmethod
     def is_connected(cls) -> bool:
