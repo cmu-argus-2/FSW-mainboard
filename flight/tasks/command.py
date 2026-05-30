@@ -248,7 +248,7 @@ class Task(TemplateTask):
                 if _SKIP_DEPLOYMENT:
                     self.log_info("Deployment skipped (SKIP_DEPLOYMENT=True)")
                     self.deployment_done = True
-                
+
                 if SATELLITE.BURN_WIRES_AVAILABLE and not self.deployment_done:
                     # Deployment finished when the deployment PWM reaches 0
                     if self.deploymentPWM < _PWM_MIN and deployment_time_check:
