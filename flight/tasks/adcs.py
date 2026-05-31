@@ -95,7 +95,7 @@ class Task(TemplateTask):
         else:
             if SM.current_state != STATES.LOW_POWER:
                 if not DH.data_process_exists("adcs"):
-                    DH.register_data_process("adcs", _ADCS_DATA_FORMAT, True, data_limit=100000, write_interval=2)
+                    DH.register_data_process("adcs", _ADCS_DATA_FORMAT, True, data_limit=25_000, write_interval=2)
 
                 ControllerModes.load()
                 sensors.load_mag_bias()
