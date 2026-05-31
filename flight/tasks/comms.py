@@ -48,8 +48,12 @@ class Task(TemplateTask):
         TODO: add tx timeout when more information about duty cycle is available
         """
 
-        self.log_info("Checking transmit queue for packets to send...")
-        self.log_info(f"  Transmit queue size: {TransmitQueue.get_size()}")
+        if not TransmitQueue.packet_available():
+            # nothing to be done here
+            return
+
+        self.log_debug("Checking transmit queue for packets to send...")
+        self.log_debug(f"  Transmit queue size: {TransmitQueue.get_size()}")
 
         if TransmitQueue.packet_available():
             self.update_comms_telemetry()  # will only update comms data when something is sent or received
@@ -79,8 +83,9 @@ class Task(TemplateTask):
         records the rssi and adds the command to the command queue for processing by the command processor task.
         """
 
-        self.log_info("Checking for incoming messages from GS...")
+        self.log_debug("Checking for incoming messages from GS...")
         if SATELLITE_RADIO.data_available():
+            self.log_info("Incoming message detected")
 
             # Read packet present in the RX buffer
             message_object = SATELLITE_RADIO.receive_message()

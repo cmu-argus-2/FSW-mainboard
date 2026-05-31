@@ -8,6 +8,7 @@ import time
 import board
 import digitalio
 from busio import I2C, SPI, UART
+from core.satellite_config import comms_config as COMMS_CONFIG
 from core.satellite_config import hal_config as CONFIG
 from hal.cubesat import ASIL0, ASIL1, ASIL2, ASIL3, ASIL4, CubeSat
 from hal.drivers.errors import Errors
@@ -502,7 +503,7 @@ class ArgusV4(CubeSat):
                 rx_en=ArgusV4Components.RADIO_RX_EN,
             )
 
-            radio._FREQ = 435.0
+            radio._FREQ = getattr(COMMS_CONFIG, "RADIO_FREQUENCY_MHZ", 437.400)
             radio._POWER = 22
 
             radio.begin(

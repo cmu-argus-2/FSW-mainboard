@@ -7,13 +7,11 @@ class CDH_IDX:
     TIME = const(0)
     BOOT_TIME = const(1)
     SC_STATE = const(2)
-    SD_USAGE = const(3)
-    CURRENT_RAM_USAGE = const(4)
-    BOOT_COUNT = const(5)
-    WATCHDOG_TIMER = const(6)
-    HAL_BITFLAGS = const(7)
-    DETUMBLING_ERROR_FLAG = const(8)
-    DEPLOYMENT_STATUS = const(9)
+    CURRENT_RAM_USAGE = const(3)
+    BOOT_COUNT = const(4)
+    HAL_BITFLAGS = const(5)
+    DETUMBLING_ERROR_FLAG = const(6)
+    DEPLOYMENT_STATUS = const(7)
 
 
 class EPS_IDX:

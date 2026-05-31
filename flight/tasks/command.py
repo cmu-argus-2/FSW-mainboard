@@ -39,12 +39,8 @@ _SKIP_DEPLOYMENT = CONFIG.SKIP_DEPLOYMENT
 
 
 class Task(TemplateTask):
-    # To be removed
-    # data_keys = ["TIME", "SC_STATE", "SD_USAGE", "CURRENT_RAM_USAGE", "BOOT_COUNT",
-    # "WATCHDOG_TIMER", "HAL_BITFLAGS", "DETUMBLING_ERROR_FLAG"]
 
-    # Ensure log_data has entries for all CDH_IDX fields (indices 0..9)
-    log_data = [0] * 10
+    log_data = [0] * 8
 
     log_commands = [0] * 3
 
@@ -131,11 +127,15 @@ class Task(TemplateTask):
             SATELLITE.NEOPIXEL.fill([255, 255, 255])
 
         if not DH.data_process_exists("cdh"):
-            data_format = "LLbLbbbbbb"
+            data_format = "LLbbbbbb"
             DH.register_data_process("cdh", data_format, True, data_limit=100000)
 
         # Restore boot count and deployment status from previous session
         if not self.restored:
+            if not DH.data_process_exists("cdh"):
+                data_format = "LLbbbbbb"
+                DH.register_data_process("cdh", data_format, True, data_limit=100000)
+
             if SATELLITE.SD_CARD_AVAILABLE:
                 cdh_data = DH.data_process_registry["cdh"].get_latest_data()
                 if cdh_data is not None:
@@ -197,8 +197,13 @@ class Task(TemplateTask):
         else:
             # If the DH successfully scanned the SD card, and it has been 5 secs since FSW boot
             if DH.SD_SCANNED() and (self.deployment_done or time_since_boot > _EXIT_STARTUP_TIMEOUT):
+                if not DH.data_process_exists("cdh"):
+                    data_format = "LLbbbbbb"
+                    # this is 14 bytes, in current config ~7.2bytes/s. 25k will be ~60min
+                    DH.register_data_process("cdh", data_format, True, data_limit=25_000, write_interval=5)
+
                 if not DH.data_process_exists("cmd_logs"):
-                    DH.register_data_process("cmd_logs", "LBB", True, data_limit=100000)
+                    DH.register_data_process("cmd_logs", "LBB", True, data_limit=25_000)
 
                 # Enable file logging to SD card (runs once, after SD is confirmed ready)
                 if not self.file_logging_enabled:
@@ -395,8 +400,6 @@ class Task(TemplateTask):
             if SATELLITE.NEOPIXEL_AVAILABLE:
                 SATELLITE.NEOPIXEL.fill([0, 255, 0])
 
-            self.log_info(f"PDMODE: {self.PAYLOAD_MODE}")
-
             """Transitions out of NOMINAL"""
             if (self.ADCS_MODE == Modes.TUMBLING or self.ADCS_MODE == Modes.VF_TUMBLING) and self.log_data[
                 CDH_IDX.DETUMBLING_ERROR_FLAG
@@ -514,10 +517,8 @@ class Task(TemplateTask):
             self.log_data[CDH_IDX.TIME] = TPM.time()
             self.log_data[CDH_IDX.BOOT_TIME] = TPM.monotonic() - SATELLITE.BOOTTIME
             self.log_data[CDH_IDX.SC_STATE] = SM.current_state
-            self.log_data[CDH_IDX.SD_USAGE] = int(DH.SD_usage() / 1000)  # kb - gets updated in the OBDH task
             self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = self.get_memory_usage()
             self.log_data[CDH_IDX.BOOT_COUNT] = self.boot_count
-            self.log_data[CDH_IDX.WATCHDOG_TIMER] = 0
             self.log_data[CDH_IDX.HAL_BITFLAGS] = 0
             self.log_data[CDH_IDX.DEPLOYMENT_STATUS] = int(self.deployment_done)
 
