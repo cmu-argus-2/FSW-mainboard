@@ -40,7 +40,7 @@ class Task(TemplateTask):
         self.max_rx_queue = int(getattr(CONFIG, "RX_QUEUE_MAX", 20))
 
         # Prefix (Bytes)
-        prefix = "^(.*?)" 
+        prefix = "^(.*?)"
         # SRC (6 chars) - Wrapped in () so it becomes Group 2
         src = "([A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9])"
         # Suffix - Groups 3 & 4
