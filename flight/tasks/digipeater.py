@@ -39,14 +39,31 @@ class Task(TemplateTask):
 
         self.max_rx_queue = int(getattr(CONFIG, "RX_QUEUE_MAX", 20))
 
-        # create the RE to find satellite CS in the path
-        self._satellite_cs_re = re.compile(
-            r"^[a-zA-Z0-9]{6}"                 # Standard raw string
-            r"(?:-(?:[1-9]|1[0-5]))?>"
-            r"(?:[a-zA-Z0-9]{1,6},)?"
-            f"{SATELLITE_RADIO.SC_CALLSIGN}"
-            r"(?:(?:,[^:]*)?:|:)"              # Standard raw string
-        )
+        # Prefix (Bytes)
+        prefix = "^(.*?)" 
+        # SRC (6 chars) - Wrapped in () so it becomes Group 2
+        src = "([A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9])"
+        # Suffix - Groups 3 & 4
+        suffix = "(-(1[0-5]|[1-9]))?"
+        # Separator - Group 5
+        sep = "(>)"
+        # DST - Group 6
+        dst = "([A-Za-z0-9]+,)?"
+        # Code - Group 7
+        callsign = "(" + SATELLITE_RADIO.SC_CALLSIGN + ")"
+        # Tail - Groups 8 & 9
+        tail = "((,[^:]*)?:)"
+        # Rest - Group 10
+        rest = "(.*)"
+
+        pattern = "^" + src + suffix + sep + \
+            dst + callsign + tail
+
+        pattern_with_rest = prefix + src + suffix + sep + \
+            dst + callsign + tail + rest
+
+        self._satellite_message_re = re.compile(pattern)
+        self._satellite_replace_re = re.compile(pattern_with_rest)
 
         DigipeaterRxQueue.configure(self.max_rx_queue)
 
@@ -63,13 +80,14 @@ class Task(TemplateTask):
             self.log_info(f"Looking at packet: {raw_packet[:20]}")
 
             # Validate LoRa APRS packet header and structure
-            result = is_valid_lora_aprs_packet(raw_packet, self._satellite_cs_re)
+            result = is_valid_lora_aprs_packet(raw_packet, self._satellite_message_re)
             if not result == 4:
                 self.log_warning(f"Invalid packet format, dropping {result}")
                 continue
 
             # Add asterik to callsign to indicate digipeating
-            final_packet = add_asterisk_packet(raw_packet, self._satellite_cs_re)
+            final_packet = add_asterisk_packet(raw_packet, self._satellite_replace_re,
+                                               SATELLITE_RADIO.SC_CALLSIGN)
 
             # Transmit using special transmit digi packet function
             if not SATELLITE_RADIO.transmit_digi_packet(final_packet):

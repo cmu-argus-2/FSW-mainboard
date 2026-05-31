@@ -30,8 +30,9 @@ def is_valid_lora_aprs_packet(data, re_obj):
     return 4 if re_obj.match(aprs_str) else 3
 
 
-def add_asterisk_packet(data, re_obj):
+def add_asterisk_packet(data, re_obj, callsign):
     """
     Will simply add an asterisk to the end of callsign in the path to indicate that the packed has been repeated
     """
-    return re_obj.sub(r"\g<0>*", data)
+    replacement = "\\1\\2\\3\\5\\6" + callsign + "*" + "\\8\\10"
+    return re_obj.sub(replacement, data)
