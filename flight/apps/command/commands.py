@@ -26,7 +26,6 @@ from apps.command.supervisor import CommandSupervisor
 from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.comms.modes import COMMS_MODE as COMMS_MODE_ID
-from apps.comms.modes import COMMS_MODE_STR
 from apps.digipeater import DigipeaterState
 from apps.telemetry.middleware import Frame as TelemetryFrame
 from apps.telemetry.splat.splat.telemetry_codec import Command
@@ -223,7 +222,6 @@ def RF_SWITCH(selector):
     return [-1]
 
 
-
 @register_command()
 def DIGIPEATER_SWITCH(selector):
     """Activates or deactivates the digipeater relay subsystem."""
@@ -286,22 +284,6 @@ def SET_FSK(freq, power, br, ps, bandwidth, f_dev, p_len, p_detect, crc_type, wh
         return ["fsk_failed"]   # this is never gonna be sent to the user
 
     return ["fsk set"]
-
-
-@register_command()
-def COMMS_MODE(mode_id):
-    """Set COMMS operating mode (STANDARD/RF_STOP).
-
-    RF_STOP is routed through CommandSupervisor for deferred execution
-    (ACK first, then drain queue, then activate).
-    """
-    if mode_id == COMMS_MODE_ID.RF_STOP:
-        logger.warning("Executing COMMS_MODE(RF_STOP) via deferred path")
-        CommandSupervisor.request_rf_stop()
-    else:
-        SATELLITE_RADIO.set_comms_mode(mode_id)
-        logger.warning(f"Executing COMMS_MODE: {COMMS_MODE_STR.get(mode_id, 'UNKNOWN')}")
-    return []
 
 
 @register_command()

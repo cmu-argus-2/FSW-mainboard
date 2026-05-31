@@ -7,7 +7,7 @@ Authors: Akshat Sahay, Ibrahima S. Sow, Perrin Tong
 """
 
 from apps.comms.auth import get_auth_key_bytes, verify_authenticated_command
-from apps.comms.modes import COMMS_MODE, COMMS_MODE_STR
+from apps.comms.modes import COMMS_MODE
 from apps.digipeater import DigipeaterRxQueue
 from apps.telemetry.splat.splat.telemetry_codec import unpack
 from core import logger
@@ -99,7 +99,7 @@ class SATELLITE_RADIO:
         cls.comms_mode = mode_id
         cls.rf_stop = mode_id == COMMS_MODE.RF_STOP
         cls._persist_rf_stop_latch(cls.rf_stop)
-        logger.warning(f"[COMMS] Mode set to {COMMS_MODE_STR.get(mode_id, mode_id)}")
+        logger.warning(f"[COMMS] Mode set to {mode_id}")
         return True
 
     @classmethod
