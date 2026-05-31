@@ -40,7 +40,13 @@ class Task(TemplateTask):
         self.max_rx_queue = int(getattr(CONFIG, "RX_QUEUE_MAX", 20))
 
         # create the RE to find satellite CS in the path
-        self._satellite_cs_re = re.compile(f"{SATELLITE_RADIO.SC_CALLSIGN}")
+        self._satellite_cs_re = re.compile(
+            r"^[a-zA-Z0-9]{6}"                 # Standard raw string
+            r"(?:-(?:[1-9]|1[0-5]))?>"
+            r"(?:[a-zA-Z0-9]{1,6},)?"
+            f"{SATELLITE_RADIO.SC_CALLSIGN}"
+            r"(?:(?:,[^:]*)?:|:)"              # Standard raw string
+        )
 
         DigipeaterRxQueue.configure(self.max_rx_queue)
 
@@ -58,8 +64,8 @@ class Task(TemplateTask):
 
             # Validate LoRa APRS packet header and structure
             result = is_valid_lora_aprs_packet(raw_packet, self._satellite_cs_re)
-            if not result == 6:
-                self.log_warning(f"  Invalid packet format, dropping {result}")
+            if not result == 4:
+                self.log_warning(f"Invalid packet format, dropping {result}")
                 continue
 
             # Add asterik to callsign to indicate digipeating

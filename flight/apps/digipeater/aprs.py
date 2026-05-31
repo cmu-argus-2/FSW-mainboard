@@ -18,29 +18,16 @@ def is_valid_lora_aprs_packet(data, re_obj):
     """Return True if data is a structurally valid LoRa APRS packet."""
 
     # check if there are enough bytes
-    if len(data) < _HEADER_LEN + 20:  # header + minimum APRS string length
+    if len(data) < _HEADER_LEN + 9:  # header + minimum APRS string length
         return 1
 
     # try an decode using ascii
     try:
         aprs_str = data[_HEADER_LEN:].decode("ascii")
     except (UnicodeDecodeError, ValueError):
-        return 3
+        return 2
 
-    # use re_obj to check if the satellite callsing is in the string
-    result = re_obj.search(aprs_str)
-    if result is None:
-        return 4
-
-    # ind max size: 10 (because of ssid)
-    # dst max size: 6
-    # extra chars: header + > = 4
-    # the maximum distance from the beggining of the string should be 20
-    # check if the callsign is in the first 20 characters of the string
-    if result.start() > 20:
-        return 5
-
-    return 6
+    return 4 if re_obj.match(aprs_str) else 3
 
 
 def add_asterisk_packet(data, re_obj):
