@@ -150,7 +150,7 @@ class SATELLITE_RADIO:
         # Assumes packet is in FIFO buffer
 
         # check to see if the state of the radio is rx
-        if not cls.is_rx_state: 
+        if not cls.is_rx_state:
             cls.set_rx_mode()
             logger.error("[COMMS ERROR] Tried to receive message while radio not in RX state")
 

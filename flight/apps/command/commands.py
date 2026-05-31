@@ -280,7 +280,7 @@ def SET_FSK(freq, power, br, ps, bandwidth, f_dev, p_len, p_detect, crc_type, wh
         logger.error("Rebooting satellite")
         supervisor.reload()     # if we have a problem with setting fsk, to be safe, lets just reboot satellite
         return ["fsk_failed"]   # this is never gonna be sent to the user
-        
+
     return ["fsk set"]
 
 
