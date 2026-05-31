@@ -52,6 +52,8 @@ class SATELLITE_RADIO:
 
     TX_BURST_SIZE = 15  # number of packets to send in a burst during a transmission window
 
+    is_rx_state = False
+
     @classmethod
     def set_rx_mode(cls):
         """
@@ -59,6 +61,7 @@ class SATELLITE_RADIO:
         Description: Used during task init to make sure that the radio is able to receive messages
         as soon as the comms task starts
         """
+        cls.is_rx_state = True
         # set the radio into receive mode
         SATELLITE.RADIO.startReceive(0xFFFFFF)
         SATELLITE.RADIO.tx_en.value = False
@@ -70,6 +73,7 @@ class SATELLITE_RADIO:
         Name: set_tx_mode
         Description: Used to set the radio into transmit mode, which is necessary before transmitting messages
         """
+        cls.is_rx_state = False
         SATELLITE.RADIO.rx_en.value = False
         SATELLITE.RADIO.tx_en.value = True
 
@@ -144,6 +148,11 @@ class SATELLITE_RADIO:
     def receive_message(cls):
         # Get packet from radio over SPI
         # Assumes packet is in FIFO buffer
+
+        # check to see if the state of the radio is rx
+        if not cls.is_rx_state: 
+            cls.set_rx_mode()
+            logger.error("[COMMS ERROR] Tried to receive message while radio not in RX state")
 
         packet = None
         err = -1  # _ERR_NONE is 0

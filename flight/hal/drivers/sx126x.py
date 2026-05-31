@@ -607,6 +607,8 @@ class SX126X:
         # 16 is the crc at the end, time in us
         self._EXTRA_TIME = (self._preambleLength + self._syncWordLength + 16) / self._bitrate * 1000000
 
+        return state
+
     def reset(self, verify=True):
         self.rst.value = True
         sleep_us(150)
@@ -662,7 +664,7 @@ class SX126X:
         state = self.clearIrqStatus()
         ASSERT(state)
 
-        # Switch to receive mode instanly after transmitting  - this is to be done by the comms task
+        # Switch to receive mode instantly after transmitting  - this is to be done by the comms task
         # state = self.startReceive(_SX126X_RX_TIMEOUT_INF)
         # ASSERT(state)
         # # Enable RX and disable TX
@@ -1260,7 +1262,7 @@ class SX126X:
 
         return state
 
-    def setModulationParams(self, sf, bw, cr, ldro,):
+    def setModulationParams(self, sf, bw, cr, ldro):
         ASSERT(_ERR_NONE if self._modem == _SX126X_PACKET_TYPE_LORA else _ERR_UNKNOWN)
 
         if self._ldroAuto:
@@ -1751,7 +1753,6 @@ class SX1262(SX126X):
             ASSERT(super().startReceive())
 
     def setBlockingCallback(self, callback=None):
-        self._BLOCKING
         if not self._BLOCKING:
             state = super().startReceive()
             ASSERT(state)

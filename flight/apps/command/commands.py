@@ -252,6 +252,10 @@ def SET_FSK(freq, power, br, ps, bandwidth, f_dev, p_len, p_detect, crc_type, wh
 
     logger.warning("Executing SET_FSK: setting modulation to FSK for next transmission")
 
+    if not SATELLITE.RADIO_AVAILABLE:
+        logger.error("[COMMS ERROR] RADIO no longer active on SAT")
+        return ["radio not available"]
+
     SATELLITE.RADIO.obj._FREQ = freq
     SATELLITE.RADIO.obj._POWER = power
     SATELLITE.RADIO.obj._bitrate = br
@@ -268,12 +272,15 @@ def SET_FSK(freq, power, br, ps, bandwidth, f_dev, p_len, p_detect, crc_type, wh
         )
 
         # in fsk transmission is way faster compared to lora (>3 times)
-        # lets triplicate tx_burst_size
-        SATELLITE_RADIO.TX_BURST_SIZE *= 3
+        # burst size depends on the set bitrate. Considering lora bps as 6k to allow for margin
+        SATELLITE_RADIO.TX_BURST_SIZE = 15 * br // 6000
 
     except Exception as e:
         logger.error(f"FSK fail: {e}")
-        return [f"fsk failed {e}"]
+        logger.error("Rebooting satellite")
+        supervisor.reload()     # if we have a problem with setting fsk, to be safe, lets just reboot satellite
+        return ["fsk_failed"]   # this is never gonna be sent to the user
+        
     return ["fsk set"]
 
 
