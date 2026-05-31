@@ -29,7 +29,7 @@ class Task(TemplateTask):
                 data_format=PC.payload_tm_data_format,
                 persistent=True,
                 data_limit=20000,  # this is 57 bytes, in current config ~5.7bytes/s. 20k will be ~60min
-                circular_buffer_size=200,
+                circular_buffer_size=50,
             )
 
     def run_idle_state(self):
@@ -358,7 +358,7 @@ class Task(TemplateTask):
 
         if TPM.time() - self._last_state_print_ts >= 10:
             self._last_state_print_ts = TPM.time()
-            DH.log_data("payload", PC.log_data)  # periodically log data
+            DH.log_data("payload_tm", PC.log_data)  # periodically log data
             self.log_info(f"Current state: {PC.current_state}")
             self.log_info(f"  next command time: {PC.log_data[PAYLOAD_IDX.NEXT_CMD_TIME]}")
 
@@ -380,7 +380,7 @@ class Task(TemplateTask):
 
         # if we are here means we are running the experiment
         # while running the experiment want to log the data every iteration
-        DH.log_data("payload", PC.log_data)  # periodically log data
+        DH.log_data("payload_tm", PC.log_data)  # periodically log data
 
         if PC.current_state == 2:
             self.run_booting_state()
