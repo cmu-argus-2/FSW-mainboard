@@ -478,7 +478,7 @@ class NullHandler(Handler):
 
 
 logger_cache = {}
-_default_handler = StreamHandler()
+_default_handler = None
 
 
 def _addLogger(logger_name: Hashable) -> None:
@@ -678,10 +678,12 @@ logger = getLogger("core_logger")
 
 def setup_logger(level="NOTSET", handler=None):
     """
-    Setup the logger with the specified level and handler.
+    Set the root logger level. Serial logging is disabled in flight, so no
+    StreamHandler is installed here; the SD-card RotatingFileHandler is added
+    later by the command task once the SD card is confirmed ready.
 
     :param level: The logging level (NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL).
-    :param handler: A logging handler, e.g., StreamHandler or FileHandler.
+    :param handler: Optional handler to register. If None, no handler is added.
     """
     set_level = 0
     for i, _level in enumerate(LEVELS):
@@ -690,10 +692,7 @@ def setup_logger(level="NOTSET", handler=None):
 
     logger.setLevel(set_level)
 
-    if handler is None:
-        handler = StreamHandler()
-
-    formatter = Formatter(fmt="[{asctime}][{levelname}] {message}", style="{")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.info(f"Logger set to level {level}")
+    if handler is not None:
+        formatter = Formatter(fmt="[{asctime}][{levelname}] {message}", style="{")
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
