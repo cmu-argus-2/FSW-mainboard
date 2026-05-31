@@ -26,7 +26,6 @@ from apps.command.supervisor import CommandSupervisor
 from apps.comms.comms import SATELLITE_RADIO
 from apps.comms.fifo import QUEUE_STATUS, TransmitQueue
 from apps.comms.modes import COMMS_MODE as COMMS_MODE_ID
-from apps.comms.modes import COMMS_MODE_STR
 from apps.digipeater import DigipeaterState
 from apps.telemetry.middleware import Frame as TelemetryFrame
 from apps.telemetry.splat.splat.telemetry_codec import Command
@@ -57,77 +56,70 @@ def register_command(name=None):
 
 
 @register_command()
-def FORCE_REBOOT():
-    """Forces a power cycle of the spacecraft."""
-    logger.info("Executing FORCE_REBOOT")
-    supervisor.reload()
-    return []
-
-
-@register_command()
-def GRACEFUL_REBOOT():
+def REBOOT(selector):
     """
-    Attempt to gracefully reboot the satellite
-    this is equivalent to the reboot every 24h
+    Select and execute one of the available reboot flows
+    0 -> Force reboot: immediately triggers a reboot without any cleanup (supervisor.reload())
+    1 -> Graceful reboot: attempts to gracefully shutdown the satellite by first shutting down the
+            data handler to ensure all files are properly closed, then triggers a reboot (SATELLITE.reboot())
+    2 -> Main power reboot: directly cuts the main power to the satellite, which will trigger a hard reboot
+    3 -> ACK reboot: sends an ACK to the ground station confirming the reboot command,
+            then triggers a reboot after the ACK is sent and the transmit queue is drained (CommandSupervisor.request_reboot())
+    4 -> PET reboot: resets the regular reboot timer to prevent an imminent reboot, without
+            actually rebooting the satellite (used when the satellite is about to reboot but we want to keep it on for longer)
     """
+    # 0 = force reboot
+    if selector == 0:
+        logger.info("Executing REBOOT: FORCE")
+        supervisor.reload()
+        return []
 
-    logger.info("Executing GRACEFUL_REBOOT")
-    try:
+    # 1 = graceful reboot
+    if selector == 1:
+        logger.info("Executing REBOOT: GRACEFUL")
+        try:
+            # shutdown DH to make sure all files are closed properly
+            response = DH.graceful_shutdown()
+            if not response:
+                logger.error("Failed to gracefully shutdown data handler, aborting reboot")
+                return ["graceful reboot failed: DH shutdown failed"]
+            SATELLITE.reboot()
+            return [1]  # this will never be returned
 
-        # shutdown DH to make sure all files are closed properly
-        response = DH.graceful_shutdown()
+        except Exception as e:
+            logger.error(f"Failed to gracefully reboot the satellite: {e}")
+            return [f"graceful reboot failed: {e}"]
 
-        if not response:
-            logger.error("Failed to gracefully shutdown data handler, aborting reboot")
-            return ["graceful reboot failed: DH shutdown failed"]
+    # 2 = main power reboot
+    elif selector == 2:
+        logger.info("Executing REBOOT: MAIN_POWER")
+        try:
+            SATELLITE.reboot()
+            return [2]  # this will never be returned
+        except Exception as e:
+            logger.error(f"Failed to reboot the satellite: {e}")
+            return [f"main power reboot failed: {e}"]
 
-        SATELLITE.reboot()
+    # 3 = ack reboot
+    elif selector == 3:
+        logger.info("Executing REBOOT: ACK")
+        CommandSupervisor.request_reboot()
+        return [3]
 
-        return ["success"]  # this will never be returned
-    except Exception as e:
-        logger.error(f"Failed to gracefully reboot the satellite: {e}")
-        return [f"graceful reboot failed: {e}"]
+    # 4 = PET reboot
+    elif selector == 4:
+        logger.info("Executing REBOOT: PET")
+        try:
+            from tasks import hal_monitor
+            current_time = TPM.monotonic()
+            hal_monitor._BOOT_TIME = current_time
+            return [4]
+        except Exception as e:
+            logger.error(f"[REBOOT_PET] Failed to reset regular reboot timer: {e}")
+            return [f"pet failed: {e}"]
 
-
-@register_command()
-def MAIN_POWER_REBOOT():
-    logger.info("Executing MAIN_POWER_REBOOT")
-    try:
-        SATELLITE.reboot()
-        return ["success"]  # this will never be returned
-    except Exception as e:
-        logger.error(f"Failed to reboot the satellite: {e}")
-        return [f"main power reboot failed: {e}"]
-
-
-@register_command()
-def REBOOT_ACK():
-    """
-    This command will perform a reboot on the satellite after acknowledging, using the command supervisor
-    This reboot is equivalente to force reboot but it will wait for the ack to be sent before rebooting
-    """
-    CommandSupervisor.request_reboot()
-
-    return ["reboot requested"]
-
-
-@register_command()
-def PET_REBOOT():
-    """
-    This will update the _BOOT_TIME in hal_monitor to make prevent the satellite from performing
-    the regular reboot for the next 24 hours
-    """
-    logger.info("Executing PET_REBOOT")
-
-    try:
-        from tasks import hal_monitor
-
-        current_time = TPM.monotonic()
-        hal_monitor._BOOT_TIME = current_time
-        return ["pet successfull"]
-    except Exception as e:
-        logger.error(f"[PET_REBOOT] Failed to reset regular reboot timer: {e}")
-        return [f"pet failed: {e}"]
+    logger.error(f"Invalid reboot selector: {selector}")
+    return [-1]
 
 
 @register_command()
@@ -169,16 +161,6 @@ def GET_COMMAND_LIST(skip_elements=0):
 
 
 @register_command()
-def SUM(opA, opB):
-    """
-    Test command
-    used to experiment adding new command and testing the arguments
-    """
-    logger.info(f"Executing SUM with opA: {opA} and opB: {opB}")
-    return [opA + opB]
-
-
-@register_command()
 def SWITCH_TO_STATE(target_state_id, time_in_state=None):
     """Forces a switch of the spacecraft to a specific state."""
     logger.info(f"Executing SWITCH_TO_STATE with target_state: {STR_STATES[target_state_id]}, time_in_state: {time_in_state}")
@@ -195,91 +177,130 @@ def UPLINK_TIME_REFERENCE(time_reference):
 
 
 @register_command()
-def TURN_OFF_PAYLOAD():
-    """Cuts the power to the payload"""
-    logger.info("Executing TURN_OFF_PAYLOAD")
-
-    if not SATELLITE.PAYLOADPOWER_AVAILABLE:
-        logger.warning("[PAYLOAD] Payload power pins is not available.")
-        return ["payload power pins not available"]
-
-    try:
-        logger.info("[PAYLOAD] Shutdown command sent successfully, waiting for payload to shutdown before cutting power")
-        SATELLITE.JETSON_ENABLE.value = False
-        TPM.sleep(0.1)
-        SATELLITE.JETSON_SD_REQ.value = False  # turn of 5v dcdc to save more power
-
-    except Exception as e:
-        logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
-
-    return []
-
-
-@register_command()
-def TURN_ON_PAYLOAD():
-    """Enables power to the payload"""
-    logger.info("Executing TURN_ON_PAYLOAD")
-
-    if not SATELLITE.PAYLOADPOWER_AVAILABLE:
-        logger.warning("[PAYLOAD] Payload power pins is not available.")
-        return ["payload power pins not available"]
-
-    try:
-        SATELLITE.JETSON_ENABLE.value = True
-        TPM.sleep(0.1)
-        SATELLITE.JETSON_SD_REQ.value = True  # turn of 5v dcdc to save more power
-
-        logger.info("[PAYLOAD] Jetson power enabled successfully.")
-    except Exception as e:
-        logger.error(f"[PAYLOAD] Failed to enable payload power: {e}")
-    return []
-
-
-@register_command()
-def RF_STOP():
-    """Stops all satellite RF transmissions."""
-    logger.warning("Executing RF_STOP (deferred): will disable TX after ACK")
-    CommandSupervisor.request_rf_stop()
-    return ["rf_stop_requested"]
-
-
-@register_command()
-def RF_RESUME():
-    """Resumes normal satellite RF transmissions."""
-    logger.warning("Executing RF_RESUME: enabling standard satellite TX")
-    CommandSupervisor.cancel_pending_rf_stop()
-    SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.STANDARD)
-    return ["rf_resume_executed"]
-
-
-@register_command()
-def DIGIPEATER_ACTIVATE():
-    """Activates the digipeater relay subsystem."""
-    logger.warning("Executing DIGIPEATER_ACTIVATE")
-    return DigipeaterState.activate()
-
-
-@register_command()
-def DIGIPEATER_DEACTIVATE():
-    """Deactivates the digipeater relay subsystem."""
-    logger.warning("Executing DIGIPEATER_DEACTIVATE")
-    return DigipeaterState.deactivate()
-
-
-@register_command()
-def COMMS_MODE(mode_id):
-    """Set COMMS operating mode (STANDARD/RF_STOP).
-
-    RF_STOP is routed through CommandSupervisor for deferred execution
-    (ACK first, then drain queue, then activate).
+def PAYLOAD_SWITCH(selector):
     """
-    if mode_id == COMMS_MODE_ID.RF_STOP:
-        logger.warning("Executing COMMS_MODE(RF_STOP) via deferred path")
+    This command is mostly used for debug. But it might come in handy in flight
+    it will turn on or off the power to the jetson
+    be careful with this command in flight
+    considering removing the capability to turn on the payload in flight
+        as you will not be able to do anything with it on
+        payload app is responbile for turning on and off the payload
+    """
+    logger.info("Executing PAYLOAD_SWITCH")
+
+    if not SATELLITE.PAYLOADPOWER_AVAILABLE:
+        logger.warning("[PAYLOAD] Payload power pins is not available.")
+        return [-2]  # "payload power pins not available"
+
+    if selector == 0:
+        try:
+            logger.info("[PAYLOAD] Shutdown command sent successfully, waiting for payload to shutdown before cutting power")
+            SATELLITE.JETSON_ENABLE.value = False
+            TPM.sleep(0.1)
+            SATELLITE.JETSON_SD_REQ.value = False  # turn of 5v dcdc to save more power
+            return [selector]  # "payload power off"
+        except Exception as e:
+            logger.error(f"[PAYLOAD] Failed to disable payload power: {e}")
+            return [f"error turning off payload: {e}"]
+
+    if selector == 1:
+        try:
+            SATELLITE.JETSON_SD_REQ.value = True  # turn of 5v dcdc to save more power
+            TPM.sleep(0.1)
+            SATELLITE.JETSON_ENABLE.value = True
+            logger.info("[PAYLOAD] Jetson power enabled successfully.")
+            return [selector]  # "payload power on"
+        except Exception as e:
+            logger.error(f"[PAYLOAD] Failed to enable payload power: {e}")
+            return [f"error turning on payload: {e}"]
+
+    return [-1]  # "invalid payload switch status"
+
+
+@register_command()
+def RF_SWITCH(selector):
+    """
+    Turn on or off all rf transmissions from the satellite
+    this is latching command (will last over reboots)
+    0 -> turn off RF transmissions (enter RF_STOP mode)
+    1 -> turn on RF transmissions (enter STANDARD mode)
+    """
+
+    if selector == 0:
+        logger.warning("Executing RF_SWITCH (turn off): will disable TX after ACK")
         CommandSupervisor.request_rf_stop()
+        return [0]
+    if selector == 1:
+        logger.warning("Executing RF_SWITCH (turn on)")
+        CommandSupervisor.cancel_pending_rf_stop()
+        SATELLITE_RADIO.set_comms_mode(COMMS_MODE_ID.STANDARD)
+        return [1]
+    logger.warning(f"Executing RF_SWITCH with invalid selector: {selector}")
+    return [-1]
+
+
+@register_command()
+def DIGIPEATER_SWITCH(selector):
+    """Activates or deactivates the digipeater relay subsystem."""
+    if selector == 0:
+        logger.warning("Executing DIGIPEATER_SWITCH (deactivate)")
+        return DigipeaterState.deactivate()
+    elif selector == 1:
+        logger.warning("Executing DIGIPEATER_SWITCH (activate)")
+        return DigipeaterState.activate()
     else:
-        SATELLITE_RADIO.set_comms_mode(mode_id)
-        logger.warning(f"Executing COMMS_MODE: {COMMS_MODE_STR.get(mode_id, 'UNKNOWN')}")
-    return []
+        logger.warning(f"Executing DIGIPEATER_SWITCH with invalid selector: {selector}")
+        return [-1]
+
+
+@register_command()
+def SET_FSK(freq, power, br, ps, bandwidth, f_dev, p_len, p_detect, crc_type, whitening):
+    """
+    Sets the radio modulation to FSK for the next transmission
+    Calling the driver here directly to avoid passing a lot of arguments around
+
+    will triplicate the tx burst size to make up for the faster transmission in fsk compared to lora
+
+    for some reason the objects are wrapped in object wrapper
+    and object wrapper does not support __setattr__ so we are unable to change the values
+    to minimize changes, here we will use the obj attribute
+    doing all of this to avoid sending a lot of arguments in beginFSK
+    to avoid exhausting the stack
+    """
+    from hal.configuration import SATELLITE
+
+    logger.warning("Executing SET_FSK: setting modulation to FSK for next transmission")
+
+    if not SATELLITE.RADIO_AVAILABLE:
+        logger.error("[COMMS ERROR] RADIO no longer active on SAT")
+        return ["radio not available"]
+
+    SATELLITE.RADIO.obj._FREQ = freq
+    SATELLITE.RADIO.obj._POWER = power
+    SATELLITE.RADIO.obj._bitrate = br
+
+    try:
+        SATELLITE.RADIO.beginFSK(
+            pS=ps,
+            bW=bandwidth,
+            fDev=f_dev,
+            preLength=p_len,
+            preDetect=p_detect,
+            crcType=crc_type,
+            whitening=whitening,
+        )
+
+        # in fsk transmission is way faster compared to lora (>3 times)
+        # burst size depends on the set bitrate. Considering lora bps as 6k to allow for margin
+        SATELLITE_RADIO.TX_BURST_SIZE = 15 * br // 6000
+
+    except Exception as e:
+        logger.error(f"FSK fail: {e}")
+        logger.error("Rebooting satellite")
+        supervisor.reload()     # if we have a problem with setting fsk, to be safe, lets just reboot satellite
+        return ["fsk_failed"]   # this is never gonna be sent to the user
+
+    return ["fsk set"]
 
 
 @register_command()
@@ -511,26 +532,12 @@ def CREATE_TRANS(tid, string_command):
 
 
 @register_command()
-def GENERATE_ALL_PACKETS(tid):
-    # 1. search for the transaction id
-    transaction = TM.get_transaction(tid)
-    if transaction is None:
-        logger.error(f"Transaction with tid {tid} not found")
-        return ["transaction_not_found"]
-
-    # 2. generate all the packets for that transaction
-    packet_list = transaction.generate_all_packets()
-    # 3. add them to the transmit queue
-    for packet in packet_list:
-        q_stat = TransmitQueue.push_packet(packet)
-        if q_stat != QUEUE_STATUS.OK:
-            logger.error(f"Failed to push packet to transmit queue with status: {q_stat}")
-
-    return [len(packet_list)]
-
-
-@register_command()
 def GENERATE_X_PACKETS(tid, x):
+    """
+    Generate x packets for the given transaction and transmit them
+        - if x is 0, generate all packets for the transaction
+
+    """
     # 1. search for the transaction id
     transaction = TM.get_transaction(tid)
     if transaction is None:
@@ -538,7 +545,10 @@ def GENERATE_X_PACKETS(tid, x):
         return ["transaction_not_found"]
 
     # 2. generate the packets
-    packet_list = transaction.generate_x_packets(x)
+    if x == 0:
+        packet_list = transaction.generate_all_packets()
+    else:
+        packet_list = transaction.generate_x_packets(x)
     # 3. add them to the transmit queue
     for packet in packet_list:
         q_stat = TransmitQueue.push_packet(packet)
@@ -593,22 +603,6 @@ def UPDATE_MISSING_FRAGMENTS(tid, seq_offset, bitmap_high, bitmap_low):
     len_missing_fragments = transaction.update_missing_fragments_bitmap(seq_offset, (bitmap_high, bitmap_low))
 
     return [len_missing_fragments]
-
-
-@register_command()
-def TRANS_PAYLOAD(tid, seq_number, payload):
-    # [TODO] - implement this command if there is the necessity to uplink files to the satellite
-    # no need to implement now, this will only be needed if sending transactions from the gs to sat
-    # return a structured "not implemented" response to avoid breaking downstream handling
-    return ["not_implemented"]
-
-
-@register_command()
-def INIT_TRANS(tid, number_of_packets):
-    # [TODO] - implement this command if there is the necessity to uplink files to the satellite
-    # no need to implement now, this will only be needed if sending transactions from the gs to sat
-    # return a structured "not implemented" response to avoid breaking downstream handling
-    return ["not_implemented"]
 
 
 @register_command()

@@ -11,6 +11,7 @@ class CDH_IDX:
     BOOT_COUNT = const(4)
     HAL_BITFLAGS = const(5)
     DETUMBLING_ERROR_FLAG = const(6)
+    DEPLOYMENT_STATUS = const(7)
 
 
 class EPS_IDX:

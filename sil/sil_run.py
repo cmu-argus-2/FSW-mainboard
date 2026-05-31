@@ -105,6 +105,13 @@ def FSW_simulate(
         _active_process = None
 
 
+# Errors that are expected in SIL and should not fail CI.
+# The emulator radio has no real hardware, so TX failures are not meaningful.
+SIL_IGNORED_ERRORS = [
+    "[COMMS ERROR] Failed to transmit packet",
+]
+
+
 def parse_FSW_logs(outfile):
     errors_detected = False
     error_logs = []
@@ -114,8 +121,9 @@ def parse_FSW_logs(outfile):
                 if keyword in line:
                     print(f"{KEYWORDS[keyword]}{line}")
                     if keyword == "ERROR":
-                        errors_detected = True
-                        error_logs.append(line)
+                        if not any(ignored in line for ignored in SIL_IGNORED_ERRORS):
+                            errors_detected = True
+                            error_logs.append(line)
 
     if errors_detected:
         raise Exception(f"FSW Simulation Failed. Errors:\n{''.join(error_logs)}")
