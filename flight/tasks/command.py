@@ -201,7 +201,6 @@ class Task(TemplateTask):
                     data_format = "LLbbbbbb"
                     # this is 14 bytes, in current config ~7.2bytes/s. 25k will be ~60min
                     DH.register_data_process("cdh", data_format, True, data_limit=25_000, write_interval=5)
-                    
 
                 if not DH.data_process_exists("cmd_logs"):
                     DH.register_data_process("cmd_logs", "LBB", True, data_limit=25_000)
