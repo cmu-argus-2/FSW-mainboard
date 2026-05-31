@@ -164,10 +164,20 @@ def mcm_coil_allocator(u: np.ndarray, b: np.ndarray) -> list:
     return _COIL_STATUS
 
 
-def zero_all_coils():
+def zero_all_coils(hw_disable=False):
     """
     Sets all magnetorquer coil throttles to zero.
+    If hw_disable is True, also cuts power to the coil driver ICs via COIL_EN.
     """
     for face in _MCM_FACES:
         if SATELLITE.TORQUE_DRIVERS_AVAILABLE(face):
             SATELLITE.APPLY_MAGNETIC_CONTROL(face, 0)
+    if hw_disable:
+        SATELLITE.turn_off_device("TORQUE_XP")
+
+
+def enable_coils():
+    """
+    Re-enables coil driver ICs via COIL_EN and reinitialises I2C devices.
+    """
+    SATELLITE.turn_on_device("TORQUE_XP")

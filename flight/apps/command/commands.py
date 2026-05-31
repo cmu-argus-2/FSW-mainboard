@@ -140,6 +140,7 @@ def GET_COMMAND_LIST(skip_elements=0):
     It should give the command name and id
     """
     from apps.telemetry.splat.splat.telemetry_definition import command_list
+
     return command_list[skip_elements:]
 
 
@@ -652,8 +653,12 @@ def UPDATE_SD_USAGE():
 
 @register_command()
 def EXPERIMENT(
+    mode_id,
     ts,
+    duration,
     camera_bit_flag,
+    capture_rate,
+    imu_hz,
     level_of_processing,
     width,
     height,
@@ -685,11 +690,18 @@ def EXPERIMENT(
     resolution            -> The resolution of the images. They are taken at full resolution and scaled down
     """
     from apps.payload.controller import PayloadController as PC
-
+    from core.time_processor import TimeProcessor as TPM
     logger.info(f"[PAYLOAD] - Experiment command received to run at {ts}")
-    result = PC.add_command(
+    if ts != 0 and ts < TPM.time():
+        logger.error(f"[PAYLOAD] - Timestamp in the past: {ts}")
+        return False
+    result = PC.add_command_inference(
+        mode_id,
         ts,
+        duration,
         camera_bit_flag,
+        capture_rate,
+        imu_hz,
         level_of_processing,
         width,
         height,
@@ -720,30 +732,16 @@ def EXPERIMENT(
 
 @register_command()
 def SIMPLE_EXPERIMENT(
+    mode_id,
     ts,
+    duration,
     camera_bit_flag,
+    capture_rate,
+    imu_hz,
     level_of_processing,
     width,
     height,
-    downscale_factor=2.0,
-    camera_defaults_selector=-1,
-    fps=0,
-    wbmode=0,
-    aelock=0,
-    awblock=0,
-    exposuretimerange_low=0,
-    exposuretimerange_high=0,
-    gainrange_low=0.0,
-    gainrange_high=0.0,
-    ispdigitalgainrange_low=0.0,
-    ispdigitalgainrange_high=0.0,
-    ee_mode=0,
-    ee_strength=0.0,
-    aeantibanding=0,
-    exposurecompensation=0.0,
-    tnr_mode=0,
-    tnr_strength=0.0,
-    saturation=0.0,
+    downscale_factor=2.0
 ):
     """
     Command that will be called by the ground station to start an experiment
@@ -757,37 +755,105 @@ def SIMPLE_EXPERIMENT(
 
     """
     from apps.payload.controller import PayloadController as PC
-
+    from core.time_processor import TimeProcessor as TPM
     logger.info(f"[PAYLOAD] - Simple experiment command received to run at {ts}")
-    result = PC.add_command(
+    if ts != 0 and ts < TPM.time():
+        logger.error(f"[PAYLOAD] - Timestamp in the past: {ts}")
+        return False
+    result = PC.add_command_inference(
+        mode_id,
         ts,
+        duration,
         camera_bit_flag,
+        capture_rate,
+        imu_hz,
         level_of_processing,
         width,
         height,
-        downscale_factor,
-        camera_defaults_selector,
-        fps,
-        wbmode,
-        aelock,
-        awblock,
-        exposuretimerange_low,
-        exposuretimerange_high,
-        gainrange_low,
-        gainrange_high,
-        ispdigitalgainrange_low,
-        ispdigitalgainrange_high,
-        ee_mode,
-        ee_strength,
-        aeantibanding,
-        exposurecompensation,
-        tnr_mode,
-        tnr_strength,
-        saturation,
+        downscale_factor
     )
     if not result:
         logger.error(f"[PAYLOAD] - Failed to add simple experiment command for timestamp {ts}")
     return result
+
+
+@register_command()
+def DATASET_PROCESSING(
+    ts,
+    duration,
+    level_processing,
+    rc_version,
+    ld_version,
+    bypass_preflt_rej,
+    dataset_path,
+):
+    """
+    Command that will be called by the ground station to start a dataset processing experiment
+    ts                    -> the time at which the command should be ran (0 is to run now)
+    level_processing      -> the level of processing to run on the dataset
+    rc_version            -> the version of the rc model to use for processing
+    ld_version            -> the version of the ld model to use for processing
+    bypass_preflt_rej     -> whether to bypass prefiltering rejection
+    dataset_path          -> the path to the dataset to process
+    """
+    from apps.payload.controller import PayloadController as PC
+    from core.time_processor import TimeProcessor as TPM
+
+    logger.info(f"[PAYLOAD] - Dataset processing command received to run at {ts}")
+    if ts != 0 and ts < TPM.time():
+        logger.error(f"[PAYLOAD] - Timestamp in the past: {ts}")
+        return False
+    result = PC.add_dataset_processing_command(
+        ts,
+        duration,
+        level_processing,
+        rc_version,
+        ld_version,
+        bypass_preflt_rej,
+        dataset_path,
+    )
+    if not result:
+        logger.error(f"[PAYLOAD] - Failed to add dataset processing command for timestamp {ts}")
+    return result
+
+
+@register_command()
+def DATASET_OD(ts, duration, max_iteration, dataset_path):
+    """
+    Command that will be called by the ground station to start a orbit determination processing experiment
+    ts                     -> the time at which the command should be ran (0 is to run now)
+    duration               -> the duration of the experiment in seconds
+    max_iteration          -> the maximum number of iterations for batch optimization
+    dataset_path           -> the path to the dataset to process
+
+    """
+    from apps.payload.controller import PayloadController as PC
+    from core.time_processor import TimeProcessor as TPM
+
+    logger.info(f"[PAYLOAD] - Dataset OD command received to run at {ts}")
+    if ts != 0 and ts < TPM.time():
+        logger.error(f"[PAYLOAD] - Timestamp in the past: {ts}")
+        return False
+    result = PC.add_dataset_od_command(ts, duration, max_iteration, dataset_path)
+    if not result:
+        logger.error(f"[PAYLOAD] - Failed to add dataset OD command for timestamp {ts}")
+    return result
+
+
+# @register_command()
+# def SYNCHRONIZE_TIME(rtc_time):
+#     """
+#     Command that will be called by the ground station to synchronize the time
+#     rtc_time               -> the real-time clock time to set
+
+#     """
+#     from apps.payload.controller import PayloadController as PC
+
+#     logger.info(f"[PAYLOAD] - Synchronize time command received with RTC time: {rtc_time}")
+#     result = PC.send_synchronize_time_command(rtc_time)
+#     if not result:
+#         logger.error("[PAYLOAD] - Failed to synchronize time")
+#     return result
 
 
 @register_command()

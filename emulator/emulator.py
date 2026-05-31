@@ -126,6 +126,21 @@ class EmulatedSatellite(CubeSat):
     def set_fsw_state(self, state):
         self.__simulated_spacecraft.set_fsw_state(state)
 
+    def turn_off_device(self, device_name: str) -> None:
+        if device_name.startswith("TORQUE"):
+            for name, dev in self.DEVICE_LIST.items():
+                if name.startswith("TORQUE"):
+                    dev.temp_disabled = True
+            if self.__simulated_spacecraft is not None:
+                for dir in ("XP", "XM", "YP", "YM", "ZP", "ZM"):
+                    self.__simulated_spacecraft.set_control_input(dir, 0)
+
+    def turn_on_device(self, device_name: str) -> None:
+        if device_name.startswith("TORQUE"):
+            for name, dev in self.DEVICE_LIST.items():
+                if name.startswith("TORQUE"):
+                    dev.temp_disabled = False
+
     ######################## ERROR HANDLING ########################
 
     def handle_error(self, _: str) -> int:
