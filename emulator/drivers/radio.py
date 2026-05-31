@@ -99,15 +99,15 @@ class Radio:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.connect((socket.gethostname(), 5500))
                     s.sendall(payload)
-                    return True
+                    return 0
             except Exception as e:
                 print(e)
-                return False
+                return -1
         else:
             tx_time = self._tx_time_bias + (random.random() - 0.5) * self._tx_time_dev
             time.sleep(tx_time)
             self.test.last_tx_packet = packet
-        return True
+        return 0
 
     async def send_with_ack(self, packet, keep_listening=True):
         await self.send(packet)
