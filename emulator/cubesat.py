@@ -28,6 +28,7 @@ class Device:
         self.error_count = 0
         self.peripheral_line = peripheral_line
         self.dead = False
+        self.temp_disabled = False
 
 
 class CubeSat:
@@ -225,7 +226,27 @@ class CubeSat:
         :param dir: The direction key (e.g., 'XP', 'XM', etc.)
         :return: bool - True if the driver exists and is not None, False otherwise.
         """
-        return self.key_in_device_list("TORQUE_" + dir) and self.__device_list["TORQUE_" + dir].device is not None
+        return (
+            self.key_in_device_list("TORQUE_" + dir)
+            and self.__device_list["TORQUE_" + dir].device is not None
+            and not self.__device_list["TORQUE_" + dir].dead
+            and not self.__device_list["TORQUE_" + dir].temp_disabled
+        )
+
+    def TORQUE_DRIVERS_NOT_DEAD(self, dir: str) -> bool:
+        """Returns True if the specific torque driver is present and not permanently failed.
+
+        Unlike TORQUE_DRIVERS_AVAILABLE, this ignores temp_disabled so intentional
+        hardware-disables (e.g. during VF_TUMBLING) are not mistaken for actuator failures.
+
+        :param dir: The direction key (e.g., 'XP', 'XM', etc.)
+        :return: bool
+        """
+        return (
+            self.key_in_device_list("TORQUE_" + dir)
+            and self.__device_list["TORQUE_" + dir].device is not None
+            and not self.__device_list["TORQUE_" + dir].dead
+        )
 
     def TORQUE_DRIVERS_CURRENT(self, dir: str) -> float:
         """Returns the coil current for the specific magnetorquer if available and returns -1 otherwise
@@ -427,6 +448,20 @@ class CubeSat:
         if self.DEPLOYMENT_SENSOR_AVAILABLE(dir):
             return self.__device_list["DEPLOYMENT_" + dir].device.distance()
         return -1
+
+    def DEPLOYMENT_SENSOR_START_RANGING(self, dir: str):
+        """Starts ranging for the specific deployment sensor if available
+
+        :param dir: The direction key (e.g., 'XP', 'YM', etc.)
+        """
+        return
+
+    def DEPLOYMENT_SENSOR_STOP_RANGING(self, dir: str):
+        """Stops ranging for the specific deployment sensor if available
+
+        :param dir: The direction key (e.g., 'XP', 'YM', etc.)
+        """
+        return
 
     @property
     def BOOTTIME(self):

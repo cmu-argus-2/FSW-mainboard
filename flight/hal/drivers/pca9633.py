@@ -82,10 +82,10 @@ class PCA9633:
         self._sleep = 0
 
     def disable_driver(self):
-        self.set_pwm(3, _PWM_MIN)
-        self.set_pwm(0, _PWM_MIN)
-        self.set_pwm(1, _PWM_MIN)
-        self.set_pwm(2, _PWM_MIN)
+        self.turn_off_pwm(3)
+        self.turn_off_pwm(2)
+        self.turn_off_pwm(1)
+        self.turn_off_pwm(0)
         self._sleep = 1
 
     ######################## ERROR HANDLING ########################

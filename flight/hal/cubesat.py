@@ -313,6 +313,21 @@ class CubeSat:
             and not self.__device_list["TORQUE_" + dir].temp_disabled
         )
 
+    def TORQUE_DRIVERS_NOT_DEAD(self, dir: str) -> bool:
+        """Returns True if the specific torque driver is present and not permanently failed.
+
+        Unlike TORQUE_DRIVERS_AVAILABLE, this ignores temp_disabled so intentional
+        hardware-disables (e.g. during VF_TUMBLING) are not mistaken for actuator failures.
+
+        :param dir: The direction key (e.g., 'XP', 'XM', etc.)
+        :return: bool
+        """
+        return (
+            self.key_in_device_list("TORQUE_" + dir)
+            and self.__device_list["TORQUE_" + dir].device is not None
+            and not self.__device_list["TORQUE_" + dir].dead
+        )
+
     def TORQUE_DRIVERS_CURRENT(self, dir: str) -> float:
         """Returns the coil current for the specific magnetorquer if available and returns -1 otherwise
 
@@ -541,6 +556,22 @@ class CubeSat:
             return self.__device_list["DEPLOYMENT_" + dir].device.distance
         return -1
 
+    def DEPLOYMENT_SENSOR_START_RANGING(self, dir: str):
+        """Starts ranging for the specific deployment sensor if available
+
+        :param dir: The direction key (e.g., 'XP', 'YM', etc.)
+        """
+        if self.DEPLOYMENT_SENSOR_AVAILABLE(dir):
+            self.__device_list["DEPLOYMENT_" + dir].device.start_ranging()
+
+    def DEPLOYMENT_SENSOR_STOP_RANGING(self, dir: str):
+        """Stops ranging for the specific deployment sensor if available
+
+        :param dir: The direction key (e.g., 'XP', 'YM', etc.)
+        """
+        if self.DEPLOYMENT_SENSOR_AVAILABLE(dir):
+            self.__device_list["DEPLOYMENT_" + dir].device.stop_ranging()
+
     @property
     def PAYLOADUART(self):
         """PAYLOAD_EN: Returns the payload UART object
@@ -600,6 +631,12 @@ class CubeSat:
 
     def graceful_reboot_devices(self, device_name: str):
         raise NotImplementedError("CubeSats must implement graceful_reboot_devices method")
+
+    def turn_on_device(self, device_name: str):
+        raise NotImplementedError("CubeSats must implement turn_on_device method")
+
+    def turn_off_device(self, device_name: str):
+        raise NotImplementedError("CubeSats must implement turn_off_device method")
 
     def reboot(self, device_name: str):
         raise NotImplementedError("CubeSats must implement reboot_devices method")

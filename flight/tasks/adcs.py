@@ -4,6 +4,7 @@ import apps.adcs.sensors as sensors
 from apps.adcs.acs import (
     bcross_controller,
     bdot_controller,
+    enable_coils,
     mcm_coil_allocator,
     spin_stabilizing_controller,
     sun_pointing_controller,
@@ -77,6 +78,7 @@ class Task(TemplateTask):
     sun_lux = np.zeros((9,))
 
     coils_off = True
+    coil_hw_disabled = False
 
     _MAG_SAMPLE_DT = 0.08
     _MAG_N_SAMPLES = 6
@@ -110,9 +112,9 @@ class Task(TemplateTask):
 
                 self.log()
 
-            if SM.current_state == STATES.LOW_POWER or SM.current_state == STATES.EXPERIMENT:
+            if SM.current_state == STATES.LOW_POWER:
                 # In low power or experiment mode, we want to conserve power by turning off the coils and not running the control cycle
-                self.ensure_coils_off()
+                self.ensure_coils_off(hw_disable=True)
             else:
                 if SM.current_state == STATES.DETUMBLING:
                     # Set bmx160 to max scale of 2000 deg/s
@@ -126,11 +128,15 @@ class Task(TemplateTask):
                 )
 
                 if self.MODE == Modes.ACS_OFF or self.MODE == Modes.VF_TUMBLING:
-                    self.ensure_coils_off()
-                elif self.CONTROLLER_MODE == ControllerModes.BDOT:
-                    self._bdot_cycle()
+                    self.ensure_coils_off(hw_disable=True)
                 else:
-                    self._bcross_sun_cycle(1.0)
+                    if self.coil_hw_disabled:
+                        enable_coils()
+                        self.coil_hw_disabled = False
+                    if self.CONTROLLER_MODE == ControllerModes.BDOT:
+                        self._bdot_cycle()
+                    else:
+                        self._bcross_sun_cycle(1.0)
 
     # --- Attitude Control ---
     def _apply_control(self):
@@ -206,13 +212,19 @@ class Task(TemplateTask):
 
         self.ensure_coils_off()
 
-    def ensure_coils_off(self):
+    def ensure_coils_off(self, hw_disable=False):
         """
         If the coils are not off, turn them off.
+        If hw_disable is True, also cuts COIL_EN to eliminate driver quiescent draw.
         """
         if not self.coils_off:
-            zero_all_coils()
+            zero_all_coils(hw_disable)
             self.coils_off = True
+        elif hw_disable and not self.coil_hw_disabled:
+            # Coils already zeroed; route through zero_all_coils just to cut COIL_EN
+            zero_all_coils(hw_disable=True)
+        if hw_disable:
+            self.coil_hw_disabled = True
 
     # --- Logging ---
     def log(self):
