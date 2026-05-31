@@ -10,7 +10,6 @@ from apps.comms.auth import get_auth_key_bytes, verify_authenticated_command
 from apps.comms.modes import COMMS_MODE, COMMS_MODE_STR
 from apps.digipeater import DigipeaterRxQueue
 from apps.telemetry.splat.splat.telemetry_codec import unpack
-from apps.telemetry.splat.splat.telemetry_helper import format_bytes
 from core import logger
 from core.satellite_config import comms_config as CONFIG
 from hal.configuration import SATELLITE
@@ -51,6 +50,10 @@ class SATELLITE_RADIO:
 
     digipeater_header = b"\x3c\xff\x01"   # have it here as well to facilitate checking
 
+    TX_BURST_SIZE = 15  # number of packets to send in a burst during a transmission window
+
+    is_rx_state = False
+
     @classmethod
     def set_rx_mode(cls):
         """
@@ -58,10 +61,21 @@ class SATELLITE_RADIO:
         Description: Used during task init to make sure that the radio is able to receive messages
         as soon as the comms task starts
         """
+        cls.is_rx_state = True
         # set the radio into receive mode
         SATELLITE.RADIO.startReceive(0xFFFFFF)
-        SATELLITE.RADIO.rx_en.value = True
         SATELLITE.RADIO.tx_en.value = False
+        SATELLITE.RADIO.rx_en.value = True
+
+    @classmethod
+    def set_tx_mode(cls):
+        """
+        Name: set_tx_mode
+        Description: Used to set the radio into transmit mode, which is necessary before transmitting messages
+        """
+        cls.is_rx_state = False
+        SATELLITE.RADIO.rx_en.value = False
+        SATELLITE.RADIO.tx_en.value = True
 
     @classmethod
     def get_rssi(cls):
@@ -134,6 +148,11 @@ class SATELLITE_RADIO:
     def receive_message(cls):
         # Get packet from radio over SPI
         # Assumes packet is in FIFO buffer
+
+        # check to see if the state of the radio is rx
+        if not cls.is_rx_state:
+            cls.set_rx_mode()
+            logger.error("[COMMS ERROR] Tried to receive message while radio not in RX state")
 
         packet = None
         err = -1  # _ERR_NONE is 0
@@ -221,9 +240,14 @@ class SATELLITE_RADIO:
 
         # Send a message to GS
         if SATELLITE.RADIO_AVAILABLE:
-            SATELLITE.RADIO.send(packet)
+            status = SATELLITE.RADIO.send(packet)
+
+            if status != 0:
+                logger.error(f"[COMMS ERROR] Failed to transmit packet, radio driver returned error code {status}")
+                cls.tx_failed_count += 1
+                return False
+
             cls.tx_packet_count += 1
-            logger.info(f"[COMMS] - Message has been transmitted: {format_bytes(packet[:20])}...")
             return True
         else:
             logger.error("[COMMS ERROR] RADIO no longer active on SAT")

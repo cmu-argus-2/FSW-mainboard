@@ -19,7 +19,6 @@ class Task(TemplateTask):
     # Number of packets to transmit back-to-back before yielding to the
     # scheduler. Bigger -> higher TX throughput but longer scheduler blackout.
     # Bounded by HW watchdog timeout. Tune empirically.
-    TX_BURST_SIZE = 15
 
     def __init__(self, id):
         super().__init__(id)
@@ -54,23 +53,25 @@ class Task(TemplateTask):
 
         if TransmitQueue.packet_available():
             self.update_comms_telemetry()  # will only update comms data when something is sent or received
+            SATELLITE_RADIO.set_tx_mode()  # set the radio to transmit mode if we have something to send, will be set back to rx mode after transmission
+            sent_in_burst = 0
 
-        sent_in_burst = 0
-        while TransmitQueue.packet_available():
-            self.log_info("  Packet available in TransmitQueue, preparing for transmission")
-            # If we have a packet to transmit, set it in the radio
-            packet, queue_error_code = TransmitQueue.pop_packet()
-            if queue_error_code == QUEUE_STATUS.OK:
-                packed_packet = pack(packet, callsign=SATELLITE_RADIO.SC_CALLSIGN)   # changed and the entries in transmitqueue are no longer packed
-                SATELLITE_RADIO.transmit_message(packed_packet)
-            else:
-                self.log_error("Error popping packet from TransmitQueue")
-            sent_in_burst += 1
-            if sent_in_burst >= self.TX_BURST_SIZE:
-                # Yield to scheduler after a burst so watchdog (and other tasks)
-                # get CPU time. Burst size bounded by HW watchdog timeout.
-                await sleep(0)
-                sent_in_burst = 0
+            while TransmitQueue.packet_available():
+                # If we have a packet to transmit, set it in the radio
+                packet, queue_error_code = TransmitQueue.pop_packet()
+                if queue_error_code == QUEUE_STATUS.OK:
+                    packed_packet = pack(packet, callsign=SATELLITE_RADIO.SC_CALLSIGN)   # changed and the entries in transmitqueue are no longer packed
+                    SATELLITE_RADIO.transmit_message(packed_packet)
+                else:
+                    self.log_error("Error popping packet from TransmitQueue")
+                sent_in_burst += 1
+                if sent_in_burst >= SATELLITE_RADIO.TX_BURST_SIZE:
+                    # Yield to scheduler after a burst so watchdog (and other tasks)
+                    # get CPU time. Burst size bounded by HW watchdog timeout.
+                    await sleep(0)
+                    sent_in_burst = 0
+
+            SATELLITE_RADIO.set_rx_mode()  # set the radio back into receive mode after transmitting
 
     def receive_message(self):
         """

@@ -223,6 +223,7 @@ def RF_SWITCH(selector):
     return [-1]
 
 
+
 @register_command()
 def DIGIPEATER_SWITCH(selector):
     """Activates or deactivates the digipeater relay subsystem."""
@@ -235,6 +236,56 @@ def DIGIPEATER_SWITCH(selector):
     else:
         logger.warning(f"Executing DIGIPEATER_SWITCH with invalid selector: {selector}")
         return [-1]
+
+
+@register_command()
+def SET_FSK(freq, power, br, ps, bandwidth, f_dev, p_len, p_detect, crc_type, whitening):
+    """
+    Sets the radio modulation to FSK for the next transmission
+    Calling the driver here directly to avoid passing a lot of arguments around
+
+    will triplicate the tx burst size to make up for the faster transmission in fsk compared to lora
+
+    for some reason the objects are wrapped in object wrapper
+    and object wrapper does not support __setattr__ so we are unable to change the values
+    to minimize changes, here we will use the obj attribute
+    doing all of this to avoid sending a lot of arguments in beginFSK
+    to avoid exhausting the stack
+    """
+    from hal.configuration import SATELLITE
+
+    logger.warning("Executing SET_FSK: setting modulation to FSK for next transmission")
+
+    if not SATELLITE.RADIO_AVAILABLE:
+        logger.error("[COMMS ERROR] RADIO no longer active on SAT")
+        return ["radio not available"]
+
+    SATELLITE.RADIO.obj._FREQ = freq
+    SATELLITE.RADIO.obj._POWER = power
+    SATELLITE.RADIO.obj._bitrate = br
+
+    try:
+        SATELLITE.RADIO.beginFSK(
+            pS=ps,
+            bW=bandwidth,
+            fDev=f_dev,
+            preLength=p_len,
+            preDetect=p_detect,
+            crcType=crc_type,
+            whitening=whitening,
+        )
+
+        # in fsk transmission is way faster compared to lora (>3 times)
+        # burst size depends on the set bitrate. Considering lora bps as 6k to allow for margin
+        SATELLITE_RADIO.TX_BURST_SIZE = 15 * br // 6000
+
+    except Exception as e:
+        logger.error(f"FSK fail: {e}")
+        logger.error("Rebooting satellite")
+        supervisor.reload()     # if we have a problem with setting fsk, to be safe, lets just reboot satellite
+        return ["fsk_failed"]   # this is never gonna be sent to the user
+
+    return ["fsk set"]
 
 
 @register_command()
