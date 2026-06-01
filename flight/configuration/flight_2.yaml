@@ -9,6 +9,6 @@ comms:
 
 adcs:
   # Hard-iron bias in µT — replace with values from magnetometer calibration campaign
-  MAG_BIAS_UT: [0.0, 0.0, 0.0]
+  MAG_BIAS_UT: [74.062, 19.439, -0.877]
   # Per-axis soft-iron scale factors — replace with values from calibration campaign
-  MAG_SCALE: [1.0, 1.0, 1.0]
+  MAG_SCALE: [0.961, 1.249, 0.835]
