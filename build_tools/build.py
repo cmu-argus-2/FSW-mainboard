@@ -156,7 +156,18 @@ def coerce_hex(value):
     return value
 
 
-def generate_satellite_config(source_folder, use_flight_config=False):
+def deep_merge(base, override):
+    """Recursively merge override dict into base dict, returning a new dict."""
+    result = dict(base)
+    for key, value in override.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = deep_merge(result[key], value)
+        else:
+            result[key] = value
+    return result
+
+
+def generate_satellite_config(source_folder, use_flight_config=False, build_id=None):
     """
     Generate satellite_config.py from ground.yaml or flight.yaml.
 
@@ -176,6 +187,17 @@ def generate_satellite_config(source_folder, use_flight_config=False):
     try:
         with open(yaml_path, "r") as yf:
             config_data = yaml.safe_load(yf)
+
+        if use_flight_config and build_id is not None:
+            override_file = f"flight_{build_id}.yaml"
+            override_path = os.path.join(source_folder, "configuration", override_file)
+            if not os.path.exists(override_path):
+                raise FileNotFoundError(f"Per-build config {override_path} not found")
+            with open(override_path, "r") as of:
+                override_data = yaml.safe_load(of)
+            if override_data:
+                config_data = deep_merge(config_data, override_data)
+            print(f"Applied per-build overrides from {override_file}")
 
         if config_data is None:
             print(f"Configuration file {yaml_path} is empty; skipping generation of satellite_config.py")
@@ -334,14 +356,21 @@ if __name__ == "__main__":
         action="store_true",
         help="Use flight.yaml configuration instead of ground.yaml",
     )
+    parser.add_argument(
+        "--build-id",
+        type=str,
+        default=None,
+        help="Per-build override ID (e.g. 1 or 2); loads flight_<id>.yaml on top of flight.yaml",
+    )
     args = parser.parse_args()
 
     source_folder = args.source_folder
 
     flight_build = args.flight
+    build_id = args.build_id
     check_directory_location(source_folder)
 
-    generate_satellite_config(source_folder, use_flight_config=flight_build)
+    generate_satellite_config(source_folder, use_flight_config=flight_build, build_id=build_id)
 
     if GIT_BRANCH:
         print(f"Branch: {GIT_BRANCH}")

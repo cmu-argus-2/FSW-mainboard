@@ -48,9 +48,9 @@ comms:
   AUTH_KEY_HEX:
     value: "d6172b38acb7d2a28e21662f689d1d15ad78ccc888a9c7a78ef58cb61b0f1e32" # AUTH_KEY_D
   SC_CALLSIGN:
-    value: "CT6xxx"
+    value: "CT6CMU"
   GS_CALLSIGN:
-    value: "CSXXXX"
+    value: "CSXXXF"
 
 # Digipeater Task
 digipeater:
@@ -62,6 +62,8 @@ digipeater:
 # ADCS Task
 adcs:
   CONTROLLER_MODE: 0
+  MAG_BIAS_UT: [0.0, 0.0, 0.0]
+  MAG_SCALE: [1.0, 1.0, 1.0]
 
 
 hal:

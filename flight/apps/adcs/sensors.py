@@ -1,5 +1,6 @@
 from apps.adcs.consts import ControllerConst, ControllerModes, Modes, StatusConst
 from apps.adcs.sun import compute_body_sun_vector_from_lux, read_light_sensors
+from core.satellite_config import adcs_config as _CONFIG
 from hal.configuration import SATELLITE
 from ulab import numpy as np
 
@@ -12,7 +13,8 @@ _MAX_GYRO_NORM = 2.0e3 * np.pi / 180.0  # bmx160 gyro max scale is 2000 deg/s - 
 _MAG_BIAS_PATH = "/sd/config/mag_bias.bin"
 _MAG_BIAS_FMT = "3f"
 _mag_bias_loaded = False
-_MAG_BIAS = np.zeros(3)
+_MAG_BIAS = np.array(_CONFIG.MAG_BIAS_UT) * 1e-6
+_MAG_SCALE = np.array(_CONFIG.MAG_SCALE)
 
 
 def load_mag_bias():
@@ -88,6 +90,7 @@ def read_magnetometer() -> tuple[int, np.ndarray]:
         mag = np.array(SATELLITE.IMU.mag())
         mag *= 1e-6  # Convert field from uT to T
         mag -= _MAG_BIAS
+        mag *= _MAG_SCALE
 
         # mag validity check
         is_valid = True

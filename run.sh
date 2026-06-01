@@ -92,7 +92,11 @@ elif [ "$1" == "simulate" ]; then
     cd "$BUILD_DIR" && rm -rf sd && $PYTHON_CMD main.py
     cd -
 elif [ "$1" == "flight" ]; then
-    # If --flight is the only argument, build with flight config
+    # ./run.sh flight [build_id] — build_id selects flight_<id>.yaml overrides
+    if [[ -n "$2" && "$2" =~ ^[0-9]+$ ]]; then
+        BUILD_ARGS+=(--build-id "$2")
+        echo "Using per-build overrides from flight_${2}.yaml"
+    fi
     $PYTHON_CMD build_tools/build.py "${BUILD_ARGS[@]}"
     $PYTHON_CMD build_tools/move_to_board.py
 else
