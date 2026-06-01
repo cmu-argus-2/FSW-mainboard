@@ -40,7 +40,7 @@ _SKIP_DEPLOYMENT = CONFIG.SKIP_DEPLOYMENT
 
 class Task(TemplateTask):
 
-    log_data = [0] * 8
+    log_data = [0] * 7
 
     log_commands = [0] * 3
 
@@ -127,13 +127,13 @@ class Task(TemplateTask):
             SATELLITE.NEOPIXEL.fill([255, 255, 255])
 
         if not DH.data_process_exists("cdh"):
-            data_format = "LLbbbbbb"
+            data_format = "LLbbbbb"
             DH.register_data_process("cdh", data_format, True, data_limit=100000)
 
         # Restore boot count and deployment status from previous session
         if not self.restored:
             if not DH.data_process_exists("cdh"):
-                data_format = "LLbbbbbb"
+                data_format = "LLbbbbb"
                 DH.register_data_process("cdh", data_format, True, data_limit=100000)
 
             if SATELLITE.SD_CARD_AVAILABLE:
@@ -198,7 +198,7 @@ class Task(TemplateTask):
             # If the DH successfully scanned the SD card, and it has been 5 secs since FSW boot
             if DH.SD_SCANNED() and (self.deployment_done or time_since_boot > _EXIT_STARTUP_TIMEOUT):
                 if not DH.data_process_exists("cdh"):
-                    data_format = "LLbbbbbb"
+                    data_format = "LLbbbbb"
                     # this is 14 bytes, in current config ~7.2bytes/s. 25k will be ~60min
                     DH.register_data_process("cdh", data_format, True, data_limit=25_000, write_interval=5)
 
@@ -519,7 +519,6 @@ class Task(TemplateTask):
             self.log_data[CDH_IDX.SC_STATE] = SM.current_state
             self.log_data[CDH_IDX.CURRENT_RAM_USAGE] = self.get_memory_usage()
             self.log_data[CDH_IDX.BOOT_COUNT] = self.boot_count
-            self.log_data[CDH_IDX.HAL_BITFLAGS] = 0
             self.log_data[CDH_IDX.DEPLOYMENT_STATUS] = int(self.deployment_done)
 
             # The detumbling error flag is set in the DETUMBLING state

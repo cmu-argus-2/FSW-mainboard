@@ -9,9 +9,8 @@ class CDH_IDX:
     SC_STATE = const(2)
     CURRENT_RAM_USAGE = const(3)
     BOOT_COUNT = const(4)
-    HAL_BITFLAGS = const(5)
-    DETUMBLING_ERROR_FLAG = const(6)
-    DEPLOYMENT_STATUS = const(7)
+    DETUMBLING_ERROR_FLAG = const(5)
+    DEPLOYMENT_STATUS = const(6)
 
 
 class EPS_IDX:
