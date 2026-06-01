@@ -1,0 +1,14 @@
+# Per-build overrides for Argus satellite 1
+# Merged over flight.yaml at build time: only keys that differ between builds belong here.
+
+comms:
+  SC_CALLSIGN:
+    value: "CT61ARG"
+  GS_CALLSIGN:
+    value: "CS5CEP"
+
+adcs:
+  # Hard-iron bias in µT — replace with values from magnetometer calibration campaign
+  MAG_BIAS_UT: [44.036, 21.952, -99.817]
+  # Per-axis soft-iron scale factors — replace with values from calibration campaign
+  MAG_SCALE: [0.896, 1.229, 0.908]

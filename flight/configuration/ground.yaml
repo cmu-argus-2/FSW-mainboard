@@ -62,6 +62,8 @@ digipeater:
 # ADCS Task
 adcs:
   CONTROLLER_MODE: 0
+  MAG_BIAS_UT: [0.0, 0.0, 0.0]
+  MAG_SCALE: [1.0, 1.0, 1.0]
 
 
 hal:
