@@ -29,7 +29,7 @@ class DownloadManager:
     """
 
     # Configuration constants
-    BATCH_SIZE = 40  # packets per batch
+    BATCH_SIZE = 20  # packets per batch
     TIMEOUT_BETWEEN_PACKETS = (
         1  # This will be the new timeout in listening mode, if no packets are recevied within this timeout it will exit listen
     )
