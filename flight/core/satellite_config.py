@@ -9,6 +9,7 @@ class adcs_config:
     MAG_BIAS_UT = [0.0, 0.0, 0.0]
     MAG_SCALE = [1.0, 1.0, 1.0]
 
+
 class command_config:
     EXIT_STARTUP_TIMEOUT = const(5)
     DETUMBLING_TIMEOUT_DURATION = const(30)
