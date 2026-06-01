@@ -69,6 +69,8 @@ class Task(TemplateTask):
         self.antenna_tries = 0
         self.file_logging_enabled = False
 
+        self._post_deploy_rebooted = False
+
     def get_memory_usage(self):
         return int(gc.mem_alloc() / self.total_memory * 100)
 
@@ -279,6 +281,15 @@ class Task(TemplateTask):
                     SATELLITE.DEPLOYMENT_SENSOR_STOP_RANGING("YM")
                     SM.switch_to(STATES.DETUMBLING)
                     self.log_warning("T0: Transition from STARTUP to DETUMBLING")
+                    if self.deployment_done and not self._post_deploy_rebooted:
+                        self._post_deploy_rebooted = True
+                        self.log_data[CDH_IDX.TIME] = TPM.time()
+                        self.log_data[CDH_IDX.BOOT_COUNT] = self.boot_count
+                        self.log_data[CDH_IDX.DEPLOYMENT_STATUS] = int(self.deployment_done)
+                        DH.log_data("cdh", self.log_data)
+                        self.log_warning("Rebooting after deployment complete")
+                        DH.graceful_shutdown()  # flushes CDH (and all other processes) to SD
+                        SATELLITE.reboot()      # hard power-cycle, matches hal_monitor regular
 
     def state_machine_execution(self):
         # ------------------------------------------------------------------------------------------------------------------------------------
