@@ -93,37 +93,6 @@ class Frame:
         return report
 
     @classmethod
-    def pack_tm_hal(cls):
-        """
-        Pack a HAL telemetry frame.
-        """
-        # this will be a report
-        report = Report("TM_HAL")
-
-        ss_list = ["cdh", "eps", "storage"]  # we need this to get the from dh, and it is case sensitive
-        idx_list = [CDH_IDX, EPS_IDX, STORAGE_IDX]  # this is used to match the ss to the dh constants
-        # get the latest data from each subsystem
-        dh_data_list = [cls.get_dh_latest_data(x) for x in ss_list]
-
-        # for each variable in the report, get the corresponding data from DH
-        for ss in report.variables.keys():
-            ss_lower = ss.lower()  # Create lowercase version for lookups
-            if ss_lower not in ss_list:
-                logger.warning(f"Subsystem {ss.upper()} not recognized for HAL")
-                continue
-
-            dh_data = dh_data_list[ss_list.index(ss_lower)]
-            if dh_data is None:
-                continue
-
-            # iterating over all the variables for the ss in the report and adding them
-            for var_name in report.variables[ss].keys():
-                dh_var_idx = getattr(idx_list[ss_list.index(ss_lower)], var_name)
-                report.add_variable(var_name, ss, dh_data[dh_var_idx])
-
-        return report
-
-    @classmethod
     def pack_tm_storage(cls):
         """
         Pack a storage telemetry frame.

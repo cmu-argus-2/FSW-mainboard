@@ -318,20 +318,6 @@ def REQUEST_TM_NOMINAL():
 
 
 @register_command()
-def REQUEST_TM_HAL():
-    """Requests hardware-focused telemetry, including information on HAL, EPS, and errors."""
-    logger.info("Executing REQUEST_TM_HAL")
-    # Pack telemetry
-    packet = TelemetryFrame.pack_tm_hal()
-    q_stat = TransmitQueue.push_packet(packet)
-    if q_stat != QUEUE_STATUS.OK:
-        logger.error(f"Failed to push HAL telemetry to transmit queue with status: {q_stat}")
-    logger.info(f"Telemetry hal packed and pushed to transmit queue {q_stat}")
-
-    return [q_stat]
-
-
-@register_command()
 def REQUEST_TM_STORAGE():
     """Requests full storage status of the mainboard, including details on onboard processes."""
     logger.info("Executing REQUEST_TM_STORAGE")
