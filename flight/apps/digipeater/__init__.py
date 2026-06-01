@@ -19,6 +19,11 @@ class DigipeaterState:
 
         cls.active = True
 
+        # Valid packets received while the digipeater is disabled
+        # will be inserted into the queue, and transmitted once its
+        # activated. This will clear the packets on init
+        DigipeaterRxQueue.clear()
+
         task = SM.scheduled_tasks.get(TASK.DIGIPEATER)
         if task is None:
             return ["digipeater_task_not_scheduled"]
