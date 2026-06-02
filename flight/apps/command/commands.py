@@ -673,6 +673,73 @@ def DELETE_ALL_FILES():
 
 
 @register_command()
+def DELETE_DP_FILES(x, string_command):
+    """
+    This is the command that will be used to delete data process files
+    Receives the following arguments:
+        - x: the number of files to delete
+            - x == 0 it will delete all files from the data process
+            - x == -1 it will assume the string command as a file path and will try and delete that file
+        - string_command: the name of the data process to delete the files from
+    """
+
+    if x < -1:
+        logger.error(f"Invalid x: {x}.")
+        return [f"invalid x: {x}"]
+
+    if x == -1:
+        # we will assume the string command as path to file and will try and delete the file
+        try:
+            os.remove(string_command)
+            logger.info(f"{string_command} deleted")
+            return [f"{string_command} deleted"]
+        except Exception as e:
+            logger.error(f"Failed delete {string_command}: {e}")
+            return [f"error deleting {string_command}: {e}"]
+
+    # the string command is the name of a data process
+
+    # 1. check if the data process exists
+    if not DH.data_process_exists(string_command):
+        logger.warning(f"No {string_command} in DH")
+        return [f"No {string_command} in DH"]
+
+    # 2. get the dh object from the data process
+    dp_obj = DH.data_process_registry[string_command]
+
+    # 3. find the current file
+    latest_file = dp_obj.current_path
+    file_name = latest_file.split("/")[-1]  # get the file name from the path
+    path_name = latest_file.replace(file_name, "")  # get the path by removing the file name from the path
+    logger.info(f"Current {string_command}: {latest_file}")
+
+    # 4. generate a list with all the files except the current file
+    file_list = DH.data_process_registry[string_command].get_sorted_file_list()
+    dir_len = len(file_list)
+    print("This is dir len: ", dir_len)
+    if x > 0:
+        # means that we do not want to delete all the files, need to edit file_list
+        file_list.remove(file_name)  # remove the current file from the list
+        x = min(x, len(file_list) - 1)  # make sure that x is not bigger than the number of files in the directory
+        file_list = file_list[1: x + 1]    # remove the config file and keep only the next x files
+
+    for file_name in file_list:
+        file_path = path_name + file_name
+        try:
+            os.remove(file_path)
+            logger.debug(f"{file_path} deleted")
+        except Exception as e:
+            logger.error(f"Failed delete {file_path}: {e}")
+            return [f"error deleting {file_path}: {e}"]
+
+    if x == 0:
+        # means that we deleted all the files (latest and config) and want to reboot
+        supervisor.reload()
+
+    return [dir_len - x]
+
+
+@register_command()
 def UPDATE_SD_USAGE():
     """
     Calls the DH function to compute the sd card usage and update it on the DH
