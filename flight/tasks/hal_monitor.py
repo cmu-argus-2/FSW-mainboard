@@ -150,10 +150,11 @@ class Task(TemplateTask):
                             else:
                                 key_name = self.idx_to_hal_name(idx)
                                 if "_ERROR_COUNT" in key_name:
-                                    SATELLITE.update_device_error_count(key_name.replace("_ERROR_COUNT", ""), value)
+                                    device_name = key_name.replace("_ERROR_COUNT", "")
+                                    SATELLITE.update_device_error_count(device_name, value)
                                     self.log_debug(f"Restored {key_name} to {value}")
-                                    if SATELLITE.check_device_dead(value):
-                                        SATELLITE.update_device_dead(key_name.replace("_ERROR_COUNT", ""), True)
+                                    if device_name != "RADIO" and SATELLITE.check_device_dead(value):
+                                        SATELLITE.update_device_dead(device_name, True)
                                         self.log_error(f"Restored {key_name} to dead")
                                 elif "_ERROR" in key_name:
                                     pass
@@ -176,7 +177,7 @@ class Task(TemplateTask):
         # restart devices that are turned off(individual power switches)
         if (TPM.monotonic() - self.individual_reboot_counter) >= _INDIVIDUAL_REBOOT_INTERVAL:
             if self.turn_on_device != {}:
-                for device_name, time in self.turn_on_device.items():
+                for device_name, time in list(self.turn_on_device.items()):  # this needs to be a list if the dict updates during iteration, you can't read it directly
                     if self.log_data[HAL_IDX.TIME_HAL] != time:
                         SATELLITE.turn_on_device(device_name)
                         self.log_warning(f"Turned on {device_name} and devices on the same power line.")

@@ -691,6 +691,7 @@ class ArgusV4(CubeSat):
 
         if device_name == "RADIO":
             device_cls.temp_disabled = True
+            self.__device_list["RADIO_PWR"].temp_disabled = True
             if device_cls.device is not None:
                 device_cls.device.deinit()
             self.__turn_off_power_line(ArgusV4Power.RADIO_EN)
@@ -721,8 +722,15 @@ class ArgusV4(CubeSat):
 
         if device_name == "RADIO":
             self.__turn_on_power_line(ArgusV4Power.RADIO_EN)
+            # time.sleep(0.1)
             self.__boot_device(device_name, device_cls)
             device_cls.temp_disabled = False
+            if device_cls.device is not None:
+                device_cls.device.startReceive(0xFFFFFF)
+            radio_power_monitor = self.__device_list["RADIO_PWR"]
+            if not radio_power_monitor.dead:
+                self.__boot_device("RADIO_PWR", radio_power_monitor)
+                radio_power_monitor.temp_disabled = False
 
         elif device_name == "GPS":
             self.__turn_on_power_line(ArgusV4Power.GPS_EN)
@@ -756,7 +764,9 @@ class ArgusV4(CubeSat):
         device_cls = self.__device_list[device_name]
 
         device_cls.error_count += 1
-        if self.check_device_dead(device_cls.error_count):
+        if device_name == "RADIO":
+            device_cls.error_count = min(device_cls.error_count, ArgusV4Error.MAX_DEVICE_ERROR)
+        elif self.check_device_dead(device_cls.error_count):
             device_cls.dead = True
             device_cls.device = None
             return Errors.DEVICE_DEAD
