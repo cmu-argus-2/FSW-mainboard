@@ -179,6 +179,14 @@ class PayloadController:
             cls.received_all_files_sent = False
             cls.download_manager.reset()
             cls.DWN_LAST_FRAGMENT_TS = TPM.time()
+            
+        if cls.current_state == PayloadState.SUCCESS or cls.current_state == PayloadState.FAIL:
+            cls.transaction_dict = {}
+            cls.received_create_trans = False
+            cls.received_init_trans = False
+            cls.received_all_files_sent = False
+            cls.download_manager.reset()
+            cls.DWN_LAST_FRAGMENT_TS = 0
 
         # turn off state needs to send turn off command
         if cls.current_state == PayloadState.OFF:
