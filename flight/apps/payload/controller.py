@@ -746,9 +746,14 @@ class PayloadController:
         This funciton will process the received fragments
         ideally this will only happen when in listening mode (triggered when the payload goes into download mode)
         """
+        transaction = cls.transaction_dict.get(fragment.tid)
+        if transaction is None:
+            logger.warning(f"[PAYLOAD] - Transaction is None for: {fragment.tid}")
+            return
+
         cls.DWN_LAST_FRAGMENT_TS = TPM.time()
         cls.download_manager.note_fragment_received(fragment)
-        cls.transaction_dict[fragment.tid].add_fragment(fragment)
+        transaction.add_fragment(fragment)
 
     @classmethod
     def add_transaction_for_download(cls, tid, transaction):
