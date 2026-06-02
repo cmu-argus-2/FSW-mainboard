@@ -756,7 +756,9 @@ class ArgusV4(CubeSat):
         device_cls = self.__device_list[device_name]
 
         device_cls.error_count += 1
-        if self.check_device_dead(device_cls.error_count):
+        if device_name == "RADIO":
+            device_cls.error_count = min(device_cls.error_count, ArgusV4Error.MAX_DEVICE_ERROR)
+        elif self.check_device_dead(device_cls.error_count):
             device_cls.dead = True
             device_cls.device = None
             return Errors.DEVICE_DEAD
