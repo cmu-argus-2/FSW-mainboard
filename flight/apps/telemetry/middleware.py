@@ -107,7 +107,7 @@ class Frame:
             "adcs",
             "comms",
             "gps",
-            "payload",
+            "payload_tm",
             "cmd_logs",
             "hal",
             "eps_warning"
