@@ -186,6 +186,7 @@ class SATELLITE_RADIO:
             logger.info(f"Received lora aprs packet {packet[:20]}")
             cls.rx_digipeater_count += 1
             DigipeaterRxQueue.push_packet(packet)
+            cls.set_rx_mode()  # need to set the radio back into rx mode to clear fifo
             return None
 
         if cls.auth_enabled:
@@ -262,6 +263,17 @@ class SATELLITE_RADIO:
         calls the normal transmit function after incrementing the count
         If the packet is not transmitted the counter will not be incremented
         """
-        status = cls.transmit_message(packet)
-        cls.tx_digipeater_count = cls.tx_digipeater_count + status
-        return status
+        # set tx mode
+        cls.set_tx_mode()
+
+        try:
+            status = cls.transmit_message(packet)
+            cls.tx_digipeater_count = cls.tx_digipeater_count + status
+            print(f"\n [DIGI] - {cls.tx_digipeater_count} \n")
+            return status
+        except Exception as e:
+            logger.error(f"[COMMS ERROR] Failed to transmit digipeater packet: {e}")
+            return False
+        finally:
+            # set rx mode
+            cls.set_rx_mode()
